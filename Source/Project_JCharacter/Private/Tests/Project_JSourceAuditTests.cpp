@@ -29,27 +29,6 @@ struct FAuditWorld
 constexpr auto AuditFlags = EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAuditTIPBudgetTest, "ProjectJ.SourceAudit.TIPBudget", AuditFlags)
-bool FProjectJAuditTIPBudgetTest::RunTest(const FString&)
-{
-    FAuditWorld Scope;
-    auto* Player = Scope.World->SpawnActor<AProject_JCombatFacingFixture>();
-    Player->bReplicatedCombatModePresentation = true;
-    Player->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-    for (int32 Index = 0; Index < 8; ++Index)
-        Player->ServerSetTurnInPlaceRotation_Implementation(false, Player->GetActorRotation().Yaw + 15.f);
-    TestTrue(TEXT("Repeated stop packets share the initial 15 degree budget"), FMath::Abs(Player->GetActorRotation().Yaw) <= 15.01f);
-    for (int32 Index = 0; Index < 8; ++Index)
-        Player->ServerSetTurnInPlaceRotation_Implementation(Index % 2 == 0, Player->GetActorRotation().Yaw + 15.f);
-    TestTrue(TEXT("Alternating active flags cannot renew same-frame budget"), FMath::Abs(Player->GetActorRotation().Yaw) <= 15.01f);
-    Scope.World->Tick(LEVELTICK_All, .1f);
-    const float Before = Player->GetActorRotation().Yaw;
-    Player->ServerSetTurnInPlaceRotation_Implementation(false, Before + 90.f);
-    TestTrue(TEXT("Server time replenishes a bounded useful turn"), FMath::FindDeltaAngleDegrees(Before, Player->GetActorRotation().Yaw) > 0.f);
-    TestTrue(TEXT("Replenishment respects 240 degrees per second"), FMath::FindDeltaAngleDegrees(Before, Player->GetActorRotation().Yaw) <= 24.01f);
-    return true;
-}
-
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAuditEquipmentNetworkTest, "ProjectJ.SourceAudit.EquipmentNetwork", AuditFlags)
 bool FProjectJAuditEquipmentNetworkTest::RunTest(const FString&)
 {

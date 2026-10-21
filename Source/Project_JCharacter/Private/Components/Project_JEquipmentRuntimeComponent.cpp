@@ -1,6 +1,8 @@
+#include "Components/Project_JEquipmentRuntimeComponent.h"
+#include "GameFramework/Pawn.h"
+#include "Movement/Project_JMovementQueries.h"
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "Components/Project_JEquipmentRuntimeComponent.h"
 #include "Components/Project_JEquipmentManagerComponent.h"
 #include "Components/Project_JModularMeshComponent.h"
 #include "Animation/Project_JPresentationMeshResolver.h"
@@ -119,7 +121,7 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentEquipped(EProject_JEquipmen
 		OnEquipmentUnequipped(Slot, RuntimeItems[Slot].ItemDef);
 	}
 
-	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+	APawn* OwnerCharacter = Cast<APawn>(GetOwner());
 	if (bIsEndingPlay || IsBeingDestroyed() || RequestedBindingRevision != BindingRevision ||
 		!IsValid(OwnerCharacter) || OwnerCharacter->IsActorBeingDestroyed()) return;
 
@@ -161,7 +163,7 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentUnequipped(EProject_JEquipm
 	RefreshCurrentWeaponConfiguration();
 }
 
-void UProject_JEquipmentRuntimeComponent::ApplyEquipmentGameplay(ACharacter& OwnerCharacter, const UProject_JEquipmentItemDefinition& ItemDef, FProject_JEquipmentRuntimeItem& RuntimeItem) const
+void UProject_JEquipmentRuntimeComponent::ApplyEquipmentGameplay(APawn& OwnerCharacter, const UProject_JEquipmentItemDefinition& ItemDef, FProject_JEquipmentRuntimeItem& RuntimeItem) const
 {
 	if (!OwnerCharacter.HasAuthority())
 	{
@@ -300,7 +302,7 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentMeshLoaded(EProject_JEquipm
 		return;
 	}
 
-	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+	APawn* OwnerCharacter = Cast<APawn>(GetOwner());
 	if (!IsValid(OwnerCharacter) || OwnerCharacter->IsActorBeingDestroyed() ||
 		OwnerCharacter->GetNetMode() == NM_DedicatedServer) return;
 
@@ -308,7 +310,8 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentMeshLoaded(EProject_JEquipm
 	FName AttachmentSocket = ItemDef->AttachSocketName;
 	if (AttachmentSocket.IsNone())
 	{
-		PoseSource = Project_J::Animation::ResolveEquipmentPoseSource(*OwnerCharacter, *LoadedMesh);
+		PoseSource = Project_J::Animation::ResolveEquipmentPoseSource(*OwnerCharacter, *LoadedMesh,
+			ItemDef->PoseMode == EProject_JEquipmentPoseMode::CopyPose);
 	}
 	else
 	{
@@ -333,7 +336,17 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentMeshLoaded(EProject_JEquipm
 
 	if (ItemDef->AttachSocketName.IsNone())
 	{
-		NewMeshComp->AttachAndSetLeader(PoseSource);
+		if(ItemDef->PoseMode == EProject_JEquipmentPoseMode::CopyPose)
+		{
+			if(!NewMeshComp->AttachAndCopyPose(PoseSource))
+			{
+				NewMeshComp->DestroyComponent();
+				CancelEquipmentMeshLoad(RuntimeItem);
+				UE_LOG(LogProjectJEquipmentRuntime,Warning,TEXT("Copy-pose equipment has an incompatible base hierarchy. Item=%s"),*GetNameSafe(ItemDef));
+				return;
+			}
+		}
+		else NewMeshComp->AttachAndSetLeader(PoseSource);
 	}
 	else
 	{

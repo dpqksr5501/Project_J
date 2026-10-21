@@ -1,5 +1,7 @@
 # 이동 재생 소유권 통합 — 2026-10-12
 
+> **이전 이동 구조의 기록 — 2026-10-21:** 본문은 당시 CMC/MM·마스터·후보 정책의 구현·제안·측정 이력이다. 현재 생산 제작은 [플레이어 로코모션](../Architecture/Player_Locomotion_Architecture.md)을 따른다. 과거 구조를 복원하라는 지시나 현재 구조의 성능 결과로 해석하지 않는다.
+
 선행: [재설계 조사](Locomotion_Unified_Playback_Redesign_Research_2026-10-12.md).
 
 후속: [지속 곡선·Master 함수 정리](Sustained_Curve_And_Master_Cleanup_2026-10-12.md)와 [200명 시각 예산 구현·검증](Crowd_Visual_Presentation_Budget_2026-10-12.md)을 함께 따른다. 아래 성능·해시·노드 수는 통합 재생을 적용한 당시 기록이며 후속 변경의 최종 값으로 대체하지 않는다.

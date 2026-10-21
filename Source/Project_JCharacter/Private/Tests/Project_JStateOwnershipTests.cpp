@@ -11,30 +11,7 @@
 #include "Animation/Project_JCharacterAnimInstance.h"
 #include "Components/SkeletalMeshComponent.h"
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJGroundStateOwnershipTest, "ProjectJ.Animation.StateOwnership.GroundModeSource",
-    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool FProjectJGroundStateOwnershipTest::RunTest(const FString&)
-{
-    auto* State = NewObject<UProject_JLocomotionAnimStateComponent>();
-    auto* Mesh = NewObject<USkeletalMeshComponent>();
-    auto* Anim = NewObject<UProject_JCharacterAnimInstance>(Mesh);
-    Anim->LocomotionAnimStateComponent = State;
-    // A legacy display alias must not become a second source of transition intent.
-    State->bUseStartDatabase = State->bUseStopDatabase = true;
-    for (const auto Mode : {EProject_JGroundMotionMode::Idle, EProject_JGroundMotionMode::Start,
-        EProject_JGroundMotionMode::Locomotion, EProject_JGroundMotionMode::Stop})
-    {
-        State->GroundMotionMode = Mode;
-        FProject_JAnimThreadSafeData Snapshot;
-        Anim->FillLocomotionStateThreadSafeData(Snapshot);
-        TestEqual(TEXT("Snapshot preserves the owning ground mode"), Snapshot.Ground.GroundMotionMode, Mode);
-        TestEqual(TEXT("Start intent follows the semantic owner despite stale aliases"), Snapshot.Ground.bStartRequested,
-            Mode == EProject_JGroundMotionMode::Start);
-        TestEqual(TEXT("Stop intent follows the semantic owner despite stale aliases"), Snapshot.Ground.bStopRequested,
-            Mode == EProject_JGroundMotionMode::Stop);
-    }
-    return true;
-}
+
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJLocomotionTagOwnershipTest, "ProjectJ.RuntimeOwnership.LocomotionTagLease",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)

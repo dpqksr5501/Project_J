@@ -5,7 +5,7 @@
 ## 현재 상태를 읽는 순서
 
 1. [프로젝트 맥락](Overview/ProjectContext.md): 시스템·권위·상태 소유권과 실제 사용 구조.
-2. [애니메이션](Animation/README.md): 통합 단발/MM·리타깃·후진 Reface·착지의 현재 읽는 순서. Mirror Data는 도입을 보류한다.
+2. [애니메이션](Animation/README.md): Mover·native 상태/핀 계산·공용 포즈 재생·골격/몸체 제작의 현재 기준. 이전 MM/CMC 이력과 mirror 메타데이터를 구분한다.
 3. [검토 목차](Review/README.md): main 통합·R19/R20·소스/BP/DA 정리와 이전 감사의 구분, 유지·보류 범위.
 4. [성능](Performance/README.md): 과거 수치의 조건과 남은 CPU·렌더 차이. 현재 반복 성능 조사·대규모 부하는 보류한다.
 

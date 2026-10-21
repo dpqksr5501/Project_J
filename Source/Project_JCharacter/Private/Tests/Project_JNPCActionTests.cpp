@@ -21,7 +21,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "System/Project_JCharacterAnimationBudgetSubsystem.h"
 #include "Components/Project_JCombatHitValidationComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
+#include "Tests/Project_JMoverFrameFixture.h"
 #include "Engine/SkeletalMesh.h"
 #include "GameplayEffect.h"
 
@@ -276,10 +276,10 @@ bool FProjectJNPCAttackMovementPolicyTest::RunTest(const FString& Parameters)
 	F.Scoring->OnQueryCompleted.Broadcast(F.Target(100), 1);
 	const auto Visibility = Mesh->VisibilityBasedAnimTickOption;
 	const bool bURO = Mesh->bEnableUpdateRateOptimizations;
-	F.NPC->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	TestTrue(TEXT("Publish grounded attack fixture"),ProjectJ::Tests::PublishMoverFrame(F.NPC,MOVE_Walking));
 	F.Actions->UpdateAction();
 	TestTrue(TEXT("Real montage activates through the action consumer"), Ability->IsActive());
-	TestEqual(TEXT("Movement remains walking; no flying override"), F.NPC->GetCharacterMovement()->MovementMode.GetValue(), MOVE_Walking);
+	TestEqual(TEXT("Movement remains walking; no flying override"), Project_J::Movement::ReadPhysicalFrame(F.NPC).Mode, MOVE_Walking);
 	TestTrue(TEXT("Existing server hit validation starts"), Hit->GetActiveAttackDefinition() == Definition);
 	F.NPC->GetAttributeSet()->InitHealth(0); F.Actions->UpdateAction();
 	TestFalse(TEXT("Death stops the owned ability"), Ability->IsActive());
@@ -296,12 +296,12 @@ bool FProjectJNPCAttackMovementPolicyTest::RunTest(const FString& Parameters)
 	TestEqual(TEXT("URO restored"), Mesh->bEnableUpdateRateOptimizations != 0, bURO);
 	F.NPC->GetAttributeSet()->InitHealth(100);
 	// The transient fixture has no floor; reset ground state for the next case.
-	F.NPC->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	TestTrue(TEXT("Publish reused grounded attack fixture"),ProjectJ::Tests::PublishMoverFrame(F.NPC,MOVE_Walking));
 	F.Actions->StartActions(F.Scoring, Handle); F.Scoring->OnQueryCompleted.Broadcast(F.Target(100), 1);
 	TestTrue(TEXT("Ability reusable after cancellation"), ASC->TryActivateAbility(Handle, false));
-	F.NPC->GetCharacterMovement()->SetMovementMode(MOVE_Falling);
+	TestTrue(TEXT("Publish completed falling frame"),ProjectJ::Tests::PublishMoverFrame(F.NPC,MOVE_Falling));
 	TestFalse(TEXT("Leaving the ground cancels the ground attack"), Ability->IsActive());
-	TestEqual(TEXT("Cleanup preserves the new falling mode"), F.NPC->GetCharacterMovement()->MovementMode.GetValue(), MOVE_Falling);
+	TestEqual(TEXT("Cleanup preserves the new falling mode"), Project_J::Movement::ReadPhysicalFrame(F.NPC).Mode, MOVE_Falling);
 	TestNull(TEXT("Falling closes the hit definition"), Hit->GetActiveAttackDefinition());
 	AddInfo(FString::Printf(TEXT("Existing montage root_motion=%d; activation, death, falling cancellation verified; no asset saved."), Montage->HasRootMotion()));
 	F.Actions->StopActions(); ASC->ClearAbility(Handle);

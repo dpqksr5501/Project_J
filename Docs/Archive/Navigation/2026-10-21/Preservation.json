@@ -1,0 +1,55 @@
+{
+  "purpose": "Preserve existing working-copy prose before updating current architecture and authoring guidance. Runtime assets are not renamed.",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 36900,
+      "sha256": "6a4bd4fa9f998653a058a03270a494ad40d5d01fee25fb6f8548d396182d24cb"
+    },
+    {
+      "path": "Docs/README.md",
+      "bytes": 4655,
+      "sha256": "c6c54f0aa3bbac230086967060c8be389002606ba4d0b809bf41e15273a22133"
+    },
+    {
+      "path": "Docs/Overview/ProjectContext.md",
+      "bytes": 25754,
+      "sha256": "b0561023c95312d997c0fa16df87c97b83d4846c3b71d4073fc2759c67da685d"
+    },
+    {
+      "path": "Docs/Overview/ProjectOverview.md",
+      "bytes": 11548,
+      "sha256": "ff57f8fb4990a9249bfc23edba957f846ca78da41e233b234829f4cd0bbac4b8"
+    },
+    {
+      "path": "Docs/Animation/README.md",
+      "bytes": 16324,
+      "sha256": "fc1d19b5d5e9ea20c364130a1a065c7eaa0970d45c619075d0c6613b62029164"
+    },
+    {
+      "path": "Docs/Animation/Authoring/README.md",
+      "bytes": 1343,
+      "sha256": "6a1cfc265637745b5da00ed273936bf8b9061f5575dc6578ba888d6b82290cfc"
+    },
+    {
+      "path": "Docs/Animation/Authoring/DataDrivenLocomotionExtensionGuide.md",
+      "bytes": 13203,
+      "sha256": "0a5884de9c9216640fc986a4a916c408dddb87d6e71b47fbffbafd05d3e2a552"
+    },
+    {
+      "path": "Docs/Animation/Authoring/HumanoidSkeletonRetargetingStandards.md",
+      "bytes": 11369,
+      "sha256": "442c5c12112dd67ed243bca34dd8fb2d9c9fae86376283bacab5f3662d429c84"
+    },
+    {
+      "path": "Docs/Animation/Locomotion/README.md",
+      "bytes": 2030,
+      "sha256": "02c1a2cfae309ab4d3415b7271b98bcdf4111f52d71ed7d150bf522d61576c29"
+    },
+    {
+      "path": "Docs/Combat/Architecture/Combat_Animation_System.md",
+      "bytes": 42240,
+      "sha256": "5d8e5fde76c70afefc3c0bafa55ef88ba2bf92f75da977efab28fff4597be7cb"
+    }
+  ]
+}

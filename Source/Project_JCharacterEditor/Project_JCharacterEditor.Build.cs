@@ -15,12 +15,14 @@ public class Project_JCharacterEditor : ModuleRules
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {
+			"Project_JCore", "Mover", "IKRig", "IKRigEditor", "ControlRig", "ControlRigDeveloper",
 			"DataValidation",
 			"Landscape",
 			"Foliage", // LandscapeEdit's public editing interface includes foliage snapping types.
 			"Project_JAnimationNodes",
 			"Json",
 			"AssetRegistry",
+			"AssetTools",
 			"Chooser",
 			"KismetCompiler",
 			"ApplicationCore",
@@ -35,9 +37,10 @@ public class Project_JCharacterEditor : ModuleRules
 			"AnimGraph",
 			"BlueprintGraph",
 			"PoseSearch",
+			"PoseSearchEditor",
 			"BlendStack",
 			"BlendStackEditor",
-			"AnimationWarpingRuntime",
+			"AnimationWarpingRuntime", "AnimationBlueprintLibrary",
 			"AnimationWarpingEditor",
 			"EditorFramework",
 			"InputCore",

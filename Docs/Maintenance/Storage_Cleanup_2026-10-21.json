@@ -1,0 +1,45 @@
+{
+  "date": "2026-10-21",
+  "git_head_before_commit": "f6b64dd671815d828c06608cee595e902c8ccc0f",
+  "working_tree": "Pre-existing migration changes retained; this task edits documentation/document-link validation and removes only matching scratch copies.",
+  "removed_files": 7162,
+  "logical_bytes_removed": 9006579677,
+  "actual_free_space_delta_measured": false,
+  "drive_free_bytes_observed_after": 172833906688,
+  "counterparts_rehashed_after_removal": 7162,
+  "current_content_files_before": 15886,
+  "current_content_files_after": 15886,
+  "preserved_unique_experiment_files": 2673,
+  "preserved_unique_experiment_bytes": 2893903461,
+  "protected": [
+    "Content",
+    "Source",
+    "Config",
+    "Binaries",
+    "Intermediate",
+    "DerivedDataCache",
+    ".git",
+    "unique experiment assets",
+    "backups",
+    "world authoring/recovery",
+    "user settings/saves"
+  ],
+  "local_evidence": "Saved/StorageCleanup_20261021",
+  "local_manifest_sha256": {
+    "ExperimentComparison.json": "cc29f86a67f1fbd0ba66d7c421f32748e99a775e24b135da87d6dad3b0e7cbc6",
+    "DeletedDuplicates.jsonl": "847ec20a37bc63272268fc53de8928db2cd8a295ad1c2ad01a81a6929c801181",
+    "VerifiedCleanup.json": "bccaa9574d9d5de1a9f99a09c9226e17bce474d6ee2078eff573bc1cc8a9096d"
+  },
+  "document_archive_sha256": "a0e0e5d41fdb370269ac802204d125b58aaf0dd960ccf377fc6dda650df50456",
+  "runtime_validation": "No new Unreal build/PIE; previous IK regression is cited with its original date/scope.",
+  "documentation": {
+    "all_markdown_checked_including_readme": 264,
+    "local_links_checked": 2838,
+    "broken_links": 0,
+    "absent_optional_local_archives": 12,
+    "catalog_markdown_coverage": 263,
+    "rewritten_guide_fragments": "No missing fragment targets found",
+    "preserved_large_document_originals": 10,
+    "diff_check_passed": true
+  }
+}

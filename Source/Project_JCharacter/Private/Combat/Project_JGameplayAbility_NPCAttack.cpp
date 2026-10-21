@@ -1,4 +1,7 @@
 #include "Combat/Project_JGameplayAbility_NPCAttack.h"
+#include "DefaultMovementSet/CharacterMoverComponent.h"
+#include "Movement/Project_JMovementQueries.h"
+#include "Movement/Project_JMoverComponent.h"
 #include "Combat/Project_JAttackDefinition.h"
 #include "Components/Project_JNPCActionComponent.h"
 #include "Components/Project_JCombatHitValidationComponent.h"
@@ -63,7 +66,7 @@ FName UProject_JGameplayAbility_NPCAttack::ValidateAttackContext(const AProject_
 	if (!FMath::IsFinite(Attack->PlayRate) || Attack->PlayRate <= 0 || Attack->Montage->GetPlayLength() <= 0) { return TEXT("InvalidMontageRateOrLength"); }
 	if (!Attack->MontageSectionName.IsNone() && Attack->Montage->GetSectionIndex(Attack->MontageSectionName) == INDEX_NONE) { return TEXT("MissingMontageSection"); }
 	if (!SupportsMovementPolicy(*Attack)) { return TEXT("UnsupportedWarpedAerialOrInPlaceRootMotion"); }
-	if (!NPC->GetCharacterMovement() || !NPC->GetCharacterMovement()->IsMovingOnGround()) { return TEXT("NotGrounded"); }
+	if (!Project_J::Movement::IsGrounded(NPC)) { return TEXT("NotGrounded"); }
 	// Keep the authored ABP policy consistent on server and simulated proxies; do not change it only on authority.
 	if (Attack->Montage->HasRootMotion() && Anim->RootMotionMode != ERootMotionMode::RootMotionFromMontagesOnly)
 	{
@@ -118,9 +121,10 @@ void UProject_JGameplayAbility_NPCAttack::ActivateAbility(FGameplayAbilitySpecHa
 	const FName Failure = ValidateAttackContext(NPC, ActiveDefinition);
 	if (!Failure.IsNone()) { LogAttackRejection(Failure); EndAbility(Handle, Info, ActivationInfo, true, true); return; }
 	AttackCharacter = NPC;
-	NPC->MovementModeChangedDelegate.AddDynamic(this, &ThisClass::OnMovementModeChanged);
+	NPC->GetMover()->OnPostFinalize.AddDynamic(this, &ThisClass::OnPhysicalFrameFinalized);
 	FRotator Facing = (LockedTarget->GetActorLocation() - NPC->GetActorLocation()).Rotation();
-	Facing.Pitch = Facing.Roll = 0; NPC->SetActorRotation(Facing);
+	Facing.Pitch = Facing.Roll = 0;
+	NPC->FaceGameplayDirection(Facing);
 	// Shared hit lifetime protects mandatory pose/notifies for both NPC and player.
 	NPC->FindComponentByClass<UProject_JCombatHitValidationComponent>()->BeginAttackNode(ActiveDefinition->AttackTag, ActiveDefinition);
 	if (auto* Presentation = NPC->FindComponentByClass<UProject_JCombatPresentationComponent>())
@@ -139,10 +143,10 @@ void UProject_JGameplayAbility_NPCAttack::ActivateAbility(FGameplayAbilitySpecHa
 		TEXT("Started Owner=%s Montage=%s RootMotion=%d"), *GetNameSafe(NPC), *GetNameSafe(RequestedAttack->Montage), RequestedAttack->Montage->HasRootMotion());
 }
 
-void UProject_JGameplayAbility_NPCAttack::OnMovementModeChanged(ACharacter* Character, EMovementMode PreviousMode, uint8 PreviousCustomMode)
+void UProject_JGameplayAbility_NPCAttack::OnPhysicalFrameFinalized(const FMoverSyncState& State,const FMoverAuxStateContext&)
 {
-	if (IsActive() && !bEndingAttack && Character == AttackCharacter.Get()
-		&& (!Character->GetCharacterMovement() || !Character->GetCharacterMovement()->IsMovingOnGround()))
+	const auto* NPC=AttackCharacter.Get();
+	if (IsActive() && !bEndingAttack && (!NPC || !NPC->GetMover()->HasGameplayTagInState(State,Mover_IsOnGround,true)))
 	{
 		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 	}
@@ -167,7 +171,7 @@ void UProject_JGameplayAbility_NPCAttack::EndAbility(FGameplayAbilitySpecHandle 
 {
 	if (!IsActive() || bEndingAttack) { return; }
 	TGuardValue<bool> EndingGuard(bEndingAttack, true);
-	if (auto* Character = AttackCharacter.Get()) { Character->MovementModeChangedDelegate.RemoveDynamic(this, &ThisClass::OnMovementModeChanged); }
+	if (auto* Character = AttackCharacter.Get()) { Character->GetMover()->OnPostFinalize.RemoveDynamic(this, &ThisClass::OnPhysicalFrameFinalized); }
 	AttackCharacter.Reset();
 	// Cancel only our montage, without a residual root-motion blend after action ownership ends.
 	if (auto* ASC = Info ? Info->AbilitySystemComponent.Get() : nullptr;

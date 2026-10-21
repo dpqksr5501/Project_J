@@ -4,7 +4,8 @@
 #include "Components/Project_JModularMeshComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
-#include "GameFramework/Character.h"
+#include "GameFramework/Pawn.h"
+#include "Movement/Project_JMovementQueries.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 
 bool Project_J::Animation::UsesIndependentClothSimulation(const USkeletalMeshComponent& Mesh)
@@ -14,10 +15,10 @@ bool Project_J::Animation::UsesIndependentClothSimulation(const USkeletalMeshCom
 	return !Mesh.GetClothingSimulationInstances().IsEmpty() || (Asset && Asset->HasActiveClothingAssets());
 }
 
-bool Project_J::Animation::WasCharacterVisualRecentlyRendered(const ACharacter& Character, float Tolerance)
+bool Project_J::Animation::WasCharacterVisualRecentlyRendered(const APawn& Character, float Tolerance)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_VisualDemandResolve);
-	const USkeletalMeshComponent* Leader = Character.GetMesh();
+	const USkeletalMeshComponent* Leader = Project_J::Movement::FindPoseSource(&Character);
 	// Pure GT visibility queries cannot mutate component ownership. Visit the
 	// actor's same owned set directly and stop at demand, instead of collecting
 	// every skeletal pointer into a temporary array before scanning it again.
@@ -33,10 +34,10 @@ bool Project_J::Animation::WasCharacterVisualRecentlyRendered(const ACharacter& 
 	return false;
 }
 
-USkeletalMeshComponent* Project_J::Animation::FindVisualFollower(const ACharacter& Character, bool bRequireMeshAsset)
+USkeletalMeshComponent* Project_J::Animation::FindVisualFollower(const APawn& Character, bool bRequireMeshAsset)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_VisualFollowerResolve);
-	const USkeletalMeshComponent* SourceMesh = Character.GetMesh();
+	const USkeletalMeshComponent* SourceMesh = Project_J::Movement::FindPoseSource(&Character);
 	if (!IsValid(SourceMesh))
 	{
 		return nullptr;
@@ -82,8 +83,8 @@ USkeletalMeshComponent* Project_J::Animation::FindVisualFollower(const ACharacte
 	return bAmbiguousRetarget ? nullptr : RetargetFollower;
 }
 
-USkeletalMeshComponent* Project_J::Animation::ResolveEquipmentPoseSource(const ACharacter& Character,
-	const USkeletalMesh& EquipmentMesh)
+USkeletalMeshComponent* Project_J::Animation::ResolveEquipmentPoseSource(const APawn& Character,
+	const USkeletalMesh& EquipmentMesh, bool bCopyPose)
 {
 	if (!EquipmentMesh.GetSkeleton())
 	{
@@ -93,18 +94,20 @@ USkeletalMeshComponent* Project_J::Animation::ResolveEquipmentPoseSource(const A
 	if (USkeletalMeshComponent* Follower = FindVisualFollower(Character))
 	{
 		if (const USkeletalMesh* FollowerAsset = Follower->GetSkeletalMeshAsset();
-			FollowerAsset && FollowerAsset->GetSkeleton() == EquipmentMesh.GetSkeleton())
+			FollowerAsset && (FollowerAsset->GetSkeleton() == EquipmentMesh.GetSkeleton() ||
+				(bCopyPose && UProject_JModularMeshComponent::CanCopyBasePose(FollowerAsset,&EquipmentMesh))))
 		{
 			return Follower;
 		}
 	}
 
-	USkeletalMeshComponent* Source = Character.GetMesh();
+	USkeletalMeshComponent* Source = Project_J::Movement::FindPoseSource(&Character);
 	return IsValid(Source) && Source->GetSkeletalMeshAsset() &&
-		Source->GetSkeletalMeshAsset()->GetSkeleton() == EquipmentMesh.GetSkeleton() ? Source : nullptr;
+		(Source->GetSkeletalMeshAsset()->GetSkeleton() == EquipmentMesh.GetSkeleton() ||
+			(bCopyPose && UProject_JModularMeshComponent::CanCopyBasePose(Source->GetSkeletalMeshAsset(),&EquipmentMesh))) ? Source : nullptr;
 }
 
-USkeletalMeshComponent* Project_J::Animation::ResolveWeaponAttachmentMesh(const ACharacter& Character,
+USkeletalMeshComponent* Project_J::Animation::ResolveWeaponAttachmentMesh(const APawn& Character,
 	FName SourceSocket, FName VisualSocket, bool bPreferVisualFollower, FName& OutSocket)
 {
 	OutSocket = NAME_None;
@@ -118,7 +121,7 @@ USkeletalMeshComponent* Project_J::Animation::ResolveWeaponAttachmentMesh(const 
 		}
 	}
 
-	USkeletalMeshComponent* Source = Character.GetMesh();
+	USkeletalMeshComponent* Source = Project_J::Movement::FindPoseSource(&Character);
 	if (IsValid(Source) && !SourceSocket.IsNone() && Source->DoesSocketExist(SourceSocket))
 	{
 		OutSocket = SourceSocket;

@@ -6,6 +6,15 @@
 
 class FProjectJGameModule final:public FDefaultGameModuleImpl
 {
+	void StartupModule() override
+	{
+		FDefaultGameModuleImpl::StartupModule();
+#if WITH_EDITOR || UE_SERVER
+		// NetDriver lazily loads server counters on the first connection. Load
+		// that known dependency before Iris freezes its serializer registrations.
+		FModuleManager::LoadModuleChecked<IModuleInterface>(TEXT("PerfCounters"));
+#endif
+	}
 	void ShutdownModule() override
 	{
 		// GameInstance persistence drains its native jobs before module unloading.

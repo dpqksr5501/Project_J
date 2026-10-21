@@ -8,25 +8,20 @@
 #include "Camera/PlayerCameraManager.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/World.h"
-#include "GameFramework/CharacterMovementComponent.h"
+#include "Movement/Project_JMovementQueries.h"
+#include "Animation/Project_JPlayerAnimInstance.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "HAL/IConsoleManager.h"
 #include "HAL/PlatformTime.h"
 #include "Misc/App.h"
 #include "Project_JLocomotionAnimStateComponent.h"
-#include "Project_JLocomotionDebugUtils.h"
 
 namespace
 {
 TAutoConsoleVariable<int32> CVarMouseTurnTrace(TEXT("p.ProjectJ.MouseTurnTrace"), 0,
 	TEXT("Local player mouse/camera/animation diagnosis. 0=off, 1=10Hz summaries with per-frame peaks, 2=every player tick. Prefix MouseTurnTrace. Read-only; camera cache is timestamped, not a same-frame final-render sample."));
 
-int32 ReadDebugMode(const TCHAR* Name)
-{
-	const IConsoleVariable* Var = IConsoleManager::Get().FindConsoleVariable(Name);
-	return Var ? Var->GetInt() : 0;
-}
 FString BoneYaw(USkeletalMeshComponent* Mesh, FName Bone)
 {
 	if (!Mesh) return TEXT("NoMesh");
@@ -82,10 +77,9 @@ void AProject_JPlayerCharacter::RecordMouseTurnFrame(float DeltaTime)
 		MouseTurnTrace.WindowFrames = 0;
 		MouseTurnTrace.PeakWallMs = MouseTurnTrace.PeakWorldDtMs = 0.0f;
 		MouseTurnTrace.PeakControlStep = MouseTurnTrace.PeakActorStep = MouseTurnTrace.PeakCameraStep = 0.0f;
-		UE_LOG(LogProjectJPlayer, Display,
-			TEXT("MouseTurnTrace Begin Actor=%s Mode=%d Stage=AfterPlayerTick CameraStage=LastAvailablePCViewCache MovingTurnTrace=%d TIPTrace=%d AnimFlow=%d MMNetDebug=%d WorldRole=%d"),
-			*GetName(), Mode, ReadDebugMode(TEXT("p.ProjectJ.MovingTurnTrace")), ReadDebugMode(TEXT("p.ProjectJ.TIPTrace")),
-			ReadDebugMode(TEXT("p.ProjectJ.AnimFlow")), ReadDebugMode(TEXT("p.ProjectJ.MMNetDebug")), int32(GetLocalRole()));
+        UE_LOG(LogProjectJPlayer, Display,
+            TEXT("MouseTurnTrace Begin Actor=%s Mode=%d Stage=AfterPlayerTick CameraStage=LastAvailablePCViewCache WorldRole=%d"),
+            *GetName(),Mode,int32(GetLocalRole()));
 	}
 	if (!MouseTurnCameraTraceHandle.IsValid())
 	{
@@ -134,25 +128,15 @@ void AProject_JPlayerCharacter::RecordMouseTurnFrame(float DeltaTime)
 		MouseTurnTrace.PeakWallMs, MouseTurnTrace.PeakWallFrame, MouseTurnTrace.PeakWorldDtMs,
 		MouseTurnTrace.PeakControlStep, MouseTurnTrace.PeakActorStep, MouseTurnTrace.PeakCameraStep);
 
-	const auto* Move = GetCharacterMovement();
-	const auto* State = GetLocomotionAnimStateComponent();
-	const auto* Anim = GetMesh() ? Cast<UProject_JCharacterAnimInstance>(GetMesh()->GetAnimInstance()) : nullptr;
-	const auto MM = Anim ? Anim->GetMotionMatchingDebugSnapshot() : FProject_JAnimMotionMatchingThreadSafeData();
+	const auto Physical = Project_J::Movement::ReadPhysicalFrame(this);
+	const auto* Anim = GetMesh() ? Cast<UProject_JPlayerAnimInstance>(GetMesh()->GetAnimInstance()) : nullptr;
 	USkeletalMeshComponent* Visual = Project_J::Animation::FindVisualFollower(*this);
 	const FName VisualRoot = Visual && Visual->GetNumBones() > 0 ? Visual->GetBoneName(0) : NAME_None;
+	const FString Playback = Anim ? Anim->InspectFoundationPlayback() : TEXT("No GASP 5.8 source");
 	UE_LOG(LogProjectJPlayer, Display,
-		TEXT("MouseTurnTrace State Frame=%llu Actor=%s Combat=%d Speed=%.2f Falling=%d OrientToMove=%d ControllerDesired=%d ControllerYaw=%d YawRate=%.2f Phase=%s Turn180=%d TIPTarget=%d FacingYaw=%.3f Present=%d SelectRev=%d Override=%d ExternalClip=%s EntryTime=%.3f HoldTime=%.3f CachedPSD=%s CachedClip=%s CachedTime=%.3f SourcePending=%d SourceMeshYaw=%.3f SourceRootYaw=%s VisualMesh=%s VisualPending=%d VisualMeshYaw=%.3f VisualRootBone=%s VisualRootYaw=%s"),
-		GFrameCounter, *GetName(), IsCombatModeActive(), GetVelocity().Size2D(), Move && Move->IsFalling(),
-		Move && Move->bOrientRotationToMovement, Move && Move->bUseControllerDesiredRotation, bUseControllerRotationYaw,
-		Move ? Move->RotationRate.Yaw : 0.0f, State ? Project_J::LocomotionDebug::ToDebugString(State->DerivedLocomotionContext.PhaseFamily) : TEXT("None"),
-		State && State->DerivedLocomotionContext.bIsMovingTurn180, State && State->IsLocalTurnInPlaceTargetActive(),
-		Anim ? Anim->GetThreadSafeStateControllerDesiredFacingRotator().Yaw : 0.0f,
-		Anim ? int32(Anim->GetThreadSafeStateControllerPresentationState()) : -1,
-		Anim ? Anim->GetThreadSafeStateControllerSelectionRevision() : -1, Anim && Anim->GetThreadSafeStateControllerShouldOverrideMotionMatching(),
-		*GetNameSafe(Anim ? Anim->GetThreadSafeStateControllerSelectedAnimation() : nullptr),
-		Anim ? Anim->GetThreadSafeStateControllerSelectedAnimationStartTime() : 0.0f,
-		Anim ? Anim->GetThreadSafeStateControllerPlaybackHoldElapsedTime() : 0.0f,
-		*MM.PostSelection.SelectedDatabase.ToString(), *MM.PostSelection.SelectedAnimation.ToString(), MM.PostSelection.SelectedAnimationTime,
+		TEXT("MouseTurnTrace State Frame=%llu Actor=%s Combat=%d Speed=%.2f PhysicalMode=%d OrientationIntentYaw=%.3f Playback=%s SourcePending=%d SourceMeshYaw=%.3f SourceRootYaw=%s VisualMesh=%s VisualPending=%d VisualMeshYaw=%.3f VisualRootBone=%s VisualRootYaw=%s"),
+		GFrameCounter, *GetName(), IsCombatModeActive(), GetVelocity().Size2D(), int32(Physical.Mode),
+		Physical.OrientationIntent.Rotation().Yaw, *Playback,
 		GetMesh() && GetMesh()->IsRunningParallelEvaluation(), GetMesh() ? GetMesh()->GetComponentRotation().Yaw : 0.0f,
 		*BoneYaw(GetMesh(), TEXT("root")), *GetNameSafe(Visual), Visual && Visual->IsRunningParallelEvaluation(),
 		Visual ? Visual->GetComponentRotation().Yaw : 0.0f, *VisualRoot.ToString(), *BoneYaw(Visual, VisualRoot));

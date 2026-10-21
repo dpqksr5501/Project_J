@@ -8,7 +8,6 @@
 
 class AProject_JPlayerCharacter;
 class UAbilitySystemComponent;
-class UCharacterMovementComponent;
 class UCapsuleComponent;
 class USkeletalMeshComponent;
 
@@ -36,7 +35,6 @@ protected:
 	friend class FProjectJPlayerVisibilityTest;
 	void CacheOwnerReferences();
 	AProject_JPlayerCharacter* GetPlayerOwner() const;
-	UCharacterMovementComponent* GetCachedMovementComponent() const;
 	UAbilitySystemComponent* GetCachedAbilitySystemComponent() const;
 	UCapsuleComponent* GetCachedCapsuleComponent() const;
 	USkeletalMeshComponent* GetCachedMeshComponent() const;
@@ -47,9 +45,6 @@ protected:
 private:
 	UPROPERTY(Transient)
 	TObjectPtr<AProject_JPlayerCharacter> CachedPlayerOwner = nullptr;
-
-	UPROPERTY(Transient)
-	TObjectPtr<UCharacterMovementComponent> CachedMovementComponent = nullptr;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UCapsuleComponent> CachedCapsuleComponent = nullptr;

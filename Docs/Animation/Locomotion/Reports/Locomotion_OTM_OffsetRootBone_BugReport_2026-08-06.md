@@ -1,5 +1,7 @@
 # Locomotion Orient-To-Movement (OTM) & Offset Root Bone 버그 분석 및 해결 보고서
 
+> **이전 이동 구조의 기록 — 2026-10-21:** 본문은 당시 CMC/MM·마스터·후보 정책의 구현·제안·측정 이력이다. 현재 생산 제작은 [플레이어 로코모션](../../Architecture/Player_Locomotion_Architecture.md)을 따른다. 과거 구조를 복원하라는 지시나 현재 구조의 성능 결과로 해석하지 않는다.
+
 - **일자**: 2026-08-06
 - **대상**: `Project_J` 로코모션 애니메이션 시스템 (`Project_JCharacter`, `ABP_Humanoid_Master`)
 - **목적**: 비전투 OTM 모드 이동 비틀림, Offset Root Bone 노드 연결 시 꼬임, 전투 Turn In Place (TIP) Presentation Enum 누락, Chooser Index UPROPERTY, OneShot.bRequested 매핑, OverrideMM Loop 조건, Idle 끊김 제거, TIP 회전 완주 스무스 동기화, Strafe 이동 축 유격(Drifting) 제거, TIP 시 Leg IK 1.0 유지, Stop -> TIP 인터럽트 수복, 삼중 회전 제거, OTM Stop -> Start 원샷 수복, TIP 무한 재진입(360도 스핀) 버그 수복, Steering 노드 뼈대 회전 보간 원복, TIP 각도 목표 지점 초과 회전(Overshoot) 방지 Clamping 수복, 착지(TransitionToLand) 동안 GaitIntentForChooser 보존 잠금 수복 및 sprint_land Shift 해제/착지 완료 시 모션매칭(PSD_Run / PSD_Sprint_Cycle / PSD_Idle) 조기 인터럽트 직행 수복 내역 종합 보고서.

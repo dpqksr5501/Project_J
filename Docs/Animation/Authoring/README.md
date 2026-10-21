@@ -2,9 +2,10 @@
 
 | 작업 | 문서 |
 | --- | --- |
+| 이동 모션·프로필·직업/탈것 문맥 확장 | [이동 콘텐츠 제작](DataDrivenLocomotionExtensionGuide.md) |
 | 캐릭터 임포트·스켈레톤 리타깃 설정 | [휴머노이드 리타깃 표준](HumanoidSkeletonRetargetingStandards.md) |
 | 캐릭터·의상·장비의 기존 LOD 보존·공통 설정 생성/검증 | [메시 LOD 제작](Mesh_LOD_Authoring.md) |
-| 이동 프로필·DB 확장 | [데이터 기반 이동 확장](DataDrivenLocomotionExtensionGuide.md) |
+| 플레이어 로코모션 클립·Chooser·native/ABP 책임 | [현재 로코모션 구조](../Architecture/Player_Locomotion_Architecture.md) |
 | 몸체 보정·Idle 부착·오른팔·왼팔·공격 구간·복귀 | [무기 파지와 손 접촉 통합 가이드](Weapon_Hand_Contact_System.md) |
 
 ## 손 접촉을 설정할 때 읽는 순서

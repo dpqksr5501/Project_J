@@ -10,6 +10,8 @@
 #include "Engine/World.h"
 #include "Engine/Engine.h"
 #include "GameFramework/Character.h"
+#include "Movement/Project_JMoverPawn.h"
+#include "Engine/SkeletalMesh.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/StaticMeshSocket.h"
 #include "Components/StaticMeshComponent.h"
@@ -484,7 +486,7 @@ bool FProjectJHiddenLeaderVisibleFollowerTest::RunTest(const FString&)
 	UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
 	FActorSpawnParameters Params;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	ACharacter* Character = World->SpawnActor<ACharacter>(Params);
+	AProject_JMoverPawn* Character = World->SpawnActor<AProject_JMoverPawn>(Params);
 
 	USkeletalMeshComponent* LeaderMesh = Character->GetMesh();
 	LeaderMesh->SetHiddenInGame(true);
@@ -492,6 +494,7 @@ bool FProjectJHiddenLeaderVisibleFollowerTest::RunTest(const FString&)
 	// Create FollowerMesh as child of LeaderMesh with RetargetAnimInstance
 	USkeletalMeshComponent* FollowerMesh = NewObject<USkeletalMeshComponent>(Character, TEXT("FollowerVisualMesh"));
 	FollowerMesh->SetupAttachment(LeaderMesh);
+	Character->AddInstanceComponent(FollowerMesh);
 	FollowerMesh->RegisterComponent();
 	FollowerMesh->SetHiddenInGame(false);
 
@@ -531,13 +534,14 @@ bool FProjectJHiddenToVisibleFollowerRestoreTest::RunTest(const FString&)
 	UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
 	FActorSpawnParameters Params;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	ACharacter* Character = World->SpawnActor<ACharacter>(Params);
+	AProject_JMoverPawn* Character = World->SpawnActor<AProject_JMoverPawn>(Params);
 
 	USkeletalMeshComponent* LeaderMesh = Character->GetMesh();
 	LeaderMesh->SetHiddenInGame(true);
 
 	USkeletalMeshComponent* FollowerMesh = NewObject<USkeletalMeshComponent>(Character, TEXT("FollowerVisualMesh"));
 	FollowerMesh->SetupAttachment(LeaderMesh);
+	Character->AddInstanceComponent(FollowerMesh);
 	FollowerMesh->RegisterComponent();
 	FollowerMesh->SetHiddenInGame(false);
 
@@ -591,13 +595,14 @@ bool FProjectJModularMeshIsolationTest::RunTest(const FString&)
 	UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
 	FActorSpawnParameters Params;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	ACharacter* Character = World->SpawnActor<ACharacter>(Params);
+	AProject_JMoverPawn* Character = World->SpawnActor<AProject_JMoverPawn>(Params);
 
 	USkeletalMeshComponent* LeaderMesh = Character->GetMesh();
 
 	// 1. Create Follower Mesh
 	USkeletalMeshComponent* FollowerMesh = NewObject<USkeletalMeshComponent>(Character, TEXT("FollowerVisualMesh"));
 	FollowerMesh->SetupAttachment(LeaderMesh);
+	Character->AddInstanceComponent(FollowerMesh);
 	FollowerMesh->RegisterComponent();
 	UProject_JRetargetAnimInstance* RetargetAnim = NewObject<UProject_JRetargetAnimInstance>(FollowerMesh);
 	FollowerMesh->AnimScriptInstance = RetargetAnim;
@@ -605,6 +610,7 @@ bool FProjectJModularMeshIsolationTest::RunTest(const FString&)
 	// 2. Create Modular Mesh (e.g. Armor/Helmet)
 	UProject_JModularMeshComponent* ModularArmorMesh = NewObject<UProject_JModularMeshComponent>(Character, TEXT("ModularArmorMesh"));
 	ModularArmorMesh->SetupAttachment(LeaderMesh);
+	Character->AddInstanceComponent(ModularArmorMesh);
 	ModularArmorMesh->RegisterComponent();
 
 	UProject_JCharacterAnimInstance* LeaderAnim = NewObject<UProject_JCharacterAnimInstance>(LeaderMesh);
@@ -770,7 +776,11 @@ bool FProjectJTwoHandIKTransitionAndCurveTest::RunTest(const FString&)
 	Profile->MotionPresentation.DefaultDrawnSecondaryIKAlpha = 0.0f; // Greatsword default: right hand only
 	Profile->MotionPresentation.DefaultSheathedPrimaryIKAlpha = 0.0f;
 	Profile->MotionPresentation.DefaultSheathedSecondaryIKAlpha = 0.0f;
-	Profile->SheathedSocketName = NAME_None; // Isolated test has no character skeletal sockets.
+	auto* SourceAsset = LoadObject<USkeletalMesh>(nullptr,
+		TEXT("/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple"));
+	if (!TestNotNull(TEXT("Manny attachment fixture"), SourceAsset)) { World->DestroyWorld(false); return false; }
+	Character->GetMesh()->SetSkeletalMesh(SourceAsset);
+	Profile->SheathedSocketName = SourceAsset->GetRefSkeleton().GetBoneName(0);
 
 	Presentation->AppliedProfile = Profile;
 	Presentation->SpawnedWeapon = MockWeapon;

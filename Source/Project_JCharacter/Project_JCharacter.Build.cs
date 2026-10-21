@@ -23,6 +23,8 @@ public class Project_JCharacter : ModuleRules
 			"Chooser",
 			"BlendStack",
 			"MotionTrajectory",
+			"Mover",
+			"NetworkPrediction",
 			"AnimationCore",
 			"AnimationBudgetAllocator",
 			"AnimGraphRuntime",

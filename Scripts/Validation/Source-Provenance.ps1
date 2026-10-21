@@ -12,6 +12,11 @@ function Get-ProjectJSourceProvenance {
   else{[ordered]@{path=$path;sha256=$null;deleted=$true}}
  })
  $binaries=@(Get-ChildItem -LiteralPath "$ProjectRoot/Binaries/Win64" -File -ErrorAction Stop|Where-Object{$_.Extension -in @('.exe','.dll','.modules','.target')}|Sort-Object Name|ForEach-Object{[ordered]@{path="Binaries/Win64/$($_.Name)";sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()}})
+ foreach($plugin in (Get-ChildItem -LiteralPath "$ProjectRoot/Plugins" -Directory -ErrorAction SilentlyContinue)){
+  $binaries+=@(Get-ChildItem -LiteralPath "$($plugin.FullName)/Binaries/Win64" -File -ErrorAction SilentlyContinue|Where-Object{$_.Extension -in @('.dll','.modules')}|Sort-Object Name|ForEach-Object{
+   [ordered]@{path=[IO.Path]::GetRelativePath($ProjectRoot,$_.FullName).Replace('\','/');sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()}
+  })
+ }
  foreach($runtime in $RuntimePaths){
   if(!(Test-Path -LiteralPath $runtime -PathType Leaf)){throw "Missing runtime binary: $runtime"}
   $binaries += [ordered]@{path="EngineHost/$([IO.Path]::GetFileName($runtime))";sha256=(Get-FileHash -LiteralPath $runtime -Algorithm SHA256).Hash.ToLowerInvariant()}

@@ -1,4 +1,6 @@
 #include "Components/Project_JWeaponPresentationComponent.h"
+#include "GameFramework/Pawn.h"
+#include "Movement/Project_JMovementQueries.h"
 
 #include "Animation/AnimMontage.h"
 #include "Animation/AnimInstance.h"
@@ -256,8 +258,8 @@ void UProject_JWeaponPresentationComponent::RefreshPresentation()
 	if (!CanCreatePresentation()) { DestroyWeaponPresentation(); return; }
 
 	const UProject_JWeaponPresentationProfile* PresentationProfile = GetCurrentPresentationProfile();
-	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
-	USkeletalMeshComponent* Mesh = OwnerCharacter ? OwnerCharacter->GetMesh() : nullptr;
+	APawn* OwnerCharacter = Cast<APawn>(GetOwner());
+	USkeletalMeshComponent* Mesh = OwnerCharacter ? Project_J::Movement::FindPoseSource(OwnerCharacter) : nullptr;
 	if (!PresentationProfile)
 	{
 		// An empty weapon slot is a valid state, not a failed spawn.
@@ -366,7 +368,7 @@ FProject_JResolvedWeaponAttachment UProject_JWeaponPresentationComponent::Resolv
 {
 	check(IsInGameThread());
 	FProject_JResolvedWeaponAttachment Result;
-	const ACharacter* Character = Cast<ACharacter>(GetOwner());
+	const APawn* Character = Cast<APawn>(GetOwner());
 	const UProject_JWeaponPresentationProfile* Profile = GetCurrentPresentationProfile();
 	if (!Character) { Result.Reason = TEXT("MissingOwner"); return Result; }
 	if (!Profile) { Result.Reason = TEXT("MissingWeaponProfile"); return Result; }
@@ -379,8 +381,8 @@ FProject_JResolvedWeaponAttachment UProject_JWeaponPresentationComponent::Resolv
 	if (!bDrawn || Profile->DrawnAttachmentMode != EProject_JDrawnAttachmentMode::PrimaryGripContact) { return Result; }
 	// Prefer the actual rendered body even when it has no legacy Visual socket.
 	USkeletalMeshComponent* Body = Profile->bPreferVisualFollowerSockets
-		? Project_J::Animation::FindVisualFollower(*Character) : Character->GetMesh();
-	if (!Body) { Body = Character->GetMesh(); }
+		? Project_J::Animation::FindVisualFollower(*Character) : Project_J::Movement::FindPoseSource(Character);
+	if (!Body) { Body = Project_J::Movement::FindPoseSource(Character); }
 	const UProject_JRetargetAnimInstance* Anim = Body ? Cast<UProject_JRetargetAnimInstance>(Body->GetAnimInstance()) : nullptr;
 	const FProject_JHandGripCalibration Calibration = Anim ? Anim->GetHandGripCalibration()
 		: Project_J::Animation::ResolveHandGripCalibration(Character, nullptr);
@@ -423,7 +425,7 @@ bool UProject_JWeaponPresentationComponent::AttachWeaponToSocket(FName SourceSoc
 	const TCHAR* Context, bool bDrawn)
 {
 	CancelContactRecovery();
-	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+	APawn* OwnerCharacter = Cast<APawn>(GetOwner());
 	const UProject_JWeaponPresentationProfile* Profile = GetCurrentPresentationProfile();
 	const FProject_JResolvedWeaponAttachment Attachment = ResolveAttachment(bDrawn);
 	USkeletalMeshComponent* Mesh = Attachment.Mesh.Get();
@@ -532,8 +534,8 @@ bool UProject_JWeaponPresentationComponent::BeginIndependentMotion(const TArray<
 	}
 
 	const UProject_JWeaponPresentationProfile* PresentationProfile = GetCurrentPresentationProfile();
-	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
-	USkeletalMeshComponent* CharacterMesh = OwnerCharacter ? OwnerCharacter->GetMesh() : nullptr;
+	APawn* OwnerCharacter = Cast<APawn>(GetOwner());
+	USkeletalMeshComponent* CharacterMesh = OwnerCharacter ? Project_J::Movement::FindPoseSource(OwnerCharacter) : nullptr;
 	USceneComponent* WeaponRoot = SpawnedWeapon ? SpawnedWeapon->GetRootComponent() : nullptr;
 	if (!PresentationProfile || !PresentationProfile->MotionPresentation.bSupportsIndependentMotion || !OwnerCharacter || !CharacterMesh || !WeaponRoot ||
 		OwnerCharacter->GetNetMode() == NM_DedicatedServer)
@@ -679,10 +681,10 @@ void UProject_JWeaponPresentationComponent::EndIndependentMotion()
 	{
 		WeaponRoot->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
 		const UProject_JWeaponPresentationProfile* Profile = GetCurrentPresentationProfile();
-		const ACharacter* Character = Cast<ACharacter>(GetOwner());
+		const APawn* Character = Cast<APawn>(GetOwner());
 		const bool bContactHandoff = !bEndingPlay && GetWorld() && Profile && Profile->MotionPresentation.bUseContactHandoff &&
 			CurrentPresentationSocket == EProject_JWeaponPresentationSocket::Drawn && ReturnMesh &&
-			Character && (ReturnMesh != Character->GetMesh() || bPrimaryContactAttachment) &&
+			Character && (ReturnMesh != Project_J::Movement::FindPoseSource(Character) || bPrimaryContactAttachment) &&
 			!ReturnSocket.IsNone() && ReturnMesh->DoesSocketExist(ReturnSocket) &&
 			FMath::IsFinite(Profile->MotionPresentation.ContactRecoverySeconds) &&
 			Profile->MotionPresentation.ContactRecoverySeconds > UE_KINDA_SMALL_NUMBER;
@@ -701,15 +703,15 @@ void UProject_JWeaponPresentationComponent::EndIndependentMotion()
 			// the return to Idle, including pauses and per-attack blend curves.
 			if (Profile->MotionPresentation.bFollowMontageBlendOut && EndingMontage &&
 				EndingMontage->IsStopped() && EndingMontage->GetWeight() > UE_KINDA_SMALL_NUMBER &&
-				Character->GetMesh()->GetAnimInstance() == EndingSourceAnim &&
-				Character->GetMesh()->DoesSocketExist(Profile->DrawnSocketName))
+				Project_J::Movement::FindPoseSource(Character)->GetAnimInstance() == EndingSourceAnim &&
+				Project_J::Movement::FindPoseSource(Character)->DoesSocketExist(Profile->DrawnSocketName))
 			{
 				ContactRecoverySourceAnim = EndingSourceAnim;
 				ContactRecoverySourceInstanceID = AutoAttackSourceInstanceID;
 				ContactRecoverySourceStartWeight = EndingMontage->GetWeight();
-				ContactRecoverySourceMesh = Character->GetMesh();
+				ContactRecoverySourceMesh = Project_J::Movement::FindPoseSource(Character);
 				ContactRecoverySourceSocket = Profile->DrawnSocketName;
-				const FTransform SourceSocketWorld = Character->GetMesh()->GetSocketTransform(Profile->DrawnSocketName, RTS_World);
+				const FTransform SourceSocketWorld = Project_J::Movement::FindPoseSource(Character)->GetSocketTransform(Profile->DrawnSocketName, RTS_World);
 				ContactRecoveryWeaponInSourceSocket = WeaponRoot->GetComponentTransform().GetRelativeTransform(SourceSocketWorld);
 				ContactRecoveryGripInSourceSocket = ExitGrip.PrimaryGripWorldTransform.GetRelativeTransform(SourceSocketWorld);
 			}
@@ -919,8 +921,8 @@ void UProject_JWeaponPresentationComponent::UpdateIndependentMotion(float DeltaT
 		return;
 	}
 
-	const ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
-	const USkeletalMeshComponent* CharacterMesh = OwnerCharacter ? OwnerCharacter->GetMesh() : nullptr;
+	const APawn* OwnerCharacter = Cast<APawn>(GetOwner());
+	const USkeletalMeshComponent* CharacterMesh = OwnerCharacter ? Project_J::Movement::FindPoseSource(OwnerCharacter) : nullptr;
 	if (!CharacterMesh || !CharacterMesh->DoesSocketExist(PresentationProfile->DrawnSocketName))
 	{
 		EndIndependentMotion();
@@ -1027,11 +1029,11 @@ void UProject_JWeaponPresentationComponent::UpdateGripTargets()
 	bool bHandDrivenAttachment = false;
 	if (!bIndependentMotionActive && CurrentPresentationSocket == EProject_JWeaponPresentationSocket::Drawn)
 	{
-		const ACharacter* Character = Cast<ACharacter>(GetOwner());
+		const APawn* Character = Cast<APawn>(GetOwner());
 		const USceneComponent* WeaponRoot = SpawnedWeapon->GetRootComponent();
 		const USkeletalMeshComponent* AttachMesh = WeaponRoot
 			? Cast<USkeletalMeshComponent>(WeaponRoot->GetAttachParent()) : nullptr;
-		if (Character && AttachMesh && (AttachMesh != Character->GetMesh() || bPrimaryContactAttachment))
+		if (Character && AttachMesh && (AttachMesh != Project_J::Movement::FindPoseSource(Character) || bPrimaryContactAttachment))
 		{
 			bHandDrivenAttachment = true;
 			GripTargets.DriveMode = EProject_JWeaponGripDriveMode::PrimaryHand;
@@ -1149,8 +1151,8 @@ bool UProject_JWeaponPresentationComponent::GetAutoAttackMotionSettings(float& O
 	{
 		return false;
 	}
-	const ACharacter* Character = Cast<ACharacter>(GetOwner());
-	UAnimInstance* Anim = Character && Character->GetMesh() ? Character->GetMesh()->GetAnimInstance() : nullptr;
+	const APawn* Character = Cast<APawn>(GetOwner());
+	UAnimInstance* Anim = Character && Project_J::Movement::FindPoseSource(Character) ? Project_J::Movement::FindPoseSource(Character)->GetAnimInstance() : nullptr;
 	if (!Anim || !Anim->Montage_IsActive(Attack->Montage))
 	{
 		return false;
@@ -1269,8 +1271,8 @@ bool UProject_JWeaponPresentationComponent::TryGetGroundCorrection(float DeltaTi
 {
 	OutComponentSpaceCorrection = FVector::ZeroVector;
 	const UProject_JWeaponPresentationProfile* PresentationProfile = GetCurrentPresentationProfile();
-	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
-	USkeletalMeshComponent* CharacterMesh = OwnerCharacter ? OwnerCharacter->GetMesh() : nullptr;
+	APawn* OwnerCharacter = Cast<APawn>(GetOwner());
+	USkeletalMeshComponent* CharacterMesh = OwnerCharacter ? Project_J::Movement::FindPoseSource(OwnerCharacter) : nullptr;
 	UWorld* World = GetWorld();
 	if (!PresentationProfile || !CharacterMesh || !World)
 	{
@@ -1420,13 +1422,13 @@ void UProject_JWeaponPresentationComponent::NotifyWeaponTargetChanged(USceneComp
 
 	if (RegisteredRetargetAnimInstances.IsEmpty())
 	{
-		if (const ACharacter* OwnerChar = Cast<ACharacter>(GetOwner()))
+		if (const APawn* OwnerChar = Cast<APawn>(GetOwner()))
 		{
 			TInlineComponentArray<USkeletalMeshComponent*> SkeletalMeshes;
 			OwnerChar->GetComponents(SkeletalMeshes);
 			for (USkeletalMeshComponent* MeshComp : SkeletalMeshes)
 			{
-				if (MeshComp && MeshComp != OwnerChar->GetMesh())
+				if (MeshComp && MeshComp != Project_J::Movement::FindPoseSource(OwnerChar))
 				{
 					if (UProject_JRetargetAnimInstance* RetargetInst = Cast<UProject_JRetargetAnimInstance>(MeshComp->GetAnimInstance()))
 					{

@@ -15,6 +15,8 @@
 #include "HAL/IConsoleManager.h"
 #include "Project_J.h"
 #include "Animation/Project_JCharacterAnimInstance.h"
+#include "Animation/Project_JPlayerAnimInstance.h"
+#include "Movement/Project_JMovementQueries.h"
 #include "Project_JGameState.h"
 #include "Project_JPlayerState.h"
 #include "Network/Project_JNetObjectFilter_Distance.h"
@@ -27,7 +29,7 @@
 #include "Widgets/Input/SVirtualJoystick.h"
 #include "UI/Project_JPlayerUIComponent.h"
 #include "InputKeyEventArgs.h"
-#include "GameFramework/CharacterMovementComponent.h"
+#include "Movement/Project_JMovementQueries.h"
 #include "World/Project_JWorldStreamingComponent.h"
 
 namespace
@@ -132,6 +134,14 @@ void AProject_JPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReaso
 	InputLeaseSubsystem.Reset();
 	if (MobileControlsWidget) { MobileControlsWidget->RemoveFromParent(); MobileControlsWidget = nullptr; }
 	Super::EndPlay(EndPlayReason);
+}
+
+void AProject_JPlayerController::SetViewTarget(AActor* NewViewTarget,FViewTargetTransitionParams TransitionParams)
+{
+	// Unpossess during world cleanup must not retarget a destroyed pawn/camera
+	// and ask Iris to send ClientSetViewTarget after its net object is removed.
+	if (GetWorld() && GetWorld()->bIsTearingDown) return;
+	Super::SetViewTarget(NewViewTarget,TransitionParams);
 }
 
 void AProject_JPlayerController::SetupInputComponent()
@@ -354,8 +364,7 @@ void AProject_JPlayerController::DumpAnimationExecutionPolicy()
 		return Variable ? Variable->GetInt() : INDEX_NONE;
 	};
 
-	const ACharacter* ProfiledCharacter = Cast<ACharacter>(GetPawn());
-	const USkeletalMeshComponent* Mesh = ProfiledCharacter ? ProfiledCharacter->GetMesh() : nullptr;
+	const USkeletalMeshComponent* Mesh = Project_J::Movement::FindPoseSource(GetPawn());
 	const UAnimInstance* AnimInstance = Mesh ? Mesh->GetAnimInstance() : nullptr;
 	const UEngine* EngineDefaults = GetDefault<UEngine>();
 	const FString Message = FString::Printf(
@@ -412,8 +421,7 @@ void AProject_JPlayerController::DumpAnimBudget()
 	return;
 #else
 	const APawn* ControlledPawn = GetPawn();
-	const ACharacter* ControlledCharacter = Cast<ACharacter>(ControlledPawn);
-	const USkeletalMeshComponent* Mesh = ControlledCharacter ? ControlledCharacter->GetMesh() : nullptr;
+	const USkeletalMeshComponent* Mesh = Project_J::Movement::FindPoseSource(ControlledPawn);
 	const UProject_JCharacterAnimInstance* AnimInstance = Mesh ? Cast<UProject_JCharacterAnimInstance>(Mesh->GetAnimInstance()) : nullptr;
 
 	const FString AnimLine = AnimInstance
@@ -425,21 +433,17 @@ void AProject_JPlayerController::DumpAnimBudget()
 #endif
 }
 
-void AProject_JPlayerController::DumpMotionMatchingTrace()
+void AProject_JPlayerController::DumpPlayerLocomotionPlayback()
 {
-#if UE_BUILD_SHIPPING
-	return;
-#else
-	const ACharacter* ControlledCharacter = Cast<ACharacter>(GetPawn());
-	const USkeletalMeshComponent* Mesh = ControlledCharacter ? ControlledCharacter->GetMesh() : nullptr;
-	const UProject_JCharacterAnimInstance* AnimInstance = Mesh ? Cast<UProject_JCharacterAnimInstance>(Mesh->GetAnimInstance()) : nullptr;
-	const FString Trace = AnimInstance
-		? AnimInstance->GetMotionMatchingTraceSummary()
-		: FString(TEXT("Motion Matching trace unavailable: possessed pawn does not use UProject_JCharacterAnimInstance."));
-	ClientMessage(TEXT("Motion Matching trace written to Output Log."));
-	UE_LOG(LogProject_J, Display, TEXT("%s"), *Trace);
+#if !UE_BUILD_SHIPPING
+ const auto* Mesh=Project_J::Movement::FindPoseSource(GetPawn());
+ const auto* Anim=Mesh?Cast<UProject_JPlayerAnimInstance>(Mesh->GetAnimInstance()):nullptr;
+ const FString Trace=Anim?Anim->GetAnimationDebugSummary()+TEXT("\n")+Anim->InspectFoundationPlayback():TEXT("No GASP locomotion instance.");
+ UE_LOG(LogProject_J,Display,TEXT("%s"),*Trace);
+ ClientMessage(Trace);
 #endif
 }
+
 
 void AProject_JPlayerController::DumpLocomotionKinematics()
 {
@@ -458,37 +462,9 @@ void AProject_JPlayerController::DumpLocomotionKinematics()
 #endif
 }
 
-void AProject_JPlayerController::DumpMotionMatchingPivotTrace()
-{
-#if UE_BUILD_SHIPPING
-	return;
-#else
-	const ACharacter* ControlledCharacter = Cast<ACharacter>(GetPawn());
-	const USkeletalMeshComponent* Mesh = ControlledCharacter ? ControlledCharacter->GetMesh() : nullptr;
-	const UProject_JCharacterAnimInstance* AnimInstance = Mesh ? Cast<UProject_JCharacterAnimInstance>(Mesh->GetAnimInstance()) : nullptr;
-	const FString Trace = AnimInstance
-		? AnimInstance->GetMotionMatchingPivotTraceSummary()
-		: FString(TEXT("Motion Matching Pivot trace unavailable: possessed pawn does not use UProject_JCharacterAnimInstance."));
-	ClientMessage(TEXT("Motion Matching Pivot trace written to Output Log."));
-	UE_LOG(LogProject_J, Display, TEXT("%s"), *Trace);
-#endif
-}
 
-void AProject_JPlayerController::DumpMotionMatchingTransitionTrace()
-{
-#if UE_BUILD_SHIPPING
-	return;
-#else
-	const ACharacter* ControlledCharacter = Cast<ACharacter>(GetPawn());
-	const USkeletalMeshComponent* Mesh = ControlledCharacter ? ControlledCharacter->GetMesh() : nullptr;
-	const UProject_JCharacterAnimInstance* AnimInstance = Mesh ? Cast<UProject_JCharacterAnimInstance>(Mesh->GetAnimInstance()) : nullptr;
-	const FString Trace = AnimInstance
-		? AnimInstance->GetMotionMatchingPivotTraceSummary()
-		: FString(TEXT("Motion Matching transition trace unavailable: possessed pawn does not use UProject_JCharacterAnimInstance."));
-	ClientMessage(TEXT("Motion Matching transition trace written to Output Log."));
-	UE_LOG(LogProject_J, Display, TEXT("%s"), *Trace);
-#endif
-}
+
+
 
 void AProject_JPlayerController::DumpReplicationPolicy()
 {
@@ -528,11 +504,11 @@ void AProject_JPlayerController::DumpCharacterComponents()
 	}
 
 	const FString ComponentLine = FString::Printf(
-		TEXT("CharacterComponents WeaponPresentation=%s HitValidation=%s Locomotion=%s Trajectory=%s ViewModel=%s"),
+		TEXT("CharacterComponents WeaponPresentation=%s HitValidation=%s Locomotion=%s LocomotionSource=%s ViewModel=%s"),
 		ProjectCharacter->GetWeaponPresentationComponent() ? TEXT("yes") : TEXT("no"),
 		ProjectCharacter->GetCombatHitValidationComponent() ? TEXT("yes") : TEXT("no"),
 		ProjectCharacter->GetLocomotionAnimStateComponent() ? TEXT("yes") : TEXT("no"),
-		ProjectCharacter->GetMotionMatchingTrajectoryComponent() ? TEXT("yes") : TEXT("no"),
+		ProjectCharacter->GetMover() ? TEXT("Mover") : TEXT("none"),
 		ProjectCharacter->GetCharacterViewModel() ? TEXT("yes") : TEXT("no"));
 
 	ClientMessage(ComponentLine);
@@ -553,15 +529,13 @@ void AProject_JPlayerController::DumpCombatState()
 	}
 
 	const FString CombatLine = FString::Printf(
-		TEXT("CombatState Combat=%s Attack=%s Dodge=%s HitReact=%s SprintAllowed=%s JumpAllowed=%s GroundStart=%s GroundStop=%s Overlay=%s AimAlpha=%.2f"),
+		TEXT("CombatState Combat=%s Attack=%s Dodge=%s HitReact=%s SprintAllowed=%s JumpAllowed=%s Overlay=%s AimAlpha=%.2f"),
 		ProjectCharacter->IsCombatModeActive() ? TEXT("true") : TEXT("false"),
 		ProjectCharacter->IsAttacking() ? TEXT("true") : TEXT("false"),
 		ProjectCharacter->IsDodging() ? TEXT("true") : TEXT("false"),
 		ProjectCharacter->IsHitReacting() ? TEXT("true") : TEXT("false"),
 		ProjectCharacter->IsSprintLocomotionAllowed() ? TEXT("true") : TEXT("false"),
 		ProjectCharacter->IsJumpLocomotionAllowed() ? TEXT("true") : TEXT("false"),
-		ProjectCharacter->IsGroundStartAllowed() ? TEXT("true") : TEXT("false"),
-		ProjectCharacter->IsGroundStopAllowed() ? TEXT("true") : TEXT("false"),
 		ProjectCharacter->IsCombatLocomotionOverlayAllowed() ? TEXT("true") : TEXT("false"),
 		ProjectCharacter->GetEffectiveCombatAimAlpha());
 
@@ -597,19 +571,14 @@ void AProject_JPlayerController::DumpMMOProfilingSnapshot(int32 MaxDetailedChara
 	int32 AutonomousCount = 0;
 	int32 SimulatedCount = 0;
 	int32 AnimInstanceCount = 0;
-	int32 FullChooserCount = 0;
-	int32 FarChooserOnlyCount = 0;
-	int32 AnimationDataUpdateCount = 0;
 	int32 TierCounts[5] = { 0, 0, 0, 0, 0 };
-	float TotalMotionMatchingInterval = 0.0f;
-	int32 MotionMatchingIntervalCount = 0;
 	int32 DetailedLinesPrinted = 0;
 
 	UE_LOG(LogProject_J, Display, TEXT("==== MMO Profiling Snapshot ===="));
 
-	for (TActorIterator<ACharacter> It(World); It; ++It)
+	for (TActorIterator<AProject_JBaseCharacter> It(World); It; ++It)
 	{
-		ACharacter* IterCharacter = *It;
+		AProject_JBaseCharacter* IterCharacter = *It;
 		if (!IterCharacter)
 		{
 			continue;
@@ -652,28 +621,9 @@ void AProject_JPlayerController::DumpMMOProfilingSnapshot(int32 MaxDetailedChara
 		FString AnimSummary = TEXT("Anim=None");
 		if (AnimInstance)
 		{
-			const FProject_JAnimMotionMatchingThreadSafeData MotionMatchingData =
-				AnimInstance->GetMotionMatchingDebugSnapshot();
-			++AnimInstanceCount;
-			const FProject_JAnimOptimizationPolicy& Policy = AnimInstance->CurrentOptimizationPolicy;
-			++TierCounts[GetBudgetTierIndex(Policy.Tier)];
-			FullChooserCount += Policy.bUseFullChooserRows ? 1 : 0;
-			FarChooserOnlyCount += Policy.bUseFarChooserRowsOnly ? 1 : 0;
-			AnimationDataUpdateCount += Policy.bUpdateAnimationData ? 1 : 0;
-			TotalMotionMatchingInterval += Policy.MotionMatchingUpdateInterval;
-			++MotionMatchingIntervalCount;
-
-			AnimSummary = FString::Printf(
-				TEXT("AnimTier=%s UpdateData=%s FullChooser=%s FarOnly=%s MMInterval=%.3f ActivePSD=%s MMRev=%d ForceReselect=%s TrajectorySamples=%d"),
-				ToDebugString(Policy.Tier),
-				Policy.bUpdateAnimationData ? TEXT("true") : TEXT("false"),
-				Policy.bUseFullChooserRows ? TEXT("true") : TEXT("false"),
-				Policy.bUseFarChooserRowsOnly ? TEXT("true") : TEXT("false"),
-				Policy.MotionMatchingUpdateInterval,
-				*GetNameSafe(AnimInstance->CurrentActivePoseSearchDatabase.Get()),
-				MotionMatchingData.SelectionRevision,
-				MotionMatchingData.bForceReselect ? TEXT("true") : TEXT("false"),
-				MotionMatchingData.TrajectorySampleCount);
+            ++AnimInstanceCount;
+            ++TierCounts[GetBudgetTierIndex(AnimInstance->CurrentOptimizationPolicy.Tier)];
+            AnimSummary=AnimInstance->GetAnimationDebugSummary();
 		}
 
 		if (DetailedLinesPrinted < MaxDetailedCharacters)
@@ -691,29 +641,10 @@ void AProject_JPlayerController::DumpMMOProfilingSnapshot(int32 MaxDetailedChara
 		}
 	}
 
-	const float AverageMotionMatchingInterval = MotionMatchingIntervalCount > 0
-		? TotalMotionMatchingInterval / static_cast<float>(MotionMatchingIntervalCount)
-		: 0.0f;
-
-	const FString SummaryLine = FString::Printf(
-		TEXT("MMOProfileSummary Players=%d NPCs=%d Authority=%d Autonomous=%d Simulated=%d AnimInstances=%d Tiers(Local/Near/Mid/Far/Hidden)=%d/%d/%d/%d/%d UpdateData=%d FullChooser=%d FarOnly=%d AvgMMInterval=%.3f Detailed=%d"),
-		PlayerCharacterCount,
-		NPCCharacterCount,
-		AuthorityCount,
-		AutonomousCount,
-		SimulatedCount,
-		AnimInstanceCount,
-		TierCounts[0],
-		TierCounts[1],
-		TierCounts[2],
-		TierCounts[3],
-		TierCounts[4],
-		AnimationDataUpdateCount,
-		FullChooserCount,
-		FarChooserOnlyCount,
-		AverageMotionMatchingInterval,
-		DetailedLinesPrinted);
-
+ const FString SummaryLine=FString::Printf(TEXT("MMOProfileSummary Players=%d NPCs=%d Authority=%d Autonomous=%d Simulated=%d AnimInstances=%d Tiers(Local/Near/Mid/Far/Hidden)=%d/%d/%d/%d/%d Detailed=%d"),
+  PlayerCharacterCount,NPCCharacterCount,AuthorityCount,AutonomousCount,SimulatedCount,AnimInstanceCount,
+  TierCounts[0],TierCounts[1],TierCounts[2],TierCounts[3],TierCounts[4],DetailedLinesPrinted);
+ UE_LOG(LogProject_J,Display,TEXT("%s"),*SummaryLine);
 	ClientMessage(SummaryLine);
 	UE_LOG(LogProject_J, Display, TEXT("%s"), *SummaryLine);
 #endif
@@ -781,9 +712,9 @@ void AProject_JPlayerController::TickSprintInputTest()
 		InputKey(FInputKeyEventArgs(nullptr, FInputDeviceId::CreateFromInternalId(0), Direction, IE_Pressed, 1.f, false, 0));
 	}
 	if (const auto* TestAvatar = Cast<AProject_JPlayerCharacter>(GetPawn()))
-		UE_LOG(LogProject_J, Display, TEXT("SprintInputTest Sample T=%.3f Pawn=%s Sprint=%d Speed=%.1f Max=%.1f Location=%s"),
+		UE_LOG(LogProject_J, Display, TEXT("SprintInputTest Sample T=%.3f Pawn=%s Sprint=%d Speed=%.1f AcceptedGaitMax=%.1f Location=%s"),
 			GetWorld()->GetTimeSeconds(), *TestAvatar->GetName(), TestAvatar->IsSprintLocomotionAllowed() ? 1 : 0,
-			TestAvatar->GetVelocity().Size2D(), TestAvatar->GetCharacterMovement()->MaxWalkSpeed, *TestAvatar->GetActorLocation().ToCompactString());
+			TestAvatar->GetVelocity().Size2D(), Project_J::Movement::ReadPhysicalFrame(TestAvatar).MaxSpeed, *TestAvatar->GetActorLocation().ToCompactString());
 }
 void AProject_JPlayerController::UIPrototypeTest(const FString& Action)
 {

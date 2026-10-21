@@ -1,5 +1,7 @@
 # 오픈 월드 레벨 설계와 확장 계획
 
+> **현재 읽는 기준 — 2026-10-21:** 이 문서는 Region A의 당시 제작·실험 이력을 포함한다. 일부 과거 실행 파일은 현재 저장소에 없어 경로를 텍스트로 보존했다. 현행 월드의 제작·진입점은 [월드 제작 목차](../../World/README.md)를 먼저 확인하며, 아래 과거 명령을 그대로 재실행하지 않는다.
+
 > 2026-10-17 후속 요청: 기존 A 지역 결과물은 사용자가 폐기를 허용했으며, 새 제작은 [v3 시작 권역 제작](../../World/README.md)을 따른다. 아래의 A 배치·에셋·성능·성공/실패 기록은 이전 결과의 이력이다. 새 월드의 실제 생성·원경·아트·서버 검증 완료를 의미하지 않는다. 기존 공통 런타임 기반과 원본 공급자 자산은 선별 재사용한다.
 
 기준일: 2026-10-16. 바다·강·마을·숲·길·산·던전·필드 보스가 이어지고 지상 탈것과 야외 자유 비행으로 탐험하는 MMORPG 월드를 계획한다. **A 지역은 중앙 대도시와 주변 작은 마을을 배치한다. 후속 지역의 도시·마을은 지형·문화·자원·이동에 맞춰 유기적으로 구성하며 중앙 대도시 배치를 강제하지 않는다.** 첫 제작 영역은 해안과 근해를 포함한 **약 8 × 8km**를 제안하며, 첫 해안권과 인접 권역을 연결하는 지리와 이동망을 함께 설계한다.
@@ -529,9 +531,9 @@ Content/Map_Resource/
 
 외부 팩은 내부 Meshes·Materials·Textures 등의 구조와 출처 이름을 유지한다. 원본 라이브러리에서 필요한 17개 메시를 선정하고 의존 패키지 186개를 확인했다. 별도 작업용 프로젝트에서 엔진 RenameAssets로 `/Game/Map_Resource/<Pack>`으로 정리한 뒤 MigratePackages로 이주했다. Rename 직후 registry 알림 지연으로 최초 자동 의존 수집에서 빠진 재질·텍스처는 확인된 전체 186개 패키지를 명시해 보완했다. 최종 이주 파일은 약 1.61GiB이며 에디터 재로딩에서 누락 패키지 오류가 없음을 확인했다. 파일 내부 문자열·패키지 경로를 직접 치환하지 않았다. 원본 라이브러리·캐릭터·스킬 자산은 변경하지 않았다. WP 외부 액터·외부 객체 패키지는 엔진의 `/Game/__ExternalActors__/Map_Resource/...`·`__ExternalObjects__` 경로를 유지한다.
 
-[공간 원본](../../../Scripts/Editor/RegionA.layout.json)은 장소·길·수계·시드·지형 규격의 제작 입력이다. [높이맵 생성](../../../Scripts/Editor/Generate-RegionATerrain.py)은 오프라인에서 2017² 높이맵을 만들며 XY 400cm로 8,064m 폭을 구성한다. 해안 아래 약 -44m부터 +1,150m까지의 초기 지형이다. [레벨 제작](../../../Scripts/Editor/Build-RegionA.py)은 새 Open World 맵에서 지형·거점·길·물 표현을 배치하며 기존 맵이 있으면 덮어쓰지 않는다.
+공간 원본 (`Scripts/Editor/RegionA.layout.json`, 당시 경로·현재 파일 없음)은 장소·길·수계·시드·지형 규격의 제작 입력이다. 높이맵 생성 (`Scripts/Editor/Generate-RegionATerrain.py`, 당시 경로·현재 파일 없음)은 오프라인에서 2017² 높이맵을 만들며 XY 400cm로 8,064m 폭을 구성한다. 해안 아래 약 -44m부터 +1,150m까지의 초기 지형이다. 레벨 제작 (`Scripts/Editor/Build-RegionA.py`, 당시 경로·현재 파일 없음)은 새 Open World 맵에서 지형·거점·길·물 표현을 배치하며 기존 맵이 있으면 덮어쓰지 않는다.
 
-[PCG 제작](../../../Scripts/Editor/Build-RegionAPCG.py)은 고정 시드로 경사·수계·도로·마을 여유를 검사한 위치를 Create Points→Static Mesh Spawner 그래프에 제공하는 **오프라인 생성 경로**다. 실행 중 플레이어 주변에서 매번 숲을 다시 만드는 방식은 사용하지 않는다. 512m 공간 단위로 그래프·컴포넌트를 나누고 생성된 인스턴스를 저장한다. 현재 입력은 제작 JSON과 높이맵이므로 지형·길 편집 후 자동 추적 Surface Sampler가 있다고 가정하지 말고 원본과 생성 결과를 함께 갱신한다.
+PCG 제작 (`Scripts/Editor/Build-RegionAPCG.py`, 당시 경로·현재 파일 없음)은 고정 시드로 경사·수계·도로·마을 여유를 검사한 위치를 Create Points→Static Mesh Spawner 그래프에 제공하는 **오프라인 생성 경로**다. 실행 중 플레이어 주변에서 매번 숲을 다시 만드는 방식은 사용하지 않는다. 512m 공간 단위로 그래프·컴포넌트를 나누고 생성된 인스턴스를 저장한다. 현재 입력은 제작 JSON과 높이맵이므로 지형·길 편집 후 자동 추적 Surface Sampler가 있다고 가정하지 말고 원본과 생성 결과를 함께 갱신한다.
 
 현재 저장 결과는 **8.064×8.064km 지형, 장소 11개, 건물 60개, 길 조각 572개, 강 수면 조각 27개와 호수·바다, PCG 116개 구역의 나무 인스턴스 1,870개**다. 도시는 건물 배치의 초안이며 완성된 대도시 규모·생활 콘텐츠가 아니다. World Partition은 `WorldPartitionRuntimeHashSet`으로 스트리밍을 활성화했다. `DA_RegionA`는 AssetManager PrimaryAsset으로 등록하고 새 맵은 Cook 대상에 추가했다. 배포 Cook는 아직 검증하지 않았다.
 
@@ -547,7 +549,7 @@ Content/Map_Resource/
 
 ### 검증 기록과 남은 범위
 
-에디터 Content Browser에서 `Map_Resource/ProjectJ_World/Maps/L_A_Region`을 연다. 전체 배치 편집은 World Partition 창에서 필요한 구간만 Load한다. [제작 스크립트](../../../Scripts/Editor/Run-RegionAAuthoring.py)는 최초 생성용으로 기존 맵을 덮어쓰지 않으며, [재로딩 검증](../../../Scripts/Editor/Verify-RegionA.py)은 A 맵을 열어 인스턴스·장소 ID·스트리밍을 검사하고 저장한다. [보스/강우 smoke](../../../Scripts/Editor/Smoke-RegionA.py)는 플레이 검증 직전에 별도로 실행하고 보스 지점 `(204019.2, 199180.8, 15000)`cm 근처에서 PIE를 시작한다. 테스트가 완료되거나 실패하면 콜백은 해제된다. 처음부터 다시 만드는 경우 원본 JSON·높이맵·환경 팩 경로를 먼저 보존한다.
+에디터 Content Browser에서 `Map_Resource/ProjectJ_World/Maps/L_A_Region`을 연다. 전체 배치 편집은 World Partition 창에서 필요한 구간만 Load한다. 제작 스크립트 (`Scripts/Editor/Run-RegionAAuthoring.py`, 당시 경로·현재 파일 없음)는 최초 생성용으로 기존 맵을 덮어쓰지 않으며, 재로딩 검증 (`Scripts/Editor/Verify-RegionA.py`, 당시 경로·현재 파일 없음)은 A 맵을 열어 인스턴스·장소 ID·스트리밍을 검사하고 저장한다. 보스/강우 smoke (`Scripts/Editor/Smoke-RegionA.py`, 당시 경로·현재 파일 없음)는 플레이 검증 직전에 별도로 실행하고 보스 지점 `(204019.2, 199180.8, 15000)`cm 근처에서 PIE를 시작한다. 테스트가 완료되거나 실패하면 콜백은 해제된다. 처음부터 다시 만드는 경우 원본 JSON·높이맵·환경 팩 경로를 먼저 보존한다.
 
 - 설치 UE 5.8의 direct UnrealBuildTool로 전체 `Project_JEditor Win64 Development` 빌드를 완료했다. 최초 컴파일의 forward declaration·복제 매크로 인자를 수정했다. 이후 에디터 제작 도구 연결과 PIE에서 확인한 Iris 거리 초과를 수정한 최종 `Build05`도 409개 작업·약 262초 후 성공했다. 이벤트/NPC의 네트워크 관련성 거리는 현재 Iris 상한인 1.5km 안으로 제한하며 이벤트 활성화 반경과 구분한다. 진행 중인 빌드를 중단하거나 캐시를 일괄 삭제하지 않았다.
 - 실제 렌더링 에디터에서 `ProjectJ.World.EnvironmentTransition`, `ProjectJ.World.StreamingPrediction` 두 테스트가 성공했다. 최초 NullRHI 에디터 검증은 엔진 초기화 직후 TNotNull 오류로 종료돼 성공 근거에서 제외했다.
@@ -565,19 +567,19 @@ Content/Map_Resource/
 ### 실제 제작 경로와 책임
 
 - `Map_Resource/Nanite_Env_Bundle_1/StunningNaturalPlace`에 소나무·덤불·풀·바위·암벽 12종과 의존 자산을 선별 이관했다. 64개 패키지 약 1.80GiB다. 전체 라이브러리를 복제하지 않았으며 캐릭터·스킬은 이번 이관 대상이 아니다.
-- [높이 원본 생성](../../../Scripts/Editor/Generate-RegionATerrain.py)은 고정 시드의 비주기적 큰 지형, 연결 능선·유역·불규칙 해안, 곡선 수계·도로와 거점 지면을 만든다. `HM_RegionA.r16`, `T_A_SurfaceMasks.png`, `RegionA.surface.json`을 함께 유지한다. 물보다 낮은 주변 땅을 좁은 강둑만으로 끌어올리던 계산을 넓은 유역의 cut/fill 혼합으로 수정했다. 실제 침식 시뮬레이터를 구현한 것은 아니다.
+- 높이 원본 생성 (`Scripts/Editor/Generate-RegionATerrain.py`, 당시 경로·현재 파일 없음)은 고정 시드의 비주기적 큰 지형, 연결 능선·유역·불규칙 해안, 곡선 수계·도로와 거점 지면을 만든다. `HM_RegionA.r16`, `T_A_SurfaceMasks.png`, `RegionA.surface.json`을 함께 유지한다. 물보다 낮은 주변 땅을 좁은 강둑만으로 끌어올리던 계산을 넓은 유역의 cut/fill 혼합으로 수정했다. 실제 침식 시뮬레이터를 구현한 것은 아니다.
 - 기존 Landscape와 외부 프록시의 ID를 유지하며 기본 Edit Layer를 재임포트한다. 엔진의 `FHeightmapAccessor::SetData`로 컴포넌트 높이·충돌 갱신을 요청한다. 단순 텍스처 쓰기와 전역 갱신 요청만으로 끝내지 않는다. 다른 편집 레이어와 지형 페인트는 삭제하지 않는다.
-- [표면 재질](../../../Scripts/Editor/Upgrade-RegionAMaterials.py)은 기존 Brushify 텍스처를 소비하는 별도 소유 재질이다. 경사·고도·숲/도로/물가/거시 변화와 거리별 표면 크기를 혼합한다. 원본 Brushify 마스터를 수정하지 않는다. 수면은 Single Layer Water 셰이딩·잔물결을 사용하며 Water Body 플러그인의 수영·부력·물리 유량은 연결하지 않았다.
-- [환경 배치](../../../Scripts/Editor/Upgrade-RegionAEnvironment.py)는 저장 가능한 SplineComponent/SplineMeshComponent로 길·강을 약 250~400m 단위에 나누어 배치한다. 전용 Landscape Splines 도구를 사용했다고 해석하지 않는다. 경로 원본에서 지면을 먼저 grading하고 교량 접근 높이를 함께 계산한다. 도시·마을의 로컬 길을 포함해 스플라인 소유 액터 244개, 주택 216개를 배치한다. 실내·성벽·상점·군중이 완성된 도시가 아니다.
+- 표면 재질 (`Scripts/Editor/Upgrade-RegionAMaterials.py`, 당시 경로·현재 파일 없음)은 기존 Brushify 텍스처를 소비하는 별도 소유 재질이다. 경사·고도·숲/도로/물가/거시 변화와 거리별 표면 크기를 혼합한다. 원본 Brushify 마스터를 수정하지 않는다. 수면은 Single Layer Water 셰이딩·잔물결을 사용하며 Water Body 플러그인의 수영·부력·물리 유량은 연결하지 않았다.
+- 환경 배치 (`Scripts/Editor/Upgrade-RegionAEnvironment.py`, 당시 경로·현재 파일 없음)는 저장 가능한 SplineComponent/SplineMeshComponent로 길·강을 약 250~400m 단위에 나누어 배치한다. 전용 Landscape Splines 도구를 사용했다고 해석하지 않는다. 경로 원본에서 지면을 먼저 grading하고 교량 접근 높이를 함께 계산한다. 도시·마을의 로컬 길을 포함해 스플라인 소유 액터 244개, 주택 216개를 배치한다. 실내·성벽·상점·군중이 완성된 도시가 아니다.
 - 건물과 기존 식생 제작 스크립트의 `Rotator` 인자 순서 오류를 수정했다. Python 호출은 `pitch=`, `yaw=`, `roll=`을 명시한다. 원본 피벗 편차를 고려해 주택 중심과 바닥을 배치하고, 약 107m 원본 종탑은 도시 약 38m·마을 약 20m로 조정했다.
-- [PCG 환경 제작](../../../Scripts/Editor/Upgrade-RegionAEcology.py)은 256m 구역별 Create Points → Landscape Data를 대상으로 하는 Projection → 가중 Static Mesh Spawner를 저장한다. [밀도/제외 원본](../../../Scripts/Editor/Generate-RegionAEcology.py)은 경사·고도·수계·도로·거점을 고려하고 저층 식생은 첫 도시–숲 접근 구간과 중앙 강변에 집중한다. 실행 중 전체 월드를 다시 생성하지 않는다. 손으로 경로 액터를 옮긴 뒤 제외 마스크까지 자동 추적하는 완성된 저작 시스템은 아니다.
+- PCG 환경 제작 (`Scripts/Editor/Upgrade-RegionAEcology.py`, 당시 경로·현재 파일 없음)은 256m 구역별 Create Points → Landscape Data를 대상으로 하는 Projection → 가중 Static Mesh Spawner를 저장한다. 밀도/제외 원본 (`Scripts/Editor/Generate-RegionAEcology.py`, 당시 경로·현재 파일 없음)은 경사·고도·수계·도로·거점을 고려하고 저층 식생은 첫 도시–숲 접근 구간과 중앙 강변에 집중한다. 실행 중 전체 월드를 다시 생성하지 않는다. 손으로 경로 액터를 옮긴 뒤 제외 마스크까지 자동 추적하는 완성된 저작 시스템은 아니다.
 - 도로·강의 HLOD는 변형된 스플라인을 병합하는 별도 Mesh Merge 레이어를 사용한다. 원본 world-space/물 재질을 유지하도록 재질 atlas baking을 끈다. 나무·건물의 기본 Instancing 레이어와 구분한다. PCG 저층 식생은 HLOD 대상에서 제외한다.
 
-이전 V1 출력은 새 맵 안에서 교체하되 원본 팩과 이전 PCG 그래프는 제작 이력·비교용으로 남긴다. 재생성은 명시적인 [소유 출력 갱신](../../../Scripts/Editor/Refine-RegionAEnvironment.py)에서만 허용하며, 수동 편집을 시작한 뒤에는 해당 수정과 생성 경계를 먼저 검토한다. 최초 변경 전 백업은 로컬 `Saved/WorldRegionA/BeforeEnvironmentPass`에 있다.
+이전 V1 출력은 새 맵 안에서 교체하되 원본 팩과 이전 PCG 그래프는 제작 이력·비교용으로 남긴다. 재생성은 명시적인 소유 출력 갱신 (`Scripts/Editor/Refine-RegionAEnvironment.py`, 당시 경로·현재 파일 없음)에서만 허용하며, 수동 편집을 시작한 뒤에는 해당 수정과 생성 경계를 먼저 검토한다. 최초 변경 전 백업은 로컬 `Saved/WorldRegionA/BeforeEnvironmentPass`에 있다.
 
 ### 검증 및 현재 제한
 
-[재로딩 검증](../../../Scripts/Editor/Verify-RegionA.py)은 생성 원본에서 기대 식생 수를 읽고 HLOD를 제외한 PCG 인스턴스·장소 11개 고유 ID·WorldState/Encounter 단일 개체·저장된 스플라인·건물 회전을 검사한다. Landscape만 대상으로 충돌을 샘플링하여 새 높이 원본과의 오차도 검사한다. 검증 스크립트가 교량·내비게이션 액터를 추가하던 이전 동작은 제거했다. 최종 빌드·실행 결과는 아래에 기록한다.
+재로딩 검증 (`Scripts/Editor/Verify-RegionA.py`, 당시 경로·현재 파일 없음)은 생성 원본에서 기대 식생 수를 읽고 HLOD를 제외한 PCG 인스턴스·장소 11개 고유 ID·WorldState/Encounter 단일 개체·저장된 스플라인·건물 회전을 검사한다. Landscape만 대상으로 충돌을 샘플링하여 새 높이 원본과의 오차도 검사한다. 검증 스크립트가 교량·내비게이션 액터를 추가하던 이전 동작은 제거했다. 최종 빌드·실행 결과는 아래에 기록한다.
 
 식생의 강제 원거리 cull은 현재 0으로 두었다. 이것은 전 구간 상주나 팝인 해결을 뜻하지 않으며 WP 셀·HLOD·Nanite 스트리밍과 별개다. 원경 나무 부피, WPO·VSM·겹침 비용, 원본 건물의 복잡한 충돌과 내비게이션 경고를 측정·조정해야 한다. Experimental Nanite Foliage의 Assemblies/Voxels/Skinning을 적용한 상태도 아니다. [Epic 식생 제작 문서](https://dev.epicgames.com/documentation/en-us/unreal-engine/nanite-foliage), [Nanite 콘텐츠 비용](https://dev.epicgames.com/documentation/unreal-engine/working-with-naniteenabled-content).
 
@@ -598,19 +600,19 @@ V2에서 수행한 검증:
 
 사용자가 지적한 문제는 부족한 지피층과 반복적인 수종·간격이었다. 나무가 각져 보이던 화면은 사용자가 로딩 중 표시였다고 정정했으므로, 이를 근거로 전역 Nanite 설정을 바꾸지 않았다. 로딩이 안정된 화면에서 아트를 판단하고, 순간 이동 직후의 캡처를 정상 최종 디테일로 사용하지 않는다.
 
-추가 이관은 원본 라이브러리의 작업용 복사본에서 가문비 2종·활엽수 3종·풀 6종·덤불 3종과 의존 자산만 대상으로 했다. [선별 이관](../../../Scripts/Editor/Migrate-RegionABiomeVariants.py)은 기존 이관 자산을 보존하며 원본 라이브러리를 변경하지 않는다.
+추가 이관은 원본 라이브러리의 작업용 복사본에서 가문비 2종·활엽수 3종·풀 6종·덤불 3종과 의존 자산만 대상으로 했다. 선별 이관 (`Scripts/Editor/Migrate-RegionABiomeVariants.py`, 당시 경로·현재 파일 없음)은 기존 이관 자산을 보존하며 원본 라이브러리를 변경하지 않는다.
 
-[식생 원본](../../../Scripts/Editor/Generate-RegionAEcology.py)의 V3는 격자별 한 나무 배치를 군집 중심·최소 이격·크기 차이·명시적 공터로 교체한다. 강변 활엽수 군집은 강의 곡선과 폭을 따라 배치한다. 낮은 풀은 길 가장자리까지 접근하지만 차도와 수로는 비워 둔다. 세부 지피층은 먼저 약 360×240m 숲 접근 구간과 약 800m 길이의 강 굽이에서 제작하며, 넓은 A 전체에 같은 밀도를 적용했다고 해석하지 않는다.
+식생 원본 (`Scripts/Editor/Generate-RegionAEcology.py`, 당시 경로·현재 파일 없음)의 V3는 격자별 한 나무 배치를 군집 중심·최소 이격·크기 차이·명시적 공터로 교체한다. 강변 활엽수 군집은 강의 곡선과 폭을 따라 배치한다. 낮은 풀은 길 가장자리까지 접근하지만 차도와 수로는 비워 둔다. 세부 지피층은 먼저 약 360×240m 숲 접근 구간과 약 800m 길이의 강 굽이에서 제작하며, 넓은 A 전체에 같은 밀도를 적용했다고 해석하지 않는다.
 
 PCG는 구역 소유자를 유지하면서 메시별 생성 분기와 실제 메시 치수에 맞춘 크기 보정을 사용한다. 큰 나무 한 종류의 스케일을 작은 변형에 그대로 적용하지 않는다. 저층 풀·관목은 충돌·그림자·HLOD를 제외하고 저장된 인스턴스로 소비한다. 이 정책은 원경 나무의 HLOD와 별개이며 성능 합격 근거가 아니다.
 
-[지면 마스크](../../../Scripts/Editor/Generate-RegionAGroundMasks.py)는 나무 군집과 연결된 숲 바닥을 만든다. [표면 색 혼합](../../../Scripts/Editor/RegionA_TerrainColor.hlsl)은 기존 Grass/Forest/Rock/Mud 텍스처를 소비하여 초지·마른 풀·숲 바닥·물가·경사면을 혼합한다. [부분 갱신](../../../Scripts/Editor/Polish-RegionABiomes.py)은 이 식생과 소유 재질만 갱신하며 지형·마을·도로를 다시 생성하지 않는다. 원경 빌드 후 확인한 이관 재질의 InstancedStaticMeshes 사용 플래그도 실제 부모 재질에 저장하여 에디터의 자동 수정에만 의존하지 않도록 한다.
+지면 마스크 (`Scripts/Editor/Generate-RegionAGroundMasks.py`, 당시 경로·현재 파일 없음)는 나무 군집과 연결된 숲 바닥을 만든다. 표면 색 혼합 (`Scripts/Editor/RegionA_TerrainColor.hlsl`, 당시 경로·현재 파일 없음)은 기존 Grass/Forest/Rock/Mud 텍스처를 소비하여 초지·마른 풀·숲 바닥·물가·경사면을 혼합한다. 부분 갱신 (`Scripts/Editor/Polish-RegionABiomes.py`, 당시 경로·현재 파일 없음)은 이 식생과 소유 재질만 갱신하며 지형·마을·도로를 다시 생성하지 않는다. 원경 빌드 후 확인한 이관 재질의 InstancedStaticMeshes 사용 플래그도 실제 부모 재질에 저장하여 에디터의 자동 수정에만 의존하지 않도록 한다.
 
 V3 식생은 후속 강바닥·둑 단면 수정 때마다 지형·경사·도로/수로 제외 영역을 다시 반영했다. 중간 생성 수를 현재 결과와 혼용하지 않으며, 최종 수와 재로딩 검증은 아래 기록을 기준으로 한다.
 
 [실제 숲 접근 구간 캡처](Assets/A_Region_Forest_BiomePass.png)는 추가 수종과 저층 식생·지면 혼합의 현재 결과다. 전체 A 지역의 아트 품질이나 목표 프레임·고속 전환 품질이 완성됐다는 의미는 아니다.
 
-2026-10-17 수계 후속 수정: 여러 강의 유역을 순서대로 조정하면서 앞선 강바닥이 다시 메워지던 원인을 고쳤다. 모든 유역·호수·거점·길 grading 뒤에 수로와 넓은 범람원 단면을 최종 조정한다. 좁은 33m 전이만 절삭해 인공적인 운하 벽이 남던 후속 문제도 주변 365m 전이로 완화했다. [독립 수계 검사](../../../Scripts/Validation/Validate-RegionAWater.py)의 강 중심 299개 표본에서 최소 수심 **약 1.33m**, 상세 MainRiver 강변 228개 구간 표본에서 최대 경사 **약 13.8%**를 확인했다. 이는 전체 강의 모든 둑·실제 유체 흐름·수영 시험을 보증하지 않는다. 강폭 변주·퇴적층·자갈 전환과 교량 끝단의 세부 아트는 남아 있다.
+2026-10-17 수계 후속 수정: 여러 강의 유역을 순서대로 조정하면서 앞선 강바닥이 다시 메워지던 원인을 고쳤다. 모든 유역·호수·거점·길 grading 뒤에 수로와 넓은 범람원 단면을 최종 조정한다. 좁은 33m 전이만 절삭해 인공적인 운하 벽이 남던 후속 문제도 주변 365m 전이로 완화했다. 독립 수계 검사 (`Scripts/Validation/Validate-RegionAWater.py`, 당시 경로·현재 파일 없음)의 강 중심 299개 표본에서 최소 수심 **약 1.33m**, 상세 MainRiver 강변 228개 구간 표본에서 최대 경사 **약 13.8%**를 확인했다. 이는 전체 강의 모든 둑·실제 유체 흐름·수영 시험을 보증하지 않는다. 강폭 변주·퇴적층·자갈 전환과 교량 끝단의 세부 아트는 남아 있다.
 
 둑 단면 수정 후 최종 식생은 **342,942개 / 672개 PCG 구역**이다. 나무 22,132개(소나무 9,179·가문비 4,061·활엽수 8,892), 덤불 14,029·낮은 풀 241,936·큰 풀 61,673·바위 3,172개다. 원경 Landscape는 source LOD 1과 같은 world-space 표면 재질을 사용하도록 적용했다. 이는 강둑 보존을 위한 미측정 초기 설정이며 최종 성능 값은 아니다. 수면의 해석적 잔물결은 월드 공간 normal을 반환하므로 `Tangent Space Normal`을 꺼서 스플라인 조각별 tangent 방향 차이를 제거했다. 반사·굴절과 먼 수면의 영상 품질은 별도 확인 대상이다.
 
@@ -626,12 +628,12 @@ V3 식생은 후속 강바닥·둑 단면 수정 때마다 지형·경사·도�
 
 ### 공간 구성과 재생성 계약
 
-- 거시 지형의 별도 원본 `HM_RegionA_Base.r16` 위에 [중간 규모 지형](../../../Scripts/Editor/RegionA_Mesorelief.py)을 적용한다. 약 20~300m 파장의 불규칙한 굴곡을 만들고 길·수계·거점·농경지·보스 전투면은 보호한다. [표면 생성](../../../Scripts/Editor/Generate-RegionACompositionSurfaces.py)이 최종 `HM_RegionA.r16`의 단일 writer다. 반복 실행으로 굴곡을 계속 더하지 않는다. 실제 침식 시뮬레이션은 아니다.
+- 거시 지형의 별도 원본 `HM_RegionA_Base.r16` 위에 중간 규모 지형 (`Scripts/Editor/RegionA_Mesorelief.py`, 당시 경로·현재 파일 없음)을 적용한다. 약 20~300m 파장의 불규칙한 굴곡을 만들고 길·수계·거점·농경지·보스 전투면은 보호한다. 표면 생성 (`Scripts/Editor/Generate-RegionACompositionSurfaces.py`, 당시 경로·현재 파일 없음)이 최종 `HM_RegionA.r16`의 단일 writer다. 반복 실행으로 굴곡을 계속 더하지 않는다. 실제 침식 시뮬레이션은 아니다.
 - 지면은 숲 바닥·초지·습지·농지·고지대 마스크, 암석의 경사 투영, 거리별 색·법선 크기를 혼합한다. 흙의 색만 바꾸지 않고 지형 형태·표면·저층 식생을 함께 바꾼다. 도로 grading의 과도한 절삭을 줄이고 도로 메시를 4m 간격으로 지면에 맞춘다. 호수는 불규칙한 둑을 따르는 메시로 교체한다.
-- [정착지 원본](../../../Scripts/Editor/Generate-RegionAComposition.py)은 중앙 도시의 순환로·시장·출입로·골목, 마을별 진입·작업 공간을 생성한다. 도시는 주택 135개, 호수 23개, 광산 36개, 숲 36개, 농업 33개, 어촌 36개, 항구 47개로 **정착지 주택 346개**다. 길 경계와 주택 간 여유를 검사하고 건물이 길을 바라보도록 배치한다. 6개 주택 변형과 마을별 작업장·뒷마당·울타리·우물·등·시장·선착장·어구를 사용한다. 완성된 실내·도시 NPC·경제 시스템은 별도 범위다.
+- 정착지 원본 (`Scripts/Editor/Generate-RegionAComposition.py`, 당시 경로·현재 파일 없음)은 중앙 도시의 순환로·시장·출입로·골목, 마을별 진입·작업 공간을 생성한다. 도시는 주택 135개, 호수 23개, 광산 36개, 숲 36개, 농업 33개, 어촌 36개, 항구 47개로 **정착지 주택 346개**다. 길 경계와 주택 간 여유를 검사하고 건물이 길을 바라보도록 배치한다. 6개 주택 변형과 마을별 작업장·뒷마당·울타리·우물·등·시장·선착장·어구를 사용한다. 완성된 실내·도시 NPC·경제 시스템은 별도 범위다.
 - 도시와 마을 사이에는 **농지 25개·탐험 지점 12개**, 야영·폐허·채집과 작업 공간, 농촌/탐험 건물 8개를 배치한다. 상점 역할·가판대 앵커는 26개다. 필드 보스 중심 약 78m 반경의 전투 공간은 유지하고 바깥쪽에 폐허 기둥·벽·암반을 둔다. 근거리 디테일과 멀리서 읽히는 실루엣을 구분하며 전 지역을 같은 숲 밀도로 덮지 않는다.
-- [정착지 배치](../../../Scripts/Editor/RegionA_Settlements.py)와 [지역 소품](../../../Scripts/Editor/RegionA_RegionalDetails.py)은 메시·256m 구역별 HISM 소유자를 사용한다. **소품 14,922개 / 소유자 270개**, 저장된 스플라인 경로 액터 270개다. 필요 자산 30종과 의존 패키지는 작업용 복사본에서 선별 이관했다. 원본 팩의 폴더·재질 연결을 유지한다.
-- PCG는 숲·강변·초지 군집에 집중하고 바깥의 적합한 땅은 [Landscape Grass 인필](../../../Scripts/Editor/Upgrade-RegionAGrassInfill.py)로 연결한다. 마스크는 길·수면·정착지·농지·보스 영역과 PCG 상세 식생을 제외한다. 두 변형의 최대 밀도 합은 **100m²당 80개**이며 실제 수는 마스크·스케일러빌리티·스트리밍에 따라 달라진다. 엔진 `LandscapeGrass.cpp`의 면적 환산을 확인했다. 풀은 140~240m 페이드와 250m cull, 그림자·충돌 제외를 사용한다. 이 근거리 페이드는 나무나 건물의 원경 표시 정책과 별개다. [Epic Grass 제작](https://dev.epicgames.com/documentation/en-us/unreal-engine/grass-quick-start-in-unreal-engine), [Landscape 재질](https://dev.epicgames.com/documentation/en-us/unreal-engine/landscape-materials-in-unreal-engine).
+- 정착지 배치 (`Scripts/Editor/RegionA_Settlements.py`, 당시 경로·현재 파일 없음)와 지역 소품 (`Scripts/Editor/RegionA_RegionalDetails.py`, 당시 경로·현재 파일 없음)은 메시·256m 구역별 HISM 소유자를 사용한다. **소품 14,922개 / 소유자 270개**, 저장된 스플라인 경로 액터 270개다. 필요 자산 30종과 의존 패키지는 작업용 복사본에서 선별 이관했다. 원본 팩의 폴더·재질 연결을 유지한다.
+- PCG는 숲·강변·초지 군집에 집중하고 바깥의 적합한 땅은 Landscape Grass 인필 (`Scripts/Editor/Upgrade-RegionAGrassInfill.py`, 당시 경로·현재 파일 없음)로 연결한다. 마스크는 길·수면·정착지·농지·보스 영역과 PCG 상세 식생을 제외한다. 두 변형의 최대 밀도 합은 **100m²당 80개**이며 실제 수는 마스크·스케일러빌리티·스트리밍에 따라 달라진다. 엔진 `LandscapeGrass.cpp`의 면적 환산을 확인했다. 풀은 140~240m 페이드와 250m cull, 그림자·충돌 제외를 사용한다. 이 근거리 페이드는 나무나 건물의 원경 표시 정책과 별개다. [Epic Grass 제작](https://dev.epicgames.com/documentation/en-us/unreal-engine/grass-quick-start-in-unreal-engine), [Landscape 재질](https://dev.epicgames.com/documentation/en-us/unreal-engine/landscape-materials-in-unreal-engine).
 
 재생성 순서는 `Generate-RegionATerrain`(Base) → `Generate-RegionAComposition` → `Generate-RegionACompositionSurfaces`(최종 높이) → `Generate-RegionAEcology` → `Generate-RegionAGroundMasks` → `Generate-RegionAInfillMask` → 명시적인 `Refine-RegionAEnvironment` → 검증·HLOD다. 기존 저장 지형을 다시 Base로 쓰지 않는다. 기본 재료·선별 이관 자산·이전 비교용 그래프는 보존한다. 수동 편집을 시작했다면 해당 수정과 생성 소유권부터 검토하고 전체 재생성을 실행한다. 이 패스 이전 백업은 로컬 `Saved/WorldRegionA/BeforeWorldCompositionPass`에 있다.
 
@@ -646,9 +648,9 @@ V3 식생은 후속 강바닥·둑 단면 수정 때마다 지형·경사·도�
 
 최종 저장·재로딩에서 PCG **149,706개 / 1,295개 구역**을 확인했다. 나무 9,801개(소나무 3,903·가문비 1,744·활엽수 4,154), 관목 5,583·낮은 풀 105,689·큰 풀 26,648·바위 1,985개다. 이 수에는 스트리밍되는 Landscape Grass 인필이 포함되지 않는다. 개수를 무조건 늘리는 대신 군집과 비움·지면 변화·생활 소품으로 밀도를 구성했다.
 
-[재로딩 검증](../../../Scripts/Editor/Verify-RegionA.py)은 고유 장소 11개, WorldState/Encounter 각 1개, WP RuntimeHashSet 스트리밍, 주택·경로·소품의 저장 수와 실제 연결을 검사했다. Landscape 충돌 97개 표본의 최대 오차는 **4.86cm**, 주택·랜드마크 353개 바닥 표본은 **6cm**, 소품 264개 표본은 **3cm**다. 맵 검사는 오류·경고 0이었다. 실제 렌더링 에디터에서 `EnvironmentTransition`, `StreamingPrediction` 두 월드 자동화 테스트도 성공했다. 전 맵 보행·실내 내비게이션·모든 충돌면을 검증한 결과는 아니다.
+재로딩 검증 (`Scripts/Editor/Verify-RegionA.py`, 당시 경로·현재 파일 없음)은 고유 장소 11개, WorldState/Encounter 각 1개, WP RuntimeHashSet 스트리밍, 주택·경로·소품의 저장 수와 실제 연결을 검사했다. Landscape 충돌 97개 표본의 최대 오차는 **4.86cm**, 주택·랜드마크 353개 바닥 표본은 **6cm**, 소품 264개 표본은 **3cm**다. 맵 검사는 오류·경고 0이었다. 실제 렌더링 에디터에서 `EnvironmentTransition`, `StreamingPrediction` 두 월드 자동화 테스트도 성공했다. 전 맵 보행·실내 내비게이션·모든 충돌면을 검증한 결과는 아니다.
 
-같은 숲 카메라에서 변경 전·후 CSV를 수집하고 그림자/지피층을 일시적으로 끈 비교 구간 후 원상복구했다. 각 92초 기록은 12초 워밍업과 20초씩 네 구간이며 각 구간 첫 6초는 제외한다. [비교 스크립트](../../../Scripts/Validation/Compare-RegionAProfiles.py)와 로컬 `Saved/Validation/WorldRegionA/WorldCompositionPass/profile-comparison.json`에 계산 근거를 둔다.
+같은 숲 카메라에서 변경 전·후 CSV를 수집하고 그림자/지피층을 일시적으로 끈 비교 구간 후 원상복구했다. 각 92초 기록은 12초 워밍업과 20초씩 네 구간이며 각 구간 첫 6초는 제외한다. 비교 스크립트 (`Scripts/Validation/Compare-RegionAProfiles.py`, 당시 경로·현재 파일 없음)와 로컬 `Saved/Validation/WorldRegionA/WorldCompositionPass/profile-comparison.json`에 계산 근거를 둔다.
 
 | 에디터 숲 고정 시점 | 변경 전 중앙값 | 변경 후 중앙값 | 전/후 p95 |
 |---|---:|---:|---:|
@@ -660,9 +662,9 @@ GPU 중앙값은 약 27% 줄었지만 게임 스레드 비용은 증가했다. �
 
 공식 HLOD 빌더는 이전 298개를 제거하고 **393개 HLOD Actor를 새로 생성**했다. 두 커맨드렛 모두 exit 0이다. 생성 실행은 약 47.4초·오류 0, 에셋 검색 `DiscoveryCacheFile` 쓰기 경고 1개였으며 생성 실패로 계산하지 않는다. 재시작 후 현재 지형·건물·소품 검사를 다시 통과했다. 이관된 재질의 ISM 사용 플래그도 명시적으로 저장했다.
 
-[비행 fixture](../../../Scripts/Editor/Smoke-RegionAFastFlight.py)는 **Standalone 권위 PIE**에서 한 번 초기 위치를 지정한 뒤 10초 워밍업, CharacterMovement 입력으로 20초 직진·8초 방향 전환을 수행했다. 최고 속도 **120m/s**, 최종 위치 변화 **1,817.96m**를 확인했다. 55개 표본 모두 예측 소스가 활성화됐지만 2개 표본에서 `is_streaming_completed()`가 false였다. 이는 특정 예측 소스의 준비 대기이며 곧바로 화면 팝인을 뜻하지도, 무팝인 합격을 뜻하지도 않는다. 해당 CSV의 프레임 중앙값/p95/최대는 **8.33/9.73/29.21ms**, GPU는 **5.33/7.20/17.68ms**, Game Thread는 **5.75/8.83/20.89ms**다. 높은 비행 시점의 한 경로이며 위 숲 지상 정지 측정과 직접 비교하지 않는다. 초기 클라이언트 모드의 무이동 실행과 Python API 오류 실행은 성공 근거에서 제외했다. fixture 실행 전 독립 실행 모드를 선택하고 종료 후 사용자의 기존 클라이언트 모드를 복구한다. 최종 탈것 동작·상승/하강·전체 경로·원격 MMO 시험은 남아 있다.
+비행 fixture (`Scripts/Editor/Smoke-RegionAFastFlight.py`, 당시 경로·현재 파일 없음)는 **Standalone 권위 PIE**에서 한 번 초기 위치를 지정한 뒤 10초 워밍업, CharacterMovement 입력으로 20초 직진·8초 방향 전환을 수행했다. 최고 속도 **120m/s**, 최종 위치 변화 **1,817.96m**를 확인했다. 55개 표본 모두 예측 소스가 활성화됐지만 2개 표본에서 `is_streaming_completed()`가 false였다. 이는 특정 예측 소스의 준비 대기이며 곧바로 화면 팝인을 뜻하지도, 무팝인 합격을 뜻하지도 않는다. 해당 CSV의 프레임 중앙값/p95/최대는 **8.33/9.73/29.21ms**, GPU는 **5.33/7.20/17.68ms**, Game Thread는 **5.75/8.83/20.89ms**다. 높은 비행 시점의 한 경로이며 위 숲 지상 정지 측정과 직접 비교하지 않는다. 초기 클라이언트 모드의 무이동 실행과 Python API 오류 실행은 성공 근거에서 제외했다. fixture 실행 전 독립 실행 모드를 선택하고 종료 후 사용자의 기존 클라이언트 모드를 복구한다. 최종 탈것 동작·상승/하강·전체 경로·원격 MMO 시험은 남아 있다.
 
-실제 화면: [도시 골목·시장](Assets/A_Region_City_CompositionPass.png), [초원 지상](Assets/A_Region_Meadow_CompositionPass.png), [호수·유출부](Assets/A_Region_Lake_CompositionPass.png), [보스 전투 공간](Assets/A_Region_Boss_CompositionPass.png), [전체 상공](Assets/A_Region_Overview_CompositionPass.png). native grass는 `AcceptPrebuiltTree`로 사전 생성 버퍼를 렌더러에 넘기므로 일반 CPU transform 배열 수가 0으로 나와도 화면에 표시될 수 있다. [진단](../../../Scripts/Editor/Inspect-RegionAGrassInfill.py)은 CPU 배열 수와 Python에서 직접 읽을 수 없는 렌더 수를 구분하고 실제 화면을 별도로 확인한다. 거점 간 모든 지면이 균일하게 풍성해졌다고 해석하지 않는다.
+실제 화면: [도시 골목·시장](Assets/A_Region_City_CompositionPass.png), [초원 지상](Assets/A_Region_Meadow_CompositionPass.png), [호수·유출부](Assets/A_Region_Lake_CompositionPass.png), [보스 전투 공간](Assets/A_Region_Boss_CompositionPass.png), [전체 상공](Assets/A_Region_Overview_CompositionPass.png). native grass는 `AcceptPrebuiltTree`로 사전 생성 버퍼를 렌더러에 넘기므로 일반 CPU transform 배열 수가 0으로 나와도 화면에 표시될 수 있다. 진단 (`Scripts/Editor/Inspect-RegionAGrassInfill.py`, 당시 경로·현재 파일 없음)은 CPU 배열 수와 Python에서 직접 읽을 수 없는 렌더 수를 구분하고 실제 화면을 별도로 확인한다. 거점 간 모든 지면이 균일하게 풍성해졌다고 해석하지 않는다.
 
 **남은 제작·검증:** 마을은 반복 가능한 제작 구조를 갖췄지만 고유 건축·실내·간판·상인 NPC·퀘스트 연결은 미완료다. 고지대 침식 형태, 넓은 초지의 색·밀도 전환, 도로와 지형 가장자리, 호수 유입 수면의 겹침과 반복적인 수면 반사 패턴은 추가 아트가 필요하다. PIE 화면에서 텍스처 풀 초과와 레이 트레이싱 geometry 상주 예산 경고가 관측됐다. 경고 숨김이나 전역 예산 증액으로 해결했다고 처리하지 않았다. 자산별 텍스처 mip/상주·RT fallback 비용과 Cook된 빌드의 메모리·전환 영상을 후속 측정한다. 이번 결과는 AAA 최종 아트·전체 월드 최적화 완료·무팝인 보장이 아니다.
 
@@ -688,23 +690,23 @@ GPU 중앙값은 약 27% 줄었지만 게임 스레드 비용은 증가했다. �
 
 두 지하 공간은 입구 기준 약 40m 내려간 공동과 약 58m 아래 탐험 가지, 공동 바닥보다 약 32m 높은 다리를 갖춘다. 이 값은 입구/제작 기준의 상대 높이며 모든 위치에서 지표와의 실제 암반 두께가 같다는 뜻은 아니다. 큰 공동의 설계 폭은 약 96×92m, 설계 높이는 52m다. 주 통로는 12–18m 폭으로 작성했다. 인간 캐릭터와 별도로 최종 비행 탈것의 날개·회전·카메라·안전 착지 치수 검증은 필요하다.
 
-[오프라인 원본 생성](../../../Scripts/Editor/Generate-RegionAVertical.py)은 연결된 공기 공간을 하나의 장으로 합성하고 [동굴 메시 생성기](../../../Scripts/Editor/RegionA_CaveMesher.py)로 벽·천장·바닥을 만든다. 2m 저작 격자, 불규칙 벽 형상, 중복 정점 용접, Unreal의 면 방향을 적용했다. 높이맵으로 불가능한 겹치는 지하 공간은 별도 메시로 만들며 Landscape 구멍으로 지상과 연결한다. 위층 순환로는 실제 충돌을 갖는 보행 구조다. 방의 공기 공간이 겹칠 때 통로 중심선에 바닥이 자동 생성된다고 가정하지 않는다. 급한 모서리는 둥글게 다듬고 생성된 보행 좌표를 저작·검사·PIE 시험이 함께 소비한다.
+오프라인 원본 생성 (`Scripts/Editor/Generate-RegionAVertical.py`, 당시 경로·현재 파일 없음)은 연결된 공기 공간을 하나의 장으로 합성하고 동굴 메시 생성기 (`Scripts/Editor/RegionA_CaveMesher.py`, 당시 경로·현재 파일 없음)로 벽·천장·바닥을 만든다. 2m 저작 격자, 불규칙 벽 형상, 중복 정점 용접, Unreal의 면 방향을 적용했다. 높이맵으로 불가능한 겹치는 지하 공간은 별도 메시로 만들며 Landscape 구멍으로 지상과 연결한다. 위층 순환로는 실제 충돌을 갖는 보행 구조다. 방의 공기 공간이 겹칠 때 통로 중심선에 바닥이 자동 생성된다고 가정하지 않는다. 급한 모서리는 둥글게 다듬고 생성된 보행 좌표를 저작·검사·PIE 시험이 함께 소비한다.
 
 최종 원본은 **57개 동굴 공간 청크·206,434개 삼각형**, 보행로·다리·전망대를 포함한 **73개 충돌 표면**, **2,055개 상세 HISM 인스턴스/18개 소유 액터**, **36개 점광원**이다. 그림자를 켠 점광원은 공동·아래층 방의 4개다. 상세 인스턴스 수에는 난간·지지대·안내 소품이 포함되며 고유 콘텐츠 개수로 계산하지 않는다. 내부 동굴은 대략 64m 공간 청크로 나누고 HLOD 자동 생성을 제외했다. 전망대의 바깥 보행 구조는 기존 경로 HLOD에 연결한다. 현 RuntimeHashSet 스트리밍을 유지하며 3D 런타임 셀 분할을 새로 도입했다고 기록하지 않는다.
 
 ### 소유권·저장·검사
 
-원본은 `Content/Map_Resource/ProjectJ_World/Source/Exploration`, 메시와 재질은 `Geometry/Exploration`·`Materials/Exploration`, 액터는 `A_Region/Exploration`에 둔다. [저작 스크립트](../../../Scripts/Editor/Build-RegionAVertical.py)는 `A_Vertical_` 접두사와 `RegionA.ExplorationV1` 소유 태그가 함께 맞는 액터만 재생성한다. 지형은 이름이 고정된 `ProjectJ_ExplorationVisibility` 편집 레이어의 작은 마스크 영역만 수정한다. 이전 저장본은 로컬 `Saved/WorldRegionA/BeforeVerticalPass`에 보관했다. 원본 assets 프로젝트, 기존 높이맵·다른 편집 레이어·11개 거점 ID와 월드 상태/보스 계약은 유지한다.
+원본은 `Content/Map_Resource/ProjectJ_World/Source/Exploration`, 메시와 재질은 `Geometry/Exploration`·`Materials/Exploration`, 액터는 `A_Region/Exploration`에 둔다. 저작 스크립트 (`Scripts/Editor/Build-RegionAVertical.py`, 당시 경로·현재 파일 없음)는 `A_Vertical_` 접두사와 `RegionA.ExplorationV1` 소유 태그가 함께 맞는 액터만 재생성한다. 지형은 이름이 고정된 `ProjectJ_ExplorationVisibility` 편집 레이어의 작은 마스크 영역만 수정한다. 이전 저장본은 로컬 `Saved/WorldRegionA/BeforeVerticalPass`에 보관했다. 원본 assets 프로젝트, 기존 높이맵·다른 편집 레이어·11개 거점 ID와 월드 상태/보스 계약은 유지한다.
 
 [C++ 제작 함수](../../../Source/Project_JCharacterEditor/Private/Project_JWorldAuthoringLibrary.cpp)의 `ImportRegionVisibilityPatch`는 에디터 월드·크기·지형 경계·파일 길이를 검사하고, 엔진의 가중치 편집 경로로 마스크를 기록한 뒤 원본 읽기와 합성 결과를 확인한다. 레이어 합성·충돌 갱신과 뒤이은 저장을 거쳐 재로딩을 검사한다. 직접 UBT를 사용한 `BuildVertical01`·`BuildVertical02` 빌드는 모두 성공했다. 첫 함수는 반환 성공만으로 저장된 물리 결과를 판단하지 않도록 후속 빌드에서 읽기 검증을 보강했다.
 
-[충돌 검사](../../../Scripts/Editor/Verify-RegionAVertical.py)는 바닥 높이와 반지름 42cm·반높이 90cm의 인간 캡슐 통과를 검사한다. 에디터의 `Visibility` 채널에는 구멍을 무시하는 Landscape 편집용 높이장도 포함되므로, 새 통과 검사는 `Camera` 채널과 단순 충돌 조회로 게임용 충돌면을 조사한다. 생성 보행 메시의 `Use Complex As Simple` 정책은 유지한다. `LandscapeCollision.cpp`의 편집용 shape 필터를 확인한 결과이며, 편집용 충돌의 검출을 게임 입구 폐쇄로 취급하지 않는다. 채널 응답과 실제 캐릭터 이동의 차이는 별도 [Standalone PIE 보행 fixture](../../../Scripts/Editor/Smoke-RegionAVerticalWalk.py)로 확인한다.
+충돌 검사 (`Scripts/Editor/Verify-RegionAVertical.py`, 당시 경로·현재 파일 없음)는 바닥 높이와 반지름 42cm·반높이 90cm의 인간 캡슐 통과를 검사한다. 에디터의 `Visibility` 채널에는 구멍을 무시하는 Landscape 편집용 높이장도 포함되므로, 새 통과 검사는 `Camera` 채널과 단순 충돌 조회로 게임용 충돌면을 조사한다. 생성 보행 메시의 `Use Complex As Simple` 정책은 유지한다. `LandscapeCollision.cpp`의 편집용 shape 필터를 확인한 결과이며, 편집용 충돌의 검출을 게임 입구 폐쇄로 취급하지 않는다. 채널 응답과 실제 캐릭터 이동의 차이는 별도 Standalone PIE 보행 fixture (`Scripts/Editor/Smoke-RegionAVerticalWalk.py`, 당시 경로·현재 파일 없음)로 확인한다.
 
 저장·재로딩 검사에서 소유 액터 **137개**, **13개 경로·1,089개 바닥/캡슐 표본**, **99개 Landscape 구멍 표본**을 확인했다. 누락 바닥·막힌 캡슐·닫힌 구멍 실패는 0이다. 입구 끝 5m 이내의 지형 접점은 높이맵 원본과 6cm 이내로 일치할 때 실제 지형 바닥으로 분류하며, 캡슐 통과 검사는 생략하지 않는다. 폐광 입구 한 표본은 통로 설계 바닥보다 **91.12cm** 높고 원본 지형과의 오차는 **0.39cm**였다. 이를 내부 바닥 오차나 숨긴 실패로 합산하지 않고 `surface_portal_contacts`에 별도로 기록했다. 다른 보행 표면의 설계 바닥 차이는 최대 약 43.17cm이며 전망대 데크/지형 접점을 포함한다. 이 검사는 경로 중심 표본이지 통로 전체 폭·모든 나무·모든 충돌면의 증명이 아니다.
 
 실제 보행에서는 폐광·유적 순환로 각각 **377개 경유점**, 수정한 숲 전망대 **140개 경유점**을 입력 기반 CharacterMovement로 통과했다. 최대 기록 속도는 약 5m/s다. 각 사례 시작 때 한 번만 위치를 지정하며 이동 중 프레임별 teleport는 사용하지 않는다. 시작 지점에서 셀과 바닥이 준비될 때까지 이동을 고정한다. 완료 시간은 폐광 약 293.92초·유적 약 152.91초·전망대 약 66.88초이며 에디터 부하·시험 대기를 포함해 탐험 소요 시간이나 성능 벤치마크로 쓰지 않는다. 더 깊은 가지는 충돌 검사에 포함됐지만 이 순환 보행 시험에는 포함하지 않았다. 근거는 로컬 `Saved/Validation/WorldRegionA/VerticalPass`의 `collision.json`, `walk-summary.json`과 사례별 원본 JSON이다.
 
-초기 전망대는 마을 동쪽 외곽 주택과 겹쳐 실제 캐릭터가 정체됐다. 주택을 보존하고 중심을 마을에서 동쪽 약 **274m**로 옮겼다. [부분 수정](../../../Scripts/Editor/Repair-RegionAForestSpur.py)은 숲 전망대 폴더의 소유 액터만 교체하고 두 지하망을 유지한다. 실패한 최초 배치와 준비 전 낙하 실행은 보관하되 통과 근거에서 제외했다. 화면 검토 후 중심 바위의 하부를 지면에 더 깊이 묻고, 동굴의 비그림자 안내 조명은 volumetric scattering을 끄고 강도를 낮췄다. 그림자 조명 4개는 유지한다. [부분 조정](../../../Scripts/Editor/Polish-RegionAVerticalLighting.py)과 전체 저작 스크립트에 같은 값을 반영했다. 저장된 지상 구성의 개수·바닥·WorldState/Encounter와 맵 검사도 다시 확인한다.
+초기 전망대는 마을 동쪽 외곽 주택과 겹쳐 실제 캐릭터가 정체됐다. 주택을 보존하고 중심을 마을에서 동쪽 약 **274m**로 옮겼다. 부분 수정 (`Scripts/Editor/Repair-RegionAForestSpur.py`, 당시 경로·현재 파일 없음)은 숲 전망대 폴더의 소유 액터만 교체하고 두 지하망을 유지한다. 실패한 최초 배치와 준비 전 낙하 실행은 보관하되 통과 근거에서 제외했다. 화면 검토 후 중심 바위의 하부를 지면에 더 깊이 묻고, 동굴의 비그림자 안내 조명은 volumetric scattering을 끄고 강도를 낮췄다. 그림자 조명 4개는 유지한다. 부분 조정 (`Scripts/Editor/Polish-RegionAVerticalLighting.py`, 당시 경로·현재 파일 없음)과 전체 저작 스크립트에 같은 값을 반영했다. 저장된 지상 구성의 개수·바닥·WorldState/Encounter와 맵 검사도 다시 확인한다.
 
 실제 에디터 화면: [상층 다리와 하층](Assets/A_Region_Cave_UpperPass.png), [공동 바닥에서 본 다리](Assets/A_Region_Cave_HallPass.png), [숲 전망 동선](Assets/A_Region_ForestSpur_VerticalPass.png). 이동 구조를 확인하기 위한 현재 화면이며 고유 암반·목재 세부 아트, 노출과 조명의 지역별 완성도를 최종 품질로 판단하지 않는다.
 
@@ -720,31 +722,31 @@ HLOD 생성 후 다시 연 저장본에서 기존 PCG 149,706개·정착지 주�
 
 ### 지형·수계·길의 공통 원본
 
-[지형 구성](../../../Scripts/Editor/RegionA_Landforms.py)과 `RegionA.landforms.json`의 10개 능선·10개 비대칭 독립 구릉으로 큰 형상을 나눈다. 기존 북쪽으로 계속 높아지는 경사를 제거하고 지역별 산체와 낮은 연결 공간을 둔다. [중간 규모 지표](../../../Scripts/Editor/RegionA_Mesorelief.py)는 반복적인 넓은 사인 파형 대신 연속 값 노이즈를 쓴다. 이는 유역·수리 침식 시뮬레이션이나 최종 자연 지형 아트의 완성을 뜻하지 않는다. 가파른 사면의 암반 재질 혼합도 조정했다.
+지형 구성 (`Scripts/Editor/RegionA_Landforms.py`, 당시 경로·현재 파일 없음)과 `RegionA.landforms.json`의 10개 능선·10개 비대칭 독립 구릉으로 큰 형상을 나눈다. 기존 북쪽으로 계속 높아지는 경사를 제거하고 지역별 산체와 낮은 연결 공간을 둔다. 중간 규모 지표 (`Scripts/Editor/RegionA_Mesorelief.py`, 당시 경로·현재 파일 없음)는 반복적인 넓은 사인 파형 대신 연속 값 노이즈를 쓴다. 이는 유역·수리 침식 시뮬레이션이나 최종 자연 지형 아트의 완성을 뜻하지 않는다. 가파른 사면의 암반 재질 혼합도 조정했다.
 
 기존 두 동굴과 숲 전망대가 만나는 지표는 3개의 작은 높이 패치와 완충 영역으로 보존한다. 저장된 `A_*_TerrainAnchor.r16`이 제작 입력이므로 로컬 백업 폴더가 없어도 재생성할 수 있다. 광역 지형을 바꾸면서 검증된 입구·보행면을 함께 무너뜨리지 않기 위한 경계다. 이전 전체 저장본은 로컬 `Saved/WorldRegionA/BeforeLandformUrbanPass`에 보관한다.
 
-[경로 계획](../../../Scripts/Editor/RegionA_RoutePlanner.py)은 지형 비용을 조회하고 호수 내부를 피해서 간선을 찾는다. 도시는 광역 도로의 시작점을 외곽 출입부로 옮겨 내부 블록을 관통하지 않게 했다. 길·강·건물 제외·지표 재질은 같은 최종 경로/필지를 소비한다. 강은 횡단면을 공유하는 연속 메시로 바꾸고 발원부 폭을 점차 넓혔다. 호숫가 마을 지반을 올린 뒤에는 강바닥을 다시 확보해 메워지는 구간을 방지한다. 길은 약 250m 저작 청크로 나눈다. 모든 산길의 경사·회전 반경과 최종 고속 탈것 통과가 합격했다는 뜻은 아니다.
+경로 계획 (`Scripts/Editor/RegionA_RoutePlanner.py`, 당시 경로·현재 파일 없음)은 지형 비용을 조회하고 호수 내부를 피해서 간선을 찾는다. 도시는 광역 도로의 시작점을 외곽 출입부로 옮겨 내부 블록을 관통하지 않게 했다. 길·강·건물 제외·지표 재질은 같은 최종 경로/필지를 소비한다. 강은 횡단면을 공유하는 연속 메시로 바꾸고 발원부 폭을 점차 넓혔다. 호숫가 마을 지반을 올린 뒤에는 강바닥을 다시 확보해 메워지는 구간을 방지한다. 길은 약 250m 저작 청크로 나눈다. 모든 산길의 경사·회전 반경과 최종 고속 탈것 통과가 합격했다는 뜻은 아니다.
 
 ### 도시 블록과 자산
 
-[도시 필지 생성](../../../Scripts/Editor/RegionA_UrbanBlocks.py)은 실제 메시 바운드로 건물의 폭·깊이를 계산하고 회전 사각형 겹침으로 교차로·다른 건물과의 충돌을 피한다. 대도시에 15개 연결 가로를 두며 시장 간선 12m, 다른 혼합 가로 4.6–10m, 보행 골목 2.6–2.8m로 폭과 전면을 구분한다. 좁은 골목의 건물 전면을 먼저 배치하고 안뜰 접근을 연결했다. 시장·작업·주거의 소품과 전면 간격을 달리한다. 최종 외관은 여전히 같은 중세 키트 안의 변형이며 각 구역의 고유 건축과 모든 실내가 완성된 상태는 아니다.
+도시 필지 생성 (`Scripts/Editor/RegionA_UrbanBlocks.py`, 당시 경로·현재 파일 없음)은 실제 메시 바운드로 건물의 폭·깊이를 계산하고 회전 사각형 겹침으로 교차로·다른 건물과의 충돌을 피한다. 대도시에 15개 연결 가로를 두며 시장 간선 12m, 다른 혼합 가로 4.6–10m, 보행 골목 2.6–2.8m로 폭과 전면을 구분한다. 좁은 골목의 건물 전면을 먼저 배치하고 안뜰 접근을 연결했다. 시장·작업·주거의 소품과 전면 간격을 달리한다. 최종 외관은 여전히 같은 중세 키트 안의 변형이며 각 구역의 고유 건축과 모든 실내가 완성된 상태는 아니다.
 
 원본 라이브러리에서 별도의 작업용 프로젝트로 선별 이관한 도시 키트는 43개 메시와 그 의존 자산이다. `Content/Map_Resource/SkyTown`의 기존 공급자 구조와 참조를 유지하고, 실제 크기는 `RegionA.building-metrics.json`으로 보관한다. 이번에 사용하지 않은 창·셔터·기초·소품 변형도 이후 제작용이므로 직접 참조가 없다는 이유로 삭제하지 않는다. 원본 assets 프로젝트는 수정하지 않았다.
 
 대도시의 유효 주택 필지는 342개, 7개 정착지 전체는 502개다. 이전 패스의 대도시 135개·전체 346개에서 늘었다. 도로·수계 제외 후 배치한 수치이며 상점 수나 고유 콘텐츠 개수가 아니다. 넓은 마을 원형 전체를 풀 제외 영역으로 쓰던 규칙을 작은 광장·실제 건물·길 제외로 바꿨다. 주변 여섯 마을은 기존 배치 형식을 유지한 채 지면·제외 경계를 갱신했으며, 모두 새 도시 블록 방식으로 완성했다고 기록하지 않는다.
 
-[보행 통과 구조](../../../Scripts/Editor/RegionA_UrbanPassages.py)는 4개 골목에 충돌을 갖는 낮은 목재 프레임을 둔다. 설계 여유 높이는 240cm, 최소 폭은 255cm다. `Route.Access.Foot` 태그는 저작 구분이며 자동 하차·탑승 금지 시스템이 아니다. 실제 탈것의 캡슐·기수·카메라를 적용하기 전에는 모든 탈것이 물리적으로 차단된다고 판단하지 않는다. 기존 상점 역할 앵커도 NPC·거래 기능과 아직 연결하지 않았다.
+보행 통과 구조 (`Scripts/Editor/RegionA_UrbanPassages.py`, 당시 경로·현재 파일 없음)는 4개 골목에 충돌을 갖는 낮은 목재 프레임을 둔다. 설계 여유 높이는 240cm, 최소 폭은 255cm다. `Route.Access.Foot` 태그는 저작 구분이며 자동 하차·탑승 금지 시스템이 아니다. 실제 탈것의 캡슐·기수·카메라를 적용하기 전에는 모든 탈것이 물리적으로 차단된다고 판단하지 않는다. 기존 상점 역할 앵커도 NPC·거래 기능과 아직 연결하지 않았다.
 
 ### 렌더와 검증 범위
 
 PCG는 편집 시 생성·저장하며 런타임 대량 재생성을 추가하지 않는다. 기존 원거리 수관 유지, 근거리 풀/덤불 페이드, WPO 거리 제한과 HISM 정책을 유지했다. 지형 위 길·광장·수면의 얇은 오버레이는 개별 메시 거리장 해상도를 0으로 두고 기반 Landscape의 입체 표현을 사용한다. 나무·건물·바위 거리장을 전역으로 끄지 않는다. 이 설정만으로 메모리 절감량이나 목표 FPS 합격을 계산하지 않는다.
 
-원본 검사에서 3개 보존 영역의 **22,357개 핵심 높이 표본**이 이전 값과 정확히 일치했고, 4개 강의 **299개 중심선 표본** 모두 수면 아래에 강바닥이 있었다. 도시 골목 한 곳의 외곽 진입부는 실제 캡슐 조회에서 가파른 지면 접점을 검출했다. 해당 접근부를 바깥 16m·안쪽 24m의 완만한 연결로 저작하고 지형과 길 메시를 갱신했다. [접근부 저작](../../../Scripts/Editor/RegionA_StreetApproaches.py)은 검사 예외를 추가하는 대신 실제 지면을 고치며, 같은 입력을 이후 생성에서도 적용한다. 영향 범위의 주택 5개와 소품 6개를 다시 접지했다.
+원본 검사에서 3개 보존 영역의 **22,357개 핵심 높이 표본**이 이전 값과 정확히 일치했고, 4개 강의 **299개 중심선 표본** 모두 수면 아래에 강바닥이 있었다. 도시 골목 한 곳의 외곽 진입부는 실제 캡슐 조회에서 가파른 지면 접점을 검출했다. 해당 접근부를 바깥 16m·안쪽 24m의 완만한 연결로 저작하고 지형과 길 메시를 갱신했다. 접근부 저작 (`Scripts/Editor/RegionA_StreetApproaches.py`, 당시 경로·현재 파일 없음)은 검사 예외를 추가하는 대신 실제 지면을 고치며, 같은 입력을 이후 생성에서도 적용한다. 영향 범위의 주택 5개와 소품 6개를 다시 접지했다.
 
 저장본 검사에서 정착지 주택 **502개**, 경로 청크 **350개**, 배경 상세 **11,041개 HISM/275개 소유 액터**, PCG **142,002개/1,320개 공간 소유 액터**를 확인했다. PCG 수에는 나무 10,234개 외에 풀·관목·바위가 포함된다. 도시 가로의 **2,621개 바닥/인간 캡슐 표본**, 기존 지하·전망대 **13개 경로/1,089개 표본**, **99개 지형 구멍 표본**은 보정 후 실패 0이었다. 주택 바닥 오차는 최대 약 6cm, 지면 배치 상세 표본은 약 3cm였다. 상층 부착물·선박은 의도한 높이를 유지하고 지면용 소품과 같은 접지 기준으로 판정하지 않는다.
 
-[Standalone PIE 보행](../../../Scripts/Editor/Arm-RegionACityWalk.py)은 실제 CharacterMovement 입력으로 `FootLane02` 210개 지점·약 97.6초, `CrossStreet02` 290개 지점·약 131.6초를 통과했다. 각 경로 첫 배치와 스트리밍 대기 이후에는 프레임별 위치 워프를 하지 않았다. 두 경로 모두 통과했고 추락·막힘 실패가 없었다. 시험 중 이동 속도는 게임 계약에 따라 약 5m/s였으며, 고속 탈것·비행·원격 멀티플레이 시험과 구분한다.
+Standalone PIE 보행 (`Scripts/Editor/Arm-RegionACityWalk.py`, 당시 경로·현재 파일 없음)은 실제 CharacterMovement 입력으로 `FootLane02` 210개 지점·약 97.6초, `CrossStreet02` 290개 지점·약 131.6초를 통과했다. 각 경로 첫 배치와 스트리밍 대기 이후에는 프레임별 위치 워프를 하지 않았다. 두 경로 모두 통과했고 추락·막힘 실패가 없었다. 시험 중 이동 속도는 게임 계약에 따라 약 5m/s였으며, 고속 탈것·비행·원격 멀티플레이 시험과 구분한다.
 
 같은 보행의 CSV는 **26,265프레임**, FrameTime 중앙값 **8.3335ms**, p95 **8.3361ms**, 최대 **31.7686ms**였다. GPUTime 중앙값은 **3.3593ms**, p95 **7.7383ms**, 최대 **20.4213ms**였다. RX 9070 XT, 상속된 중간 품질 단계 1·ScreenPercentage 71%의 PIE 뷰포트이며 프레임 시간은 약 120Hz 상한에 가깝다. GPUTime만으로 전체 프레임 비용을 판단하지 않는다. 이전 숲 A/B와 조건이 달라 개선율을 계산하지 않으며, 최고 품질·최저 사양·전체 지역·고속 이동·메모리 예산의 합격 근거로 사용하지 않는다. 로컬 근거는 `Saved/Validation/WorldRegionA/LandformUrbanPass`의 검사 JSON과 `walk-render-context.json`·`walk-profile-summary.json`, `Saved/Profiling/CSV/Profile(20261017_104254).csv`다.
 
@@ -752,7 +754,7 @@ PCG는 편집 시 생성·저장하며 런타임 대량 재생성을 추가하�
 
 공식 `WorldPartitionHLODsBuilder`의 정리·생성 실행은 모두 exit 0이었다. 생성은 **421개 HLOD**, 약 **50.36초**, 오류·경고 0이다. 이는 최신 저작물의 원거리 프록시 생성 결과이며 고속 비행 시 전환 품질을 새로 합격 판정한 결과가 아니다. PCG와 소품의 인스턴스 재질 usage는 자동 활성화된 메모리 값만 믿지 않고 실제 부모 재질을 dirty 처리해 저장한다. 생성된 모든 표면이 같은 거리장·충돌 정책을 쓰도록 전역 렌더 옵션을 바꾸지 않는다.
 
-전역 제작을 다시 실행할 때는 지형 원본 → 정착지 계획 → 최종 지면/수계/경로 → 생태 → 지표 마스크 → 풀 제외 마스크의 입력 순서를 따른다. 완료된 에디터 배치를 자동 시작 훅에서 재생성하지 않는다. [명시적 제작 진입점](../../../Scripts/Editor/Build-RegionALandformUrban.py)은 백업을 확인하고 비동기 PCG 완료·저장 이후 재로딩 검사를 수행한다. 이미 저장된 맵에 대한 중복 `save_current_level`의 false 반환 때문에 검사를 중단했던 실행은 저장본 검증으로 복구했으며, dirty 패키지 저장 경로로 수정했다. C++ 소스를 변경하지 않아 이번 패스에서는 새 C++ 빌드를 수행하지 않았다. 관련 Python 71개 구문 검사와 `git diff --check`를 통과했다.
+전역 제작을 다시 실행할 때는 지형 원본 → 정착지 계획 → 최종 지면/수계/경로 → 생태 → 지표 마스크 → 풀 제외 마스크의 입력 순서를 따른다. 완료된 에디터 배치를 자동 시작 훅에서 재생성하지 않는다. 명시적 제작 진입점 (`Scripts/Editor/Build-RegionALandformUrban.py`, 당시 경로·현재 파일 없음)은 백업을 확인하고 비동기 PCG 완료·저장 이후 재로딩 검사를 수행한다. 이미 저장된 맵에 대한 중복 `save_current_level`의 false 반환 때문에 검사를 중단했던 실행은 저장본 검증으로 복구했으며, dirty 패키지 저장 경로로 수정했다. C++ 소스를 변경하지 않아 이번 패스에서는 새 C++ 빌드를 수행하지 않았다. 관련 Python 71개 구문 검사와 `git diff --check`를 통과했다.
 
 HLOD 생성 후 마지막 저장본에서도 지면·배치·도시 및 수직 경로 검사를 통과했다. HLOD는 동기 맵 조회 직후의 상주 수와 저장된 descriptor 수를 구분하고, 에디터 틱 이후 **421개 저장 descriptor와 421개 로드된 프록시**를 확인했다. 각 시점에서 30초 대기하고 엔진의 로딩 완료 경로로 실제 화면 3개를 다시 저장했다. 상공에서 원경 건물의 거친 표현과 밝은 수면은 여전히 남아 있어 시각적 전환 품질까지 해결됐다고 판단하지 않는다. `Play As Client`·플레이어 1명을 복구하고 dirty 패키지를 저장한 뒤 엔진의 정상 종료를 호출했다. `FinalReview.log`의 `LogExit: Exiting`과 Unreal/빌드 프로세스가 남지 않은 것을 확인했다. 최종 로컬 결과는 `LandformUrbanPass/final.json`이다.
 
@@ -765,13 +767,13 @@ HLOD 생성 후 마지막 저장본에서도 지면·배치·도시 및 수직 �
 
 MedievalVillage 예제는 손상된 건축도 많이 포함하므로 예제 레벨을 그대로 붙이지 않았다. 정상 벽·지붕·기둥·문·창으로 Cottage, Townhouse, Inn, Storehouse, Workshop, Longhouse 6종을 조립하고 반복 배치용 메시로 병합했다. 새 키트의 25개 메시와 지면 텍스처·재질·함수 등 총 150개 패키지는 Content/Map_Resource/MedievalVillage의 공급자 구조 아래에 정리했다. 기존 assets 라이브러리에서 이미 이관한 SkyTown, Brushify, Nanite 환경과 ProceduralNaturePack의 뿌리 나무·풀도 함께 사용한다. 건물 종류 이름은 외관 저작이며 여관 이용·NPC 거래·모든 실내 기능을 구현했다는 의미가 아니다.
 
-[마을 계획](../../../Scripts/Editor/RegionA_VillageBlocks.py)은 6개 마을에 서로 다른 연결 가로를 둔다. 농촌은 밭·헛간으로 갈라지는 길, 숲 마을은 목재 작업장 순환길, 광산은 광석 운반길, 호숫가는 해안 작업길, 어촌은 그물 작업 골목, 항구는 창고·상업 가로를 구분한다. 혼합 가로는 3.5–10m, 보행 골목은 2.5–2.8m다. 실제 메시 바운드와 회전 사각형으로 건물 간·교차로 겹침을 피하며 새 키트의 문 방향 보정도 필지에 명시한다. 시장에는 새 목재 가판과 천막을 사용하고 벤치·통·화분과 후면 풀·꽃을 HISM으로 묶는다. 기존 상점 역할 앵커는 유지한다. 탈것 자동 하차 정책은 추가하지 않았다.
+마을 계획 (`Scripts/Editor/RegionA_VillageBlocks.py`, 당시 경로·현재 파일 없음)은 6개 마을에 서로 다른 연결 가로를 둔다. 농촌은 밭·헛간으로 갈라지는 길, 숲 마을은 목재 작업장 순환길, 광산은 광석 운반길, 호숫가는 해안 작업길, 어촌은 그물 작업 골목, 항구는 창고·상업 가로를 구분한다. 혼합 가로는 3.5–10m, 보행 골목은 2.5–2.8m다. 실제 메시 바운드와 회전 사각형으로 건물 간·교차로 겹침을 피하며 새 키트의 문 방향 보정도 필지에 명시한다. 시장에는 새 목재 가판과 천막을 사용하고 벤치·통·화분과 후면 풀·꽃을 HISM으로 묶는다. 기존 상점 역할 앵커는 유지한다. 탈것 자동 하차 정책은 추가하지 않았다.
 
 ### 지면과 지형
 
-[토지 이용 원본](../../../Scripts/Editor/Generate-RegionASettlementGround.py)은 4096² RGBA에 다진 흙·포장석·자갈·젖은 흙을 기록한다. 큰 마을 원 하나를 칠하는 대신 실제 가로·건물 마당·작업장·광장을 그리고 약 3m 경계 완충과 세부 질감으로 혼합한다. 지형과 길·광장이 같은 월드 좌표 재질을 사용하므로 서로 다른 색의 평면이 길 끝에서 갑자기 끊기는 현상을 줄인다. 포장석은 새 키트의 색·노멀 텍스처를 사용한다. 이번 구현에 새 RVT 시스템이나 LandscapeLayerBlend를 설치했다고 기록하지 않는다. [직접 자료 D23](Open_World_Research_References.md#2026-10-17-지형도시-가로-추가-조사)는 표면 혼합의 참고다.
+토지 이용 원본 (`Scripts/Editor/Generate-RegionASettlementGround.py`, 당시 경로·현재 파일 없음)은 4096² RGBA에 다진 흙·포장석·자갈·젖은 흙을 기록한다. 큰 마을 원 하나를 칠하는 대신 실제 가로·건물 마당·작업장·광장을 그리고 약 3m 경계 완충과 세부 질감으로 혼합한다. 지형과 길·광장이 같은 월드 좌표 재질을 사용하므로 서로 다른 색의 평면이 길 끝에서 갑자기 끊기는 현상을 줄인다. 포장석은 새 키트의 색·노멀 텍스처를 사용한다. 이번 구현에 새 RVT 시스템이나 LandscapeLayerBlend를 설치했다고 기록하지 않는다. [직접 자료 D23](Open_World_Research_References.md#2026-10-17-지형도시-가로-추가-조사)는 표면 혼합의 참고다.
 
-[마을 도로 지면](../../../Scripts/Editor/RegionA_VillageGrading.py)을 먼저 정리하고 실제 건물 발자국에 맞춰 기초를 다듬는다. 도로 중심의 완충을 보호해 주택 패드가 골목을 다시 깎지 않게 했다. 기존 전망대 보존의 넓은 완충이 새 숲 마을 길의 경사를 되돌리는 충돌도 발견했다. 광역 단계의 320m 보존 완충은 유지하고 마지막 세부 단계에서는 핵심 영역과 12m 경계만 재보호하도록 순서를 고쳤다. 원본은 RegionA.surface-base.json을 별도로 저장해 이전 출력 도로를 다음 실행의 입력으로 다시 읽던 반복 의존도 끊었다.
+마을 도로 지면 (`Scripts/Editor/RegionA_VillageGrading.py`, 당시 경로·현재 파일 없음)을 먼저 정리하고 실제 건물 발자국에 맞춰 기초를 다듬는다. 도로 중심의 완충을 보호해 주택 패드가 골목을 다시 깎지 않게 했다. 기존 전망대 보존의 넓은 완충이 새 숲 마을 길의 경사를 되돌리는 충돌도 발견했다. 광역 단계의 320m 보존 완충은 유지하고 마지막 세부 단계에서는 핵심 영역과 12m 경계만 재보호하도록 순서를 고쳤다. 원본은 RegionA.surface-base.json을 별도로 저장해 이전 출력 도로를 다음 실행의 입력으로 다시 읽던 반복 의존도 끊었다.
 
 두 건조 협곡은 RegionA.landforms.json의 공유 경로·폭·깊이를 지형과 암반 배치가 함께 사용한다. 수리 침식 시뮬레이션이나 새로운 수계 구현은 아니다. 농촌 주변에는 완만한 장파장 굴곡과 농경 평지를 함께 두었다. 기존 동굴·전망대 핵심 높이 22,357개 표본은 이전 값과 같고, 4개 강 중심 299개 표본은 모두 수면 아래에 강바닥을 유지한다. 넓은 개활지는 모든 곳을 숲으로 채우지 않고 농경·초지·구릉·협곡의 대비를 유지한다.
 
@@ -781,7 +783,7 @@ MedievalVillage 예제는 손상된 건축도 많이 포함하므로 예제 레�
 
 식생은 편집 시 생성·저장하며 런타임 대량 재생성을 추가하지 않는다. 새 건물 메시에는 Nanite와 단순 충돌을 사용하고, 프로젝트에서 꺼진 voxel 기능에 의존하던 새 식생 5종은 개별 자산을 PreserveArea로 맞췄다. 전역 렌더 설정을 바꾸지 않는다. 새 마을의 실제 보행·프레임·메모리와 고속 비행은 각각 검증 범위를 구분하며 AAA 완성·전체 무팝인·최종 MMO 서버 합격으로 간주하지 않는다.
 
-거리만 비워 둔 골목 옆에 높은 절개가 남는 화면도 확인해 [마을 기반 지면](../../../Scripts/Editor/RegionA_VillageTownscape.py)을 추가했다. 주변 마을 중심부에는 완만한 기울기를 주고 넓은 경계에서 기존 구릉으로 연결한다. 강·호숫가와 동굴·전망대 핵심 영역은 별도로 보호한다. 도로를 가로지르던 밭 울타리·작물 269개도 공유 도로 예약 규칙으로 제거했으며, 이후 제작 시 같은 규칙을 사용한다. 지붕은 예제의 아래쪽 평면을 외부 지붕으로 사용한 조립 오류를 실제 상공 화면에서 발견해 여섯 원형의 바깥 면과 UV를 갖는 닫힌 지붕으로 바꾸었다. 이는 지붕 원형의 수정이며 건물 배치나 골목을 삭제해 가린 수정이 아니다.
+거리만 비워 둔 골목 옆에 높은 절개가 남는 화면도 확인해 마을 기반 지면 (`Scripts/Editor/RegionA_VillageTownscape.py`, 당시 경로·현재 파일 없음)을 추가했다. 주변 마을 중심부에는 완만한 기울기를 주고 넓은 경계에서 기존 구릉으로 연결한다. 강·호숫가와 동굴·전망대 핵심 영역은 별도로 보호한다. 도로를 가로지르던 밭 울타리·작물 269개도 공유 도로 예약 규칙으로 제거했으며, 이후 제작 시 같은 규칙을 사용한다. 지붕은 예제의 아래쪽 평면을 외부 지붕으로 사용한 조립 오류를 실제 상공 화면에서 발견해 여섯 원형의 바깥 면과 UV를 갖는 닫힌 지붕으로 바꾸었다. 이는 지붕 원형의 수정이며 건물 배치나 골목을 삭제해 가린 수정이 아니다.
 
 첫 생성에서는 PCG 저장 중 Slate 콜백이 검증을 시작해 맵을 다시 읽으면서 저장 대상이 교체되는 오류가 발생했고 에디터가 비정상 종료했다. 인스턴스 수만으로 완료를 판단하던 경로를 고쳐 생태 저작자의 저장 반환 뒤에 발행된 새 완료 보고를 기다리게 했다. 복구는 생성 전체를 재실행하지 않고 저장본 재조회·지면 소비자 재접지·명시적 재투영으로 수행했다. 이 패스의 복구와 이후 저장 경로는 실제 확인했으며 수정된 전체 생성 진입점을 다시 처음부터 실행한 별도 시험과 구분한다. 이전 실패 로그는 로컬에 보존한다.
 

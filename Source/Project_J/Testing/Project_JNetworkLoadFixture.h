@@ -5,7 +5,6 @@
 #include "GameFramework/Pawn.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "Containers/Ticker.h"
-#include "Project_JNPCCharacter.h"
 #include "Animation/Project_JReplicatedAnimEventTypes.h"
 #include "Project_JNetworkLoadFixture.generated.h"
 
@@ -32,7 +31,8 @@ public:
 };
 
 UCLASS(NotBlueprintable)
-class AProject_JNetworkProbeNPC : public AProject_JNPCCharacter
+// Static AOI/counter probes have no movement or animation contract.
+class AProject_JNetworkProbeNPC : public APawn
 {
 	GENERATED_BODY()
 public:
@@ -79,7 +79,7 @@ private:
 	TSet<TWeakObjectPtr<AProject_JPlayerCharacter>> ObservedLandingPose;
 	int32 AnimationStage = INDEX_NONE;
 	bool bAnimationViolation = false;
-	FString AnimationRows = TEXT("stage,actor,role,move_sequence,landing_sequence,landing_revision,presentation_epoch,selection_revision,asset,mm_asset,comparison\n");
+	FString AnimationRows = TEXT("stage,actor,role,move_sequence,landing_sequence,landing_revision,presentation_epoch,capture_frame,gasp_state,playback_asset,comparison\n");
 	int32 CurrentStage = INDEX_NONE, LocalSlot = INDEX_NONE, RequiredPulse = 0;
 	FGuid ItemId;
 	bool bItemsExpected = true;

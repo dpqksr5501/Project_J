@@ -4,7 +4,7 @@ namespace ProjectJ::Animation
 {
 float ResolveAnimationDistanceTier(double DistanceSquared, const FProject_JAnimationBudgetSettings& S)
 {
-	// Malformed configuration preserves quality instead of silently disabling MM.
+	// Malformed configuration preserves quality instead of silently reducing visual quality.
 	if (!FMath::IsFinite(DistanceSquared) || DistanceSquared < 0 ||
 		!FMath::IsFinite(S.NearDistance) || !FMath::IsFinite(S.MidDistance) || !FMath::IsFinite(S.FarDistance) ||
 		S.NearDistance <= 0 || S.MidDistance <= S.NearDistance || S.FarDistance <= S.MidDistance) return 0.f;
@@ -21,12 +21,10 @@ FProject_JAnimOptimizationPolicy ResolveSourceQuality(const FQualityObservation&
 	if (!I.bHasOwner || (!I.bLocal && !I.bGameplayPose && !I.bRecentlyRendered))
 	{
 		P.Tier = EProject_JAnimBudgetTier::Hidden;
-		P.bUpdateAnimationData = P.bUseFullChooserRows = P.bUseFarChooserRowsOnly = false;
 		P.bEnableHandIK = P.bEnableFootIK = P.bEnableRetargetIK = P.bEnableFollowerRetarget = false;
 		if (I.bHasOwner)
 		{
 			P.RetargetIKLODThreshold = P.RetargetLODThreshold = 0;
-			P.MotionMatchingUpdateInterval = S.HiddenUpdateInterval;
 		}
 		return P;
 	}
@@ -42,14 +40,11 @@ FProject_JAnimOptimizationPolicy ResolveSourceQuality(const FQualityObservation&
 	if (I.Significance <= 1.f)
 	{
 		P.Tier = EProject_JAnimBudgetTier::Mid;
-		P.MotionMatchingUpdateInterval = S.MidUpdateInterval;
 		P.RetargetLODThreshold = -1;
 		return P;
 	}
 	P.Tier = EProject_JAnimBudgetTier::Far;
-	P.bUseFullChooserRows = P.bEnableFootIK = false;
-	P.bUseFarChooserRowsOnly = true;
-	P.MotionMatchingUpdateInterval = S.FarUpdateInterval;
+	P.bEnableFootIK = false;
 	P.RetargetLODThreshold = 2;
 	return P;
 }

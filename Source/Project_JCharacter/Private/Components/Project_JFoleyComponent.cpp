@@ -1,4 +1,6 @@
 #include "Components/Project_JFoleyComponent.h"
+#include "GameFramework/Pawn.h"
+#include "Movement/Project_JMovementQueries.h"
 
 #include "Audio/Project_JFoleyAudioProfile.h"
 #include "Animation/Project_JCharacterAnimProfile.h"
@@ -31,7 +33,7 @@ TSoftObjectPtr<UProject_JFoleyAudioProfile> UProject_JFoleyComponent::GetEffecti
 
 bool UProject_JFoleyComponent::CanPresent(EProject_JFoleyGroup Group) const
 {
-	const ACharacter* Character = Cast<ACharacter>(GetOwner());
+	const APawn* Character = Cast<APawn>(GetOwner());
 	const UWorld* World = GetWorld();
 	if (!bEnabled || !IsActive() || !Character || !World || !World->IsGameWorld() ||
 		World->bIsTearingDown || World->GetNetMode() == NM_DedicatedServer || Character->IsActorBeingDestroyed()) { return false; }
@@ -40,8 +42,7 @@ bool UProject_JFoleyComponent::CanPresent(EProject_JFoleyGroup Group) const
 	if (const auto* Mount = Character->FindComponentByClass<UProject_JMountComponent>(); Mount && Mount->IsMounted()) { return false; }
 	if (Group == EProject_JFoleyGroup::Footstep || Group == EProject_JFoleyGroup::Scuff)
 	{
-		const UCharacterMovementComponent* Movement = Character->GetCharacterMovement();
-		if (!Movement || !Movement->IsMovingOnGround()) { return false; }
+		if (!Project_J::Movement::IsGrounded(Character)) { return false; }
 	}
 	return true;
 }
@@ -62,9 +63,9 @@ bool UProject_JFoleyComponent::PrepareLocalAudio()
 
 void UProject_JFoleyComponent::HandleAnimNotify(USkeletalMeshComponent* Mesh, const FProject_JFoleyEvent& Event)
 {
-	const ACharacter* Character = Cast<ACharacter>(GetOwner());
+	const APawn* Character = Cast<APawn>(GetOwner());
 	// Retarget followers and modular clothes cannot create a second contact stream.
-	if (!Character || Mesh != Character->GetMesh()) { return; }
+	if (!Character || Mesh != Project_J::Movement::FindPoseSource(Character)) { return; }
 	if (bUseMovementEventsForJumpAndLand && (Event.Event == Project_J::Foley::Jump || Event.Event == Project_J::Foley::Land)) { return; }
 	PlayFoleyEvent(Event);
 }
@@ -92,7 +93,7 @@ void UProject_JFoleyComponent::PlayLanding(float ImpactSpeed, float AgeSeconds)
 FVector UProject_JFoleyComponent::ResolveContactLocation(const UProject_JFoleyAudioProfile& Profile, EProject_JFoleySide Side,
 	const FProject_JFoleySoundSet* Definition) const
 {
-	const ACharacter* Character = Cast<ACharacter>(GetOwner());
+	const APawn* Character = Cast<APawn>(GetOwner());
 	if (!Character) { return FVector::ZeroVector; }
 	const EProject_JFoleyContact Contact = Definition ? Definition->Contact : EProject_JFoleyContact::Foot;
 	const bool bHand = Contact == EProject_JFoleyContact::Hand;
@@ -110,14 +111,14 @@ FVector UProject_JFoleyComponent::ResolveContactLocation(const UProject_JFoleyAu
 		{
 			return Visual->GetSocketLocation(EffectiveVisualBone);
 		}
-		const USkeletalMeshComponent* Source = Character->GetMesh();
+		const USkeletalMeshComponent* Source = Project_J::Movement::FindPoseSource(Character);
 		if (Source && Source->IsRegistered() && Source->WasRecentlyRendered(0.2f) && Source->DoesSocketExist(SourceBone))
 		{
 			return Source->GetSocketLocation(SourceBone);
 		}
 	}
 	// Offscreen/URO poses can be stale. Use a current movement-space contact without waking all bones.
-	return Character->GetActorLocation() - Character->GetActorUpVector() * Character->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+	return Character->GetActorLocation() - Character->GetActorUpVector() * Project_J::Movement::FindCapsule(Character)->GetScaledCapsuleHalfHeight();
 }
 
 void UProject_JFoleyComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)

@@ -7,9 +7,8 @@
 #include "Project_JAnimNotifyState_LocomotionEarlyTransition.generated.h"
 
 /**
- * Opens an authored, game-thread-safe permission window for the experimental
- * locomotion Blend Stack State Controller to leave a non-looping transition
- * early. It does not change CharacterMovement, gameplay state, or replication.
+ * Authored GASP transition request. It does not change physical movement,
+ * gameplay state, or replication. Existing clip payloads retain their meaning.
  */
 UCLASS(meta = (DisplayName = "Project J Locomotion Early Transition"))
 class PROJECT_JCHARACTER_API UProject_JAnimNotifyState_LocomotionEarlyTransition : public UAnimNotifyState
@@ -17,13 +16,15 @@ class PROJECT_JCHARACTER_API UProject_JAnimNotifyState_LocomotionEarlyTransition
 	GENERATED_BODY()
 
 public:
-	/** Original six GASP Run clips use Re-Transition / Gait != Run.
-	 * This bridge permits the current held one-shot to be re-evaluated; it does
-	 * not implement GASP's separate Transition-to-Loop destination. */
+	/** The original six Run clips request Re-Transition / Gait != Run. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Transition")
 	bool bRequireGaitChange = true;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Transition")
 	EProject_JLocomotionGaitIntent ExcludedGait = EProject_JLocomotionGaitIntent::Run;
+	/** GASP BP adapter: destination 0=Re-Transition, 1=ToLoop; condition 0=Always, 1=GaitNotEqual. */
+	UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion")
+	static void RequestGASPTransition(USkeletalMeshComponent* MeshComp, const FAnimNotifyEventReference& EventReference,
+		uint8 Destination, uint8 Condition, uint8 GaitNotEqual);
 	virtual void NotifyTick(
 		USkeletalMeshComponent* MeshComp,
 		UAnimSequenceBase* Animation,

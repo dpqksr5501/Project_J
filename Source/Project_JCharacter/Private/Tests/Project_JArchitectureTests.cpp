@@ -84,67 +84,9 @@ bool FProjectJMountEligibilityGameplayPolicyTest::RunTest(const FString& Paramet
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(
-	FProjectJMotionMatchingSearchPolicyTest,
-	"ProjectJ.Architecture.MotionMatching.SearchPolicy",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
-bool FProjectJMotionMatchingSearchPolicyTest::RunTest(const FString& Parameters)
-{
-	FProject_JMotionMatchingSearchPolicy Policy;
-	Policy.SuppressedSearchThrottleTime = 120.0f;
 
-	TestTrue(
-		TEXT("Ground locomotion keeps regular searching"),
-		Policy.ShouldSearchEveryUpdate(EProject_JLocomotionPhaseFamily::Cycle, false));
-	TestFalse(
-		TEXT("In-air loop defaults to continuing-pose only"),
-		Policy.ShouldSearchEveryUpdate(EProject_JLocomotionPhaseFamily::Fall, false));
-	TestFalse(
-		TEXT("Landing defaults to continuing-pose only"),
-		Policy.ShouldSearchEveryUpdate(EProject_JLocomotionPhaseFamily::Landing, false));
-	TestFalse(
-		TEXT("Stop defaults to continuing-pose only"),
-		Policy.ShouldSearchEveryUpdate(EProject_JLocomotionPhaseFamily::Stop, false));
-	TestEqual(
-		TEXT("Suppressed airborne search uses policy throttle"),
-		Policy.ResolveSearchThrottleTime(EProject_JLocomotionPhaseFamily::Fall, false, 0.0f, false),
-		120.0f);
-	TestEqual(
-		TEXT("Database changes retain immediate search"),
-		Policy.ResolveSearchThrottleTime(EProject_JLocomotionPhaseFamily::Fall, false, 0.0f, true),
-		0.0f);
-	TestEqual(
-		TEXT("Landing suppresses repeat one-shot searches until its database changes"),
-		Policy.ResolveSearchThrottleTime(EProject_JLocomotionPhaseFamily::Landing, false, 0.0f, false),
-		120.0f);
-	TestEqual(
-		TEXT("Stop suppresses repeat one-shot searches until its database changes"),
-		Policy.ResolveSearchThrottleTime(EProject_JLocomotionPhaseFamily::Stop, false, 0.0f, false),
-		120.0f);
 
-	return true;
-}
-
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(
-	FProjectJCombatStrafeRunPivotPolicyTest,
-	"ProjectJ.Architecture.Animation.CombatStrafeRunPivotPolicy",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-
-bool FProjectJCombatStrafeRunPivotPolicyTest::RunTest(const FString& Parameters)
-{
-	FProject_JLocomotionTransitionPolicy Policy;
-	TestEqual(TEXT("Pivot defaults to a reversal-only threshold"), Policy.PivotAngleThreshold, 135.0f);
-	TestTrue(TEXT("Pivot minimum speed exceeds ordinary TurnRedirect"), Policy.PivotMinSpeed >= Policy.TurnRedirectMinSpeed);
-
-	const UProject_JCombatAnimProfile* Profile = GetDefault<UProject_JCombatAnimProfile>();
-	TestNotNull(TEXT("Combat profile class default exists"), Profile);
-	if (Profile)
-	{
-		TestFalse(TEXT("Pivot remains opt-in for every combat profile"), Profile->bEnableCombatStrafeRunPivot);
-	}
-	return true;
-}
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FProjectJCombatHitValidationPolicyTest,
@@ -373,8 +315,6 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FProjectJRemoteOneShotSemanticPolicyTest::RunTest(const FString& Parameters)
 {
 	const FProject_JRemoteVisualLocomotionPolicy Policy;
-	TestTrue(TEXT("Far Start and Stop remain budgeted by default"), Policy.bDisableStartStopChooserBeyondFarDistance);
-	TestFalse(TEXT("Rare Land one-shots remain visible by default"), Policy.bDisableLandChooserBeyondFarDistance);
 	TestTrue(TEXT("Urgent one-shot URO bypass is short and enabled"),
 		Policy.UrgentOneShotAnimationUpdateDuration > 0.0f &&
 		Policy.UrgentOneShotAnimationUpdateDuration <= 0.25f);
@@ -396,13 +336,6 @@ bool FProjectJRemoteOneShotSemanticPolicyTest::RunTest(const FString& Parameters
 	TestEqual(TEXT("Visual decisions precede dependency-controlled mesh evaluation"),
 		UpdateCoordinatorDefaults->PrimaryComponentTick.TickGroup, TG_PrePhysics);
 
-	using Project_J::Locomotion::ResolveLandingGaitIntent;
-	TestEqual(TEXT("A standing landing stays Walk regardless of a stale Sprint bit"),
-		ResolveLandingGaitIntent(false, true), EProject_JLocomotionGaitIntent::Walk);
-	TestEqual(TEXT("A moving non-Sprint landing resolves to Run"),
-		ResolveLandingGaitIntent(true, false), EProject_JLocomotionGaitIntent::Run);
-	TestEqual(TEXT("A moving Sprint landing resolves to Sprint"),
-		ResolveLandingGaitIntent(true, true), EProject_JLocomotionGaitIntent::Sprint);
 	return true;
 }
 

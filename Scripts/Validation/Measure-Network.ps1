@@ -6,6 +6,7 @@
     [switch]$ParallelNet,
     [switch]$Animation,
     [switch]$CombatInput,
+    [switch]$MoverBuffers,
     [ValidateRange(0,200)][int]$PacketLag = 0,
     [ValidateRange(0,20)][int]$PacketLoss = 0,
     [int]$Port = 17871,
@@ -14,6 +15,7 @@
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot/Source-Provenance.ps1"
 if ($CombatInput -and !$Animation) { throw 'CombatInput requires the authored Animation fixture.' }
+if ($MoverBuffers -and !$Animation) { throw 'MoverBuffers requires the authored Animation fixture.' }
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path.Replace('\','/')
 Set-Location -LiteralPath $projectRoot
 $busy = @(Get-Process UnrealEditor*,Project_J,UnrealBuildTool,dotnet,LiveCodingConsole,MSBuild,ShaderCompileWorker -ErrorAction SilentlyContinue)
@@ -22,7 +24,7 @@ if ($Port -lt 1024 -or $Port -gt 65535) { throw 'Invalid local test port.' }
 $runRoot = "$projectRoot/Saved/Validation/GroupD_20260910/$RunName"
 if (Test-Path -LiteralPath $runRoot) { throw 'Run directory already exists; choose a unique name.' }
 New-Item -ItemType Directory -Path $runRoot | Out-Null
-$files = @(& git -c core.fsmonitor=false ls-files --modified --others --exclude-standard -- Source Scripts Config Project_J.uproject)
+$files = @(& git -c core.fsmonitor=false ls-files --modified --others --exclude-standard -- Source Scripts Config Plugins Project_J.uproject)
 $snapshot = @($files | Sort-Object -Unique | ForEach-Object {
     $sourcePath = Join-Path $projectRoot $_
     if (Test-Path -LiteralPath $sourcePath -PathType Leaf) {
@@ -38,6 +40,9 @@ $provenance=Get-ProjectJSourceProvenance -ProjectRoot $projectRoot -RuntimePaths
 $exe = "$EngineRoot/Engine/Binaries/Win64/UnrealEditor-Cmd.exe"
 $common = @("$projectRoot/Project_J.uproject",'-game','-unattended','-nop4','-nosplash','-NullRHI','-nosound','-NoLiveCoding','-NoDDCCleanup','-SaveToUserDir','-ProjectJNetworkFixture',"-ProjectJFixtureClients=$ClientCount","-ProjectJFixtureNPCs=$NPCCount",'-statnamedevents','-trace=cpu,frame,bookmark,region,counters,net','-NetTrace=1','-ExecCmds=t.MaxFPS 30')
 if ($Animation) { $common += '-ProjectJAnimationFixture' }
+if ($MoverBuffers) {
+    $common = @($common | ForEach-Object { if ($_ -like '-ExecCmds=*') { $_ + ',ProjectJ.CaptureMoverBuffers 120' } else { $_ } })
+}
 if ($CombatInput) {
     $common += '-ProjectJCombatInputFixture'
     $common = @($common | ForEach-Object { if ($_ -like '-ExecCmds=*') { $_ + ',Project_J.Combat.ComboDebug 1,ProjectJ.Combat.Presentation.Debug 1' } else { $_ } })
@@ -91,8 +96,24 @@ $results = @($resultFiles | ForEach-Object {
 })
 $exitCodes = @($fixtureProcesses | ForEach-Object {$_.ExitCode})
 $timeouts = @(Get-ChildItem -LiteralPath $runRoot -Recurse -Filter timeout.json)
+$bufferValidations = @()
+$bufferDiagnostics = @()
+if ($MoverBuffers) {
+    foreach ($slot in 1..$ClientCount) {
+        $captures = @(Get-ChildItem -LiteralPath "$runRoot/Client${slot}User/Saved/Validation/MoverBuffers" -Filter '*.csv' -ErrorAction SilentlyContinue | Where-Object Name -notlike '*.actors.csv')
+        $valid = $false
+        if ($captures.Count -eq 1) {
+            & python "$PSScriptRoot/Validate-MoverBufferCapture.py" $captures[0].FullName --min-receive-hz 10 --output "$runRoot/Client$slot/mover-buffer-validation.json"
+            $valid = $LASTEXITCODE -eq 0
+        }
+        $bufferValidations += [ordered]@{client=$slot;passed=$valid}
+    }
+    $bufferDiagnostics = @(Get-ChildItem -LiteralPath $runRoot -Filter '*.log' | Select-String -Pattern 'LogNetworkPrediction: Warning:|LogNetworkPrediction.*Interpolation out of sync|NetworkPrediction.*SystemFault' | ForEach-Object { $_.Line })
+}
 $passed = @($results | Where-Object { !$_.success }).Count -eq 0 -and @($exitCodes | Where-Object { $null -eq $_ -or $_ -ne 0 }).Count -eq 0 -and $timeouts.Count -eq 0
+$passed = $passed -and @($bufferValidations | Where-Object { !$_.passed }).Count -eq 0
+$passed = $passed -and $bufferDiagnostics.Count -eq 0
 $startupErrors = @(Get-ChildItem -LiteralPath $runRoot -Filter '*.log' | Select-String -Pattern 'LogPython: Error:' | ForEach-Object { $_.Line })
-[ordered]@{passed=$passed;results=$results;exitCodes=$exitCodes;nativeHandleCapturedBeforeWait=$true;timeouts=$timeouts.Count;startupPythonErrors=$startupErrors;note='Fixture assertions and exit codes are authoritative. Engine ToolsetRegistry Python startup errors, if present, are recorded separately; a passing fixture does not mean the whole log is clean.'} | ConvertTo-Json -Depth 5 | Set-Content "$runRoot/verification.json" -Encoding utf8
+[ordered]@{passed=$passed;results=$results;exitCodes=$exitCodes;bufferValidations=$bufferValidations;bufferDiagnostics=$bufferDiagnostics;nativeHandleCapturedBeforeWait=$true;timeouts=$timeouts.Count;startupPythonErrors=$startupErrors;note='Fixture assertions and exit codes are authoritative. Engine ToolsetRegistry Python startup errors, if present, are recorded separately; a passing fixture does not mean the whole log is clean.'} | ConvertTo-Json -Depth 5 | Set-Content "$runRoot/verification.json" -Encoding utf8
 if (!$passed) { throw "Network fixture failed. Inspect $runRoot/verification.json and logs." }
 Write-Output "All processes completed: $runRoot"

@@ -10,7 +10,9 @@ public class Project_JCore : ModuleRules
 			"Core",
 			"CoreUObject",
 			"Engine",
-			"GameplayTags"
+			"NetCore",
+			"GameplayTags",
+			"Mover"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });

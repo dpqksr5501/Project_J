@@ -4,7 +4,7 @@
 #include "Components/ActorComponent.h"
 #include "Project_JCombatIntroComponent.generated.h"
 
-class ACharacter;
+class APawn;
 class UAnimMontage;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FProject_JCombatIntroEndedSignature, UAnimMontage*, Montage, bool, bInterrupted);
@@ -28,10 +28,10 @@ public:
 	FProject_JCombatIntroEndedSignature OnCombatOutroEnded;
 	FSimpleMulticastDelegate OnTransitionStateChanged;
 
-	bool PlayIntro(ACharacter& CharacterOwner, UAnimMontage* Montage, float PlayRate);
-	void CancelIntro(ACharacter& CharacterOwner, UAnimMontage* FallbackMontage);
-	bool PlayOutro(ACharacter& CharacterOwner, UAnimMontage* Montage, float PlayRate);
-	void CancelOutro(ACharacter& CharacterOwner);
+	bool PlayIntro(APawn& CharacterOwner, UAnimMontage* Montage, float PlayRate);
+	void CancelIntro(APawn& CharacterOwner, UAnimMontage* FallbackMontage);
+	bool PlayOutro(APawn& CharacterOwner, UAnimMontage* Montage, float PlayRate);
+	void CancelOutro(APawn& CharacterOwner);
 
 	UFUNCTION(BlueprintPure, Category = "Combat|Intro")
 	bool IsPlayingIntro() const { return Phase == EProject_JCombatTransitionPhase::Drawing; }
@@ -45,15 +45,15 @@ public:
 
 private:
 	friend class FProjectJCombatTransitionOwnershipTest;
-	bool PlayTransition(ACharacter& CharacterOwner, UAnimMontage* Montage, float PlayRate, EProject_JCombatTransitionPhase NewPhase);
-	void CancelTransition(ACharacter& CharacterOwner, EProject_JCombatTransitionPhase ExpectedPhase);
+	bool PlayTransition(APawn& CharacterOwner, UAnimMontage* Montage, float PlayRate, EProject_JCombatTransitionPhase NewPhase);
+	void CancelTransition(APawn& CharacterOwner, EProject_JCombatTransitionPhase ExpectedPhase);
 	void HandleMontageEnded(UAnimMontage* Montage, bool bInterrupted, uint64 ExpectedRevision);
 	void StopTransitions();
 	void PublishState();
 	EProject_JCombatTransitionPhase Phase = EProject_JCombatTransitionPhase::Idle;
 	uint64 TransitionRevision = 0;
 	bool bEndingPlay = false;
-	TWeakObjectPtr<ACharacter> MontageOwner;
+	TWeakObjectPtr<APawn> MontageOwner;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UAnimMontage> ActiveTransitionMontage = nullptr;

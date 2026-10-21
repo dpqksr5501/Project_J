@@ -1,6 +1,6 @@
 # 02. GASP CMC: 자연스러움을 만드는 연결
 
-**버전 경계:** 이 문서는 당시 5.7.4 CMC 분석을 보존한다. 5.8 설치본의 기본 Mover Pawn·Pose Match Chooser·Blend Stack과 채택 범위는 [최신 조사·적용](../../Architecture/GASP58_Locomotion_Migration_2026-10-19.md)을 읽는다. 기본 경로가 같다고 가정하지 않는다.
+**버전 경계:** 이 문서는 당시 5.7.4 CMC 분석을 보존한다. 5.8 설치본의 기본 Mover Pawn·Pose Match Chooser·Blend Stack과 채택 범위는 [최신 조사·적용](../../Architecture/Player_Locomotion_Migration_2026-10-19.md)을 읽는다. 기본 경로가 같다고 가정하지 않는다.
 
 이 문서는 로컬 5.7.4의 확인한 CMC 경로를 설명한다. 근거 G01-G05. 기본 활성 MM과 비활성 실험적 State Machine을 구분한다. 그래프에서 추론한 효과는 I이며 새 영상 검증은 U다.
 

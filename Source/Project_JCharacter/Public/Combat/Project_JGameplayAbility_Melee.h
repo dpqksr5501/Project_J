@@ -98,7 +98,7 @@ private:
 	TObjectPtr<UProject_JComboDefinition> ActiveComboDefinition = nullptr;
 	TObjectPtr<UAnimMontage> ActiveComboMontage = nullptr;
 	TObjectPtr<UProject_JAttackDefinition> ActiveAttackDefinition = nullptr;
-	TWeakObjectPtr<class UCharacterMovementComponent> RootMotionMovementComponent;
+	TWeakObjectPtr<AActor> RootMotionMovementOwner;
 	EProject_JRootMotionEndMovementPolicy RootMotionEndMovementPolicy = EProject_JRootMotionEndMovementPolicy::Land;
 	bool bRootMotionForcedFlying = false;
 	bool bIsComboWindowOpen = false;

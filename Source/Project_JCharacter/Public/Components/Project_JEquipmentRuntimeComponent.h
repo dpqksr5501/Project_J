@@ -10,7 +10,7 @@
 #include "Project_JEquipmentRuntimeComponent.generated.h"
 
 class UProject_JEquipmentItemDefinition;
-class ACharacter;
+class APawn;
 class UProject_JEquipmentManagerComponent;
 class UProject_JModularMeshComponent;
 class UProject_JCombatStyleDefinition;
@@ -92,7 +92,7 @@ private:
 	void ScheduleVisualRetry();
 	FTimerHandle VisualRetryTimer;
 
-	void ApplyEquipmentGameplay(ACharacter& OwnerCharacter, const UProject_JEquipmentItemDefinition& ItemDef, FProject_JEquipmentRuntimeItem& RuntimeItem) const;
+	void ApplyEquipmentGameplay(APawn& OwnerCharacter, const UProject_JEquipmentItemDefinition& ItemDef, FProject_JEquipmentRuntimeItem& RuntimeItem) const;
 	void RemoveEquipmentGameplay(FProject_JEquipmentRuntimeItem& RuntimeItem) const;
 	void StartLocalSpawnEquipment(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef);
 	void OnEquipmentMeshLoaded(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef);

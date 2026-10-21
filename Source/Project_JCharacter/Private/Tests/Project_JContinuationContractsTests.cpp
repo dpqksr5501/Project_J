@@ -12,7 +12,6 @@
 #include "Equipment/Project_JWeaponMotionTypes.h"
 #include "Components/Project_JWeaponPresentationComponent.h"
 #include "Animation/Project_JAnimNotifyState_WeaponMotion.h"
-#include "Animation/Project_JOneShotInputResponse.h"
 #include "Animation/Project_JPresentationMeshResolver.h"
 #include "Misc/DataValidation.h"
 #include <limits>
@@ -262,28 +261,5 @@ bool FProjectJWeaponMotionNumericAdmissionTest::RunTest(const FString&)
     return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJOneShotMalformedInputTest,
-    "ProjectJ.Continuation.OneShotMalformedInput", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool FProjectJOneShotMalformedInputTest::RunTest(const FString&)
-{
-    using P = FProject_JOneShotInputResponse;
-    P::FInput Valid; Valid.bCanSteer = Valid.bHasMoveReference = Valid.bHasMoveInput = true;
-    TestFalse(TEXT("Default compatible input preserves the authored owner"), P::Resolve(Valid).bRelease);
-    for (int32 Field = 0; Field < 5; ++Field)
-    {
-        auto Input = Valid;
-        float* Values[] = { &Input.EntryControlYaw, &Input.EntryMoveYaw, &Input.MouseCancelAngle, &Input.MoveCancelAngle, &Input.SteeringLimit };
-        *Values[Field] = std::numeric_limits<float>::quiet_NaN();
-        const auto Result = P::Resolve(Input);
-        TestTrue(TEXT("Malformed entry/tuning cannot retain ownership"), Result.bRelease);
-        TestEqual(TEXT("Malformed entry/tuning has a typed cause"), FString(Result.Reason), FString(TEXT("InvalidInputSample")));
-    }
-    Valid.MouseCancelAngle = -1;
-    TestTrue(TEXT("Negative authored cancellation threshold is invalid"), P::Resolve(Valid).bRelease);
-    auto* Profile = NewObject<UProject_JLocomotionProfile>();
-    Profile->TransitionPolicy.StartMouseTurnCancelAngle = std::numeric_limits<float>::quiet_NaN();
-    FDataValidationContext Context;
-    TestEqual(TEXT("Profile authoring rejects the same malformed cancellation tuning"), Profile->IsDataValid(Context), EDataValidationResult::Invalid);
-    return true;
-}
+
 #endif

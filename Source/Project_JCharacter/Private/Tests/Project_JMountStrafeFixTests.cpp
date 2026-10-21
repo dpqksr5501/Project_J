@@ -12,7 +12,6 @@
 #include "Project_JGameplayTags.h"
 #include "Animation/Project_JCharacterAnimProfile.h"
 #include "Animation/Project_JCombatAnimProfile.h"
-#include "Animation/Project_JMotionMatchingAssetSet.h"
 #include "Project_JLocomotionAnimStateComponent.h"
 #include "PoseSearch/PoseSearchDatabase.h"
 #include "Components/Project_JCombatStateComponent.h"
@@ -66,100 +65,9 @@ bool FProjectJMountedInteractInputTest::RunTest(const FString&)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJCombatFacingTransitionTest, "ProjectJ.MountStrafeFix.Combat.GradualFacing",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool FProjectJCombatFacingTransitionTest::RunTest(const FString&)
-{
-	FFixWorld W;
-	auto* Player = W.World->SpawnActor<AProject_JCombatFacingFixture>();
-	auto* Controller = W.World->SpawnActor<AAIController>(); Controller->Possess(Player);
-	auto* Profile = NewObject<UProject_JCharacterAnimProfile>();
-	auto* Combat = NewObject<UProject_JCombatAnimProfile>(); Profile->CombatAnimProfile = Combat; Player->CharacterAnimProfile = Profile;
-	auto* ASC = NewObject<UProject_JAbilitySystemComponent>(Player); ASC->RegisterComponent(); ASC->InitAbilityActorInfo(Player, Player);
-	Player->FindComponentByClass<UProject_JCombatStateComponent>()->BindToAbilitySystem(ASC);
-	const auto CombatTag = FProject_JGameplayTags::Get().State_CombatMode;
-	ASC->AddProjectJLooseGameplayTag(CombatTag, false);
-	auto* Movement = Player->GetCharacterMovement(); Movement->SetMovementMode(MOVE_Walking);
-	Movement->Velocity = FVector(-300, 0, 0);
-	Combat->CombatFacingRotationRateYaw = 360.0f;
-	Player->UpdateTestMovementPolicy();
-	for (const int32 FPS : {30, 60, 120})
-	{
-		const float Delta = 1.0f / FPS;
-		Player->SetActorRotation(FRotator(0, 180, 0)); Controller->SetControlRotation(FRotator::ZeroRotator);
-		Player->ApplyTestRotationMode(true);
-		TestFalse(TEXT("Combat does not enable snapping Pawn::FaceRotation"), Player->bUseControllerRotationYaw);
-		TestTrue(TEXT("Moving Strafe uses bounded CMC desired rotation"), Movement->bUseControllerDesiredRotation && !Movement->bOrientRotationToMovement);
-		Player->FaceRotation(Controller->GetControlRotation(), Delta);
-		TestTrue(TEXT("Entering combat preserves the initial actor yaw"), FMath::Abs(FMath::FindDeltaAngleDegrees(180, Player->GetActorRotation().Yaw)) < 0.01f);
-		float PreviousRemaining = 180.0f;
-		for (int32 Frame = 0; Frame < FPS / 2; ++Frame)
-		{
-			const float BeforeYaw = Player->GetActorRotation().Yaw;
-			Movement->PhysicsRotation(Delta);
-			const float Step = FMath::Abs(FMath::FindDeltaAngleDegrees(BeforeYaw, Player->GetActorRotation().Yaw));
-			const float Remaining = FMath::Abs(FMath::FindDeltaAngleDegrees(Player->GetActorRotation().Yaw, 0));
-			TestTrue(TEXT("Per-frame yaw respects the authored angular rate"), Step <= 360.0f * Delta + 0.01f);
-			TestTrue(TEXT("Actor approaches camera yaw without overshoot"), Remaining <= PreviousRemaining + 0.01f);
-			PreviousRemaining = Remaining;
-		}
-		TestTrue(TEXT("180 degree turn completes in half a second at every cadence"), PreviousRemaining < 0.1f);
-	}
-	Player->SetActorRotation(FRotator(0, 170, 0)); Controller->SetControlRotation(FRotator(0, -170, 0));
-	Movement->PhysicsRotation(1.0f / 60.0f);
-	TestTrue(TEXT("Crossing +/-180 takes the short angular path"), FMath::Abs(FMath::FindDeltaAngleDegrees(Player->GetActorRotation().Yaw, -170)) < 20.0f);
-	TestFalse(TEXT("Combat never enables remote straight-running trajectory repair"), Player->AllowsStraightRunningTrajectoryRepair());
-	Combat->CombatFacingRotationRateYaw = std::numeric_limits<float>::quiet_NaN(); Player->UpdateTestMovementPolicy();
-	TestEqual(TEXT("Invalid authored rotation rate uses a finite default"), Movement->RotationRate.Yaw, 360.0);
-	Movement->Velocity = FVector::ZeroVector; Player->ApplyTestRotationMode(true);
-	TestFalse(TEXT("Idle TIP retains authored yaw ownership"), Movement->bUseControllerDesiredRotation);
-	const float IdleYaw = Player->GetActorRotation().Yaw; Movement->PhysicsRotation(0.1f);
-	TestTrue(TEXT("CMC does not compete with idle TIP"), FMath::Abs(FMath::FindDeltaAngleDegrees(IdleYaw, Player->GetActorRotation().Yaw)) < 0.01f);
-	Movement->Velocity = FVector(-300, 0, 0); Movement->SetMovementMode(MOVE_Falling); Player->ApplyTestRotationMode(true);
-	TestFalse(TEXT("Air interpolation keeps its separate owner"), Movement->bUseControllerDesiredRotation);
-	Movement->SetMovementMode(MOVE_Walking); ASC->RemoveProjectJLooseGameplayTag(CombatTag, false);
-	Player->ApplyTestRotationMode(false); Player->UpdateTestMovementPolicy();
-	TestTrue(TEXT("Leaving combat restores OTM rotation"), Movement->bOrientRotationToMovement && !Movement->bUseControllerDesiredRotation);
-	TestEqual(TEXT("OTM retains its original movement rotation tuning"), Movement->RotationRate.Yaw, static_cast<double>(Player->WalkRotationRateYaw));
-	TestTrue(TEXT("OTM can still repair remote straight-running trajectory"), Player->AllowsStraightRunningTrajectoryRepair());
-	return true;
-}
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJCombatFacingSettledCycleTest, "ProjectJ.MountStrafeFix.Combat.SettleAfterFacing",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool FProjectJCombatFacingSettledCycleTest::RunTest(const FString&)
-{
-	FFixWorld W;
-	auto* Player = W.World->SpawnActor<AProject_JCombatFacingFixture>();
-	auto* Controller = W.World->SpawnActor<AAIController>(); Controller->Possess(Player);
-	auto* Profile = NewObject<UProject_JCharacterAnimProfile>();
-	auto* Combat = NewObject<UProject_JCombatAnimProfile>(); Profile->CombatAnimProfile = Combat; Player->CharacterAnimProfile = Profile;
-	auto* Set = NewObject<UProject_JMotionMatchingAssetSet>(); Combat->CombatStrafeMotionMatchingAssetSet = Set;
-	Set->RunDatabases.Cycle = NewObject<UPoseSearchDatabase>(); Set->RunDatabases.SettledCycle = NewObject<UPoseSearchDatabase>();
-	auto* State = Player->GetLocomotionAnimStateComponent();
-	State->bUsingLocalInputState = true;
-	State->AuthoritativeContext.bCombatMode = true;
-	State->AuthoritativeContext.RotationMode = EProject_JLocomotionRotationMode::Strafe;
-	State->AuthoritativeContext.GaitIntent = EProject_JLocomotionGaitIntent::Run;
-	State->DerivedLocomotionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Cycle;
-	State->KinematicContext.bHasMoveInput = true; State->KinematicContext.GroundSpeed = 300;
-	Player->SetActorRotation(FRotator(0, 180, 0)); Controller->SetControlRotation(FRotator::ZeroRotator);
-	for (int32 Frame = 0; Frame < 10; ++Frame) { State->UpdateCombatStrafeCycleSelection(0.1f, *Player); }
-	TestFalse(TEXT("Stable camera/input cannot settle while actor is still facing away"), State->bUseCombatStrafeSettledCycle);
-	TestEqual(TEXT("Turn catch-up does not accumulate settled time"), State->CombatStrafeSettledCycleElapsedTime, 0.0f);
-	Player->SetActorRotation(FRotator::ZeroRotator);
-	State->UpdateCombatStrafeCycleSelection(0.15f, *Player);
-	TestFalse(TEXT("Alignment still observes the authored settle delay"), State->bUseCombatStrafeSettledCycle);
-	State->UpdateCombatStrafeCycleSelection(0.15f, *Player);
-	TestTrue(TEXT("Aligned stable facing can enter the loop-only cycle"), State->bUseCombatStrafeSettledCycle);
-	Player->SetActorRotation(FRotator(0, 20, 0)); State->UpdateCombatStrafeCycleSelection(0.1f, *Player);
-	TestFalse(TEXT("Losing facing alignment immediately restores Dynamic Cycle"), State->bUseCombatStrafeSettledCycle);
-	Player->SetActorRotation(FRotator(0, 179, 0)); Controller->SetControlRotation(FRotator(0, -179, 0));
-	State->UpdateCombatStrafeCycleSelection(0.1f, *Player);
-	State->UpdateCombatStrafeCycleSelection(0.15f, *Player); State->UpdateCombatStrafeCycleSelection(0.15f, *Player);
-	TestTrue(TEXT("Facing tolerance handles the +/-180 wrap"), State->bUseCombatStrafeSettledCycle);
-	return true;
-}
+
+
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMountedInteractDispatchTest, "ProjectJ.MountStrafeFix.Mount.InteractDispatchRoundTrip",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)

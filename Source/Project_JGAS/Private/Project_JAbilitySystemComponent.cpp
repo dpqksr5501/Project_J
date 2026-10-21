@@ -4,16 +4,91 @@
 
 #include "GameFramework/Actor.h"
 #include "Project_JCombatInterface.h"
+#include "Movement/Project_JMoverComponent.h"
+#include "Abilities/GameplayAbility.h"
+#include "Engine/World.h"
+
+void UProject_JAbilitySystemComponent::CancelAbilitySpec(FGameplayAbilitySpec& Spec,UGameplayAbility* Ignore)
+{
+	if (!GetWorld() || !GetWorld()->bIsTearingDown)
+	{
+		Super::CancelAbilitySpec(Spec,Ignore);
+		return;
+	}
+	// Actor/ability cleanup can precede ASC destruction but follow Iris channel
+	// removal. Keep cancellation and local End/Tag/Task cleanup without an RPC
+	// into a closing world. Ordinary gameplay cancellation stays engine-owned.
+	const auto Policy=Spec.Ability->GetInstancingPolicy();
+	if (Policy==EGameplayAbilityInstancingPolicy::InstancedPerActor || Policy==EGameplayAbilityInstancingPolicy::InstancedPerExecution)
+	{
+		const TArray<UGameplayAbility*> Instances=Spec.GetAbilityInstances();
+		for (UGameplayAbility* Instance:Instances)
+			if (Instance && Instance!=Ignore)
+				Instance->CancelAbility(Spec.Handle,AbilityActorInfo.Get(),Instance->GetCurrentActivationInfoRef(),false);
+	}
+	else Spec.Ability->CancelAbility(Spec.Handle,AbilityActorInfo.Get(),FGameplayAbilityActivationInfo(),false);
+	MarkAbilitySpecDirty(Spec);
+}
 
 void UProject_JAbilitySystemComponent::InitAbilityActorInfo(AActor* Owner,AActor* Avatar)
 {
+	if (GetAvatarActor()!=Avatar) if (auto* Mover=MontageMover.Get()) Mover->StopGameplayMontageRootMotion();
 	check(IsInGameThread());if(++ActorInfoRevision==0)++ActorInfoRevision;
 	Super::InitAbilityActorInfo(Owner,Avatar);
 }
 void UProject_JAbilitySystemComponent::ClearActorInfo()
 {
+	if (auto* Mover=MontageMover.Get()) Mover->StopGameplayMontageRootMotion();
+	MontageMover.Reset();
 	check(IsInGameThread());if(++ActorInfoRevision==0)++ActorInfoRevision;
 	Super::ClearActorInfo();
+}
+
+void UProject_JAbilitySystemComponent::RefreshMoverMontage()
+{
+ auto* Avatar=GetAvatarActor();
+ auto* Mover=Avatar?Avatar->FindComponentByClass<UProject_JMoverComponent>():nullptr;
+ if (auto* Previous=MontageMover.Get(); Previous && Previous!=Mover) Previous->StopGameplayMontageRootMotion();
+ MontageMover=Mover;
+ if (Mover) Mover->FollowGameplayMontage(GetCurrentMontage());
+}
+
+float UProject_JAbilitySystemComponent::PlayMontage(UGameplayAbility* Ability,FGameplayAbilityActivationInfo Activation,UAnimMontage* Montage,float Rate,FName Section,float Start)
+{
+ const float Result=Super::PlayMontage(Ability,Activation,Montage,Rate,Section,Start);
+ if (Result>0.f) RefreshMoverMontage();
+ return Result;
+}
+
+void UProject_JAbilitySystemComponent::CurrentMontageStop(float BlendOut)
+{
+ auto* Montage=GetCurrentMontage();
+ Super::CurrentMontageStop(BlendOut);
+ if (auto* Mover=MontageMover.Get()) Mover->StopGameplayMontageRootMotion(Montage);
+}
+
+void UProject_JAbilitySystemComponent::CurrentMontageJumpToSection(FName Section)
+{
+ Super::CurrentMontageJumpToSection(Section);
+ RefreshMoverMontage();
+}
+
+void UProject_JAbilitySystemComponent::CurrentMontageSetPlayRate(float Rate)
+{
+ Super::CurrentMontageSetPlayRate(Rate);
+ RefreshMoverMontage();
+}
+
+void UProject_JAbilitySystemComponent::ServerCurrentMontageJumpToSectionName_Implementation(UAnimSequenceBase* ClientAnimation,FName SectionName)
+{
+ Super::ServerCurrentMontageJumpToSectionName_Implementation(ClientAnimation,SectionName);
+ RefreshMoverMontage();
+}
+
+void UProject_JAbilitySystemComponent::ServerCurrentMontageSetPlayRate_Implementation(UAnimSequenceBase* ClientAnimation,float Rate)
+{
+ Super::ServerCurrentMontageSetPlayRate_Implementation(ClientAnimation,Rate);
+ RefreshMoverMontage();
 }
 
 UProject_JAbilitySystemComponent::UProject_JAbilitySystemComponent()

@@ -1,0 +1,195 @@
+#include "Animation/Project_JPlayerAnimInstance.h"
+#include "Movement/Project_JMoverLifecycle.h"
+#include "Animation/Project_JCharacterAnimInstanceProxy.h"
+#include "Movement/Project_JMoverPawn.h"
+#include "Movement/Project_JMoverInputs.h"
+#include "Movement/Project_JMovementQueries.h"
+#include "Project_JPlayerCharacter.h"
+#include "Project_JLocomotionAnimStateComponent.h"
+#include "DefaultMovementSet/CharacterMoverComponent.h"
+#include "DefaultMovementSet/Settings/CommonLegacyMovementSettings.h"
+#include "MoverPoseSearchTrajectoryPredictor.h"
+#include "PoseSearch/PoseSearchTrajectoryLibrary.h"
+#include "Animation/AnimClassInterface.h"
+#include "BlendStack/AnimNode_BlendStack.h"
+
+void UProject_JPlayerAnimInstance::NativeInitializeAnimation()
+{
+ if(auto* Previous=BasedMovementSource.Get()) Previous->OnBasedMovementApplied.RemoveAll(this);
+ BasedMovementSource.Reset(); PendingBasedMovementDelta=FTransform::Identity;
+	ActiveAirEpisode=0; bAirEntryPending=bAirLoop=false;
+	AirSelectedAsset=nullptr; LastAirReselection=-1.; AirReselectionCount=AirTransitionEntryCount=AirLoopEntryCount=0;
+	bWasPhysicallyInAir = false;
+	LastLandVelocity = FVector::ZeroVector;
+	MoverPredictor = nullptr;
+	MoverTrajectory.Samples.Reset();
+	PredictorYaw = 0.f;
+	Super::NativeInitializeAnimation();
+}
+
+void UProject_JPlayerAnimInstance::NativeUninitializeAnimation()
+{
+ if(auto* Previous=BasedMovementSource.Get()) Previous->OnBasedMovementApplied.RemoveAll(this);
+ BasedMovementSource.Reset(); PendingBasedMovementDelta=FTransform::Identity;
+ Super::NativeUninitializeAnimation();
+}
+
+void UProject_JPlayerAnimInstance::AccumulateBasedMovement(const FTransform& Delta,const FMoverTimeStep&)
+{
+ check(IsInGameThread());
+ // Preserve Mover's world-space translation / quaternion delta convention.
+ PendingBasedMovementDelta.AddToTranslation(Delta.GetTranslation());
+ PendingBasedMovementDelta.SetRotation((Delta.GetRotation()*PendingBasedMovementDelta.GetRotation()).GetNormalized());
+}
+
+void UProject_JPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
+{
+	auto* Pawn = TryGetPawnOwner();
+	auto* Mover = Project_J::Movement::FindMover(Pawn);
+	if (!Mover)
+	{
+		PlayerHasOwningActor = TryGetPawnOwner() != nullptr;
+		PlayerUseThreadSafeUpdateAnimation = TryGetPawnOwner() != nullptr;
+		PlayerHasLocomotionSource = false;
+		Super::NativeUpdateAnimation(DeltaSeconds);
+		return;
+	}
+	if (!Mover->HasBeenInitialized() || !Mover->HasBegunPlay())
+	{
+		PlayerHasLocomotionSource = false;
+		return;
+	}
+	UAnimInstance::NativeUpdateAnimation(DeltaSeconds);
+	UpdateNativeConsoleVariables();
+ if(BasedMovementSource!=Mover)
+ {
+  if(auto* Previous=BasedMovementSource.Get()) Previous->OnBasedMovementApplied.RemoveAll(this);
+  BasedMovementSource=Mover; PendingBasedMovementDelta=FTransform::Identity;
+  Mover->OnBasedMovementApplied.AddUniqueDynamic(this,&ThisClass::AccumulateBasedMovement);
+ }
+	if (NeedsOwnerReferenceRefresh()) CacheOwnerReferences();
+	FProject_JAnimThreadSafeData Data;
+	Data.bIsLocallyControlled = Pawn->IsLocallyControlled();
+	Data.DeltaTime = DeltaSeconds;
+	FillPlayerThreadSafeData(Data);
+	FillMountThreadSafeData(Data);
+	FillMontageThreadSafeData(Data);
+	Data.bIsLocallyControlled = Pawn->IsLocallyControlled();
+	Data.Movement.Velocity = Mover->GetVelocity();
+	Data.Movement.GroundSpeed = Data.Movement.Velocity.Size2D();
+	Data.Air.bIsInAir = Mover->IsAirborne();
+	const auto* Input = Mover->GetLastInputCmd().InputCollection.FindDataByType<FCharacterDefaultInputs>();
+	const auto* Intent = Mover->GetLastInputCmd().InputCollection.FindDataByType<FProject_JMoverInputs>();
+	const auto* PhysicalLife=Mover->GetSyncState().SyncStateCollection.FindDataByType<FProject_JMoverLifecycle>();
+	const auto* ComparisonPawn = Cast<AProject_JMoverPawn>(Pawn);
+	const bool bStrafe = PhysicalLife?PhysicalLife->bStrafe:Intent ? Intent->bStrafe : ComparisonPawn && ComparisonPawn->WantsStrafe();
+	const bool bSprint = PhysicalLife?PhysicalLife->bSprint:Intent ? Intent->bSprint : ComparisonPawn && ComparisonPawn->WantsSprint();
+	const auto* Settings = Mover->FindSharedSettings<UCommonLegacyMovementSettings>();
+	const FVector Move = Input ? Input->GetMoveInput_WorldSpace() : FVector::ZeroVector;
+	Data.Input.bHasMoveInput = !Move.IsNearlyZero();
+	Data.Input.MovementDirection = Move.IsNearlyZero()?0.f:FMath::FindDeltaAngleDegrees(Pawn->GetActorRotation().Yaw,Move.Rotation().Yaw);
+	Data.Movement.Acceleration = Move.GetSafeNormal() * (Settings ? Settings->Acceleration : 4000.f);
+	Data.Movement.RelativeVelocityDirection = FMath::UnwindDegrees(Data.Movement.Velocity.Rotation().Yaw - Pawn->GetActorRotation().Yaw);
+	Data.LocomotionContext.DesiredFacingYaw = Input && !Input->GetOrientationIntentDir_WorldSpace().IsNearlyZero() ?
+		Input->GetOrientationIntentDir_WorldSpace().Rotation().Yaw : Pawn->GetActorRotation().Yaw;
+	if(bStrafe && Input) Data.LocomotionContext.DesiredFacingYaw=Input->ControlRotation.Yaw;
+	Data.LocomotionContext.RotationMode = bStrafe ? EProject_JLocomotionRotationMode::Strafe : EProject_JLocomotionRotationMode::OrientToMovement;
+	Data.LocomotionContext.GaitIntent = Intent && Intent->bWalk && !bSprint ? EProject_JLocomotionGaitIntent::Walk : EProject_JLocomotionGaitIntent::Run;
+	Data.Ground.bWantsSprint = bSprint;
+	if (const auto* Player = Cast<AProject_JPlayerCharacter>(Pawn))
+		if (const auto* State = Player->GetLocomotionAnimStateComponent())
+		{
+			Data.Air.bIsJumping = State->bIsJumping;
+			Data.Air.bIsFallOffStart = State->bIsFallOffStart;
+
+		}
+	if (const auto* Life=Mover->GetSyncState().SyncStateCollection.FindDataByType<FProject_JMoverLifecycle>()) Data.Air.bIsJumping=Life->bJumpEpisode && Data.Air.bIsInAir;
+	if (!MoverPredictor)
+	{
+		MoverPredictor = NewObject<UMoverTrajectoryPredictor>(this);
+		MoverPredictor->Setup(Mover);
+	}
+	TScriptInterface<IPoseSearchTrajectoryPredictorInterface> Predictor(MoverPredictor);
+	UPoseSearchTrajectoryLibrary::PoseSearchGenerateTransformTrajectoryWithPredictor(Predictor, DeltaSeconds,
+		MoverTrajectory, PredictorYaw, Data.Movement.Trajectory, .033f, 15, .1f, 15);
+	Data.Movement.FutureTrajectoryVelocity = (Data.Movement.Trajectory.GetSampleAtTime(.6f).Position -
+		Data.Movement.Trajectory.GetSampleAtTime(.4f).Position) / .2f;
+	Data.Movement.FutureTrajectoryTurnAngle = FMath::FindDeltaAngleDegrees(Pawn->GetActorRotation().Yaw,
+		Data.Movement.Trajectory.GetSampleAtTime(.5f).Facing.Rotator().Yaw);
+	Data.Movement.bHasTrajectory = !Data.Movement.Trajectory.Samples.IsEmpty();
+	BuildProjectAirFrame(Data);
+	ThreadSafeData = Data;
+	PublishPlayerLocomotionSourceFrame(Data);
+	GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>().QueueGameThreadData(Data);
+}
+
+FString UProject_JPlayerAnimInstance::InspectFoundationPlayback() const
+{
+	FString Result;
+	const auto& Proxy = GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>();
+	const auto& Air=Proxy.GetThreadSafeData().PlayerLocomotionAir;
+	Result+=FString::Printf(TEXT("AirEpisode=%llu FallOff=%d Jumping=%d LiveAngle=%.2f Gait=%d AirEntries=%d/%d QueryMode=%d QueryDir=%d AirAsset=%s; "),Air.Episode,Air.Query.bFallOff,Proxy.GetThreadSafeData().Air.bIsJumping,Air.LiveDirectionDegrees,int32(Air.Query.Gait),AirTransitionEntryCount,AirLoopEntryCount,int32(CommittedAirQuery.RotationMode),int32(CommittedAirQuery.Direction),*GetNameSafe(AirSelectedAsset));
+	const auto* Interface = Proxy.GetAnimClassInterface();
+	if (!Interface) return TEXT("No generated animation class");
+	for (int32 Index = 0; Index < Interface->GetAnimNodeProperties().Num(); ++Index)
+	{
+		const auto* Node = Proxy.GetNodeFromIndex<FAnimNode_BlendStack_Standalone>(Index);
+		if (!Node) continue;
+		Result += FString::Printf(TEXT("Index=%d Asset=%s Time=%.3f Length=%.3f Weight=%.3f Players=%d Rate=%.3f; "),
+			Index, *GetPathNameSafe(Node->GetAnimAsset()), Node->GetCurrentAssetTime(), Node->GetCurrentAssetLength(),
+			Node->GetCachedBlendWeight(), Node->AnimPlayers.Num(), Node->AnimPlayers.IsEmpty() ? 0.f : Node->AnimPlayers[0].GetPlayRate());
+	}
+	return Result;
+}
+
+FTransformTrajectory UProject_JPlayerAnimInstance::GetFoundationTrajectory() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Movement.Trajectory;
+}
+
+void UProject_JPlayerAnimInstance::PublishPlayerLocomotionSourceFrame(const FProject_JAnimThreadSafeData& Data)
+{
+	auto* Pawn = TryGetPawnOwner();
+	if (!Pawn) return;
+	const auto* Mover = Project_J::Movement::FindMover(Pawn);
+	const auto* Settings = Mover ? Mover->FindSharedSettings<UCommonLegacyMovementSettings>() : nullptr;
+	if (!Mover || !Settings) return;
+	SourceActorTransform = Pawn->GetActorTransform();
+	if (bWasPhysicallyInAir && !Data.Air.bIsInAir) LastLandVelocity = CastChecked<AProject_JMoverPawn>(Pawn)->GetLastLandingVelocity();
+ PlayerCharacterProperties.ActorTransform = SourceActorTransform;
+ PlayerCharacterProperties.Velocity = Data.Movement.Velocity;
+ const auto* Command=Mover->GetLastInputCmd().InputCollection.FindDataByType<FCharacterDefaultInputs>();
+ PlayerCharacterProperties.InputAcceleration=Command?Command->GetMoveInput_WorldSpace():FVector::ZeroVector;
+ // Preserve the sample's zero-valued legacy acceleration fields.
+ PlayerCharacterProperties.CurrentMaxAcceleration=0.;
+ PlayerCharacterProperties.CurrentMaxDeceleration=0.;
+ PlayerCharacterProperties.OrientationIntent=FRotator(0.f,Data.LocomotionContext.DesiredFacingYaw,0.f);
+ PlayerCharacterProperties.AimingRotation=Command?Command->ControlRotation:Pawn->GetBaseAimRotation();
+ PlayerCharacterProperties.JustLanded=bWasPhysicallyInAir && !Data.Air.bIsInAir;
+ PlayerCharacterProperties.LandVelocity=LastLandVelocity;
+ PlayerCharacterProperties.SteeringTime=0.;
+ FHitResult Floor;Mover->TryGetFloorCheckHitResult(Floor);
+ PlayerCharacterProperties.GroundNormal=Floor.bBlockingHit?Floor.ImpactNormal:FVector::UpVector;
+ PlayerCharacterProperties.GroundLocation=Floor.ImpactPoint;
+ PlayerCharacterProperties.BasedMovementDelta=PendingBasedMovementDelta;
+ PendingBasedMovementDelta=FTransform::Identity;
+ PlayerCharacterProperties.MovementMode=Data.Air.bIsInAir?EProject_JPlayerMovementMode::InAir:EProject_JPlayerMovementMode::OnGround;
+ PlayerCharacterProperties.Stance=EProject_JPlayerStance::Stand;
+ const bool bStrafe=Data.LocomotionContext.RotationMode==EProject_JLocomotionRotationMode::Strafe;
+ PlayerCharacterProperties.RotationMode=bStrafe?EProject_JPlayerRotationMode::Strafe:EProject_JPlayerRotationMode::OrientToMovement;
+ const auto* Intent=Mover->GetLastInputCmd().InputCollection.FindDataByType<FProject_JMoverInputs>();
+ const uint8 Direction=bStrafe && !Data.Ground.bWantsSprint && Intent?FMath::Min<uint8>(Intent->MovementDirection,5):0;
+ PlayerCharacterProperties.MovementDirection=static_cast<EProject_JPlayerMovementDirection>(Direction);
+ PlayerCharacterProperties.Gait=Data.Ground.bWantsSprint?EProject_JLocomotionGaitIntent::Sprint:Data.LocomotionContext.GaitIntent==EProject_JLocomotionGaitIntent::Walk?EProject_JLocomotionGaitIntent::Walk:EProject_JLocomotionGaitIntent::Run;
+ PlayerCharacterProperties.InputState.WantsToSprint=Data.Ground.bWantsSprint;
+ PlayerCharacterProperties.InputState.WantsToStrafe=bStrafe;
+ PlayerHasLocomotionSource=PlayerHasOwningActor=PlayerUseThreadSafeUpdateAnimation=true;
+	bWasPhysicallyInAir = Data.Air.bIsInAir;
+}
+
+
+FName UProject_JPlayerAnimInstance::GetFoundationStateName() const
+{
+ check(IsInGameThread());
+ return PlayerStateName;
+}

@@ -1,6 +1,8 @@
 # Start·Land의 입력 반응과 첫 MM 검색
 
-**2026-10-19 현재 계약:** [GASP 5.8 전환 책임 정리](GASP58_Locomotion_Migration_2026-10-19.md)가 아래의 단발 곡선 양보 정책을 대체한다. 작은 호환 입력은 동일 authored 클립·revision을 유지한다. 실제 입력 부적합·gait/owner 변화·authored 종료는 기존 경계로 처리한다. `FProject_JOneShotCurvePolicy`와 강제 양보 상태는 퇴역하며 일반 MM의 지속 곡선 후보 판정은 유지한다. 물리 착지 입장 종료만으로 시각 Land를 자르지 않는다. 아래 수치·로그·검증은 당시 구현 이력이다.
+> **이전 이동 구조의 기록 — 2026-10-21:** 아래 CMC/MM·후보·재생 정책과 검증은 당시 구현이다. 현재 제작·입력·핀 계산은 [플레이어 로코모션](Player_Locomotion_Architecture.md)을 따른다. 기존 로그·실패·수치를 새 구조의 현재 상태로 해석하지 않는다.
+
+**2026-10-19 현재 계약:** [GASP 5.8 전환 책임 정리](Player_Locomotion_Migration_2026-10-19.md)가 아래의 단발 곡선 양보 정책을 대체한다. 작은 호환 입력은 동일 authored 클립·revision을 유지한다. 실제 입력 부적합·gait/owner 변화·authored 종료는 기존 경계로 처리한다. `FProject_JOneShotCurvePolicy`와 강제 양보 상태는 퇴역하며 일반 MM의 지속 곡선 후보 판정은 유지한다. 물리 착지 입장 종료만으로 시각 Land를 자르지 않는다. 아래 수치·로그·검증은 당시 구현 이력이다.
 
 ## 목적과 근거
 

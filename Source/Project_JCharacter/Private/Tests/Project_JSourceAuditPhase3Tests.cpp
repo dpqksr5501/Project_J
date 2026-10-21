@@ -1,4 +1,5 @@
 #if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
+#include "Tests/Project_JMoverFrameFixture.h"
 #include "Misc/AutomationTest.h"
 #include "Project_JNPCCharacter.h"
 #include "Components/Project_JCombatPresentationComponent.h"
@@ -32,7 +33,7 @@
 #include "UObject/UnrealType.h"
 
 namespace {
-constexpr auto Flags = EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter;
+constexpr auto SourceAuditPhase3TestFlags = EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter;
 struct FWorld {
     UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
     FWorld(bool Begun=false) {
@@ -47,7 +48,7 @@ UProject_JAbilitySystemComponent* InstallASC(AProject_JPlayerMaturityASCFixture*
     ASC->InitAbilityActorInfo(Rider,Rider); Rider->CurrentASC=ASC; return ASC;
 }
 }
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAudit3DismountPossessionTest,"ProjectJ.SourceAudit3.DismountPossession",Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAudit3DismountPossessionTest,"ProjectJ.SourceAudit3.DismountPossession",SourceAuditPhase3TestFlags)
 bool FProjectJAudit3DismountPossessionTest::RunTest(const FString&) {
     for (bool TagCallback : {false,true}) {
         FWorld Scope; auto* W=Scope.World;
@@ -73,7 +74,7 @@ bool FProjectJAudit3DismountPossessionTest::RunTest(const FString&) {
         TestEqual(TEXT("Previous mounted contribution cleans up"),ASC->GetTagCount(Tag),0);
     } return true;
 }
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAudit3BegunMountDestroyTest,"ProjectJ.SourceAudit3.BegunMountComponentDestroy",Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAudit3BegunMountDestroyTest,"ProjectJ.SourceAudit3.BegunMountComponentDestroy",SourceAuditPhase3TestFlags)
 bool FProjectJAudit3BegunMountDestroyTest::RunTest(const FString&) {
     FWorld Scope(true); auto* W=Scope.World;
     auto* Rider=W->SpawnActor<AProject_JPlayerMaturityASCFixture>();
@@ -87,7 +88,7 @@ bool FProjectJAudit3BegunMountDestroyTest::RunTest(const FString&) {
     TestTrue(TEXT("Live rider regains possession when its component alone is destroyed"),Controller->GetPawn()==Rider);
     return true;
 }
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAudit3MontageRateTest,"ProjectJ.SourceAudit3.SharedMontageRate",Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAudit3MontageRateTest,"ProjectJ.SourceAudit3.SharedMontageRate",SourceAuditPhase3TestFlags)
 bool FProjectJAudit3MontageRateTest::RunTest(const FString&) {
     FWorld Scope; auto* W=Scope.World; auto* Player=W->SpawnActor<AProject_JGreatswordCharacter>();
     auto* ASC=NewObject<UProject_JAbilitySystemComponent>(Player);ASC->RegisterComponent();ASC->InitAbilityActorInfo(Player,Player);
@@ -117,26 +118,25 @@ bool FProjectJAudit3MontageRateTest::RunTest(const FString&) {
     TestEqual(TEXT("Reused montage adopts next node rate"),Player->GetMesh()->GetAnimInstance()->Montage_GetPlayRate(Montage),2.f);
     Input->HandleInputTagReleased(InputTag);ASC->CancelAllAbilities();return true;
 }
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAudit3BudgetAuthoringTest,"ProjectJ.SourceAudit3.BudgetAuthoringContract",Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAudit3BudgetAuthoringTest,"ProjectJ.SourceAudit3.BudgetAuthoringContract",SourceAuditPhase3TestFlags)
 bool FProjectJAudit3BudgetAuthoringTest::RunTest(const FString&) {
     auto* Profile=NewObject<UProject_JLocomotionProfile>();
-    TestFalse(TEXT("Ineffective nested budget must not be editable"),FindFProperty<FProperty>(Profile->GetClass(),TEXT("AnimationBudget"))->HasAnyPropertyFlags(CPF_Edit));
-    Profile->AnimationBudget.NearDistance=99999.f;Profile->NearMotionMatchingDistance=1234.f;
-    Profile->MidMotionMatchingDistance=5678.f;Profile->FarMotionMatchingDistance=9000.f;
-    Profile->MidMotionMatchingUpdateInterval=.04f;Profile->FarMotionMatchingUpdateInterval=.12f;Profile->AnimInstanceHiddenRemoteUpdateInterval=.2f;Profile->bDisableMotionMatchingBeyondFarDistance=true;
+    TestTrue(TEXT("One authoritative visual budget is editable"),FindFProperty<FProperty>(Profile->GetClass(),TEXT("AnimationBudget"))->HasAnyPropertyFlags(CPF_Edit));
+    Profile->AnimationBudget.NearDistance=1234.f;Profile->AnimationBudget.MidDistance=5678.f;Profile->AnimationBudget.FarDistance=9000.f;
     auto* Copy=DuplicateObject(Profile,GetTransientPackage());const auto R=Copy->GetResolvedAnimationBudgetSettings();
-    TestEqual(TEXT("Saved flat near precedence is preserved"),R.NearDistance,1234.f);TestEqual(TEXT("Mid authoring is effective"),R.MidDistance,5678.f);TestEqual(TEXT("Far authoring is effective"),R.FarDistance,9000.f);
-    TestEqual(TEXT("Mid interval"),R.MidUpdateInterval,.04f);TestEqual(TEXT("Far interval"),R.FarUpdateInterval,.12f);TestEqual(TEXT("Hidden interval"),R.HiddenUpdateInterval,.2f);TestTrue(TEXT("Far disable"),R.bDisableMotionMatchingBeyondFarDistance);
+    TestEqual(TEXT("Near authoring survives duplication"),R.NearDistance,1234.f);
+    TestEqual(TEXT("Mid authoring survives duplication"),R.MidDistance,5678.f);
+    TestEqual(TEXT("Far authoring survives duplication"),R.FarDistance,9000.f);
     return true;
 }
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAudit3MovementOwnerTest,"ProjectJ.SourceAudit3.MovementOwnerAndTimers",Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAudit3MovementOwnerTest,"ProjectJ.SourceAudit3.MovementOwnerAndTimers",SourceAuditPhase3TestFlags)
 bool FProjectJAudit3MovementOwnerTest::RunTest(const FString&) {
     for(int32 Mode=0;Mode<3;++Mode){
-        FWorld Scope;auto* W=Scope.World;auto* Player=W->SpawnActor<AProject_JGreatswordCharacter>();auto* Next=W->SpawnActor<AProject_JGreatswordCharacter>();
+        FWorld Scope(true);auto* W=Scope.World;auto* Player=W->SpawnActor<AProject_JGreatswordCharacter>();auto* Next=W->SpawnActor<AProject_JGreatswordCharacter>();
         auto* ASC=NewObject<UProject_JAbilitySystemComponent>(Player);ASC->RegisterComponent();ASC->InitAbilityActorInfo(Player,Player);
         FindFProperty<FObjectPropertyBase>(AProject_JBaseCharacter::StaticClass(),TEXT("AbilitySystemComponent"))->SetObjectPropertyValue_InContainer(Player,ASC);
         auto* State=Player->FindComponentByClass<UProject_JLocomotionAnimStateComponent>();State->RefreshCachedReferences();
-        Player->GetCharacterMovement()->SetMovementMode(MOVE_Falling);State->StartFallOffStart(false);
+        TestTrue(TEXT("Mover falling fixture published"),ProjectJ::Tests::PublishMoverFrame(Player,MOVE_Falling));State->StartFallOffStart(false);
         const auto Tag=FProject_JGameplayTags::Get().State_Movement_InAir;
         TestEqual(TEXT("Fall-off owns one local tag contribution"),ASC->GetTagCount(Tag),1);
         if(Mode==0){ASC->InitAbilityActorInfo(Player,Next);State->AddOwnedInAirGameplayTag();TestEqual(TEXT("Retained old owner cannot maintain a tag on reassigned ASC"),ASC->GetTagCount(Tag),0);}

@@ -16,7 +16,6 @@ enum class EProject_JReplicatedAnimEventType : uint8
 	FallOffStart,
 	LandingStart,
 	LandingCancel,
-	TurnInPlace
 };
 
 /**
@@ -43,12 +42,6 @@ public:
 	void DispatchFallOffStarted();
 	void DispatchLandingStarted(float ImpactSpeed, bool bWasMoving, bool bWasSprinting, bool bWasHeavy);
 	void DispatchLandingCancelled();
-	/**
-	 * Requests a stationary combat turn visual. The server validates the owning
-	 * character's current locomotion before publishing a direction bucket and
-	 * the local-facing target used only for remote presentation.
-	 */
-	void DispatchTurnInPlaceStarted(uint8 DirectionBucket, float TargetFacingYaw);
 
 private:
 	void DispatchEvent(EProject_JReplicatedAnimEventType EventType, bool bFlag = false);
@@ -56,8 +49,6 @@ private:
 	void ApplyMoveEvent(bool bIsMoving, bool bWasSprintingAtBoundary);
 	void ApplyLandingStart(float ImpactSpeed, bool bWasMoving, bool bWasSprinting, bool bWasHeavy);
 	void ApplyLandingCancel();
-	void ApplyTurnInPlace(uint8 DirectionBucket, float TargetFacingYaw);
-	bool CanServerAcceptTurnInPlace(uint8 DirectionBucket, float TargetFacingYaw) const;
 	void ReplicateLatestState();
 	void ApplyReplicatedEvents(
 		const FProject_JReplicatedAnimEventState& CurrentState,
@@ -65,7 +56,6 @@ private:
 	void ApplyRemoteMoveState(const FProject_JReplicatedAnimEventState& State);
 	void ApplyRemoteLandingState(const FProject_JReplicatedAnimEventState& State);
 	void ApplyRemoteFallOffState(const FProject_JReplicatedAnimEventState& State);
-	void ApplyRemoteTurnInPlaceState(const FProject_JReplicatedAnimEventState& State);
 	float ResolveServerEventAgeSeconds(float ServerTimeSeconds) const;
 	void RequestUrgentRemoteAnimationUpdate() const;
 
@@ -82,8 +72,6 @@ private:
 	UFUNCTION(Server, Reliable)
 	void ServerDispatchEvent(EProject_JReplicatedAnimEventType EventType, bool bFlag);
 
-	UFUNCTION(Server, Reliable)
-	void ServerDispatchTurnInPlace(uint8 DirectionBucket, float TargetFacingYaw);
 
 	UFUNCTION()
 	void OnRep_ReplicatedAnimEvents(FProject_JReplicatedAnimEventState PreviousState);
@@ -101,6 +89,5 @@ private:
 	int32 LastAppliedMoveSequence = 0;
 	int32 LastAppliedLandingRevision = 0;
 	int32 LastAppliedFallOffCounter = 0;
-	int32 LastAppliedTurnInPlaceSequence = 0;
 	int32 LastAppliedSemanticEventOrder = 0;
 };

@@ -9,10 +9,100 @@
 #include "EngineUtils.h"
 #include "HAL/IConsoleManager.h"
 #include "Net/Core/Trace/Private/NetTraceInternal.h"
+#include "NetworkPredictionWorldManager.h"
+#include "NetworkPredictionComponent.h"
+#include "GameFramework/Pawn.h"
+#include "UObject/UnrealType.h"
+#include "Misc/CoreDelegates.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
+#include "HAL/FileManager.h"
 
 #if !UE_BUILD_SHIPPING
 namespace Project_JNetworkDiagnostics
 {
+	// Explicit, bounded, read-only capture. No per-frame console/MCP round trip,
+	// flush or file IO can perturb the receive timeline under test. Discover new
+	// pawn components once per second; sample their weak references thereafter.
+	class FMoverBufferCapture
+	{
+		FDelegateHandle Handle;
+		FString Rows, ObjectRows, Output;
+		double Started=0., Duration=0., NextDiscovery=0.;
+		TArray<TWeakObjectPtr<UNetworkPredictionComponent>> Components;
+		struct FReceive { int32 Latest=0; double ChangedAt=0.; };
+		TMap<FString,FReceive> Received;
+	public:
+		~FMoverBufferCapture() { Stop(); }
+		void Stop()
+		{
+			if(!Handle.IsValid()) return;
+			FCoreDelegates::OnEndFrame.Remove(Handle); Handle.Reset();
+			IFileManager::Get().MakeDirectory(*FPaths::GetPath(Output),true);
+			const bool bSaved=FFileHelper::SaveStringToFile(Rows,*Output);
+			FFileHelper::SaveStringToFile(ObjectRows,*(FPaths::ChangeExtension(Output,TEXT("actors.csv"))));
+			UE_LOG(LogProject_J,Display,TEXT("MoverBufferCapture Saved=%d File=%s"),bSaved,*Output);
+			Rows.Reset(); ObjectRows.Reset(); Components.Reset(); Received.Reset();
+		}
+		void Start(const TArray<FString>& Args)
+		{
+			if(Handle.IsValid()) { UE_LOG(LogProject_J,Warning,TEXT("Mover buffer capture already running.")); return; }
+			Duration=FMath::Clamp(Args.IsEmpty()?60.:FCString::Atod(*Args[0]),1.,120.);
+			Started=FPlatformTime::Seconds();
+			Output=FPaths::ProjectSavedDir()/TEXT("Validation/MoverBuffers")/(FDateTime::Now().ToString(TEXT("%Y%m%d_%H%M%S"))+TEXT(".csv"));
+			Rows=TEXT("WallSeconds,World,NetMode,WorldDeltaMS,SimulationMS,LatestReceiveMS,InterpolationMS,BufferedMS,ReceiveGapMS,ReceiveAdvanceMS,DesiredMS,MaxMS\n");
+			ObjectRows=TEXT("WallSeconds,World,Actor,Role,NetHz,MinNetHz,PendingFrame,CachedAutonomousFrame,CachedSimulatedFrame,Dormancy\n");
+			NextDiscovery=0.;
+			Handle=FCoreDelegates::OnEndFrame.AddRaw(this,&FMoverBufferCapture::Sample);
+			UE_LOG(LogProject_J,Display,TEXT("MoverBufferCapture Started Seconds=%.1f File=%s"),Duration,*Output);
+		}
+		void Sample()
+		{
+			const double Now=FPlatformTime::Seconds();
+			if(Now-Started>=Duration) { Stop(); return; }
+			if(!GEngine) return;
+			for(const FWorldContext& Context:GEngine->GetWorldContexts())
+			{
+				auto* World=Context.World();
+				if(!World || !World->IsGameWorld() || World->bIsTearingDown) continue;
+				const auto* Manager=World->GetSubsystem<UNetworkPredictionWorldManager>();
+				if(!Manager) continue;
+				if(Now>=NextDiscovery)
+					for(TActorIterator<APawn> It(World);It;++It)
+						if(auto* Component=It->FindComponentByClass<UNetworkPredictionComponent>()) Components.AddUnique(Component);
+				const auto& State=Manager->GetVariableTickState();
+				const int32 Latest=State.Interpolation.LatestRecvTimeMS;
+				const FString Name=World->GetPathName();
+				auto& Receive=Received.FindOrAdd(Name);
+				const double Gap=Receive.ChangedAt>0.?(Now-Receive.ChangedAt)*1000.:0.;
+				const int32 Advance=Latest-Receive.Latest;
+				if(Advance) { Receive.Latest=Latest; Receive.ChangedAt=Now; }
+				Rows+=FString::Printf(TEXT("%.6f,%s,%d,%.3f,%d,%d,%.3f,%.3f,%.3f,%d,%d,%d\n"),
+					Now-Started,*Name,int32(World->GetNetMode()),World->GetDeltaSeconds()*1000.,
+					State.Frames[State.PendingFrame].TotalMS,Latest,State.Interpolation.fTimeMS,
+					Latest-State.Interpolation.fTimeMS,Gap,Advance,
+					Manager->GetSettings().IndependentTickInterpolationBufferedMS,
+					Manager->GetSettings().IndependentTickInterpolationMaxBufferedMS);
+			}
+			if(Now>=NextDiscovery) NextDiscovery=Now+1.;
+			static const auto* Autonomous=FindFProperty<FStructProperty>(UNetworkPredictionComponent::StaticClass(),TEXT("ReplicationProxy_Autonomous"));
+			static const auto* Simulated=FindFProperty<FStructProperty>(UNetworkPredictionComponent::StaticClass(),TEXT("ReplicationProxy_Simulated"));
+			static const auto* Prediction=FindFProperty<FStructProperty>(UNetworkPredictionComponent::StaticClass(),TEXT("NetworkPredictionProxy"));
+			for(const auto& Weak:Components)
+				if(const auto* Component=Weak.Get())
+					if(const auto* Owner=Component->GetOwner();Owner && Owner->GetWorld() && !Owner->GetWorld()->bIsTearingDown)
+						ObjectRows+=FString::Printf(TEXT("%.6f,%s,%s,%d,%.3f,%.3f,%d,%d,%d,%d\n"),Now-Started,
+							*Owner->GetWorld()->GetPathName(),*Owner->GetName(),int32(Owner->GetLocalRole()),Owner->GetNetUpdateFrequency(),Owner->GetMinNetUpdateFrequency(),
+							Prediction?Prediction->ContainerPtrToValuePtr<FNetworkPredictionProxy>(Component)->GetPendingFrame():-1,
+							Autonomous?Autonomous->ContainerPtrToValuePtr<FReplicationProxy>(Component)->GetCachedPendingFrame():-1,
+							Simulated?Simulated->ContainerPtrToValuePtr<FReplicationProxy>(Component)->GetCachedPendingFrame():-1,int32(Owner->NetDormancy));
+		}
+	};
+	static FMoverBufferCapture MoverBufferCapture;
+	static FAutoConsoleCommand CaptureMoverBuffersCommand(
+		TEXT("ProjectJ.CaptureMoverBuffers"),TEXT("Read-only Mover receive/simulation/interpolation CSV capture. Optional seconds (1-120, default 60)."),
+		FConsoleCommandWithArgsDelegate::CreateLambda([](const TArray<FString>& Args){MoverBufferCapture.Start(Args);}),ECVF_Default);
+
 	static const TCHAR* GetNetModeName(const ENetMode NetMode)
 	{
 		switch (NetMode)

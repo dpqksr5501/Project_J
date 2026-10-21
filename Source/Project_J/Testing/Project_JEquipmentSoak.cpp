@@ -1,5 +1,6 @@
 // Editor-only, opt-in load fixture. No map, Blueprint or shared asset is modified.
 #if WITH_EDITOR
+#include "Movement/Project_JMovementQueries.h"
 #include "AIController.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
@@ -195,7 +196,7 @@ struct FRun
   Pawn->SetPlayerState(Bot.State.Get());
   Pawn->FinishSpawning(FTransform(FRotator::ZeroRotator, Bot.Origin));
   Bot.Controller->Possess(Pawn);
-  Pawn->GetCharacterMovement()->DisableMovement();
+  if (!Project_J::Movement::SetMovementMode(Pawn,MOVE_None)) return false;
   auto* ASC = Pawn->GetAbilitySystemComponent();
   if (!ASC || ASC != Bot.State->GetAbilitySystemComponent() || !Pawn->GetMesh()->GetAnimInstance()) return false;
   Bot.State->GetEquipmentManagerComponent()->UnequipSlot(EProject_JEquipmentSlot::Weapon);

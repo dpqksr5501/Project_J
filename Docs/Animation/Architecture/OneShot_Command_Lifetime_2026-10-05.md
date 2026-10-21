@@ -1,5 +1,7 @@
 # 일회성 이동 동작의 요청 수명 — 2026-10-05
 
+> **이전 이동 구조의 기록 — 2026-10-21:** 본문은 당시 CMC/MM·마스터·후보 정책의 구현·제안·측정 이력이다. 현재 생산 제작은 [플레이어 로코모션](Player_Locomotion_Architecture.md)을 따른다. 과거 구조를 복원하라는 지시나 현재 구조의 성능 결과로 해석하지 않는다.
+
 2026-10-14 RA13은 State Controller와 presentation helper의 동일한 다섯 전이 상태 판정을 기존 StateControllerRuntime 함수로 통합했다. 실제 GT 호출 세 곳을 대조했고, hold·worker snapshot·완료 feedback의 서로 다른 소유권과 단발 기준은 유지한다. 최종 Editor의 344개 native 회귀 결과와 아직 검증하지 못한 범위는 [재점검 기록](../../Review/Audits/Project_J_Reaudit_2026-10-14.md)에 구분한다.
 
 [2026-10-13 심화 감사](../../Review/Audits/Project_J_Deep_Structure_Audit_2026-10-13.md)는 기존 hold/worker 재생 경계를 보존하며 BP 지상 alias의 이중 요청을 제거하고 GroundMotionMode에서 게시한다. 원격 점프 확인은 실제 적용 상태의 한 sequence에서 older/duplicate를 거절한다. Jump·Landing 전체 packet 타임라인의 시각 품질을 이 native admission 회귀만으로 보증하지 않는다.

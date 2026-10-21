@@ -2,13 +2,13 @@
 
 // Read-only authored fixture shared by CPU and real-socket validation. It spawns
 // the Blueprint itself, including its construction script and visual followers.
+#include "Tests/Project_JMoverFrameFixture.h"
 #include "AIController.h"
 #include "Engine/World.h"
 #include "Project_JPlayerCharacter.h"
 #include "Game/Project_JPlayerState.h"
 #include "Components/Project_JEquipmentManagerComponent.h"
 #include "Equipment/Project_JEquipmentItemDefinition.h"
-#include "GameFramework/CharacterMovementComponent.h"
 
 namespace ProjectJAuthoredAnimationFixture
 {
@@ -36,9 +36,8 @@ inline AProject_JPlayerCharacter* Spawn(UWorld* World, AController* Controller, 
 	Controller->Possess(Player);
 	State->GetEquipmentManagerComponent()->UnequipSlot(EProject_JEquipmentSlot::Weapon);
 	State->GetEquipmentManagerComponent()->EquipItem(Item);
-	// Controlled kinematics remove navigation/ground geometry from CPU comparisons.
-	Player->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-	Player->GetCharacterMovement()->SetComponentTickEnabled(false);
+	// Static standalone diagnostics prescribe a frame. Real socket fixtures use Mover simulation.
+	if (World->GetNetMode()==NM_Standalone && !ProjectJ::Tests::PublishMoverFrame(Player,MOVE_None)) { Player->Destroy(); return nullptr; }
 	return Player;
 }
 }

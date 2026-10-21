@@ -1,4 +1,7 @@
 #include "Testing/Project_JAuditNetworkFixture.h"
+#include "GameFramework/Character.h"
+#include "Movement/Project_JMovementQueries.h"
+#include "DefaultMovementSet/CharacterMoverComponent.h"
 #include "AbilitySystemComponent.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JAttributeSet.h"
@@ -60,7 +63,7 @@ void WriteAudit(const FString& Name,const FString& Body) {
 float Health(AActor* Actor) { const auto* I=Cast<IAbilitySystemInterface>(Actor);const auto* ASC=I?I->GetAbilitySystemComponent():nullptr;return ASC?ASC->GetNumericAttribute(UProject_JAttributeSet::GetHealthAttribute()):-999.f; }
 FVector TraceStart(AActor* A){return A->GetActorLocation()+FVector(20,0,0);}
 FVector TraceEnd(AActor* A){return A->GetActorLocation()+FVector(140,0,0);}
-void FreezeAuditKinematics(ACharacter* C){C->GetCharacterMovement()->SetMovementMode(MOVE_Flying);C->GetCharacterMovement()->SetComponentTickEnabled(false);}
+void FreezeAuditKinematics(APawn* C){Project_J::Movement::SetMovementMode(C,MOVE_None);}
 }
 UProject_JAuditNetworkDamage::UProject_JAuditNetworkDamage() {
  DurationPolicy=EGameplayEffectDurationType::Instant;

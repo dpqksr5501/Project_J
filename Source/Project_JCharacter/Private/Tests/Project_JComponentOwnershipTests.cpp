@@ -1,5 +1,6 @@
-#if WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
+#include "GameFramework/Character.h"
+#if WITH_DEV_AUTOMATION_TESTS
 #include "Tests/Project_JInternalTestReceiver.h"
 #include "Animation/Project_JBudgetedSkeletalMeshComponent.h"
 #include "System/Project_JCharacterAnimationBudgetSubsystem.h"

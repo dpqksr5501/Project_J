@@ -4,19 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
-#include "Animation/Project_JStrafeUpperBodyFacing.h"
-#include "Animation/Project_JStrafeLowerBodyFacing.h"
 #include "Project_JCombatAnimProfile.generated.h"
 
-class UProject_JMotionMatchingAssetSet;
-
-/**
- * Combat animation policy for a playable character archetype.
- *
- * This profile owns behavior switches and animation tuning values that are shared across weapons.
- * It intentionally does not require any montage or blend space assets, so it is safe to assign
- * before combat animations are authored.
- */
 UCLASS(BlueprintType)
 class PROJECT_JCHARACTER_API UProject_JCombatAnimProfile : public UPrimaryDataAsset
 {
@@ -35,107 +24,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|AimOffset", meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
 	float CombatAimAlpha = 1.0f;
 
-	/** Camera-facing upper-body presentation after Pose History; no PSD/PSS changes. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Upper Body Facing")
-	FProject_JStrafeUpperBodyFacingPolicy StrafeUpperBodyFacing;
 
-	/** Post-history forward Run pelvis facing with existing feet as constraints. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Lower Body Facing")
-	FProject_JStrafeLowerBodyFacingPolicy StrafeLowerBodyFacing;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Movement")
 	bool bAllowSprintInCombat = false;
 
-	/** Grounded moving Strafe follows camera yaw through CharacterMovement's
-	 * bounded rotation, rather than Pawn::FaceRotation snapping the capsule. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Movement", meta = (ClampMin = "1.0", ClampMax = "1080.0", UIMin = "90.0", UIMax = "720.0", Units = "deg/s"))
-	float CombatFacingRotationRateYaw = 360.0f;
-
-	/** Expose grounded moving facing catch-up to Pose Search, including OTM -> Strafe. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching|Facing Redirect")
-	bool bEnableStrafeFacingRedirect = true;
-
-	/** Forward-running body/path reversal only. Legacy values below 150 are clamped at runtime. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching|Facing Redirect", meta = (EditCondition = "bEnableStrafeFacingRedirect", ClampMin = "150.0", ClampMax = "180.0", Units = "deg"))
-	float StrafeFacingRedirectEntryAngle = 150.0f;
-
-	/** Hysteresis: retain the redirect until facing is within this angle. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching|Facing Redirect", meta = (EditCondition = "bEnableStrafeFacingRedirect", ClampMin = "0.0", ClampMax = "45.0", Units = "deg"))
-	float StrafeFacingRedirectExitAngle = 5.0f;
-
-	/**
-	 * Optional combat loop Motion Matching asset set used while this profile owns
-	 * camera-facing combat rotation. Assign Default/Idle and Run/Sprint Dynamic
-	 * Cycle PSDs; an optional SettledCycle is a Loop-only PSD for stable local Strafe.
-	 * Optional Run/Sprint TurnRedirect PSDs may contain combat-facing moving turns.
-	 * With those slots empty, facing redirects search the existing Dynamic Cycle.
-	 * Authored Start, Stop, Pivot, Jump, Fall Off and Landing clips stay owned by
-	 * the State Controller Chooser / direct Blend Stack path.
-	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching", meta = (ToolTip = "Assign combat Idle and Run/Sprint Dynamic Cycle PSDs. Optional TurnRedirect PSDs serve moving facing changes; empty slots retain Dynamic Cycle. Optional Loop-only SettledCycle PSDs serve stable local Strafe. One-shot clips belong in the State Controller Choosers."))
-	TObjectPtr<UProject_JMotionMatchingAssetSet> CombatStrafeMotionMatchingAssetSet = nullptr;
-
-	/**
-	 * Use a Loop-only Cycle PSD only after local Combat-Strafe input, Control Yaw,
-	 * and velocity alignment are stable. Dynamic Cycle retains Arc/Diamond/etc.
-	 * while a camera-relative trajectory is still changing.
-	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching|Settled Cycle")
-	bool bEnableStrafeSettledCycle = true;
-
-	/** Continuous stable duration required before selecting the optional SettledCycle PSD. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching|Settled Cycle", meta = (EditCondition = "bEnableStrafeSettledCycle", ClampMin = "0.0", UIMin = "0.0", Units = "s"))
-	float StrafeSettledCycleDelay = 0.25f;
-
-	/** Keep turn-capable Dynamic Cycle while the capsule catches up to camera yaw. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching|Settled Cycle", meta = (EditCondition = "bEnableStrafeSettledCycle", ClampMin = "0.0", ClampMax = "45.0", Units = "deg"))
-	float StrafeSettledFacingToleranceDegrees = 5.0f;
-
-	/** Input-direction turn at or above this angle keeps the Dynamic Cycle PSD active. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching|Settled Cycle", meta = (EditCondition = "bEnableStrafeSettledCycle", ClampMin = "0.0", ClampMax = "180.0", UIMin = "0.0", UIMax = "45.0", Units = "deg"))
-	float StrafeDynamicInputTurnAngle = 5.0f;
-
-	/** Serialized legacy tuning. Sustained curvature now uses TransitionPolicy.ContinuousCurve. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching|Settled Cycle", meta = (DeprecatedProperty, DeprecationMessage = "Use Locomotion TransitionPolicy.ContinuousCurve; instantaneous camera yaw rate no longer opens Dynamic Cycle."))
-	float StrafeDynamicFacingYawRate = 15.0f;
-
-	/** Velocity-to-current-input angle at or above this value keeps the Dynamic Cycle PSD active. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching|Settled Cycle", meta = (EditCondition = "bEnableStrafeSettledCycle", ClampMin = "0.0", ClampMax = "180.0", UIMin = "0.0", UIMax = "90.0", Units = "deg"))
-	float StrafeDynamicVelocityToInputAngle = 15.0f;
-
-	/**
-	 * Re-query the current combat locomotion PSD when a held movement input turns
-	 * sharply. This is required for a camera-facing strafe set: W -> A/D normally
-	 * stays in the same Cycle PSD, but must not keep a forward continuing pose.
-	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching")
-	bool bForceReselectOnStrafeInputTurn = true;
-
-	/** Enables the local-only authored Combat-Strafe Run Pivot presentation. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching|Pivot")
-	bool bEnableCombatStrafeRunPivot = false;
-
-	/** Minimum camera-relative input direction change that forces a fresh combat strafe pose search. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching", meta = (EditCondition = "bForceReselectOnStrafeInputTurn", ClampMin = "0.0", ClampMax = "180.0", UIMin = "15.0", UIMax = "90.0"))
-	float StrafeInputTurnReselectAngle = 35.0f;
-
-	/** Coalesces W->W+A->A input edges into one pose search instead of interrupting the same combat cycle twice. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching", meta = (EditCondition = "bForceReselectOnStrafeInputTurn", ClampMin = "0.0", UIMin = "0.0", Units = "s"))
-	float StrafeInputTurnReselectCooldown = 0.10f;
-
-	/** Ignore very slow trajectory samples and retain the last valid combat-Strafe direction instead. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float StrafeDirectionMinimumSpeed = 10.0f;
-
-	/** Extra angular margin retained inside the previous eight-direction sector to prevent boundary flicker. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching", meta = (ClampMin = "0.0", ClampMax = "22.5", UIMin = "0.0", UIMax = "15.0"))
-	float StrafeDirectionHysteresisDegrees = 7.5f;
-
-	/** Require positive camera-relative forward input (W, W+A, or W+D) for combat sprint. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Movement", meta = (EditCondition = "bAllowSprintInCombat"))
-	bool bRequireForwardInputForSprintInCombat = true;
-
-	/** Minimum positive forward axis value required by the combat sprint direction rule. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Movement", meta = (EditCondition = "bAllowSprintInCombat && bRequireForwardInputForSprintInCombat", ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
-	float CombatSprintForwardInputThreshold = 0.1f;
 };

@@ -9,6 +9,10 @@ EDataValidationResult UProject_JEquipmentItemDefinition::IsDataValid(FDataValida
 {
 	EDataValidationResult Result = Super::IsDataValid(Context);
 	bool bHasError = Result == EDataValidationResult::Invalid;
+	if(PoseMode == EProject_JEquipmentPoseMode::CopyPose && !AttachSocketName.IsNone())
+	{
+		Project_J::DataValidation::AddError(Context,bHasError,NSLOCTEXT("ProjectJEquipmentItemDefinition","CopyPoseSocket","CopyPose equipment follows a body mesh and must not specify AttachSocketName."));
+	}
 
 	if (EquipmentSlot == EProject_JEquipmentSlot::None)
 	{

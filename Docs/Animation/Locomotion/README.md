@@ -1,24 +1,24 @@
 # 이동 애니메이션
 
-## 기준과 확장
+## 현재 기준
 
-- [통합 재생 스택](../Planning/Unified_Locomotion_Implementation_2026-10-12.md): 현재 Master 노드와 State Controller의 역할.
-- [지속 곡선·미세 Strafe 입력](../Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md): 단발 복귀와 Cycle 후보군의 공통 판정.
-- [GASP 대응표](GASP_ProjectJ_Locomotion_Parity.md): 검토한 GASP 경로와 Project J의 적용·보류 범위.
-- [원격 원샷 복제](RemoteOneShotReplication.md): Start/Stop/Land의 희소 이벤트와 로컬 연속 이동 구분.
-- [Motion Matching 구조와 후속 항목](../Architecture/MotionMatchingNextSteps.md).
-- [이동 콘텐츠 확장](../Authoring/DataDrivenLocomotionExtensionGuide.md).
+- [플레이어 로코모션 아키텍처](../Architecture/Player_Locomotion_Architecture.md): Mover·C++ 계산·State Controller/Pose Match/BlendStack·몸체 표현의 책임.
+- [이동 콘텐츠 확장](../Authoring/DataDrivenLocomotionExtensionGuide.md): 현재 클립·Chooser·프로필 제작과 검증.
+- [스켈레톤·추가 뼈](../Authoring/HumanoidSkeletonRetargetingStandards.md): Manny 공용 모션과 몸체별 연결.
+- [전환·검증 기록](../Architecture/Player_Locomotion_Migration_2026-10-19.md): 공중 재선택·IK·전신 몽타주·회귀의 최신 근거.
+- [원격 표현 이벤트](RemoteOneShotReplication.md): 입력/이동 상태와 희소 경계 이벤트의 역할.
 
-## 구현·문제 해결 기록
+## 이전 구조와 비교 자료
+
+[상태 선택 대응 조사](GASP_ProjectJ_Locomotion_Parity.md), [이전 공통 재생 스택](../Planning/Unified_Locomotion_Implementation_2026-10-12.md), [지속 곡선 판정](../Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md), [이전 MM 계획](../Architecture/MotionMatchingNextSteps.md)은 당시 설계·시도·측정 자료다. 현재 제작에 옛 CMC·퇴역 노드·독립 MM 경로를 복원하지 않는다.
 
 | 기록 | 용도 |
 | --- | --- |
-| [리팩터링 상세](Reports/MotionMatching_Locomotion_Refactor.md) | 구현 계약과 당시 에디터 연결·후속 순서 |
-| [2026-09-19 보완](Reports/Locomotion_Refinement_2026-09-19.md) | 후속 이동 구조 보완 |
-| [2026-08-24 Pivot 정정](Reports/GASP_Pivot_Architecture_Correction_2026-08-24.md) | regular MM과 Experimental State Machine, 태그·비활성 경로 구분 |
-| [2026-08-06 OTM·OffsetRootBone 문제](Reports/Locomotion_OTM_OffsetRootBone_BugReport_2026-08-06.md) | 원샷·회전·착지 문제와 당시 수정 |
-| [2026-08-05 Moving Reorientation](Reports/MovingReorientation_TIP_WorkLog_2026-08-05.md) | 방향 재정렬 알고리즘과 작업 기록 |
-| [2026-08-04 BranchIn TIP 인계](Reports/GASP_BranchIn_TIP_Handoff_2026-08-04.md) | 당시 연결과 인계 |
-| [2026-08-01 구현 요약](Reports/MotionMatching_Locomotion_Implementation_Summary_20260801.md) · [인계](Reports/MotionMatching_StateController_Handoff_2026-08-01.md) | 초기 구현 배경과 당시 남은 작업 |
+| [리팩터링 상세](Reports/MotionMatching_Locomotion_Refactor.md) | 당시 구현·에디터 연결 |
+| [2026-09-19 보완](Reports/Locomotion_Refinement_2026-09-19.md) | 이전 이동 구조 보완 |
+| [Pivot 구조 조사](Reports/GASP_Pivot_Architecture_Correction_2026-08-24.md) | 샘플 분기·비활성 경로 구분 |
+| [OTM·OffsetRootBone 진단](Reports/Locomotion_OTM_OffsetRootBone_BugReport_2026-08-06.md) | 당시 원샷·회전·착지 문제 |
+| [이동 방향 재정렬](Reports/MovingReorientation_TIP_WorkLog_2026-08-05.md) | 알고리즘과 작업 기록 |
+| [초기 인계](Reports/GASP_BranchIn_TIP_Handoff_2026-08-04.md) · [구현 요약](Reports/MotionMatching_Locomotion_Implementation_Summary_20260801.md) · [상태 선택 인계](Reports/MotionMatching_StateController_Handoff_2026-08-01.md) | 당시 연결과 후속 과제 |
 
-후속 TIP 진단은 [애니메이션 진단](../Diagnostics/README.md), 전투 Strafe 구현은 [전투 기록](../../Combat/README.md)에서 이어 읽는다.
+증상별 진단은 [진단 목차](../Diagnostics/README.md), 전투 애니메이션은 [전투 목차](../../Combat/README.md)로 이어진다.

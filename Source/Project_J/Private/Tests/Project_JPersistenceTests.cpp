@@ -740,7 +740,6 @@ bool FProjectJLocalProfileLifecycleTest::RunTest(const FString &)
 		AddError(TEXT("Preserve existing process-restart fixture; use a fresh validation run directory"));
 		return false;
 	}
-	AddExpectedError(TEXT("Character data registry is empty."), EAutomationExpectedErrorFlags::Contains, 1);
 	auto *GI = NewObject<UGameInstance>(GEngine);
 	GI->InitializeStandalone();
 	auto *World = GI->GetWorld();

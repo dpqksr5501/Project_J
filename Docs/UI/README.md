@@ -8,7 +8,7 @@
 
 [전체 감사](../Review/Audits/Project_J_Whole_Project_Audit_2026-10-13.md)는 화면 생성 실패·재시도의 구독/입력 처리기 수명 경계도 확인한다. 정상 화면 자동화 통과만으로 실패 경로의 수명까지 보장하지 않는다.
 
-Shift 이동 예측과 좌측 Ctrl 조작의 최신 수정은 [커서와 달리기](Cursor_And_Sprint_Prediction_2026-10-10.md)를 읽는다.
+좌측 Ctrl 조작과 이전 CMC 달리기 예측 수정의 이력은 [커서와 달리기](Cursor_And_Sprint_Prediction_2026-10-10.md)를 읽는다. 현재 이동/Sprint 예측은 [Mover 로코모션](../Animation/Architecture/Player_Locomotion_Architecture.md)이 기준이다.
 
 최신 전환·키보드·연속 갱신 검증은 [UI 수명과 키보드](Continuity_Keyboard_And_Dynamic_Load_2026-10-10.md), 저장·장비 정책은 [UI 저장과 장비 비교](Reliability_Comparison_And_Load_2026-10-10.md), 기본 화면·아트 교체 계약은 [Compact MMORPG HUD](Compact_HUD_And_Gameplay_2026-10-10.md)를 읽는다.
 

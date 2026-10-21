@@ -90,3 +90,24 @@
 - 로컬 근거는 `Saved/StorageCleanup_20261019/Report.txt`, `Result.json`, `Plan.json`, `Inventory.json`, `Archives.json`, `VerifiedActions.json`, `Deleted.jsonl`, `CurrentBuildProtected.json`이다. 삭제 대상·SHA-256·생존 사본·압축 복원 검증·실제 여유 공간을 보존한다. 해당 로그·원자료가 Git에 포함됐다는 뜻은 아니며, 이 문서에는 환경 비밀값과 사용자 절대 경로를 복사하지 않았다.
 
 이번 추가 정리는 파일 보존·공간 정리 검증이며 새 게임 동작·Cook·성능 검증이 아니다. 소스와 현재 빌드는 변경하지 않았다.
+
+## 2026-10-20 GASP 작업 산출물 추가 정리
+
+Manny 이관 후 늘어난 용량과 불필요 스크립트의 안전한 정리를 요청받아 GASP 실험·작업 폴더를 확인했다. 현재 프로젝트의 에셋·Source·Config·빌드와 영구 테스트는 유지했다. 스크립트 전체 크기는 약 1MiB로 작으며, 주요 증가분은 과거 실험용 복제 프로젝트의 생성된 빌드 파일과 반복 실행 원자료였다.
+
+| 정리 대상 | 처리 |
+| --- | --- |
+| `Saved/GASP58Migration_20261019/Experiments`의 두 실험 프로젝트 | 종료 상태 확인 후 `Project_J`의 Binaries/Intermediate/DDC와 `GameAnimationSample`의 Intermediate/DDC만 제거. 2,446개, 7.84GiB. Content·Source·설정·실행 결과·실험 자산은 보존. |
+| 완료된 GASP/Manny 세션 스크립트 | 일회성 이행·점검·PIE 준비 스크립트 265개를 ZIP 보관하고 원래 실행 위치에서 제거. 각 원문의 SHA-256과 ZIP 해제 결과 일치 확인. 현행 `Scripts` 도구와 공용 콘솔 제출 helper는 유지. |
+| 큰 로그·Blueprint 텍스트 export·포즈/입력 원자료 | 105개, 원문 1.66GiB → 인접 `.gz` 약 91.1MiB. 삭제 후 압축본을 다시 해제 스트리밍해 모든 원문의 SHA-256 일치 확인. 성공·실패 근거는 폐기하지 않음. |
+| 이번 작업/도구의 Python bytecode | 재생성 가능한 캐시 19개 제거. |
+
+압축본을 포함한 논리 파일 크기 순감소는 **9.41GiB**다. 최초 용량 확인 시 C 드라이브 실제 여유 164,491,563,008 bytes에서 정리 후 174,587,039,744 bytes로 **9.40GiB 증가**를 관측했다. 다른 디스크 활동과 파일 할당 영향이 있으므로 논리 합계와 실제 여유 변화를 구분한다. 정리 직후 여유는 약 162.60GiB이며 이후 용량을 보장하지 않는다.
+
+파일 정리 직후 보존 대상으로 기록한 **33,810개 파일의 크기·mtime이 그대로**임을 확인했다. 현재 Content/Source/Config/Scripts/Binaries/Intermediate/Plugins와 해당 작업의 원본·백업 에셋을 포함한다. 이후 아래의 감사기 receipt 보호 조건 1개는 의도적으로 보완했으며 정리로 인한 변조와 구분한다. 별도로 UEFN AnimSequence 448개의 최종 SHA-256도 이전 값과 모두 일치한다. 이번 작업으로 애니메이션·기타 Content 에셋을 삭제하거나 변경하지 않았다. 현재 프로젝트의 PCH·DLL·EXE·PDB·플러그인 빌드 캐시, DDC·IDE 캐시와 WorldRegionA 제작/복구 자료도 보존했다. Git/LFS 이력은 정리하지 않았다.
+
+현행 `Scripts/Validation/Run-GASP58Regression.ps1`과 실제 PIE 검사기, native 테스트, `Scripts/Audit/Audit-GASPAnimationContracts.py` 등은 계속 필요해 유지했다. 감사기의 기존 receipt 보호 조건은 `.json.gz`도 검사하도록 보완했다. 압축된 과거 결과가 있다는 이유로 같은 label을 새 결과에 재사용하지 않는다. Python 문법과 원문/압축 receipt 충돌 조건을 확인했으며, runtime 변경이 없어 C++ 빌드나 에디터 실행은 반복하지 않았다. 에디터는 종료 상태를 유지한다.
+
+로컬 명세는 `Saved/StorageCleanup_20261020/Inventory.json`, `Plan.json`, `Deleted.jsonl`, `Result.json`, `Verification.json`에 있다. 일회성 스크립트는 `RetiredSessionScripts.zip`, 이번 정리 실행 원형은 `CleanupImplementation.zip`에 보관했다. 입력 원문과 압축 위치·해시가 Plan에 기록돼 있다. 원자료를 다시 분석하려면 인접 `.gz`를 해제하고, 퇴역 스크립트를 조사하려면 ZIP에서 필요한 파일만 꺼낸다. 실험용 과거 Binaries/Intermediate는 폐기했으므로 과거 실험 프로젝트가 즉시 실행 가능한 완전 아카이브는 아니며 실행하려면 해당 당시 소스/환경으로 다시 빌드해야 한다.
+
+파일 정리 후 빈 폴더 마감에서 Windows PowerShell의 `Path.GetRelativePath` 미지원이 확인돼, 삭제 명세의 완료를 먼저 대조하고 호환 방식으로 빈 폴더만 마감했다. 파일 삭제 작업을 다시 실행하지 않았다. 상세는 Result에 남겼으며 최종 보존·압축 복원 검증은 통과했다.

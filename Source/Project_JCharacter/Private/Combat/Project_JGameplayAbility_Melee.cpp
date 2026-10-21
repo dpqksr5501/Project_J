@@ -1,4 +1,5 @@
 #include "Combat/Project_JGameplayAbility_Melee.h"
+#include "Movement/Project_JMoverPawn.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "AbilitySystemComponent.h"
@@ -6,7 +7,8 @@
 #include "Combat/Project_JCombatStyleDefinition.h"
 #include "Combat/Project_JAttackDefinition.h"
 #include "GameFramework/Character.h"
-#include "GameFramework/CharacterMovementComponent.h"
+#include "Movement/Project_JMovementQueries.h"
+#include "Movement/Project_JMoverComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "Project_JGameplayTags.h"
 #include "Project_JPlayerCharacter.h"
@@ -207,85 +209,32 @@ void UProject_JGameplayAbility_Melee::OnWeaponRevoked()
 
 void UProject_JGameplayAbility_Melee::ApplyAttackMovementPolicy(const UProject_JAttackDefinition& AttackDefinition)
 {
-	ACharacter* Character = Cast<ACharacter>(GetAvatarActorFromActorInfo());
-	UCharacterMovementComponent* MovementComponent = Character ? Character->GetCharacterMovement() : nullptr;
-	if (!AttackDefinition.bUseFlyingMovementModeForRootMotion || AttackDefinition.MovementPolicy == EProject_JAttackMovementPolicy::InPlace)
-	{
-		if (IsComboDebugEnabled())
-		{
-			UE_LOG(LogProjectJCombatCombo, Display,
-				TEXT("RootMotionPolicy Attack=%s Policy=%d UseFlying=%s Result=Skipped MovementMode=%d"),
-				*AttackDefinition.AttackTag.ToString(),
-				static_cast<int32>(AttackDefinition.MovementPolicy),
-				AttackDefinition.bUseFlyingMovementModeForRootMotion ? TEXT("true") : TEXT("false"),
-				MovementComponent ? static_cast<int32>(MovementComponent->MovementMode) : -1);
-		}
-		return;
-	}
-
-	RootMotionEndMovementPolicy = AttackDefinition.RootMotionEndMovementPolicy;
-	if (bRootMotionForcedFlying)
-	{
-		return;
-	}
-
-	if (!MovementComponent || MovementComponent->IsFlying())
-	{
-		if (IsComboDebugEnabled())
-		{
-			UE_LOG(LogProjectJCombatCombo, Display,
-				TEXT("RootMotionPolicy Attack=%s Policy=%d UseFlying=true Result=%s MovementMode=%d"),
-				*AttackDefinition.AttackTag.ToString(),
-				static_cast<int32>(AttackDefinition.MovementPolicy),
-				MovementComponent ? TEXT("AlreadyFlying") : TEXT("NoMovementComponent"),
-				MovementComponent ? static_cast<int32>(MovementComponent->MovementMode) : -1);
-		}
-		return;
-	}
-
-	RootMotionMovementComponent = MovementComponent;
-	bRootMotionForcedFlying = true;
-	MovementComponent->SetMovementMode(MOVE_Flying);
-	if (IsComboDebugEnabled())
-	{
-		UE_LOG(LogProjectJCombatCombo, Display,
-			TEXT("RootMotionPolicy Attack=%s Policy=%d UseFlying=true Result=SetFlying MovementMode=%d"),
-			*AttackDefinition.AttackTag.ToString(),
-			static_cast<int32>(AttackDefinition.MovementPolicy),
-			static_cast<int32>(MovementComponent->MovementMode));
-	}
+ AActor* Avatar=GetAvatarActorFromActorInfo();
+ if (!AttackDefinition.bUseFlyingMovementModeForRootMotion || AttackDefinition.MovementPolicy==EProject_JAttackMovementPolicy::InPlace) return;
+ RootMotionEndMovementPolicy=AttackDefinition.RootMotionEndMovementPolicy;
+ if (bRootMotionForcedFlying || !Avatar) return;
+ const auto Physical=Project_J::Movement::ReadPhysicalFrame(Avatar);
+ if (!Physical.bValid || Physical.Mode==MOVE_Flying) return;
+ if (Project_J::Movement::SetMovementMode(Avatar,MOVE_Flying))
+ {
+  RootMotionMovementOwner=Avatar;
+  bRootMotionForcedFlying=true;
+ }
 }
 
 void UProject_JGameplayAbility_Melee::RestoreAttackMovementMode(const bool bWasCancelled)
 {
-	if (!bRootMotionForcedFlying)
-	{
-		return;
-	}
-
-	if (UCharacterMovementComponent* MovementComponent = RootMotionMovementComponent.Get())
-	{
-		// An interrupted aerial attack always falls. On a normal completion the
-		// authored AttackDefinition controls whether it lands, falls, or begins a
-		// persistent flying state. Landing directly avoids a transient Falling
-		// state that would make Motion Matching play an unwanted landing montage.
-		if (bWasCancelled)
-		{
-			MovementComponent->SetMovementMode(MOVE_Falling);
-		}
-		else if (RootMotionEndMovementPolicy == EProject_JRootMotionEndMovementPolicy::Land)
-		{
-			MovementComponent->SetMovementMode(MOVE_Walking);
-		}
-		else if (RootMotionEndMovementPolicy == EProject_JRootMotionEndMovementPolicy::Fall)
-		{
-			MovementComponent->SetMovementMode(MOVE_Falling);
-		}
-	}
-
-	RootMotionMovementComponent = nullptr;
-	RootMotionEndMovementPolicy = EProject_JRootMotionEndMovementPolicy::Land;
-	bRootMotionForcedFlying = false;
+ if (!bRootMotionForcedFlying) return;
+ if (AActor* Avatar=RootMotionMovementOwner.Get())
+ {
+  if (bWasCancelled || RootMotionEndMovementPolicy==EProject_JRootMotionEndMovementPolicy::Fall)
+   Project_J::Movement::SetMovementMode(Avatar,MOVE_Falling);
+  else if (RootMotionEndMovementPolicy==EProject_JRootMotionEndMovementPolicy::Land)
+   Project_J::Movement::SetMovementMode(Avatar,MOVE_Walking);
+ }
+ RootMotionMovementOwner.Reset();
+ RootMotionEndMovementPolicy=EProject_JRootMotionEndMovementPolicy::Land;
+ bRootMotionForcedFlying=false;
 }
 
 void UProject_JGameplayAbility_Melee::OnComboInputReceived(FGameplayEventData Payload)
@@ -666,7 +615,7 @@ void UProject_JGameplayAbility_Melee::OnMeleeHitReceived(FGameplayEventData Payl
 
 void UProject_JGameplayAbility_Melee::ApplyCameraDirectionRotation()
 {
-	if (ACharacter* Character = Cast<ACharacter>(GetAvatarActorFromActorInfo()))
+	if (AProject_JMoverPawn* Character = Cast<AProject_JMoverPawn>(GetAvatarActorFromActorInfo()))
 	{
 		if (APlayerController* PC = Cast<APlayerController>(Character->GetController()))
 		{
@@ -674,7 +623,7 @@ void UProject_JGameplayAbility_Melee::ApplyCameraDirectionRotation()
 			FRotator ControlRot = PC->GetControlRotation();
 			ControlRot.Pitch = 0.0f;
 			ControlRot.Roll = 0.0f;
-			Character->SetActorRotation(ControlRot);
+			Character->FaceGameplayDirection(ControlRot);
 		}
 	}
 }

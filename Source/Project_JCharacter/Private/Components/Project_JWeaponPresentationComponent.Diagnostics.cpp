@@ -1,4 +1,6 @@
 #include "Components/Project_JWeaponPresentationComponent.h"
+#include "GameFramework/Pawn.h"
+#include "Movement/Project_JMovementQueries.h"
 #include "Engine/StaticMesh.h"
 
 #include "Animation/AnimMontage.h"
@@ -24,7 +26,6 @@
 #include "HAL/IConsoleManager.h"
 #include "Project_JPlayerCharacter.h"
 #include "Project_JBaseCharacter.h"
-#include "PoseSearch/PoseSearchDatabase.h"
 #include "System/Project_JPresentationBudgetSubsystem.h"
 
 
@@ -50,7 +51,7 @@ namespace Project_J::WeaponPresentation
 	static TAutoConsoleVariable<FString> CVarGripTraceActor(TEXT("ProjectJ.Presentation.GripTraceActor"), FString(),
 		TEXT("Optional actor-name substring. Empty traces only locally controlled characters."));
 
-	static bool ShouldTraceGrip(const ACharacter* Character)
+	static bool ShouldTraceGrip(const APawn* Character)
 	{
 		if (!Character || CVarGripTrace.GetValueOnGameThread() == 0)
 		{
@@ -89,10 +90,10 @@ namespace Project_J::WeaponPresentation
 
 void UProject_JWeaponPresentationComponent::LogGripTraceEvent(const TCHAR* Event) const
 {
-	const ACharacter* Character = Cast<ACharacter>(GetOwner());
+	const APawn* Character = Cast<APawn>(GetOwner());
 	if (!Project_J::WeaponPresentation::ShouldTraceGrip(Character)) { return; }
 	const USceneComponent* Root = SpawnedWeapon ? SpawnedWeapon->GetRootComponent() : nullptr;
-	const USkeletalMeshComponent* Source = Character ? Character->GetMesh() : nullptr;
+	const USkeletalMeshComponent* Source = Character ? Project_J::Movement::FindPoseSource(Character) : nullptr;
 	const UAnimInstance* SourceAnim = Source ? Source->GetAnimInstance() : nullptr;
 	const UAnimMontage* Montage = SourceAnim ? SourceAnim->GetCurrentActiveMontage() : nullptr;
 	const float MontageTime = SourceAnim && Montage ? SourceAnim->Montage_GetPosition(Montage) : -1.0f;
@@ -114,7 +115,7 @@ void UProject_JWeaponPresentationComponent::LogGripTraceEvent(const TCHAR* Event
 void UProject_JWeaponPresentationComponent::LogAttachmentTrace(const TCHAR* Context, bool bForce, int32 RequestedSocket) const
 {
 	check(IsInGameThread());
-	const ACharacter* Character = Cast<ACharacter>(GetOwner());
+	const APawn* Character = Cast<APawn>(GetOwner());
 	const UWorld* World = GetWorld();
 	if (!World || !Project_J::WeaponPresentation::ShouldTraceGrip(Character)) { return; }
 	const double Now = World->GetTimeSeconds();
@@ -127,8 +128,8 @@ void UProject_JWeaponPresentationComponent::LogAttachmentTrace(const TCHAR* Cont
 	const FProject_JResolvedWeaponAttachment Desired = ResolveAttachment(bDrawn);
 	const USkeletalMeshComponent* ExpectedMesh = Desired.Mesh.Get();
 	const USkeletalMeshComponent* Body = Profile && Profile->bPreferVisualFollowerSockets
-		? Project_J::Animation::FindVisualFollower(*Character) : Character->GetMesh();
-	if (!Body) { Body = Character->GetMesh(); }
+		? Project_J::Animation::FindVisualFollower(*Character) : Project_J::Movement::FindPoseSource(Character);
+	if (!Body) { Body = Project_J::Movement::FindPoseSource(Character); }
 	const UProject_JRetargetAnimInstance* Anim = Body ? Cast<UProject_JRetargetAnimInstance>(Body->GetAnimInstance()) : nullptr;
 	const AProject_JPlayerCharacter* Player = Cast<AProject_JPlayerCharacter>(Character);
 	const UProject_JCharacterAnimProfile* CharacterProfile = Player ? Player->GetCharacterAnimProfile() : nullptr;
@@ -192,7 +193,7 @@ void UProject_JWeaponPresentationComponent::LogAttachmentTrace(const TCHAR* Cont
 
 void UProject_JWeaponPresentationComponent::SampleGripTrace()
 {
-	const ACharacter* Character = Cast<ACharacter>(GetOwner());
+	const APawn* Character = Cast<APawn>(GetOwner());
 	if (!Project_J::WeaponPresentation::ShouldTraceGrip(Character) || !SpawnedWeapon || !GetWorld())
 	{
 		bGripTraceHasPreviousSample = false;
@@ -205,7 +206,7 @@ void UProject_JWeaponPresentationComponent::SampleGripTrace()
 	LogAttachmentTrace(TEXT("Sample"));
 
 	const USceneComponent* Root = SpawnedWeapon->GetRootComponent();
-	const USkeletalMeshComponent* Source = Character->GetMesh();
+	const USkeletalMeshComponent* Source = Project_J::Movement::FindPoseSource(Character);
 	const USkeletalMeshComponent* Visible = Project_J::Animation::FindVisualFollower(*Character);
 	const UProject_JRetargetAnimInstance* FollowerAnim = Visible
 		? Cast<UProject_JRetargetAnimInstance>(Visible->GetAnimInstance()) : nullptr;
@@ -377,8 +378,8 @@ void UProject_JWeaponPresentationComponent::SampleGripTrace()
 
 void UProject_JWeaponPresentationComponent::LogWeaponPresentationDebug(const TCHAR* Context) const
 {
-	const ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
-	const USkeletalMeshComponent* CharacterMesh = OwnerCharacter ? OwnerCharacter->GetMesh() : nullptr;
+	const APawn* OwnerCharacter = Cast<APawn>(GetOwner());
+	const USkeletalMeshComponent* CharacterMesh = OwnerCharacter ? Project_J::Movement::FindPoseSource(OwnerCharacter) : nullptr;
 	const USceneComponent* WeaponRoot = SpawnedWeapon ? SpawnedWeapon->GetRootComponent() : nullptr;
 	const FName AttachedSocketName = WeaponRoot ? WeaponRoot->GetAttachSocketName() : NAME_None;
 	const USceneComponent* AttachParent = WeaponRoot ? WeaponRoot->GetAttachParent() : nullptr;
@@ -396,7 +397,7 @@ void UProject_JWeaponPresentationComponent::LogWeaponPresentationDebug(const TCH
 	const UProject_JCharacterAnimInstance* ProjectAnimInstance = Cast<UProject_JCharacterAnimInstance>(AnimInstance);
 	const UAnimMontage* ActiveMontage = AnimInstance ? AnimInstance->GetCurrentActiveMontage() : nullptr;
 	const float MontagePosition = (AnimInstance && ActiveMontage) ? AnimInstance->Montage_GetPosition(ActiveMontage) : -1.0f;
-	const UPoseSearchDatabase* ActivePoseSearchDatabase = ProjectAnimInstance ? ProjectAnimInstance->GetCurrentActivePoseSearchDatabaseThreadSafe() : nullptr;
+	const FName Playback = ProjectAnimInstance ? ProjectAnimInstance->GetPlaybackSnapshot().SelectedAnimation : NAME_None;
 	const float FullBodyMontageWeight = ProjectAnimInstance ? ProjectAnimInstance->GetThreadSafeFullBodyMontageWeight() : 0.0f;
 	const bool bCombatMode = ProjectAnimInstance ? ProjectAnimInstance->GetThreadSafeIsCombatMode() : false;
 	const TCHAR* CombatPresentation = !ProjectAnimInstance
@@ -404,7 +405,7 @@ void UProject_JWeaponPresentationComponent::LogWeaponPresentationDebug(const TCH
 		: (ProjectAnimInstance->GetThreadSafeUsesFullBodyCombatLocomotion() ? TEXT("FullBody") : TEXT("UpperBodyOverlay"));
 
 	UE_LOG(LogProjectJWeaponPresentation, Warning,
-		TEXT("[%s][Pose] HandToIK=%.1f | HandRCS=%s | IKHandRCS=%s | Montage=%s Time=%.3f Weight=%.2f Combat=%d Presentation=%s PSD=%s"),
+		TEXT("[%s][Pose] HandToIK=%.1f | HandRCS=%s | IKHandRCS=%s | Montage=%s Time=%.3f Weight=%.2f Combat=%d Presentation=%s GASPPlayback=%s"),
 		Context,
 		HandToIKDistance,
 		*Project_J::WeaponPresentation::ToCompactTransformString(RightHandComponentTransform),
@@ -414,7 +415,7 @@ void UProject_JWeaponPresentationComponent::LogWeaponPresentationDebug(const TCH
 		FullBodyMontageWeight,
 		bCombatMode ? 1 : 0,
 		CombatPresentation,
-		*GetNameSafe(ActivePoseSearchDatabase));
+		*Playback.ToString());
 
 	UE_LOG(LogProjectJWeaponPresentation, Warning,
 		TEXT("[%s][Attach] Owner=%s Mesh=%s Weapon=%s Class=%s Root=%s Parent=%s ParentIsMesh=%d Socket=%s Bone=%s | SocketCS=%s | RootRel=%s | RootWorld=%s"),

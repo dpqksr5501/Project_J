@@ -67,13 +67,13 @@ class AProject_JInternalInteractionTarget : public AActor, public IProject_JInte
 public:
 	bool bAllowed = true;
 	int32 Interactions = 0;
-	TFunction<void(ACharacter*)> OnCanInteract;
-	virtual bool CanInteract_Implementation(ACharacter* Interactor) const override
+	TFunction<void(APawn*)> OnCanInteract;
+	virtual bool CanInteract_Implementation(APawn* Interactor) const override
 	{
 		if (OnCanInteract) { OnCanInteract(Interactor); }
 		return bAllowed;
 	}
-	virtual void Interact_Implementation(ACharacter* Interactor) override { ++Interactions; }
+	virtual void Interact_Implementation(APawn* Interactor) override { ++Interactions; }
 };
 
 UCLASS(Transient)

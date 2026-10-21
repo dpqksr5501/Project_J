@@ -1,202 +1,50 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "Animation/Project_JCharacterAnimInstance.h"
-#include "Animation/Project_JFootPlacementDefaults.h"
-#include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "Animation/Project_JCharacterAnimInstanceProxy.h"
-
-#include "ChooserFunctionLibrary.h"
-#include "ChooserTypes.h"
-#include "Components/SkeletalMeshComponent.h"
-#include "Animation/Project_JBudgetedSkeletalMeshComponent.h"
-#include "Components/Project_JAnimationUpdateCoordinatorComponent.h"
-#include "GameFramework/Character.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "GameFramework/PlayerController.h"
-#include "IObjectChooser.h"
-#include "Project_JLocomotionAnimStateComponent.h"
-#include "Project_JLocomotionAnimStateComponentBase.h"
-#include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
-#include "Animation/Project_JMotionMatchingAssetSet.h"
-#include "Animation/Project_JMotionMatchingCVars.h"
-#include "Animation/Project_JOneShotInputResponse.h"
 #include "Animation/Project_JLocomotionProfile.h"
 #include "Animation/Project_JCombatAnimProfile.h"
 #include "Animation/Project_JWeaponAnimProfile.h"
 #include "Animation/Project_JRiderAnimationProfile.h"
-#include "Animation/AnimationAsset.h"
-#include "PoseSearch/PoseSearchDatabase.h"
-#include "PoseSearch/PoseSearchLibrary.h"
 #include "Project_JPlayerCharacter.h"
-#include "Project_JBaseCharacter.h"
 #include "Mount/Project_JMountComponent.h"
 #include "Mount/Project_JMountCharacter.h"
 #include "Mount/Project_JFlyingMountCharacter.h"
-#include "Project_JLocomotionDebugUtils.h"
-#include "StructUtils/InstancedStruct.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "ProfilingDebugging/CpuProfilerTrace.h"
 
-#include "Animation/Project_JAnimationPresentationHelpers.h"
-using namespace ProjectJ::Animation::Presentation;
-
-UProject_JCharacterAnimInstance::UProject_JCharacterAnimInstance()
-{
-	bUseMultiThreadedAnimationUpdate = true;
-
-	ProjectJ::Animation::InitializeFootPlacementDefaults(FootPlacementPlantSettingsDefault,
-		FootPlacementPlantSettingsStops, FootPlacementInterpolationSettingsStops);
-}
-
+UProject_JCharacterAnimInstance::UProject_JCharacterAnimInstance() { bUseMultiThreadedAnimationUpdate=true; }
 void UProject_JCharacterAnimInstance::NativeInitializeAnimation()
 {
-	ReleaseFollowerTickOverride();
-	AnimationClock = FProject_JAnimationClock();
-	AnimationFlowSampler = {};
-	bAnimationFlowEvaluationPending = false;
-	Super::NativeInitializeAnimation();
-	GeneralTurnPolicy.Reset();
-	BackwardRefacePolicy.Reset();
-	CompletedTurnFeedback = {};
-	MotionMatchingRuntime.Reset();
-	ResetStateControllerOwnerPresentation();
-	CurrentActivePoseSearchDatabase = nullptr;
+ ReleaseFollowerTickOverride();
+ ThreadSafeData={};
+ bHasStateControllerFootContactCurves=bHasStateControllerFootPhaseHistory=false;
+ CachedStateControllerLeftFootContact=CachedStateControllerRightFootContact=0.f;
+ StateControllerFootPhaseHistory=EProject_JStateControllerFoot::None;
+ Super::NativeInitializeAnimation();
 }
-
 void UProject_JCharacterAnimInstance::NativeUninitializeAnimation()
 {
-	ReleaseFollowerTickOverride();
-	Super::NativeUninitializeAnimation();
+ ReleaseFollowerTickOverride();
+ Super::NativeUninitializeAnimation();
 }
-
-void UProject_JCharacterAnimInstance::ResetStateControllerOwnerPresentation()
-{
-	bAuthoredEarlyTransitionPending = false;
-	AuthoredEarlyTransitionAsset.Reset();
-	StateControllerRuntime.Reset();
-	ResetStateControllerChooserCache();
-	CachedStateControllerPresentationState = EProject_JStateControllerPresentationState::Disabled;
-	CachedStateControllerPivotRequestRevision = 0;
-	++StateControllerChooserSelectionRevision;
-	bWasMountedForStateController = false;
-	bWasPlayingFullBodyMontageForStateController = false;
-	bWasPlayingCombatPresentationTransitionForStateController = false;
-	bSuppressPreTransitionLandingPresentationUntilLandingEnds = false;
-	LastFullBodyMontageEndedAtSeconds = -100.0;
-}
-
 void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
-	TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_AnimNativeUpdate);
-	Super::NativeUpdateAnimation(DeltaSeconds);
-	++EarlyTransitionSnapshotRevision;
-	AnimationClock.Advance(DeltaSeconds, GetWorld() && GetWorld()->IsPaused());
-
-	if (NeedsOwnerReferenceRefresh())
-	{
-		CacheOwnerReferences();
-		GeneralTurnPolicy.Reset();
-		BackwardRefacePolicy.Reset();
-		MotionMatchingRuntime.Reset();
-		ResetStateControllerOwnerPresentation();
-		CurrentActivePoseSearchDatabase = nullptr;
-	}
-
-	if (ShouldSkipNativeUpdate(DeltaSeconds))
-	{
-		return;
-	}
-
-	ThreadSafeData = BuildThreadSafeData(DeltaSeconds);
-	UpdatePresentationFromSnapshot();
-	if (IsPrimaryMeshAnimInstance())
-	{
-		ResetTrajectoryHistoryOnAccelerationStop(ThreadSafeData);
-	}
-	// Preserve the consumed snapshot; record cleanup separately rather than
-	// overwriting history that this frame's Stop chooser has just consumed.
-	if (CachedTrajectoryComponent)
-	{
-		ThreadSafeData.Movement.TrajectoryResetRevisionAfterConsumption = CachedTrajectoryComponent->GetResetRevision();
-		ThreadSafeData.Movement.TrajectoryResetReasonAfterConsumption = uint8(CachedTrajectoryComponent->GetLastResetReason());
-	}
-	PublishThreadSafeDataToProxy(ThreadSafeData);
-	if (IsPrimaryMeshAnimInstance() && IsLocallyControlledCharacter())
-	{
-		if (!Project_J::MotionMatchingCVars::ShouldTraceCombatStop())
-		{
-			bCombatStopTraceWasInputHeld = false;
-			bCombatStopTraceWasTransitionActive = false;
-			CombatStopTraceUntilSeconds = 0.0;
-		}
-		else
-		{
-			const double NowSeconds = FPlatformTime::Seconds();
-			const bool bTransitionActive = ThreadSafeData.Combat.bIsPlayingCombatIntro ||
-				ThreadSafeData.Combat.bIsPlayingCombatOutro;
-			const bool bTransitionStarted = bTransitionActive && !bCombatStopTraceWasTransitionActive;
-			const bool bTransitionEnded = !bTransitionActive && bCombatStopTraceWasTransitionActive;
-			const bool bInputReleased = bCombatStopTraceWasInputHeld && !ThreadSafeData.Input.bHasMoveInput;
-			if (bTransitionStarted)
-			{
-				CombatStopTraceUntilSeconds = NowSeconds + 8.0;
-			}
-			if (bInputReleased && (bTransitionActive || bCombatStopTraceWasTransitionActive ||
-				NowSeconds < CombatStopTraceUntilSeconds))
-			{
-				CombatStopTraceUntilSeconds = FMath::Max(CombatStopTraceUntilSeconds, NowSeconds + 6.0);
-			}
-			if (bTransitionEnded)
-			{
-				CombatStopTraceUntilSeconds = FMath::Max(CombatStopTraceUntilSeconds, NowSeconds + 4.0);
-			}
-			bCombatStopTraceWasInputHeld = ThreadSafeData.Input.bHasMoveInput;
-			bCombatStopTraceWasTransitionActive = bTransitionActive;
-			if (bTransitionStarted || bTransitionEnded || bInputReleased ||
-				(NowSeconds < CombatStopTraceUntilSeconds && NowSeconds >= CombatStopTraceNextSampleSeconds))
-			{
-				CombatStopTraceNextSampleSeconds = NowSeconds + 0.25;
-				const TCHAR* Event = bInputReleased ? TEXT("InputReleased")
-					: (bTransitionStarted ? TEXT("TransitionStarted")
-						: (bTransitionEnded ? TEXT("TransitionEnded") : TEXT("Sample")));
-				const UProject_JLocomotionAnimStateComponent* State = LocomotionAnimStateComponent.Get();
-				const FProject_JAnimMotionMatchingPostSelectionData& Played = ThreadSafeData.MotionMatching.PostSelection;
-				UE_LOG(LogProjectJPlayer, Display,
-					TEXT("MMCombatStop State Event=%s Actor=%s Frame=%llu Intro=%d Outro=%d MontageWeight=%.2f Input=%d StateInput=%d AxisSize=%.2f Speed=%.1f FutureSpeed=%.1f Accel=%d GroundMode=%d RawPhase=%d PresentedPhase=%d MMMoving=%d OneShot=%d Held=%d Request=%d"),
-					Event, *GetNameSafe(OwningCharacter), GFrameCounter,
-					ThreadSafeData.Combat.bIsPlayingCombatIntro ? 1 : 0,
-					ThreadSafeData.Combat.bIsPlayingCombatOutro ? 1 : 0,
-					ThreadSafeData.ProceduralIK.FullBodyMontageWeight,
-					ThreadSafeData.Input.bHasMoveInput ? 1 : 0,
-					State && State->bHasMoveInput ? 1 : 0,
-					State ? State->MoveInputSize : -1.0f,
-					ThreadSafeData.Movement.GroundSpeed,
-					ThreadSafeData.Movement.bHasFutureTrajectoryVelocity
-						? ThreadSafeData.Movement.FutureTrajectoryVelocity.Size2D() : -1.0f,
-					ThreadSafeData.Movement.bIsAccelerating ? 1 : 0,
-					static_cast<int32>(ThreadSafeData.Ground.GroundMotionMode),
-					State ? static_cast<int32>(State->DerivedLocomotionContext.PhaseFamily) : -1,
-					static_cast<int32>(ThreadSafeData.LocomotionContext.PhaseFamily),
-					ThreadSafeData.LocomotionContext.bIsMotionMatchingMoving ? 1 : 0,
-					static_cast<int32>(ThreadSafeData.OneShotPresentation.PresentationState),
-					static_cast<int32>(StateControllerRuntime.GetHeldState()),
-					ThreadSafeData.OneShotPresentation.bRequested ? 1 : 0);
-				UE_LOG(LogProjectJPlayer, Display,
-					TEXT("MMCombatStop Pose Actor=%s Frame=%llu RequestedPSD=%s PlayedPSD=%s PlayedAnim=%s Time=%.2f/%.2f Rate=%.2f Continuing=%d DirectAnim=%s DirectOverride=%d DirectLoop=%d ForceSearch=%d SelectionRev=%d TrajectoryResetRev=%d"),
-					*GetNameSafe(OwningCharacter), GFrameCounter,
-					*GetNameSafe(CurrentActivePoseSearchDatabase.Get()),
-					*Played.SelectedDatabase.ToString(), *Played.SelectedAnimation.ToString(),
-					Played.SelectedAnimationTime, Played.SelectedAnimationLength, Played.WantedPlayRate,
-					Played.bIsContinuingPoseSearch ? 1 : 0,
-					*GetNameSafe(ThreadSafeData.OneShotPresentation.SelectedAnimation.Get()),
-					ThreadSafeData.OneShotPresentation.bShouldOverrideMotionMatching ? 1 : 0,
-					ThreadSafeData.OneShotPresentation.bSelectedAnimationShouldLoop ? 1 : 0,
-					ThreadSafeData.MotionMatching.bForceReselect ? 1 : 0,
-					ThreadSafeData.MotionMatching.SelectionRevision,
-					ThreadSafeData.Movement.TrajectoryResetRevision);
-			}
-		}
-	}
+ Super::NativeUpdateAnimation(DeltaSeconds);
+ if (NeedsOwnerReferenceRefresh()) CacheOwnerReferences();
+ FProject_JAnimThreadSafeData Data;
+ Data.DeltaTime=DeltaSeconds;
+ if (OwningCharacter)
+ {
+  Data.Movement.Velocity=OwningCharacter->GetVelocity();
+  Data.Movement.GroundSpeed=Data.Movement.Velocity.Size2D();
+  const auto Local=OwningCharacter->GetActorQuat().UnrotateVector(Data.Movement.Velocity);
+  Data.Movement.RelativeVelocityDirection=Data.Movement.GroundSpeed>UE_SMALL_NUMBER ? FMath::RadiansToDegrees(FMath::Atan2(Local.Y,Local.X)):0.f;
+  FillPlayerThreadSafeData(Data);
+  FillMountThreadSafeData(Data);
+  FillMontageThreadSafeData(Data);
+ }
+ ThreadSafeData=Data;
+ GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>().QueueGameThreadData(Data);
 }
-
 void UProject_JCharacterAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeconds)
 {
 	// The engine owns update/evaluation ordering for both primary and linked
@@ -224,7 +72,6 @@ void UProject_JCharacterAnimInstance::NativeThreadSafeUpdateAnimation(float Delt
 		Super::NativeThreadSafeUpdateAnimation(DeltaSeconds);
 	}
 }
-
 void UProject_JCharacterAnimInstance::NativePostEvaluateAnimation()
 {
 	// Post-evaluate is intentionally measured separately from NativeUpdate and
@@ -237,41 +84,10 @@ void UProject_JCharacterAnimInstance::NativePostEvaluateAnimation()
 	{
 		return;
 	}
-	CompletedTurnFeedback = {};
-	if (OwningCharacter && OwningCharacter->IsLocallyControlled())
-	{
-		const auto& Proxy = GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>();
-		const auto& Data = Proxy.GetThreadSafeData();
-		const auto& Result = Proxy.GetLatestPostSelection();
-		CompletedTurnFeedback.Frame = Result.CaptureFrame;
-		CompletedTurnFeedback.Seconds = GetWorld() ? GetWorld()->GetTimeSeconds() : 0;
-		CompletedTurnFeedback.Mode = Data.LocomotionContext.RotationMode;
-		CompletedTurnFeedback.Gait = Data.LocomotionContext.GaitIntent;
-		CompletedTurnFeedback.SelectedDatabase = Result.SelectedDatabase;
-		CompletedTurnFeedback.bRelevant = Result.CachedNodeWeight > UE_SMALL_NUMBER &&
-			!Data.OneShotPresentation.bShouldOverrideMotionMatching;
-		if (const auto* Node = Proxy.GetCapturedMotionMatchingNode())
-			CompletedTurnFeedback.bRelevant &= !Node->GetMotionMatchingState().SearchResult.bIsInteraction;
-		const auto* Mesh = GetSkelMeshComponent();
-		const int32 Root = Mesh ? Mesh->GetBoneIndex(TEXT("root")) : INDEX_NONE;
-		if (Mesh && Root != INDEX_NONE && Mesh->GetEditableComponentSpaceTransforms().IsValidIndex(Root))
-		{
-			const float RootYaw = (Mesh->GetEditableComponentSpaceTransforms()[Root] * Mesh->GetComponentTransform()).Rotator().Yaw;
-			// Remove the mesh's reference-facing axis, not just the retarget/root
-			// world yaw. Selection reads this pose; gameplay rotation never does.
-			CompletedTurnFeedback.VisualFacingYaw = FRotator::NormalizeAxis(OwningCharacter->GetActorRotation().Yaw +
-				FMath::FindDeltaAngleDegrees(Mesh->GetComponentRotation().Yaw, RootYaw));
-			CompletedTurnFeedback.VisualFrame = GFrameCounter;
-			CompletedTurnFeedback.bVisualFacingValid = FMath::IsFinite(CompletedTurnFeedback.VisualFacingYaw);
-		}
-	}
-
 	float LeftContact = 0.0f;
 	float RightContact = 0.0f;
 	const bool bHasLeftContact = GetCurveValue(TEXT("contact_l"), LeftContact);
 	const bool bHasRightContact = GetCurveValue(TEXT("contact_r"), RightContact);
-	bHasStateControllerLeftFootContactCurve = bHasLeftContact;
-	bHasStateControllerRightFootContactCurve = bHasRightContact;
 	bHasStateControllerFootContactCurves = bHasLeftContact && bHasRightContact;
 	if (bHasStateControllerFootContactCurves)
 	{
@@ -291,10 +107,25 @@ void UProject_JCharacterAnimInstance::NativePostEvaluateAnimation()
 		CachedStateControllerLeftFootContact = 0.0f;
 		CachedStateControllerRightFootContact = 0.0f;
 	}
-	RecordAnimationFlowEvaluation();
-	RecordLocomotionContinuityEvaluation();
 }
-
+FAnimInstanceProxy* UProject_JCharacterAnimInstance::CreateAnimInstanceProxy()
+{
+	return new FProject_JCharacterAnimInstanceProxy(this);
+}
+void UProject_JCharacterAnimInstance::DestroyAnimInstanceProxy(FAnimInstanceProxy* InProxy)
+{
+	delete InProxy;
+}
+bool UProject_JCharacterAnimInstance::IsPrimaryMeshAnimInstance() const
+{
+	return OwningCharacter &&
+		OwningCharacter->GetMesh() &&
+		OwningCharacter->GetMesh()->GetAnimInstance() == this;
+}
+const UProject_JLocomotionProfile* UProject_JCharacterAnimInstance::GetLocomotionProfile() const
+{
+	return OwningPlayerCharacter ? OwningPlayerCharacter->GetLocomotionProfile() : nullptr;
+}
 EProject_JStateControllerFoot UProject_JCharacterAnimInstance::ResolveStateControllerFootFromContactCurves(
 	const bool bAllowPhaseHistoryFallback,
 	EProject_JStateControllerFootSelectionReason& OutReason) const
@@ -343,216 +174,168 @@ EProject_JStateControllerFoot UProject_JCharacterAnimInstance::ResolveStateContr
 	OutReason = EProject_JStateControllerFootSelectionReason::RightFootLowerContact;
 	return EProject_JStateControllerFoot::Right;
 }
-
-FAnimInstanceProxy* UProject_JCharacterAnimInstance::CreateAnimInstanceProxy()
+EProject_JAnimationLocomotionMode UProject_JCharacterAnimInstance::GetThreadSafeLocomotionMode() const
 {
-	return new FProject_JCharacterAnimInstanceProxy(this);
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().LocomotionMode;
+}
+float UProject_JCharacterAnimInstance::GetThreadSafeFullBodyMontageWeight() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Montage.FullBodyMontageWeight;
+}
+bool UProject_JCharacterAnimInstance::GetThreadSafeIsCombatMode() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Combat.bIsCombatMode;
+}
+bool UProject_JCharacterAnimInstance::GetThreadSafeUsesFullBodyCombatLocomotion() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Combat.PresentationMode ==
+		EProject_JCombatAnimationPresentationMode::FullBodyLocomotion;
+}
+bool UProject_JCharacterAnimInstance::GetThreadSafeIsMounted() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Mount.bIsMounted;
+}
+bool UProject_JCharacterAnimInstance::GetThreadSafeMountedIsFlying() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Mount.bIsFlying;
+}
+bool UProject_JCharacterAnimInstance::GetThreadSafeMountedIsGliding() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Mount.bIsGliding;
+}
+float UProject_JCharacterAnimInstance::GetThreadSafeMountedSpeed() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Mount.Speed;
+}
+float UProject_JCharacterAnimInstance::GetThreadSafeMountedVerticalSpeed() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Mount.VerticalSpeed;
+}
+bool UProject_JCharacterAnimInstance::GetThreadSafeHasMountedHandIKTargets() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Mount.bHasHandIKTargets;
+}
+FVector UProject_JCharacterAnimInstance::GetThreadSafeMountedLeftHandTargetComponentSpace() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Mount.LeftHandTargetComponentSpace;
+}
+FVector UProject_JCharacterAnimInstance::GetThreadSafeMountedRightHandTargetComponentSpace() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Mount.RightHandTargetComponentSpace;
+}
+FGameplayTagContainer UProject_JCharacterAnimInstance::GetThreadSafeMountedAnimationTags() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Mount.AnimationTags;
+}
+bool UProject_JCharacterAnimInstance::GetThreadSafeMountedHasAnimationTag(FGameplayTag Tag) const
+{
+	return Tag.IsValid() &&
+		GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Mount.AnimationTags.HasTag(Tag);
+}
+float UProject_JCharacterAnimInstance::GetThreadSafeMountedTransitionBlendTime() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Mount.TransitionBlendTime;
+}
+bool UProject_JCharacterAnimInstance::FillPlayerThreadSafeData(FProject_JAnimThreadSafeData& Data) const
+{
+	if (!OwningPlayerCharacter)
+	{
+		return false;
+	}
+
+	Data.Combat.bIsCombatMode = OwningPlayerCharacter->IsCombatModeActive();
+	Data.Combat.bIsAttacking = OwningPlayerCharacter->IsAttacking();
+	Data.Combat.bIsDodging = OwningPlayerCharacter->IsDodging();
+	Data.Combat.bIsHitReacting = OwningPlayerCharacter->IsHitReacting();
+	Data.Combat.bIsPlayingCombatIntro = OwningPlayerCharacter->IsCombatIntroPlaying();
+	Data.Combat.bIsPlayingCombatOutro = OwningPlayerCharacter->IsCombatOutroPlaying();
+	if (const UProject_JWeaponAnimProfile* WeaponAnimProfile = OwningPlayerCharacter->GetWeaponAnimProfile())
+	{
+		Data.Combat.PresentationMode = WeaponAnimProfile->CombatPresentationMode;
+	}
+
+	// GetBaseAimRotation uses the owning controller for the autonomous proxy and
+	// the engine-replicated remote view pitch for simulated proxies. Reading the
+	// controller directly left remote combat overlays at zero aim whenever that
+	// client did not own the pawn.
+	const FRotator AimRotation = OwningCharacter->GetBaseAimRotation();
+	const FRotator ActorRotation = OwningCharacter->GetActorRotation();
+	Data.Aim.AimYaw = FMath::Clamp(FMath::FindDeltaAngleDegrees(ActorRotation.Yaw, AimRotation.Yaw), -MaxAimYaw, MaxAimYaw);
+	Data.Aim.AimPitch = FMath::Clamp(FRotator::NormalizeAxis(AimRotation.Pitch), -MaxAimPitch, MaxAimPitch);
+	const auto* CombatProfile=OwningPlayerCharacter->GetCombatAnimProfile();
+	Data.Aim.AimOffsetAlpha=Data.Combat.bIsCombatMode ? (CombatProfile?CombatProfile->CombatAimAlpha:CombatAimAlpha) : 0.f;
+	return true;
+}
+void UProject_JCharacterAnimInstance::FillMountThreadSafeData(FProject_JAnimThreadSafeData& Data) const
+{
+	if (!OwningPlayerCharacter)
+	{
+		return;
+	}
+
+	Data.LocomotionMode = OwningPlayerCharacter->GetAnimationLocomotionMode();
+
+	const UProject_JMountComponent* MountComponent = OwningPlayerCharacter->GetMountComponent();
+	const AProject_JMountCharacter* MountedMount = MountComponent ? MountComponent->GetMountedMount() : nullptr;
+	if (!MountedMount)
+	{
+		return;
+	}
+
+	// This snapshot describes the physical rider/mount relation. It must not
+	// depend on the broader presentation context: a future vehicle context may
+	// still use the same attachment and rider hand-target contract.
+	Data.Mount.bIsMounted = true;
+	if (const UProject_JRiderAnimationProfile* RiderProfile = MountedMount->GetRiderAnimationProfile())
+	{
+		Data.Mount.AnimationTags = RiderProfile->AnimationTags;
+		Data.Mount.TransitionBlendTime = RiderProfile->TransitionBlendTime;
+	}
+	const FVector MountVelocity = MountedMount->GetVelocity();
+	Data.Mount.Speed = MountVelocity.Size2D();
+	Data.Mount.VerticalSpeed = MountVelocity.Z;
+
+	if (const AProject_JFlyingMountCharacter* FlyingMount = Cast<AProject_JFlyingMountCharacter>(MountedMount))
+	{
+		Data.Mount.bIsFlying = FlyingMount->IsFlyingMount();
+		Data.Mount.bIsGliding = FlyingMount->IsGliding();
+	}
+
+	USkeletalMeshComponent* RiderMesh = OwningPlayerCharacter->GetMesh();
+	FVector LeftHandTargetWorld;
+	FVector RightHandTargetWorld;
+	if (RiderMesh && MountedMount->GetRiderHandIKTargetsWorld(LeftHandTargetWorld, RightHandTargetWorld))
+	{
+		const FTransform RiderMeshTransform = RiderMesh->GetComponentTransform();
+		Data.Mount.LeftHandTargetComponentSpace = RiderMeshTransform.InverseTransformPosition(LeftHandTargetWorld);
+		Data.Mount.RightHandTargetComponentSpace = RiderMeshTransform.InverseTransformPosition(RightHandTargetWorld);
+		Data.Mount.bHasHandIKTargets = true;
+	}
 }
 
-void UProject_JCharacterAnimInstance::DestroyAnimInstanceProxy(FAnimInstanceProxy* InProxy)
+void UProject_JCharacterAnimInstance::FillMontageThreadSafeData(FProject_JAnimThreadSafeData& Data) const
 {
-	delete InProxy;
+ check(IsInGameThread());
+ Data.bIsLocallyControlled=IsLocallyControlledCharacter();
+ Data.Montage.FullBodyMontageWeight=Data.LocomotionMode==EProject_JAnimationLocomotionMode::OnFoot
+  ? FMath::Clamp(GetSlotMontageGlobalWeight(TEXT("DefaultSlot")),0.f,1.f):0.f;
 }
-
-void UProject_JCharacterAnimInstance::OnStateEntry_TurnInPlace(const FAnimUpdateContext& Context, const FAnimNodeReference& Node)
+FProject_JAnimPlaybackSnapshot UProject_JCharacterAnimInstance::GetPlaybackSnapshot() const
 {
-	// Empty stub for Blueprint State Machine On Entry Binding
+ return GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>().GetLatestPostSelection();
 }
-
-void UProject_JCharacterAnimInstance::RequestAuthoredEarlyTransition(UAnimSequenceBase* Animation, bool bRequireGaitChange, EProject_JLocomotionGaitIntent ExcludedGait)
-{
-	check(IsInGameThread());
-	// Notify events from the outgoing Blend Stack or a Motion Matching clip may
-	// coexist with the held one-shot. They cannot authorize this state's exit.
-	if (!Animation || Animation != CachedStateControllerSelectedAnimation || !ThreadSafeData.OneShotPresentation.bEnabled) return;
-	AuthoredEarlyTransitionAsset = Animation; AuthoredEarlyTransitionSnapshotRevision = EarlyTransitionSnapshotRevision;
-	bAuthoredEarlyTransitionPending = true;
-	bAuthoredEarlyTransitionRequiresGaitChange = bRequireGaitChange;
-	AuthoredEarlyTransitionExcludedGait = ExcludedGait;
-}
-bool UProject_JCharacterAnimInstance::IsAuthoredEarlyTransitionAllowed(EProject_JLocomotionGaitIntent CurrentGait) const
-{
-	return bAuthoredEarlyTransitionPending && AuthoredEarlyTransitionAsset.IsValid() &&
-		AuthoredEarlyTransitionAsset.Get() == CachedStateControllerSelectedAnimation &&
-		EarlyTransitionSnapshotRevision <= AuthoredEarlyTransitionSnapshotRevision + 1 &&
-		(!bAuthoredEarlyTransitionRequiresGaitChange || CurrentGait != AuthoredEarlyTransitionExcludedGait);
-}
-
 FString UProject_JCharacterAnimInstance::GetAnimationDebugSummary() const
 {
-	using Project_J::LocomotionDebug::ToDebugString;
-
-	const FProject_JAnimThreadSafeData& Data = ThreadSafeData;
-	const FProject_JAnimMotionMatchingPostSelectionData& PostSelection =
-		GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().MotionMatching.PostSelection;
-	const bool bSprintAllowed = OwningPlayerCharacter && OwningPlayerCharacter->IsSprintLocomotionAllowed();
-	const bool bJumpAllowed = OwningPlayerCharacter && OwningPlayerCharacter->IsJumpLocomotionAllowed();
-	const UProject_JWeaponAnimProfile* WeaponAnimProfile = OwningPlayerCharacter ? OwningPlayerCharacter->GetWeaponAnimProfile() : nullptr;
-	return FString::Printf(
-		TEXT("Optimization Tier=%d UpdateData=%s FullChooser=%s FarOnly=%s MMInterval=%.3f ActivePSD=%s\n")
-		TEXT("Weapon Profile=%s Stance=%s Presentation=%d\n")
-		TEXT("Movement GroundSpeed=%.1f VerticalSpeed=%.1f AccelRatio=%.2f RelAccel=(%.2f,%.2f) Lean=(%.2f,%.2f) Decel=%s StopDist=%.1f VelocityToInput=%.1f HasTrajectory=%s StoppedAccel=%s\n")
-		TEXT("Input Has=%s Size=%.2f Held=%.2f Turn=%.1f SharpTurn=%s MoveDir=%.1f\n")
-		TEXT("Context Gait=%s Rotation=%s Phase=%s Starting=%s Pivoting=%s TurnInPlace=%s Spin=%s DesiredYaw=%.1f\n")
-		TEXT("Policy SprintAllowed=%s JumpAllowed=%s Combat=%s Attack=%s Dodge=%s HitReact=%s\n")
-		TEXT("Ground Mode=%d Start=%s Stop=%s WantsSprint=%s UseSprint=%s StartSprint=%s StopSprint=%s\n")
-		TEXT("Air InAir=%s Jumping=%s FallOff=%s Landing=%s HeavyLand=%s LandMoving=%s LandSprint=%s\n")
-		TEXT("MM Revision=%d Changed=%s ForceReselect=%s TrajectorySamples=%d NativePoseHistory=true\n")
-		TEXT("Trajectory GenerationFrame=%llu SnapshotFrame=%llu Age=%.3f Usable=%s Reset=%d/%d AfterConsumption=%d/%d\n")
-		TEXT("MM RepresentativeNode=%d Candidates=%d CaptureFrame=%llu CachedWeight=%.3f ResultChangedFrame=%llu FinalContributionUnverified=true\n")
-		TEXT("Chooser Start=%s Stop=%s RunLoc=%s RemoteRunLoc=%s SprintLoc=%s Jump=%s Fall=%s Land=%s Combat=%s Remote=%s"),
-		static_cast<int32>(CurrentOptimizationPolicy.Tier),
-		CurrentOptimizationPolicy.bUpdateAnimationData ? TEXT("true") : TEXT("false"),
-		CurrentOptimizationPolicy.bUseFullChooserRows ? TEXT("true") : TEXT("false"),
-		CurrentOptimizationPolicy.bUseFarChooserRowsOnly ? TEXT("true") : TEXT("false"),
-		CurrentOptimizationPolicy.MotionMatchingUpdateInterval,
-		*GetNameSafe(CurrentActivePoseSearchDatabase),
-		*GetNameSafe(WeaponAnimProfile),
-		WeaponAnimProfile ? ToDebugString(WeaponAnimProfile->WeaponStance) : TEXT("None"),
-		static_cast<int32>(Data.Combat.PresentationMode),
-		Data.Movement.GroundSpeed,
-		Data.Movement.VerticalSpeed,
-		Data.Movement.AccelerationRatio,
-		Data.Movement.RelativeAccelerationAmount.X,
-		Data.Movement.RelativeAccelerationAmount.Y,
-		Data.Movement.LeanAmount.X,
-		Data.Movement.LeanAmount.Y,
-		Data.Movement.bIsDecelerating ? TEXT("true") : TEXT("false"),
-		Data.Movement.PredictedStopDistance,
-		Data.Movement.VelocityToMoveInputAngle,
-		Data.Movement.bHasTrajectory ? TEXT("true") : TEXT("false"),
-		Data.Movement.bStoppedAcceleratingThisFrame ? TEXT("true") : TEXT("false"),
-		Data.Input.bHasMoveInput ? TEXT("true") : TEXT("false"),
-		Data.Input.MoveInputSize,
-		Data.Input.MoveInputHeldTime,
-		Data.Input.MoveInputTurnAngle,
-		Data.Input.bSharpTurnRequested ? TEXT("true") : TEXT("false"),
-		Data.Input.MovementDirection,
-		ToDebugString(Data.LocomotionContext.GaitIntent),
-		ToDebugString(Data.LocomotionContext.RotationMode),
-		ToDebugString(Data.LocomotionContext.PhaseFamily),
-		Data.LocomotionContext.bIsStarting ? TEXT("true") : TEXT("false"),
-		Data.LocomotionContext.bIsPivoting ? TEXT("true") : TEXT("false"),
-		Data.LocomotionContext.bShouldTurnInPlace ? TEXT("true") : TEXT("false"),
-		Data.LocomotionContext.bShouldSpinTransition ? TEXT("true") : TEXT("false"),
-		Data.LocomotionContext.DesiredFacingDeltaYaw,
-		bSprintAllowed ? TEXT("true") : TEXT("false"),
-		bJumpAllowed ? TEXT("true") : TEXT("false"),
-		Data.Combat.bIsCombatMode ? TEXT("true") : TEXT("false"),
-		Data.Combat.bIsAttacking ? TEXT("true") : TEXT("false"),
-		Data.Combat.bIsDodging ? TEXT("true") : TEXT("false"),
-		Data.Combat.bIsHitReacting ? TEXT("true") : TEXT("false"),
-		static_cast<int32>(Data.Ground.GroundMotionMode),
-		Data.Ground.bStartRequested ? TEXT("true") : TEXT("false"),
-		Data.Ground.bStopRequested ? TEXT("true") : TEXT("false"),
-		Data.Ground.bWantsSprint ? TEXT("true") : TEXT("false"),
-		Data.Ground.bUseSprintLocomotion ? TEXT("true") : TEXT("false"),
-		Data.Ground.bStartWasSprinting ? TEXT("true") : TEXT("false"),
-		Data.Ground.bStopWasSprinting ? TEXT("true") : TEXT("false"),
-		Data.Air.bIsInAir ? TEXT("true") : TEXT("false"),
-		Data.Air.bIsJumping ? TEXT("true") : TEXT("false"),
-		Data.Air.bIsFallOffStart ? TEXT("true") : TEXT("false"),
-		Data.Landing.bIsLanding ? TEXT("true") : TEXT("false"),
-		Data.Landing.bUseHeavyLand ? TEXT("true") : TEXT("false"),
-		Data.Landing.bLandWasMoving ? TEXT("true") : TEXT("false"),
-		Data.Landing.bLandWasSprinting ? TEXT("true") : TEXT("false"),
-		Data.MotionMatching.SelectionRevision,
-		Data.MotionMatching.bSelectionChanged ? TEXT("true") : TEXT("false"),
-		Data.MotionMatching.bForceReselect ? TEXT("true") : TEXT("false"),
-		Data.MotionMatching.TrajectorySampleCount,
-		Data.Movement.TrajectoryGenerationFrame,
-		Data.Movement.SnapshotFrame,
-		Data.Movement.TrajectoryAgeSeconds,
-		Data.Movement.bTrajectoryPredictionUsable ? TEXT("true") : TEXT("false"),
-		Data.Movement.TrajectoryResetRevision,
-		static_cast<int32>(Data.Movement.TrajectoryResetReason),
-		Data.Movement.TrajectoryResetRevisionAfterConsumption,
-		static_cast<int32>(Data.Movement.TrajectoryResetReasonAfterConsumption),
-		PostSelection.ProducerNodeIndex,
-		PostSelection.ResultCandidateCount,
-		PostSelection.CaptureFrame,
-		PostSelection.CachedNodeWeight,
-		PostSelection.ResultLastChangedFrame,
-		bChooserStartRequested ? TEXT("true") : TEXT("false"),
-		bChooserStopRequested ? TEXT("true") : TEXT("false"),
-		bChooserUseRunLocomotion ? TEXT("true") : TEXT("false"),
-		bChooserUseRemoteRunLocomotion ? TEXT("true") : TEXT("false"),
-		bChooserUseSprintLocomotionRow ? TEXT("true") : TEXT("false"),
-		bChooserUseJumpStart ? TEXT("true") : TEXT("false"),
-		(bChooserUseFallOff || bChooserUseFallLoop) ? TEXT("true") : TEXT("false"),
-		bChooserIsLanding ? TEXT("true") : TEXT("false"),
-		bChooserIsCombatMode ? TEXT("true") : TEXT("false"),
-		bChooserIsRemoteProxy ? TEXT("true") : TEXT("false"));
+ const auto Playback=GetPlaybackSnapshot();
+ return FString::Printf(TEXT("PlayerLocomotion Playback=%s Time=%.3f/%.3f Rate=%.3f Node=%d Weight=%.3f Frame=%llu Speed=%.1f Air=%d Montage=%.3f"),
+  *Playback.SelectedAnimation.ToString(),Playback.SelectedAnimationTime,Playback.SelectedAnimationLength,
+  Playback.WantedPlayRate,Playback.ProducerNodeIndex,Playback.CachedNodeWeight,Playback.CaptureFrame,
+  ThreadSafeData.Movement.GroundSpeed,ThreadSafeData.Air.bIsInAir,ThreadSafeData.Montage.FullBodyMontageWeight);
 }
-
-FName UProject_JCharacterAnimInstance::GetThreadSafeMotionMatchingSelectedAnimation() const
+bool UProject_JCharacterAnimInstance::NeedsFullRateVisualUpdate() const
 {
-	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().MotionMatching.PostSelection.SelectedAnimation;
-}
-
-float UProject_JCharacterAnimInstance::GetThreadSafeMotionMatchingSelectedAnimationProgress() const
-{
-	const FProject_JAnimMotionMatchingPostSelectionData& PostSelection =
-		GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().MotionMatching.PostSelection;
-	return PostSelection.SelectedAnimationLength > UE_KINDA_SMALL_NUMBER
-		? FMath::Clamp(PostSelection.SelectedAnimationTime / PostSelection.SelectedAnimationLength, 0.0f, 1.0f)
-		: 0.0f;
-}
-
-bool UProject_JCharacterAnimInstance::GetThreadSafeMotionMatchingSelectionIsContinuing() const
-{
-	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().MotionMatching.PostSelection.bIsContinuingPoseSearch;
-}
-
-FString UProject_JCharacterAnimInstance::GetMotionMatchingTraceSummary() const
-{
-	using Project_J::LocomotionDebug::ToDebugString;
-
-	FString Summary = FString::Printf(TEXT("==== Motion Matching Trace (%d entries) ====\n"), MotionMatchingTrace.Num());
-	for (int32 EntryIndex = 0; EntryIndex < MotionMatchingTrace.Num(); ++EntryIndex)
-	{
-		const FProject_JMotionMatchingTraceEntry& Entry = MotionMatchingTrace[EntryIndex];
-		const double UntilNextSeconds = EntryIndex + 1 < MotionMatchingTrace.Num()
-			? MotionMatchingTrace[EntryIndex + 1].WorldTimeSeconds - Entry.WorldTimeSeconds
-			: -1.0;
-		Summary += FString::Printf(
-			TEXT("t=%.3f Next=%.3f Rev=%d PSD=%s Anim=%s AnimTime=%.3f/%.3f PlayRate=%.2f Continuing=%s CurveSpeed=%.1f Warp=%.2f CurvePhase=%.2f Phase=%s Ground=%d Age=%.3f Gait=%s Rotation=%s SettledCycle=%s Speed=%.1f FutureSpeed=%.1f Gain=%.1f FutureTurn=%.1f FutureValid=%s StopDist=%.1f Input=%s Accel=%s Decel=%s InputTurn=%.1f Trajectory=%d DBChanged=%s ForceReselect=%s\n"),
-			Entry.WorldTimeSeconds,
-			UntilNextSeconds,
-			Entry.SelectionRevision,
-			*Entry.DatabaseName,
-			*Entry.SelectedAnimationName,
-			Entry.SelectedAnimationTime,
-			Entry.SelectedAnimationLength,
-			Entry.SelectedAnimationWantedPlayRate,
-			Entry.bSelectionIsContinuing ? TEXT("true") : TEXT("false"),
-			Entry.MoveDataSpeedCurve,
-			Entry.EnableWarpingCurve,
-			Entry.PhaseCurve,
-			ToDebugString(Entry.PhaseFamily),
-			static_cast<int32>(Entry.GroundMotionMode),
-			Entry.GroundModeAgeSeconds,
-			ToDebugString(Entry.GaitIntent),
-			ToDebugString(Entry.RotationMode),
-			Entry.bUseSettledCycle ? TEXT("true") : TEXT("false"),
-			Entry.GroundSpeed,
-			Entry.FutureTrajectorySpeed,
-			Entry.PredictedSpeedGain,
-			Entry.FutureTrajectoryTurnAngle,
-			Entry.bHasFutureTrajectoryVelocity ? TEXT("true") : TEXT("false"),
-			Entry.PredictedStopDistance,
-			Entry.bHasMoveInput ? TEXT("true") : TEXT("false"),
-			Entry.bIsAccelerating ? TEXT("true") : TEXT("false"),
-			Entry.bIsDecelerating ? TEXT("true") : TEXT("false"),
-			Entry.InputTurnAngle,
-			Entry.TrajectorySampleCount,
-			Entry.bDatabaseChanged ? TEXT("true") : TEXT("false"),
-			Entry.bForceReselect ? TEXT("true") : TEXT("false"));
-	}
-	return Summary;
-}
-
-FString UProject_JCharacterAnimInstance::GetMotionMatchingPivotTraceSummary() const
-{
-	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetPivotTraceSummary();
+ check(IsInGameThread());
+ return ThreadSafeData.Air.bIsInAir || ThreadSafeData.Combat.bIsAttacking || ThreadSafeData.Combat.bIsDodging ||
+  ThreadSafeData.Combat.bIsHitReacting || ThreadSafeData.Montage.FullBodyMontageWeight>ZERO_ANIMWEIGHT_THRESH ||
+  FMath::Abs(ThreadSafeData.Movement.FutureTrajectoryTurnAngle)>=60.f;
 }

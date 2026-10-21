@@ -8,8 +8,10 @@ const output = path.join(docs, 'Maintenance', 'Document_Catalog.md');
 const slash = value => value.replaceAll('\\', '/');
 const cell = value => value.replaceAll('|', '\\|').replaceAll('\n', ' ');
 const topics = new Map([
+  ['', '문서 시작점'],
   ['Overview', '프로젝트 개요'], ['Architecture', '공통 아키텍처'],
   ['Animation', '애니메이션'], ['Combat', '전투'], ['Gameplay', '게임플레이'],
+  ['World', '월드 제작'], ['WorldGen', '월드 생성·설계'],
   ['UI', '플레이어 UI'],
   ['Networking', '네트워크'], ['Performance', '성능'], ['Benchmarks', '벤치마크'],
   ['Review', '검토·후속 결과'], ['Handoffs', '작업 인계'],
@@ -52,6 +54,10 @@ const records = files.filter(file => file.endsWith('.md')).map(file => {
   return { file, relative: rel, topic: rel.includes('/') ? rel.split('/')[0] : '',
     title: source.match(/^#\s+(.+)$/m)?.[1]?.trim() ?? path.basename(file), type: kind(rel, source) };
 });
+// A newly added topic must not silently disappear from the whole-doc catalog.
+for (const topic of [...new Set(records.map(record => record.topic))].sort()) {
+  if (!topics.has(topic)) topics.set(topic, topic);
+}
 let text = `# 전체 문서 목록\n\n[문서 시작점](../README.md) · [분류·보존 규칙](README.md)\n\n`;
 text += '목록은 파일 위치와 문서 종류를 안내한다. 구현 완료·현재 성능을 판정하는 표가 아니며, 각 문서의 날짜·범위·후속 기록을 함께 읽는다. 통합 문서 안내는 이전 링크를 이어주는 진입점이고 상세 본문은 통합 가이드에 있다.\n\n';
 text += `문서 폴더 파일 ${files.length}개, Markdown ${records.length}개. 목록 갱신: \`node Scripts/Documentation/Update-DocumentCatalog.mjs\`.\n\n`;

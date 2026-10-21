@@ -1,268 +1,36 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "Animation/Project_JLocomotionProfile.h"
-#include "Animation/Project_JFootPlacementDefaults.h"
+#if WITH_EDITOR
+#include "Validation/Project_JDataValidation.h"
+#endif
 
 FName UProject_JLocomotionProfile::GetMovementValidationFailure() const
 {
-	struct FField { const TCHAR* Name; float Value; };
-	const FField Fields[] = {
-		{TEXT("WalkSpeed"), WalkSpeed}, {TEXT("SprintSpeed"), SprintSpeed},
-		{TEXT("WalkRotationRateYaw"), WalkRotationRateYaw}, {TEXT("SprintRotationRateYaw"), SprintRotationRateYaw},
-		{TEXT("MovementPolicy.RunMaxAcceleration"), MovementPolicy.RunMaxAcceleration},
-		{TEXT("MovementPolicy.SprintMaxAcceleration"), MovementPolicy.SprintMaxAcceleration},
-		{TEXT("MovementPolicy.RunBrakingDeceleration"), MovementPolicy.RunBrakingDeceleration},
-		{TEXT("MovementPolicy.SprintBrakingDeceleration"), MovementPolicy.SprintBrakingDeceleration},
-		{TEXT("MovementPolicy.RunGroundFriction"), MovementPolicy.RunGroundFriction},
-		{TEXT("MovementPolicy.SprintGroundFriction"), MovementPolicy.SprintGroundFriction},
-		{TEXT("MovementPolicy.StrafeForwardSpeedMultiplier"), MovementPolicy.StrafeForwardSpeedMultiplier},
-		{TEXT("MovementPolicy.StrafeSideSpeedMultiplier"), MovementPolicy.StrafeSideSpeedMultiplier},
-		{TEXT("MovementPolicy.StrafeBackwardSpeedMultiplier"), MovementPolicy.StrafeBackwardSpeedMultiplier}};
-	for (const auto& Field : Fields)
-		if (!FMath::IsFinite(Field.Value) || Field.Value < 0) { return FName(Field.Name); }
-	if (MovementPolicy.bEnableStrafeDirectionalSpeedScaling)
-		for (const float Multiplier : {MovementPolicy.StrafeForwardSpeedMultiplier, MovementPolicy.StrafeSideSpeedMultiplier, MovementPolicy.StrafeBackwardSpeedMultiplier})
-			if (!FMath::IsFinite(WalkSpeed * Multiplier) || !FMath::IsFinite(SprintSpeed * Multiplier))
-				return TEXT("MovementPolicy.StrafeSpeedProduct");
-	return NAME_None;
+ for(const auto& Field : {TPair<FName,float>(TEXT("WalkSpeed"),WalkSpeed), TPair<FName,float>(TEXT("SprintSpeed"),SprintSpeed),
+  TPair<FName,float>(TEXT("IdleSpeedThreshold"),TransitionPolicy.IdleSpeedThreshold)})
+  if(!FMath::IsFinite(Field.Value) || Field.Value<0.f) return Field.Key;
+ return NAME_None;
 }
-
-#if WITH_EDITOR
-#include "Chooser.h"
-#include "FloatRangeColumn.h"
-#include "ObjectChooser_Asset.h"
-#include "Validation/Project_JDataValidation.h"
-#include "UObject/UnrealType.h"
-#endif
-
-#if WITH_EDITOR
-namespace
-{
-bool BindsLiveGroundSpeed(const FFloatRangeColumn& Column)
-{
-	if (!Column.InputValue.IsValid() ||
-		Column.InputValue.GetScriptStruct() != FFloatContextProperty::StaticStruct())
-	{
-		return false;
-	}
-
-	const FFloatContextProperty& Property = Column.InputValue.Get<FFloatContextProperty>();
-	return Property.Binding.PropertyBindingChain.Contains(FName(TEXT("GetThreadSafeGroundSpeed")));
-}
-
-void GatherReferencedChooserTables(
-	const UChooserTable& Table,
-	TArray<const UChooserTable*>& OutReferencedTables)
-{
-	for (const TObjectPtr<UChooserTable>& NestedChooser : Table.NestedChoosers)
-	{
-		if (NestedChooser)
-		{
-			OutReferencedTables.Add(NestedChooser);
-		}
-	}
-
-	for (const FInstancedStruct& Result : Table.ResultsStructs)
-	{
-		if (!Result.IsValid())
-		{
-			continue;
-		}
-
-		if (Result.GetScriptStruct() == FAssetChooser::StaticStruct())
-		{
-			if (const UChooserTable* ReferencedTable = Cast<UChooserTable>(Result.Get<FAssetChooser>().Asset))
-			{
-				OutReferencedTables.Add(ReferencedTable);
-			}
-		}
-		else if (Result.GetScriptStruct() == FEvaluateChooser::StaticStruct())
-		{
-			if (const UChooserTable* ReferencedTable = Result.Get<FEvaluateChooser>().Chooser)
-			{
-				OutReferencedTables.Add(ReferencedTable);
-			}
-		}
-		else if (Result.GetScriptStruct() == FNestedChooser::StaticStruct())
-		{
-			if (const UChooserTable* ReferencedTable = Result.Get<FNestedChooser>().Chooser)
-			{
-				OutReferencedTables.Add(ReferencedTable);
-			}
-		}
-	}
-}
-
-void ValidateStateControllerLandingChoosers(
-	const UChooserTable* RootTable,
-	FDataValidationContext& Context,
-	bool& bHasError)
-{
-	if (!RootTable)
-	{
-		return;
-	}
-
-	TArray<const UChooserTable*> PendingTables{RootTable};
-	TSet<const UChooserTable*> VisitedTables;
-	while (!PendingTables.IsEmpty())
-	{
-		const UChooserTable* Table = PendingTables.Pop(EAllowShrinking::No);
-		if (!Table || VisitedTables.Contains(Table))
-		{
-			continue;
-		}
-		VisitedTables.Add(Table);
-
-		const bool bLandingTable = Table->GetName().Contains(TEXT("Land"), ESearchCase::IgnoreCase);
-		if (bLandingTable)
-		{
-			for (const FInstancedStruct& ColumnStruct : Table->ColumnsStructs)
-			{
-				if (ColumnStruct.IsValid() &&
-					ColumnStruct.GetScriptStruct() == FFloatRangeColumn::StaticStruct() &&
-					BindsLiveGroundSpeed(ColumnStruct.Get<FFloatRangeColumn>()))
-				{
-					Project_J::DataValidation::AddError(
-						Context,
-						bHasError,
-						FText::Format(
-							NSLOCTEXT(
-								"ProjectJLocomotionProfile",
-								"LiveGroundSpeedLandingChooser",
-								"Landing Chooser '{0}' filters by live GetThreadSafeGroundSpeed. Use the latched Walk/Run/Sprint landing semantics instead; live remote smoothing can leave no matching row near a speed boundary."),
-							FText::FromString(Table->GetPathName())));
-				}
-			}
-		}
-
-		GatherReferencedChooserTables(*Table, PendingTables);
-	}
-}
-}
-#endif
-
-bool FProject_JMotionMatchingSearchPolicy::ShouldSearchEveryUpdate(
-	EProject_JLocomotionPhaseFamily PhaseFamily,
-	bool bIsFallOffStart) const
-{
-	switch (PhaseFamily)
-	{
-	case EProject_JLocomotionPhaseFamily::JumpStart:
-		return bSearchJumpStartEveryUpdate;
-
-	case EProject_JLocomotionPhaseFamily::Fall:
-		return bIsFallOffStart
-			? bSearchFallOffEveryUpdate
-			: bSearchAirborneLoopEveryUpdate;
-
-	case EProject_JLocomotionPhaseFamily::Landing:
-		return bSearchLandingEveryUpdate;
-
-	case EProject_JLocomotionPhaseFamily::Start:
-		return bSearchStartEveryUpdate;
-
-	case EProject_JLocomotionPhaseFamily::Stop:
-		return bSearchStopEveryUpdate;
-
-	default:
-		return true;
-	}
-}
-
-float FProject_JMotionMatchingSearchPolicy::ResolveSearchThrottleTime(
-	EProject_JLocomotionPhaseFamily PhaseFamily,
-	bool bIsFallOffStart,
-	float DefaultSearchThrottleTime,
-	bool bDatabaseChanged,
-	float MinimumSearchInterval) const
-{
-	const float PhaseInterval = ShouldSearchEveryUpdate(PhaseFamily, bIsFallOffStart) || bDatabaseChanged
-		? FMath::Max(0.0f, DefaultSearchThrottleTime)
-		: FMath::Max(0.0f, SuppressedSearchThrottleTime);
-	const float BudgetInterval = FMath::IsFinite(MinimumSearchInterval)
-		? FMath::Max(0.0f, MinimumSearchInterval) : 0.0f;
-	return FMath::Max(PhaseInterval, BudgetInterval);
-}
-
-float FProject_JMotionMatchingSearchPolicy::ResolveBlendTime(
-	bool bIsInAir,
-	bool bWasInAir,
-	float VerticalSpeed) const
-{
-	// Mirrors GASP Get_MMBlendTime. This is a presentation policy only: phase
-	// ownership and Start/Stop completion remain in the locomotion component.
-	if (!bIsInAir)
-	{
-		return FMath::Max(0.0f, bWasInAir ? LandingBlendTime : DefaultBlendTime);
-	}
-
-	return FMath::Max(0.0f, VerticalSpeed > 100.0f ? JumpBlendTime : AirBlendTime);
-}
-
-UProject_JLocomotionProfile::UProject_JLocomotionProfile()
-{
-	OTMSprintForwardTurn.RunningQualificationSpeed = StrafeSprintForwardTurn.RunningQualificationSpeed = 300.f;
-	// Include F+A/F+D on the boundary despite floating point angle rounding.
-	StrafeSprintForwardTurn.ForwardConeAngle = 45.5f;
-	ProjectJ::Animation::InitializeFootPlacementDefaults(FootPlacementPlantSettingsDefault,
-		FootPlacementPlantSettingsStops, FootPlacementInterpolationSettingsStops);
-}
-
 #if WITH_EDITOR
 EDataValidationResult UProject_JLocomotionProfile::IsDataValid(FDataValidationContext& Context) const
 {
-	EDataValidationResult Result = Super::IsDataValid(Context);
-	bool bHasError = Result == EDataValidationResult::Invalid;
-	const float CancelAngles[] = {TransitionPolicy.StartMouseTurnCancelAngle, TransitionPolicy.StartMoveInputCancelAngle, TransitionPolicy.LandMouseTurnCancelAngle};
-	for (const float Angle : CancelAngles)
-	{
-		if (!FMath::IsFinite(Angle) || Angle < 0.f)
-		{
-			Context.AddError(NSLOCTEXT("ProjectJLocomotionProfile", "InvalidCancelAngle", "Start/Land cancellation angles must be finite and nonnegative."));
-			bHasError = true;
-		}
-	}
-	if (const FName Failure = GetMovementValidationFailure(); !Failure.IsNone())
-	{
-		Context.AddError(FText::FromString(FString::Printf(TEXT("%s must produce finite, nonnegative movement values."), *Failure.ToString())));
-		bHasError = true;
-	}
-	const auto ValidateTurnSettings = [&](const FProject_JTurnEventSettings& Settings, const TCHAR* Mode)
-	{
-		const auto Resolved = Settings.Resolved();
-		for (TFieldIterator<FFloatProperty> It(FProject_JTurnEventSettings::StaticStruct()); It; ++It)
-		{
-			const float Value = It->GetPropertyValue_InContainer(&Settings);
-			const float Safe = It->GetPropertyValue_InContainer(&Resolved);
-			if (!FMath::IsFinite(Value) || Value != Safe)
-			{
-				Context.AddError(FText::FromString(FString::Printf(TEXT("%s ForwardTurn.%s is outside its supported range or conflicts with admission/recovery hysteresis."), Mode, *It->GetName())));
-				bHasError = true;
-			}
-		}
-	};
-	ValidateTurnSettings(OTMForwardTurn, TEXT("OTM"));
-	ValidateTurnSettings(StrafeForwardTurn, TEXT("Strafe"));
-	ValidateTurnSettings(OTMSprintForwardTurn, TEXT("OTM Sprint"));
-	ValidateTurnSettings(StrafeSprintForwardTurn, TEXT("Strafe Sprint"));
-	ValidateStateControllerLandingChoosers(
-		MotionMatchingSearchPolicy.StateControllerAnimationChooserTable,
-		Context,
-		bHasError);
-	return Project_J::DataValidation::MakeResult(Result, bHasError);
+ const auto Base=Super::IsDataValid(Context);
+ bool bError=Base==EDataValidationResult::Invalid;
+ if(const FName Failure=GetMovementValidationFailure();!Failure.IsNone())
+ {
+  Context.AddError(FText::FromString(FString::Printf(TEXT("%s must be finite and nonnegative."),*Failure.ToString())));
+  bError=true;
+ }
+ const auto Check=[&](float Value,float Minimum,float Maximum,const TCHAR* Name)
+ {
+  if(!FMath::IsFinite(Value) || Value<Minimum || Value>Maximum)
+  { Context.AddError(FText::FromString(FString::Printf(TEXT("AirPolicy.%s is outside its supported range."),Name)));bError=true; }
+ };
+ Check(AirPolicy.AirJumpReselectCooldown,.01f,TNumericLimits<float>::Max(),TEXT("AirJumpReselectCooldown"));
+ Check(AirPolicy.AirJumpBlendTime,.05f,.5f,TEXT("AirJumpBlendTime"));
+ Check(AirPolicy.AirJumpMinBlendProgressRatio,.3f,1.f,TEXT("AirJumpMinBlendProgressRatio"));
+ Check(AirPolicy.AirJumpMaxProgressRatio,.1f,1.f,TEXT("AirJumpMaxProgressRatio"));
+ Check(AirPolicy.OTMJumpLaunchAngleThreshold,10.f,90.f,TEXT("OTMJumpLaunchAngleThreshold"));
+ Check(AirPolicy.RemoteJumpUrgentAnimationUpdateDuration,0.f,TNumericLimits<float>::Max(),TEXT("RemoteJumpUrgentAnimationUpdateDuration"));
+ return Project_J::DataValidation::MakeResult(Base,bError);
 }
 #endif
-
-FProject_JAnimationBudgetSettings UProject_JLocomotionProfile::GetResolvedAnimationBudgetSettings() const
-{
-	FProject_JAnimationBudgetSettings ResolvedSettings = AnimationBudget;
-	ResolvedSettings.NearDistance = NearMotionMatchingDistance;
-	ResolvedSettings.MidDistance = MidMotionMatchingDistance;
-	ResolvedSettings.FarDistance = FarMotionMatchingDistance;
-	ResolvedSettings.MidUpdateInterval = MidMotionMatchingUpdateInterval;
-	ResolvedSettings.FarUpdateInterval = FarMotionMatchingUpdateInterval;
-	ResolvedSettings.HiddenUpdateInterval = AnimInstanceHiddenRemoteUpdateInterval;
-	ResolvedSettings.bDisableMotionMatchingBeyondFarDistance = bDisableMotionMatchingBeyondFarDistance;
-	return ResolvedSettings;
-}

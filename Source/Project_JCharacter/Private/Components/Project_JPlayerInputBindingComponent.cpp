@@ -1,7 +1,6 @@
 #include "Components/Project_JPlayerInputBindingComponent.h"
 
 #include "EnhancedInputComponent.h"
-#include "Animation/Project_JMotionMatchingCVars.h"
 #include "InputActionValue.h"
 #include "Project_JPlayerCharacter.h"
 #include "Project_JLocomotionAnimStateComponent.h"
@@ -122,6 +121,7 @@ bool UProject_JPlayerInputBindingComponent::BindInput(UInputComponent* PlayerInp
 	BindOwnedAction(ActionSet.SprintAction, ETriggerEvent::Completed, BoundPlayerCharacter.Get(), &AProject_JPlayerCharacter::StopSprint);
 	BindOwnedAction(ActionSet.SprintAction, ETriggerEvent::Canceled, BoundPlayerCharacter.Get(), &AProject_JPlayerCharacter::StopSprint);
 	BindOwnedAction(ActionSet.ToggleCombatAction, ETriggerEvent::Started, BoundPlayerCharacter.Get(), &AProject_JPlayerCharacter::ToggleCombatMode);
+ BindOwnedAction(ActionSet.WalkAction,ETriggerEvent::Started,BoundPlayerCharacter.Get(),&AProject_JPlayerCharacter::ToggleWalk);
 	if (ActionSet.AttackAction)
 	{
 		BindOwnedAction(ActionSet.AttackAction, ETriggerEvent::Started, this, &UProject_JPlayerInputBindingComponent::HandlePrimarySkillPressed);
@@ -291,16 +291,7 @@ void UProject_JPlayerInputBindingComponent::HandleMove(const FInputActionValue& 
 
 	const FVector2D MoveInput = Value.Get<FVector2D>();
 	if (MoveInput.ContainsNaN()) { return; }
-	if (Project_J::MotionMatchingCVars::ShouldTraceCombatStop() &&
-		bPendingMoveStopReconciliation && MoveInput.SizeSquared() > KINDA_SMALL_NUMBER)
-	{
-		UE_LOG(LogProjectJPlayer, Display,
-			TEXT("MMCombatStop Input=MoveResumed Actor=%s Frame=%llu Axis=(%.2f,%.2f) Speed=%.1f Intro=%d Outro=%d"),
-			*GetNameSafe(PlayerCharacter), GFrameCounter, MoveInput.X, MoveInput.Y,
-			PlayerCharacter->GetVelocity().Size2D(),
-			PlayerCharacter->IsCombatIntroPlaying() ? 1 : 0,
-			PlayerCharacter->IsCombatOutroPlaying() ? 1 : 0);
-	}
+
 	if (MoveInput.SizeSquared() > KINDA_SMALL_NUMBER)
 	{
 		CancelPendingMoveStopReconciliation();
@@ -367,16 +358,7 @@ void UProject_JPlayerInputBindingComponent::HandleMoveStopped()
 	{
 		return;
 	}
-	if (Project_J::MotionMatchingCVars::ShouldTraceCombatStop())
-	{
-		UE_LOG(LogProjectJPlayer, Display,
-			TEXT("MMCombatStop Input=MoveCompleted Actor=%s Frame=%llu Speed=%.1f Intro=%d Outro=%d PendingStop=%d"),
-			*GetNameSafe(BoundPlayerCharacter.Get()), GFrameCounter,
-			BoundPlayerCharacter->GetVelocity().Size2D(),
-			BoundPlayerCharacter->IsCombatIntroPlaying() ? 1 : 0,
-			BoundPlayerCharacter->IsCombatOutroPlaying() ? 1 : 0,
-			bPendingMoveStopReconciliation ? 1 : 0);
-	}
+
 
 	// Do not translate an individual mapping's Completed/Canceled callback into
 	// a Stop yet.  The same IA_Move can receive another non-zero mapping during
@@ -423,16 +405,7 @@ void UProject_JPlayerInputBindingComponent::RefreshSemanticMoveIntent()
 	BoundPlayerCharacter->LocomotionAnimStateComponent->SetSemanticMoveIntentInput(
 		Intent, bHasActiveIntent);
 
-	if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
-	{
-		UE_LOG(LogProjectJPlayer, Display,
-			TEXT("CombatStrafeSemanticIntent Actor=%s PressRank[F=%d B=%d L=%d R=%d] Final=(%.2f,%.2f) Active=%s"),
-			*GetNameSafe(BoundPlayerCharacter.Get()),
-			SemanticMoveIntent.GetPressRank(EProject_JMoveIntentDirection::Forward), SemanticMoveIntent.GetPressRank(EProject_JMoveIntentDirection::Backward),
-			SemanticMoveIntent.GetPressRank(EProject_JMoveIntentDirection::Left), SemanticMoveIntent.GetPressRank(EProject_JMoveIntentDirection::Right),
-			Intent.X, Intent.Y,
-			bHasActiveIntent ? TEXT("true") : TEXT("false"));
-	}
+
 }
 
 void UProject_JPlayerInputBindingComponent::CancelPendingMoveStopReconciliation()
@@ -466,18 +439,7 @@ void UProject_JPlayerInputBindingComponent::FinalizeMoveStoppedForCharacter(APro
 		PlayerCharacter->LocomotionAnimStateComponent->ClearMoveInput();
 	}
 	if (!MayRetirePlayerState(PlayerCharacter, ReleaseRevision)) { return; }
-	if (Project_J::MotionMatchingCVars::ShouldTraceCombatStop())
-	{
-		UE_LOG(LogProjectJPlayer, Display,
-			TEXT("MMCombatStop Input=StopApplied Actor=%s Frame=%llu Speed=%.1f HadMove=%d Sprint=%d StateInput=%d CachedAxis=%.2f"),
-			*GetNameSafe(PlayerCharacter), GFrameCounter,
-			PlayerCharacter->GetVelocity().Size2D(), bHadMoveInput ? 1 : 0,
-			bWasSprintingAtStop ? 1 : 0,
-			PlayerCharacter->LocomotionAnimStateComponent &&
-				PlayerCharacter->LocomotionAnimStateComponent->bHasMoveInput ? 1 : 0,
-			PlayerCharacter->LocomotionAnimStateComponent
-				? PlayerCharacter->LocomotionAnimStateComponent->MoveInputSize : -1.0f);
-	}
+
 
 	PlayerCharacter->UpdateSprintInputFromMove(FVector2D::ZeroVector);
 	if (!MayRetirePlayerState(PlayerCharacter, ReleaseRevision)) { return; }

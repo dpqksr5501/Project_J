@@ -22,7 +22,9 @@ UCLASS(abstract)
 class AProject_JPlayerController : public APlayerController
 {
 	GENERATED_BODY()
-	
+public:
+	virtual void SetViewTarget(AActor* NewViewTarget,FViewTargetTransitionParams TransitionParams=FViewTargetTransitionParams()) override;
+
 protected:
 	AProject_JPlayerController();
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="World")
@@ -87,15 +89,7 @@ protected:
 
 	/** Prints recent Motion Matching selection events captured while the player was moving. */
 	UFUNCTION(Exec)
-	void DumpMotionMatchingTrace();
-
-	/** Prints native Motion Matching/BlendStack frames captured while p.ProjectJ.MMPivotDebug was enabled. */
-	UFUNCTION(Exec)
-	void DumpMotionMatchingPivotTrace();
-
-	/** Prints native Motion Matching one-shot BlendStack frames captured while p.ProjectJ.MMTransitionDebug was enabled. */
-	UFUNCTION(Exec)
-	void DumpMotionMatchingTransitionTrace();
+	void DumpPlayerLocomotionPlayback();
 
 	UFUNCTION(Exec)
 	void DumpReplicationPolicy();

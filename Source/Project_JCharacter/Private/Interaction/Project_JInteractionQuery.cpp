@@ -1,4 +1,6 @@
 #include "Interaction/Project_JInteractionQuery.h"
+#include "GameFramework/Pawn.h"
+#include "Movement/Project_JMovementQueries.h"
 #include "Interaction/Project_JInteractable.h"
 #include "Interaction/Project_JInteractionTargetComponent.h"
 #include "Engine/World.h"
@@ -6,7 +8,7 @@
 #include "GameFramework/Character.h"
 #include "UObject/StrongObjectPtr.h"
 
-bool Project_J::Interaction::IsEligible(ACharacter& Interactor, AActor* Candidate, float SearchRadius)
+bool Project_J::Interaction::IsEligible(APawn& Interactor, AActor* Candidate, float SearchRadius)
 {
 	check(IsInGameThread());
 	if (!IsValid(&Interactor) || Interactor.IsActorBeingDestroyed()) return false;
@@ -30,12 +32,12 @@ bool Project_J::Interaction::IsEligible(ACharacter& Interactor, AActor* Candidat
 	return true;
 }
 
-bool Project_J::Interaction::TryInteract(ACharacter& Interactor, float SearchRadius)
+bool Project_J::Interaction::TryInteract(APawn& Interactor, float SearchRadius)
 {
 	check(IsInGameThread());
 	if (!IsValid(&Interactor) || Interactor.IsActorBeingDestroyed()) return false;
 	// Reflected CanInteract may destroy the caller and collect garbage synchronously.
-	const TStrongObjectPtr<ACharacter> KeepInteractor(&Interactor);
+	const TStrongObjectPtr<APawn> KeepInteractor(&Interactor);
 	UWorld* World = Interactor.GetWorld();
 	if (!Interactor.HasAuthority() || !World || !FMath::IsFinite(SearchRadius) || SearchRadius <= 0.0f) return false;
 	FCollisionObjectQueryParams ObjectTypes;

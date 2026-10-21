@@ -1,6 +1,8 @@
 # [Project J] 차세대 휴머노이드 스켈레톤 표준 & 애니메이션 파이프라인 구조 개선 제안서
 ### Next-Gen Humanoid Skeleton Architecture Redesign & New Session Master Prompt
 
+> **이전 이동 구조의 기록 — 2026-10-21:** 본문은 당시 CMC/MM·마스터·후보 정책의 구현·제안·측정 이력이다. 현재 생산 제작은 [플레이어 로코모션](../Architecture/Player_Locomotion_Architecture.md)을 따른다. 과거 구조를 복원하라는 지시나 현재 구조의 성능 결과로 해석하지 않는다.
+
 > **2026-10-02 상태 갱신:** 이 문서는 초기 구조 제안이며 아래 전체 로드맵이 구현됐다는 뜻은 아니다. 현재는 소스 마네킹의 이동/전투 합성과 임포트 몸체의 런타임 리타깃을 유지하고, 몸체 프로필·Palm 접촉 변환·Guided Hand IK 및 몽타주 가중치 복귀를 구현했다. 노드 설정과 검증은 [Guided 손 접촉](../Authoring/Weapon_Hand_Contact_System.md#body), 무기 소유권은 [무기 정책](../Authoring/Weapon_Hand_Contact_System.md#drive)을 우선한다. [Idle 접촉 자동 부착](../Authoring/Weapon_Hand_Contact_System.md#mount)은 선택 모드로 구현했다. 상체 FBIK와 Post Process 전환은 후속 검토 사항이다.
 
 > **문서 버전:** 1.0.0<br>

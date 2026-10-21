@@ -1,4 +1,5 @@
 #include "Mount/Project_JMountCharacter.h"
+#include "Movement/Project_JMovementQueries.h"
 
 #include "Animation/Project_JRiderAnimationProfile.h"
 #include "AbilitySystemComponent.h"
@@ -52,8 +53,8 @@ AProject_JMountCharacter::AProject_JMountCharacter()
 }
 
 UAbilitySystemComponent* AProject_JMountCharacter::GetAbilitySystemComponent() const { return MountAbilitySystemComponent; }
-bool AProject_JMountCharacter::CanInteract_Implementation(ACharacter* Interactor) const { return GetMountEligibilityFailure(Interactor) == EProject_JMountEligibilityFailure::None; }
-void AProject_JMountCharacter::Interact_Implementation(ACharacter* Interactor) { TryMountRider(Interactor); }
+bool AProject_JMountCharacter::CanInteract_Implementation(APawn* Interactor) const { return GetMountEligibilityFailure(Interactor) == EProject_JMountEligibilityFailure::None; }
+void AProject_JMountCharacter::Interact_Implementation(APawn* Interactor) { TryMountRider(Interactor); }
 
 bool AProject_JMountCharacter::ShouldUseRiderHandIK() const
 {
@@ -248,7 +249,7 @@ bool AProject_JMountCharacter::ApplyMountDamage(float Damage)
 	return true;
 }
 
-EProject_JMountEligibilityFailure AProject_JMountCharacter::GetMountEligibilityFailure(const ACharacter* NewRider) const
+EProject_JMountEligibilityFailure AProject_JMountCharacter::GetMountEligibilityFailure(const APawn* NewRider) const
 {
 	if (!IsValid(this) || IsActorBeingDestroyed() || bEndingPlay)
 	{
@@ -299,7 +300,7 @@ EProject_JMountEligibilityFailure AProject_JMountCharacter::GetMountEligibilityF
 		: EProject_JMountEligibilityFailure::TooFar;
 }
 
-bool AProject_JMountCharacter::TryMountRider(ACharacter* NewRider)
+bool AProject_JMountCharacter::TryMountRider(APawn* NewRider)
 {
 	if (!HasAuthority())
 	{
@@ -323,7 +324,7 @@ bool AProject_JMountCharacter::TryMountRider(ACharacter* NewRider)
 	}
 
 	const TStrongObjectPtr<AProject_JMountCharacter> KeepSelf(this);
-	const TStrongObjectPtr<ACharacter> KeepRider(NewRider);
+	const TStrongObjectPtr<APawn> KeepRider(NewRider);
 	const TStrongObjectPtr<AController> KeepController(RiderController);
 	const uint32 Revision = ++RiderTransitionRevision;
 	const auto IsCurrentTransition = [this, NewRider, Revision]()
@@ -386,7 +387,7 @@ bool AProject_JMountCharacter::DismountRider(bool bForce, bool bRestorePossessio
 		return false;
 	}
 
-	ACharacter* PreviousRider = Rider;
+	APawn* PreviousRider = Rider;
 	AController* RiderController = GetController();
 	if (!RiderController && SessionController.IsValid() && !SessionController->GetPawn()) { RiderController = SessionController.Get(); }
 	FVector DismountLocation;
@@ -403,7 +404,7 @@ bool AProject_JMountCharacter::DismountRider(bool bForce, bool bRestorePossessio
 	}
 
 	const TStrongObjectPtr<AProject_JMountCharacter> KeepSelf(this);
-	const TStrongObjectPtr<ACharacter> KeepRider(PreviousRider);
+	const TStrongObjectPtr<APawn> KeepRider(PreviousRider);
 	const TStrongObjectPtr<AController> KeepController(RiderController);
 	++RiderTransitionRevision;
 	MountState = EProject_JMountState::Dismounting;
@@ -431,7 +432,7 @@ bool AProject_JMountCharacter::DismountRider(bool bForce, bool bRestorePossessio
 	// mode. Commit the captured rider mode after that lifecycle hook completes.
 	if (bHasRiderRestoreState && StillOwnsRiderRestore())
 	{
-		PreviousRider->GetCharacterMovement()->SetMovementMode(RiderMovementBeforeMount, RiderCustomMovementBeforeMount);
+		Project_J::Movement::SetMovementMode(PreviousRider, RiderMovementBeforeMount, RiderCustomMovementBeforeMount);
 	}
 	MountState = EProject_JMountState::Unmounted;
 	SessionController.Reset();
@@ -442,11 +443,11 @@ bool AProject_JMountCharacter::DismountRider(bool bForce, bool bRestorePossessio
 	return true;
 }
 
-void AProject_JMountCharacter::OnRep_Rider(ACharacter* PreviousRider)
+void AProject_JMountCharacter::OnRep_Rider(APawn* PreviousRider)
 {
 	const TStrongObjectPtr<AProject_JMountCharacter> KeepSelf(this);
-	const TStrongObjectPtr<ACharacter> KeepPrevious(PreviousRider);
-	const TStrongObjectPtr<ACharacter> KeepNew(Rider);
+	const TStrongObjectPtr<APawn> KeepPrevious(PreviousRider);
+	const TStrongObjectPtr<APawn> KeepNew(Rider);
 	const uint32 Revision = ++RiderTransitionRevision;
 	// Replication can coalesce A -> null -> B into A -> B. Retire A's
 	// restore slot before capturing B, including synchronous movement callbacks.
@@ -458,14 +459,14 @@ void AProject_JMountCharacter::OnRep_Rider(ACharacter* PreviousRider)
 		bHasRiderRestoreState = false;
 		PreviousRider->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 		if (RiderTransitionRevision != Revision || !IsValid(PreviousRider) || PreviousRider->IsActorBeingDestroyed()) { return; }
-		if (UCapsuleComponent* Capsule = PreviousRider->GetCapsuleComponent())
+		if (UCapsuleComponent* Capsule = Project_J::Movement::FindCapsule(PreviousRider))
 		{
 			Capsule->SetCollisionEnabled(Collision);
 		}
 		if (RiderTransitionRevision != Revision || !IsValid(PreviousRider) || PreviousRider->IsActorBeingDestroyed()) { return; }
-		if (UCharacterMovementComponent* MoveComp = PreviousRider->GetCharacterMovement())
+		if (Project_J::Movement::ReadPhysicalFrame(PreviousRider).bValid)
 		{
-			MoveComp->SetMovementMode(Mode, CustomMode);
+			Project_J::Movement::SetMovementMode(PreviousRider, Mode, CustomMode);
 		}
 	}
 	if (RiderTransitionRevision != Revision || !IsValid(this) || IsActorBeingDestroyed() || bEndingPlay) { return; }
@@ -481,7 +482,7 @@ void AProject_JMountCharacter::OnRep_MountState(EProject_JMountState PreviousSta
 bool AProject_JMountCharacter::FindDismountLocation(FVector& OutLocation) const
 {
 	const FVector Right = GetActorRightVector();
-	const UCapsuleComponent* RiderCapsule = Rider ? Rider->GetCapsuleComponent() : nullptr;
+	const UCapsuleComponent* RiderCapsule = Rider ? Project_J::Movement::FindCapsule(Rider) : nullptr;
 	if (!RiderCapsule || !GetWorld())
 	{
 		return false;
@@ -504,13 +505,13 @@ bool AProject_JMountCharacter::FindDismountLocation(FVector& OutLocation) const
 			// Mount and rider capsule centers need not have the same height.
 			// Search the nearby floor, then validate the full rider capsule.
 			const float MountBottom = GetActorLocation().Z - MountHalfHeight;
-			const float StepHeight = Rider->GetCharacterMovement()->MaxStepHeight;
+			const float StepHeight = Project_J::Movement::ReadPhysicalFrame(Rider).MaxStepHeight;
 			const FVector TraceStart(Candidate.X, Candidate.Y, MountBottom + FMath::Max(MountHalfHeight, RiderHalfHeight) * 2.0f + StepHeight);
 			const FVector TraceEnd(Candidate.X, Candidate.Y, MountBottom - StepHeight - 2.0f);
 			FHitResult Floor;
 			if (GetWorld()->LineTraceSingleByChannel(Floor, TraceStart, TraceEnd, RiderCapsule->GetCollisionObjectType(), QueryParams, Responses))
 			{
-				if (!Rider->GetCharacterMovement()->IsWalkable(Floor)) { continue; }
+				if (!Project_J::Movement::IsWalkable(Rider, Floor)) { continue; }
 				Candidate.Z = Floor.ImpactPoint.Z + RiderHalfHeight + 2.0f;
 			}
 			else
@@ -527,7 +528,7 @@ bool AProject_JMountCharacter::FindDismountLocation(FVector& OutLocation) const
 	return false;
 }
 
-bool AProject_JMountCharacter::AttachRider(ACharacter* NewRider)
+bool AProject_JMountCharacter::AttachRider(APawn* NewRider)
 {
 	const uint32 Revision = RiderTransitionRevision;
 	const EProject_JMountState ExpectedState = MountState;
@@ -542,12 +543,12 @@ bool AProject_JMountCharacter::AttachRider(ACharacter* NewRider)
 		return false;
 	}
 	const TStrongObjectPtr<AProject_JMountCharacter> KeepSelf(this);
-	const TStrongObjectPtr<ACharacter> KeepRider(NewRider);
+	const TStrongObjectPtr<APawn> KeepRider(NewRider);
 	if (!bHasRiderRestoreState)
 	{
-		RiderCollisionBeforeMount = NewRider->GetCapsuleComponent()->GetCollisionEnabled();
-		RiderMovementBeforeMount = NewRider->GetCharacterMovement()->MovementMode;
-		RiderCustomMovementBeforeMount = NewRider->GetCharacterMovement()->CustomMovementMode;
+		RiderCollisionBeforeMount = Project_J::Movement::FindCapsule(NewRider)->GetCollisionEnabled();
+		RiderMovementBeforeMount = Project_J::Movement::ReadPhysicalFrame(NewRider).Mode;
+		RiderCustomMovementBeforeMount = 0;
 		bHasRiderRestoreState = true;
 	}
 
@@ -555,13 +556,13 @@ bool AProject_JMountCharacter::AttachRider(ACharacter* NewRider)
 	const FName SocketName = GetMesh() && GetMesh()->DoesSocketExist(RiderSocketName) ? RiderSocketName : NAME_None;
 	NewRider->AttachToComponent(AttachTarget, FAttachmentTransformRules::SnapToTargetNotIncludingScale, SocketName);
 	if (!IsCurrentAttachment()) { return false; }
-	NewRider->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	Project_J::Movement::FindCapsule(NewRider)->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	if (!IsCurrentAttachment()) { return false; }
-	NewRider->GetCharacterMovement()->DisableMovement();
+	Project_J::Movement::SetMovementMode(NewRider, MOVE_None);
 	return IsCurrentAttachment();
 }
 
-void AProject_JMountCharacter::DetachRider(ACharacter* PreviousRider, const FVector& DismountLocation) const
+void AProject_JMountCharacter::DetachRider(APawn* PreviousRider, const FVector& DismountLocation) const
 {
 	if (!PreviousRider)
 	{
@@ -569,12 +570,12 @@ void AProject_JMountCharacter::DetachRider(ACharacter* PreviousRider, const FVec
 	}
 
 	PreviousRider->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-	PreviousRider->GetCapsuleComponent()->SetCollisionEnabled(bHasRiderRestoreState ? RiderCollisionBeforeMount : ECollisionEnabled::QueryAndPhysics);
+	Project_J::Movement::FindCapsule(PreviousRider)->SetCollisionEnabled(bHasRiderRestoreState ? RiderCollisionBeforeMount : ECollisionEnabled::QueryAndPhysics);
 	PreviousRider->TeleportTo(DismountLocation, GetActorRotation(), false, true);
-	PreviousRider->GetCharacterMovement()->SetMovementMode(bHasRiderRestoreState ? RiderMovementBeforeMount : MOVE_Walking, RiderCustomMovementBeforeMount);
+	Project_J::Movement::SetMovementMode(PreviousRider, bHasRiderRestoreState ? RiderMovementBeforeMount : MOVE_Walking, RiderCustomMovementBeforeMount);
 }
 
-void AProject_JMountCharacter::NotifyRiderMountChanged(ACharacter* ChangedRider, bool bMounted)
+void AProject_JMountCharacter::NotifyRiderMountChanged(APawn* ChangedRider, bool bMounted)
 {
 	if (!ChangedRider)
 	{

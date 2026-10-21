@@ -1,27 +1,21 @@
 # Project J 프로젝트 맥락
 
-이 문서는 Project J의 **현재 구조와 작업 기준을 빠르게 파악하는 맥락 문서**다. 전투/애니메이션만이 아니라 런타임 소유권, 데이터, 네트워크, 탈것, UI와 향후 MMORPG 확장 경계를 함께 다룬다.
+이 문서는 현재 구조·권위·상태 소유권과 작업 진입점을 설명한다. 현재 이동·애니메이션의 책임 분리는 [플레이어 로코모션 아키텍처](../Animation/Architecture/Player_Locomotion_Architecture.md), 에셋별 제작 규칙과 시점별 검증은 해당 전문 문서를 따른다.
 
-> 상세한 구현 규칙은 각 전문 문서가 기준이다. 이 문서는 현재 구조를 빠르게 파악하기 위한 진입점이며, 에셋의 정확한 할당값은 에디터에서 최종 확인한다.
+공통 생산 경로는 Mover + `UProject_JPlayerAnimInstance` + `ABP_Player_Master`다. 상태·전환·Chooser 호출·핀 계산은 C++가 소유하고, 포즈 연결과 노드별 실행 시점은 ABP가 소유한다. OTM/Strafe, 전방 세 방향 Strafe Sprint, 공중 방향 재선택·playhead 연속성과 수평 관성을 유지한다. 구형 CMC·독립 MM/단발 경로는 현재 제작 기준이 아니다.
 
-2026-10-19의 [MMORPG 아키텍처 대조](../Review/Architecture/Project_J_MMO_Architecture_2026-10-19.md)는 앞 단계 이력이며, [현재 잔여 작업 상태](../Review/Architecture/Project_J_MMO_Remaining_2026-10-19.md)가 ZIP 전체 권고와 후속 구현·검증의 현재 판정 기준이다. 장비 상세/공개 복제 분리, PS 명령 예산, 요청 payload와 receipt 결합, 소셜 접속 교체 후 쓰기 철회와 Gateway byte 경계를 적용했다. 운영 인증·네트워크/Shipping 영속 저장·실제 존 이전·미래 카탈로그 기능은 구현 완료와 구분한다.
+공통 Skeleton은 Manny `SK_Mannequin`이다. UEFN 원본에서 변환한 448개 시퀀스·BlendSpace 10개를 생산 Chooser/PSD에 연결하며 원본은 재제작용으로 보존한다. UE5 호환 몸체는 직접 재생하고, 현재 Bip01 대검 몸체는 Family RTG와 몸체별 손 보정을 사용한다. 추가 망토 뼈의 처리는 [스켈레톤·추가 뼈 기준](../Animation/Authoring/HumanoidSkeletonRetargetingStandards.md)을 따른다. Quinn Simple은 같은 Skeleton의 직접 재생을 확인했지만, 체형별 접지·무기 접촉의 실제 플레이 검수는 별개다.
 
-2026-10-19 애니메이션 후속은 [GASP 5.8 전환 책임 정리](../Animation/Architecture/GASP58_Locomotion_Migration_2026-10-19.md)다. 설치본의 기본 Mover 경로와 이전 5.7 CMC 분석을 구분한다. CMC·GAS·공통 스택을 유지하면서 authored 단발의 완료 권한과 기존 8방향 Pivot 도달 경로를 정리한다. 2026-10-20 사용자 실행에서 Strafe Pivot은 여전히4방향이며 대각 연결의 실제 동작은 미해결이다.
+2026-10-21 마지막 IK 수정 기준 direct UBT와 집중 native 회귀 61개, 실제 지상·Sprint 회전·공중/착지·전신 몽타주 검증이 통과했다. 이전 빌드·성능·네트워크 수치를 이 결과에 합산하지 않는다. 팔 기준 포즈, 손가락 마디, Bip01 limb 시작점 누락의 원인·수정·실패 자료는 [전환·검증 기록](../Animation/Architecture/Player_Locomotion_Migration_2026-10-19.md)에 남겼다. 전체 클립 외형·새 군중 성능·Cook/Shipping 완료를 뜻하지 않는다.
 
-2026-10-15의 main 통합·R19/R20·소스/BP/DA 정리와 보류 범위는 [검토 목차](../Review/README.md)를 따른다. 애니메이션의 현재 계약은 [주제 목차](../Animation/README.md)에 모으며, Mirror Data는 새로 도입하지 않고 특정 연결 문제가 확인될 때만 재검토한다. 이전 인계의 전체 감사 요청을 현재 작업 지시로 자동 재개하지 않는다.
-
-2026-09-19의 기반 변경은 [갱신·수명 정리](../Architecture/Runtime/Reports/Internal_Polish_2026-09-19.md)에 기록했다. GAS Tick은 엔진의 필요 기반 정책을 사용하고, 탈것 체력은 GAS가 원천이며 기존 Actor 필드는 호환 조회값이다. 콘텐츠 작성은 기존 DA 구조와 [직업·전직 묶음 제작 도구](../Gameplay/Authoring/Content_Authoring_System.md#tool)를 함께 사용한다.
-
-2026-10-13의 실제 후속 구현은 [전체 결함 감사](../Review/Audits/Project_J_Whole_Project_Audit_2026-10-13.md)와 [구조 개선](../Review/Audits/Project_J_Structural_Improvement_2026-10-13.md)에 기록한다. 후자는 레이어·UI 자원 수명 공통화, UI/무기 진단 책임 분리, private 미사용 제거와 늦은 Controller의 GAS metadata 갱신이며, 검토만 한 시스템·미해결 CPU 증가와 구분한다.
-
-이전 통합 검증은 [2026-09-19 기록](../Architecture/Runtime/Reports/Internal_Polish_Validation_2026-09-19.json)이다. 후속 캐릭터 변경과 검증 범위는 [2026-09-20 컴포넌트 실행·수명 정리](../Architecture/Runtime/Reports/Character_Component_Ownership_2026-09-20.md)를 따른다. UI는 소비 수명에 따라 구독하고, 임시 애니메이션 요구는 메시에서 합성하며, 발도·납도 실행 상태는 기존 CombatIntroComponent가 소유한다. 궤적은 현재 생성 경계를 유지한다. 자동화 기록은 실제 멀티플레이·제작 메뉴·에셋 저장의 수동 확인을 대신하지 않는다.
+MMORPG의 운영 인증·영속 저장·실제 존 이전 등 구현/보류 경계는 [현재 잔여 작업 상태](../Review/Architecture/Project_J_MMO_Remaining_2026-10-19.md)를 따른다. 이전 인계 요청을 새 작업 지시로 자동 재개하지 않는다. 작업 종료 시 정리·검증·사용자 변경 보존은 [변경 마감 기준](../Maintenance/Change_Completion_Policy.md)을 따른다.
 
 ## 1. 프로젝트 성격과 현재 범위
 
 - Unreal Engine **5.8** 기반의 3인칭 액션 MMORPG 지향 프로젝트다.
-- 핵심은 C++ 기반 캐릭터 이동, GAS, 데이터 기반 직업/장비/전투, 네트워크 권한, 그리고 Motion Matching 애니메이션이다.
+- 핵심은 C++ 기반 캐릭터 이동, GAS, 데이터 기반 직업/장비/전투, 네트워크 권한, 그리고 Mover·데이터 기반 로코모션 애니메이션이다.
 - 현재 기본 맵은 `Lvl_ThirdPerson`, 기본 GameMode는 `BP_Project_JGameMode`다. 이 Blueprint는 `Project_JGameMode`를 상속하고, GameState/PlayerState는 C++ 클래스다. 실제 CDO의 Pawn은 `BP_GreatSword`, Controller는 `BP_ThirdPersonPlayerController`의 override다. Third Person 샘플 에셋이 남아 있지만 최종 게임 구조를 의미하지는 않는다.
-- 대검은 첫 번째 실제 직업 수직 슬라이스다. `BP_Player`, `ABP_Player`는 테스트 자산이며 생산 직업 구조의 기준은 아니다.
+- 대검은 첫 번째 실제 직업 수직 슬라이스다. `BP_Player`는 공통 아바타 제작 기반이며, 생산 대검·NPC와 함께 `ABP_Player_Master`를 사용한다. 구형 `ABP_Player`는 퇴역했다.
 - 아직 실제 백엔드/메가서버/거래소/길드/대규모 군중을 완성한 상태가 아니다. 관련 타입과 경계는 장래 확장을 위해 존재한다.
 - NPC 타깃 후보는 중앙 스케줄러의 공간 질의를 사용하며, 장비 메시 스트리밍은 `VisualAssetSubsystem`의 요청·수명 관리를 사용한다. 전투/탑승 애니메이션 레이어에는 컴포넌트 로컬 `FStreamableHandle` 경로도 남아 있다. 이를 모든 전투 질의·표현 로딩의 단일 서비스로 일반화하지 않는다. 서버 간 이동은 handover envelope/상태 머신/transport 계약이며 실제 라이브 서버 연결 완료를 의미하지 않는다.
 
@@ -44,7 +38,7 @@ Project_JMount
   └─ 지상/비행 탈것, 탈것 Attribute/Animation/Component
 
 Project_JCharacter
-  ├─ Character, Locomotion, Motion Matching, Animation
+  ├─ Mover Pawn, Locomotion, 상태 선택/Pose Match, Animation
   ├─ Combat, Input, Hit Validation, Server-side rewind
   ├─ Inventory, Equipment, Weapon presentation, Character class
   ├─ UI binding, Networking, Mass/NPC, Validation
@@ -133,22 +127,19 @@ EquipmentItemDefinition
 ### 이동 → 애니메이션
 
 ```text
-Player movement / replicated movement
-  → UProject_JLocomotionAnimStateComponent
-  → UProject_JCharacterAnimInstance snapshot (thread-safe)
-  → Native State Controller / Chooser의 단발 명령과 MM 후보
-  → Project Unified Locomotion의 공통 재생 스택 / Master ABP
-  → Linked job animation layer / montage slots / Foot Placement / Leg IK
+Enhanced Input / NavMover → GAS 정책 검증 → Mover / Network Prediction
+  → 물리 lifecycle·UMoverTrajectoryPredictor → GT 불변 snapshot / Proxy
+  → State Controller / Pose Match Chooser / BlendStack (지상)
+    + Project_J 값 타입 Chooser·실제 재생 시각 유지 (공중 재선택)
+  → Warping / Root Offset / Lean / Aim / 공통 DefaultSlot / 발 접지
+  → 전투·탈것 Linked Anim Layer / Pose History
   → 리타깃 몸체 / 손 접촉 / 의상 물리 / 장비 Leader Pose
 ```
 
-- Locomotion 상태 계산은 C++ 컴포넌트가 담당한다. 직업 ABP Event Graph에서 Pawn을 읽어 속도·방향을 다시 계산하지 않는다.
-- Motion Matching은 OTM·전투 Strafe의 이동 선택기다. 공격 스킬의 권위·판정·몽타주 선택을 대신하지 않는다.
-- 네이티브 State Controller는 계속 사용한다. 현재 Master에서는 별도 포즈 State Machine·외부 Blend Stack·Handoff를 제거하고 단발과 MM을 한 스택에서 재생한다. [구현과 노드 역할](../Animation/Planning/Unified_Locomotion_Implementation_2026-10-12.md)을 따른다.
-- 단발 복귀와 Strafe 후보군은 실제 이동·누적 회전 증거로 지속 곡선을 판정한다. [느린 회전·미세 입력·미사용 함수 정리](../Animation/Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md)를 따른다.
-- 원본 포즈의 ABA와 별도로 리타깃·의상 물리의 시각 평가·보간을 관리한다. 기존 Proxy·엔진 병렬 평가를 활용하며 GT 관리자는 worker 완료를 기다리지 않는다. [200명 예산·보호·비교·남은 검증](../Animation/Planning/Crowd_Visual_Presentation_Budget_2026-10-12.md)을 따른다.
-- 무기 전투 자세는 Master ABP의 Linked Anim Layer 경로로 합성한다.
-- 공격·구르기·발도·피격처럼 하체까지 저작된 동작은 `DefaultSlot`의 full-body montage 우선순위를 따른다.
+- 지상 물리는 원본 SmoothWalking 엔진 solver에 native `Project_JGroundMovementLibrary` 계산을 연결한다. 모드 BP는 native 호출 adapter이며 튜닝은 Mover의 `GroundMovementSettings`다. 승인된 native 입력을 직접 소비하고 별도 BP 입력 투영을 만들지 않는다. native AnimInstance가 프레임 계산과 Chooser/재생 요청을 소유하고 포즈 그래프가 소비한다. worker에서 Pawn의 물리 상태를 다시 조회하지 않는다.
+- OTM/Strafe facing과 jump/land episode는 물리 결과에서 가져온다. 공격 권위·판정·몽타주 선택은 GAS가 소유하고 root motion은 Mover에 연결한다.
+- 리타깃·의상 표시 예산과 실제 전투/서버 포즈 요구는 기존 coordinator를 사용한다. 이번 이관을 과거 200명 성능 검증의 재통과로 보고하지 않는다.
+- 옛 `Project Unified Locomotion`과 CMC TIP·곡선/MM 후보 정책은 이전 기반 자료다. 현재 계약과 남은 한계는 [Mover 이관](../Animation/Architecture/Player_Locomotion_Migration_2026-10-19.md)을 따른다.
 
 ## 5. 현재 콘텐츠/에셋 작업의 기준
 
@@ -159,15 +150,15 @@ AProject_JPlayerCharacter
   → AProject_JGreatswordCharacter
     → BP_GreatSword
 
-ABP_Humanoid_Master
+ABP_Player_Master
   + ALI_HumanoidCombat
   + ABP_Greatsword_Layers
 ```
 
 - 새 휴머노이드 직업은 얇은 native 직업 클래스 + 해당 Blueprint + 직업 layer/DA 조합으로 확장한다.
-- 공통 입력, GAS 소유권, 장비 시스템, SSR, Motion Matching graph를 직업 Blueprint에 복사하지 않는다.
-- `ABP_Humanoid_Master`는 공통 Motion Matching, 슬롯, Aim, Foot Placement/Leg IK, Pose History, Mount 선택을 소유한다. 현재 `BP_GreatSword`가 이 Master ABP와 `DA_Greatsword_AnimProfile`을 실제 사용한다.
-- Master ABP에서 State Controller는 연속 locomotion의 Motion Matching 경로와 authored one-shot의 Chooser/Blend Stack 경로를 선택적으로 합성한다. State Controller는 gameplay 권위가 아니라 C++ locomotion snapshot을 소비하는 presentation 계층으로 유지한다.
+- 공통 입력, GAS 소유권, 장비 시스템, SSR, locomotion graph를 직업 Blueprint에 복사하지 않는다.
+- `ABP_Player_Master`는 지상 상태 선택·재생/보정, Project_J 점프 재선택·원본 일반 추락, 슬롯·Aim·접지·Pose History·Mount 선택을 소유한다. 실제 BP_Player/GreatSword/NPC 연결을 저장했다. 직업/몸체 DA의 역할은 유지한다.
+- State Controller/Chooser는 gameplay 권위를 갖지 않는다. 물리 입력과 lifecycle은 Mover, 전투·장비 상태는 기존 GAS/장비 컴포넌트가 소유한다.
 - 직업 layer는 무기 자세/상체 오버레이/직업 고유 전투 이동 등 **차이가 실제로 필요한 부분만** 구현한다.
 
 ### 태그와 데이터의 역할
@@ -207,7 +198,7 @@ ABP_Humanoid_Master
 
 ## 8. 자주 발생하는 오해와 금지 사항
 
-- `BP_Player`/`ABP_Player` 테스트 구현을 생산 직업에 직접 의존시키지 않는다.
+- 생산 휴머노이드는 현재 공통 `ABP_Player_Master`와 직업 Linked Anim Layer를 사용한다. `BP_Player`는 공통 아바타 제작 기반이고, 퇴역한 `ABP_Player`/`ABP_Humanoid_Master`를 새 제작 경로로 복원하지 않는다.
 - 아이템 장착 여부와 손에 든/등에 멘 무기 표현을 같은 bool 하나로 처리하지 않는다.
 - InputTag를 몽타주 이름 또는 직업 이름으로 과도하게 세분화하지 않는다.
 - 직업마다 PlayerCharacter, 공통 AnimGraph, GA 기반 로직을 복사하지 않는다.
@@ -228,7 +219,7 @@ DumpCombatState
 DumpMMOProfilingSnapshot [MaxDetailedCharacters]
 ```
 
-Motion Matching 관련 CVar는 [README](../README.md)와 [MotionMatchingNextSteps](../Animation/Architecture/MotionMatchingNextSteps.md)를 참고한다. 에셋 Validation 오류는 폴더 이름 변경 뒤 Redirector 또는 Soft Reference가 남은 경우도 있으므로, Content Browser의 Redirector 정리와 재저장을 우선 확인한다.
+현재 로코모션의 회귀·제작·진단 경로는 [플레이어 로코모션 전환 기록](../Animation/Architecture/Player_Locomotion_Migration_2026-10-19.md)의 마지막 절을 따른다. 퇴역한 구형 MM CVar나 전용 노드를 복원하지 않는다. 에셋 Validation 오류는 실제 메시지와 참조를 먼저 확인하고, 폴더 변경 뒤 남은 Redirector/Soft Reference가 원인으로 확인되면 해당 연결을 정리한다.
 
 ## 10. 이 문서 다음에 읽을 전문 문서
 
@@ -236,16 +227,19 @@ Motion Matching 관련 CVar는 [README](../README.md)와 [MotionMatchingNextStep
 - GAS·AbilitySet·Input: [SkillSystemArchitecture](../Gameplay/Architecture/SkillSystemArchitecture.md)
 - 장비·직업·DA: [DataAssetQuickReference](../Gameplay/Authoring/Content_Authoring_System.md#data), [ContentExpansionGuide](../Gameplay/Authoring/Content_Authoring_System.md#expansion)
 - 전투·콤보·무기·애니메이션: [CombatLocomotionArchitecture](../Combat/Architecture/Combat_Animation_System.md#layers), [CombatAnimationComposition](../Combat/Architecture/Combat_Animation_System.md#composition)
-- Motion Matching·원격 프록시·예산: [MotionMatchingNextSteps](../Animation/Architecture/MotionMatchingNextSteps.md)
+- 현재 플레이어 로코모션·원격 표현·회귀: [플레이어 로코모션 전환 기록](../Animation/Architecture/Player_Locomotion_Migration_2026-10-19.md). [MotionMatchingNextSteps](../Animation/Architecture/MotionMatchingNextSteps.md)는 이전 MM 경로의 역사 자료다.
 - 탈것: [MountSystemArchitecture](../Gameplay/Architecture/MountSystemArchitecture.md)
 
 ## 새 Codex 채팅에 붙여 넣을 최소 컨텍스트
 
 ```text
 UE 5.8 C++ Project J 작업이다. 먼저 Docs/Overview/ProjectContext.md와 기능별 관련 문서를 읽고,
-Source/Config를 좁게 분석한 뒤 작업해줘. BP_Player/ABP_Player는 테스트 자산이며,
+Source/Config를 좁게 분석한 뒤 작업해줘. BP_Player는 공통 아바타 제작 기반이며,
 생산 휴머노이드 기준은 AProject_JPlayerCharacter → 직업 native class → BP_직업,
-ABP_Humanoid_Master + 직업 Linked Anim Layer 구조다. 플레이어의 장기 상태는 PlayerState 우선,
+ABP_Player_Master + 직업 Linked Anim Layer 구조다. 이동은 Mover와 native 이동·애니메이션 계산,
+포즈는 State Controller/Pose Match/BlendStack을 사용한다. OTM/Strafe와 현재 점프
+공중 재선택·playhead 연속성을 유지하고, 퇴역한 Master/MM fallback을 복원하지 마.
+플레이어의 장기 상태는 PlayerState 우선,
 서버 권한과 클라이언트 표현을 분리한다. C++ 변경 후에는 Project_JEditor Win64 Development를 빌드해줘.
 기존 사용자 코드·에셋 변경을 보존하고 AGENTS.md의 빌드 안전 규칙을 지켜줘.
 작업에 필요하면 MCP·컴퓨터 사용을 별도 도구 사용 허락 없이 활용해줘.

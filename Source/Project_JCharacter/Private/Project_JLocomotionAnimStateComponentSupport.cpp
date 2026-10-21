@@ -1,195 +1,24 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "Project_JLocomotionAnimStateComponent.h"
-
 #include "AbilitySystemComponent.h"
 #include "Project_JAbilitySystemComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "Project_JLocomotionDebugUtils.h"
+#include "Movement/Project_JMovementQueries.h"
 #include "Project_JGameplayTags.h"
 #include "Project_JPlayerCharacter.h"
 #include "TimerManager.h"
 
 FString UProject_JLocomotionAnimStateComponent::GetDebugSummary() const
 {
-	using Project_J::LocomotionDebug::ToDebugString;
-
-	const AActor* Owner = GetOwner();
-	const AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
-	const ENetMode NetMode = Owner ? Owner->GetNetMode() : NM_Standalone;
-	const ENetRole LocalRole = Owner ? Owner->GetLocalRole() : ROLE_None;
-	const ENetRole RemoteRole = Owner ? Owner->GetRemoteRole() : ROLE_None;
-	const bool bSprintAllowed = PlayerOwner && PlayerOwner->IsSprintLocomotionAllowed();
-	const bool bJumpAllowed = PlayerOwner && PlayerOwner->IsJumpLocomotionAllowed();
-	const bool bCombatMode = PlayerOwner && PlayerOwner->IsCombatModeActive();
-	const bool bAttacking = PlayerOwner && PlayerOwner->IsAttacking();
-	const bool bDodging = PlayerOwner && PlayerOwner->IsDodging();
-	const bool bHitReacting = PlayerOwner && PlayerOwner->IsHitReacting();
-
-	return FString::Printf(
-		TEXT("Net=%s LocalRole=%s RemoteRole=%s LocalInput=%s Rendered=%s Dedicated=%s\n")
-		TEXT("Ground=%s GroundSpeed=%.1f VerticalSpeed=%.1f HasInput=%s InputSize=%.2f Held=%.2f Turn=%.1f SharpTurn=%s\n")
-		TEXT("Context Gait=%s Rotation=%s Phase=%s GameplayMoving=%s MMMoving=%s Starting=%s Pivoting=%s TurnInPlace=%s Spin=%s DesiredYaw=%.1f Accel=%.2f\n")
-		TEXT("Kinematic VelocityToInput=%.1f PredictedGain=%.1f StopDistance=%.1f Accelerating=%s Decelerating=%s PredictedMoving=%s RelativeAccel=(%.2f,%.2f)\n")
-		TEXT("Policy SprintAllowed=%s JumpAllowed=%s Combat=%s Attack=%s Dodge=%s HitReact=%s\n")
-		TEXT("Sprint Wants=%s UseSprint=%s StartSprint=%s StopSprint=%s StartReq=%s StopReq=%s\n")
-		TEXT("MM Revision=%d Changed=%s ForceReselect=%s Published=%s\n")
-		TEXT("Air InAir=%s PhysAir=%s Jumping=%s FallOff=%s Landing=%s LandReq=%s CanLand=%s CanGround=%s LastFall=%.1f\n")
-		TEXT("JumpDebug IgnoredLandings=%d LastIgnoredElapsed=%.3f LastIgnoredVz=%.1f LastIgnoredFall=%.1f LastIgnoredVertical=%.1f HadFallEvidence=%s\n")
-		TEXT("Combat Dir=%.1f Fwd=%.2f Right=%.2f FwdSpeed=%.1f RightSpeed=%.1f"),
-		ToDebugString(NetMode),
-		ToDebugString(LocalRole),
-		ToDebugString(RemoteRole),
-		bUsingLocalInputState ? TEXT("true") : TEXT("false"),
-		bRecentlyRendered ? TEXT("true") : TEXT("false"),
-		bDedicatedServerContext ? TEXT("true") : TEXT("false"),
-		ToDebugString(GroundMotionMode),
-		GroundSpeed,
-		VerticalSpeed,
-		bHasMoveInput ? TEXT("true") : TEXT("false"),
-		MoveInputSize,
-		MoveInputHeldTime,
-		MoveInputTurnAngle,
-		bSharpTurnRequested ? TEXT("true") : TEXT("false"),
-		ToDebugString(AuthoritativeContext.GaitIntent),
-		ToDebugString(AuthoritativeContext.RotationMode),
-		ToDebugString(DerivedLocomotionContext.PhaseFamily),
-		DerivedLocomotionContext.bIsMoving ? TEXT("true") : TEXT("false"),
-		DerivedLocomotionContext.bIsMotionMatchingMoving ? TEXT("true") : TEXT("false"),
-		DerivedLocomotionContext.bIsStarting ? TEXT("true") : TEXT("false"),
-		DerivedLocomotionContext.bIsPivoting ? TEXT("true") : TEXT("false"),
-		DerivedLocomotionContext.bShouldTurnInPlace ? TEXT("true") : TEXT("false"),
-		DerivedLocomotionContext.bShouldSpinTransition ? TEXT("true") : TEXT("false"),
-		KinematicContext.DesiredFacingDeltaYaw,
-		KinematicContext.AccelerationRatio,
-		KinematicContext.VelocityToMoveInputAngle,
-		KinematicContext.PredictedSpeedGain,
-		KinematicContext.PredictedStopDistance,
-		KinematicContext.bIsAccelerating ? TEXT("true") : TEXT("false"),
-		KinematicContext.bIsDecelerating ? TEXT("true") : TEXT("false"),
-		KinematicContext.bHasPredictedMovement ? TEXT("true") : TEXT("false"),
-		KinematicContext.RelativeAccelerationAmount.X,
-		KinematicContext.RelativeAccelerationAmount.Y,
-		bSprintAllowed ? TEXT("true") : TEXT("false"),
-		bJumpAllowed ? TEXT("true") : TEXT("false"),
-		bCombatMode ? TEXT("true") : TEXT("false"),
-		bAttacking ? TEXT("true") : TEXT("false"),
-		bDodging ? TEXT("true") : TEXT("false"),
-		bHitReacting ? TEXT("true") : TEXT("false"),
-		bWantsSprint ? TEXT("true") : TEXT("false"),
-		bUseSprintLocomotion ? TEXT("true") : TEXT("false"),
-		bStartWasSprinting ? TEXT("true") : TEXT("false"),
-		bStopWasSprinting ? TEXT("true") : TEXT("false"),
-		bStartRequested ? TEXT("true") : TEXT("false"),
-		bStopRequested ? TEXT("true") : TEXT("false"),
-		MotionMatchingSelectionRevision,
-		bMotionMatchingSelectionChanged ? TEXT("true") : TEXT("false"),
-		bForceMotionMatchingReselect ? TEXT("true") : TEXT("false"),
-		MotionMatchingSelectionPolicy.HasPublished() ? TEXT("true") : TEXT("false"),
-		bIsInAir ? TEXT("true") : TEXT("false"),
-		bIsPhysicallyInAir ? TEXT("true") : TEXT("false"),
-		bIsJumping ? TEXT("true") : TEXT("false"),
-		bIsFallOffStart ? TEXT("true") : TEXT("false"),
-		bIsLanding ? TEXT("true") : TEXT("false"),
-		bLandingRequested ? TEXT("true") : TEXT("false"),
-		bCanEnterLand ? TEXT("true") : TEXT("false"),
-		bCanEnterGround ? TEXT("true") : TEXT("false"),
-		LastFallSpeed,
-		IgnoredJumpStartLandingCount,
-		LastIgnoredJumpStartLandingElapsedTime,
-		LastIgnoredJumpStartLandingVelocityZ,
-		LastIgnoredJumpStartLandingFallSpeed,
-		LastIgnoredJumpStartLandingVerticalSpeed,
-		bLastIgnoredJumpStartLandingHadFallingEvidence ? TEXT("true") : TEXT("false"),
-		MovementDirection,
-		CombatInputForward,
-		CombatInputRight,
-		CombatForwardSpeed,
-		CombatRightSpeed);
+ return FString::Printf(TEXT("Mover Gameplay Local=%d Input=(%.2f,%.2f) Speed=%.1f Sprint=%d PhysicalAir=%d Jump=%d FallOff=%d Landing=%d LandingRevision=%d"),
+  bUsingLocalInputState,CachedMoveInput.X,CachedMoveInput.Y,GroundSpeed,bWantsSprint,bIsPhysicallyInAir,bIsJumping,bIsFallOffStart,bIsLanding,LandingPresentationRevision);
 }
 
-void UProject_JLocomotionAnimStateComponent::ResetJumpStartLandingDebugState()
-{
-	IgnoredJumpStartLandingCount = 0;
-	LastIgnoredJumpStartLandingElapsedTime = 0.0f;
-	LastIgnoredJumpStartLandingVelocityZ = 0.0f;
-	LastIgnoredJumpStartLandingFallSpeed = 0.0f;
-	LastIgnoredJumpStartLandingVerticalSpeed = 0.0f;
-	bLastIgnoredJumpStartLandingHadFallingEvidence = false;
-}
 
-void UProject_JLocomotionAnimStateComponent::UpdateCombatMovementState(const FVector& HorizontalVelocity)
-{
-	const AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
-	if (!PlayerOwner)
-	{
-		ClearCombatMovementState();
-		return;
-	}
 
-	if (!PlayerOwner->IsCombatModeActive() || !bHasMoveInput)
-	{
-		ClearCombatMovementState();
-		return;
-	}
 
-	if (bUsingLocalInputState)
-	{
-		UpdateLocalCombatMovementState(*PlayerOwner);
-		return;
-	}
 
-	UpdateRemoteCombatMovementState(*PlayerOwner, HorizontalVelocity);
-}
 
-void UProject_JLocomotionAnimStateComponent::ClearCombatMovementState()
-{
-	MovementDirection = 0.0f;
-	CombatInputForward = 0.0f;
-	CombatInputRight = 0.0f;
-	CombatForwardSpeed = 0.0f;
-	CombatRightSpeed = 0.0f;
-}
 
-void UProject_JLocomotionAnimStateComponent::UpdateLocalCombatMovementState(const AProject_JPlayerCharacter& PlayerOwner)
-{
-	const FVector2D CombatMoveInput = CachedMoveInput.GetClampedToMaxSize(1.0f);
-	const UCharacterMovementComponent* MovementComponent = GetCachedMovementComponent();
-	const float DesiredSpeed = MovementComponent ? MovementComponent->MaxWalkSpeed : PlayerOwner.WalkSpeed;
-	CombatInputRight = CombatMoveInput.X;
-	CombatInputForward = CombatMoveInput.Y;
-	CombatRightSpeed = CombatMoveInput.X * DesiredSpeed;
-	CombatForwardSpeed = CombatMoveInput.Y * DesiredSpeed;
-	MovementDirection = FMath::RadiansToDegrees(FMath::Atan2(CombatMoveInput.X, CombatMoveInput.Y));
-}
 
-void UProject_JLocomotionAnimStateComponent::UpdateRemoteCombatMovementState(const AProject_JPlayerCharacter& PlayerOwner, const FVector& HorizontalVelocity)
-{
-	const FVector Forward = PlayerOwner.GetActorForwardVector();
-	const FVector Right = PlayerOwner.GetActorRightVector();
-	CombatForwardSpeed = FVector::DotProduct(HorizontalVelocity, Forward);
-	CombatRightSpeed = FVector::DotProduct(HorizontalVelocity, Right);
-
-	const UCharacterMovementComponent* MovementComponent = GetCachedMovementComponent();
-	const float MaxSpeed = MovementComponent ? FMath::Max(MovementComponent->MaxWalkSpeed, 1.0f) : FMath::Max(PlayerOwner.WalkSpeed, 1.0f);
-	CombatInputForward = FMath::Clamp(CombatForwardSpeed / MaxSpeed, -1.0f, 1.0f);
-	CombatInputRight = FMath::Clamp(CombatRightSpeed / MaxSpeed, -1.0f, 1.0f);
-	MovementDirection = FMath::RadiansToDegrees(FMath::Atan2(CombatRightSpeed, CombatForwardSpeed));
-}
-
-void UProject_JLocomotionAnimStateComponent::DispatchLandingCancelForAnimation()
-{
-	if (!ShouldUseLocalInputState() || bLandingCancelEventDispatched)
-	{
-		return;
-	}
-
-	if (AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner())
-	{
-		bLandingCancelEventDispatched = true;
-		PlayerOwner->NotifyLandingCancelledForAnimation();
-	}
-}
 
 void UProject_JLocomotionAnimStateComponent::OnCachedAbilitySystemChanged()
 {
@@ -256,26 +85,4 @@ void UProject_JLocomotionAnimStateComponent::ClearOwnedMovementGameplayTags()
     bInAirGameplayTagRequested = bLandingGameplayTagRequested = false;
     RemoveOwnedInAirGameplayTag();
     RemoveOwnedLandingGameplayTag();
-}
-
-void UProject_JLocomotionAnimStateComponent::ClearMovementRequests()
-{
-	bPendingStartRequest = false;
-	bPendingStopRequest = false;
-	RemoteRuntime.ClearStopVisualIntent();
-	bResolvedMoveInputLastUpdate = false;
-	MoveInputHeldTime = 0.0f;
-	bSharpTurnRequested = false;
-	MoveInputTurnAngle = 0.0f;
-	EnterGroundMotionMode(EProject_JGroundMotionMode::Idle);
-}
-
-void UProject_JLocomotionAnimStateComponent::ClearResolvedMoveInputState()
-{
-	bHasMoveInput = false;
-	bPrevHasMoveInput = false;
-	bResolvedMoveInputLastUpdate = false;
-	MoveInputSize = 0.0f;
-	MoveInputHeldTime = 0.0f;
-	PreviousMoveInputForTurn = FVector2D::ZeroVector;
 }

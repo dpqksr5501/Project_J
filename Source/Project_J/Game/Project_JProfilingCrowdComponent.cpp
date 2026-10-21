@@ -117,10 +117,7 @@ bool UProject_JProfilingCrowdComponent::StartInternal(
 		// Keep world-floor/static collision, but prevent profiling clones from
 		// pushing each other into corrective CMC movement.
 		Character->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
-		if (UCharacterMovementComponent* MovementComponent = Character->GetCharacterMovement())
-		{
-			MovementComponent->bRunPhysicsWithNoController = true;
-		}
+
 
 		AAIController* Controller = World->SpawnActor<AAIController>(AAIController::StaticClass(), SpawnLocation, SafeForward.Rotation(), SpawnParameters);
 		if (!Controller)

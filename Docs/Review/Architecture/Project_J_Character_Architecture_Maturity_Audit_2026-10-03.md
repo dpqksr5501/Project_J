@@ -1,5 +1,7 @@
 # 캐릭터 컴포넌트·DA·아키텍처 고도화 점검
 
+> **과거 소스 경로 안내 — 2026-10-21:** 아래 현재 파일이 없는 소스 경로는 당시 구현의 위치를 텍스트로 보존했다. 이를 현행 API나 실행 가능한 제작 단계로 해석하지 않는다. 이동·애니메이션의 현재 계약은 [플레이어 로코모션](../../Animation/Architecture/Player_Locomotion_Architecture.md)을 따른다. 당시 수치·실패·외부 출처는 유지한다.
+
 기준: 2026-10-03, `main`, `33b574a1d6775306a26357f67bc3d79311e7189b`.
 
 이 문서는 기존 최적화·책임 분리 이후의 구조를 검토한다. 판단 기준은 클래스 수나 추상화 단계가 아니라 **캐릭터 교체에도 상태가 올바르게 유지되는지, OTM·Start 동작을 보존하면서 개선할 수 있는지, 새 직업·장비·스킬을 일관되게 만들 수 있는지, 실패 원인을 추적하고 검증할 수 있는지**다.
@@ -94,7 +96,7 @@ Avatar
 
 ### A04. 궤적의 생성 조건을 조회 조건에도 반영한다
 
-근거: [MotionMatchingTrajectory](../../../Source/Project_JCharacter/Private/Animation/Project_JMotionMatchingTrajectoryComponent.cpp) 174·217·304행, [LocomotionAnimState](../../../Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponent.cpp) 145·640·692행.
+근거: MotionMatchingTrajectory (`Source/Project_JCharacter/Private/Animation/Project_JMotionMatchingTrajectoryComponent.cpp`, 당시 경로·현재 파일 없음) 174·217·304행, [LocomotionAnimState](../../../Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponent.cpp) 145·640·692행.
 
 궤적은 DedicatedServer·탑승·최근 렌더링되지 않은 원격 캐릭터에서 생성하지 않는다. 생성 중단 시 기존 sample은 남는다. `TryGetFuturePlanarVelocity`는 generation eligibility/age를 확인하지 않고 sample을 읽고, Locomotion 의미 판정은 이를 미래 속도로 사용할 수 있다. 숨겨진 원격 캐릭터의 상태 갱신은 완전히 중단되지 않고 낮은 주기로 실행된다.
 

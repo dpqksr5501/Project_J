@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 
 class USkeletalMeshComponent;
-class ACharacter;
+class APawn;
 class UProject_JHandGripProfile;
 struct FProject_JHandGripCalibration;
 struct FProject_JGripArmBones;
@@ -12,7 +12,7 @@ namespace Project_J::Animation
 {
 	/** One precedence rule for visual animation and normal weapon mounting. Game thread only. */
 	PROJECT_JCHARACTER_API FProject_JHandGripCalibration ResolveHandGripCalibration(
-		const ACharacter* Character, const UProject_JHandGripProfile* VisualOverride);
+		const APawn* Character, const UProject_JHandGripProfile* VisualOverride);
 	enum class EHandContactStatus : uint8 { Socket, LegacyWrist, MissingSocket, InvalidHand, InvalidOffset };
 	/** Game-thread resolved body data. No UObject pointer or world-space pose is carried to a solver. */
 	struct FResolvedHandContact

@@ -1,11 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Project_JLocomotionAnimStateComponentBase.h"
+#include "Movement/Project_JMovementQueries.h"
 
 #include "AbilitySystemComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "Project_JPlayerCharacter.h"
 #include "Animation/Project_JPresentationMeshResolver.h"
 
@@ -30,7 +30,6 @@ void UProject_JLocomotionAnimStateComponentBase::CacheOwnerReferences()
 {
 	const auto PreviousASC = CachedAbilitySystemComponent;
 	CachedPlayerOwner = Cast<AProject_JPlayerCharacter>(GetOwner());
-	CachedMovementComponent = CachedPlayerOwner ? CachedPlayerOwner->GetCharacterMovement() : nullptr;
 	CachedCapsuleComponent = CachedPlayerOwner ? CachedPlayerOwner->GetCapsuleComponent() : nullptr;
 	CachedAbilitySystemComponent = CachedPlayerOwner ? CachedPlayerOwner->GetAbilitySystemComponent() : nullptr;
 	CachedMeshComponent = CachedPlayerOwner ? CachedPlayerOwner->GetMesh() : nullptr;
@@ -40,11 +39,6 @@ void UProject_JLocomotionAnimStateComponentBase::CacheOwnerReferences()
 AProject_JPlayerCharacter* UProject_JLocomotionAnimStateComponentBase::GetPlayerOwner() const
 {
 	return CachedPlayerOwner ? CachedPlayerOwner.Get() : Cast<AProject_JPlayerCharacter>(GetOwner());
-}
-
-UCharacterMovementComponent* UProject_JLocomotionAnimStateComponentBase::GetCachedMovementComponent() const
-{
-	return CachedMovementComponent.Get();
 }
 
 UAbilitySystemComponent* UProject_JLocomotionAnimStateComponentBase::GetCachedAbilitySystemComponent() const
@@ -64,8 +58,7 @@ USkeletalMeshComponent* UProject_JLocomotionAnimStateComponentBase::GetCachedMes
 
 bool UProject_JLocomotionAnimStateComponentBase::IsInAirForAnimation() const
 {
-	const UCharacterMovementComponent* MoveComp = GetCachedMovementComponent();
-	return MoveComp && MoveComp->IsFalling();
+	return Project_J::Movement::IsInAir(GetOwner());
 }
 
 bool UProject_JLocomotionAnimStateComponentBase::IsDedicatedServerContext() const

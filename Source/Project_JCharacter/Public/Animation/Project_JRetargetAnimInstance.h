@@ -10,7 +10,7 @@
 #include "Project_JRetargetAnimInstance.generated.h"
 
 class USceneComponent;
-class ACharacter;
+class APawn;
 class UProject_JWeaponPresentationComponent;
 class UProject_JRetargetBodyProfile;
 

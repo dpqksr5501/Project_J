@@ -1,4 +1,7 @@
 #if WITH_DEV_AUTOMATION_TESTS
+#include "DefaultMovementSet/NavMoverComponent.h"
+#include "DefaultMovementSet/Settings/CommonLegacyMovementSettings.h"
+#include "DefaultMovementSet/CharacterMoverComponent.h"
 #include "Misc/AutomationTest.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Misc/CommandLine.h"
@@ -107,8 +110,8 @@ public:
 			NPC->GetMesh()->SetCanEverAffectNavigation(false);
 			NPC->GetCapsuleComponent()->SetCanEverAffectNavigation(false);
 			NPC->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
-			NPC->GetCharacterMovement()->MaxWalkSpeed = 600;
-			NPC->GetCharacterMovement()->GetNavMovementProperties()->bUseAccelerationForPaths = true;
+			NPC->GetMover()->FindSharedSettings_Mutable<UCommonLegacyMovementSettings>()->MaxSpeed = 600;
+			NPC->NavMover->GetNavMovementProperties()->bUseAccelerationForPaths = true;
 			NPC->GetAbilitySystemComponent()->InitAbilityActorInfo(NPC, NPC);
 			NPC->GetAttributeSet()->InitHealth(100);
 			NPCs.Add(NPC);

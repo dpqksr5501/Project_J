@@ -1,4 +1,6 @@
 #include "Testing/Project_JNetworkLoadFixture.h"
+#include "Tests/Project_JMoverFrameFixture.h"
+#include "Movement/Project_JMovementQueries.h"
 #include "Testing/Project_JAuditNetworkFixture.h"
 #include "World/Project_JWorldState.h"
 #include "Engine/AssetManager.h"
@@ -28,7 +30,9 @@
 #include "Serialization/JsonSerializer.h"
 #include "ProfilingDebugging/MiscTrace.h"
 #include "Testing/Project_JAuthoredAnimationFixture.h"
-#include "Animation/Project_JCharacterAnimInstance.h"
+#include "DefaultMovementSet/CharacterMoverComponent.h"
+#include "DefaultMovementSet/InstantMovementEffects/BasicInstantMovementEffects.h"
+#include "Animation/Project_JPlayerAnimInstance.h"
 #include "Components/Project_JReplicatedAnimEventComponent.h"
 #include "Project_JLocomotionAnimStateComponent.h"
 #include "UObject/UnrealType.h"
@@ -179,9 +183,7 @@ void UProject_JNetworkFixtureLifetime::Initialize(FSubsystemCollectionBase& Coll
             if (!World || !World->IsGameWorld()) { return; }
             for (TActorIterator<AProject_JAuditNetworkPlayer> It(World); It; ++It)
             {
-                auto* Movement = It->GetCharacterMovement();
-                Movement->SetComponentTickEnabled(false); Movement->SetMovementMode(MOVE_Flying);
-                Movement->Velocity = FVector::ZeroVector;
+                if (It->HasAuthority()) ProjectJ::Tests::PublishMoverFrame(*It,MOVE_None);
             }
         });
     }
@@ -190,25 +192,7 @@ void UProject_JNetworkFixtureLifetime::Initialize(FSubsystemCollectionBase& Coll
 		FloorWorldInit = FWorldDelegates::OnPostWorldInitialization.AddLambda([](UWorld* World, const UWorld::InitializationValues)
 		{ EnsureAnimationFloor(World); });
 		EnsureAnimationFloor(GetWorld());
-		// Run after net dispatch and before actor/component ticks: the first
-		// autonomous CMC tick must also use the controlled fixture kinematics.
-		AnimationKinematicsTick = FWorldDelegates::OnWorldPreActorTick.AddLambda([](UWorld* World, ELevelTick, float)
-		{
-			if (!World || !World->IsGameWorld()) { return; }
-			for (TActorIterator<AProject_JPlayerCharacter> It(World); It; ++It)
-			{
-				auto* Movement = It->GetCharacterMovement();
-				const auto* ASC = It->GetAbilitySystemComponent();
-				if (CombatEnabled() && ASC && ASC->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_CombatMode))
-				{
-					// Dedicated-server root-motion pose/notifies are driven by CMC.
-					// Prescribed animation-stage kinematics must not suppress that path.
-					Movement->SetComponentTickEnabled(true); continue;
-				}
-				Movement->SetComponentTickEnabled(false);
-				Movement->SetMovementMode(MOVE_Walking);
-			}
-		});
+
 	}
 	const double Started = FPlatformTime::Seconds();
 	Timeout = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([Started, bAudit](float)
@@ -233,7 +217,12 @@ AProject_JNetworkViewPawn::AProject_JNetworkViewPawn()
 	bReplicates = true; bOnlyRelevantToOwner = true; SetReplicateMovement(true);
 }
 AProject_JNetworkProbeNPC::AProject_JNetworkProbeNPC()
-{ bReplicates = true; bAlwaysRelevant = false; PrimaryActorTick.bCanEverTick = false; }
+{
+ SetRootComponent(CreateDefaultSubobject<USceneComponent>(TEXT("ProbeRoot")));
+ bReplicates=true; bAlwaysRelevant=false; PrimaryActorTick.bCanEverTick=false;
+ SetReplicateMovement(true); SetNetCullDistanceSquared(FMath::Square(8000.f));
+ SetNetUpdateFrequency(10.f); SetMinNetUpdateFrequency(2.f);
+}
 AProject_JAlwaysRelevantProbeNPC::AProject_JAlwaysRelevantProbeNPC() { bAlwaysRelevant = true; }
 void AProject_JNetworkProbeNPC::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 { Super::GetLifetimeReplicatedProps(OutLifetimeProps); DOREPLIFETIME(AProject_JNetworkProbeNPC, ProbeId); DOREPLIFETIME(AProject_JNetworkProbeNPC, Pulse); }
@@ -301,12 +290,12 @@ bool AProject_JNetworkLoadController::ObserveAnimation()
 		}
 		if (!ObservedCharacter) { AnimationRows += FString::Printf(TEXT("%d,NotReady_NullActor%d\n"), CurrentStage, I); bReady = false; continue; }
 		// Only this opt-in fixture supplies kinematics/visibility. No asset is saved.
-		ObservedCharacter->GetCharacterMovement()->SetComponentTickEnabled(false);
+		// Simulated proxies consume the authority Mover frame; no local writer is installed.
 		TInlineComponentArray<USkeletalMeshComponent*> Visuals(ObservedCharacter);
 		for (auto* Mesh : Visuals) { Mesh->SetLastRenderTime(CurrentStage == 4 ? -1000.0f : GetWorld()->GetTimeSeconds()); }
 		if (ObservedCharacter->IsLocallyControlled()) { continue; } // SkipOwner is a production contract.
 		++RemoteCount;
-		auto* Anim = Cast<UProject_JCharacterAnimInstance>(ObservedCharacter->GetMesh()->GetAnimInstance());
+		auto* Anim = Cast<UProject_JPlayerAnimInstance>(ObservedCharacter->GetMesh()->GetAnimInstance());
 		auto* Locomotion = ObservedCharacter->GetLocomotionAnimStateComponent();
 		if (!Anim || !Locomotion || ObservedCharacter->GetLocalRole() != ROLE_SimulatedProxy)
 		{
@@ -316,11 +305,15 @@ bool AProject_JNetworkLoadController::ObserveAnimation()
 		const auto State = ReadAnimationEvents(ObservedCharacter); const auto& Expected = AnimationStates[I];
 		bReady &= State.MoveSequence == Expected.MoveSequence && State.LandingRevision == Expected.LandingRevision
 			&& State.FallOffStartCounter == Expected.FallOffStartCounter && State.bLandingActive == Expected.bLandingActive;
-		const bool bHasPose = Anim->GetThreadSafeStateControllerHasSelectedAnimation() || !Anim->GetThreadSafeMotionMatchingSelectedAnimation().IsNone();
+		const auto Playback=Anim->GetPlaybackSnapshot();
+		const bool bHasPose=!Playback.SelectedAnimation.IsNone() && Playback.CachedNodeWeight>ZERO_ANIMWEIGHT_THRESH;
 		if (bHasPose) { ObservedPose.Add(ObservedCharacter); }
+		const bool bFreshPose=bHasPose && Playback.CaptureFrame>0 && Playback.CaptureFrame<=GFrameCounter && GFrameCounter-Playback.CaptureFrame<=2;
+		// This stage injects a replicated landing event, not a physical Mover landing.
+		// Verify its lease alongside a fresh GASP body evaluation. Actual landing
+		// clips and ground handoff are exercised by the physical PIE air fixture.
 		if (CurrentStage == 3 && State.LandingRevision == Expected.LandingRevision && Locomotion->bIsLanding
-			&& Anim->GetThreadSafeStateControllerHasSelectedAnimation() && Anim->GetThreadSafeStateControllerShouldOverrideMotionMatching()
-			&& Anim->GetThreadSafeStateControllerPresentationState() == EProject_JStateControllerPresentationState::TransitionToLand)
+			&& bFreshPose)
 		{ ObservedLandingPose.Add(ObservedCharacter); }
 		if (CurrentStage == 3) { bReady &= ObservedLandingPose.Contains(ObservedCharacter); }
 		// Reliable RPC + unreliable multicast + replicated fallback must not manufacture
@@ -328,11 +321,10 @@ bool AProject_JNetworkLoadController::ObserveAnimation()
 		if (State.LandingRevision == Expected.LandingRevision && Locomotion->LandingPresentationRevision > Expected.LandingSequence)
 		{ bAnimationViolation = true; bReady = false; }
 		if (CurrentStage >= 4) { bReady &= !Locomotion->bIsLanding && ObservedPose.Contains(ObservedCharacter); }
-		const auto MM = Anim->GetMotionMatchingDebugSnapshot();
-		bReady &= FMath::IsFinite(MM.PostSelection.SelectedAnimationTime);
-		AnimationRows += FString::Printf(TEXT("%d,%s,%d,%d,%d,%d,%d,%d,%s,%s,ExpectedMove%d_Land%d_Fall%d_ActualFall%d_Ready%d\n"), CurrentStage, *ObservedCharacter->GetName(), int32(ObservedCharacter->GetLocalRole()),
+		bReady &= FMath::IsFinite(Playback.SelectedAnimationTime);
+		AnimationRows += FString::Printf(TEXT("%d,%s,%d,%d,%d,%d,%d,%llu,%s,%s,ExpectedMove%d_Land%d_Fall%d_ActualFall%d_Ready%d\n"), CurrentStage, *ObservedCharacter->GetName(), int32(ObservedCharacter->GetLocalRole()),
 			State.MoveSequence, State.LandingSequence, State.LandingRevision, Locomotion->LandingPresentationRevision,
-			Anim->GetThreadSafeStateControllerSelectionRevision(), *GetNameSafe(Anim->GetThreadSafeStateControllerSelectedAnimation()), *Anim->GetThreadSafeMotionMatchingSelectedAnimation().ToString(),
+			Playback.CaptureFrame, *Anim->GetFoundationStateName().ToString(), *Playback.SelectedAnimation.ToString(),
 			Expected.MoveSequence, Expected.LandingRevision, Expected.FallOffStartCounter, State.FallOffStartCounter, bReady);
 	}
 	return bReady && RemoteCount == FixtureClients() - 1;
@@ -454,7 +446,7 @@ void AProject_JNetworkLoadGameMode::BeginPlay()
 	{
 		UClass* Class = bAllRelevant ? AProject_JAlwaysRelevantProbeNPC::StaticClass() : AProject_JNetworkProbeNPC::StaticClass();
 		auto* NPC = GetWorld()->SpawnActor<AProject_JNetworkProbeNPC>(Class, FVector((I < FixtureNPCs() / 2 ? 0 : 20000) + (I % 32) * 20, ((I % (FixtureNPCs() / 2)) / 32) * 20, 100), FRotator::ZeroRotator, Params);
-		NPC->ProbeId = I + 1; NPC->GetCharacterMovement()->SetComponentTickEnabled(false);
+		NPC->ProbeId = I + 1;
 		NPC->SetActorEnableCollision(false); NPCs.Add(NPC);
 	}
 	UE_LOG(LogProjectJDNetwork, Display, TEXT("READY Iris=1 AllRelevant=%d NPCs=%d Clients=%d"), bAllRelevant, FixtureNPCs(), FixtureClients());
@@ -512,7 +504,14 @@ void AProject_JNetworkLoadGameMode::StartStage(int32 NewStage)
 		const int32 Slot = PC->FixtureSlot;
 		if (APawn* Pawn = PC->GetPawn())
 		{
-			Pawn->SetActorLocation(FVector((Stage == 2 ? 1 - Slot % 2 : Slot % 2) * 20000, 0, 100)); Pawn->ForceNetUpdate();
+			const FVector Target((Stage == 2 ? 1 - Slot % 2 : Slot % 2) * 20000,0,Pawn->GetActorLocation().Z);
+            if(auto* Player=Cast<AProject_JPlayerCharacter>(Pawn))
+            {
+                auto Teleport=MakeShared<FTeleportEffect>();Teleport->TargetLocation=Target;
+                Player->GetMover()->QueueInstantMovementEffect(Teleport);
+            }
+            else Pawn->SetActorLocation(Target);
+            Pawn->ForceNetUpdate();
 			PC->SetViewTarget(Pawn);
 		}
 		PC->ConfirmedStage = INDEX_NONE;
@@ -525,8 +524,8 @@ void AProject_JNetworkLoadGameMode::StartStage(int32 NewStage)
 		{
 			auto* Player = CastChecked<AProject_JPlayerCharacter>(PC->GetPawn());
 			auto* Events = Player->FindComponentByClass<UProject_JReplicatedAnimEventComponent>();
-			if (Stage == 1) { Player->GetCharacterMovement()->Velocity = FVector(200, 0, 0); Events->DispatchMoveStarted(false); }
-			if (Stage == 2) { Player->GetCharacterMovement()->Velocity = FVector::ZeroVector; Events->DispatchMoveStopped(false); }
+			if (Stage == 1) { Events->DispatchMoveStarted(false); }
+			if (Stage == 2) { Events->DispatchMoveStopped(false); }
 			if (Stage == 3) { Events->DispatchLandingStarted(650, false, false, false); }
 			if (Stage == 4) { Events->DispatchLandingCancelled(); }
 			if (Stage == 5) { Events->DispatchMoveStarted(false); Events->DispatchLandingStarted(650, false, false, false); Events->DispatchLandingCancelled(); Events->DispatchMoveStopped(false); }
@@ -564,16 +563,28 @@ void AProject_JNetworkLoadGameMode::Tick(float DeltaSeconds)
 	{
 		if (AnimationEnabled())
 		{
+            bool bSpawnedThisTick=false;
 			for (AProject_JNetworkLoadController* PC : Clients)
 			{
-				APawn* OldPawn = PC->GetPawn(); auto* PS = PC->GetPlayerState<AProject_JPlayerState>();
+				APawn* OldPawn = PC->GetPawn();
+                if(Cast<AProject_JPlayerCharacter>(OldPawn)) continue;
+                auto* PS = PC->GetPlayerState<AProject_JPlayerState>();
 				auto* Player = ProjectJAuthoredAnimationFixture::Spawn(GetWorld(), PC, PS, OldPawn->GetActorLocation());
 				if (!Player) { Finish(false, TEXT("Authored animation fixture spawn failed")); return; }
 				OldPawn->Destroy();
+                bSpawnedThisTick=true;
 				PS->SetPublicCharacterSnapshot(FName(*FString::Printf(TEXT("DClient%d"), PC->FixtureSlot)), 1);
 			}
+            if(bSpawnedThisTick) return; // Let the newly constructed Mover simulate before checking contact.
 		}
-		StartStage(1); return;
+        if(AnimationEnabled()) for(const auto& PC:Clients)
+        {
+            const auto* Player=CastChecked<AProject_JPlayerCharacter>(PC->GetPawn());
+            const auto Physical=Project_J::Movement::ReadPhysicalFrame(Player);
+            // Capture semantic expectations only after the real initial touchdown settles.
+            if(!Physical.bValid || !Physical.bGrounded || Player->GetLocomotionAnimStateComponent()->bIsLanding) return;
+        }
+        StartStage(1); return;
 	}
 	if (Stage >= 1 && Stage <= 5 && Now - StageStarted >= 3
 		&& !Clients.ContainsByPredicate([this](const auto& PC) { return !IsValid(PC) || PC->ConfirmedStage != Stage; }))

@@ -1,4 +1,6 @@
 #include "Components/Project_JCombatIntroComponent.h"
+#include "GameFramework/Pawn.h"
+#include "Movement/Project_JMovementQueries.h"
 
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
@@ -28,23 +30,23 @@ void UProject_JCombatIntroComponent::ClearPendingCombatMode()
 	PublishState();
 }
 
-bool UProject_JCombatIntroComponent::PlayIntro(ACharacter& CharacterOwner, UAnimMontage* Montage, float PlayRate)
+bool UProject_JCombatIntroComponent::PlayIntro(APawn& CharacterOwner, UAnimMontage* Montage, float PlayRate)
 {
 	return PlayTransition(CharacterOwner, Montage, PlayRate, EProject_JCombatTransitionPhase::Drawing);
 }
 
-bool UProject_JCombatIntroComponent::PlayOutro(ACharacter& CharacterOwner, UAnimMontage* Montage, float PlayRate)
+bool UProject_JCombatIntroComponent::PlayOutro(APawn& CharacterOwner, UAnimMontage* Montage, float PlayRate)
 {
 	return PlayTransition(CharacterOwner, Montage, PlayRate, EProject_JCombatTransitionPhase::Sheathing);
 }
 
-bool UProject_JCombatIntroComponent::PlayTransition(ACharacter& CharacterOwner, UAnimMontage* Montage, float PlayRate, EProject_JCombatTransitionPhase NewPhase)
+bool UProject_JCombatIntroComponent::PlayTransition(APawn& CharacterOwner, UAnimMontage* Montage, float PlayRate, EProject_JCombatTransitionPhase NewPhase)
 {
 	if (bEndingPlay || !Montage || Phase != EProject_JCombatTransitionPhase::Idle || !FMath::IsFinite(PlayRate) || PlayRate <= 0) { return false; }
-	auto* Anim = CharacterOwner.GetMesh() ? CharacterOwner.GetMesh()->GetAnimInstance() : nullptr;
+	auto* Anim = Project_J::Movement::FindPoseSource(&CharacterOwner) ? Project_J::Movement::FindPoseSource(&CharacterOwner)->GetAnimInstance() : nullptr;
 	if (!Anim) { return false; }
 	const uint64 BeforePlay = TransitionRevision;
-	if (CharacterOwner.PlayAnimMontage(Montage, PlayRate) <= 0) { return false; }
+	if (Anim->Montage_Play(Montage, PlayRate) <= 0) { return false; }
 	// Montage playback can synchronously invoke callbacks from the previous montage.
 	if (bEndingPlay || TransitionRevision != BeforePlay) { return false; }
 	Phase = NewPhase;
@@ -59,17 +61,17 @@ bool UProject_JCombatIntroComponent::PlayTransition(ACharacter& CharacterOwner, 
 	return TransitionRevision == Revision && Phase == NewPhase;
 }
 
-void UProject_JCombatIntroComponent::CancelIntro(ACharacter& CharacterOwner, UAnimMontage*)
+void UProject_JCombatIntroComponent::CancelIntro(APawn& CharacterOwner, UAnimMontage*)
 {
 	CancelTransition(CharacterOwner, EProject_JCombatTransitionPhase::Drawing);
 }
 
-void UProject_JCombatIntroComponent::CancelOutro(ACharacter& CharacterOwner)
+void UProject_JCombatIntroComponent::CancelOutro(APawn& CharacterOwner)
 {
 	CancelTransition(CharacterOwner, EProject_JCombatTransitionPhase::Sheathing);
 }
 
-void UProject_JCombatIntroComponent::CancelTransition(ACharacter& CharacterOwner, EProject_JCombatTransitionPhase ExpectedPhase)
+void UProject_JCombatIntroComponent::CancelTransition(APawn& CharacterOwner, EProject_JCombatTransitionPhase ExpectedPhase)
 {
 	if (Phase != ExpectedPhase || Phase == EProject_JCombatTransitionPhase::Idle) { return; }
 	UAnimMontage* Montage = ActiveTransitionMontage;
@@ -79,7 +81,8 @@ void UProject_JCombatIntroComponent::CancelTransition(ACharacter& CharacterOwner
 	ActiveTransitionMontage = nullptr;
 	MontageOwner.Reset();
 	const uint64 CancelRevision = ++TransitionRevision; // Retire callbacks before stopping playback.
-	(PreviousOwner.IsValid() ? PreviousOwner.Get() : &CharacterOwner)->StopAnimMontage(Montage);
+	if (auto* Source = Project_J::Movement::FindPoseSource(PreviousOwner.IsValid() ? PreviousOwner.Get() : &CharacterOwner))
+		if (auto* Anim = Source->GetAnimInstance()) Anim->Montage_Stop(Montage ? Montage->BlendOut.GetBlendTime() : 0.f, Montage);
 	if (TransitionRevision != CancelRevision) { return; }
 	PublishState();
 	if (bEndingPlay || TransitionRevision != CancelRevision) { return; }

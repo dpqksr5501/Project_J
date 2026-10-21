@@ -1,3 +1,4 @@
+#include "Tests/Project_JMoverFrameFixture.h"
 // Real Character/ASC/component lifecycle, with a single-node idle animation for
 // repeatable allocator load. Actual ABP+GAS attacks are covered by CombatContinuity.
 namespace ProjectJAnimationBudgetProbe
@@ -56,7 +57,7 @@ public:
 			{
 				FActorSpawnParameters Params; Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 				auto* Actor = World->SpawnActor<AProject_JNPCCharacter>(Params);
-				Actor->SetActorEnableCollision(false); Actor->GetCharacterMovement()->DisableMovement();
+				Actor->SetActorEnableCollision(false); if (!ProjectJ::Tests::PublishMoverFrame(Actor,MOVE_None)) { Test->AddError(TEXT("Stationary Mover fixture failed")); Cleanup(); return true; }
 				auto* Mesh = Cast<UProject_JBudgetedSkeletalMeshComponent>(Actor->GetMesh());
 				if (!Mesh) { Actor->Destroy(); Test->AddError(TEXT("Character default mesh was not upgraded")); Cleanup(); return true; }
 				Mesh->SetSkeletalMeshAsset(MeshAsset.Get());

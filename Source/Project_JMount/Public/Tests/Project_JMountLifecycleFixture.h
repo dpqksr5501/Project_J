@@ -15,6 +15,6 @@ public:
 	void NotifyTestClientRestart() { PawnClientRestart(); }
 	int32 InputSetupCount = 0;
 	void SetTestInteractAction(UInputAction* Action) { InteractAction = Action; }
-	void SetTestRider(ACharacter* Character) { ACharacter* Previous = Rider; Rider = Character; OnRep_Rider(Previous); }
+	void SetTestRider(APawn* Character) { APawn* Previous = Rider; Rider = Character; OnRep_Rider(Previous); }
 	void UnrelatedInput() {}
 };

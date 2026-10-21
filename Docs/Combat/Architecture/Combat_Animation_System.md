@@ -1,5 +1,8 @@
 # 전투 애니메이션 합성과 책임 통합 가이드
 
+2026-10-21 현재 생산 마스터는 `ABP_Player_Master`이며 native 부모는 `UProject_JPlayerAnimInstance`다. 지상 이동·공중 재선택은 공통 Mover/Chooser/포즈 재생 경로가 소유하고, 직업 레이어는 필요한 전투 표현만 제공한다. 현재 상태·핀 계산은 C++ 계약을 읽는다. 전신 몽타주는 로코모션 절차 보정 뒤에서 하체까지 소유하며, 발 IK가 스킬을 다시 덮지 않는다. [현재 구조](../../Animation/Architecture/Player_Locomotion_Architecture.md)와 [이동 제작 기준](../../Animation/Authoring/DataDrivenLocomotionExtensionGuide.md)을 우선한다. 아래 통합 원문의 과거 무기별 이동 BlendSpace·fallback 예시를 현재 생산 그래프에 그대로 추가하지 않는다.
+
+
 2026-10-13 [구조 개선](../../Review/Audits/Project_J_Structural_Improvement_2026-10-13.md): Combat/MountedAnimationLayerComponent는 같은 `FProject_JAnimationLayerLease` 구현을 사용하되 각각 독립된 transient/DuplicateTransient 자원을 가진다. request generation/failure cache·stream cancel·class GC pin·원래 mesh/master unlink는 lease 책임이며, weapon/combat/mount suppression·rider profile/fallback·preload admission은 각 component 책임이다. 기존 rendering-client-only·async load·명시 retry 계약과 Blueprint public API는 유지한다.
 
 정리일: 2026-10-03. 전투 포즈 합성, 이동 정책 경계와 무기 계열 레이어의 상세 계약을 한곳에서 읽는다. 기존 세 문서의 제작·입력·콤보·복제·비동기 수명 내용과 체크리스트를 상세 절에 보존했다.
@@ -30,7 +33,7 @@
 <a id="composition-combat-animation-composition"></a>
 원제: **Combat Animation Composition**
 
-> **스켈레톤 및 본 리타기팅 표준:** 휴머노이드 표준 스켈레톤(`SK_Mannequin`)의 본 트랜슬레이션 리타기팅 규칙 및 GASP 호환 표준은 [`HumanoidSkeletonRetargetingStandards.md`](../../Animation/Authoring/HumanoidSkeletonRetargetingStandards.md)를 참조한다.
+> **스켈레톤 및 본 리타기팅 표준:** 휴머노이드 표준 스켈레톤(`SK_Mannequin`)의 본 트랜슬레이션 리타기팅 규칙 및 공용 모션·골격 제작 기준은 [`HumanoidSkeletonRetargetingStandards.md`](../../Animation/Authoring/HumanoidSkeletonRetargetingStandards.md)를 참조한다.
 
 <a id="composition-decision"></a>
 ### Decision
@@ -69,7 +72,7 @@ CombatUpperBody(BasePose: Pose) -> Pose
 The common master chooses the path with the thread-safe function
 `GetThreadSafeUsesFullBodyCombatLocomotion`. This makes a newly added weapon
 family data-driven: it supplies a linked layer class, then chooses composition
-mode in its `WeaponAnimProfile`; it never forks `ABP_Humanoid_Master` or player
+mode in its `WeaponAnimProfile`; it never forks `ABP_Player_Master` or player
 character code.
 
 <a id="composition-master-animgraph-shape"></a>
@@ -346,10 +349,10 @@ Combat locomotion is presentation selected by the equipped weapon family. It is 
 Class + permanent advancement + equipped item
   -> AbilitySet / effects / weapon permissions
   -> WeaponAnimProfile -> weapon/job Anim Layer
-  -> ABP_Humanoid_Master
+  -> ABP_Player_Master
 ```
 
-`BP_Player` is a test pawn and is not part of the production job hierarchy. `ABP_Humanoid_Master` owns shared Motion Matching, montage slots, aim, foot/leg IK, pose history, and mount selection. Every production job owns a thin Blueprint pair such as `BP_GreatswordCharacter` and `ABP_Greatsword_Layers`. The job layer supplies the full-body armed idle, directional BlendSpace, and—when authored—armed jump/fall/landing poses. Shared C++ character state remains available through `AProject_JPlayerCharacter` and `UProject_JCharacterAnimInstance`.
+`BP_Player` is the common avatar authoring foundation; the production greatsword Blueprint is `BP_GreatSword`. `ABP_Player_Master` owns shared Motion Matching, montage slots, aim, foot/leg IK, pose history, and mount selection. Every production job owns a thin Blueprint pair such as `BP_GreatSword` and `ABP_Greatsword_Layers`. The job layer supplies only authored combat presentation that differs from the shared locomotion contract; current OTM/Strafe and airborne selection remain in the shared master. Shared C++ character state remains available through `AProject_JPlayerCharacter` and `UProject_JCharacterAnimInstance`.
 
 <a id="layers-job-blueprint-pattern"></a>
 ### Job Blueprint Pattern
@@ -359,36 +362,36 @@ When a job has its own visual mesh or future runtime extensions, use a native jo
 ```text
 AProject_JPlayerCharacter
   -> AProject_JGreatswordCharacter
-       -> BP_GreatswordCharacter
+       -> BP_GreatSword
 ```
 
-`BP_GreatswordCharacter` assigns the mesh, class/advancement data, and `ABP_Humanoid_Master`. Its greatsword `WeaponAnimProfile` points to `ABP_Greatsword_Layers` through `CombatAnimationLayerClass`. Mount presentation is selected by the mounted actor's `RiderAnimationProfile`, never by a job Blueprint. It does not duplicate player input, GAS ownership, weapon presentation, or SSR validation. The native greatsword class stays empty until it needs genuine job rules such as charge, guard, counter, or weapon-length policy.
+`BP_GreatSword` assigns the mesh, class/advancement data, and `ABP_Player_Master`. Its greatsword `WeaponAnimProfile` points to `ABP_Greatsword_Layers` through `CombatAnimationLayerClass`. Mount presentation is selected by the mounted actor's `RiderAnimationProfile`, never by a job Blueprint. It does not duplicate player input, GAS ownership, weapon presentation, or SSR validation. The native greatsword class stays empty until it needs genuine job rules such as charge, guard, counter, or weapon-length policy.
 
 <a id="layers-editor-asset-setup"></a>
 ### Editor Asset Setup
 
-Keep `BP_Player` and `ABP_Player` as test assets. New production content uses `ABP_Humanoid_Master`; future common changes go there, not into each job graph.
+`BP_Player` is the common avatar authoring foundation; the old `ABP_Player` has been retired. Production jobs share `ABP_Player_Master`; common changes belong there, not in copied job graphs.
 
 1. Create `ALI_HumanoidCombat` with `FullBody`, `UpperBody`, and `IK` layers in a non-default shared group.
-2. Add the interface to `ABP_Humanoid_Master`. Its default layer implementations provide the non-combat Motion Matching fallback, generic upper-body behavior, and common foot/leg IK.
+2. Add the interface to `ABP_Player_Master`. Its default layer implementations provide the non-combat Motion Matching fallback, generic upper-body behavior, and common foot/leg IK.
 3. Add `ALI_HumanoidMount` and place one `MountedLocomotion` Linked Anim Layer on the `Mounted` input of the master's full-body context blend. All humanoid job meshes using the master automatically receive this common mount presentation path.
-4. Create `ABP_Greatsword_Layers` on the compatible skeleton, add `ALI_HumanoidCombat`, and implement only the greatsword-specific layers. `FullBody` contains armed idle, combat movement BlendSpace, and armed airborne poses; `UpperBody` and `IK` are implemented only when the greatsword needs them.
-5. Create `BP_GreatswordCharacter` from `AProject_JGreatswordCharacter`, set its Mesh Anim Class to `ABP_Humanoid_Master`, and configure its class/advancement assets.
+4. Create `ABP_Greatsword_Layers` on the compatible skeleton, add `ALI_HumanoidCombat`, and implement only the greatsword-specific layers. `FullBody`, `UpperBody`, and `IK` provide only the job-specific authored poses/overlays required by the shared composition contract; do not duplicate ground/air movement selection in the job layer.
+5. Create `BP_GreatSword` from `AProject_JGreatswordCharacter`, set its Mesh Anim Class to `ABP_Player_Master`, and configure its class/advancement assets.
 6. Set `DA_WeaponProfile_Greatsword.CombatAnimationLayerClass` to `ABP_Greatsword_Layers`. At runtime the combat animation component links it on combat entry, and unlinks it on combat exit, weapon change, or mounting.
 
-If a future job uses an incompatible skeleton, create a separate skeleton-family master (for example `ABP_Beast_Master`) rather than forcing it into the humanoid interface. Jobs on compatible humanoid skeletons share the one master.
+A different visual skeleton does not by itself require a new locomotion master. Use the canonical Manny source plus a compatible Family/Body retarget bridge; choose a separate master only when pose/gameplay contracts actually differ. Jobs on compatible humanoid skeletons share the one master.
 
 <a id="layers-authoring-contract"></a>
 ### Authoring Contract
 
-`ABP_Humanoid_Master` and every job layer implement the same Animation Layer Interface. The master contains linked Full Body, Upper Body, and IK nodes with a safe default implementation. Each job layer derives from the project's native animation instance class so it receives the same thread-safe locomotion, combat, and aim snapshot. The job layer owns its combat branch: armed idle plus a 2D BlendSpace with direction on X (`-180..180`) and speed on Y. `UProject_JCombatAnimationLayerComponent` links the class assigned by `CombatAnimationLayerClass` only while the matching weapon is in combat mode, and unlinks it for mount presentation or weapon/combat changes.
+`ABP_Player_Master` and every job layer implement the same Animation Layer Interface. The master contains linked Full Body, Upper Body, and IK nodes with a safe default implementation. Each job layer derives from the project's native animation instance class so it receives the same thread-safe locomotion, combat, and aim snapshot. The job layer owns its combat branch: armed idle plus a 2D BlendSpace with direction on X (`-180..180`) and speed on Y. `UProject_JCombatAnimationLayerComponent` links the class assigned by `CombatAnimationLayerClass` only while the matching weapon is in combat mode, and unlinks it for mount presentation or weapon/combat changes.
 
 <a id="layers-full-body-montage-and-procedural-leg-ik"></a>
 #### Full-body montage and procedural leg IK
 
 `DefaultSlot` is the shared **full-body** slot: attacks, dodge, draw/sheath, hit reactions, death, and any montage that authors its own lower-body pose use it. `UpperBody` remains reserved for overlays whose legs must keep following locomotion.
 
-`UProject_JCharacterAnimInstance` samples the `DefaultSlot` global montage weight on the game thread and copies the result to its animation proxy. The following Blueprint-thread-safe getters are then used directly in `ABP_Humanoid_Master`:
+`UProject_JCharacterAnimInstance` samples the `DefaultSlot` global montage weight on the game thread and copies the result to its animation proxy. The following Blueprint-thread-safe getters are then used directly in `ABP_Player_Master`:
 
 - `GetThreadSafeFootPlacementAlpha` → `Foot Placement.Alpha`
 - `GetThreadSafeLegIKAlpha` → `Leg IK.Alpha`
@@ -595,7 +598,7 @@ LMB
   -> AnimMontage
 ```
 
-Finally assign `DA_Greatsword_AnimProfile` and `AS_Greatsword_Base` to `BP_GreatswordCharacter` through the existing class/advancement setup. Keep `BP_Player` and `ABP_Player` as test assets; do not add production greatsword logic there.
+Finally assign `DA_Greatsword_AnimProfile` and `AS_Greatsword_Base` to `BP_GreatSword` through the existing class/advancement setup. Keep the common `BP_Player` foundation and shared `ABP_Player_Master`; the old `ABP_Player` is retired. Add only genuine job-specific behavior to the job class/layer.
 
 <a id="layers-add-the-second-light-attack-later"></a>
 #### Add the Second Light Attack Later

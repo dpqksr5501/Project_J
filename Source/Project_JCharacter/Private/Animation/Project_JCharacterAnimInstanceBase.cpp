@@ -4,7 +4,6 @@
 
 #include "GameFramework/Character.h"
 #include "Project_JPlayerCharacter.h"
-#include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
 #include "Animation/Project_JPresentationMeshResolver.h"
 
 void UProject_JCharacterAnimInstanceBase::NativeInitializeAnimation()
@@ -17,10 +16,9 @@ void UProject_JCharacterAnimInstanceBase::NativeInitializeAnimation()
 void UProject_JCharacterAnimInstanceBase::CacheOwnerReferences()
 {
 	OwningPawn = TryGetPawnOwner();
-	OwningCharacter = Cast<ACharacter>(OwningPawn);
+	OwningCharacter = Cast<AProject_JMoverPawn>(OwningPawn);
 	OwningPlayerCharacter = Cast<AProject_JPlayerCharacter>(OwningCharacter);
 	LocomotionAnimStateComponent = OwningPlayerCharacter ? OwningPlayerCharacter->GetLocomotionAnimStateComponent() : nullptr;
-	CachedTrajectoryComponent = OwningCharacter ? OwningCharacter->FindComponentByClass<UProject_JMotionMatchingTrajectoryComponent>() : nullptr;
 }
 
 bool UProject_JCharacterAnimInstanceBase::NeedsOwnerReferenceRefresh() const

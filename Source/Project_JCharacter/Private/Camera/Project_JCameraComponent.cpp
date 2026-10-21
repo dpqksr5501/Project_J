@@ -5,7 +5,9 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "Camera/CameraComponent.h"
-#include "GameFramework/Character.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Movement/Project_JMoverPawn.h"
+#include "DefaultMovementSet/CharacterMoverComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Project_JGameplayTags.h"
@@ -28,6 +30,17 @@ void UProject_JCameraComponent::BeginPlay()
 	if (APawn* Pawn = Cast<APawn>(GetOwner()))
 	{
 		Pawn->ReceiveControllerChangedDelegate.AddUniqueDynamic(this, &UProject_JCameraComponent::OnControllerChanged);
+		if (const auto* MoverPawn=Cast<AProject_JMoverPawn>(Pawn))
+		{
+			// Follow the same render-time transform as Mover's visual smoothing.
+			// A capsule-attached boom would still step at the simulation frequency.
+			// Keep the authored camera anchor and any explicitly authored parent.
+			if (CameraBoom && CameraBoom->GetAttachParent()==Pawn->GetRootComponent())
+			{
+				CameraBoom->AttachToComponent(MoverPawn->GetMesh(),FAttachmentTransformRules::KeepWorldTransform);
+				CameraBoom->AddTickPrerequisiteComponent(MoverPawn->GetMover());
+			}
+		}
 	}
 	RefreshAbilitySystemBinding();
 }

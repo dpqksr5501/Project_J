@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
+#include "Movement/Project_JMoverPawn.h"
 #include "Project_JCharacterAnimInstanceBase.generated.h"
 
-class ACharacter;
+class AProject_JMoverPawn;
 class APawn;
 class AProject_JPlayerCharacter;
 class UProject_JLocomotionAnimStateComponent;
-class UProject_JMotionMatchingTrajectoryComponent;
 
 class USkeletalMeshComponent;
 
@@ -50,15 +50,12 @@ protected:
 	TObjectPtr<APawn> OwningPawn = nullptr;
 
 	UPROPERTY(Transient)
-	TObjectPtr<ACharacter> OwningCharacter = nullptr;
+	TObjectPtr<AProject_JMoverPawn> OwningCharacter = nullptr;
 
 	UPROPERTY(Transient)
 	TObjectPtr<AProject_JPlayerCharacter> OwningPlayerCharacter = nullptr;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UProject_JLocomotionAnimStateComponent> LocomotionAnimStateComponent = nullptr;
-
-	UPROPERTY(Transient)
-	TObjectPtr<UProject_JMotionMatchingTrajectoryComponent> CachedTrajectoryComponent = nullptr;
 
 };

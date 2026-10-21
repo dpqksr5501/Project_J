@@ -1,3 +1,4 @@
+#include "Tests/Project_JMoverFrameFixture.h"
 // Included by the editor-only probe: exercise production combat beside optional
 // budgeted poses, without changing the production mesh class or authored assets.
 #include "AIController.h"
@@ -109,7 +110,7 @@ class FCombatComparison : public IAutomationLatentCommand
 		Player->SetActorEnableCollision(false);
 		State->SetOwner(Controller); Controller->SetPlayerState(State.Get()); Player->SetPlayerState(State.Get());
 		Player->FinishSpawning(FTransform(FRotator::ZeroRotator, Origin)); Controller->Possess(Player.Get());
-		Player->GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+		if (!ProjectJ::Tests::PublishMoverFrame(Player.Get(),MOVE_Flying)) return false;
 		ASC = Player->GetAbilitySystemComponent();
 		Presentation = Player->FindComponentByClass<UProject_JCombatPresentationComponent>();
 		Hit = Player->FindComponentByClass<UProject_JCombatHitValidationComponent>();
@@ -123,7 +124,7 @@ class FCombatComparison : public IAutomationLatentCommand
 		Params.bDeferConstruction = false;
 		Target = World->SpawnActor<AProject_JNPCCharacter>(AProject_JNPCCharacter::StaticClass(), Origin + FVector(100, 0, 0), FRotator::ZeroRotator, Params);
 		if (!Target.IsValid()) { return false; }
-		Target->GetCharacterMovement()->DisableMovement();
+		if (!ProjectJ::Tests::PublishMoverFrame(Target.Get(),MOVE_None)) return false;
 		// Broad nearby stationary target: validates notify -> authority GE dispatch, not weapon geometry precision.
 		Target->GetCapsuleComponent()->SetCapsuleSize(150, 180);
 		Target->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);

@@ -23,4 +23,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "ModularMesh")
 	void AttachAndSetLeader(USkeletalMeshComponent* MainMesh);
 
+	/** Independent pose buffer for extra bones. The mesh's post-process ABP may simulate them. */
+	UFUNCTION(BlueprintCallable, Category="ModularMesh")
+	bool AttachAndCopyPose(USkeletalMeshComponent* MainMesh);
+	/** Common bones must keep the same parent chain; extra peripheral bones are allowed. */
+	static bool CanCopyBasePose(const USkeletalMesh* Source, const USkeletalMesh* Target);
+protected:
+	virtual void OnRegister() override;
+	virtual void OnUnregister() override;
+private:
+	void ClearPosePrerequisite();
+	TWeakObjectPtr<USkeletalMeshComponent> PosePrerequisite;
+
 };

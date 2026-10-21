@@ -1,8 +1,10 @@
 #if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
+#include "Tests/Project_JMoverFrameFixture.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/ScopeExit.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "GameFramework/WorldSettings.h"
 #include "Engine/SkeletalMesh.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -38,12 +40,13 @@ constexpr auto Phase2Flags = EAutomationTestFlags::EditorContext | EAutomationTe
 struct FPhase2World
 {
     UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
-    FPhase2World()
+    FPhase2World(bool bBegun=false)
     {
         GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
+        if(bBegun) { World->InitializeActorsForPlay(FURL()); World->GetWorldSettings()->NotifyBeginPlay(); World->GetWorldSettings()->NotifyMatchStarted(); }
         ++GFrameCounter; World->GetTimerManager().Tick(0.f);
     }
-    ~FPhase2World() { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); }
+    ~FPhase2World() { World->EndPlay(EEndPlayReason::Quit); World->DestroyWorld(false); GEngine->DestroyWorldContext(World); }
 };
 }
 
@@ -100,10 +103,10 @@ bool FProjectJAudit2RemoteJumpTest::RunTest(const FString&)
 {
     for (float Age : {0.f, .1f}) for (int32 Mode = 0; Mode < 3; ++Mode)
     {
-        FPhase2World Scope;
+        FPhase2World Scope(true);
         auto* Player = Scope.World->SpawnActor<AProject_JGreatswordCharacter>();
         auto* State = Player->FindComponentByClass<UProject_JLocomotionAnimStateComponent>();
-        Player->GetCharacterMovement()->SetMovementMode(MOVE_Falling);
+        TestTrue(TEXT("Mover falling fixture published"),ProjectJ::Tests::PublishMoverFrame(Player,MOVE_Falling));
         State->RefreshCachedReferences();
         if (Mode != 0)
         {
@@ -134,102 +137,6 @@ bool FProjectJAudit2RemoteJumpTest::RunTest(const FString&)
     return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAudit2AssetUsageTest, "ProjectJ.SourceAudit2.ReadOnlyAssetUsage", Phase2Flags)
-bool FProjectJAudit2AssetUsageTest::RunTest(const FString&)
-{
-    UClass* Class = LoadClass<AProject_JGreatswordCharacter>(nullptr, TEXT("/Game/Character_BPs/GreatSword/BP_GreatSword.BP_GreatSword_C"));
-    if (!TestNotNull(TEXT("Production character Blueprint"), Class)) return false;
-    if (Class)
-    {
-        const auto* Player = CastChecked<AProject_JPlayerCharacter>(Class->GetDefaultObject());
-        const auto* Profile = Player->GetCharacterAnimProfile();
-        AddInfo(FString::Printf(TEXT("ProductionBP=%s Profile=%s Locomotion=%s AirReselection=%d OneShot=%d Chooser=%s"), *Class->GetPathName(), *GetPathNameSafe(Profile),
-            *GetPathNameSafe(Profile ? Profile->LocomotionProfile.Get() : nullptr),
-            Profile && Profile->LocomotionProfile ? int32(Profile->LocomotionProfile->MotionMatchingSearchPolicy.bEnableAirJumpReselection) : -1,
-            Profile && Profile->LocomotionProfile ? int32(Profile->LocomotionProfile->MotionMatchingSearchPolicy.bEnableExperimentalOneShotPresentation) : -1,
-            *GetPathNameSafe(Profile && Profile->LocomotionProfile ? Profile->LocomotionProfile->MotionMatchingSearchPolicy.StateControllerAnimationChooserTable.Get() : nullptr)));
-    }
-    auto* Style = LoadObject<UProject_JCombatStyleDefinition>(nullptr, TEXT("/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword.DA_CombatStyle_Greatsword"));
-    if (!TestNotNull(TEXT("Production combat style"), Style) || !TestNotNull(TEXT("Production combo"), Style->ComboDefinition.Get())) return false;
-    for (const auto& Node : Style->ComboDefinition->Nodes)
-    {
-        const auto* Attack = Node.AttackDefinition.Get();
-        AddInfo(FString::Printf(TEXT("Node=%s Attack=%s Montage=%s Section=%s Rate=%.3f"), *Node.NodeTag.ToString(), *GetPathNameSafe(Attack),
-            *GetPathNameSafe(Attack ? Attack->Montage.Get() : nullptr), Attack ? *Attack->MontageSectionName.ToString() : TEXT("None"), Attack ? Attack->PlayRate : 0));
-    }
-    return true;
-}
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAudit2AirReselectionTest, "ProjectJ.SourceAudit2.AirReselectionCommand", Phase2Flags)
-bool FProjectJAudit2AirReselectionTest::RunTest(const FString&)
-{
-    for (float EntryTime : {0.f, .2f})
-    {
-        FPhase2World Scope;
-        auto* Player = Scope.World->SpawnActor<AProject_JGreatswordCharacter>();
-        auto* Profile = NewObject<UProject_JCharacterAnimProfile>(Player);
-        Profile->LocomotionProfile = NewObject<UProject_JLocomotionProfile>(Profile);
-        FindFProperty<FObjectPropertyBase>(AProject_JPlayerCharacter::StaticClass(), TEXT("CharacterAnimProfile"))->SetObjectPropertyValue_InContainer(Player, Profile);
-        auto* Clip = NewObject<UAnimSequence>(Player);
-        auto* Mesh = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple.SKM_Quinn_Simple"));
-        if (!TestNotNull(TEXT("Transient clip skeleton source"), Mesh)) return false;
-        Clip->SetSkeleton(Mesh->GetSkeleton());
-        auto& Controller = Clip->GetController(); Controller.InitializeModel();
-        Controller.SetFrameRate(FFrameRate(30, 1), false); Controller.SetNumberOfFrames(FFrameNumber(30), false);
-        TestEqual(TEXT("Transient timing fixture is exactly one second"), Clip->GetPlayLength(), 1.f);
-        auto* Chooser = NewObject<UChooserTable>(Profile);
-        Chooser->FallbackResult.InitializeAs<FAssetChooser>(); Chooser->FallbackResult.GetMutable<FAssetChooser>().Asset = Clip;
-        auto& Policy = Profile->LocomotionProfile->MotionMatchingSearchPolicy;
-        Policy.StateControllerAnimationChooserTable = Chooser; Policy.bEnableExperimentalOneShotPresentation = true;
-        Policy.bEnableAirJumpReselection = true; Policy.bUseMotionMatchForExperimentalOneShotEntry = false;
-        auto* Anim = NewObject<UProject_JCharacterAnimInstance>(Player->GetMesh());
-        Anim->OwningCharacter = Player; Anim->OwningPlayerCharacter = Player;
-        auto* State = Player->FindComponentByClass<UProject_JLocomotionAnimStateComponent>();
-        Anim->LocomotionAnimStateComponent = State;
-        State->bIsJumping = true; State->bHasMoveInput = true;
-        State->AuthoritativeContext.RotationMode = EProject_JLocomotionRotationMode::OrientToMovement;
-        State->AuthoritativeContext.GaitIntent = EProject_JLocomotionGaitIntent::Run;
-        State->DerivedLocomotionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::JumpStart;
-        State->KinematicContext.bHasFutureTrajectoryVelocity = true;
-        State->KinematicContext.FutureTrajectoryVelocity = FVector(0, -300, 0);
-        FProject_JAnimThreadSafeData Data; Data.MotionMatchingSearchPolicy = Policy; Data.Air.bIsInAir = true;
-        Data.Movement.Velocity = FVector(300, 0, 0).RotateAngleAxis(40.f, FVector::UpVector); Data.Movement.GroundSpeed = 300;
-        Anim->FillLocomotionStateThreadSafeData(Data);
-        TestTrue(TEXT("Future trajectory deliberately disagrees with current air velocity"), Data.Movement.FutureTrajectoryVelocity.Y < 0 && Data.Movement.Velocity.Y > 0);
-        TestEqual(TEXT("OTM launch snapshot uses its authored 45 degree forward sector"), Data.OneShotPresentation.StrafeDirection, EProject_JStateControllerStrafeDirection::Forward);
-        Anim->StateControllerRuntime.BeginHold(EProject_JStateControllerPresentationState::TransitionToInAir, 0.);
-        Anim->CachedStateControllerSelectedAnimation = Clip;
-        Anim->CachedStateControllerSelectedAnimationOutput.StartTime = EntryTime;
-        Anim->CachedStateControllerPresentationState = EProject_JStateControllerPresentationState::TransitionToInAir;
-        Anim->CachedStateControllerStrafeDirection = EProject_JStateControllerStrafeDirection::Forward;
-        Anim->bCachedStateControllerHasSelectedAnimation = true;
-        Anim->CachedStateControllerChooserTable = Chooser;
-        Anim->StateControllerPresentationStateForChooser = EProject_JStateControllerPresentationState::TransitionToInAir;
-        Anim->AnimationClock.Advance(.4f, false);
-        Anim->ResolveStateControllerPresentationStateWithPlaybackHold(Data, Data.OneShotPresentation);
-        TestEqual(TEXT("Approved live air direction reaches the same command snapshot"), Data.OneShotPresentation.StrafeDirection, EProject_JStateControllerStrafeDirection::ForwardRight);
-        TestTrue(TEXT("Approved direction has its live angle"), Data.OneShotPresentation.bHasStrafeDirectionAngle);
-        TestNearlyEqual(TEXT("Approved live angle"), Data.OneShotPresentation.StrafeDirectionAngle, 40.f);
-        Anim->EvaluateStateControllerAnimationChooserOnGameThread(Data);
-        TestEqual(TEXT("Same-frame chooser reads the approved direction"), Anim->StateControllerStrafeDirectionForChooser, EProject_JStateControllerStrafeDirection::ForwardRight);
-        TestNearlyEqual(TEXT("Reselection preserves absolute asset time, including nonzero entry"), Data.OneShotPresentation.SelectedAnimationOutput.StartTime, EntryTime + .4f);
-        const int32 Revision = Anim->StateControllerChooserSelectionRevision;
-        Anim->AnimationClock.Advance(.01f, false);
-        Anim->FillLocomotionStateThreadSafeData(Data);
-        Anim->ResolveStateControllerPresentationStateWithPlaybackHold(Data, Data.OneShotPresentation);
-        TestEqual(TEXT("Next snapshot preserves the committed air sector"), Data.OneShotPresentation.StrafeDirection, EProject_JStateControllerStrafeDirection::ForwardRight);
-        TestNearlyEqual(TEXT("Asset start offset is deducted exactly once"), Data.OneShotPresentation.TransitionTimeRemaining, 1.f - EntryTime - .4f - .01f);
-        Anim->EvaluateStateControllerAnimationChooserOnGameThread(Data);
-        TestEqual(TEXT("Stable air direction does not emit another selection"), Anim->StateControllerChooserSelectionRevision, Revision);
-        const float AdditionalWait = Data.OneShotPresentation.SelectedAnimationOutput.BlendTime * Policy.AirJumpMinBlendProgressRatio + .01f;
-        Anim->AnimationClock.Advance(AdditionalWait, false);
-        Data.Movement.Velocity = FVector(300, 0, 0).RotateAngleAxis(-40.f, FVector::UpVector);
-        Anim->FillLocomotionStateThreadSafeData(Data);
-        Anim->ResolveStateControllerPresentationStateWithPlaybackHold(Data, Data.OneShotPresentation);
-        TestEqual(TEXT("A later meaningful direction change is accepted after blend cooldown"), Data.OneShotPresentation.StrafeDirection, EProject_JStateControllerStrafeDirection::ForwardLeft);
-        Anim->EvaluateStateControllerAnimationChooserOnGameThread(Data);
-        TestNearlyEqual(TEXT("Repeated reselection keeps cumulative asset progress"), Data.OneShotPresentation.SelectedAnimationOutput.StartTime, EntryTime + .41f + AdditionalWait);
-        TestEqual(TEXT("One command per meaningful direction change"), Anim->StateControllerChooserSelectionRevision, Revision + 1);
-    }
-    return true;
-}
+
+// Current air selection and playback are covered by ProjectJ.PlayerLocomotion and the PIE fixtures.
 #endif

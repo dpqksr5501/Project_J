@@ -1,4 +1,5 @@
 #include "Components/Project_JAnimationUpdateCoordinatorComponent.h"
+#include "Movement/Project_JMoverPawn.h"
 
 #include "Components/SkeletalMeshComponent.h"
 #include "Animation/Project_JBudgetedSkeletalMeshComponent.h"
@@ -8,7 +9,6 @@
 #include "Components/Project_JModularMeshComponent.h"
 #include "Project_JBaseCharacter.h"
 #include "GameFramework/PlayerController.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "HAL/IConsoleManager.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "GameFramework/Character.h"
@@ -43,7 +43,7 @@ void UProject_JAnimationUpdateCoordinatorComponent::RequestUrgentRemoteAnimation
 	{
 		return;
 	}
-	ACharacter* CharacterOwner = Cast<ACharacter>(GetOwner());
+	AProject_JMoverPawn* CharacterOwner = Cast<AProject_JMoverPawn>(GetOwner());
 	if (!CharacterOwner || CharacterOwner->GetLocalRole() != ROLE_SimulatedProxy)
 	{
 		return;
@@ -129,7 +129,7 @@ void UProject_JAnimationUpdateCoordinatorComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	if (GetNetMode() == NM_DedicatedServer) { SetComponentTickEnabled(false); return; }
-	if (const auto* Character = Cast<ACharacter>(GetOwner()))
+	if (const auto* Character = Cast<AProject_JMoverPawn>(GetOwner()))
 	{
 		VisualSource = Character->GetMesh();
 		AddTickPrerequisiteActor(GetOwner());
@@ -145,7 +145,7 @@ void UProject_JAnimationUpdateCoordinatorComponent::TickComponent(float DeltaTim
 bool UProject_JAnimationUpdateCoordinatorComponent::CanManageVisualMesh(const USkeletalMeshComponent* Mesh) const
 {
 	if (!IsValid(Mesh) || Mesh->GetOwner() != GetOwner() || Mesh == VisualSource.Get() || !Mesh->IsRegistered() ||
-		!Mesh->GetSkeletalMeshAsset() || Mesh->IsA<UProject_JModularMeshComponent>() || Mesh->LeaderPoseComponent.IsValid() ||
+		!Mesh->GetSkeletalMeshAsset() || Mesh->LeaderPoseComponent.IsValid() ||
 		Mesh->IsSimulatingPhysics() || Mesh->ComponentTags.Contains(TEXT("NoVisualBudget"))) return false;
 	// Chaos Cloth has its own tick/visibility contract. Animation's external
 	// cadence does not throttle it, and forcing AlwaysTick can wake hidden cloth.
@@ -258,8 +258,7 @@ void UProject_JAnimationUpdateCoordinatorComponent::RefreshVisualBudget(float De
 	bSawAuthoredPresentation = bAuthored;
 	bool bProtected = bLocal || Source->IsCombatCritical() || Source->HasAnimationUpdateRequirement() ||
 		Source->GetAnimInstance()->RootMotionMode == ERootMotionMode::RootMotionFromEverything ||
-		Source->GetAnimInstance()->IsAnyMontagePlaying() || Character->GetCharacterMovement()->HasAnimRootMotion() ||
-		Character->GetCharacterMovement()->CurrentRootMotion.HasActiveRootMotionSources() ||
+		Source->GetAnimInstance()->IsAnyMontagePlaying() ||
 		bAuthored || Now < AuthoredReturnUntil;
 	if (!bProtected) for (const auto& Entry : Visuals) if (const auto* Mesh = Entry.Mesh.Get())
 	{

@@ -1,5 +1,7 @@
 # 외부 Blend Stack → Motion Matching의 실제 포즈 크로스페이드
 
+> **이전 이동 구조의 기록 — 2026-10-21:** 본문은 당시 CMC/MM·마스터·후보 정책의 구현·제안·측정 이력이다. 현재 생산 제작은 [플레이어 로코모션](Player_Locomotion_Architecture.md)을 따른다. 과거 구조를 복원하라는 지시나 현재 구조의 성능 결과로 해석하지 않는다.
+
 이 문서는 통합 이전의 외부 Handoff 구현·검증 기록이다. 현재 Master는 [2026-10-12 통합 Locomotion](../Planning/Unified_Locomotion_Implementation_2026-10-12.md)에서 단발과 MM을 한 스택으로 재생하며, 아래 외부 Blend Stack·Handoff 연결을 새 기준으로 적용하지 않는다. 단발 복귀의 현재 곡선 판정은 [후속 개선](../Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md)을 따른다.
 
 후속: [Start/Land 입력 반응과 첫 MM 검색](OneShot_Input_Response_2026-10-11.md)은 단발의 유지/복귀 판단과 입력 변화의 후보 연결을 다룬다. 이 문서의 crossfade와 별도 정책이다.

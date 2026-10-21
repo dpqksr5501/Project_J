@@ -1,7 +1,7 @@
 #include "Project_JLocomotionAnimStateComponent.h"
+#include "Movement/Project_JMovementQueries.h"
 #include "TimerManager.h"
 #include "Engine/World.h"
-
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Project_JPlayerCharacter.h"
 #include "Components/Project_JFoleyComponent.h"
@@ -153,7 +153,7 @@ void UProject_JLocomotionAnimStateComponent::HandleReplicatedLandingCancelled(in
 
 	LastConfirmedRemoteLandingSequence = FMath::Max(LastConfirmedRemoteLandingSequence, Sequence);
 	bLandWasMoving = true;
-	bForceLandingFinishToLocomotion = true;
+
 	FinishLandingImmediately();
 }
 
@@ -254,8 +254,7 @@ bool UProject_JLocomotionAnimStateComponent::CanStartJumpForAnimation() const
 		return false;
 	}
 
-	const UCharacterMovementComponent* MovementComponent = GetCachedMovementComponent();
-	const bool bIsGroundedForJump = MovementComponent && MovementComponent->IsMovingOnGround();
+	const bool bIsGroundedForJump = Project_J::Movement::IsGrounded(PlayerOwner);
 	const bool bInLandingRecovery = IsLandingStateActive();
 	const bool bCanCancelLandingIntoJump =
 		bInLandingRecovery &&
@@ -394,7 +393,7 @@ void UProject_JLocomotionAnimStateComponent::ScheduleJumpStartTimeout(float Dura
 
 void UProject_JLocomotionAnimStateComponent::BeginLandingState(const AProject_JPlayerCharacter& PlayerOwner, float ImpactFallSpeed)
 {
-	ReleasedLandingPresentationRevision = INDEX_NONE;
+
 	StopFallOffStart();
 	++LandingPresentationRevision;
 	if (LandingPresentationRevision == 0)
@@ -426,17 +425,6 @@ void UProject_JLocomotionAnimStateComponent::BeginLandingState(const AProject_JP
 	bUseHeavyLand = LandStartFallSpeed >= HeavyLandSpeedThreshold;
 	bLandingCancelEventDispatched = false;
 
-	InitialLandingMoveWorldDirection = FVector::ZeroVector;
-	PreviousLandingMoveWorldDirection = FVector::ZeroVector;
-	InitialLandingActorYaw = PlayerOwner.GetActorRotation().Yaw;
-	InitialLandingControlYaw = PlayerOwner.GetControlRotation().Yaw;
-	PreviousLandingActorYaw = InitialLandingActorYaw;
-	if (bLandWasMoving)
-	{
-		const FVector2D LandingMoveInput = GetMovementInputForState();
-		InitialLandingMoveWorldDirection = CalculateMoveWorldDirection(LandingMoveInput);
-		PreviousLandingMoveWorldDirection = InitialLandingMoveWorldDirection;
-	}
 
 	bIsLanding = true;
 	bLandingRequested = true;
@@ -445,10 +433,7 @@ void UProject_JLocomotionAnimStateComponent::BeginLandingState(const AProject_JP
 	bCanExitLanding = LandingMinHoldTime <= 0.0f;
 	bLandingFinished = false;
 	LandingElapsedTime = 0.0f;
-	LandingPostTouchdownMoveInputTime = 0.0f;
-	bLandingReceivedPostTouchdownMoveInput = false;
-	bForceLandingFinishToStop = false;
-	bLandingExitStopWasSprinting = false;
+
 	bLandingFinishPendingExit = false;
 }
 
@@ -498,7 +483,7 @@ void UProject_JLocomotionAnimStateComponent::ScheduleLandingTimeout()
 
 void UProject_JLocomotionAnimStateComponent::ClearActiveLandingState()
 {
-	ReleasedLandingPresentationRevision = INDEX_NONE;
+
 	bIsLanding = false;
 	bLandingRequested = false;
 	bIsInAir = false;
@@ -512,13 +497,8 @@ void UProject_JLocomotionAnimStateComponent::ClearActiveLandingState()
 	LastFallSpeed = 0.0f;
 	RemoteAirborneTime = 0.0f;
 	LandingElapsedTime = 0.0f;
-	LandingPostTouchdownMoveInputTime = 0.0f;
-	bLandingReceivedPostTouchdownMoveInput = false;
-	InitialLandingMoveWorldDirection = FVector::ZeroVector;
-	PreviousLandingMoveWorldDirection = FVector::ZeroVector;
-	InitialLandingActorYaw = 0.0f;
-	InitialLandingControlYaw = 0.0f;
-	PreviousLandingActorYaw = 0.0f;
+
+
 }
 
 void UProject_JLocomotionAnimStateComponent::StartLanding(float ImpactFallSpeed, bool bBroadcastRealLandingEvent, bool bUpdateGameplayTags, float FoleyEventAgeSeconds)
@@ -622,54 +602,14 @@ void UProject_JLocomotionAnimStateComponent::CompleteLanding()
 
 void UProject_JLocomotionAnimStateComponent::OnLandingTimerFinished()
 {
-	const bool bHadLandingState = IsLandingStateActive();
-
-	const bool bIgnoreRemoteMotionForLandingFinish = bLandingIgnoresRemoteGroundSpeed;
-	const bool bMoveInputStillHeld = !bIgnoreRemoteMotionForLandingFinish && GetMovementInputForState().Size() > MoveInputDeadZone;
-	const bool bForcedLocomotionFinish = bForceLandingFinishToLocomotion;
-	const bool bForcedStopFinish = bForceLandingFinishToStop;
-	const bool bForcedStopWasSprinting = bLandingExitStopWasSprinting;
-	const bool bAllowGroundSpeedLocomotion = !bIgnoreRemoteMotionForLandingFinish;
-	const bool bShouldEnterLocomotion =
-		!bForcedStopFinish &&
-		(bForcedLocomotionFinish || bMoveInputStillHeld || (bAllowGroundSpeedLocomotion && GroundSpeed > IdleSpeedThreshold));
-
-	ClearActiveLandingState();
-
-	bForceLandingFinishToLocomotion = false;
-	bForceLandingFinishToStop = false;
-	bLandingExitStopWasSprinting = false;
-	bLandingIgnoresRemoteGroundSpeed = false;
-	bLandingCancelEventDispatched = false;
-
-	if (bForcedStopFinish)
-	{
-		// EnterStopGroundMotionMode snapshots these values into bStopWasSprinting,
-		// which lets the existing OTM/Strafe Stop choosers retain the landing gait.
-		bWantsSprint = bForcedStopWasSprinting;
-		bUseSprintLocomotion = bForcedStopWasSprinting;
-		bHasMoveInput = false;
-		bPrevHasMoveInput = false;
-		bResolvedMoveInputLastUpdate = false;
-		EnterGroundMotionMode(EProject_JGroundMotionMode::Stop);
-	}
-	else if (bShouldEnterLocomotion)
-	{
-		const bool bHasResolvedMoveIntent = bForcedLocomotionFinish || bMoveInputStillHeld;
-		bHasMoveInput = bHasResolvedMoveIntent;
-		bPrevHasMoveInput = bHasResolvedMoveIntent;
-		bResolvedMoveInputLastUpdate = bHasResolvedMoveIntent;
-		EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
-	}
-	else
-	{
-		EnterGroundMotionMode(EProject_JGroundMotionMode::Idle);
-	}
-
-	if (bHadLandingState)
-	{
-		RemoveOwnedLandingGameplayTag();
-	}
+ const bool bHadLandingState=IsLandingStateActive();
+ ClearActiveLandingState();
+ bLandingIgnoresRemoteGroundSpeed=false;
+ bLandingCancelEventDispatched=false;
+ // Physical landing/tag lifetime is independent of GASP's visual Land exit.
+ // The next movement sample publishes current intent without issuing a second
+ // authored Start/Stop request to the animation graph.
+ if(bHadLandingState) RemoveOwnedLandingGameplayTag();
 }
 
 void UProject_JLocomotionAnimStateComponent::OnJumpTimerFinished()

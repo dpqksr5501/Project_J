@@ -1,4 +1,6 @@
 #include "System/Project_JFoleySubsystem.h"
+#include "GameFramework/Pawn.h"
+#include "Movement/Project_JMovementQueries.h"
 
 #include "Audio/Project_JFoleyAudioProfile.h"
 #include "AudioDevice.h"
@@ -213,7 +215,7 @@ bool UProject_JFoleySubsystem::PrepareLocalAudio(UProject_JFoleyComponent* Compo
 	UWorld* World = GetWorld();
 	if (bStopped || !World || World->GetNetMode() == NM_DedicatedServer || !FoleyEnabled.GetValueOnGameThread() ||
 		!IsValid(Component) || Component->GetWorld() != World || !Component->CanPresent(EProject_JFoleyGroup::Other)) { return false; }
-	const auto* Character = Cast<ACharacter>(Component->GetOwner());
+	const auto* Character = Cast<APawn>(Component->GetOwner());
 	if (!Character || !Character->IsPlayerControlled() || !Character->IsLocallyControlled()) { return false; }
 	const FSoftObjectPath Path = Component->GetEffectiveProfile().ToSoftObjectPath();
 	if (!Path.IsValid()) { return false; }
@@ -228,7 +230,7 @@ bool UProject_JFoleySubsystem::Submit(UProject_JFoleyComponent* Component, const
 	if (bStopped || !World || World->bIsTearingDown || World->GetNetMode() == NM_DedicatedServer ||
 		!FoleyEnabled.GetValueOnGameThread() || !IsValid(Component) || Component->GetWorld() != World ||
 		!ValidateEvent(Event, FMath::Clamp(MaxAge.GetValueOnGameThread(), 0.f, 0.5f))) { return false; }
-	auto* Character = Cast<ACharacter>(Component->GetOwner());
+	auto* Character = Cast<APawn>(Component->GetOwner());
 	if (!Character) { return false; }
 	const bool bLocal = Character->IsPlayerControlled() && Character->IsLocallyControlled();
 	if (!bLocal && !OtherCharacters.GetValueOnGameThread()) { return false; }

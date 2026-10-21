@@ -1,6 +1,8 @@
 # Mirror Data 도입 보류 결정
 
-2026-10-19 후속은 [GASP 5.8 전환 책임 정리](../Architecture/GASP58_Locomotion_Migration_2026-10-19.md)를 따른다. 아래는 당시 판단·로그·검증 이력이다. Mirror 신규 도입 보류는 유지하지만, 당시 locomotion 전체 유지 결정을 이후 단발 수명·대각 Pivot 개선의 금지로 해석하지 않는다.
+> **과거 소스 경로 안내 — 2026-10-21:** 아래 현재 파일이 없는 소스 경로는 당시 구현의 위치를 텍스트로 보존했다. 이를 현행 API나 실행 가능한 제작 단계로 해석하지 않는다. 이동·애니메이션의 현재 계약은 [플레이어 로코모션](../Architecture/Player_Locomotion_Architecture.md)을 따른다. 당시 수치·실패·외부 출처는 유지한다.
+
+2026-10-19 후속은 [GASP 5.8 전환 책임 정리](../Architecture/Player_Locomotion_Migration_2026-10-19.md)를 따른다. 아래는 당시 판단·로그·검증 이력이다. Mirror 신규 도입 보류는 유지하지만, 당시 locomotion 전체 유지 결정을 이후 단발 수명·대각 Pivot 개선의 금지로 해석하지 않는다.
 
 결정일: 2026-10-15. 조사 기준: `a28b665718a802660e4dd2ae5494f27e84fa1ee3`.
 
@@ -66,7 +68,7 @@ PSS 6개는 `PSS_Player`, `PSS_InAir_Player`, `PSS_Combat`, `PSS_Combat_Run_Cont
 - [통합 Locomotion 구현](Unified_Locomotion_Implementation_2026-10-12.md)과 [회전 연속성 구현](GASP_ProjectJ_Naturalness_2026-10-06/07_LOCOMOTION_CONTINUITY.md): 이미 구현한 공통 스택과 player별 보정 계약.
 - [GASP 비교](GASP_ProjectJ_Naturalness_Comparison_2026-10-12.md): 당시 후진 Reface 비교 기록. 현재 후보·정책은 후속 코드와 구분한다.
 - [R19 소스·데이터 대조](../../Review/Audits/Project_J_PC_Source_Data_Reconciliation_2026-10-15.md)와 [R20 보정 복구](../../Review/Audits/Project_J_Strafe_Diagonal_Warp_Repair_2026-10-15.md): 선택 공백과 sample 소비 오류를 구분한 기존 수정·검증.
-- [현재 단발 재생](../../../Source/Project_JCharacter/Private/Animation/AnimNode_ProjectJLocomotion.cpp), [entry-MM 결과 소비](../../../Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Presentation.cpp), [Foley Notify](../../../Source/Project_JCharacter/Private/Animation/Project_JAnimNotify_FoleyEvent.cpp): 실제 실행 계약.
+- 현재 단발 재생 (`Source/Project_JCharacter/Private/Animation/AnimNode_ProjectJLocomotion.cpp`, 당시 경로·현재 파일 없음), entry-MM 결과 소비 (`Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Presentation.cpp`, 당시 경로·현재 파일 없음), [Foley Notify](../../../Source/Project_JCharacter/Private/Animation/Project_JAnimNotify_FoleyEvent.cpp): 실제 실행 계약.
 
 GASP 로컬 원본은 5.7.4, Project_J는 5.8.3이다. GASP CMC ABP·Chooser의 기존 구조 자료는 현재 원본 해시와 일치하지만 현재 실행 pawn/CMC·Mover 경로와 미러 선택 사례는 확인하지 않았다. GASP의 자연스러움을 미러 한 가지의 효과로 설명하지 않는다.
 

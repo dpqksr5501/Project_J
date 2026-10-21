@@ -1,6 +1,7 @@
+#include "Misc/AutomationTest.h"
+#include "GameFramework/Character.h"
 #if WITH_DEV_AUTOMATION_TESTS
 
-#include "Misc/AutomationTest.h"
 #include "Components/Project_JEquipmentRuntimeComponent.h"
 #include "Components/Project_JWeaponPresentationComponent.h"
 #include "Components/Project_JEquipmentManagerComponent.h"

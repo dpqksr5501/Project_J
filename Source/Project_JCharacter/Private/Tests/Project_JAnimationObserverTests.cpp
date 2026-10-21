@@ -10,7 +10,7 @@
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
-#include "GameFramework/CharacterMovementComponent.h"
+#include "Tests/Project_JMoverFrameFixture.h"
 #include "GameFramework/WorldSettings.h"
 #include "SignificanceManager.h"
 #include "UObject/UnrealType.h"
@@ -31,7 +31,9 @@ bool FProjectJAnimationObserverRuntime::RunTest(const FString&)
     auto* Character = World->SpawnActor<AProject_JNPCCharacter>();
     Character->SetActorLocation(FVector(30000, 0, 0));
     Character->SetActorTickEnabled(false);
-    Character->GetCharacterMovement()->SetComponentTickEnabled(false);
+    // Keep the observer fixture stationary through the real Mover publication.
+    // Component tick alone does not suspend Network Prediction simulation.
+    TestTrue(TEXT("Publish stationary observer fixture"),ProjectJ::Tests::PublishMoverFrame(Character,MOVE_None));
     auto* Mesh = CastChecked<UProject_JBudgetedSkeletalMeshComponent>(Character->GetMesh());
     auto* Anim = NewObject<UProject_JCharacterAnimInstance>(Mesh);
     Anim->NativeInitializeAnimation();

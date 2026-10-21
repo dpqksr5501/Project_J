@@ -28,7 +28,12 @@ for (const file of files) {
     const bare = target.split('#', 1)[0];
     if (!bare || bare.includes(' ')) continue;
     checked++;
-    const full = path.resolve(path.dirname(file), bare);
+    // Markdown URLs encode spaces and non-ASCII names; resolve filesystem paths
+    // after decoding, rather than reporting existing Korean-named images missing.
+    let decoded;
+    try { decoded = decodeURIComponent(bare); }
+    catch { decoded = bare; }
+    const full = path.resolve(path.dirname(file), decoded);
     if (fs.existsSync(full)) continue;
     const line = source.slice(0, match.index).split('\n').length;
     const record = `${relative}:${line} -> ${target}`;

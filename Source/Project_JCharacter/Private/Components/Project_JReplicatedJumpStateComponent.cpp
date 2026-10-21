@@ -106,7 +106,7 @@ void UProject_JReplicatedJumpStateComponent::ApplyConfirmedJumpState(
 	{
 		AnimationUpdateCoordinator->RequestUrgentRemoteAnimationUpdate(
 			LocomotionProfile
-				? LocomotionProfile->MotionMatchingSearchPolicy.RemoteJumpUrgentAnimationUpdateDuration
+				? LocomotionProfile->AirPolicy.RemoteJumpUrgentAnimationUpdateDuration
 				: 0.10f);
 	}
 }

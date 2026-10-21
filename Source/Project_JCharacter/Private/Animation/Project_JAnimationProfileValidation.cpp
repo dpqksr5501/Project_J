@@ -4,7 +4,6 @@
 
 #include "Animation/Project_JCombatAnimProfile.h"
 #include "Animation/Project_JLocomotionProfile.h"
-#include "Animation/Project_JMotionMatchingAssetSet.h"
 #include "Animation/Project_JWeaponAnimProfile.h"
 #include "Project_JLocomotionAnimStateComponent.h"
 #include "Project_JPlayerCharacter.h"
@@ -41,31 +40,12 @@ void ValidateLocomotionProfile(
 
 	if (const FName Failure = LocomotionProfile->GetMovementValidationFailure(); !Failure.IsNone())
 		AddWarning(Context, OutWarnings, FString::Printf(TEXT("has invalid movement parameter %s."), *Failure.ToString()));
-	ValidateNonNegativeValue(Context, OutWarnings, TEXT("GenericMoveInputSpeedThreshold"), LocomotionProfile->GenericMoveInputSpeedThreshold);
-	ValidateNonNegativeValue(Context, OutWarnings, TEXT("SprintLocomotionSpeedThreshold"), LocomotionProfile->SprintLocomotionSpeedThreshold);
-	ValidateNonNegativeValue(Context, OutWarnings, TEXT("StartMouseTurnCancelAngle"), LocomotionProfile->TransitionPolicy.StartMouseTurnCancelAngle);
-	ValidateNonNegativeValue(Context, OutWarnings, TEXT("StartMoveInputCancelAngle"), LocomotionProfile->TransitionPolicy.StartMoveInputCancelAngle);
-	ValidateNonNegativeValue(Context, OutWarnings, TEXT("LandMouseTurnCancelAngle"), LocomotionProfile->TransitionPolicy.LandMouseTurnCancelAngle);
 
 	if (LocomotionProfile->SprintSpeed < LocomotionProfile->WalkSpeed)
 	{
 		AddWarning(Context, OutWarnings, TEXT("has SprintSpeed lower than WalkSpeed."));
 	}
 
-	if (LocomotionProfile->SprintLocomotionSpeedThreshold > LocomotionProfile->SprintSpeed)
-	{
-		AddWarning(Context, OutWarnings, TEXT("has SprintLocomotionSpeedThreshold above SprintSpeed."));
-	}
-
-	if (LocomotionProfile->MidMotionMatchingDistance < LocomotionProfile->NearMotionMatchingDistance)
-	{
-		AddWarning(Context, OutWarnings, TEXT("has MidMotionMatchingDistance lower than NearMotionMatchingDistance."));
-	}
-
-	if (LocomotionProfile->FarMotionMatchingDistance < LocomotionProfile->MidMotionMatchingDistance)
-	{
-		AddWarning(Context, OutWarnings, TEXT("has FarMotionMatchingDistance lower than MidMotionMatchingDistance."));
-	}
 }
 
 void ValidateLocomotionAnimState(
@@ -118,19 +98,13 @@ void ValidateCombatProfile(
 		AddWarning(Context, OutWarnings, TEXT("plays combat intro on enter but no effective CombatIntroMontage is assigned."));
 	}
 
-	if (CombatProfile->bAllowSprintInCombat &&
-		CombatProfile->bRequireForwardInputForSprintInCombat &&
-		(!FMath::IsFinite(CombatProfile->CombatSprintForwardInputThreshold) || CombatProfile->CombatSprintForwardInputThreshold <= 0.0f))
-	{
-		AddWarning(Context, OutWarnings, TEXT("allows combat sprint with a non-positive forward-input threshold; use a small positive value such as 0.1."));
-	}
+
 }
 }
 
 void Project_J::AnimationProfileValidation::ValidatePlayerAnimationConfiguration(
 	const AProject_JPlayerCharacter& PlayerCharacter,
 	const UProject_JLocomotionProfile* LocomotionProfile,
-	const UProject_JMotionMatchingAssetSet* MotionMatchingAssetSet,
 	const UProject_JWeaponAnimProfile* WeaponAnimProfile,
 	const UProject_JCombatAnimProfile* CombatAnimProfile,
 	const UProject_JLocomotionAnimStateComponent* LocomotionAnimStateComponent,
@@ -141,16 +115,4 @@ void Project_J::AnimationProfileValidation::ValidatePlayerAnimationConfiguration
 	ValidateWeaponProfile(&PlayerCharacter, WeaponAnimProfile, OutWarnings);
 	ValidateCombatProfile(&PlayerCharacter, CombatAnimProfile, WeaponAnimProfile, OutWarnings);
 
-	if (MotionMatchingAssetSet)
-	{
-		MotionMatchingAssetSet->ValidateForProjectJLocomotion(&PlayerCharacter, OutWarnings);
-		if (CombatAnimProfile && CombatAnimProfile->bUseCombatRotationMode)
-		{
-			const UProject_JMotionMatchingAssetSet* CombatStrafeAssetSet =
-				CombatAnimProfile->CombatStrafeMotionMatchingAssetSet
-					? CombatAnimProfile->CombatStrafeMotionMatchingAssetSet.Get()
-					: MotionMatchingAssetSet;
-			CombatStrafeAssetSet->ValidateCombatStrafeForProjectJLocomotion(&PlayerCharacter, OutWarnings);
-		}
-	}
 }

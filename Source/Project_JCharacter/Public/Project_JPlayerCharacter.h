@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "Components/Project_JPlayerInputBindingComponent.h"
 #include "Animation/Project_JAnimationLocomotionMode.h"
-#include "Animation/Project_JTurnInPlacePresentationRuntime.h"
 #include "Animation/Project_JReplicatedAnimEventTypes.h"
 #include "Project_JBaseCharacter.h"
 #include "Combat/Project_JCombatConfiguration.h"
@@ -23,8 +22,6 @@ class UAnimInstance;
 class UProject_JCharacterAnimProfile;
 struct FStreamableHandle;
 class UProject_JLocomotionAnimStateComponent;
-class UProject_JMotionMatchingAssetSet;
-class UProject_JMotionMatchingTrajectoryComponent;
 class UProject_JLocomotionProfile;
 class UProject_JWeaponAnimProfile;
 class UProject_JWeaponPresentationProfile;
@@ -81,12 +78,14 @@ class PROJECT_JCHARACTER_API AProject_JPlayerCharacter : public AProject_JBaseCh
 
 public:
 	virtual void ReceiveAuthorityCombatInput(const FGameplayTag& InputTag, float ClientTimestamp, uint32 InputSequence) override;
+	virtual void ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdContext& InputCmd) override;
+	virtual FProject_JMoverPolicy ResolveMoverPolicy(const FProject_JMoverInputs& Requested,const FCharacterDefaultInputs* Input=nullptr) const override;
+	virtual float GetMoverMaxSpeed(bool bAcceptedSprint) const override;
 
 private:
 
 	friend class UProject_JPlayerInputBindingComponent;
 	friend class FProjectJActiveMoveReentryTest;
-	friend class FProjectJAuditTIPBudgetTest;
 
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
@@ -104,10 +103,6 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UProject_JLocomotionAnimStateComponent> LocomotionAnimStateComponent = nullptr;
 
-	/** Native trajectory buffer used by PoseSearch motion matching. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UProject_JMotionMatchingTrajectoryComponent> MotionMatchingTrajectoryComponent = nullptr;
-	
 	/** ViewModel for UI bindings */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="UI", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UProject_JCharacterUIBindingComponent> CharacterUIBindingComponent = nullptr;
@@ -214,6 +209,8 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Input")
 	TObjectPtr<UInputAction> SprintAction = nullptr;
 
+ UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="Input") TObjectPtr<UInputAction> WalkAction = nullptr;
+
 	/** Toggle Combat Input Action */
 	UPROPERTY(EditAnywhere, Category="Input")
 	TObjectPtr<UInputAction> ToggleCombatAction = nullptr;
@@ -294,7 +291,7 @@ protected:
 
 	void RegisterCombatStateTagEvents();
 	void UnregisterCombatStateTagEvents();
-	void ApplyCombatRotationMode(bool bEnableCombatRotation);
+	virtual void ApplyCombatRotationMode(bool bEnableCombatRotation);
 	bool HasCombatStateTag(const FGameplayTag& StateTag) const;
 	bool TryActivateAbilityByTag(const FGameplayTag& AbilityTag);
 	void CancelAbilitiesByTag(const FGameplayTag& AbilityTag);
@@ -324,8 +321,6 @@ protected:
 	void ApplyLocomotionProfile();
 	void LogAnimationProfileConfiguration() const;
 	void UpdateMaxWalkSpeed();
-	friend class UProject_JCharacterMovementComponent;
-	void ApplyMovementPolicy(bool bCanSprint, const FVector& MovementDirection);
 	void ApplySprintAnimationState();
 	UAnimMontage* GetEffectiveCombatIntroMontage() const;
 	float GetEffectiveCombatIntroMontagePlayRate() const;
@@ -412,16 +407,13 @@ public:
 	FORCEINLINE class UProject_JLocomotionAnimStateComponent* GetLocomotionAnimStateComponent() const { return LocomotionAnimStateComponent; }
 
 	/** Returns MotionMatchingTrajectoryComponent subobject **/
-	FORCEINLINE class UProject_JMotionMatchingTrajectoryComponent* GetMotionMatchingTrajectoryComponent() const { return MotionMatchingTrajectoryComponent; }
 
 	/**
 	 * True only when the actor is expected to face its travel direction. Remote
 	 * trajectory repair must not reinterpret intentional strafe/lock-on facing
 	 * as a stale straight-running query.
 	 */
-	bool AllowsStraightRunningTrajectoryRepair() const;
-
-	FORCEINLINE class UProject_JMountComponent* GetMountComponent() const { return MountComponent; }
+FORCEINLINE class UProject_JMountComponent* GetMountComponent() const { return MountComponent; }
 	FORCEINLINE UProject_JMountedAnimationLayerComponent* GetMountedAnimationLayerComponent() const { return MountedAnimationLayerComponent; }
 	const TSoftClassPtr<UAnimInstance>& GetFallbackMountedAnimationLayerClass() const { return MountedAnimationLayerClass; }
 
@@ -448,10 +440,6 @@ private:
 	UFUNCTION(Server, Reliable)
 	void ServerTryInteract();
 
-	// Cosmetic TIP yaw is sampled repeatedly while the turn plays.  It must not
-	// occupy the reliable RPC queue behind gameplay-critical requests.
-	UFUNCTION(Server, Unreliable)
-	void ServerSetTurnInPlaceRotation(bool bInTurnInPlace, float InTargetActorYaw);
 
 public:
 
@@ -459,8 +447,6 @@ public:
 	UProject_JCharacterViewModel* GetCharacterViewModel() const;
 
 	const UProject_JLocomotionProfile* GetLocomotionProfile() const;
-	const UProject_JMotionMatchingAssetSet* GetMotionMatchingAssetSet() const;
-	const UProject_JMotionMatchingAssetSet* GetCombatStrafeMotionMatchingAssetSet() const;
 	const UProject_JWeaponAnimProfile* GetWeaponAnimProfile() const;
 	const UProject_JCombatAnimProfile* GetCombatAnimProfile() const;
 	const UProject_JCombatStyleDefinition* GetCombatStyleDefinition() const;
@@ -515,12 +501,6 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Movement|Jump")
 	bool IsJumpLocomotionAllowed() const;
 
-	UFUNCTION(BlueprintPure, Category = "Movement|Ground")
-	bool IsGroundStartAllowed() const;
-
-	UFUNCTION(BlueprintPure, Category = "Movement|Ground")
-	bool IsGroundStopAllowed() const;
-
 	UFUNCTION(BlueprintPure, Category = "Combat|Animation")
 	bool IsCombatLocomotionOverlayAllowed() const;
 
@@ -539,26 +519,12 @@ public:
 	virtual void SetCharacterLevel(int32 NewLevel) override;
 	virtual bool TrySetCharacterLevel(int32 NewLevel) override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Profile Fallbacks", AdvancedDisplay, meta = (ClampMin = "0.0", UIMin = "0.0", ToolTip = "Fallback used only when no CharacterAnimProfile or LocomotionProfile provides movement speed."))
-	float WalkSpeed = 500.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Profile Fallbacks", AdvancedDisplay, meta = (ClampMin = "0.0", UIMin = "0.0", ToolTip = "Fallback used only when no CharacterAnimProfile or LocomotionProfile provides sprint speed."))
-	float SprintSpeed = 700.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Profile Fallbacks", AdvancedDisplay, meta = (ClampMin = "0.0", UIMin = "0.0", ToolTip = "Fallback used only when no CharacterAnimProfile or LocomotionProfile provides walk rotation rate."))
-	float WalkRotationRateYaw = 500.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Profile Fallbacks", AdvancedDisplay, meta = (ClampMin = "0.0", UIMin = "0.0", ToolTip = "Fallback used only when no CharacterAnimProfile or LocomotionProfile provides sprint rotation rate."))
-	float SprintRotationRateYaw = 500.0f;
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Profile", meta = (ToolTip = "Preferred top-level animation profile. New characters should assign this and leave the migration fallback fields empty."))
 	TObjectPtr<UProject_JCharacterAnimProfile> CharacterAnimProfile = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Profile|Migration Fallbacks", AdvancedDisplay, meta = (ToolTip = "Fallback locomotion profile used only when CharacterAnimProfile does not provide one."))
 	TObjectPtr<UProject_JLocomotionProfile> LocomotionProfile = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Profile|Migration Fallbacks", AdvancedDisplay, meta = (ToolTip = "Fallback asset set used only when no effective LocomotionProfile provides one."))
-	TObjectPtr<UProject_JMotionMatchingAssetSet> MotionMatchingAssetSet = nullptr;
 
 	/** Derived locally from immutable equipped item data. */
 	UPROPERTY(Transient) FProject_JCombatConfiguration CombatConfiguration;
@@ -666,11 +632,8 @@ private:
 	FVector2D SprintMoveInput = FVector2D::ZeroVector;
 	bool bWasSprintLocomotionAllowed = false;
 
-	FProject_JTurnInPlacePresentationRuntime TurnInPlacePresentationRuntime;
 
 	// Server-side acceptance state for client-sampled cosmetic TIP yaw.  These
 	// bounds prevent the RPC from being used as an unrestricted actor-rotation
 	// path while still tolerating ordinary packet jitter and frame hitches.
-	double LastServerTurnInPlaceRotationTime = -1.0;
-	float ServerTurnInPlaceYawBudget = 15.0f;
 };

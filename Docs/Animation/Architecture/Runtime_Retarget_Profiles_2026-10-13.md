@@ -1,5 +1,9 @@
 # 골격·몸체 프로필 기반 실시간 리타깃 — 2026-10-13
 
+2026-10-21 현재 공통 source/master는 Manny 기준이며 생산 Bip01 Family는 `RTG_Greatsword_Manny`를 사용한다. UE5 호환 몸체 직접 연결과 독립 파츠의 native CopyPose 경로도 추가했다. 구형 UEFN 몸체 Family/RTG/전용 IKRig와 이전 Quinn용 RTG/전용 IKRig는 Manny 전환 후 백업·퇴역했다. 아래는 당시 프로필 구현 기록이며 최신 제작 기준은 [스켈레톤·추가 뼈 가이드](../Authoring/HumanoidSkeletonRetargetingStandards.md), 실제 이관·검증은 [전환·검증 기록](Player_Locomotion_Migration_2026-10-19.md)의 Manny 절을 따른다.
+
+현재 업데이트: UEFN→Manny 변환은 공용 라이브러리를 한 번 전환한 것이며, 아래의 “몸체마다 시퀀스를 변환하지 않는다”는 프로필 책임과 구분한다. Bip01 손가락의 실제 3마디와 네 limb solver의 시작/Goal은 실제 골격·도달 검사로 보완했다. 공유 Body/HandGrip 역할·수명은 유지한다. 현재 계약은 [플레이어 로코모션](Player_Locomotion_Architecture.md), 시점별 원인은 전환 기록의 마지막 IK 점검 절을 따른다.
+
 ## 적용 범위
 
 기준 코드는 `8485562c`의 MM 캐시 최적화를 포함한다. 공통 마네킹 Master에서 MM·단발·전투 상체·몽타주를 합성하고, 임포트 몸체에 한 번 리타깃하는 현재 구조를 유지한다. 개별 Animation Sequence를 변환하거나 PSS/PSD를 몸체별로 복제하지 않는다.

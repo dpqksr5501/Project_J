@@ -7,7 +7,7 @@
 
 class UProject_JFoleyAudioProfile;
 class USkeletalMeshComponent;
-class ACharacter;
+class APawn;
 struct FProject_JFoleySoundSet;
 
 /** Avatar-local cosmetic events; no component Tick, replication or persistent PlayerState state. */

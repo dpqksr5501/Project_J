@@ -1,0 +1,6 @@
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path style="opacity:0.8;fill:none;stroke:#ffffff" d="M 0,8 H 1"/>
+  <path style="opacity:0.8;fill:none;stroke:#ffffff" d="M 2,8 H 7"/>
+  <path style="opacity:0.8;fill:none;stroke:#ffffff" d="M 2.5,10.75 H 3.5"/>
+  <path style="opacity:0.8;fill:none;stroke:#ffffff" d="M 3,5.5 H 9 V 2 L 15,8.0 9,14 v -3.25 l -4.5,0"/>
+</svg>

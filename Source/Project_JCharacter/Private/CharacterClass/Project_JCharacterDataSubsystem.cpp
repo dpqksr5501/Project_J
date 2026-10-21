@@ -14,6 +14,18 @@ void UProject_JCharacterDataSubsystem::Initialize(FSubsystemCollectionBase& Coll
 {
 	Super::Initialize(Collection);
 	PopulateRegistry();
+	// Config is an optional explicit source. Production class/item definitions
+	// are also registered PrimaryAssets and must be available before consumers
+	// initialize, independently of opting into local-profile persistence.
+	if (!LoadPrimaryAssetDefinitions())
+	{
+		ClassMap.Reset(); AdvancementMap.Reset(); ItemMap.Reset();
+		UE_LOG(LogProjectJCharacterData, Error, TEXT("Character PrimaryAsset registry initialization failed; no partial registry is published."));
+	}
+	else if (ClassMap.IsEmpty() && AdvancementMap.IsEmpty())
+	{
+		UE_LOG(LogProjectJCharacterData, Warning, TEXT("Character data registry is empty after Config and PrimaryAsset discovery. Configure or author class definitions."));
+	}
 }
 
 void UProject_JCharacterDataSubsystem::Deinitialize()
@@ -28,14 +40,6 @@ void UProject_JCharacterDataSubsystem::PopulateRegistry()
 {
 	ClassMap.Empty();
 	AdvancementMap.Empty();
-
-	if (ClassDefinitions.IsEmpty() && AdvancementDefinitions.IsEmpty())
-	{
-		UE_LOG(
-			LogProjectJCharacterData,
-			Warning,
-			TEXT("Character data registry is empty. Configure ClassDefinitions and AdvancementDefinitions in DefaultGame.ini."));
-	}
 
 	// Load and register classes
 	for (const TSoftObjectPtr<UProject_JCharacterClassDefinition>& ClassSoftPtr : ClassDefinitions)
@@ -191,8 +195,14 @@ bool UProject_JCharacterDataSubsystem::ValidateDataRegistry(TArray<FText>& OutVa
 {
 	OutValidationErrors.Reset();
 	bool bIsValid = true;
+	// Validate the same effective sources used at runtime while retaining null
+	// and duplicate entries in explicitly authored Config lists for diagnostics.
+	auto ClassesToValidate=ClassDefinitions;
+	auto AdvancementsToValidate=AdvancementDefinitions;
+	for (const auto& Pair:ClassMap) ClassesToValidate.AddUnique(TSoftObjectPtr<UProject_JCharacterClassDefinition>(Pair.Value.Get()));
+	for (const auto& Pair:AdvancementMap) AdvancementsToValidate.AddUnique(TSoftObjectPtr<UProject_JCharacterAdvancementDefinition>(Pair.Value.Get()));
 
-	if (ClassDefinitions.IsEmpty())
+	if (ClassesToValidate.IsEmpty())
 	{
 		OutValidationErrors.Add(NSLOCTEXT(
 			"CharacterDataSubsystem",
@@ -203,9 +213,9 @@ bool UProject_JCharacterDataSubsystem::ValidateDataRegistry(TArray<FText>& OutVa
 
 	// Check if soft pointers loaded correctly and detect duplicate IDs
 	TSet<FName> SeenClassIds;
-	for (int32 Index = 0; Index < ClassDefinitions.Num(); ++Index)
+	for (int32 Index = 0; Index < ClassesToValidate.Num(); ++Index)
 	{
-		const TSoftObjectPtr<UProject_JCharacterClassDefinition>& SoftPtr = ClassDefinitions[Index];
+		const TSoftObjectPtr<UProject_JCharacterClassDefinition>& SoftPtr = ClassesToValidate[Index];
 		if (SoftPtr.IsNull())
 		{
 			OutValidationErrors.Add(FText::Format(
@@ -247,9 +257,9 @@ bool UProject_JCharacterDataSubsystem::ValidateDataRegistry(TArray<FText>& OutVa
 	}
 
 	TSet<FName> SeenAdvIds;
-	for (int32 Index = 0; Index < AdvancementDefinitions.Num(); ++Index)
+	for (int32 Index = 0; Index < AdvancementsToValidate.Num(); ++Index)
 	{
-		const TSoftObjectPtr<UProject_JCharacterAdvancementDefinition>& SoftPtr = AdvancementDefinitions[Index];
+		const TSoftObjectPtr<UProject_JCharacterAdvancementDefinition>& SoftPtr = AdvancementsToValidate[Index];
 		if (SoftPtr.IsNull())
 		{
 			OutValidationErrors.Add(FText::Format(
@@ -305,7 +315,7 @@ bool UProject_JCharacterDataSubsystem::ValidateDataRegistry(TArray<FText>& OutVa
 
 	TArray<UProject_JCharacterClassDefinition*> Classes;
 	TArray<UProject_JCharacterAdvancementDefinition*> Advancements;
-	for (const auto& Ref : ClassDefinitions) Classes.Add(Ref.LoadSynchronous());
-	for (const auto& Ref : AdvancementDefinitions) Advancements.Add(Ref.LoadSynchronous());
+	for (const auto& Ref : ClassesToValidate) Classes.Add(Ref.LoadSynchronous());
+	for (const auto& Ref : AdvancementsToValidate) Advancements.Add(Ref.LoadSynchronous());
 	return ProjectJ::ValidateAdvancementGraph(Classes, Advancements, OutValidationErrors) && bIsValid;
 }

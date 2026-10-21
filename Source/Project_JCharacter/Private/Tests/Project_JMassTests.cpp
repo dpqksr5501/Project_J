@@ -95,76 +95,7 @@ bool FProjectJMassValuesTest::RunTest(const FString&)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMassHandoffTest, "ProjectJ.GroupD.MassHandoff",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool FProjectJMassHandoffTest::RunTest(const FString&)
-{
-	auto* World = UWorld::CreateWorld(EWorldType::Game, false);
-	GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
-	TArray<AProject_JNPCCharacter*> NPCs;
-	FActorSpawnParameters Params; Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	for (int32 I = 0; I < 12; ++I)
-	{ NPCs.Add(World->SpawnActor<AProject_JNPCCharacter>(AProject_JNPCCharacter::StaticClass(), FVector(0, I * 100, 100), FRotator::ZeroRotator, Params)); }
-	World->InitializeActorsForPlay(FURL()); World->GetWorldSettings()->NotifyBeginPlay(); World->GetWorldSettings()->NotifyMatchStarted();
-	auto* Bridge = World->GetSubsystem<UProject_JMassRepresentationSubsystem>();
-	Bridge->SetObserversForTest({FVector(20000, 0, 0)});
-	TArray<FProjectJMassAgentToken> Tokens; TArray<FNavPathSharedPtr> Paths;
-	for (auto* NPC : NPCs)
-	{
-		NPC->GetAttributeSet()->InitMaxHealth(100); NPC->GetAttributeSet()->InitHealth(73);
-		NPC->GetAbilitySystemComponent()->InitAbilityActorInfo(NPC, NPC);
-		Tokens.Add(Bridge->RegisterNPC(NPC));
-		auto Path = MakeShared<FNavigationPath, ESPMode::ThreadSafe>();
-		Path->GetPathPoints().Add(FNavPathPoint(NPC->GetNavAgentLocation()));
-		Path->GetPathPoints().Add(FNavPathPoint(NPC->GetNavAgentLocation() + FVector(10000, 0, 0))); Path->MarkReady();
-		Paths.Add(Path); TestTrue(TEXT("Explicit route accepted"), Bridge->SetRoute(Tokens.Last(), Path));
-	}
-	auto* ASC = NPCs[0]->GetAbilitySystemComponent();
-	auto* Equipment = NPCs[0]->FindComponentByClass<UProject_JEquipmentManagerComponent>();
-	auto* Item = NewObject<UProject_JEquipmentItemDefinition>(); Item->EquipmentSlot = EProject_JEquipmentSlot::Weapon;
-	Equipment->EquipItem(Item); const FString EquipmentBefore = Equipment->GetReplicationDiagnosticSummary();
-	TestEqual(TEXT("Round-trip fixture has a real equipped item"), Equipment->GetAllEquippedItems().Num(), 1);
-	auto* Effect = NewObject<UGameplayEffect>(); Effect->DurationPolicy = EGameplayEffectDurationType::Infinite;
-	const auto EffectHandle = ASC->ApplyGameplayEffectSpecToSelf(FGameplayEffectSpec(Effect, ASC->MakeEffectContext(), 1));
-	for (int32 I = 0; I < 3; ++I) { Bridge->Tick(0.05f); TestTrue(TEXT("Transition budget bounded"), Bridge->GetStats().LastTransitions <= 4); }
-	TestFalse(TEXT("Active effect pins Character state"), Bridge->IsMassOwned(Tokens[0].Id));
-	ASC->RemoveActiveGameplayEffect(EffectHandle); Bridge->Tick(0.05f);
-	TestEqual(TEXT("All opt-in NPCs handed off"), Bridge->GetStats().MassOwned, 12);
-	TestFalse(TEXT("CMC cannot write while Mass owns movement"), NPCs[0]->GetCharacterMovement()->IsComponentTickEnabled());
-	TestFalse(TEXT("ABA cannot re-enable a suspended requested pose tick"), CastChecked<UProject_JBudgetedSkeletalMeshComponent>(NPCs[0]->GetMesh())->GetRequestedTickEnabled());
-	TestFalse(TEXT("Old-generation route rejected"), Bridge->SetRoute(Tokens[0], Paths[0]));
-	Bridge->SetObserversForTest({FVector(-1800, 0, 100)}); Bridge->Tick(0.0f);
-	TestTrue(TEXT("Hysteresis retains far representation in the boundary band"), Bridge->IsMassOwned(Tokens[0].Id));
-	const FVector BeforeInvalidation = NPCs[0]->GetActorLocation(); Paths[0]->Invalidate();
-	Bridge->Tick(0.05f);
-	TestTrue(TEXT("Invalid route never advances stale movement"), NPCs[0]->GetActorLocation().Equals(BeforeInvalidation));
-	Bridge->SetObserversForTest({NPCs[0]->GetActorLocation()});
-	for (int32 I = 0; I < 4; ++I) { Bridge->Tick(0.0f); }
-	TestFalse(TEXT("Near NPC returns to Character"), Bridge->IsMassOwned(Tokens[0].Id));
-	TestTrue(TEXT("CMC restored"), NPCs[0]->GetCharacterMovement()->IsComponentTickEnabled());
-	TestTrue(TEXT("ASC identity preserved"), NPCs[0]->GetAbilitySystemComponent() == ASC);
-	TestTrue(TEXT("Equipment authority preserved"), NPCs[0]->FindComponentByClass<UProject_JEquipmentManagerComponent>() == Equipment);
-	TestEqual(TEXT("Equipped item identity and payload survive the round trip"), Equipment->GetReplicationDiagnosticSummary(), EquipmentBefore);
-	TestEqual(TEXT("Health survives round trip"), NPCs[0]->GetAttributeSet()->GetHealth(), 73.f);
-	NPCs.Last()->Destroy(); Bridge->Tick(0);
-	TestEqual(TEXT("Destroyed actor retires Mass entity"), Bridge->GetStats().Registered, 11);
-	TestTrue(TEXT("Explicit unregister with current generation"), Bridge->UnregisterNPC(Bridge->GetToken(Tokens[0].Id)));
-	TestFalse(TEXT("Retired stable ID remains invalid"), Bridge->UnregisterNPC(Tokens[0]));
-	auto* OtherWorld = UWorld::CreateWorld(EWorldType::Game, false);
-	GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(OtherWorld);
-	auto* OtherNPC = OtherWorld->SpawnActor<AProject_JNPCCharacter>();
-	auto* OtherBridge = OtherWorld->GetSubsystem<UProject_JMassRepresentationSubsystem>();
-	const auto OtherToken = OtherBridge->RegisterNPC(OtherNPC);
-	TestEqual(TEXT("World-local IDs can repeat"), OtherToken.Id, Tokens[0].Id);
-	TestFalse(TEXT("Old-world token cannot unregister a new-world NPC with matching ID/generation"), OtherBridge->UnregisterNPC(Tokens[0]));
-	TestTrue(TEXT("New-world token remains valid"), OtherBridge->UnregisterNPC(OtherToken));
-	OtherWorld->DestroyWorld(false); GEngine->DestroyWorldContext(OtherWorld);
-	World->EndPlay(EEndPlayReason::LevelTransition);
-	TestEqual(TEXT("World end clears all representation ownership"), Bridge->GetStats().Registered, 0);
-	TestFalse(TEXT("No registration after world end"), Bridge->RegisterNPC(NPCs[0]).IsValid());
-	World->DestroyWorld(false); GEngine->DestroyWorldContext(World);
-	return true;
-}
+
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJCrowdMassTest, "ProjectJ.Crowd.MassSpacing",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)

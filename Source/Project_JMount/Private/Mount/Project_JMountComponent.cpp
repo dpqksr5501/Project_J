@@ -1,4 +1,5 @@
 #include "Mount/Project_JMountComponent.h"
+#include "Movement/Project_JMovementQueries.h"
 
 #include "Mount/Project_JMountCharacter.h"
 #include "Net/UnrealNetwork.h"
@@ -36,7 +37,7 @@ bool UProject_JMountComponent::RequestMount(AProject_JMountCharacter* Mount)
 
 	if (GetOwner() && GetOwner()->HasAuthority())
 	{
-		return Mount->TryMountRider(Cast<ACharacter>(GetOwner()));
+		return Mount->TryMountRider(Cast<APawn>(GetOwner()));
 	}
 
 	ServerRequestMount(Mount);
@@ -47,7 +48,7 @@ void UProject_JMountComponent::ServerRequestMount_Implementation(AProject_JMount
 {
 	if (CanAcceptMountRequest() && IsValid(Mount) && Mount->GetWorld() == GetWorld() && !MountedMount)
 	{
-		Mount->TryMountRider(Cast<ACharacter>(GetOwner()));
+		Mount->TryMountRider(Cast<APawn>(GetOwner()));
 	}
 }
 
@@ -85,7 +86,7 @@ void UProject_JMountComponent::SetMountedMount(AProject_JMountCharacter* NewMoun
 	MountedMount = NewMount;
 	const uint32 Revision = ++MountRevision;
 
-	if (const ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner()); OwnerCharacter && OwnerCharacter->HasAuthority())
+	if (const APawn* OwnerCharacter = Cast<APawn>(GetOwner()); OwnerCharacter && OwnerCharacter->HasAuthority())
 	{
 		ReleaseMountedTag();
 		// Tag removal may synchronously end this transition and mount another actor.

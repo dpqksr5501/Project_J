@@ -652,34 +652,13 @@ UI는 매 프레임 전체 목록을 다시 읽지 말고 위 이벤트에서 Vi
 ---
 
 <a id="expansion-10-소비-아이템의-간단한-구현-방향"></a>
-### 10. 소비 아이템의 간단한 구현 방향
+### 10. 소비 아이템의 현재 구현
 
-현재 인벤토리는 장비 정의 중심이다. 임시 테스트라면 서버에서 `ConsumeItemStack()` 후 GameplayEffect를 적용할 수 있지만, 본 구현은 다음 구조가 적합하다.
+현재 회복 소모품은 `UProject_JConsumableDefinition : UProject_JItemDefinition`의 `RestoreHealth`, `RestoreMana`, `CooldownSeconds`로 제작한다. `UseEffect` 필드를 가진 별도 `UProject_JConsumableItemDefinition`을 새로 만드는 제안은 현재 API가 아니다.
 
-```text
-UProject_JItemDefinition
-  ├─ ItemId
-  ├─ DisplayName / Icon
-  ├─ MaxStack
-  └─ ItemType
+클라이언트는 `RequestUseItem(RequestId, InstanceId)`로 소유 인스턴스 사용을 요청한다. 서버는 mutation 권한·잠금/장착·수량·유효한 회복 값·생존·쿨다운·실제 회복 가능량을 검증한다. 일반 경로는 effect spec을 준비한 뒤 수량을 소비하고, 소비 callback 후 owner/ASC/avatar와 권한을 재검증한다. 소유자가 종료됐으면 이미 공개된 소비를 임의로 복원하거나 잘못된 대상에 회복을 적용하지 않는다. 유효한 경우 공유 쿨다운을 먼저 예약하고 즉시 GameplayEffect를 적용해 재진입을 보호한다.
 
-UProject_JEquipmentItemDefinition : UProject_JItemDefinition
-UProject_JConsumableItemDefinition : UProject_JItemDefinition
-  └─ UseEffect
-```
-
-소비 요청:
-
-```text
-Client: RequestUseItem(InstanceId)
-Server:
-  1. authoritative instance 조회
-  2. 잠금/수량/쿨다운/사용 조건 검증
-  3. UseEffect 적용
-  4. 성공한 경우에만 ConsumeItemStack
-```
-
-Effect 적용 실패 전에 수량부터 줄이지 않는다.
+영속 편집이 연결된 경우에는 `SubmitPersistentUse`의 제출/receipt 경로를 사용한다. 일반 경로와 영속 경로를 같은 로컬 수량 writer로 중복 실행하지 않는다. 실제 구현은 `Project_JInventoryComponent::RequestUseItem/TryUseItem`과 소모품 정의를 기준으로 한다.
 
 ---
 

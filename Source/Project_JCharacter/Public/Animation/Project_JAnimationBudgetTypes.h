@@ -21,19 +21,7 @@ struct PROJECT_JCHARACTER_API FProject_JAnimOptimizationPolicy
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Optimization")
 	EProject_JAnimBudgetTier Tier = EProject_JAnimBudgetTier::Local;
 
-	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Optimization")
-	bool bUpdateAnimationData = true;
-
-	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Optimization")
-	bool bUseFullChooserRows = true;
-
-	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Optimization")
-	bool bUseFarChooserRowsOnly = false;
-
-	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Optimization")
-	float MotionMatchingUpdateInterval = 0.0f;
-
-	/** Whether Post-Retarget Hand IK should be evaluated. (On for Local/Near, Off for Mid/Far/Hidden). */
+/** Whether Post-Retarget Hand IK should be evaluated. (On for Local/Near, Off for Mid/Far/Hidden). */
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Optimization")
 	bool bEnableHandIK = true;
 
@@ -72,15 +60,4 @@ struct PROJECT_JCHARACTER_API FProject_JAnimationBudgetSettings
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Budget", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float FarDistance = 12000.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Budget", meta = (ClampMin = "0.0", UIMin = "0.0", Units = "s"))
-	float MidUpdateInterval = 0.033f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Budget", meta = (ClampMin = "0.0", UIMin = "0.0", Units = "s"))
-	float FarUpdateInterval = 0.083f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Budget", meta = (ClampMin = "0.0", UIMin = "0.0", Units = "s"))
-	float HiddenUpdateInterval = 0.10f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Budget")
-	bool bDisableMotionMatchingBeyondFarDistance = false;
 };

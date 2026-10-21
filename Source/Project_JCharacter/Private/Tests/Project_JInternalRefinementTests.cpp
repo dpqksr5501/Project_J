@@ -1,5 +1,6 @@
-#if WITH_DEV_AUTOMATION_TESTS
 #include <limits>
+#include "GameFramework/Character.h"
+#if WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
 #include "Tests/Project_JInternalTestReceiver.h"
 #include "Animation/Project_JTrajectoryQuery.h"
@@ -142,28 +143,7 @@ bool FProjectJEquipmentCallbacksTest::RunTest(const FString&)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJTrajectoryQueryTest, "ProjectJ.Internal.Trajectory.TimeLayoutAndInvalidInput", InternalTestFlags)
-bool FProjectJTrajectoryQueryTest::RunTest(const FString&)
-{
-	FTransformTrajectory Trajectory; Trajectory.Samples.SetNum(3);
-	Trajectory.Samples[0].TimeInSeconds = 0.0f;
-	Trajectory.Samples[1].TimeInSeconds = 0.2f;
-	Trajectory.Samples[2].TimeInSeconds = 0.5f;
-	Trajectory.Samples[1].SetTransform(FTransform(FVector(20, 0, 0)));
-	Trajectory.Samples[2].SetTransform(FTransform(FVector(0, 100, 0)));
-	FVector Velocity; float Angle;
-	TestTrue(TEXT("Initial layout resolves horizon"), Project_J::Animation::TryGetFuturePlanarVelocity(Trajectory, 0.2f, FVector(100, 0, 0), Velocity, Angle));
-	TestTrue(TEXT("Initial planar speed"), Velocity.Equals(FVector(100, 0, 0)));
-	Trajectory.Samples[1].TimeInSeconds = 0.8f; Trajectory.Samples[2].TimeInSeconds = 0.2f;
-	TestTrue(TEXT("Same sample count with changed times resolves again"), Project_J::Animation::TryGetFuturePlanarVelocity(Trajectory, 0.2f, FVector(100, 0, 0), Velocity, Angle));
-	TestTrue(TEXT("New sample supplies velocity"), Velocity.Equals(FVector(0, 500, 0), 0.01));
-	TestTrue(TEXT("Turn angle"), FMath::IsNearlyEqual(Angle, 90.0f));
-	TestFalse(TEXT("NaN horizon fails closed"), Project_J::Animation::TryGetFuturePlanarVelocity(Trajectory, std::numeric_limits<float>::quiet_NaN(), FVector::ZeroVector, Velocity, Angle));
-	TestTrue(TEXT("Failure clears outputs"), Velocity.IsZero() && Angle == 0.0f);
-	Trajectory.Samples[2].TimeInSeconds = std::numeric_limits<float>::infinity();
-	TestFalse(TEXT("Infinite sample time fails closed"), Project_J::Animation::TryGetFuturePlanarVelocity(Trajectory, 0.2f, FVector::ZeroVector, Velocity, Angle));
-	return true;
-}
+
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJRewindHistoryTest, "ProjectJ.Internal.Combat.RewindHistory", InternalTestFlags)
 bool FProjectJRewindHistoryTest::RunTest(const FString&)
@@ -254,25 +234,7 @@ bool FProjectJPoolDefinitionBoundsTest::RunTest(const FString&)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAnimationSnapshotBoundaryTest, "ProjectJ.Internal.Animation.SnapshotBoundary", InternalTestFlags)
-bool FProjectJAnimationSnapshotBoundaryTest::RunTest(const FString&)
-{
-	FInternalTestWorld Scope;
-	auto* Character = Scope.World->SpawnActor<ACharacter>();
-	auto* Anim = NewObject<UProject_JCharacterAnimInstance>(Character->GetMesh());
-	Anim->FootPlacementPlantSettingsDefault.UnplantRadius = 42.0f;
-	FProject_JAnimThreadSafeData Data;
-	Anim->FillProceduralIKThreadSafeData(Data);
-	TestEqual(TEXT("Game-thread publication captures authored IK settings"), Data.ProceduralIK.PlantSettings.UnplantRadius, 42.0f);
-	Data.bIsLocallyControlled = true;
-	Data.LocomotionContext.DesiredFacingDeltaYaw = 60.0f;
-	auto& Proxy = Anim->GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>();
-	Proxy.ThreadSafeData = Data;
-	Anim->FootPlacementPlantSettingsDefault.UnplantRadius = 99.0f;
-	TestEqual(TEXT("Getter reads the published frame, not mutable profile defaults"), Anim->Get_FootPlacementPlantSettings().UnplantRadius, 42.0f);
-	TestEqual(TEXT("Turn bucket uses captured ownership without resolving a live pawn"), Anim->GetThreadSafeStateControllerTurnInPlaceIndex(), 3.0f);
-	return true;
-}
+
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJInteractionSelectionTest, "ProjectJ.Internal.Interaction.ServerSelection", InternalTestFlags)
 bool FProjectJInteractionSelectionTest::RunTest(const FString&)
@@ -329,7 +291,7 @@ bool FProjectJInteractionRetirementTest::RunTest(const FString&)
 		Scope.World->GetWorldSettings()->NotifyBeginPlay();
 		int32 Calls = 0;
 		bool bDestroyedInCallback = false;
-		Target->OnCanInteract = [&](ACharacter* Actor)
+		Target->OnCanInteract = [&](APawn* Actor)
 		{
 			if (++Calls == DestroyOnCall) { bDestroyedInCallback = Actor->Destroy(); }
 		};

@@ -1,5 +1,7 @@
 # 실제 캐릭터 애니메이션 CPU·소켓 검증 — 2026-10-05
 
+> 2026-10-20: 이 문서는 이전 CPU/CMC 기반 측정 이력이다. 해당 `ProjectJ.Animation.AuthoredCPU` fixture는 현재 Source에 없으므로 이를 실행하던 `Measure-AuthoredAnimation.ps1`을 퇴역했다. 현재 기능 회귀는 [GASP 제작·회귀 기준](Player_Locomotion_Migration_2026-10-19.md#현재-회귀-실행)을 따른다. 이 문서의 수치를 현재 GASP 성능으로 해석하지 않는다.
+
 [MM 복귀·군중 검색 예산](MotionMatching_Return_Crowd_2026-10-05.md) 이후, 에디터를 직접 조작하지 않고 진행하는 CPU 실측·실제 원격 경로 검증·측정에 근거한 코드 비용 절감의 후속 기록이다. 데이터 튜닝과 화면에서의 연결 품질 판정은 별도 범위다.
 
 ## CPU 측정 구조

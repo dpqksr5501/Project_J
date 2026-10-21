@@ -48,20 +48,22 @@ for f in unreal.BlueprintEditorLibrary.list_functions(bp):
         functions.append({'name':str(f.get_editor_property('name')), 'implemented_in_bp':bool(f.get_editor_property('is_implemented'))})
 assert len(functions) == 3 and not any(f['implemented_in_bp'] for f in functions), 'Expected inherited native functions'
 
-legacy = unreal.load_asset('/Game/Animation_Logic/ABPs/ABP_Player')
-assert legacy and unreal.BlueprintEditorLibrary.compile_blueprint(legacy), 'Preserved test ABP compile failed'
-legacy_graphs = unreal.BlueprintEditorLibrary.list_graphs(legacy)
-assert 'OnUpdate' not in [g.get_name() for g in legacy_graphs], 'Duplicate DB writer remains'
-fields = ['initialUpdateFunction', 'becomeRelevantFunction', 'updateFunction', 'onMotionMatchingStateUpdatedFunction']
-legacy_bindings = []
-for graph in legacy_graphs:
+foundation = unreal.load_asset('/Game/Animation_Logic/ABPs/ABP_Player_Master')
+assert foundation and unreal.BlueprintEditorLibrary.compile_blueprint(foundation), 'GASP foundation compile failed'
+foundation_graphs = unreal.BlueprintEditorLibrary.list_graphs(foundation)
+assert not unreal.EditorAssetLibrary.does_asset_exist('/Game/Animation_Logic/ABPs/ABP_Player'), 'Retired test ABP returned'
+assert not unreal.EditorAssetLibrary.does_asset_exist('/Game/Animation_Logic/ABPs/ABP_Humanoid_Master'), 'Retired master returned'
+production_class = unreal.get_default_object(bp.generated_class()).get_source_mesh().get_editor_property('AnimClass')
+assert production_class == foundation.generated_class(), 'Production source mesh does not use GASP'
+gasp_nodes = []
+for graph in foundation_graphs:
     editor = unreal.BlueprintGraphEditor.get_graph_editor(graph)
     for node in editor.list_all_nodes():
-        if node.get_class().get_name() == 'AnimGraphNode_MotionMatching':
-            bindings = json.loads(unreal.ToolsetLibrary.get_object_properties(node, fields))
-            assert all(bindings[f]['memberName'] == 'None' for f in fields), 'Duplicate callback still bound after reload'
-            legacy_bindings.append({'node':node.get_path_name(), 'bindings':bindings})
-assert len(legacy_bindings) == 1, 'Actual preserved test MM node missing'
+        name = node.get_class().get_name()
+        assert name not in ('AnimGraphNode_ProjectJLocomotion', 'AnimGraphNode_ProjectJOneShotHandoff'), 'Retired playback owner returned'
+        if name in ('AnimGraphNode_BlendStack', 'AnimGraphNode_Slot'):
+            gasp_nodes.append({'node': node.get_path_name(), 'class': name})
+assert any(n['class'] == 'AnimGraphNode_BlendStack' for n in gasp_nodes), 'Actual GASP stack missing'
 
 # Verify the generator against compiled native defaults and existing assets, without creating anything.
 defaults = [
@@ -90,7 +92,7 @@ assert len({r['item_id'] for r in items}) == 3 and all(r['item_id'] != 'None' fo
 
 receipt.write_text(json.dumps({'asset_save':False, 'asset_delete':False, 'game_package_count':len(assets),
     'selected_registry_metadata':metadata, 'bp':bp_path, 'reloaded_graphs':graphs, 'inherited_functions':functions,
-    'legacy_mm_reloaded_bindings':legacy_bindings,
+    'gasp_reloaded_playback_nodes':gasp_nodes,
     'native_generator_defaults_verified':True, 'existing_generator_assets_unchanged':before, 'items':items,
     'scope_ko':'fresh load/compile·세 native 함수 상속·제작 기본값·기존 데이터 보존. registry 분류는 상세 graph/asset 전수 완료 아님.'}, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
 unreal.log('ProjectJ asset architecture fresh reload and authoring verification passed; save/delete=0.')

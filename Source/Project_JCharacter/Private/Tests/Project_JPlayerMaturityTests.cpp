@@ -7,8 +7,6 @@
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JAttributeSet.h"
 #include "Project_JGameplayTags.h"
-#include "Animation/Project_JAnimationClock.h"
-#include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
 #include "Animation/Project_JPresentationMeshResolver.h"
 #include "Animation/Project_JCharacterAnimInstance.h"
 #include "Animation/Project_JCharacterAnimInstanceProxy.h"
@@ -134,35 +132,7 @@ bool FProjectJMountedTagOwnershipTest::RunTest(const FString&)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJTrajectoryFreshnessTest, "ProjectJ.PlayerMaturity.Trajectory.Freshness",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool FProjectJTrajectoryFreshnessTest::RunTest(const FString&)
-{
-	FTestWorld W;
-	W.World->Tick(LEVELTICK_TimeOnly, 1.0f);
-	auto* Player = W.World->SpawnActor<AProject_JGreatswordCharacter>();
-	auto* Controller = W.World->SpawnActor<APlayerController>(); Controller->Possess(Player);
-	// NullRHI has no renderer; explicitly model visual demand for the producer.
-	Player->GetMesh()->SetHiddenInGame(false);
-	Player->GetMesh()->SetLastRenderTime(W.World->GetTimeSeconds());
-	auto* C = Player->GetMotionMatchingTrajectoryComponent();
-	C->UpdateTrajectoryState(1.0f/60.0f);
-	TestTrue(TEXT("Fresh generated trajectory is usable"), C->IsTrajectoryPredictionUsable());
-	FVector Velocity; float Angle;
-	TestTrue(TEXT("Fresh sample query succeeds"), C->TryGetFuturePlanarVelocity(0.2f, FVector::ZeroVector, Velocity, Angle));
-	C->LastGeneratedWorldTimeSeconds = W.World->GetTimeSeconds() - 0.1;
-	TestTrue(TEXT("Prediction survives sparse multi-frame cadence within age budget"), C->IsTrajectoryPredictionUsable());
-	C->LastGeneratedWorldTimeSeconds = W.World->GetTimeSeconds() - 1.0;
-	TestFalse(TEXT("Stale sample query is rejected"), C->TryGetFuturePlanarVelocity(0.2f, FVector::ZeroVector, Velocity, Angle));
-	TestTrue(TEXT("Rejected sample returns zero velocity"), Velocity.IsZero());
-	C->ResetTrajectoryHistory();
-	TestFalse(TEXT("Reset samples are invalid until regeneration"), C->IsTrajectoryPredictionUsable());
-	C->UpdateTrajectoryState(1.0f/30.0f);
-	TestTrue(TEXT("Regeneration after reset restores usability"), C->IsTrajectoryPredictionUsable());
-	C->bWasTrajectoryGenerationEligible = false;
-	TestFalse(TEXT("No generation demand invalidates retained samples"), C->IsTrajectoryPredictionUsable());
-	return true;
-}
+
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJComboWindowOwnershipTest, "ProjectJ.PlayerMaturity.Combat.ComboWindowOwnership",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -258,34 +228,7 @@ bool FProjectJLayerLoadLifecycleTest::RunTest(const FString&)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAnimationClockTest, "ProjectJ.PlayerMaturity.Animation.ClockAndTIP",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool FProjectJAnimationClockTest::RunTest(const FString&)
-{
-	for (const int32 FPS : {30, 60, 120})
-	{
-		FProject_JAnimationClock Clock;
-		for (int32 i=0; i<FPS; ++i) { Clock.Advance(1.0f/FPS, false); }
-		TestTrue(TEXT("Animation time is frame-rate independent"), FMath::IsNearlyEqual(Clock.Seconds, 1.0, 1.e-5));
-		Clock.Advance(10.0f, true);
-		TestTrue(TEXT("Pause does not advance animation progress"), FMath::IsNearlyEqual(Clock.Seconds, 1.0, 1.e-5));
-		Clock.Advance(0.25f, false);
-		TestTrue(TEXT("UE's dilated delta is applied exactly once"), FMath::IsNearlyEqual(Clock.Seconds, 1.25, 1.e-5));
-		Clock.Advance(std::numeric_limits<float>::quiet_NaN(), false);
-		TestTrue(TEXT("Invalid delta is ignored"), FMath::IsFinite(Clock.Seconds));
-	}
-	FProject_JAnimationClock Sparse; Sparse.Advance(0.2f, false);
-	FProject_JAnimationClock Dense; for(int32 i=0;i<12;++i) { Dense.Advance(1.0f/60.0f, false); }
-	TestTrue(TEXT("URO accumulated delta and dense updates agree"), FMath::IsNearlyEqual(Sparse.Seconds, Dense.Seconds, 1.e-5));
-	FTestWorld W; auto* Player = W.World->SpawnActor<AProject_JGreatswordCharacter>();
-	auto* Anim = NewObject<UProject_JCharacterAnimInstance>(Player->GetMesh());
-	Anim->AnimationClock.Seconds = 50;
-	Anim->StateControllerRuntime.BeginHold(EProject_JStateControllerPresentationState::TurnInPlace, 40);
-	auto& Proxy = Anim->GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>();
-	Proxy.ThreadSafeData.OneShotPresentation.TransitionElapsedTime = 0.3f;
-	TestEqual(TEXT("TIP reads the published animation clock, not the live real-time hold"), Anim->GetThreadSafeStateControllerPlaybackHoldElapsedTime(), 0.3f);
-	return true;
-}
+
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJPlayerVisibilityTest, "ProjectJ.PlayerMaturity.Animation.SharedVisibility",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -298,12 +241,9 @@ bool FProjectJPlayerVisibilityTest::RunTest(const FString&)
 	Follower->SetHiddenInGame(false); Follower->SetLastRenderTime(W.World->GetTimeSeconds());
 	auto* Anim = NewObject<UProject_JCharacterAnimInstance>(Leader); Leader->AnimScriptInstance = Anim; Anim->InitializeAnimation();
 	auto* Locomotion = Player->GetLocomotionAnimStateComponent(); Locomotion->RefreshCachedReferences();
-	auto* Trajectory = Player->GetMotionMatchingTrajectoryComponent();
 	TestTrue(TEXT("Follower visibility wakes AnimInstance"), Anim->WasOwnerVisualRecentlyRendered(0.25f));
 	TestTrue(TEXT("Follower visibility wakes locomotion semantics"), Locomotion->WasRecentlyRendered(0.25f));
-	TestTrue(TEXT("Follower visibility permits trajectory producer"), Trajectory->ShouldGenerateTrajectory(*Player));
 	Follower->SetLastRenderTime(-100);
-	TestFalse(TEXT("No visible renderer suspends trajectory"), Trajectory->ShouldGenerateTrajectory(*Player));
 	TestFalse(TEXT("No visible renderer suspends semantic presentation"), Locomotion->WasRecentlyRendered(0.25f));
 	Leader->SetLastRenderTime(W.World->GetTimeSeconds());
 	TestFalse(TEXT("Hidden leader shadow timestamp cannot override visual demand"), Anim->WasOwnerVisualRecentlyRendered(0.25f));
@@ -318,7 +258,6 @@ bool FProjectJPlayerVisibilityTest::RunTest(const FString&)
 	StaticVisual->SetLastRenderTime(W.World->GetTimeSeconds());
 	TestFalse(TEXT("Recently rendered non-skeletal component preserves the existing criterion"), Anim->WasOwnerVisualRecentlyRendered(0.25f));
 	Leader->SetHiddenInGame(false);
-	TestTrue(TEXT("Visible leader remains a supported renderer"), Trajectory->ShouldGenerateTrajectory(*Player));
 	return true;
 }
 

@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
+#include "Movement/Project_JMoverPawn.h"
 #include "AbilitySystemInterface.h"
 #include "AbilitySystem/Project_JAbilitySet.h"
 #include "Project_JCombatInterface.h"
@@ -27,7 +27,7 @@ enum class EProject_JRuntimeStateOwnership : uint8
 };
 
 UCLASS(Abstract)
-class PROJECT_JCHARACTER_API AProject_JBaseCharacter : public ACharacter,
+class PROJECT_JCHARACTER_API AProject_JBaseCharacter : public AProject_JMoverPawn,
 													   public IAbilitySystemInterface,
 													   public IProject_JCombatInterface
 {

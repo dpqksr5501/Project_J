@@ -1,4 +1,5 @@
 #include "Testing/Project_JCombatCookedFixture.h"
+#include "Movement/Project_JMovementQueries.h"
 #include "AIController.h"
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraActor.h"
@@ -77,7 +78,7 @@ bool UProject_JCombatCookedFixture::CreateCharacter()
 	Character->SetPlayerState(State);
 	Character->FinishSpawning(FTransform(FVector(0, 0, 100)));
 	Controller->Possess(Character);
-	Character->GetCharacterMovement()->DisableMovement();
+	if (!Project_J::Movement::SetMovementMode(Character,MOVE_None)) return false;
 	auto* ASC = Character->GetAbilitySystemComponent();
 	if (!ASC || ASC != State->GetAbilitySystemComponent() || !Mesh->GetAnimInstance()) { return false; }
 	State->GetEquipmentManagerComponent()->UnequipSlot(EProject_JEquipmentSlot::Weapon);

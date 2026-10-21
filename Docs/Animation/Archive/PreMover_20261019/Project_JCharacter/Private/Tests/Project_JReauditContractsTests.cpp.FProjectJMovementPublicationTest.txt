@@ -1,0 +1,29 @@
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMovementPublicationTest,
+    "ProjectJ.Reaudit.MovementPublication", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJMovementPublicationTest::RunTest(const FString&)
+{
+    auto* World=UWorld::CreateWorld(EWorldType::Game,false);
+    GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
+    ON_SCOPE_EXIT {World->DestroyWorld(false);GEngine->DestroyWorldContext(World);};
+    auto* Character=World->SpawnActor<AProject_JCombatFacingFixture>();
+    auto* Profile=NewObject<UProject_JLocomotionProfile>(Character);
+    FindFProperty<FObjectPropertyBase>(Character->GetClass(),TEXT("CharacterAnimProfile"))->SetObjectPropertyValue_InContainer(Character,nullptr);
+    FindFProperty<FObjectPropertyBase>(Character->GetClass(),TEXT("LocomotionProfile"))->SetObjectPropertyValue_InContainer(Character,Profile);
+    if(!TestTrue(TEXT("Fixture selects the real profile resolver"),Character->GetLocomotionProfile()==Profile)){return false;}
+    auto* Movement=Character->GetCharacterMovement();
+    Movement->MaxWalkSpeed=432;Movement->MaxAcceleration=111;Movement->BrakingDecelerationWalking=222;
+    Movement->GroundFriction=3;Movement->RotationRate.Yaw=99;
+    Profile->WalkSpeed=std::numeric_limits<float>::quiet_NaN();
+    Profile->MovementPolicy.RunMaxAcceleration=999;
+    Character->UpdateTestMovementPolicy();
+    TestEqual(TEXT("Nonfinite speed cannot poison the CMC"),Movement->MaxWalkSpeed,432.f);
+    TestEqual(TEXT("Invalid policy cannot partially publish acceleration"),Movement->MaxAcceleration,111.f);
+    TestEqual(TEXT("Invalid policy preserves braking"),Movement->BrakingDecelerationWalking,222.f);
+    TestEqual(TEXT("Invalid policy preserves friction"),Movement->GroundFriction,3.f);
+    TestEqual(TEXT("Invalid policy preserves rotation"),Movement->RotationRate.Yaw,99.0);
+    Profile->WalkSpeed=120;
+    Character->UpdateTestMovementPolicy();
+    TestEqual(TEXT("Corrected live profile resumes normal publication"),Movement->MaxWalkSpeed,120.f);
+    TestEqual(TEXT("The complete valid policy is published"),Movement->MaxAcceleration,999.f);
+    return true;
+}

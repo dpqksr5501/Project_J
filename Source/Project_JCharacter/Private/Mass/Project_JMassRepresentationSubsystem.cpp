@@ -1,4 +1,5 @@
 #include "Mass/Project_JMassRepresentationSubsystem.h"
+#include "Movement/Project_JMovementQueries.h"
 #include "Mass/Project_JMassMovementProcessor.h"
 #include "MassEntityManager.h"
 #include "MassEntityManagerStorage.h"
@@ -135,11 +136,13 @@ bool UProject_JMassRepresentationSubsystem::IsMassOwned(uint64 Id) const
 bool UProject_JMassRepresentationSubsystem::CanDemote(const FProjectJMassRepresentationEntry& E) const
 {
 	const auto* NPC = E.NPC.Get();
+	// The existing Mass adapter suspends CMC only. Keep Mover actors in their authoritative simulation.
+	if (Project_J::Movement::FindMover(NPC)) return false;
 	if (!NPC || !E.Path || !E.Path->IsValid() || !E.Path->IsUpToDate() || NPC->IsActorBeingDestroyed()) { return false; }
 	if (Entities->GetFragmentDataChecked<FProjectJMassMovementFragment>(E.Entity).bNeedsCharacterTraversal) { return false; }
 	const auto* ASC = NPC->GetAbilitySystemComponent();
-	const auto* Movement = NPC->GetCharacterMovement();
-	if (!FMath::IsFinite(Movement->MaxWalkSpeed) || Movement->MaxWalkSpeed <= 0 || Movement->MaxWalkSpeed > 1000 || Movement->HasRootMotionSources()) { return false; }
+	const auto* Movement = NPC->FindComponentByClass<UCharacterMovementComponent>();
+	if (!Movement || !FMath::IsFinite(Movement->MaxWalkSpeed) || Movement->MaxWalkSpeed <= 0 || Movement->MaxWalkSpeed > 1000 || Movement->HasRootMotionSources()) { return false; }
 	if (NPC->GetCapsuleComponent()->GetScaledCapsuleRadius() > 90) { return false; }
 	const auto* BudgetMesh = Cast<UProject_JBudgetedSkeletalMeshComponent>(NPC->GetMesh());
 	const auto* Anim = NPC->GetMesh()->GetAnimInstance();
@@ -147,7 +150,7 @@ bool UProject_JMassRepresentationSubsystem::CanDemote(const FProjectJMassReprese
 		|| (Anim && (Anim->Montage_IsPlaying(nullptr) || Anim->RootMotionMode == ERootMotionMode::RootMotionFromEverything))) { return false; }
 	if (!ASC || NPC->GetAttributeSet()->GetHealth() <= 0 || ASC->GetActiveEffects(FGameplayEffectQuery()).Num() > 0) { return false; }
 	if (!E.bMass && FVector::DistSquared(NPC->GetNavAgentLocation(), E.Path->GetPathPoints()[0].Location) > FMath::Square(100.0)) { return false; }
-	if (E.bMass && NPC->GetCharacterMovement()->IsComponentTickEnabled()) { return false; }
+	if (E.bMass && NPC->FindComponentByClass<UCharacterMovementComponent>()->IsComponentTickEnabled()) { return false; }
 	for (const auto& Spec : ASC->GetActivatableAbilities()) { if (Spec.IsActive()) { return false; } }
 	UProject_JNPCActionComponent* Action = nullptr;
 	if (!ResolveActiveAction(*NPC, Action)) { return false; }
@@ -158,7 +161,9 @@ bool UProject_JMassRepresentationSubsystem::CanDemote(const FProjectJMassReprese
 
 void UProject_JMassRepresentationSubsystem::Demote(FProjectJMassRepresentationEntry& E)
 {
-	auto* NPC = E.NPC.Get(); auto* Movement = NPC->GetCharacterMovement();
+	auto* NPC = E.NPC.Get();
+ if (!NPC || Project_J::Movement::FindMover(NPC)) return;
+ auto* Movement = NPC->FindComponentByClass<UCharacterMovementComponent>(); if (!Movement) return;
 	TStrongObjectPtr<AProject_JNPCCharacter> PinnedNPC(NPC);
 	UProject_JNPCActionComponent* ActiveAction = nullptr;
 	if (!ResolveActiveAction(*NPC, ActiveAction)) { return; }
@@ -201,7 +206,7 @@ void UProject_JMassRepresentationSubsystem::Promote(FProjectJMassRepresentationE
 	if (auto* NPC = E.NPC.Get(); NPC && !NPC->IsActorBeingDestroyed())
 	{
 		TStrongObjectPtr<AProject_JNPCCharacter> PinnedNPC(NPC);
-		NPC->GetCharacterMovement()->SetComponentTickEnabled(E.bMovementTick);
+		if (auto* Movement=NPC->FindComponentByClass<UCharacterMovementComponent>()) Movement->SetComponentTickEnabled(E.bMovementTick);
 		NPC->GetMesh()->SetComponentTickEnabled(E.bMeshTick);
 		NPC->SetActorEnableCollision(E.bCollision); NPC->SetCanBeDamaged(E.bDamage); NPC->SetActorHiddenInGame(E.bHidden);
 		NPC->ForceNetUpdate();

@@ -1,5 +1,7 @@
 # GASP ↔ Project_J Locomotion / State Controller 대응표
 
+> **이전 이동 구조의 기록 — 2026-10-21:** 본문은 당시 CMC/MM·마스터·후보 정책의 구현·제안·측정 이력이다. 현재 생산 제작은 [플레이어 로코모션](../Architecture/Player_Locomotion_Architecture.md)을 따른다. 과거 구조를 복원하라는 지시나 현재 구조의 성능 결과로 해석하지 않는다.
+
 2026-10-15 에셋 정리: 테스트용 `ABP_Player`는 유지하며 MM 노드의 Initial/BecomeRelevant/Update/StateUpdated에 연결됐던 중복 `OnUpdate` setter를 제거했다. generated MM 노드의 primary+companion 및 문맥별 interrupt는 기존 native proxy가 소유한다. BP가 single DB·고정 invalidate를 매 갱신 덮어쓰지 않는다. 기존 pose 그래프/노드/핀과 DB getter는 유지했다. [실제 재현·집중65·Cook 및 범위 제한](../../Review/Audits/Project_J_Asset_Architecture_Cleanup_2026-10-15.md)을 확인한다. OTM/Strafe·Run/Sprint·단발/MM·Land·.35초/100cm/3도/85% 계약은 동일하다.
 
 > **2026-09-22 Skeleton Retargeting Standard:** GASP(`SK_UEFN_Mannequin`) 애니메이션의 Project_J 표준 스켈레톤(`SK_Mannequin`) 호환 및 본 트랜슬레이션 리타기팅 규칙은 [`HumanoidSkeletonRetargetingStandards.md`](../Authoring/HumanoidSkeletonRetargetingStandards.md)를 따른다.

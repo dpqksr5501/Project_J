@@ -30,6 +30,8 @@ public class Project_J : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[] {
 			"SQLiteCore",
+			"Mover",
+			"NetworkPrediction",
 			"HTTP",
 			"Json",
 			"JsonUtilities",
@@ -46,6 +48,10 @@ public class Project_J : ModuleRules
 			PrivateDependencyModuleNames.Add("Project_JAnimationNodes");
 			PrivateDependencyModuleNames.Add("AnimationBlueprintLibrary"); // Public read-only notify copy API for editor diagnostics.
 			PrivateDependencyModuleNames.AddRange(new string[] { "PoseSearch", "BlendStack", "IKRig", "AnimGraphRuntime" });
+		}
+		if (Target.Type == TargetType.Editor || Target.Type == TargetType.Server)
+		{
+			DynamicallyLoadedModuleNames.Add("PerfCounters");
 		}
 
 		PublicIncludePaths.AddRange(new string[] {

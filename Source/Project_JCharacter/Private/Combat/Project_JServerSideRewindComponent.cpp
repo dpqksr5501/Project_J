@@ -1,4 +1,6 @@
 #include "Combat/Project_JServerSideRewindComponent.h"
+#include "GameFramework/Pawn.h"
+#include "Movement/Project_JMovementQueries.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/Character.h"
@@ -37,7 +39,7 @@ void UProject_JServerSideRewindComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	const ACharacter* Owner = Cast<ACharacter>(GetOwner());
+	const APawn* Owner = Cast<APawn>(GetOwner());
 	const bool bRecord = Owner && Owner->HasAuthority();
 	SetComponentTickEnabled(bRecord);
 	MaxRecordTime = FMath::IsFinite(MaxRecordTime) ? FMath::Clamp(MaxRecordTime, 0.05f, 10.0f) : 1.0f;
@@ -72,8 +74,8 @@ void UProject_JServerSideRewindComponent::TickComponent(float DeltaTime, ELevelT
 	NewRecord.Timestamp = GetWorld()->GetTimeSeconds();
 	NewRecord.Location = Owner->GetActorLocation();
 	NewRecord.Rotation = Owner->GetActorQuat();
-	const ACharacter* Character = Cast<ACharacter>(Owner);
-	const UCapsuleComponent* Capsule = Character ? Character->GetCapsuleComponent() : nullptr;
+	const APawn* Character = Cast<APawn>(Owner);
+	const UCapsuleComponent* Capsule = Character ? Project_J::Movement::FindCapsule(Character) : nullptr;
 	if (!Capsule) return;
 	NewRecord.CapsuleLocation = Capsule->GetComponentLocation();
 	NewRecord.CapsuleRotation = Capsule->GetComponentQuat();

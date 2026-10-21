@@ -1,5 +1,9 @@
 # 보관 자료
 
+## 현재 구조 안내 갱신 전 원문 — 2026-10-21
+
+README·프로젝트 개요/맥락·애니메이션/이동/제작 목차·골격·확장·전투 문서의 작업 사본 10개를 [ZIP](Navigation/2026-10-21/Before_Current_Documentation.zip)과 [SHA-256 명세](Navigation/2026-10-21/Preservation.json)로 보존했다. ZIP 안에서는 각 원래 저장소 경로를 유지한다. 현재 기준은 [플레이어 로코모션 아키텍처](../Animation/Architecture/Player_Locomotion_Architecture.md), 변경과 검증 범위는 [문서 갱신 기록](../Maintenance/Storage_Cleanup_2026-10-21.md)을 따른다.
+
 ## 이전 작업 프롬프트 분류 2026-10-15
 
 과거 작업용 프롬프트 9개는 [상태 목록](../Handoffs/README.md#이전-작업-프롬프트의-상태)에서 결과 연결·현재 기준 대체·당시 인계를 구분했다. 기존 파일에는 안내만 추가하고, 변경 전 원문은 바이트 그대로 `.txt`로 보존했다. 각 경로·SHA256·추가한 안내문은 [프롬프트 보존 명세](Requests/2026-10-15/Preservation.json)에 있다. 상대 링크는 원래 경로를 기준으로 해석한다.

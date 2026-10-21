@@ -1,5 +1,7 @@
 # 6850ed45 소스 감사 수정·검증 마감
 
+> **과거 소스 경로 안내 — 2026-10-21:** 아래 현재 파일이 없는 소스 경로는 당시 구현의 위치를 텍스트로 보존했다. 이를 현행 API나 실행 가능한 제작 단계로 해석하지 않는다. 이동·애니메이션의 현재 계약은 [플레이어 로코모션](../../Animation/Architecture/Player_Locomotion_Architecture.md)을 따른다. 당시 수치·실패·외부 출처는 유지한다.
+
 원본 `Project_J_Source_Audit_6850ed45.zip`의 README·Runtime·Tools 보고서와 기준 커밋 `6850ed4556b5df0468d6809fd190950e1b1a4c82`를 대조한 1·2·3차 누적 결과다. 별도 MMORPG 아키텍처 보고서의 미래 기능은 구현 범위에 포함하지 않았다. 1·2차 수정과 기존 미커밋 작업을 보존하고, 재현된 지원 경로의 결함을 최소 변경으로 수정했다.
 
 원본 Runtime 지적 16개, 조건부 위험 R1/R2/R3 3개, Tools 원본 절 1~9를 모두 포함한 **28개**다. `TOOLS-01`~`TOOLS-09`는 원본 Tools 보고서의 실제 절 번호에 대응하도록 붙인 별칭이다. 신규 수정 14개, 앞선 수정의 해결 상태를 코드·회귀로 확인한 13개, 퇴역 도구의 지원 범위 밖 판단 1개로 정리했다. 조건부 위험은 아래 실제 재현 범위만 결함으로 확정했다.
@@ -263,7 +265,7 @@
 
 **변경·유지 판단:** 2차 실제 선택 시각/offset 기준을 보존해 StartTime과 hold 경과시간이 같은 구간을 두 번 차감하지 않는다.
 
-**관련 파일:** [Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Presentation.cpp](../../../Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Presentation.cpp), [Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h](../../../Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h), [Source/Project_JCharacter/Public/Animation/Project_JStateControllerRuntime.h](../../../Source/Project_JCharacter/Public/Animation/Project_JStateControllerRuntime.h), [Source/Project_JCharacter/Private/Tests/Project_JSourceAuditPhase2Tests.cpp](../../../Source/Project_JCharacter/Private/Tests/Project_JSourceAuditPhase2Tests.cpp).
+**관련 파일:** Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Presentation.cpp (`Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Presentation.cpp`, 당시 경로·현재 파일 없음), [Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h](../../../Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h), Source/Project_JCharacter/Public/Animation/Project_JStateControllerRuntime.h (`Source/Project_JCharacter/Public/Animation/Project_JStateControllerRuntime.h`, 당시 경로·현재 파일 없음), [Source/Project_JCharacter/Private/Tests/Project_JSourceAuditPhase2Tests.cpp](../../../Source/Project_JCharacter/Private/Tests/Project_JSourceAuditPhase2Tests.cpp).
 
 **테스트:** `ProjectJ.SourceAudit2.AirReselectionCommand`.
 
@@ -281,7 +283,7 @@
 
 **변경·유지 판단:** 2차 승인 방향을 한 snapshot/command로 소비하는 순서를 보존했다. chooser/hold/trajectory 방향을 함께 확인한다.
 
-**관련 파일:** [Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Presentation.cpp](../../../Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Presentation.cpp), [Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Snapshot.cpp](../../../Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Snapshot.cpp), [Source/Project_JCharacter/Private/Tests/Project_JSourceAuditPhase2Tests.cpp](../../../Source/Project_JCharacter/Private/Tests/Project_JSourceAuditPhase2Tests.cpp).
+**관련 파일:** Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Presentation.cpp (`Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Presentation.cpp`, 당시 경로·현재 파일 없음), Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Snapshot.cpp (`Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Snapshot.cpp`, 당시 경로·현재 파일 없음), [Source/Project_JCharacter/Private/Tests/Project_JSourceAuditPhase2Tests.cpp](../../../Source/Project_JCharacter/Private/Tests/Project_JSourceAuditPhase2Tests.cpp).
 
 **테스트:** `ProjectJ.SourceAudit2.AirReselectionCommand`.
 
@@ -335,7 +337,7 @@
 
 **변경·유지 판단:** test name + GUID별 기본 출력과 capture 폴더를 고정한다. 명시 출력의 부모 생성 결과를 확인하고 기존 파일을 거절한다. 단순 상대 파일명도 지원한다.
 
-**관련 파일:** [Source/Project_J/Testing/Project_JOneShotReturnPlayback.cpp](../../../Source/Project_J/Testing/Project_JOneShotReturnPlayback.cpp).
+**관련 파일:** Source/Project_J/Testing/Project_JOneShotReturnPlayback.cpp (`Source/Project_J/Testing/Project_JOneShotReturnPlayback.cpp`, 당시 경로·현재 파일 없음).
 
 **테스트:** `ProjectJ.Animation.OneShotInput.AuthoredCurvePlayback`, `ProjectJ.Animation.OneShotReturn.RecordedStrafeLand`, `명시 fresh 출력 성공 / 기존 출력 거절(예상 실패 1)`.
 
@@ -503,7 +505,7 @@
 
 **변경·유지 판단:** 현행 unified graph/authoring 문서와 대체 경로를 확인했다. 폐기된 repair를 현대화하지 않고, opt-in도 자산 load/mutation 전에 명시 오류로 종료하도록 철회했다.
 
-**관련 파일:** [Source/Project_JCharacterEditor/Private/Tests/Project_JNaturalnessGraphTests.cpp](../../../Source/Project_JCharacterEditor/Private/Tests/Project_JNaturalnessGraphTests.cpp), [Docs/Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/06_IMPLEMENTATION.md](../../../Docs/Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/06_IMPLEMENTATION.md).
+**관련 파일:** Source/Project_JCharacterEditor/Private/Tests/Project_JNaturalnessGraphTests.cpp (`Source/Project_JCharacterEditor/Private/Tests/Project_JNaturalnessGraphTests.cpp`, 당시 경로·현재 파일 없음), [Docs/Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/06_IMPLEMENTATION.md](../../../Docs/Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/06_IMPLEMENTATION.md).
 
 **테스트:** `ProjectJ.Authoring.Naturalness.ExternalWarpingRepair -ProjectJRepairExternalWarping: 예상 실패1 / native exit255`, `ABP_Humanoid_Master 실제 파일 해시 전후 일치`.
 

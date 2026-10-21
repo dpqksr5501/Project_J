@@ -1,4 +1,5 @@
 #if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
+#include "Tests/Project_JMoverFrameFixture.h"
 #include "Testing/Project_JAuthoredAnimationFixture.h"
 #include "Components/Project_JAnimationUpdateCoordinatorComponent.h"
 #include "Animation/Project_JBudgetedSkeletalMeshComponent.h"
@@ -67,17 +68,17 @@ bool FProjectJAuthoredObserverProfile::RunTest(const FString&)
     if (!TestNotNull(TEXT("Player profile property exists"), ProfileProperty)) return false;
     ProfileProperty->SetObjectPropertyValue_InContainer(Player, Profile);
     ON_SCOPE_EXIT { ProfileProperty->SetObjectPropertyValue_InContainer(Player, const_cast<UProject_JCharacterAnimProfile*>(OriginalProfile)); };
-    Locomotion->NearMotionMatchingDistance = 10000; Locomotion->MidMotionMatchingDistance = 20000; Locomotion->FarMotionMatchingDistance = 30000;
+    Locomotion->AnimationBudget.NearDistance = 10000; Locomotion->AnimationBudget.MidDistance = 20000; Locomotion->AnimationBudget.FarDistance = 30000;
     Service->Refresh();
     TestEqual(TEXT("Authored profile's Near distance owns observer classification"), Source->GetAnimationDistanceTier(), 0.f);
-    Locomotion->NearMotionMatchingDistance = 1000; Locomotion->MidMotionMatchingDistance = 2000; Locomotion->FarMotionMatchingDistance = 3000;
+    Locomotion->AnimationBudget.NearDistance = 1000; Locomotion->AnimationBudget.MidDistance = 2000; Locomotion->AnimationBudget.FarDistance = 3000;
     Service->Refresh();
     TestEqual(TEXT("Runtime profile changes are observed without a stale settings cache"), Source->GetAnimationDistanceTier(), 3.f);
     Source->InitAnim(true);
     TestEqual(TEXT("Animation reinitialization clears the observation"), Source->GetAnimationDistanceTier(), Player->GetSignificance());
     Service->Refresh();
     TestEqual(TEXT("Reinitialized Master resolves its current profile again"), Source->GetAnimationDistanceTier(), 3.f);
-    Locomotion->MidMotionMatchingDistance = 500;
+    Locomotion->AnimationBudget.MidDistance = 500;
     Service->Refresh();
     TestEqual(TEXT("Invalid authored distance ordering preserves Near"), Source->GetAnimationDistanceTier(), 0.f);
     Source->EnableExternalTickRateControl(true);
@@ -168,7 +169,7 @@ public:
 		if (Frame == 660) { Local->UnPossess(); Player->SetPlayerState(nullptr); Coordinator->bAllowVisualBudget = false; }
 		if (auto* Tier = FindFProperty<FFloatProperty>(AProject_JBaseCharacter::StaticClass(), TEXT("CurrentSignificance")))
 			Tier->SetPropertyValue_InContainer(Player, Frame < 180 ? 0 : 2);
-		Player->GetCharacterMovement()->Velocity = FVector(200,0,0); Player->AddActorWorldOffset(FVector(200.f/60,0,0));
+		Test->TestTrue(TEXT("Synthetic budget frame published"),ProjectJ::Tests::PublishMoverFrame(Player,MOVE_None,FVector(200,0,0))); Player->AddActorWorldOffset(FVector(200.f/60,0,0));
 		TInlineComponentArray<USkeletalMeshComponent*> Meshes(Player);
 		for (auto* Mesh : Meshes) Mesh->SetLastRenderTime(bHidden ? -1000 : World->GetTimeSeconds());
 		const int16 Before = Body->GetAnimInstance()->GetUpdateCounter().Get();

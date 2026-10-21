@@ -1,5 +1,7 @@
 # 일반 이동 회전 후보와 수명
 
+> **이전 이동 구조의 기록 — 2026-10-21:** 본문은 당시 CMC/MM·마스터·후보 정책의 구현·제안·측정 이력이다. 현재 생산 제작은 [플레이어 로코모션](Player_Locomotion_Architecture.md)을 따른다. 과거 구조를 복원하라는 지시나 현재 구조의 성능 결과로 해석하지 않는다.
+
 체크포인트 커밋 `38f2268`(애니메이션 회전 연속성과 GASP 분석 기반 보정·진단 추가) 이후의 구현이다. 기존 GASP 조사 자료 [02_GASP](../Planning/GASP_ProjectJ_Naturalness_2026-10-06/02_GASP.md)의 기본 CMC MM 경로, 조건부 PSD 배열과 continuing pose, 각 Blend Stack 플레이어의 Steering 입력 계약을 사용했다. 비활성 실험적 State Machine의 실행 방식을 기본 경로로 간주하지 않는다.
 
 ## 문제와 적용 범위

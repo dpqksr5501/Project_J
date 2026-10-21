@@ -1,11 +1,14 @@
 # Remote Locomotion One-Shot Replication
 
+Current movement authority and pose selection are described in [Player locomotion architecture](../Architecture/Player_Locomotion_Architecture.md). This document retains the semantic boundary/recovery protocol; do not restore retired CMC/MM playback writers from older diagnostics. Jump identity and air selection use their current native contracts, and landing presentation must not race a second movement-state writer.
+
+
 ## Scope
 
 Player Start, Stop, Fall Off, and Land are short presentation boundaries. Continuous
 movement, direction, trajectory, and Motion Matching cycle selection remain locally
-derived from CharacterMovement. NPCs do not opt into this player-only component unless
-they explicitly use the player Motion Matching presentation stack.
+derived from the approved Mover command/view state and animation snapshots. NPCs do not opt into this player-only component unless
+they explicitly use the shared player locomotion presentation stack.
 
 ## Semantic snapshot contract
 

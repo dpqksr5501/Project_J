@@ -4,14 +4,13 @@
 #include "Animation/Project_JCharacterAnimInstance.h"
 #include "Animation/Project_JCombatAnimProfile.h"
 #include "Animation/Project_JLocomotionProfile.h"
-#include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
-#include "Animation/Project_JMotionMatchingCVars.h"
 #include "Animation/AnimSequence.h"
 #include "Combat/Project_JCombatMovementPolicy.h"
 #include "Components/Project_JCombatStateComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
+#include "Movement/Project_JGroundMovement.h"
 #include "Engine/World.h"
 #include "Project_JLocomotionAnimStateComponent.h"
 
@@ -36,180 +35,12 @@ FProject_JCombatMovementPolicy BuildCombatMovementPolicy(const AProject_JPlayerC
 
 void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotation)
 {
-	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
-	const bool bIsInAir = MoveComp && MoveComp->IsFalling();
-	const bool bShouldUseCombatRotation = bEnableCombatRotation && ShouldUseCombatRotationMode();
-	// Pending input is a consumable CMC accumulator, not a held-key state.
-	// Keep the same physical facing owner through the braking minimum while
-	// raw local input is held; Completed/Canceled clears this state immediately.
-	const bool bHeldLocalMoveInput = LocomotionAnimStateComponent &&
-		LocomotionAnimStateComponent->HasHeldLocalMoveInput();
-	const bool bIsMovingInCombat = bShouldUseCombatRotation &&
-		(bHeldLocalMoveInput || GetPendingMovementInputVector().SizeSquared() > 0.001f || GetVelocity().SizeSquared2D() > 100.0f);
-
-	const bool bDesiredControllerRotation = bIsMovingInCombat && !bIsInAir;
-	const bool bRotationModeChanged = bUseControllerRotationYaw || (MoveComp &&
-		(MoveComp->bUseControllerDesiredRotation != bDesiredControllerRotation ||
-		 MoveComp->bOrientRotationToMovement != !bShouldUseCombatRotation));
-	// FaceRotation would copy control yaw in one frame, bypassing rotation rate.
-	// CMC owns gradual moving yaw; idle TIP keeps its authored root-yaw owner.
+	// Physical facing is part of the predicted Mover command. GASP handles pose/root offset.
 	bUseControllerRotationYaw = false;
-	if (MoveComp)
-	{
-		MoveComp->bUseControllerDesiredRotation = bDesiredControllerRotation;
-		MoveComp->bOrientRotationToMovement = !bShouldUseCombatRotation;
-	}
-
-	if (bShouldUseCombatRotation && bIsInAir)
-	{
-		const float TargetYaw = GetController() ? GetController()->GetControlRotation().Yaw : GetActorRotation().Yaw;
-		const FRotator CurrentRot = GetActorRotation();
-		const FRotator TargetRot(0.0f, TargetYaw, 0.0f);
-		const float DeltaSeconds = GetWorld() ? GetWorld()->GetDeltaSeconds() : 0.016f;
-		const float CatchUpSpeed = GetLocomotionProfile()
-			? GetLocomotionProfile()->MotionMatchingSearchPolicy.AirRotationCatchUpSpeed
-			: 12.0f;
-		const FRotator NewRot = FMath::RInterpTo(CurrentRot, TargetRot, DeltaSeconds, CatchUpSpeed);
-		SetActorRotation(NewRot);
-	}
-
-	bool bCurrentlyInTurnInPlace = false;
-	bool bApplyingLocalTurnInPlaceRootYaw = false;
-	const int32 TipTraceMode = Project_J::MotionMatchingCVars::GetTurnInPlaceTraceMode();
-	if (bShouldUseCombatRotation && !bIsMovingInCombat)
-	{
-		if (const UProject_JCharacterAnimInstance* AnimInst = Cast<UProject_JCharacterAnimInstance>(GetMesh() ? GetMesh()->GetAnimInstance() : nullptr))
-		{
-			const EProject_JStateControllerPresentationState PresentationState =
-				AnimInst->GetThreadSafeStateControllerPresentationState();
-			bCurrentlyInTurnInPlace = (PresentationState == EProject_JStateControllerPresentationState::TurnInPlace);
-			const UAnimationAsset* SelectedAnim = AnimInst->GetThreadSafeStateControllerSelectedAnimation();
-			if (bCurrentlyInTurnInPlace)
-			{
-				if (const UAnimSequence* AnimSeq = Cast<UAnimSequence>(SelectedAnim))
-				{
-					const int32 SelectionRevision = AnimInst->GetThreadSafeStateControllerSelectionRevision();
-					const float Elapsed = AnimInst->GetThreadSafeStateControllerPlaybackHoldElapsedTime();
-					const FProject_JTurnInPlacePresentationRuntime::ESelectionUpdate SelectionUpdate =
-						TurnInPlacePresentationRuntime.UpdateSelection(
-							AnimSeq, SelectionRevision, GetActorRotation().Yaw, Elapsed);
-					const bool bNewSelection = SelectionUpdate ==
-						FProject_JTurnInPlacePresentationRuntime::ESelectionUpdate::NewSelection;
-					const bool bAwaitingFreshSelection = SelectionUpdate ==
-						FProject_JTurnInPlacePresentationRuntime::ESelectionUpdate::AwaitingFreshSelection;
-					const float CurrTime = FMath::Clamp(Elapsed, 0.0f, AnimSeq->GetPlayLength());
-					const float StartTime = FMath::Clamp(
-						AnimInst->GetThreadSafeStateControllerSelectedAnimationStartTime(),
-						0.0f,
-						AnimSeq->GetPlayLength());
-					const float CumulativeCurrentTime = FMath::Clamp(StartTime + CurrTime, StartTime, AnimSeq->GetPlayLength());
-
-					FAnimExtractContext CurrentCumulativeContext(static_cast<double>(CumulativeCurrentTime));
-					const float CurrentCumulativeYaw = AnimSeq->ExtractRootMotionFromRange(
-						static_cast<double>(StartTime), static_cast<double>(CumulativeCurrentTime), CurrentCumulativeContext).Rotator().Yaw;
-
-					const float AuthoredTargetActorYaw = FRotator::NormalizeAxis(
-						TurnInPlacePresentationRuntime.GetSelectionStartActorYaw() + CurrentCumulativeYaw);
-					const float RootYawDelta = FMath::FindDeltaAngleDegrees(GetActorRotation().Yaw, AuthoredTargetActorYaw);
-
-					// TIP owns one fixed authored target. Prefer the locomotion context so
-					// the capsule, Blend Stack Steering and replicated event agree.
-					float FacingDelta = RootYawDelta;
-					if (LocomotionAnimStateComponent)
-					{
-						FacingDelta = LocomotionAnimStateComponent->KinematicContext.DesiredFacingDeltaYaw;
-					}
-					else if (IsLocallyControlled() && GetController())
-					{
-						FacingDelta = FMath::FindDeltaAngleDegrees(GetActorRotation().Yaw, GetController()->GetControlRotation().Yaw);
-					}
-
-					const float ClampedRootYawDelta = FProject_JTurnInPlacePresentationRuntime::ClampAuthoredYaw(
-						RootYawDelta, FacingDelta);
-
-					// A reversed TIP spends a short release window unwinding Blend Stack /
-					// Offset Root Bone. Do not continue applying the old authored root yaw
-					// to the capsule during that visual hand-off.
-					const bool bLocalTargetActive = !LocomotionAnimStateComponent ||
-						LocomotionAnimStateComponent->IsLocalTurnInPlaceTargetActive();
-					const bool bCanApplyActorRotation = IsLocallyControlled() && bLocalTargetActive &&
-						!bAwaitingFreshSelection;
-					const float ActorYawBefore = GetActorRotation().Yaw;
-					if (bCanApplyActorRotation && !FMath::IsNearlyZero(ClampedRootYawDelta))
-					{
-						AddActorWorldRotation(FRotator(0.0f, ClampedRootYawDelta, 0.0f));
-					}
-					// Keep the active replication state while the new chooser revision
-					// catches up; only the stale root yaw is suppressed for this frame.
-					bApplyingLocalTurnInPlaceRootYaw = IsLocallyControlled() && bLocalTargetActive;
-					const bool bFacingOpposesAuthoredTurn =
-						FMath::Abs(FacingDelta) > 1.0f && FMath::Abs(RootYawDelta) > 1.0f &&
-						FMath::Sign(FacingDelta) != FMath::Sign(RootYawDelta);
-					if (TipTraceMode >= 2 ||
-						(TipTraceMode == 1 && (bNewSelection || bAwaitingFreshSelection || CurrTime <= 0.35f ||
-							bFacingOpposesAuthoredTurn || FMath::Abs(ClampedRootYawDelta) >= 6.0f)))
-					{
-						const UWorld* TraceWorld = GetWorld();
-						const int32 SemanticSequence = LocomotionAnimStateComponent
-							? LocomotionAnimStateComponent->DerivedLocomotionContext.TurnInPlaceSequence : 0;
-						const uint8 SemanticBucket = LocomotionAnimStateComponent
-							? LocomotionAnimStateComponent->DerivedLocomotionContext.TurnInPlaceDirectionBucket : 0;
-						UE_LOG(LogProjectJPlayer, Display,
-							TEXT("TIPTrace Stage=Root T=%.3f Actor=%s Local=%d NewSelection=%d Deferred=%d Seq=%d Bucket=%d Rev=%d Asset=%s Hold=%.3f Start=%.3f Playhead=%.3f RootCum=%.2f Anchor=%.2f ActorBefore=%.2f ActorAfter=%.2f AuthoredDelta=%.2f FacingDelta=%.2f Applied=%.2f TargetActive=%d TargetYaw=%.2f Opposite=%d"),
-							TraceWorld ? TraceWorld->GetTimeSeconds() : 0.0f, *GetName(),
-							IsLocallyControlled() ? 1 : 0, bNewSelection ? 1 : 0, bAwaitingFreshSelection ? 1 : 0,
-							SemanticSequence, static_cast<int32>(SemanticBucket), SelectionRevision,
-							*GetNameSafe(AnimSeq), Elapsed, StartTime, CumulativeCurrentTime,
-							CurrentCumulativeYaw, TurnInPlacePresentationRuntime.GetSelectionStartActorYaw(),
-							ActorYawBefore, GetActorRotation().Yaw, RootYawDelta, FacingDelta,
-							bCanApplyActorRotation ? ClampedRootYawDelta : 0.0f,
-							LocomotionAnimStateComponent && LocomotionAnimStateComponent->IsLocalTurnInPlaceTargetActive() ? 1 : 0,
-							LocomotionAnimStateComponent ? LocomotionAnimStateComponent->KinematicContext.DesiredFacingYaw : 0.0f,
-							bFacingOpposesAuthoredTurn ? 1 : 0);
-					}
-
-					if (!HasAuthority() && bCanApplyActorRotation)
-					{
-						const UWorld* World = GetWorld();
-						const double Now = World ? World->GetTimeSeconds() : 0.0;
-						const float CurrentActorYaw = GetActorRotation().Yaw;
-						if (TurnInPlacePresentationRuntime.ShouldSendActiveYaw(CurrentActorYaw, Now))
-						{
-							ServerSetTurnInPlaceRotation(true, CurrentActorYaw);
-						}
-					}
-				}
-				else if (TipTraceMode > 0)
-				{
-					UE_LOG(LogProjectJPlayer, Display,
-						TEXT("TIPTrace Stage=Root Event=NoSequence Actor=%s Rev=%d Asset=%s"),
-						*GetName(), AnimInst->GetThreadSafeStateControllerSelectionRevision(), *GetNameSafe(SelectedAnim));
-				}
-			}
-		}
-	}
-
-	if (TurnInPlacePresentationRuntime.FinishFrame(
-		bCurrentlyInTurnInPlace, bApplyingLocalTurnInPlaceRootYaw, GetActorRotation().Yaw,
-		!HasAuthority() && IsLocallyControlled()))
-	{
-		ServerSetTurnInPlaceRotation(false, GetActorRotation().Yaw);
-	}
-
-	if (bRotationModeChanged && MotionMatchingTrajectoryComponent)
-	{
-		MotionMatchingTrajectoryComponent->NotifyRotationModeChanged();
-	}
+	SetStrafe(bEnableCombatRotation && ShouldUseCombatRotationMode());
 }
 
-bool AProject_JPlayerCharacter::AllowsStraightRunningTrajectoryRepair() const
-{
-	// Combat owns its facing target through the controller and therefore permits
-	// movement that intentionally differs from facing. Future lock-on or forced
-	// facing modes should return false here as well, rather than changing the
-	// global simulated-proxy repair CVar.
-	return !(IsCombatModeActive() && ShouldUseCombatRotationMode());
-}
+
 
 bool AProject_JPlayerCharacter::IsCombatActionBlockingSprint() const
 {
@@ -218,95 +49,10 @@ bool AProject_JPlayerCharacter::IsCombatActionBlockingSprint() const
 
 void AProject_JPlayerCharacter::UpdateMaxWalkSpeed()
 {
-	ApplyMovementPolicy(IsSprintLocomotionAllowed(), GetPendingMovementInputVector());
+	SetSprint(IsSprintLocomotionAllowed());
 }
 
-void AProject_JPlayerCharacter::ApplyMovementPolicy(bool bCanSprint, const FVector& MovementDirection)
-{
-	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
-	if (!MoveComp || (!IsLocallyControlled() && GetLocalRole() != ROLE_Authority))
-	{
-		return;
-	}
 
-	const UProject_JLocomotionProfile* EffectiveLocomotionProfile = GetLocomotionProfile();
-	const float EffectiveWalkSpeed = EffectiveLocomotionProfile ? EffectiveLocomotionProfile->WalkSpeed : WalkSpeed;
-	const float EffectiveSprintSpeed = EffectiveLocomotionProfile ? EffectiveLocomotionProfile->SprintSpeed : SprintSpeed;
-	const float EffectiveWalkRotationRateYaw = EffectiveLocomotionProfile
-		? EffectiveLocomotionProfile->WalkRotationRateYaw
-		: WalkRotationRateYaw;
-	const float EffectiveSprintRotationRateYaw = EffectiveLocomotionProfile
-		? EffectiveLocomotionProfile->SprintRotationRateYaw
-		: SprintRotationRateYaw;
-	float DirectionalSpeedMultiplier = 1.0f;
-	float DesiredMaxAcceleration = MoveComp->MaxAcceleration;
-	float DesiredBrakingDeceleration = MoveComp->BrakingDecelerationWalking;
-	float DesiredGroundFriction = MoveComp->GroundFriction;
-	if (EffectiveLocomotionProfile)
-	{
-		const FProject_JLocomotionMovementPolicy& Policy = EffectiveLocomotionProfile->MovementPolicy;
-		DesiredMaxAcceleration = bCanSprint ? Policy.SprintMaxAcceleration : Policy.RunMaxAcceleration;
-		DesiredBrakingDeceleration = bCanSprint ? Policy.SprintBrakingDeceleration : Policy.RunBrakingDeceleration;
-		DesiredGroundFriction = bCanSprint ? Policy.SprintGroundFriction : Policy.RunGroundFriction;
-
-		if (Policy.bEnableStrafeDirectionalSpeedScaling && IsCombatModeActive())
-		{
-			FVector Direction = MovementDirection;
-			Direction.Z = 0.0f;
-			if (Direction.IsNearlyZero())
-			{
-				Direction = GetVelocity();
-				Direction.Z = 0.0f;
-			}
-
-			if (!Direction.IsNearlyZero())
-			{
-				const FVector LocalDirection = GetActorTransform().InverseTransformVectorNoScale(Direction.GetSafeNormal());
-				const float ForwardAmount = LocalDirection.X;
-				const float SideAmount = FMath::Abs(LocalDirection.Y);
-				if (ForwardAmount < -0.5f)
-				{
-					DirectionalSpeedMultiplier = Policy.StrafeBackwardSpeedMultiplier;
-				}
-				else if (SideAmount > FMath::Abs(ForwardAmount))
-				{
-					DirectionalSpeedMultiplier = Policy.StrafeSideSpeedMultiplier;
-				}
-				else
-				{
-					DirectionalSpeedMultiplier = Policy.StrafeForwardSpeedMultiplier;
-				}
-			}
-		}
-	}
-
-	const float DesiredMaxWalkSpeed =
-		(bCanSprint ? EffectiveSprintSpeed : EffectiveWalkSpeed) * DirectionalSpeedMultiplier;
-	float DesiredRotationRateYaw = bCanSprint
-		? EffectiveSprintRotationRateYaw
-		: EffectiveWalkRotationRateYaw;
-	if (IsCombatModeActive() && ShouldUseCombatRotationMode())
-	{
-		const UProject_JCombatAnimProfile* CombatProfile = GetCombatAnimProfile();
-		const float Rate = CombatProfile ? CombatProfile->CombatFacingRotationRateYaw : 360.0f;
-		DesiredRotationRateYaw = FMath::IsFinite(Rate) ? FMath::Clamp(Rate, 1.0f, 1080.0f) : 360.0f;
-	}
-	// Publish one complete CMC policy. Reject an invalid tuple before changing
-	// any field, including finite inputs whose speed product overflowed.
-	for (const float Value : {DesiredMaxAcceleration, DesiredBrakingDeceleration, DesiredGroundFriction, DesiredMaxWalkSpeed, DesiredRotationRateYaw})
-		if (!FMath::IsFinite(Value) || Value < 0) { return; }
-	if (!FMath::IsNearlyEqual(MoveComp->MaxAcceleration, DesiredMaxAcceleration)) MoveComp->MaxAcceleration = DesiredMaxAcceleration;
-	if (!FMath::IsNearlyEqual(MoveComp->BrakingDecelerationWalking, DesiredBrakingDeceleration)) MoveComp->BrakingDecelerationWalking = DesiredBrakingDeceleration;
-	if (!FMath::IsNearlyEqual(MoveComp->GroundFriction, DesiredGroundFriction)) MoveComp->GroundFriction = DesiredGroundFriction;
-	if (!FMath::IsNearlyEqual(MoveComp->MaxWalkSpeed, DesiredMaxWalkSpeed))
-	{
-		MoveComp->MaxWalkSpeed = DesiredMaxWalkSpeed;
-	}
-	if (!FMath::IsNearlyEqual(MoveComp->RotationRate.Yaw, DesiredRotationRateYaw))
-	{
-		MoveComp->RotationRate = FRotator(0.0f, DesiredRotationRateYaw, 0.0f);
-	}
-}
 
 bool AProject_JPlayerCharacter::ShouldUseCombatRotationMode() const
 {
@@ -342,8 +88,8 @@ bool AProject_JPlayerCharacter::IsSprintInputDirectionAllowed() const
 		return false;
 	}
 
-	return !CombatAnimProfile->bRequireForwardInputForSprintInCombat ||
-		SprintMoveInput.Y > CombatAnimProfile->CombatSprintForwardInputThreshold;
+ return UProject_JGroundMovementLibrary::SupportsStrafeSprint(
+  FVector(SprintMoveInput.Y,SprintMoveInput.X,0.),FVector::ForwardVector);
 }
 
 bool AProject_JPlayerCharacter::IsJumpLocomotionAllowed() const
@@ -351,15 +97,9 @@ bool AProject_JPlayerCharacter::IsJumpLocomotionAllowed() const
 	return BuildCombatMovementPolicy(*this).IsJumpAllowed();
 }
 
-bool AProject_JPlayerCharacter::IsGroundStartAllowed() const
-{
-	return BuildCombatMovementPolicy(*this).IsGroundStartAllowed();
-}
 
-bool AProject_JPlayerCharacter::IsGroundStopAllowed() const
-{
-	return BuildCombatMovementPolicy(*this).IsGroundStopAllowed();
-}
+
+
 
 bool AProject_JPlayerCharacter::IsCombatLocomotionOverlayAllowed() const
 {

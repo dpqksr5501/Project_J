@@ -398,7 +398,6 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJProfileRuntimeCoverageTest,
 								 EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJProfileRuntimeCoverageTest::RunTest(const FString &)
 {
-	AddExpectedError(TEXT("Character data registry is empty."), EAutomationExpectedErrorFlags::Contains, 1);
 	AddExpectedError(TEXT("Backup admission full \\(8 retained files\\)"), EAutomationExpectedErrorFlags::Contains, 1);
 	auto *GI = NewObject<UGameInstance>(GEngine);
 	GI->InitializeStandalone();

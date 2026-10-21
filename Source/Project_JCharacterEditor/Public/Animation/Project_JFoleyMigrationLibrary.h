@@ -14,6 +14,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Project J|Authoring|Foley")
 	static FString MigrateGaspFoley(const TArray<FString>& Packages, const FString& SourceContent, bool bApply, const TArray<FString>& VerifiedNamedEvents);
 
+	/** Explicit 5.8 namespace migration; reuses payload/metadata-preserving Foley conversion. */
+	UFUNCTION(BlueprintCallable, Category="Project J|Authoring|Foley")
+	static FString MigrateFoundationFoley(const TArray<FString>& Packages, bool bApply);
+
 	/** Recover stripped notify objects by matching source GUID and serialized event metadata.
 	 * Reads source animations under a separate mount; never replaces target animation data. */
 	UFUNCTION(BlueprintCallable, Category="Project J|Authoring|Foley")

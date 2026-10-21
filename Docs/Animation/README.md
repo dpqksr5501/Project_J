@@ -1,78 +1,35 @@
 # 애니메이션
 
-현재 동작을 이해할 때는 아래 파이프라인과 목적별 기준 문서를 읽는다. 제작은 [Authoring](Authoring/README.md), 증상·원인은 [Diagnostics](Diagnostics/README.md), 이미 구현한 기능·과거 제안·인계의 구분은 [Planning 목차](Planning/README.md)에서 찾는다.
+Project J는 **Mover 이동, C++ 상태·선택 계산, 데이터 기반 포즈 재생, 골격·몸체별 표현**을 분리한다. 공통 생산 마스터는 `ABP_Player_Master`, native 부모는 `UProject_JPlayerAnimInstance`, 공통 Skeleton은 Manny `SK_Mannequin`이다.
 
-**현재 결정은 기존 locomotion 유지와 Mirror Data 도입 보류다.** 특정 연결이 어색해졌을 때만 해당 구간을 재검토한다. 최신 착지 수정은 R19의 선택 조건과 R20의 sample 보정 초기화로 나눠 읽는다. 기존 TIP·OTM/Strafe·Run/Sprint·전투·장비·리타깃과 지속 곡선 계약을 보존한다.
-
-감사별 변경·시험 조건·성능 미해결 범위는 [검토 목차](../Review/README.md)로 모았다. 과거 검사 횟수나 통과 수는 현재 전체 품질의 보증으로 사용하지 않는다.
-
-현재 GreatSword_Woman의 LOD0–2는 사용자 검토 후 채택했으며 LOD3–4 추가는 보류한다. 새 캐릭터·의상·장비는 [공통 LOD 제작](Authoring/Mesh_LOD_Authoring.md)을 사용한다. 기존 체인은 보존하며 LOD가 없는 일반 표면 메시만 명시적으로 생성·검증한다. Cloth·헤어·morph 등은 원본을 유지하고 각 native 제작 경로로 검수한다. [7차 구현·검증](../Performance/Planning/ProjectJ_200_Player_Optimization_Plan_2026-10-15.md#10월-15일-7차--새-캐릭터의상장비의-공통-lod-제작)에 저장 후 재검사와 로컬 무기 품질 보호를 기록했다.
-
-[6차 최적화](../Performance/Planning/ProjectJ_200_Player_Optimization_Plan_2026-10-15.md#10월-15일-6차--다른-에셋-호환성과-실제-몸체-lod)는 다른 에셋의 Cloth/외부 제어·역할 충돌을 보호하고 원격 body의 실제 화면 크기 LOD를 사용한다. 기존 body에 LOD1·2를 추가했으며 로컬은 기존LOD0·포즈/물리를 유지한다. 반복 GPU 이득과 미확정인 전체 frame/CPU 이득을 구분한다. 새 캐릭터/망토/헤어의 제작·접촉·LOD 전환 검수는 여전히 에셋별로 필요하다.
-
-최적화의 현재 목표는 **총 200명 전원 표시와 로컬 품질 유지**다. [계획과 첫 적용·검증](../Performance/Planning/ProjectJ_200_Player_Optimization_Plan_2026-10-15.md)은 기존 예산 subsystem의 거리 관측 활성화와 로컬 중복 계산 정리, 200명 렌더·로컬 품질·원격/전투 회귀를 기록한다. 동시 공격의 리타깃·의상 비용과 일부 CPU 증가는 남아 있으며 전체 성능 개선 완료로 판정하지 않는다.
-
-3차에서는 원격 retarget IK 생략을 실제 구현·포즈·교대 CPU로 시험했으나 비용 절감을 입증하지 못해 제거했다. 당시 2차 runtime을 보존했고 실험용 CVar/분기를 남기지 않았다. 이후 6·7차의 공통 경계·몸체 LOD·제작 경로는 별도로 반영했다. [미채택 근거와 후속 범위](../Performance/Planning/ProjectJ_200_Player_Optimization_Plan_2026-10-15.md#10월-15일-3차--원격-리타깃-ik-소비)를 확인한다.
-
-4차에서는 op별 비용과 실제 physics actor를 읽는 Editor 진단을 추가했다. 의상 전용 데이터 축소는 단순 복제 대조군의 동등성도 확보되지 않아 보류했고 제작 에셋·runtime은 유지했다. [실제 관측·실패 근거·다음 검증](../Performance/Planning/ProjectJ_200_Player_Optimization_Plan_2026-10-15.md#10월-15일-4차--실제-연산-비용과-의상-데이터-분리-검증)을 함께 읽는다.
-
-후속 [5차](../Performance/Planning/ProjectJ_200_Player_Optimization_Plan_2026-10-15.md#10월-15일-5차--물리-복제의-초기화-동등성과-비용-판정)에서 시험의 비대칭 초기화 순서를 고쳐 단순 복제와 축소본900표본이 동등성을 통과했다. 91→44 actor 축소는 비계측 비용 이득이 대부분1% 안팎이고 trace의 대조 scope 변동도 남아 미채택했다. 생산 몸체에 강제 reset/새 상태를 추가하지 않고 Editor 회귀만 남겼다.
-
-같은 계획의 2차는 전반적 locomotion 경로의 작은 조회 정리, 비계측 교대 비교와 실제 Body IK/물리/LOD 소비를 추가한다. Far 정책값만으로 리타깃 IK가 비활성화됐다고 판단하지 않는다. 전체 성능 효과가 미확정인 부분과 RHI34개·최종200명/local 품질 검증을 구분해 기록했다.
-
-## 현재 플레이어 파이프라인
-
-공용 소스 포즈에서 이동 Motion Matching과 전투 상체·몽타주를 합성한다. 임포트 몸체는 런타임 리타깃 뒤 몸체 비율에 맞는 Guided Hand IK를 적용하고 의상 물리를 평가한다. 무기 구동과 손 접촉의 책임은 별도로 설정한다.
-
-2026-10-12 기준 Master는 `Project Unified Locomotion`에서 단발과 MM을 같은 재생 스택으로 실행한다. 네이티브 State Controller·Chooser는 계속 사용하며, 이전 ABP State Machine·외부 Blend Stack·Handoff 경로와 미사용 함수 그래프 9개는 제거했다. Inertialization·Lean과 플레이어별 보정·전투·접지 후단은 유지한다. 일반 MM에서는 실제 이동 증거로 지속 곡선을 판정하되 호환되는 authored 단발을 곡선 누적만으로 해제하지 않으며, 리타깃 몸체와 의상 물리는 보호 조건을 포함한 시각 예산으로 함께 관리한다.
+## 현재 구조와 제작
 
 | 목적 | 기준 문서 |
 | --- | --- |
-| GASP 5.8 조사·단발 수명 정리·대각 Pivot 연결 시도(실제 Strafe 4방향 제한 미해결) | [GASP 5.8 전환 책임 정리](Architecture/GASP58_Locomotion_Migration_2026-10-19.md) |
-| 대각 점프·착지의 실제 sample 보정 초기화 | [R20 보정 복구](../Review/Audits/Project_J_Strafe_Diagonal_Warp_Repair_2026-10-15.md) |
-| 대각 Stand 착지 선택과 현재 Chooser·입력 대조 | [R19 소스·데이터 대조](../Review/Audits/Project_J_PC_Source_Data_Reconciliation_2026-10-15.md) |
-| 후진 중 몸 방향 전환과 Cycle 복귀 | [후진 Reface 구현](Planning/GASP_Backward_Reface_Implementation_2026-10-12.md) |
-| Mirror의 현재 유지 결정과 국소 재검토 조건 | [Mirror Data 도입 보류](Planning/Mirror_Data_Adoption_Decision_2026-10-15.md) |
-| 골격·몸체 프로필 공유, 실제 리타깃/손 접촉 연결과 호환·수명 검증 | [실시간 리타깃 프로필](Architecture/Runtime_Retarget_Profiles_2026-10-13.md) |
-| 스냅샷·표시·검색·복귀·품질 예산의 경계와 동작 보존 검증 | [파이프라인 리팩토링](Architecture/Animation_Pipeline_Refactor_2026-10-13.md) |
-| 현재 단발·MM의 공통 재생 스택과 ABP 노드 역할 | [통합 Locomotion 구현](Planning/Unified_Locomotion_Implementation_2026-10-12.md) |
-| 느린 OTM/Strafe 회전·미세 입력·State Controller·미사용 함수 정리 | [지속 곡선 판정과 Master 정리](Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md) |
-| 좌우 곡선 반전의 후보 유지·전방 입력 묶음의 예측 안정화 | [사용자 로그 후속 구현](Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md#사용자-로그-후속-곡선-반전과-전방-예측-안정화) |
-| W 미세 회전의 Loop·곡선 공동 후보·정규화 참조 보정·실제 로그 재생 | [전방 Strafe Run 후속](Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md#전방-strafe-run-미세-회전-후속-구현) |
-| W 곡선의 전방 후보 구성과 A/D 측면 후보 보호 | [전방 이동 의도별 PSD 구성](Planning/Strafe_Forward_Intent_2026-10-13.md) |
-| 착지 후 약한 회전의 후보 소유권·후속 Arc/Loop의 보간 일관성·숙인 상체의 yaw 오해 방지 | [Strafe Land 복귀 보완](Planning/Strafe_Land_Return_2026-10-13.md) |
-| 200명 리타깃·의상 물리 예산·보간·병렬 경계·off/on 결과 | [시각 애니메이션 예산 구현과 검증](Planning/Crowd_Visual_Presentation_Budget_2026-10-12.md) |
-| 실제 그래프 기반 GASP 비교·자연스러움 고도화·후속 프롬프트·PDF | [2026-10-06 조사와 고도화 인계](Planning/GASP_ProjectJ_Naturalness_2026-10-06/README.md) |
-| 이동 상태·GASP 대응 확인 | [Locomotion](Locomotion/README.md) |
-| Motion Matching 실행·원격·예산 정책 | [Motion Matching 구조와 후속 항목](Architecture/MotionMatchingNextSteps.md) |
-| 이전 외부 Blend Stack 복귀·현재에도 사용하는 검색 예산의 보완 이력 | [복귀 검색과 군중 예산 보완](Architecture/MotionMatching_Return_Crowd_2026-10-05.md) |
-| 통합 이전의 외부 단발→MM 크로스페이드·관성 복귀 비교 이력 | [Live Return 구조와 당시 검증](Architecture/OneShot_Live_Return_2026-10-11.md) |
-| Start·Land 작은 입력 유지·지속 곡선의 Cycle 복귀·첫 MM 후보 전달 | [단발 입력 반응과 첫 검색](Architecture/OneShot_Input_Response_2026-10-11.md) |
-| Strafe A/S/D 카메라 회전의 예측 흔들림·재선택 비교 | [Strafe 예측 안정화](Architecture/Strafe_Prediction_Stability_2026-10-11.md) |
-| 전방 Strafe Arc의 실제 몸통 방향·원본 자세 비교 | [전방 몸통 진단](Architecture/Strafe_Forward_Facing_Diagnostics_2026-10-11.md) |
-| Master 공통 상체 방향·프로필 뼈 역할·LOD·보호 포즈 검증 | [Strafe 상체 방향 보정](Architecture/Strafe_Upper_Body_Facing_2026-10-11.md) |
-| 전방 Strafe Run의 골반 방향·기존 발 접지 제약·Turn/몽타주 제외 | [Strafe 하체 방향 보정](Architecture/Strafe_Lower_Body_Facing_2026-10-11.md) |
-| Strafe 네 방향 Pivot·입력 취소 | [Pivot 이동 입력 기준 통일](Architecture/Strafe_Pivot_Input_Basis_2026-10-05.md) |
-| 연속 Pivot·OTM/Strafe 중복 Start/Land 방지 | [일회성 동작의 요청 수명](Architecture/OneShot_Command_Lifetime_2026-10-05.md) |
-| Start·착지 중 입력 변경·MM 복귀의 실행 흐름 | [기본 비활성 흐름 진단](Architecture/Start_Land_Input_Flow_Trace_2026-10-05.md) |
-| 이동 착지 취소의 Idle 경유·연결 레이어 검색 완료 수정 | [착지 복귀와 연결 레이어 검색](Architecture/Landing_Return_Linked_Search_2026-10-05.md) |
-| 실제 BP 군중 CPU·소켓 검증과 동시 공격 비용 | [실제 캐릭터 애니메이션 검증](Architecture/Authored_Animation_Crowd_Network_2026-10-05.md) |
-| OTM·Strafe 이동 중 180도 Turn의 조건·요청 수명·PSD 연결 | [이동 중 180도 Turn](Architecture/Moving_Turn_180_2026-10-06.md) |
-| 리타깃 파이프라인과 배경 | [런타임 리타깃 구조](Architecture/Runtime_Retarget_HandIK_Architecture.md) |
-| 무기 부착·파지·궤적·공격 종료 복귀 | [무기 파지와 손 접촉 통합 가이드](Authoring/Weapon_Hand_Contact_System.md) |
-| 외형·의상 리더 선택 | [외형 메시 소유권](Architecture/Visual_Presentation_Mesh_Ownership.md) |
-| 발소리·지형 매핑·클라이언트 군중 오디오 기반 | [캐릭터 Foley 시스템](Architecture/Foley_Audio_System.md) |
-| 실제 GASP 노티파이·오디오 뱅크·재생 경로 조사 | [GASP Foley 조사](Diagnostics/GASP_Foley_Investigation_2026-10-08.md) |
-| GASP BP 노티파이의 native 교체·설정 보존·검증 | [Foley 노티파이 교체](Diagnostics/Foley_Notify_Migration_2026-10-08.md) |
-| 이벤트 대체·발/손/소켓 정책·초기 마네킹 음원 연결 | [Foley 확장과 연결](Diagnostics/Foley_Extension_2026-10-08.md) |
-| 정면 달리기의 객체 없는 노티파이 복구·실제 MM 재생 검증 | [정면 달리기 Foley 복구](Diagnostics/Foley_Forward_Run_Fix_2026-10-08.md) |
+| 이동·스냅샷·상태 선택·ABP 노드의 책임과 현재 에셋 경로 | [플레이어 로코모션 아키텍처](Architecture/Player_Locomotion_Architecture.md) |
+| 새 이동 클립·Chooser·프로필·직업/탈것 콘텐츠 연결 | [이동 콘텐츠 확장](Authoring/DataDrivenLocomotionExtensionGuide.md) |
+| Manny 공용 모션·Quinn·비표준 골격·추가 망토 뼈 | [스켈레톤 제작 기준](Authoring/HumanoidSkeletonRetargetingStandards.md) |
+| 몸체별 손 보정·소켓·무기 부착·양손 파지 | [무기 파지와 손 접촉](Authoring/Weapon_Hand_Contact_System.md) |
+| 메시·의상·장비의 기존 LOD 보존과 제작 | [LOD 제작](Authoring/Mesh_LOD_Authoring.md) |
+| 골격 Family와 몸체 Body 프로필의 역할·수명 | [리타깃 프로필](Architecture/Runtime_Retarget_Profiles_2026-10-13.md) |
+| 실제 원인·실패·복구·빌드·회귀·PIE | [로코모션 전환·검증 기록](Architecture/Player_Locomotion_Migration_2026-10-19.md) |
 
-## 에디터 제작과 디버깅
+OTM/Strafe, 전방 세 방향 Strafe Sprint, 현재 점프의 공중 방향 재선택·playhead 연속성·수평 관성을 유지한다. 계산·Chooser 호출·핀 입력은 C++가 소유하고 포즈 연결과 노드별 실행 시점은 ABP가 소유한다. 전신 몽타주 하체를 이후 로코모션 IK가 덮지 않도록 합성 순서를 유지한다.
 
-1. [제작 가이드](Authoring/README.md): 몸체 DA, Palm·WeaponGrip 소켓, ABP의 오른팔·왼팔 연결.
-2. [진단 기록](Diagnostics/README.md): 파지·팔꿈치·TIP의 로그와 수정 근거.
-3. [계획](Planning/README.md): 파이프라인 제안과 스레딩 감사의 후속 범위.
+UEFN 원본에서 변환한 Manny 시퀀스 448개·BlendSpace 10개를 생산 Chooser/PSD/가산 base/Branch In에 연결했다. 원본은 재제작용으로 보존한다. UE5 호환 몸체 직접 재생과 현재 Bip01 대검의 실시간 리타깃을 구분한다. 추가 망토 뼈만으로 리타깃이 필수인 것은 아니다. Quinn Simple도 같은 Skeleton에서 직접 재생하지만 체형별 접지·무기 접촉은 별도 확인한다.
 
-현재 대검의 확인된 구성은 Idle 오른손 파지 → Two-Hand Grip IK 구간 양손 파지 → 왼손 해제다. 다른 무기는 보조 접촉 기능과 기본 가중치로 한손·항상 양손을 선택한다. 세부 설정은 [통합 가이드의 보조 손 절](Authoring/Weapon_Hand_Contact_System.md#secondary)에 모은다.
+## 검증을 읽을 때
 
-상체 전투 합성은 [전투](../Combat/README.md), 원격 복제 검증은 [네트워크](../Networking/README.md), 다수 플레이어 비용은 [성능](../Performance/README.md)에서 확인한다.
+2026-10-21 마지막 IK 수정 기준 native 회귀 61개, 변환본 2,240개 키프레임 표본과 실제 지상·급회전·공중/착지·전신 몽타주 검증이 통과했다. 팔 기준 포즈·손가락 마디 대응·Bip01 limb 시작점의 누락을 각각 원인에 맞춰 수정했다. 연결·실제 solver 작동·포즈·화면은 서로 다른 검증이며 전체 클립 외형·새 군중 성능을 인증한 것으로 확대하지 않는다.
+
+현재 실행기는 `Scripts/Validation/Run-PlayerLocomotionRegression.ps1`, 압축 포즈 검사는 `Validate-MannyRetargetedKinematics.py`다. 새 실행명과 정상 종료·프로세스 중복 방지 규칙을 지킨다. 상세 조건과 로컬 원자료 위치는 전환 기록을 따른다.
+
+## 관련 시스템과 이전 기록
+
+- [제작 목차](Authoring/README.md) · [이동 목차](Locomotion/README.md) · [진단](Diagnostics/README.md)
+- [전투](../Combat/README.md) · [네트워크](../Networking/README.md) · [성능](../Performance/README.md)
+- [계획·구현 이력](Planning/README.md) · [감사·후속 결과](../Review/README.md)
+
+이전 `ABP_Humanoid_Master`, CMC 전용 TIP·독립 MM·단발 스택과 R19/R20 제작 안내는 당시의 구현·비교 자료다. 현재 마스터에 옛 보정 분기를 다시 추가하지 않는다. Mirror Data의 이전 독자 계층 도입 보류와 현재 Manny mirror metadata를 구분하며, 현재 production 검색은 unmirrored다.
+
+200명 시각 예산·몸체 LOD·의상 물리의 이전 측정은 [성능 계획](../Performance/Planning/ProjectJ_200_Player_Optimization_Plan_2026-10-15.md)에서 조건과 한계를 확인한다. 새 Mover 구조의 성능으로 환산하지 않는다. 외부 기반과 프로젝트 구현의 범위는 현재 아키텍처 문서에 명시한다.

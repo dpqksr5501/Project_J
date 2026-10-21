@@ -2,13 +2,14 @@
 #include "CoreMinimal.h"
 #include "Engine/EngineTypes.h"
 #include "Abilities/GameplayAbility.h"
+#include "MoverSimulationTypes.h"
 #include "Project_JGameplayAbility_NPCAttack.generated.h"
 
 class UProject_JAttackDefinition;
 class USkeletalMeshComponent;
-class ACharacter;
+class AProject_JMoverPawn;
 class AProject_JNPCCharacter;
-/** In-place or unwarped ground root-motion attack using engine CharacterMovement and existing hit/VFX notifies. */
+/** In-place or unwarped ground root-motion attack using Mover and existing hit/VFX notifies. */
 UCLASS()
 class PROJECT_JCHARACTER_API UProject_JGameplayAbility_NPCAttack : public UGameplayAbility
 {
@@ -40,9 +41,9 @@ private:
 	UFUNCTION() void OnCompleted();
 	UFUNCTION() void OnInterrupted();
 	UFUNCTION() void OnHit(FGameplayEventData Payload);
-	UFUNCTION() void OnMovementModeChanged(ACharacter* Character, EMovementMode PreviousMode, uint8 PreviousCustomMode);
+	UFUNCTION() void OnPhysicalFrameFinalized(const FMoverSyncState& State,const FMoverAuxStateContext& Aux);
 	UPROPERTY(Transient) TObjectPtr<UProject_JAttackDefinition> ActiveDefinition;
 	TWeakObjectPtr<AActor> LockedTarget;
-	TWeakObjectPtr<ACharacter> AttackCharacter;
+	TWeakObjectPtr<AProject_JNPCCharacter> AttackCharacter;
 	bool bEndingAttack = false;
 };

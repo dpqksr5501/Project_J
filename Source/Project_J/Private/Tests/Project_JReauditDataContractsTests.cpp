@@ -78,7 +78,7 @@ bool FProjectJMovementDataValidationTest::RunTest(const FString&)
     TestEqual(TEXT("The authored data validator rejects a nonfinite movement speed"),Profile->IsDataValid(Context),EDataValidationResult::Invalid);
     TArray<FString> Warnings;
     Project_J::AnimationProfileValidation::ValidatePlayerAnimationConfiguration(
-        *GetDefault<AProject_JGreatswordCharacter>(),Profile,nullptr,nullptr,nullptr,nullptr,Warnings);
+        *GetDefault<AProject_JGreatswordCharacter>(),Profile,nullptr,nullptr,nullptr,Warnings);
     TestTrue(TEXT("Runtime configuration diagnostics identify the invalid WalkSpeed"),Warnings.ContainsByPredicate([](const FString& W){return W.Contains(TEXT("WalkSpeed"));}));
     return true;
 }
@@ -207,7 +207,6 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJControllerUIPlayReuseTest,
     "ProjectJ.Reaudit.ControllerUIPlayReuse", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJControllerUIPlayReuseTest::RunTest(const FString&)
 {
-    AddExpectedError(TEXT("Character data registry is empty."),EAutomationExpectedErrorFlags::Contains,1);
     AddExpectedError(TEXT("does not have a valid PlayerInput object. Failed to load user settings."),EAutomationExpectedErrorFlags::Contains,1);
     auto* GameInstance=NewObject<UGameInstance>(GEngine);GameInstance->InitializeStandalone();
     auto* World=GameInstance->GetWorld();

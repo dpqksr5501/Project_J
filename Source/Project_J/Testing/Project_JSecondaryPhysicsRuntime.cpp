@@ -1,4 +1,5 @@
 #if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
+#include "Tests/Project_JMoverFrameFixture.h"
 #include "Testing/Project_JAuthoredAnimationFixture.h"
 #include "BoneControllers/AnimNode_RigidBody.h"
 #include "PhysicsEngine/PhysicsAsset.h"
@@ -125,13 +126,13 @@ class FSecondaryPhysicsEquivalence : public IAutomationLatentCommand
 	}
 	void AdvanceInput()
 	{
-		auto* Movement = Player->GetCharacterMovement();
 		const bool bAir = Frame>=360 && Frame<420;
-		Movement->SetMovementMode(bAir ? MOVE_Falling : MOVE_Walking);
 		if (Frame>=240 && Frame<360) Player->AddActorWorldRotation(FRotator(0,.5,0));
-		Movement->Velocity = Player->GetActorForwardVector()*(Frame<120 ? 0 : Frame<240 ? 200 : 600) + FVector(0,0,bAir ? 300-(Frame-360)*10 : 0);
-		Player->AddActorWorldOffset(Movement->Velocity/60.f);
+		const FVector Velocity = Player->GetActorForwardVector()*(Frame<120 ? 0 : Frame<240 ? 200 : 600) + FVector(0,0,bAir ? 300-(Frame-360)*10 : 0);
+  Player->AddActorWorldOffset(Velocity/60.f);
 		if (Frame==440) Player->SetActorLocation(Player->GetActorLocation()+FVector(1200,0,0),false,nullptr,ETeleportType::TeleportPhysics);
+		// Publish the completed synthetic transform, including the deliberate teleport.
+		Test->TestTrue(TEXT("Synthetic secondary-physics frame published"),ProjectJ::Tests::PublishMoverFrame(Player,bAir?MOVE_Falling:MOVE_None,Velocity));
 		if (Frame==480 || Frame==540 || Frame==600) Player->SetActorScale3D(FVector(Frame==480 ? .85 : Frame==540 ? 1.15 : 1));
 		if (Frame==660)
 		{

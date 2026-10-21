@@ -16,6 +16,14 @@ class UProject_JCombatStyleDefinition;
 class UProject_JWeaponPresentationProfile;
 
 UENUM(BlueprintType)
+enum class EProject_JEquipmentPoseMode : uint8
+{
+	LeaderPose,
+	/** Copy matching bones, then run the mesh's authored post-process ABP for extra bones. */
+	CopyPose
+};
+
+UENUM(BlueprintType)
 enum class EProject_JEquipmentStatApplicationPolicy : uint8
 {
 	/** Preferred production path: authored infinite GameplayEffects with explicit source handles. */
@@ -46,6 +54,10 @@ public:
 	// Socket name to attach to. If empty, it assumes standard body armor attaching (Leader Pose).
 	UPROPERTY(EditDefaultsOnly, Category = "Equipment|Visual")
 	FName AttachSocketName;
+
+	/** Applies to body-following parts without an attachment socket. */
+	UPROPERTY(EditDefaultsOnly, Category="Equipment|Visual")
+	EProject_JEquipmentPoseMode PoseMode = EProject_JEquipmentPoseMode::LeaderPose;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Equipment|Visual|Optimization", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float MaxDrawDistance = 0.0f;

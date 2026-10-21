@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "Project_JLocomotionAnimStateComponent.h"
 
 void UProject_JLocomotionAnimStateComponent::UpdateLocalAirState(bool bIsCurrentlyInAir)
@@ -101,21 +99,17 @@ void UProject_JLocomotionAnimStateComponent::UpdateRemoteAirState(
 		UpdateRemoteAirborneEvidence(DeltaTime);
 	}
 
-	if (!bIsCurrentlyInAir && bHadRemoteAirborneEvidence && !bIsLanding && !bLandingRequested)
-	{
-		StartLanding(FMath::Max(LastFallSpeed, FMath::Abs(VerticalSpeed)), false, false);
-		bWasInAir = false;
-		RemoteAirborneTime = 0.0f;
-		return;
-	}
-
 	if (bIsCurrentlyInAir)
 	{
 		bIsInAir = true;
-		bIsLanding = false;
-		bLandingRequested = false;
-		bCanEnterLand = false;
-		bCanEnterGround = false;
+		// Mover's interpolated physical frame drives GASP. The ordered server
+		// event owns this remote landing/Foley lease and can arrive before that
+		// frame reaches ground. Do not cancel it or infer a second landing here.
+		if (!IsLandingStateActive())
+		{
+			bCanEnterLand = false;
+			bCanEnterGround = false;
+		}
 	}
 	else if (!bIsLanding && !bLandingRequested)
 	{
@@ -189,7 +183,10 @@ bool UProject_JLocomotionAnimStateComponent::UpdateRemoteJumpStartState(float De
 	}
 	else if (bHadRemoteAirborneEvidence && JumpStartElapsedTime >= JumpStartGroundContactGraceTime && !bIsLanding && !bLandingRequested)
 	{
-		StartLanding(FMath::Max(LastFallSpeed, FMath::Abs(VerticalSpeed)), false, false);
+		// Physical interpolation may end the jump before its ordered landing
+		// event arrives. End only the jump here; that event owns remote landing.
+		CompleteJumpStart();
+		ClearRemoteGroundedAirState();
 		bWasInAir = false;
 		RemoteAirborneTime = 0.0f;
 		return true;

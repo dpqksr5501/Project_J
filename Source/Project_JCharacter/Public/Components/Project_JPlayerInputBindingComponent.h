@@ -38,6 +38,8 @@ struct FProject_JPlayerInputActionSet
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> SprintAction = nullptr;
 
+ UPROPERTY() TObjectPtr<UInputAction> WalkAction = nullptr;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> ToggleCombatAction = nullptr;
 

@@ -1,7 +1,9 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Project_JPlayerCharacter.h"
-#include "Components/Project_JCharacterMovementComponent.h"
+#include "MoverSimulationTypes.h"
+#include "Movement/Project_JMovementQueries.h"
+#include "Movement/Project_JMoverComponent.h"
 #include "Components/Project_JFoleyComponent.h"
 #include "CharacterClass/Project_JCharacterClassDefinition.h"
 #include "CharacterClass/Project_JProgressionComponent.h"
@@ -18,8 +20,7 @@
 #include "Animation/Project_JCharacterAnimProfile.h"
 #include "Animation/Project_JCombatAnimProfile.h"
 #include "Animation/Project_JLocomotionProfile.h"
-#include "Animation/Project_JMotionMatchingAssetSet.h"
-#include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
+#include "Animation/Project_JPlayerAnimInstance.h"
 #include "Animation/Project_JWeaponAnimProfile.h"
 #include "Combat/Project_JCombatStyleDefinition.h"
 #include "Equipment/Project_JWeaponPresentationProfile.h"
@@ -66,7 +67,6 @@
 #include "Engine/World.h"
 #include "Engine/OverlapResult.h"
 #include "HAL/IConsoleManager.h"
-#include "Animation/Project_JMotionMatchingCVars.h"
 
 DEFINE_LOG_CATEGORY(LogProjectJPlayer);
 
@@ -108,7 +108,7 @@ int32 GetCharacterLevelForInterfaceObject(const UObject* Object)
 }
 
 AProject_JPlayerCharacter::AProject_JPlayerCharacter(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer.SetDefaultSubobjectClass<UProject_JCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
+	: Super(ObjectInitializer)
 {
 	RuntimeStateOwnership = EProject_JRuntimeStateOwnership::PlayerStatePreferred;
 
@@ -121,19 +121,6 @@ AProject_JPlayerCharacter::AProject_JPlayerCharacter(const FObjectInitializer& O
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
-
-	// Configure character movement
-	GetCharacterMovement()->bOrientRotationToMovement = true;
-	GetCharacterMovement()->RotationRate = FRotator(0.0f, WalkRotationRateYaw, 0.0f);
-
-	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
-	// instead of recompiling to adjust them
-	GetCharacterMovement()->JumpZVelocity = 500.f;
-	GetCharacterMovement()->AirControl = 0.35f;
-	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
-	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
-	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
-	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 	GetMesh()->SetAnimInstanceClass(UProject_JCharacterAnimInstance::StaticClass());
@@ -155,7 +142,7 @@ AProject_JPlayerCharacter::AProject_JPlayerCharacter(const FObjectInitializer& O
 	CameraComponent->Initialize(CameraBoom, FollowCamera);
 
 	LocomotionAnimStateComponent = CreateDefaultSubobject<UProject_JLocomotionAnimStateComponent>(TEXT("LocomotionAnimStateComponent"));
-	MotionMatchingTrajectoryComponent = CreateDefaultSubobject<UProject_JMotionMatchingTrajectoryComponent>(TEXT("MotionMatchingTrajectoryComponent"));
+	// Mover trajectory is captured once by the native GASP animation bridge.
 	CharacterUIBindingComponent = CreateDefaultSubobject<UProject_JCharacterUIBindingComponent>(TEXT("CharacterUIBindingComponent"));
 	PlayerInputBindingComponent = CreateDefaultSubobject<UProject_JPlayerInputBindingComponent>(TEXT("PlayerInputBindingComponent"));
 	SkillInputRouterComponent = CreateDefaultSubobject<UProject_JSkillInputRouterComponent>(TEXT("SkillInputRouterComponent"));
@@ -231,7 +218,6 @@ void AProject_JPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason
 #if !UE_BUILD_SHIPPING
 	UnregisterMouseTurnCameraTrace();
 #endif
-	TurnInPlacePresentationRuntime.Reset();
 	PendingMountItemId.Invalidate();
 	if (IsValid(SummonedMount))
 	{
@@ -269,7 +255,6 @@ void AProject_JPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason
 void AProject_JPlayerCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-	TurnInPlacePresentationRuntime.Reset();
 
 	if (LocomotionAnimStateComponent)
 	{
@@ -291,7 +276,6 @@ void AProject_JPlayerCharacter::PawnClientRestart()
 
 void AProject_JPlayerCharacter::UnPossessed()
 {
-	TurnInPlacePresentationRuntime.Reset();
 	StopSprint();
 	SprintMoveInput = FVector2D::ZeroVector;
 	if (PlayerInputBindingComponent) PlayerInputBindingComponent->UnbindInput();
@@ -312,7 +296,7 @@ void AProject_JPlayerCharacter::OnRep_PlayerState()
 
 void AProject_JPlayerCharacter::ApplyPrototypeStartingEquipment()
 {
-	if (!HasAuthority() || !PrototypeStartingWeapon)
+	if (!HasAuthority() || !PrototypeStartingWeapon || !GetPlayerState())
 	{
 		return;
 	}
@@ -350,22 +334,13 @@ void AProject_JPlayerCharacter::Tick(float DeltaTime)
 	// The component owns generation eligibility and same-frame de-duplication.
 	// Calling here guarantees locomotion semantics consume the current movement
 	// frame even when CharacterMovement did not broadcast an update.
-	if (MotionMatchingTrajectoryComponent)
-	{
-		TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_PlayerCharacterTick_Trajectory);
-		MotionMatchingTrajectoryComponent->UpdateTrajectoryState(DeltaTime);
-	}
+
 
 	if (LocomotionAnimStateComponent)
 	{
 		TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_PlayerCharacterTick_LocomotionState);
 		LocomotionAnimStateComponent->UpdateState(DeltaTime);
-		uint8 TurnInPlaceDirectionBucket = 0;
-		float TurnInPlaceTargetFacingYaw = 0.0f;
-		if (LocomotionAnimStateComponent->ConsumeTurnInPlaceReplicationRequest(TurnInPlaceDirectionBucket, TurnInPlaceTargetFacingYaw) && ReplicatedAnimEventComponent)
-		{
-			ReplicatedAnimEventComponent->DispatchTurnInPlaceStarted(TurnInPlaceDirectionBucket, TurnInPlaceTargetFacingYaw);
-		}
+
 	}
 #if !UE_BUILD_SHIPPING
 	RecordMouseTurnFrame(DeltaTime);
@@ -576,6 +551,7 @@ void AProject_JPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
 	ActionSet.LookAction = LookAction;
 	ActionSet.MouseLookAction = MouseLookAction;
 	ActionSet.SprintAction = SprintAction;
+ ActionSet.WalkAction = WalkAction;
 	ActionSet.ToggleCombatAction = ToggleCombatAction;
 	ActionSet.AttackAction = AttackAction;
 	ActionSet.HeavyAttackAction = HeavyAttackAction;
@@ -839,87 +815,19 @@ void AProject_JPlayerCharacter::ApplyLocomotionProfile()
 	{
 		if (LocomotionAnimStateComponent)
 		{
-			LocomotionAnimStateComponent->SprintLocomotionSpeedThreshold = EffectiveLocomotionProfile->SprintLocomotionSpeedThreshold;
 			LocomotionAnimStateComponent->ApplyTransitionPolicy(EffectiveLocomotionProfile->TransitionPolicy);
 			LocomotionAnimStateComponent->HiddenRemoteUpdateInterval = EffectiveLocomotionProfile->AnimStateHiddenRemoteUpdateInterval;
-			LocomotionAnimStateComponent->RemoteStartTurnExitAngle = EffectiveLocomotionProfile->RemoteVisualPolicy.RemoteStartTurnExitAngle;
-			LocomotionAnimStateComponent->RemoteStopStartSuppressDuration = EffectiveLocomotionProfile->RemoteVisualPolicy.RemoteStopStartSuppressDuration;
-			LocomotionAnimStateComponent->bUseForwardOnlyRemoteStart = EffectiveLocomotionProfile->RemoteVisualPolicy.bUseForwardOnlyRemoteStart;
 		}
 
-		SignificanceNearDistance = EffectiveLocomotionProfile->NearMotionMatchingDistance;
-		SignificanceMidDistance = EffectiveLocomotionProfile->MidMotionMatchingDistance;
-		SignificanceFarDistance = EffectiveLocomotionProfile->FarMotionMatchingDistance;
+		SignificanceNearDistance = EffectiveLocomotionProfile->AnimationBudget.NearDistance;
+		SignificanceMidDistance = EffectiveLocomotionProfile->AnimationBudget.MidDistance;
+		SignificanceFarDistance = EffectiveLocomotionProfile->AnimationBudget.FarDistance;
 	}
 
 	UpdateMaxWalkSpeed();
 }
 
-void AProject_JPlayerCharacter::LogAnimationProfileConfiguration() const
-{
-	const UProject_JLocomotionProfile* EffectiveLocomotionProfile = GetLocomotionProfile();
-	const UProject_JMotionMatchingAssetSet* EffectiveAssetSet = GetMotionMatchingAssetSet();
 
-	if (!CharacterAnimProfile && LocomotionProfile)
-	{
-		UE_LOG(
-			LogProjectJPlayer,
-			Display,
-			TEXT("%s uses LocomotionProfile directly. Prefer assigning CharacterAnimProfile for new characters."),
-			*GetNameSafe(this));
-	}
-	else if (!CharacterAnimProfile && MotionMatchingAssetSet)
-	{
-		UE_LOG(
-			LogProjectJPlayer,
-			Display,
-			TEXT("%s uses MotionMatchingAssetSet directly. Prefer CharacterAnimProfile -> LocomotionProfile -> MotionMatchingAssetSet."),
-			*GetNameSafe(this));
-	}
-
-	if (CharacterAnimProfile && !EffectiveLocomotionProfile)
-	{
-		UE_LOG(
-			LogProjectJPlayer,
-			Warning,
-			TEXT("%s has CharacterAnimProfile %s, but it does not provide a LocomotionProfile."),
-			*GetNameSafe(this),
-			*GetNameSafe(CharacterAnimProfile));
-	}
-
-	if (EffectiveLocomotionProfile && !EffectiveAssetSet)
-	{
-		UE_LOG(
-			LogProjectJPlayer,
-			Warning,
-			TEXT("%s uses LocomotionProfile %s, but no MotionMatchingAssetSet is assigned."),
-			*GetNameSafe(this),
-			*GetNameSafe(EffectiveLocomotionProfile));
-	}
-	else if (!EffectiveLocomotionProfile && !EffectiveAssetSet)
-	{
-		UE_LOG(
-			LogProjectJPlayer,
-			Warning,
-			TEXT("%s has no CharacterAnimProfile, LocomotionProfile, or MotionMatchingAssetSet assigned."),
-			*GetNameSafe(this));
-	}
-
-	TArray<FString> ValidationWarnings;
-	Project_J::AnimationProfileValidation::ValidatePlayerAnimationConfiguration(
-		*this,
-		EffectiveLocomotionProfile,
-		EffectiveAssetSet,
-		GetWeaponAnimProfile(),
-		GetCombatAnimProfile(),
-		LocomotionAnimStateComponent,
-		ValidationWarnings);
-
-	for (const FString& ValidationWarning : ValidationWarnings)
-	{
-		UE_LOG(LogProjectJPlayer, Warning, TEXT("%s"), *ValidationWarning);
-	}
-}
 
 UAnimMontage* AProject_JPlayerCharacter::GetEffectiveCombatIntroMontage() const
 {
@@ -1021,30 +929,9 @@ const UProject_JLocomotionProfile* AProject_JPlayerCharacter::GetLocomotionProfi
 	return LocomotionProfile.Get();
 }
 
-const UProject_JMotionMatchingAssetSet* AProject_JPlayerCharacter::GetMotionMatchingAssetSet() const
-{
-	// AssetSet is normally resolved from the effective locomotion profile.
-	// Direct assignment remains as the last character-level migration fallback.
-	if (const UProject_JLocomotionProfile* EffectiveLocomotionProfile = GetLocomotionProfile())
-	{
-		if (EffectiveLocomotionProfile->MotionMatchingAssetSet)
-		{
-			return EffectiveLocomotionProfile->MotionMatchingAssetSet.Get();
-		}
-	}
 
-	return MotionMatchingAssetSet.Get();
-}
 
-const UProject_JMotionMatchingAssetSet* AProject_JPlayerCharacter::GetCombatStrafeMotionMatchingAssetSet() const
-{
-	if (const UProject_JCombatAnimProfile* EffectiveCombatAnimProfile = GetCombatAnimProfile())
-	{
-		return EffectiveCombatAnimProfile->CombatStrafeMotionMatchingAssetSet.Get();
-	}
 
-	return nullptr;
-}
 
 const UProject_JWeaponAnimProfile* AProject_JPlayerCharacter::GetWeaponAnimProfile() const
 {
@@ -1269,53 +1156,6 @@ void AProject_JPlayerCharacter::ServerSetCombatIntroPresentation_Implementation(
 		bReplicatedCombatIntroPresentation ? TEXT("ServerIntroPresentationSetTrue") : TEXT("ServerIntroPresentationSetFalse"));
 }
 
-void AProject_JPlayerCharacter::ServerSetTurnInPlaceRotation_Implementation(bool bInTurnInPlace, float InTargetActorYaw)
-{
-	if (!FMath::IsFinite(InTargetActorYaw))
-	{
-		return;
-	}
-
-	UCharacterMovementComponent* Movement = GetCharacterMovement();
-	if (!IsCombatModeActive() || !Movement || !Movement->IsMovingOnGround() || GetVelocity().Size2D() > 20.0f)
-	{
-		return;
-	}
-
-	const UWorld* World = GetWorld();
-	const double Now = World ? World->GetTimeSeconds() : 0.0;
-	const float CurrentYaw = GetActorRotation().Yaw;
-	const float RequestedYaw = FRotator::NormalizeAxis(InTargetActorYaw);
-
-	// A 180 degree authored TIP can legitimately rotate at about 180 deg/s.
-	// The server clock owns admission and the yaw budget, including stop packets.
-	// Client active/stop flags must never replenish the initial burst.
-	constexpr double MinServerTurnInPlaceUpdateInterval = 1.0 / 30.0;
-	constexpr float MaxTurnInPlaceYawRateDegreesPerSecond = 240.0f;
-	constexpr float MaxTurnInPlaceYawBurstDegrees = 35.0f;
-	if (LastServerTurnInPlaceRotationTime >= 0.0 &&
-		(Now - LastServerTurnInPlaceRotationTime) < MinServerTurnInPlaceUpdateInterval)
-	{
-		return;
-	}
-
-	const double Elapsed = LastServerTurnInPlaceRotationTime >= 0.0
-		? FMath::Max(0.0, Now - LastServerTurnInPlaceRotationTime)
-		: 0.0;
-	ServerTurnInPlaceYawBudget = FMath::Min(MaxTurnInPlaceYawBurstDegrees,
-		ServerTurnInPlaceYawBudget + MaxTurnInPlaceYawRateDegreesPerSecond * static_cast<float>(Elapsed));
-	const float RequestedDelta = FMath::FindDeltaAngleDegrees(CurrentYaw, RequestedYaw);
-	const float AcceptedDelta = FMath::Clamp(RequestedDelta, -ServerTurnInPlaceYawBudget, ServerTurnInPlaceYawBudget);
-	if (!FMath::IsNearlyZero(AcceptedDelta, 0.01f))
-	{
-		SetActorRotation(FRotator(0.0f, FRotator::NormalizeAxis(CurrentYaw + AcceptedDelta), 0.0f));
-		ServerTurnInPlaceYawBudget = FMath::Max(0.0f, ServerTurnInPlaceYawBudget - FMath::Abs(AcceptedDelta));
-	}
-
-	LastServerTurnInPlaceRotationTime = Now;
-	// Retain the RPC payload for wire compatibility; active/stop owns no budget.
-}
-
 void AProject_JPlayerCharacter::SetCombatTransitionState(bool bTransitionActive)
 {
 	if (!HasAuthority())
@@ -1374,7 +1214,7 @@ bool AProject_JPlayerCharacter::CanToggleCombatMode() const
 		return false;
 	}
 
-	if (const UCharacterMovementComponent* MoveComp = GetCharacterMovement(); MoveComp && MoveComp->IsFalling())
+	if (Project_J::Movement::IsInAir(this))
 	{
 		return false;
 	}
@@ -1542,10 +1382,8 @@ void AProject_JPlayerCharacter::InterruptCombatIntroForHit()
 
 void AProject_JPlayerCharacter::Landed(const FHitResult& Hit)
 {
-	const FVector PreLandingVelocity = GetVelocity();
-	const FVector PreLandingAcceleration = GetCharacterMovement()
-		? GetCharacterMovement()->GetCurrentAcceleration()
-		: FVector::ZeroVector;
+	const FVector PreLandingVelocity = GetLastLandingVelocity();
+	const FVector PreLandingAcceleration = Project_J::Movement::ReadPhysicalFrame(this).Acceleration;
 	const float ImpactFallSpeed = FMath::Abs(PreLandingVelocity.Z);
 	const float HorizontalSpeedSquared = FVector(PreLandingVelocity.X, PreLandingVelocity.Y, 0.0f).SizeSquared();
 	const float LandingMovingSpeedThreshold = LocomotionAnimStateComponent
@@ -1680,7 +1518,7 @@ bool AProject_JPlayerCharacter::TryApplyHandoverSnapshot(const TArray<uint8>& In
 	// class-floor normalization, but never acknowledge a different level or pose-only apply.
 	if (!CanApplyCharacterLevelExactly(Snapshot.Level)) { return false; }
 
-	if (!SetActorLocationAndRotation(Snapshot.Location, Snapshot.Rotation, false, nullptr, ETeleportType::TeleportPhysics))
+	if (!CastChecked<UProject_JMoverComponent>(GetMover())->ApplyAuthorityHandoverTransform(FTransform(Snapshot.Rotation,Snapshot.Location)))
 	{
 		return false;
 	}
@@ -1689,13 +1527,6 @@ bool AProject_JPlayerCharacter::TryApplyHandoverSnapshot(const TArray<uint8>& In
 		|| GetProgressionComponent() != Progression.Get() || !TrySetCharacterLevel(Snapshot.Level)
 		|| GetCharacterLevel_Implementation() != Snapshot.Level) { return false; }
 
-	// Physics and teleport compensation
-	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
-	{
-		MoveComp->StopMovementImmediately();
-	}
-
-	if (MotionMatchingTrajectoryComponent) MotionMatchingTrajectoryComponent->ResetTrajectoryHistory();
 	if (UProject_JServerSideRewindComponent* Rewind = FindComponentByClass<UProject_JServerSideRewindComponent>()) Rewind->ResetHistory();
 	ForceNetUpdate();
 	return !IsActorBeingDestroyed() && IsValid(StateOwner.Get()) && !StateOwner->IsActorBeingDestroyed()
@@ -1719,4 +1550,11 @@ bool AProject_JPlayerCharacter::TrySetCharacterLevel(int32 NewLevel)
 	return !IsActorBeingDestroyed() && IsValid(StateOwner.Get()) && !StateOwner->IsActorBeingDestroyed()
 		&& GetAbilitySystemOwnerActor() == StateOwner.Get() && GetProgressionComponent() == Progression.Get()
 		&& (!Progression.Get() || !Progression->IsBeingDestroyed());
+}
+
+void AProject_JPlayerCharacter::LogAnimationProfileConfiguration() const
+{
+ TArray<FString> Warnings;
+ Project_J::AnimationProfileValidation::ValidatePlayerAnimationConfiguration(*this,GetLocomotionProfile(),GetWeaponAnimProfile(),GetCombatAnimProfile(),LocomotionAnimStateComponent,Warnings);
+ for(const auto& Warning:Warnings) UE_LOG(LogProjectJPlayer,Warning,TEXT("%s"),*Warning);
 }

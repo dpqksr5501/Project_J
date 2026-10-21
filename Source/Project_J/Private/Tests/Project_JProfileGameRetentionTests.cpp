@@ -260,7 +260,6 @@ bool FProjectJGameRetentionTest::RunTest(const FString &)
 		AddError(TEXT("Unknown actual command phase"));
 		return false;
 	}
-	AddExpectedError(TEXT("Character data registry is empty."), EAutomationExpectedErrorFlags::Contains, 1);
 	const FString File = FPaths::ConvertRelativePathToFull(
 		FPaths::ProjectSavedDir() / TEXT("Validation/GameRetention") /
 		(Phase.IsEmpty() ? FGuid::NewGuid().ToString() : TEXT("Restart")) / TEXT("Profiles.sqlite"));

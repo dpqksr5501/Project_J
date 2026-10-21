@@ -1,4 +1,7 @@
 #if WITH_DEV_AUTOMATION_TESTS
+#include "DefaultMovementSet/NavMoverComponent.h"
+#include "DefaultMovementSet/Settings/CommonLegacyMovementSettings.h"
+#include "DefaultMovementSet/CharacterMoverComponent.h"
 #include "Misc/AutomationTest.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/Engine.h"
@@ -20,7 +23,6 @@
 #include "GameFramework/WorldSettings.h"
 #include "System/Project_JNPCPathSubsystem.h"
 #include "System/Project_JNPCDecisionSubsystem.h"
-#include "Mass/Project_JMassRepresentationSubsystem.h"
 #include "Components/Project_JNPCActionComponent.h"
 #include "Components/Project_JTargetScoringComponent.h"
 #include "HAL/PlatformTime.h"
@@ -31,8 +33,8 @@ namespace
 	class FNativeNavCommand : public IAutomationLatentCommand
 	{
 	public:
-		explicit FNativeNavCommand(FAutomationTestBase* InTest, bool bTestMovingTarget = false, bool bTestRebuild = false, bool bTestAutomaticDirty = false, bool bTestMassRoute = false)
-			: Test(InTest), Started(FPlatformTime::Seconds()), bMovingTarget(bTestMovingTarget), bRebuild(bTestRebuild), bAutomaticDirty(bTestAutomaticDirty), bMassRoute(bTestMassRoute)
+		explicit FNativeNavCommand(FAutomationTestBase* InTest, bool bTestMovingTarget = false, bool bTestRebuild = false, bool bTestAutomaticDirty = false)
+			: Test(InTest), Started(FPlatformTime::Seconds()), bMovingTarget(bTestMovingTarget), bRebuild(bTestRebuild), bAutomaticDirty(bTestAutomaticDirty)
 		{
 			World = UWorld::CreateWorld(EWorldType::Game, false);
 			GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
@@ -53,27 +55,43 @@ namespace
 			auto* Builder = NewObject<UCubeBuilder>();
 			Builder->X = 3800; Builder->Y = 2800; Builder->Z = 1000;
 			UActorFactory::CreateBrushForVolumeActor(Bounds, Builder);
-			FNavigationSystem::AddNavigationSystemToWorld(*World, FNavigationSystemRunMode::GameMode);
+			// Create the service first so the explicit nav-data actor can register,
+			// then initialize the world with that data already available. Creating
+			// the actor before the service leaves it without a registered generator.
+			FNavigationSystem::AddNavigationSystemToWorld(*World, FNavigationSystemRunMode::GameMode, nullptr, false);
 			Nav = FNavigationSystem::GetCurrent<UNavigationSystemV1>(World);
+			if(Nav)
+			{
+				// This fixture drives AAIController's standard path follower and
+				// NavMover, not DetourCrowd agents. Do not create an unused crowd
+				// service that searches for a replacement navmesh during teardown.
+				// Only this transient instance is configured; project defaults stay intact.
+				auto* CrowdClass=FindFProperty<FSoftClassProperty>(Nav->GetClass(),TEXT("CrowdManagerClass"));
+				check(CrowdClass);
+				CrowdClass->SetObjectPropertyValue_InContainer(Nav,nullptr);
+			}
+			auto* FixtureNavData=World->SpawnActor<ARecastNavMesh>();
+			FixtureNavData->SetConfig(UNavigationSystemV1::GetDefaultSupportedAgent());
+			// Static transient nav data must request its initial build before world
+			// initialization decides whether to retain geometry in the nav octree.
+			FixtureNavData->MarkRequiresInitialRebuild();
+			if(bRebuild)
+			{
+				auto* Property=FindFProperty<FEnumProperty>(ANavigationData::StaticClass(),TEXT("RuntimeGeneration"));
+				Property->GetUnderlyingProperty()->SetIntPropertyValue(Property->ContainerPtrToValuePtr<void>(FixtureNavData),int64(ERuntimeGenerationType::Dynamic));
+			}
 			if (Nav)
 			{
+				Nav->InitializeForWorld(*World,FNavigationSystemRunMode::GameMode);
 				Nav->OnNavigationBoundsUpdated(Bounds);
-				if (auto* Data = Nav->GetDefaultNavDataInstance(FNavigationSystem::Create))
-				{
-					if (bRebuild)
-					{
-						auto* Property = FindFProperty<FEnumProperty>(ANavigationData::StaticClass(), TEXT("RuntimeGeneration"));
-						Property->GetUnderlyingProperty()->SetIntPropertyValue(Property->ContainerPtrToValuePtr<void>(Data), int64(ERuntimeGenerationType::Dynamic));
-					}
-					Data->MarkRequiresInitialRebuild();
-				}
 				Nav->Build();
 			}
 			FActorSpawnParameters P; P.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 			NPC = World->SpawnActor<AProject_JNPCCharacter>(AProject_JNPCCharacter::StaticClass(), FVector(-900, 0, 100), FRotator::ZeroRotator, P);
 			AI = World->SpawnActor<AAIController>(); AI->Possess(NPC);
+			Test->TestEqual(TEXT("This fixture exercises the standard path follower"),AI->GetPathFollowingComponent()->GetClass(),UPathFollowingComponent::StaticClass());
 			NPC->GetMesh()->SetCanEverAffectNavigation(false);
-			NPC->GetCharacterMovement()->MaxWalkSpeed = 300;
+			NPC->GetMover()->FindSharedSettings_Mutable<UCommonLegacyMovementSettings>()->MaxSpeed = 300;
 			NPC->GetAbilitySystemComponent()->InitAbilityActorInfo(NPC, NPC);
 			NPC->GetAttributeSet()->InitHealth(100);
 			World->InitializeActorsForPlay(FURL());
@@ -89,15 +107,11 @@ namespace
 				auto* Scoring = NewObject<UProject_JTargetScoringComponent>(NPC); NPC->AddInstanceComponent(Scoring); Scoring->RegisterComponent();
 				Scoring->Range = 4000; Scoring->bUseUrgentNPCDecisionInterval = true;
 				Scoring->StartBatchedNPCDecisions(1);
-				if (bMassRoute)
-				{
-					// A disabled optional component must not hide the actual movement owner.
-					auto* DisabledPeer = NewObject<UProject_JNPCActionComponent>(NPC); NPC->AddInstanceComponent(DisabledPeer); DisabledPeer->RegisterComponent();
-				}
+
 				Actions = NewObject<UProject_JNPCActionComponent>(NPC); NPC->AddInstanceComponent(Actions); Actions->RegisterComponent();
 				Actions->RetryInterval = 0.1;
 				Test->TestTrue(TEXT("Real moving-target consumer starts"), Actions->StartActions(Scoring, {}));
-				NPC->GetCharacterMovement()->GetNavMovementProperties()->bUseAccelerationForPaths = true;
+				NPC->NavMover->GetNavMovementProperties()->bUseAccelerationForPaths = true;
 			}
 		}
 		~FNativeNavCommand()
@@ -120,27 +134,7 @@ namespace
 				MovingTarget->SetActorLocation(FVector(900, FMath::Min(SimulatedSeconds * 100.0, 800.0), 90));
 				const auto PreviousMove = AI->GetPathFollowingComponent()->GetCurrentRequestId();
 				const bool bWasFollowing = AI->GetPathFollowingComponent()->GetStatus() == EPathFollowingStatus::Moving;
-				if (bMassRoute && bWasFollowing && !MassToken.IsValid())
-				{
-					auto* Bridge = World->GetSubsystem<UProject_JMassRepresentationSubsystem>();
-					MassPath = AI->GetPathFollowingComponent()->GetPath();
-					MassToken = Bridge->RegisterNPC(NPC);
-					Test->TestTrue(TEXT("Owned Character path can be lent to Mass"), Bridge->SetRoute(MassToken, MassPath));
-					Bridge->SetObserversForTest({FVector(20000, 0, 0)});
-					Bridge->Tick(0);
-					Test->TestTrue(TEXT("Active pursuit hands movement to Mass"), Bridge->IsMassOwned(MassToken.Id));
-					Test->TestEqual(TEXT("Old action consumer stopped before Mass moves"), Actions->GetActionState(), EProjectJNPCActionState::Disabled);
-					Test->TestEqual(TEXT("Owned path following released"), AI->GetPathFollowingComponent()->GetStatus(), EPathFollowingStatus::Idle);
-					const FVector Before = NPC->GetActorLocation();
-					World->Tick(LEVELTICK_All, 0.05f);
-					Test->TestTrue(TEXT("Mass advances the retained Character after action shutdown"), !NPC->GetActorLocation().Equals(Before));
-					Bridge->SetObserversForTest({NPC->GetActorLocation()}); Bridge->Tick(0);
-					Test->TestFalse(TEXT("Near promotion releases Mass ownership"), Bridge->IsMassOwned(MassToken.Id));
-					Test->TestTrue(TEXT("Scoring/action start contract restored"), Actions->GetScoringSource() && Actions->GetActionState() != EProjectJNPCActionState::Disabled);
-					Test->TestTrue(TEXT("Movement component restored for resumed pursuit"), NPC->GetCharacterMovement()->IsComponentTickEnabled());
-					Bridge->UnregisterNPC(Bridge->GetToken(MassToken.Id));
-					return false; // Continue the real moving-target scenario until resumed pursuit arrives.
-				}
+
 				if (bRebuild && !bRebuilt && bWasFollowing)
 				{
 					bRebuilt = true; DispatchBeforeRebuild = Service->GetStats().Dispatched;
@@ -205,14 +199,7 @@ namespace
 					if (!Result.Path) { return; }
 					PathPoints = Result.Path->GetPathPoints().Num();
 					Test->TestTrue(TEXT("Route avoids obstacle rather than a straight-line mock"), PathPoints > 2);
-					if (bMassRoute)
-					{
-						auto* Bridge = World->GetSubsystem<UProject_JMassRepresentationSubsystem>();
-						Bridge->SetObserversForTest({FVector(20000, 0, 0)});
-						MassToken = Bridge->RegisterNPC(NPC); MassPath = Result.Path;
-						Test->TestTrue(TEXT("C service path handed to Mass as route values"), Bridge->SetRoute(MassToken, Result.Path));
-						return;
-					}
+
 					FAIMoveRequest Move; Move.SetGoalLocation(Goal); Move.SetAcceptanceRadius(60);
 					MoveId = AI->RequestMove(Move, Result.Path);
 					Test->TestTrue(TEXT("Real path-following accepts completed path"), MoveId.IsValid());
@@ -221,18 +208,8 @@ namespace
 			}
 			if (bCompleted && FVector::DistSquared2D(NPC->GetActorLocation(), Goal) < FMath::Square(120.0))
 			{
-				if (bMassRoute)
-				{
-					auto* Bridge = World->GetSubsystem<UProject_JMassRepresentationSubsystem>();
-					Test->TestTrue(TEXT("Mass owns actual Recast route traversal"), Bridge->IsMassOwned(MassToken.Id));
-					Test->TestFalse(TEXT("No simultaneous CharacterMovement writer"), NPC->GetCharacterMovement()->IsComponentTickEnabled());
-					MassPath->Invalidate(); const FVector Position = NPC->GetActorLocation(); Bridge->Tick(0.05f);
-					Test->TestFalse(TEXT("Invalidated Recast route returns movement authority"), Bridge->IsMassOwned(MassToken.Id));
-					Test->TestTrue(TEXT("Invalidation cannot advance old route"), NPC->GetActorLocation().Equals(Position));
-					Test->TestTrue(TEXT("CMC restored after real route handoff"), NPC->GetCharacterMovement()->IsComponentTickEnabled());
-					Bridge->UnregisterNPC(Bridge->GetToken(MassToken.Id));
-				}
-				Test->AddInfo(FString::Printf(TEXT("Real Recast + CharacterMovement: points=%d final=%s elapsed=%.3fs dispatches=%llu"),
+
+				Test->AddInfo(FString::Printf(TEXT("Real Recast + Mover: points=%d final=%s elapsed=%.3fs dispatches=%llu"),
 					PathPoints, *NPC->GetActorLocation().ToString(), FPlatformTime::Seconds() - Started, Service->GetStats().Dispatched));
 				return true;
 			}
@@ -254,9 +231,9 @@ namespace
 		bool bMovingTarget = false;
 		bool bRebuild = false, bRebuilt = false;
 		bool bAutomaticDirty = false;
-		bool bMassRoute = false;
-		FProjectJMassAgentToken MassToken;
-		FNavPathSharedPtr MassPath;
+
+
+
 		AActor* Obstacle = nullptr;
 		uint64 DispatchBeforeRebuild = 0;
 		AActor* MovingTarget = nullptr;
@@ -264,24 +241,6 @@ namespace
 		double SimulatedSeconds = 0;
 		int32 ContinuousRepaths = 0;
 	};
-}
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMassNativeNavigationTest, "ProjectJ.GroupD.MassNativeNavigation",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool FProjectJMassNativeNavigationTest::RunTest(const FString& Parameters)
-{
-	AddExpectedMessage(TEXT("SpawnMissingNavigationData: No saved navigation data found"), ELogVerbosity::Warning, EAutomationExpectedMessageFlags::Contains, 1, false);
-	AddExpectedMessage(TEXT("Unable to find RecastNavMesh instance while trying to create UCrowdManager instance"), ELogVerbosity::Warning, EAutomationExpectedMessageFlags::Contains, 1, false);
-	ADD_LATENT_AUTOMATION_COMMAND(FNativeNavCommand(this, false, false, false, true));
-	return true;
-}
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMassActionHandoffTest, "ProjectJ.GroupD.MassActionHandoff",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool FProjectJMassActionHandoffTest::RunTest(const FString& Parameters)
-{
-	AddExpectedMessage(TEXT("SpawnMissingNavigationData: No saved navigation data found"), ELogVerbosity::Warning, EAutomationExpectedMessageFlags::Contains, 1, false);
-	AddExpectedMessage(TEXT("Unable to find RecastNavMesh instance while trying to create UCrowdManager instance"), ELogVerbosity::Warning, EAutomationExpectedMessageFlags::Contains, 1, false);
-	ADD_LATENT_AUTOMATION_COMMAND(FNativeNavCommand(this, true, false, false, true));
-	return true;
 }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJNativeNavigationTest, "ProjectJ.Integrated.NativeNavMovement",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)

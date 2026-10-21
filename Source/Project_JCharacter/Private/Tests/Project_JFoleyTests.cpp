@@ -108,7 +108,7 @@ bool FProjectJFoleyContactTest::RunTest(const FString&)
 	auto* Component = NewObject<UProject_JFoleyComponent>(Character); Component->RegisterComponent();
 	auto* Profile = NewObject<UProject_JFoleyAudioProfile>(World);
 	auto* Mesh = Character->GetMesh();
-	auto* Asset = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/UEFN_Mannequin/Meshes/SKM_UEFN_Mannequin.SKM_UEFN_Mannequin"));
+	auto* Asset = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple"));
 	if (TestNotNull(TEXT("Basic mannequin contact fixture exists"), Asset))
 	{
 		Mesh->SetSkeletalMeshAsset(Asset);
@@ -273,11 +273,11 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJFoleyLocomotionAssetTest, "ProjectJ.Fo
 bool FProjectJFoleyLocomotionAssetTest::RunTest(const FString&)
 {
 	// A stripped notify has no BP dependency, so a referencer-only migration audit misses it.
-	// Cover the actual straight locomotion loops selected by Motion Matching.
-	for (const TCHAR* Relative : {TEXT("Run/M_Neutral_Run_Loop_F"),
-		TEXT("Walk/M_Neutral_Walk_Loop_F"), TEXT("Sprint/M_Neutral_Sprint_Loop_F")})
+	// Cover the current GASP 5.8 ground chooser's straight locomotion loops.
+	for (const TCHAR* Relative : {TEXT("Run/M_Relaxed_Run_Loop_F"),
+		TEXT("Walk/M_Relaxed_Walk_Loop_F"), TEXT("Sprint/M_Relaxed_Sprint_Loop_F")})
 	{
-		const FString Path = FString(TEXT("/Game/Characters/UEFN_Mannequin/Animations/")) + Relative;
+		const FString Path = FString(TEXT("/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/")) + Relative;
 		const UAnimSequence* Sequence = LoadObject<UAnimSequence>(nullptr, *Path);
 		if (!TestNotNull(*Path, Sequence)) { continue; }
 		int32 Contacts = 0;

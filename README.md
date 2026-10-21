@@ -2,7 +2,7 @@
 
 ### Unreal Engine 5.8 · C++ · Third-person Action MMORPG Prototype
 
-서버 권위형 전투·장비 시스템과 Motion Matching을 기반으로, **다수 캐릭터의 판단·이동·애니메이션·이펙트 비용을 제어하는 개인 개발 프로젝트**입니다.
+서버 권위형 전투·장비와 Mover 기반 이동 애니메이션을 구현하며, **다수 캐릭터의 판단·이동·애니메이션·이펙트 비용을 제어하는 개인 개발 프로젝트**입니다.
 
 멀티스레딩의 설계 기준은 Game Thread의 상태 소유권, Worker의 값 계산, 완료 결과의 유효성 검증입니다. 취소·재입장·캐릭터 파괴·월드 종료까지 구현과 검증 범위에 포함합니다.
 
@@ -12,9 +12,10 @@
 | --- | --- |
 | 프로젝트 구조와 작업 시작 | [문서 시작점](Docs/README.md) → [프로젝트 맥락](Docs/Overview/ProjectContext.md) |
 | 변경 후 정리와 테스트·기존 자산 보존 | [공통 작업 규칙](AGENTS.md) → [변경 마감 기준](Docs/Maintenance/Change_Completion_Policy.md) |
-| 이번 브랜치의 main 통합 | [2026-10-15 통합 기록](Docs/Review/Audits/Project_J_Main_Integration_2026-10-15.md). 리타깃·구조 정리·R19/R20과 문서 결정은 `6d6713f4`까지 반영했습니다. |
-| 현재 이동·리타깃·손 접촉 | [애니메이션](Docs/Animation/README.md). 단발/MM 통합과 기존 동작을 유지합니다. |
-| Mirror Data 결정 | [도입 보류](Docs/Animation/Planning/Mirror_Data_Adoption_Decision_2026-10-15.md). 특정 동작 연결이 어색해졌을 때만 해당 구간을 다시 검토합니다. |
+| 이전 main 통합 기록 | [2026-10-15 통합 기록](Docs/Review/Audits/Project_J_Main_Integration_2026-10-15.md). 리타깃·구조 정리·R19/R20과 문서 결정은 `6d6713f4`까지 반영했습니다. |
+| 현재 이동·리타깃·손 접촉 | [애니메이션](Docs/Animation/README.md). native 상태 계산·포즈 재생·몸체별 보정을 구분합니다. |
+| 플레이어 이동·포즈 재생·공용 모션 | [플레이어 로코모션 아키텍처](Docs/Animation/Architecture/Player_Locomotion_Architecture.md) |
+| 이전 Mirror Data 결정 | [도입 보류](Docs/Animation/Planning/Mirror_Data_Adoption_Decision_2026-10-15.md). 특정 동작 연결이 어색해졌을 때만 해당 구간을 다시 검토합니다. |
 | 감사 단계별 변경·검증·남은 경계 | [검토 목차](Docs/Review/README.md). 전체 함수·에셋 정밀 감사 완료와 명시 범위의 구조 정리 마감을 구분합니다. |
 | 200명 최적화와 현재 LOD 결정 | [계획·단계별 결과](Docs/Performance/Planning/ProjectJ_200_Player_Optimization_Plan_2026-10-15.md). `7b2ee72e`에 반영했으며 현재 몸체 LOD0–2 채택·LOD3–4 추가 보류입니다. |
 | CPU·렌더 차이와 측정 조건 | [성능](Docs/Performance/README.md). 확인된 GPU 감소와 미확정인 전체 CPU·프레임 효과를 구분합니다. |
@@ -29,13 +30,9 @@
 
 **실시간 리타깃 프로필 — 2026-10-13:** 공통 Master의 최종 포즈와 기존 리타깃·손 IK·의상 물리를 유지하면서, 골격 쌍의 Family와 몸체별 접촉 Body를 분리했습니다. MCP로 실제 Greatsword 외형 ABP에도 연결하고, 프로필 해제·재초기화·source 불일치의 복구를 검증했습니다. 200명 CPU 비교에서는 일부 구간의 증가가 관찰되어 전체 성능 개선으로 보고하지 않습니다. [적용 구조·검증·측정 한계](Docs/Animation/Architecture/Runtime_Retarget_Profiles_2026-10-13.md)
 
-**애니메이션 후속 구현 — 2026-10-12:** Start/Land 등 단발과 Motion Matching을 `Project Unified Locomotion`의 한 재생 스택으로 통합했습니다. 네이티브 State Controller·Chooser는 의미 상태와 단발 선택을 계속 담당합니다. 지속 회전은 실제 이동·누적 방향 변화로 판정하고, 미세한 Strafe 입력은 안정 Loop 후보군을 유지합니다. [통합 구조](Docs/Animation/Planning/Unified_Locomotion_Implementation_2026-10-12.md) · [지속 곡선과 Master 함수 정리](Docs/Animation/Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md)
+**플레이어 로코모션:** Mover 입력 승인과 이동 시뮬레이션, C++ 상태·전환·Chooser·노드 핀 계산, `ABP_Player_Master`의 포즈 연결을 분리했습니다. OTM/Strafe·공중 방향 재선택·재생 시각 연속성을 유지하며, Manny 공용 모션과 몸체별 리타깃/손 보정으로 캐릭터를 확장합니다. [현재 구조와 외부 기반·프로젝트 구현의 경계](Docs/Animation/Architecture/Player_Locomotion_Architecture.md)
 
-**Strafe 사용자 로그 후속:** 단발을 끝내는 엄격한 증거와 이미 확인된 곡선의 후보군 유지 조건을 구분해, 좌우 반전 중 Loop 전용 PSD로 강제 복귀하는 현상을 수정했습니다. 적합한 기존 PSD 후보는 유지하고, 정렬된 전방 이동의 입력 묶음 예측만 제한적으로 안정화합니다. 매우 느린 회전과 급회전의 기존 대응은 보호합니다. [구현 범위·비교·검증](Docs/Animation/Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md#사용자-로그-후속-곡선-반전과-전방-예측-안정화)
-
-**Strafe Run W 미세 회전 후속:** MCP에서 기존 Cycle에 Loop 참조가 없음을 확인해, 정렬된 전방 입력용 `ForwardCycle`에 Loop와 기존 곡선 후보를 함께 구성했습니다. 사용자 재현에서 최초 8/12도 회전율 제한이 후보를 다시 닫는 문제를 확인하여 제거했습니다. 안정·곡선 상태에서 같은 PSD를 유지하고 곡률은 궤적 검색으로 판단하며 측면·후방·대각선과 급회전의 기존 경로를 보호합니다. Arc→Box 재현 후 전방 전용 PSS의 미래 위치·방향 가중치를 보정했고, 공통 PSS와 기존 방향·급회전 PSD/시퀀스는 유지합니다. [적용 조건·비용 진단·검증](Docs/Animation/Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md#전방-strafe-run-미세-회전-후속-구현)
-
-**200명 시각 예산 비교:** 같은 바이너리의 기능 off/on, 실제 BP·장비·follower 구성, NullRHI, 조건별 120틱 준비 + 120틱 측정, 2회 반복에서 ABA on 평균 World tick은 근거리 **13.61→11.40ms**, 원거리 **13.78→10.69ms**였습니다. 리타깃 몸체와 의상 물리의 평가 횟수를 줄이고 사이 프레임을 보간하며, 로컬·전투·단발·급회전은 매 프레임 평가를 보호합니다. 동시 공격 ABA on은 **19.76→19.58ms**로 거의 같았습니다. 전체 렌더 FPS·GPU 개선이나 200명 동시 접속 결과로 해석하지 않습니다. [조건·원자료 위치·복구 설정](Docs/Animation/Planning/Crowd_Visual_Presentation_Budget_2026-10-12.md)
+**이전 구조의 200명 시각 예산 비교 — 2026-10-12:** 같은 바이너리의 기능 off/on, 실제 BP·장비·follower 구성, NullRHI, 조건별 120틱 준비 + 120틱 측정, 2회 반복에서 ABA on 평균 World tick은 근거리 **13.61→11.40ms**, 원거리 **13.78→10.69ms**였습니다. 리타깃 몸체와 의상 물리의 평가 횟수를 줄이고 사이 프레임을 보간하며, 로컬·전투·단발·급회전은 매 프레임 평가를 보호합니다. 동시 공격 ABA on은 **19.76→19.58ms**로 거의 같았습니다. 전체 렌더 FPS·GPU 개선이나 200명 동시 접속 결과로 해석하지 않습니다. [조건·원자료 위치·복구 설정](Docs/Animation/Planning/Crowd_Visual_Presentation_Budget_2026-10-12.md)
 
 **구조 검증 이력 — 2026-09-19:** 직업·전직 기반, 내부 갱신·수명 정리와 에디터 제작 도구를 통합해 Editor/Game Win64 Development 빌드 및 자동화 **81개 통과, 테스트 오류·경고 0개**를 확인했습니다. GAS는 필요한 작업에 따라 갱신하고, 서버 피격 기록은 정해진 주기로 수집하며, 탈것 체력은 GAS로 일원화했습니다. [변경 범위](Docs/Architecture/Runtime/Reports/Internal_Polish_2026-09-19.md) · [검증 기록](Docs/Architecture/Runtime/Reports/Internal_Polish_Validation_2026-09-19.json)
 
@@ -63,7 +60,7 @@ Project J는 **캐릭터·애니메이션·무기·의상·이펙트를 실제 �
 |---|---|---|
 | **캐릭터·몬스터 모델** | Skeletal Mesh와 캐릭터 프로필, AnimBP에 연결 | skeleton·비율·리타게팅, 발 접지와 손 IK |
 | **의상·방어구·무기** | 장비 정의와 표현 프로필로 메시·부착 위치 구성, 호환되는 파츠는 Leader Pose 사용 | 본 구조, 소켓·그립, 클리핑과 LOD |
-| **이동·전투 애니메이션** | Motion Matching/Chooser용 이동 데이터와 무기별 프로필, 공격 몽타주 조합 | 이동·회전 전환, root motion, 공격·복귀 타이밍 |
+| **이동·전투 애니메이션** | Pose Match/Chooser용 이동 데이터와 무기별 프로필, 공격 몽타주 조합 | 이동·회전 전환, root motion, 공격·복귀 타이밍 |
 | **Niagara 이펙트** | 공격 태그별 presentation profile과 몽타주 Notify 구간에 연결 | Trail 시작·끝, 무기 소켓, 잔상·중단 시 정리와 가독성 |
 | **캐릭터 사운드** | 이벤트·접촉 위치·Physical Surface별 오디오 프로필에 음원 연결 | 움직임과의 타이밍, 기본음 대체, 가까운 원격 캐릭터 청취와 군중 비용 |
 | **직업·스킬·콤보 기획** | 입력 태그, AbilitySet, 콤보 그래프와 AttackDefinition 조합 | 입력 분기, 연계 구간, 판정·이동·연출의 일치 |
@@ -85,7 +82,7 @@ Project J는 **캐릭터·애니메이션·무기·의상·이펙트를 실제 �
 - **입력 조합과 콤보:** 좌·우클릭, 동시 입력, Shift/Ctrl/Alt 같은 modifier를 입력 태그로 해석하고, 콤보 그래프에서 공격 정의를 선택합니다. 조합별 실제 동작은 데이터로 구성합니다.
 - **무기별 액션과 외형:** 장착한 장비의 메시·표현 프로필과 전투 스타일을 연결해 무기 외형, 대기·공격 애니메이션 구성을 바꿀 수 있습니다.
 - **같은 공격의 다른 연출:** 기본 전투 스타일의 VFX를 전직 또는 스킨별 cue로 덮어쓸 수 있습니다. 동일한 공격 정의에 서로 다른 Trail·방출 효과를 붙이는 방식입니다.
-- **데이터 기반 이동 확장:** 이동 문맥과 콘텐츠 프로필을 나누고, Motion Matching·Chooser·Linked Anim Layer를 통해 애니메이션을 구성합니다. 실제 품질은 사용할 애니메이션과 리타게팅·프로필 튜닝을 함께 확인합니다.
+- **데이터 기반 이동 확장:** 이동 문맥과 콘텐츠 프로필을 나누고, 상태 선택·Pose Match·Chooser·Linked Anim Layer를 통해 애니메이션을 구성합니다. 실제 품질은 사용할 애니메이션과 리타게팅·프로필 튜닝을 함께 확인합니다.
 
 작성 가이드: [콘텐츠 확장](Docs/Gameplay/Authoring/Content_Authoring_System.md#expansion) · [장비·직업 데이터 빠른 참조](Docs/Gameplay/Authoring/Content_Authoring_System.md#data) · [공격·콤보 작성](Docs/Combat/Authoring/GreatswordCombatAuthoringGuide.md) · [전투 VFX 연결](Docs/Combat/Architecture/CombatVFXArchitecture.md#authoring) · [이동 프로필 확장](Docs/Animation/Authoring/DataDrivenLocomotionExtensionGuide.md)
 
@@ -177,25 +174,11 @@ Mass의 간격 계산을 포함한 CPU 구간은 스냅샷 생성과 join 비용
 
 ## 검증 현황
 
-### 애니메이션 후속 검증 — 2026-10-12
+### 현재 로코모션 검증 — 2026-10-21
 
-200명 시각 예산 후속 시점의 기록입니다. 직접 UBT Editor/Game Development 빌드가 성공했습니다. 시각 예산 회귀는 첫 실행 58개 성공·5개 설정 조건 실패 후, 요구 예산을 설정한 실제 RHI 실행에서 해당 5개와 시각 lifecycle 1개가 모두 성공했습니다. 두 실행에서 성공을 확인한 고유 관련 검증은 63개입니다. 전체 ProjectJ 자동화의 새 전수 실행 수치로 사용하지 않습니다.
+Manny 공용 라이브러리·Chooser/PSD/BlendSpace 연결과 비표준 Bip01 몸체의 실제 IK를 점검했습니다. direct UBT Editor 빌드와 집중 native 회귀 **61개 통과**, 변환 시퀀스 **448개·2,240개 키프레임 표본**, 실제 OTM/Strafe 이동·Sprint 급회전·공중/착지·전신 몽타주 검증을 확인했습니다. 골격 호환·선택·실제 포즈·화면 품질의 근거를 구분하고, 재임포트 대신 원인이 확인된 리타깃 기준·Goal/시작 본·실행 연결을 수정했습니다. [조건·실패·복구·최종 결과](Docs/Animation/Architecture/Player_Locomotion_Migration_2026-10-19.md)
 
-실제 소켓은 서버1 + 클라이언트2 + NPC200, 지연50ms·손실3% 조건에서 검증과 정상 종료를 확인했습니다. 렌더 캡처 17개와 보간 중 실제 뼈 변위를 확인했으며, 이번 최적화 이후 사용자의 체감 확인과 200명 실제 렌더 장면의 GPU·Cook/패키징 검증은 남아 있습니다. [검증 결과와 한계](Docs/Animation/Planning/Crowd_Visual_Presentation_Budget_2026-10-12.md#기능품질-검증)
-
-Strafe 사용자 로그의 후속 변경은 최종 Editor/Game 직접 UBT 빌드와 고유 관련 검증 **65개**가 성공했습니다. 급회전 57장면, 완만한 회전·반전·미세 입력의 비교 및 실제 RHI 실행을 구분해 기록했습니다. 기존 후보 판정 경로에서도 실패하던 특정 클립 강제 검사와 실제 평가 자세 기준으로 수정한 이유도 남겼습니다. 이 후속 실행에서 200명 CPU/GPU나 소켓 검증을 다시 수행한 것으로 표현하지 않습니다. [후속 검증 기록](Docs/Animation/Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md#후속-검증과-해석)
-
-**커밋 정리 시점 — 2026-10-13:** 단발 곡선 복귀 조건을 사용자 요청대로 0.35초·100cm·3도·85%로 복원했습니다. 임시 전방 가중치 실험과 에셋 작성용 테스트 경로를 제거했습니다. 이 상태의 집중 검증은 **21개 성공·1개 실패**이며, 미세 입력은 Loop 732/733 및 Box/Diamond 0입니다. 실패한 곡선 기록을 단독 재생한 결과 Box/Diamond 28/2,596프레임으로 1% 이하 기준을 초과했습니다. 새로 보고된 Strafe 착지 후 튐도 원인 확정과 실제 재현이 남아 있습니다. [현재 제한과 조사 기록](Docs/Animation/Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md#2026-10-13-커밋-전-코드-정리와-착지-튐-조사)
-
-**착지 복귀 후속 — 2026-10-13:** Land의 재생이 MM으로 복귀했는데 전방 후보는 아직 Landing으로 처리되던 상태 불일치를 보완했습니다. 회복 중 이탈은 기존 관성 보간으로 포즈와 속도를 이어 주며, 정상 tail·Start/Stop 및 0.35초 조건은 유지합니다. 직접 UBT Editor/Game 빌드와 관련 고유 69개 검증, 약한 착지 회전의 D3D12 재생을 확인했습니다. 기존 곡선 기록의 Box/Diamond 기준 실패 하나와 사용자 화면의 체감 확인은 남아 있습니다. [수정 범위·검증·한계](Docs/Animation/Planning/Strafe_Land_Return_2026-10-13.md)
-
-**전방 후보 구성 후속 — 2026-10-13:** W 곡선 재현에서 전방 PSD의 동작 목적을 Arc 6종과 기존 Loop 8종으로 정리했습니다. 전방 전용 PSS의 추가 실험은 되돌리고, A/D·후방·대각선과 급회전은 기존 후보를 유지합니다. 동일 곡선·미세 입력 기록은 30/60/120Hz에서 모두 통과했고, 곡선의 Box/Diamond 노출은 0입니다. A/D 12장면의 전체 로컬 포즈 360개와 궤적 예측 1,080개는 이전 데이터와 동일했습니다. 관련 고유 71개 검사와 Editor/Game 직접 UBT 빌드를 통과했습니다. [자료 조사·최종 검증·범위](Docs/Animation/Planning/Strafe_Forward_Intent_2026-10-13.md)
-
-**느린 착지 회전 후속 — 2026-10-13 09:26 로그:** Strafe W 착지 복귀 때 숙인 가슴의 수평 방향을 큰 yaw 오차로 읽어 상체 보정이 개입하는 경로를 수정했습니다. 회전의 수직축 twist를 읽고 실제 upright 정도에 따라 보정 강도를 줄입니다. 동일한 왼발 착지 재현의 첫 프레임 3D 회전량은 3.98→1.70도로 줄었으며, MM 후보·PSS/PSD·0.35초 종료 조건은 유지합니다. 전체 회복 구간의 최고 변위와 사용자 체감은 초기 변위 개선과 구분합니다. [비교 결과와 적용 범위](Docs/Animation/Planning/Strafe_Land_Return_2026-10-13.md#0926-느린-착지-회전-후속)
-
-**착지 후 Arc/Loop 전환 후속 — 2026-10-13 10:02 로그:** Land의 관성 보간 중 MM 재선택이 일반 스택 블렌드로 진입하는 중첩을 보완했습니다. 기존 복귀 보간 시간 안의 재선택도 관성 방식으로 이어 주며, 검색과 후보 선택은 유지합니다. 기록 입력의 착지 11회에서 일부 후보 전환 순간의 가슴 변위는 줄었지만 전체 회복 최대값과 발 접촉 품질은 별도 확인이 필요합니다. [보간 구조·기록 재현·검증 한계](Docs/Animation/Planning/Strafe_Land_Return_2026-10-13.md#1002-착지-이후-arcloop-전환-후속)
-
-**애니메이션 파이프라인 리팩토링 — 2026-10-13:** 스냅샷·표시 수명·검색 게시·엔진 MM 연결·복귀 보간·품질 예산을 역할별로 정리했습니다. 기존 reflected 이름과 GT→Proxy 순서를 유지하고, 공통 캐시 초기화 및 CVar 등록 의존성을 정리했습니다. [구조·네트워크/병렬 계약·전후 검증](Docs/Animation/Architecture/Animation_Pipeline_Refactor_2026-10-13.md)
+이 결과는 모든 애니메이션 프레임의 외형 승인이나 현재 Mover 구조의 200명 CPU/GPU·새 네트워크 부하·Cook/Shipping 검증을 의미하지 않습니다. 10월 12–15일의 CMC/MM·성능 실험은 [이전 구현 기록](Docs/Animation/Planning/README.md)으로 보존하며 현재 수치와 합산하지 않습니다.
 
 ### 이전 기능·수명 검증 — 2026-10-08
 
@@ -231,12 +214,12 @@ Strafe 사용자 로그의 후속 변경은 최종 Editor/Game 직접 UBT 빌드
 | **PlayerState / Character 분리** | 플레이어의 ASC·인벤토리·장비 상태와 Avatar의 이동·표현 수명을 분리. NPC는 character-local 소유 경로 사용 |
 | **모듈러 장비 표현** | 호환되는 파츠를 메인 메시의 Leader Pose에 연결하고, 장착 상태와 시각 오브젝트의 수명을 별도로 관리 |
 | **FastArray 기반 복제** | 인벤토리·장비 변경분을 전달하고 owner-only 데이터와 공개 표현을 구분 |
-| **원격 이동 궤적 보정** | 복제된 이동과 visual smoothing을 사용해 원격 캐릭터의 Motion Matching 입력 방향 보정 |
+| **원격 이동 궤적 보정** | Mover의 승인 입력·보간된 이동 상태와 source pose를 사용해 원격 표현 구성 |
 | **데이터 유효성 검사** | 장비·프로필의 필수 참조와 설정을 `IsDataValid` 등으로 검사. 실제 애니메이션·연출 품질은 플레이 검증과 병행 |
 | **클라이언트 캐릭터 오디오** | 가까운 플레이어·NPC 접촉음을 로컬에서 구성. 이벤트별 음원·Physical Surface 매핑, 비동기 준비와 후보·voice 예산 지원. 현재 마네킹 기본음 연결, 실제 눈·물·진흙 환경은 후속 제작 범위 |
 | **서버 간 상태 전달 준비** | Handover envelope, 검증·취소·실패 상태와 transport 경계를 마련. 운영 분산 서버와 영속 저장 완성을 의미하지 않음 |
 
-→ [모듈러 메시](Source/Project_JCharacter/Private/Components/Project_JModularMeshComponent.cpp) · [원격 궤적](Source/Project_JCharacter/Public/Animation/Project_JMotionMatchingTrajectoryComponent.h) · [장비 데이터 검사](Source/Project_JCharacter/Private/Equipment/Project_JEquipmentItemDefinition.cpp) · [캐릭터 오디오](Docs/Animation/Architecture/Foley_Audio_System.md) · [Handover](Source/Project_J/Backend/Project_JHandoverManager.h)
+→ [모듈러 메시](Source/Project_JCharacter/Private/Components/Project_JModularMeshComponent.cpp) · [이동·포즈 스냅샷](Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceProxy.PlayerLocomotion.cpp) · [장비 데이터 검사](Source/Project_JCharacter/Private/Equipment/Project_JEquipmentItemDefinition.cpp) · [캐릭터 오디오](Docs/Animation/Architecture/Foley_Audio_System.md) · [Handover](Source/Project_J/Backend/Project_JHandoverManager.h)
 
 ## 프로젝트 구성
 
@@ -251,7 +234,7 @@ Strafe 사용자 로그의 후속 변경은 최종 Editor/Game 직접 UBT 빌드
 | [Project_JAnimationNodes](Source/Project_JAnimationNodes) | Guided Hand IK AnimGraph 제작 노드·컴파일 검사, UncookedOnly |
 | [Project_JMount](Source/Project_JMount) | 탈것과 탑승 캐릭터 연결 |
 
-플레이어의 ASC·인벤토리·장비 소유권은 PlayerState에 두고 Character의 표현 수명과 분리합니다. GAS 전투 정의, 장비별 animation/presentation profile, Motion Matching/Chooser, Niagara 에셋을 조합하는 방식으로 기능을 확장합니다. 일반 NPC는 플레이어와 다른 소유 경로를 사용합니다.
+플레이어의 ASC·인벤토리·장비 소유권은 PlayerState에 두고 Character의 표현 수명과 분리합니다. GAS 전투 정의, 장비별 animation/presentation profile, 포즈 검색/Chooser, Niagara 에셋을 조합하는 방식으로 기능을 확장합니다. 일반 NPC는 플레이어와 다른 소유 경로를 사용합니다.
 
 ## 빌드와 실행
 

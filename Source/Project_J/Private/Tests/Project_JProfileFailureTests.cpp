@@ -252,7 +252,6 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJLocalProfileFailureTest, "ProjectJ.MMO
 								 EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJLocalProfileFailureTest::RunTest(const FString &)
 {
-	AddExpectedError(TEXT("Character data registry is empty."), EAutomationExpectedErrorFlags::Contains, 1);
 	AddExpectedError(TEXT("Local profile load rejected;"), EAutomationExpectedErrorFlags::Contains, 2);
 	auto *GI = NewObject<UGameInstance>(GEngine);
 	GI->InitializeStandalone();

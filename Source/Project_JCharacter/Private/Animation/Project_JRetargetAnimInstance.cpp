@@ -1,6 +1,8 @@
+#include "Animation/Project_JRetargetAnimInstance.h"
+#include "GameFramework/Pawn.h"
+#include "Movement/Project_JMovementQueries.h"
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "Animation/Project_JRetargetAnimInstance.h"
 #include "Animation/Project_JCharacterAnimInstance.h"
 #include "Animation/Project_JCharacterAnimProfile.h"
 #include "Animation/Project_JRetargetBodyProfile.h"
@@ -89,7 +91,7 @@ FProject_JHandGripCalibration UProject_JRetargetAnimInstance::GetHandGripCalibra
 {
 	check(IsInGameThread());
 	if (const auto* Profile = GetResolvedHandGripProfile()) return Profile->Calibration;
-	return Project_J::Animation::ResolveHandGripCalibration(Cast<ACharacter>(TryGetPawnOwner()), HandGripProfile);
+	return Project_J::Animation::ResolveHandGripCalibration(Cast<APawn>(TryGetPawnOwner()), HandGripProfile);
 }
 
 FAnimInstanceProxy* UProject_JRetargetAnimInstance::CreateAnimInstanceProxy()
@@ -177,9 +179,9 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	}
 
 	// 1. Synchronize animation quality tier from Leader Mesh policy
-	if (const ACharacter* OwnerChar = Cast<ACharacter>(OwnerPawn))
+	if (const APawn* OwnerChar = Cast<APawn>(OwnerPawn))
 	{
-		if (const USkeletalMeshComponent* LeaderMesh = OwnerChar->GetMesh())
+		if (const USkeletalMeshComponent* LeaderMesh = Project_J::Movement::FindPoseSource(OwnerChar))
 		{
 			if (const UProject_JCharacterAnimInstance* LeaderAnim = Cast<UProject_JCharacterAnimInstance>(LeaderMesh->GetAnimInstance()))
 			{
@@ -222,9 +224,9 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	// 3. Check Leader AnimInstance curves (supports authored high-precision Float Curves on attack montages)
 	float LeaderLeftCurveValue = -1.0f;
 	float LeaderRightCurveValue = -1.0f;
-	if (const ACharacter* OwnerChar = Cast<ACharacter>(OwnerPawn))
+	if (const APawn* OwnerChar = Cast<APawn>(OwnerPawn))
 	{
-		if (const USkeletalMeshComponent* LeaderMesh = OwnerChar->GetMesh())
+		if (const USkeletalMeshComponent* LeaderMesh = Project_J::Movement::FindPoseSource(OwnerChar))
 		{
 			if (const UAnimInstance* LeaderAnim = LeaderMesh->GetAnimInstance())
 			{

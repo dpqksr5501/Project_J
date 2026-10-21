@@ -1,6 +1,7 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
 #include "Animation/Project_JRetargetBodyProfile.h"
+#include "Project_JPlayerCharacter.h"
 #include "Animation/Project_JRetargetAnimInstance.h"
 #include "Animation/Project_JHandContact.h"
 #include "Animation/Skeleton.h"
@@ -60,6 +61,27 @@ bool FProjectJRetargetFamilyValidationTest::RunTest(const FString&)
  auto* Body = NewObject<UProject_JRetargetBodyProfile>(); Body->Family = Invalid;
  FDataValidationContext BodyPair;
  TestTrue(TEXT("Body cannot validate an incompatible family dependency"), Body->IsDataValid(BodyPair) == EDataValidationResult::Invalid);
+ return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAuthoredRetargetSourceTest, "ProjectJ.Retarget.AuthoredMoverSourceFamily",
+ EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJAuthoredRetargetSourceTest::RunTest(const FString&)
+{
+ const UClass* AvatarClass=LoadClass<AProject_JPlayerCharacter>(nullptr,TEXT("/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C"));
+ const auto* Avatar=AvatarClass?AvatarClass->GetDefaultObject<AProject_JPlayerCharacter>():nullptr;
+ const auto* Source=Avatar && Avatar->GetMesh()?Avatar->GetMesh()->GetSkeletalMeshAsset():nullptr;
+ auto* Body=LoadObject<UProject_JRetargetBodyProfile>(nullptr,TEXT("/Game/DataAssetSets/Presentation/Retarget/DA_RetargetBody_Greatsword.DA_RetargetBody_Greatsword"));
+ if(!TestNotNull(TEXT("Authored avatar pose source"),Source) || !TestNotNull(TEXT("Authored body profile"),Body) || !TestNotNull(TEXT("Authored source/target family"),Body->Family.Get())) return false;
+ auto* Family=Body->Family.Get();
+ TestTrue(TEXT("Body override owns the actual Mover source skeleton, not a silent graph fallback"),Family->Matches(Source->GetSkeleton(),Family->TargetSkeleton));
+ if(!TestNotNull(TEXT("Retargeter retained"),Family->Retargeter.Get())) return false;
+ const auto* RigSource=Family->Retargeter->GetPreviewMesh(ERetargetSourceOrTarget::Source);
+ const auto* RigTarget=Family->Retargeter->GetPreviewMesh(ERetargetSourceOrTarget::Target);
+ TestEqual(TEXT("Source rig uses the actual authored avatar source mesh"),RigSource,Source);
+ TestTrue(TEXT("Target rig retains the body's target skeleton"),RigTarget && RigTarget->GetSkeleton()==Family->TargetSkeleton);
+ TestNotNull(TEXT("Existing hand calibration is preserved"),Body->HandGrip.Get());
+ FDataValidationContext Context;
+ TestTrue(TEXT("The complete authored family validates"),Family->IsDataValid(Context)==EDataValidationResult::Valid);
  return true;
 }
 #endif

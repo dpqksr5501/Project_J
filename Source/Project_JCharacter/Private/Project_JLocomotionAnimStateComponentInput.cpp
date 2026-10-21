@@ -1,189 +1,12 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "Project_JLocomotionAnimStateComponent.h"
-
+#include "Movement/Project_JMovementQueries.h"
 #include "Project_JPlayerCharacter.h"
 
-void UProject_JLocomotionAnimStateComponent::HandleReplicatedTurnInPlaceStarted(
-	int32 Sequence,
-	float ServerStartAgeSeconds,
-	uint8 DirectionBucket,
-	float TargetFacingYaw)
-{
-	if (ShouldUseLocalInputState() || DirectionBucket < 1 || DirectionBucket > 4 || !FMath::IsFinite(TargetFacingYaw))
-	{
-		return;
-	}
-
-	// 저작된 동작의 완료는 State Controller가 관리하며, 이 값은 네트워크 이벤트 유효 기간이다.
-	RemoteRuntime.OnTurnStarted(Sequence, ServerStartAgeSeconds, DirectionBucket, TargetFacingYaw);
-}
-
-bool UProject_JLocomotionAnimStateComponent::ConsumeTurnInPlaceReplicationRequest(uint8& OutDirectionBucket, float& OutTargetFacingYaw)
-{
-	OutDirectionBucket = 0;
-	OutTargetFacingYaw = 0.0f;
-	if (!bTurnInPlaceReplicationRequestPending || !ShouldUseLocalInputState())
-	{
-		return false;
-	}
-
-	bTurnInPlaceReplicationRequestPending = false;
-	if (PendingTurnInPlaceBucket >= 1 && PendingTurnInPlaceBucket <= 4)
-	{
-		OutDirectionBucket = PendingTurnInPlaceBucket;
-		PendingTurnInPlaceBucket = 0;
-	}
-	else
-	{
-		const float DeltaYaw = KinematicContext.DesiredFacingDeltaYaw;
-		if (DeltaYaw >= -135.0f && DeltaYaw <= -30.0f)
-		{
-			OutDirectionBucket = 1;
-		}
-		else if (DeltaYaw < -135.0f)
-		{
-			OutDirectionBucket = 2;
-		}
-		else if (DeltaYaw >= 30.0f && DeltaYaw < 135.0f)
-		{
-			OutDirectionBucket = 3;
-		}
-		else if (DeltaYaw >= 135.0f)
-		{
-			OutDirectionBucket = 4;
-		}
-	}
-
-	if (OutDirectionBucket != 0)
-	{
-		// Publish the target selected at the local TIP edge. Sampling the actor or
-		// camera again here would make remote Steering disagree with local playback.
-		if (bLocalTurnInPlaceTargetActive && OutDirectionBucket == LocalTurnInPlaceDirectionBucket)
-		{
-			OutTargetFacingYaw = LocalTurnInPlaceTargetFacingYaw;
-		}
-		else
-		{
-			float AuthoredTurnAngle = 0.0f;
-			switch (OutDirectionBucket)
-			{
-			case 1: AuthoredTurnAngle = -90.0f; break;
-			case 2: AuthoredTurnAngle = -180.0f; break;
-			case 3: AuthoredTurnAngle = 90.0f; break;
-		case 4: AuthoredTurnAngle = 180.0f; break;
-			default: break;
-			}
-			const AActor* OwnerActor = GetOwner();
-			const float BaseActorYaw = OwnerActor ? OwnerActor->GetActorRotation().Yaw : 0.0f;
-			OutTargetFacingYaw = FRotator::NormalizeAxis(BaseActorYaw + AuthoredTurnAngle);
-		}
-	}
-	return OutDirectionBucket != 0;
-}
-
-
 void UProject_JLocomotionAnimStateComponent::HandleReplicatedMoveStarted(bool bWasSprintingForStart)
-{
-	if (ShouldUseLocalInputState())
-	{
-		return;
-	}
-
-	ClearRemoteMoveStartTransientState();
-	if (TryFinishLandingForReplicatedMoveStart(bWasSprintingForStart))
-	{
-		return;
-	}
-
-	if (TryPromoteReplicatedStartToLocomotion())
-	{
-		return;
-	}
-
-	if (ShouldIgnoreRedundantReplicatedMoveStart())
-	{
-		return;
-	}
-
-	QueueReplicatedMoveStart(bWasSprintingForStart);
-}
+{ if(!ShouldUseLocalInputState()) bRemoteMoveReleasedWhileAirborne=false; }
 
 void UProject_JLocomotionAnimStateComponent::HandleReplicatedMoveStopped(bool bWasSprintingAtStop)
-{
-	if (ShouldUseLocalInputState())
-	{
-		return;
-	}
-	QueueReplicatedMoveStop(bWasSprintingAtStop);
-	MarkRemoteMoveReleasedIfAirborne();
-	TryFinishLandingForReplicatedMoveStop();
-}
-
-void UProject_JLocomotionAnimStateComponent::ClearRemoteMoveStartTransientState()
-{
-	RemoteRuntime.OnMoveStarted();
-	bRemoteMoveReleasedWhileAirborne = false;
-	bLandingIgnoresRemoteGroundSpeed = false;
-}
-
-bool UProject_JLocomotionAnimStateComponent::TryFinishLandingForReplicatedMoveStart(bool bWasSprintingForStart)
-{
-	if (!IsLandingStateActive())
-	{
-		return false;
-	}
-
-	bStartWasSprinting = bWasSprintingForStart;
-	bWantsSprint = bWasSprintingForStart;
-	bHasMoveInput = true;
-	bPrevHasMoveInput = true;
-	bResolvedMoveInputLastUpdate = true;
-	bLandWasMoving = true;
-	bPendingStartRequest = false;
-	bForceLandingFinishToLocomotion = true;
-	FinishLandingImmediately();
-	return true;
-}
-
-bool UProject_JLocomotionAnimStateComponent::TryPromoteReplicatedStartToLocomotion()
-{
-	if (GroundMotionMode != EProject_JGroundMotionMode::Start)
-	{
-		return false;
-	}
-
-	bPendingStartRequest = false;
-	EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
-	return true;
-}
-
-bool UProject_JLocomotionAnimStateComponent::ShouldIgnoreRedundantReplicatedMoveStart() const
-{
-	return
-		GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
-		(bHasMoveInput || GroundSpeed > IdleSpeedThreshold);
-}
-
-void UProject_JLocomotionAnimStateComponent::QueueReplicatedMoveStart(bool bWasSprintingForStart)
-{
-	bStartWasSprinting = bWasSprintingForStart;
-	bHasReplicatedStartGait = true;
-	bReplicatedStartWasSprinting = bWasSprintingForStart;
-	bHasReplicatedStopGait = false;
-	bPendingStartRequest = true;
-}
-
-void UProject_JLocomotionAnimStateComponent::QueueReplicatedMoveStop(bool bWasSprintingAtStop)
-{
-	ClearResolvedMoveInputState();
-	bPendingStartRequest = false;
-	bPendingStopRequest = true;
-	bHasReplicatedStartGait = false;
-	bHasReplicatedStopGait = true;
-	bReplicatedStopWasSprinting = bWasSprintingAtStop;
-	RemoteRuntime.OnMoveStopped(RemoteStopStartSuppressDuration);
-}
+{ if(!ShouldUseLocalInputState()) MarkRemoteMoveReleasedIfAirborne(); }
 
 void UProject_JLocomotionAnimStateComponent::MarkRemoteMoveReleasedIfAirborne()
 {
@@ -194,160 +17,27 @@ void UProject_JLocomotionAnimStateComponent::MarkRemoteMoveReleasedIfAirborne()
 	}
 }
 
-void UProject_JLocomotionAnimStateComponent::TryFinishLandingForReplicatedMoveStop()
-{
-	if (IsLandingStateActive())
-	{
-		// A replicated MoveStop is the remote equivalent of releasing local
-		// movement input.  Do not reselect/cancel the in-flight landing pose;
-		// only prevent residual replicated velocity from choosing Locomotion
-		// when the landing naturally completes.
-		bLandingIgnoresRemoteGroundSpeed = true;
-		if (bLandWasMoving && bLandingReceivedPostTouchdownMoveInput)
-		{
-			bForceLandingFinishToStop = true;
-			bLandingExitStopWasSprinting = bLandWasSprinting;
-			DispatchLandingCancelForAnimation();
-			FinishLandingImmediately();
-		}
-	}
-}
-
 void UProject_JLocomotionAnimStateComponent::SetMoveInput(const FVector2D& InMoveInput)
-{
-	const bool bHadMoveInput = HasAnyMoveInputState();
-	CachedMoveInput = InMoveInput.GetClampedToMaxSize(1.0f);
-	// A non-zero final Move Action value wins over a stale Completed/Canceled
-	// callback from another mapping of that same action.  This is local-input
-	// state only; replicated Stop events continue to use QueueReplicatedMoveStop.
-	if (HasCachedMoveInput())
-	{
-		bPendingStopRequest = false;
-	}
-	// While the Enhanced Input layer is resolving a semantic chord, do not let
-	// the aggregate Axis2D value overwrite its final direction. Gameplay still
-	// consumes CachedMoveInput immediately below through the normal player path.
-	if (!bHasSemanticMoveIntentInput && !bSemanticMoveIntentUpdatePending)
-	{
-		UpdateLocalMoveIntentSnapshot(CachedMoveInput);
-	}
-	QueueLocalMoveStartIfNeeded(bHadMoveInput, HasCachedMoveInput());
-}
-
-bool UProject_JLocomotionAnimStateComponent::HasHeldLocalMoveInput() const
-{
-	const AProject_JPlayerCharacter* Player = GetPlayerOwner();
-	return Player && Player->IsLocallyControlled() && HasCachedMoveInput();
-}
+{ CachedMoveInput=InMoveInput.GetClampedToMaxSize(1.f); }
 
 void UProject_JLocomotionAnimStateComponent::ClearMoveInput()
-{
-	const bool bHadMoveInput = HasAnyMoveInputState();
-	ClearLocalMoveInputState();
-	QueueLocalMoveStopIfNeeded(bHadMoveInput);
-}
+{ ClearLocalMoveInputState(); }
 
 void UProject_JLocomotionAnimStateComponent::BeginSemanticMoveIntentUpdate()
-{
-	bSemanticMoveIntentUpdatePending = true;
-	bHasSemanticPivotKinematicCapture = false;
-	SemanticPivotKinematicCaptureIntentRevision = INDEX_NONE;
-	SemanticPivotKinematicCapturePreviousDirection = FVector::ZeroVector;
-	SemanticPivotKinematicCaptureGroundSpeed = 0.0f;
-
-	if (const AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner())
-	{
-		FVector HorizontalVelocity = PlayerOwner->GetVelocity();
-		HorizontalVelocity.Z = 0.0f;
-		SemanticPivotKinematicCaptureGroundSpeed = HorizontalVelocity.Size2D();
-		SemanticPivotKinematicCapturePreviousDirection = HorizontalVelocity.GetSafeNormal2D();
-		bHasSemanticPivotKinematicCapture = !SemanticPivotKinematicCapturePreviousDirection.IsNearlyZero();
-	}
-}
+{ bSemanticMoveIntentUpdatePending=true; }
 
 void UProject_JLocomotionAnimStateComponent::SetSemanticMoveIntentInput(const FVector2D& InMoveIntent, const bool bHasActiveIntent)
 {
-	const int32 PreviousMoveIntentRevision = MoveIntentRevision;
-	bSemanticMoveIntentUpdatePending = false;
-	bHasSemanticMoveIntentInput = bHasActiveIntent;
-	CachedSemanticMoveIntentInput = bHasActiveIntent
-		? InMoveIntent.GetClampedToMaxSize(1.0f)
-		: FVector2D::ZeroVector;
-
-	if (bHasSemanticMoveIntentInput)
-	{
-		UpdateLocalMoveIntentSnapshot(CachedSemanticMoveIntentInput);
-		if (bHasSemanticPivotKinematicCapture && MoveIntentRevision != PreviousMoveIntentRevision)
-		{
-			SemanticPivotKinematicCaptureIntentRevision = MoveIntentRevision;
-		}
-		else
-		{
-			bHasSemanticPivotKinematicCapture = false;
-			SemanticPivotKinematicCaptureIntentRevision = INDEX_NONE;
-		}
-	}
-	else
-	{
-		bHasSemanticPivotKinematicCapture = false;
-		SemanticPivotKinematicCaptureIntentRevision = INDEX_NONE;
-	}
+ bSemanticMoveIntentUpdatePending=false;
+ bHasSemanticMoveIntentInput=bHasActiveIntent;
+ CachedSemanticMoveIntentInput=bHasActiveIntent ? InMoveIntent.GetClampedToMaxSize(1.f):FVector2D::ZeroVector;
 }
 
 void UProject_JLocomotionAnimStateComponent::HandleSprintStarted()
-{
-	bSprintInputHeld = true;
-	bWantsSprint = true;
-	UpdateSprintLocomotionRequest();
-	if (GroundMotionMode == EProject_JGroundMotionMode::Start)
-	{
-		bStartWasSprinting = true;
-	}
-}
+{ bSprintInputHeld=bWantsSprint=true; }
 
 void UProject_JLocomotionAnimStateComponent::HandleSprintStopped()
-{
-	const bool bWasSprintingAtRelease =
-		bUseSprintLocomotion ||
-		bWantsSprint ||
-		bSprintInputHeld ||
-		GroundSpeed >= SprintLocomotionSpeedThreshold;
-	if (bWasSprintingAtRelease)
-	{
-		SprintStopMemoryTimeRemaining = SprintStopMemoryDuration;
-	}
-
-	bSprintInputHeld = false;
-	bWantsSprint = false;
-	bUseSprintLocomotion = false;
-
-	if (GroundMotionMode == EProject_JGroundMotionMode::Start)
-	{
-		bStartWasSprinting = false;
-		EnterGroundMotionMode(ResolveGroundMotionModeAfterSprintStop());
-	}
-
-	// Sprint release preserves the selected landing pose; normal landing
-	// completion resolves the current input into Idle or Locomotion.
-}
-
-bool UProject_JLocomotionAnimStateComponent::HasAnyMoveInputState() const
-{
-	return HasCachedMoveInput() || bHasMoveInput || bResolvedMoveInputLastUpdate;
-}
-
-bool UProject_JLocomotionAnimStateComponent::HasCachedMoveInput() const
-{
-	return CachedMoveInput.Size() > MoveInputDeadZone;
-}
-
-void UProject_JLocomotionAnimStateComponent::QueueLocalMoveStartIfNeeded(bool bHadMoveInput, bool bHasNewMoveInput)
-{
-	if (bHasNewMoveInput && !bHadMoveInput)
-	{
-		bPendingStartRequest = true;
-	}
-}
+{ bSprintInputHeld=bWantsSprint=bUseSprintLocomotion=false; }
 
 void UProject_JLocomotionAnimStateComponent::ClearLocalMoveInputState()
 {
@@ -355,32 +45,5 @@ void UProject_JLocomotionAnimStateComponent::ClearLocalMoveInputState()
 	MoveInputSize = 0.0f;
 	MoveInputHeldTime = 0.0f;
 	bHasMoveInput = false;
-	PreviousMoveInputForTurn = FVector2D::ZeroVector;
-}
 
-void UProject_JLocomotionAnimStateComponent::QueueLocalMoveStopIfNeeded(bool bHadMoveInput)
-{
-	if (bHadMoveInput)
-	{
-		bPendingStopRequest = true;
-	}
-}
-
-void UProject_JLocomotionAnimStateComponent::UpdateSprintLocomotionRequest()
-{
-	bUseSprintLocomotion =
-		GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
-		(HasCachedMoveInput() || GroundSpeed > IdleSpeedThreshold);
-}
-
-EProject_JGroundMotionMode UProject_JLocomotionAnimStateComponent::ResolveGroundMotionModeAfterSprintStop() const
-{
-	if (HasCachedMoveInput() || bHasMoveInput)
-	{
-		return EProject_JGroundMotionMode::Locomotion;
-	}
-
-	return GroundSpeed > StopIntentSpeedThreshold
-		? EProject_JGroundMotionMode::Stop
-		: EProject_JGroundMotionMode::Idle;
 }

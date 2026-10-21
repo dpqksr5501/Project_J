@@ -28,15 +28,15 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
-	virtual bool CanInteract_Implementation(ACharacter* Interactor) const override;
-	virtual void Interact_Implementation(ACharacter* Interactor) override;
+	virtual bool CanInteract_Implementation(APawn* Interactor) const override;
+	virtual void Interact_Implementation(APawn* Interactor) override;
 
 	/** Same deterministic checks used by interaction UI and the authoritative mount request. */
 	UFUNCTION(BlueprintPure, Category = "Mount|Eligibility")
-	EProject_JMountEligibilityFailure GetMountEligibilityFailure(const ACharacter* NewRider) const;
+	EProject_JMountEligibilityFailure GetMountEligibilityFailure(const APawn* NewRider) const;
 
 	UFUNCTION(BlueprintPure, Category = "Mount")
-	ACharacter* GetRider() const { return Rider; }
+	APawn* GetRider() const { return Rider; }
 
 	UFUNCTION(BlueprintPure, Category = "Mount")
 	bool IsOccupied() const { return Rider != nullptr; }
@@ -66,7 +66,7 @@ public:
 	bool ApplyMountDamage(float Damage);
 
 	/** Called by the rider's mount component on the authority. */
-	bool TryMountRider(ACharacter* NewRider);
+	bool TryMountRider(APawn* NewRider);
 
 	/** Usable by forced-dismount gameplay such as death or despawn. Authority only. */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Mount")
@@ -76,10 +76,10 @@ public:
 	void ServerRequestDismount();
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Mount")
-	void K2_OnRiderMounted(ACharacter* NewRider);
+	void K2_OnRiderMounted(APawn* NewRider);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Mount")
-	void K2_OnRiderDismounted(ACharacter* PreviousRider);
+	void K2_OnRiderDismounted(APawn* PreviousRider);
 
 protected:
 	virtual void PawnClientRestart() override;
@@ -96,7 +96,7 @@ protected:
 	/** Called once per positive-to-zero transition on authority, after the health mirror is updated. */
 	virtual void HandleHealthDepleted();
 	UFUNCTION()
-	void OnRep_Rider(ACharacter* PreviousRider);
+	void OnRep_Rider(APawn* PreviousRider);
 
 	UFUNCTION()
 	void OnRep_MountState(EProject_JMountState PreviousState);
@@ -146,7 +146,7 @@ protected:
 	TObjectPtr<class UCameraComponent> MountFollowCamera = nullptr;
 
 	UPROPERTY(ReplicatedUsing = OnRep_Rider, Transient)
-	TObjectPtr<ACharacter> Rider = nullptr;
+	TObjectPtr<APawn> Rider = nullptr;
 
 	UPROPERTY(ReplicatedUsing = OnRep_MountState, Transient)
 	EProject_JMountState MountState = EProject_JMountState::Unmounted;
@@ -179,7 +179,7 @@ private:
 	bool bHasRiderRestoreState = false;
 	uint32 RiderTransitionRevision = 0;
 	bool FindDismountLocation(FVector& OutLocation) const;
-	bool AttachRider(ACharacter* NewRider);
-	void DetachRider(ACharacter* PreviousRider, const FVector& DismountLocation) const;
-	void NotifyRiderMountChanged(ACharacter* ChangedRider, bool bMounted);
+	bool AttachRider(APawn* NewRider);
+	void DetachRider(APawn* PreviousRider, const FVector& DismountLocation) const;
+	void NotifyRiderMountChanged(APawn* ChangedRider, bool bMounted);
 };

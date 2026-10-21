@@ -1,10 +1,9 @@
 #include "Components/Project_JReplicatedAnimEventComponent.h"
+#include "Movement/Project_JMovementQueries.h"
 
 #include "Animation/Project_JLocomotionProfile.h"
-#include "Animation/Project_JMotionMatchingCVars.h"
 #include "Components/Project_JAnimationUpdateCoordinatorComponent.h"
 #include "GameFramework/Actor.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/GameStateBase.h"
 #include "Net/UnrealNetwork.h"
 #include "Project_JLocomotionAnimStateComponent.h"
@@ -100,26 +99,6 @@ void UProject_JReplicatedAnimEventComponent::DispatchLandingCancelled()
 	DispatchEvent(EProject_JReplicatedAnimEventType::LandingCancel);
 }
 
-void UProject_JReplicatedAnimEventComponent::DispatchTurnInPlaceStarted(uint8 DirectionBucket, float TargetFacingYaw)
-{
-	AActor* Owner = GetOwner();
-	if (!Owner || DirectionBucket < 1 || DirectionBucket > 4 || !FMath::IsFinite(TargetFacingYaw))
-	{
-		return;
-	}
-
-	if (Owner->HasAuthority())
-	{
-		if (CanServerAcceptTurnInPlace(DirectionBucket, TargetFacingYaw))
-		{
-			ApplyTurnInPlace(DirectionBucket, TargetFacingYaw);
-			ReplicateLatestState();
-		}
-		return;
-	}
-
-	ServerDispatchTurnInPlace(DirectionBucket, TargetFacingYaw);
-}
 
 void UProject_JReplicatedAnimEventComponent::DispatchEvent(EProject_JReplicatedAnimEventType EventType, bool bFlag)
 {
@@ -147,6 +126,13 @@ void UProject_JReplicatedAnimEventComponent::ServerDispatchMoveState_Implementat
 void UProject_JReplicatedAnimEventComponent::ServerDispatchEvent_Implementation(
 	EProject_JReplicatedAnimEventType EventType, bool bFlag)
 {
+	// A predicted fall-off RPC can arrive after authoritative touchdown. Mover
+	// owns physical air state; an old cosmetic request cannot reopen that episode.
+	if (EventType == EProject_JReplicatedAnimEventType::FallOffStart &&
+		!Project_J::Movement::ReadPhysicalFrame(GetOwner()).bInAir)
+	{
+		return;
+	}
 	if (EventType == EProject_JReplicatedAnimEventType::MoveStart ||
 		EventType == EProject_JReplicatedAnimEventType::MoveStop ||
 		EventType == EProject_JReplicatedAnimEventType::LandingStart)
@@ -157,16 +143,6 @@ void UProject_JReplicatedAnimEventComponent::ServerDispatchEvent_Implementation(
 	ReplicateLatestState();
 }
 
-void UProject_JReplicatedAnimEventComponent::ServerDispatchTurnInPlace_Implementation(uint8 DirectionBucket, float TargetFacingYaw)
-{
-	if (!CanServerAcceptTurnInPlace(DirectionBucket, TargetFacingYaw))
-	{
-		return;
-	}
-
-	ApplyTurnInPlace(DirectionBucket, TargetFacingYaw);
-	ReplicateLatestState();
-}
 
 void UProject_JReplicatedAnimEventComponent::ApplyEvent(EProject_JReplicatedAnimEventType EventType, bool bFlag)
 {
@@ -186,37 +162,12 @@ void UProject_JReplicatedAnimEventComponent::ApplyEvent(EProject_JReplicatedAnim
 		ApplyLandingCancel();
 		break;
 	case EProject_JReplicatedAnimEventType::LandingStart:
-	case EProject_JReplicatedAnimEventType::TurnInPlace:
 	default:
 		break;
 	}
 }
 
-void UProject_JReplicatedAnimEventComponent::ApplyTurnInPlace(uint8 DirectionBucket, float TargetFacingYaw)
-{
-	++ReplicatedAnimEvents.TurnInPlaceSequence;
-	ReplicatedAnimEvents.TurnInPlaceEventOrder = ++NextSemanticEventOrder;
-	ReplicatedAnimEvents.TurnInPlaceServerTimeSeconds = GetServerWorldTimeSeconds(GetWorld());
-	ReplicatedAnimEvents.TurnInPlaceDirectionBucket = DirectionBucket;
-	ReplicatedAnimEvents.TurnInPlaceTargetFacingYaw = FRotator::NormalizeAxis(TargetFacingYaw);
-}
 
-bool UProject_JReplicatedAnimEventComponent::CanServerAcceptTurnInPlace(uint8 DirectionBucket, float TargetFacingYaw) const
-{
-	if (DirectionBucket < 1 || DirectionBucket > 4 || !FMath::IsFinite(TargetFacingYaw))
-	{
-		return false;
-	}
-
-	const AProject_JPlayerCharacter* PlayerOwner = Cast<AProject_JPlayerCharacter>(GetOwner());
-	if (!PlayerOwner || !PlayerOwner->IsCombatModeActive())
-	{
-		return false;
-	}
-
-	const UCharacterMovementComponent* Movement = PlayerOwner->GetCharacterMovement();
-	return Movement && Movement->IsMovingOnGround() && PlayerOwner->GetVelocity().Size2D() <= 20.0f;
-}
 
 void UProject_JReplicatedAnimEventComponent::ApplyMoveEvent(bool bIsMoving, bool bWasSprintingAtBoundary)
 {
@@ -293,36 +244,29 @@ void UProject_JReplicatedAnimEventComponent::ApplyReplicatedEvents(
 	bool bMovePending = CurrentState.MoveSequence > LastAppliedMoveSequence;
 	bool bLandingPending = CurrentState.LandingRevision > LastAppliedLandingRevision;
 	bool bFallOffPending = CurrentState.FallOffStartCounter > LastAppliedFallOffCounter;
-	bool bTurnInPlacePending = CurrentState.TurnInPlaceSequence > LastAppliedTurnInPlaceSequence;
 	(void)PreviousState;
 
 	// Apply coalesced state in the authoritative server order. This prevents an old
 	// MoveStart from cancelling a newer landing when both arrive in one net update.
-	while (bMovePending || bLandingPending || bFallOffPending || bTurnInPlacePending)
+	while (bMovePending || bLandingPending || bFallOffPending)
 	{
 		const int32 MoveOrder = bMovePending ? CurrentState.MoveEventOrder : MAX_int32;
 		const int32 LandingOrder = bLandingPending ? CurrentState.LandingEventOrder : MAX_int32;
 		const int32 FallOffOrder = bFallOffPending ? CurrentState.FallOffEventOrder : MAX_int32;
-		const int32 TurnInPlaceOrder = bTurnInPlacePending ? CurrentState.TurnInPlaceEventOrder : MAX_int32;
-		if (MoveOrder <= LandingOrder && MoveOrder <= FallOffOrder && MoveOrder <= TurnInPlaceOrder)
+		if (MoveOrder <= LandingOrder && MoveOrder <= FallOffOrder)
 		{
 			ApplyRemoteMoveState(CurrentState);
 			bMovePending = false;
 		}
-		else if (LandingOrder <= FallOffOrder && LandingOrder <= TurnInPlaceOrder)
+		else if (LandingOrder <= FallOffOrder)
 		{
 			ApplyRemoteLandingState(CurrentState);
 			bLandingPending = false;
 		}
-		else if (FallOffOrder <= TurnInPlaceOrder)
+		else
 		{
 			ApplyRemoteFallOffState(CurrentState);
 			bFallOffPending = false;
-		}
-		else
-		{
-			ApplyRemoteTurnInPlaceState(CurrentState);
-			bTurnInPlacePending = false;
 		}
 	}
 }
@@ -332,13 +276,7 @@ void UProject_JReplicatedAnimEventComponent::ApplyRemoteMoveState(const FProject
 	LastAppliedMoveSequence = State.MoveSequence;
 	if (State.MoveEventOrder <= LastAppliedSemanticEventOrder)
 	{
-		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
-		{
-			UE_LOG(LogProjectJPlayer, Display,
-				TEXT("RemoteAnimSemanticDrop Actor=%s Type=Move Order=%d LastOrder=%d MoveSeq=%d"),
-				*GetNameSafe(GetOwner()),
-				State.MoveEventOrder, LastAppliedSemanticEventOrder, State.MoveSequence);
-		}
+
 		return;
 	}
 	LastAppliedSemanticEventOrder = State.MoveEventOrder;
@@ -352,15 +290,7 @@ void UProject_JReplicatedAnimEventComponent::ApplyRemoteMoveState(const FProject
 		LocomotionAnimStateComponent->HandleReplicatedMoveStopped(State.bIsSprinting);
 	}
 
-	if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
-	{
-		UE_LOG(LogProjectJPlayer, Display,
-			TEXT("RemoteAnimSemantic Actor=%s Type=%s Order=%d MoveSeq=%d SprintAtEdge=%s Age=%.3f"),
-			*GetNameSafe(GetOwner()),
-			State.bIsMoving ? TEXT("MoveStart") : TEXT("MoveStop"), State.MoveEventOrder,
-			State.MoveSequence, State.bIsSprinting ? TEXT("true") : TEXT("false"),
-			ResolveServerEventAgeSeconds(State.MoveServerTimeSeconds));
-	}
+
 }
 
 void UProject_JReplicatedAnimEventComponent::ApplyRemoteLandingState(const FProject_JReplicatedAnimEventState& State)
@@ -368,14 +298,7 @@ void UProject_JReplicatedAnimEventComponent::ApplyRemoteLandingState(const FProj
 	LastAppliedLandingRevision = State.LandingRevision;
 	if (State.LandingEventOrder <= LastAppliedSemanticEventOrder)
 	{
-		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
-		{
-			UE_LOG(LogProjectJPlayer, Display,
-				TEXT("RemoteAnimSemanticDrop Actor=%s Type=Landing Order=%d LastOrder=%d LandSeq=%d LandRev=%d"),
-				*GetNameSafe(GetOwner()),
-				State.LandingEventOrder, LastAppliedSemanticEventOrder,
-				State.LandingSequence, State.LandingRevision);
-		}
+
 		return;
 	}
 	LastAppliedSemanticEventOrder = State.LandingEventOrder;
@@ -392,18 +315,7 @@ void UProject_JReplicatedAnimEventComponent::ApplyRemoteLandingState(const FProj
 		LocomotionAnimStateComponent->HandleReplicatedLandingCancelled(State.LandingSequence);
 	}
 
-	if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
-	{
-		UE_LOG(LogProjectJPlayer, Display,
-			TEXT("RemoteAnimSemantic Actor=%s Type=%s Order=%d LandSeq=%d LandRev=%d Moving=%s Sprint=%s Heavy=%s Impact=%.1f Age=%.3f"),
-			*GetNameSafe(GetOwner()),
-			State.bLandingActive ? TEXT("LandingStart") : TEXT("LandingCancel"),
-			State.LandingEventOrder, State.LandingSequence, State.LandingRevision,
-			State.bLandingWasMoving ? TEXT("true") : TEXT("false"),
-			State.bLandingWasSprinting ? TEXT("true") : TEXT("false"),
-			State.bLandingWasHeavy ? TEXT("true") : TEXT("false"),
-			State.LandingImpactSpeed, EventAge);
-	}
+
 }
 
 void UProject_JReplicatedAnimEventComponent::ApplyRemoteFallOffState(const FProject_JReplicatedAnimEventState& State)
@@ -411,13 +323,7 @@ void UProject_JReplicatedAnimEventComponent::ApplyRemoteFallOffState(const FProj
 	LastAppliedFallOffCounter = State.FallOffStartCounter;
 	if (State.FallOffEventOrder <= LastAppliedSemanticEventOrder)
 	{
-		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
-		{
-			UE_LOG(LogProjectJPlayer, Display,
-				TEXT("RemoteAnimSemanticDrop Actor=%s Type=FallOff Order=%d LastOrder=%d Counter=%d"),
-				*GetNameSafe(GetOwner()),
-				State.FallOffEventOrder, LastAppliedSemanticEventOrder, State.FallOffStartCounter);
-		}
+
 		return;
 	}
 	LastAppliedSemanticEventOrder = State.FallOffEventOrder;
@@ -425,26 +331,6 @@ void UProject_JReplicatedAnimEventComponent::ApplyRemoteFallOffState(const FProj
 	LocomotionAnimStateComponent->HandleReplicatedFallOffStarted();
 }
 
-void UProject_JReplicatedAnimEventComponent::ApplyRemoteTurnInPlaceState(const FProject_JReplicatedAnimEventState& State)
-{
-	// An unreliable multicast may arrive before, after, or not at all relative
-	// to the replicated state.  Never let either path rewind a newer semantic
-	// edge that has already been presented.
-	if (State.TurnInPlaceSequence <= LastAppliedTurnInPlaceSequence ||
-		State.TurnInPlaceEventOrder <= LastAppliedSemanticEventOrder)
-	{
-		return;
-	}
-
-	LastAppliedTurnInPlaceSequence = State.TurnInPlaceSequence;
-	LastAppliedSemanticEventOrder = State.TurnInPlaceEventOrder;
-	RequestUrgentRemoteAnimationUpdate();
-	LocomotionAnimStateComponent->HandleReplicatedTurnInPlaceStarted(
-		State.TurnInPlaceSequence,
-		ResolveServerEventAgeSeconds(State.TurnInPlaceServerTimeSeconds),
-		State.TurnInPlaceDirectionBucket,
-		State.TurnInPlaceTargetFacingYaw);
-}
 
 float UProject_JReplicatedAnimEventComponent::ResolveServerEventAgeSeconds(float ServerTimeSeconds) const
 {

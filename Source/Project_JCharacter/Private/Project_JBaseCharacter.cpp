@@ -22,7 +22,7 @@
 
 AProject_JBaseCharacter::AProject_JBaseCharacter(const FObjectInitializer &ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UProject_JBudgetedSkeletalMeshComponent>(
-		  ACharacter::MeshComponentName))
+		  AProject_JMoverPawn::MeshComponentName))
 {
 	PrimaryActorTick.bCanEverTick = false;
 

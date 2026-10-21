@@ -1,5 +1,7 @@
 # 200명 애니메이션 런타임 최적화 — 2026-10-13
 
+> 2026-10-20: 이전 CPU/CMC 측정·이관 이력이다. 현재 Source에 없는 `ProjectJ.Animation.AuthoredCPU` 실행기는 퇴역했으며 현재 기능 회귀는 [GASP 기준](../Architecture/Player_Locomotion_Migration_2026-10-19.md#현재-회귀-실행)을 따른다. 아래 명령·수치는 당시 조건의 기록이다.
+
 > 후속 리타깃 작업: 이 문서의 MM 캐시 변경은 `8485562c`에 커밋됐다. 그 위에 작성한 [골격·몸체 프로필과 검증](../Architecture/Runtime_Retarget_Profiles_2026-10-13.md)은 별도 변경이다. 후속 CPU 표본의 증가와 이번 MM 타이머 감소를 합쳐 전체 성능 개선으로 해석하지 않는다.
 
 ## 결과와 범위

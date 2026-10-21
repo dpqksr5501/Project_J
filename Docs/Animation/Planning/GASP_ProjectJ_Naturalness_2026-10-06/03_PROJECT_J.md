@@ -1,5 +1,9 @@
 # 03. Project_J 운영 연결 상세
 
+> **이전 이동 구조의 기록 — 2026-10-21:** 본문은 당시 CMC/MM·마스터·후보 정책의 구현·제안·측정 이력이다. 현재 생산 제작은 [플레이어 로코모션](../../Architecture/Player_Locomotion_Architecture.md)을 따른다. 과거 구조를 복원하라는 지시나 현재 구조의 성능 결과로 해석하지 않는다.
+
+> **과거 소스 경로 안내 — 2026-10-21:** 아래 현재 파일이 없는 소스 경로는 당시 구현의 위치를 텍스트로 보존했다. 이를 현행 API나 실행 가능한 제작 단계로 해석하지 않는다. 이동·애니메이션의 현재 계약은 [플레이어 로코모션](../../Architecture/Player_Locomotion_Architecture.md)을 따른다. 당시 수치·실패·외부 출처는 유지한다.
+
 근거 J01-J07, S01-S08, E01-E03, H01-H04. G/A/S는 조사 시점의 확인이며 새로운 실행 결과가 아니다.
 
 ## 1. 운영 Pawn과 프로필
@@ -74,8 +78,8 @@ S03: 원격 position/rotation smoothing과 facing repair는 opt-in CVar 정책�
 S: phase/context 우선순위는 Land·Jump/Fall·Stop·TIP·Pivot·Start·Turn·Cycle 계열을 조합한다. 물리적 공중과 표시용 landing/inAir 의미를 구분한다. 다음 함수/파일이 책임을 나눈다.
 
 - [Locomotion Component](../../../../Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponent.cpp): authoritative/kinematic/derived context, 요청과 큰 Turn.
-- [Context Builder](../../../../Source/Project_JCharacter/Public/Animation/Project_JLocomotionContextBuilder.h): selection context의 의미.
-- [Asset Set](../../../../Source/Project_JCharacter/Private/Animation/Project_JMotionMatchingAssetSet.cpp): gait/mode/phase의 PSD 해석.
+- Context Builder (`Source/Project_JCharacter/Public/Animation/Project_JLocomotionContextBuilder.h`, 당시 경로·현재 파일 없음): selection context의 의미.
+- Asset Set (`Source/Project_JCharacter/Private/Animation/Project_JMotionMatchingAssetSet.cpp`, 당시 경로·현재 파일 없음): gait/mode/phase의 PSD 해석.
 - [AnimInstance](../../../../Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp): snapshot·Chooser·단발 commit.
 - [Proxy](../../../../Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceProxy.cpp): worker MM 노드 적용·검색 실행/소비.
 

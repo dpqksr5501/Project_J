@@ -1,5 +1,7 @@
 # 200명 전원 표시와 로컬 품질 보존 최적화 계획
 
+> **과거 소스 경로 안내 — 2026-10-21:** 아래 현재 파일이 없는 소스 경로는 당시 구현의 위치를 텍스트로 보존했다. 이를 현행 API나 실행 가능한 제작 단계로 해석하지 않는다. 이동·애니메이션의 현재 계약은 [플레이어 로코모션](../../Animation/Architecture/Player_Locomotion_Architecture.md)을 따른다. 당시 수치·실패·외부 출처는 유지한다.
+
 ## 목표와 현재 상태
 
 목표는 평상시 유휴·이동부터 밀집 전투까지 총 200명의 캐릭터를 표시하는 MMORPG다. 대표 클라이언트는 로컬 플레이어 1명과 다른 플레이어 표현 199명으로 구성한다. 로컬의 움직임·입력 반응·애니메이션 품질을 유지하면서 중복 작업과 불필요한 계산을 줄이고, 원격 표현·네트워크·서버 판정 비용을 각각 관리한다. 인원 제한이나 가까운 플레이어 숨김으로 목표를 달성하지 않는다. 화면 밖·가려진 대상의 시각 계산 생략은 전원 표시 정책과 구분한다.
@@ -79,9 +81,9 @@
 주요 소스 위치:
 
 - [BaseCharacter](../../../Source/Project_JCharacter/Private/Project_JBaseCharacter.cpp): BeginPlay의 Significance 등록.
-- [PlayerCharacter Tick](../../../Source/Project_JCharacter/Private/Project_JPlayerCharacter.cpp), [이동 정책](../../../Source/Project_JCharacter/Private/Project_JPlayerCharacter.Movement.cpp), [궤적](../../../Source/Project_JCharacter/Private/Animation/Project_JMotionMatchingTrajectoryComponent.cpp).
+- [PlayerCharacter Tick](../../../Source/Project_JCharacter/Private/Project_JPlayerCharacter.cpp), [이동 정책](../../../Source/Project_JCharacter/Private/Project_JPlayerCharacter.Movement.cpp), 궤적 (`Source/Project_JCharacter/Private/Animation/Project_JMotionMatchingTrajectoryComponent.cpp`, 당시 경로·현재 파일 없음).
 - [Budget](../../../Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Budget.cpp), [QualityPolicy](../../../Source/Project_JCharacter/Private/Animation/Project_JAnimationQualityPolicy.cpp), [BudgetedMesh](../../../Source/Project_JCharacter/Private/Animation/Project_JBudgetedSkeletalMeshComponent.cpp), [Coordinator](../../../Source/Project_JCharacter/Private/Components/Project_JAnimationUpdateCoordinatorComponent.cpp).
-- [Snapshot](../../../Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Snapshot.cpp), [Search](../../../Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Search.cpp), [Proxy](../../../Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceProxy.cpp).
+- Snapshot (`Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Snapshot.cpp`, 당시 경로·현재 파일 없음), Search (`Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Search.cpp`, 당시 경로·현재 파일 없음), [Proxy](../../../Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceProxy.cpp).
 - [Retarget Proxy](../../../Source/Project_JCharacter/Private/Animation/Project_JRetargetAnimInstanceProxy.cpp), [Retarget Instance](../../../Source/Project_JCharacter/Private/Animation/Project_JRetargetAnimInstance.cpp), [GuidedHandIK](../../../Source/Project_JCharacter/Private/Animation/Project_JAnimNode_GuidedHandIK.cpp), [WeaponPresentation](../../../Source/Project_JCharacter/Private/Components/Project_JWeaponPresentationComponent.cpp).
 
 ## 로컬 품질을 유지하는 개선 순서
@@ -177,7 +179,7 @@ AOI 재진입·순간이동·late join의 초기 복제와 에셋 로딩이 몰�
 - Coordinator/allocator가 취득한 설정만 복원하고 최신 외부 정책을 덮어쓰지 않는다. GC·world teardown·장비/Avatar 교체 후 오래된 요구/캐시를 유지하지 않는다.
 - Mirror Data는 [현재 보류 결정](../../Animation/Planning/Mirror_Data_Adoption_Decision_2026-10-15.md)을 유지한다. Traversal은 제외한다.
 
-검증 도구는 기존 [AuthoredAnimation](../../../Scripts/Validation/Measure-AuthoredAnimation.ps1), [RenderedCrowd](../../../Scripts/Validation/Measure-RenderedCrowd.ps1), [Network](../../../Scripts/Validation/Measure-Network.ps1), [trace export](../../../Scripts/Validation/Export-DTrace.ps1)를 재사용했다. RenderedCrowd의 새 `-LocalPlayer` 옵션은 기존 controlled kinematics 장면에 실제 로컬 소유권과 full-quality 조건 검사를 추가한다. 실제 local CMC 이동은 별도 시험이며, 현재 fixture에 없는 부하를 실행한 것으로 표기하지 않는다.
+검증 도구는 기존 `AuthoredAnimation`(당시 실행기; 2026-10-20 구형 fixture 부재로 퇴역), [RenderedCrowd](../../../Scripts/Validation/Measure-RenderedCrowd.ps1), [Network](../../../Scripts/Validation/Measure-Network.ps1), [trace export](../../../Scripts/Validation/Export-DTrace.ps1)를 재사용했다. RenderedCrowd의 새 `-LocalPlayer` 옵션은 기존 controlled kinematics 장면에 실제 로컬 소유권과 full-quality 조건 검사를 추가한다. 실제 local CMC 이동은 별도 시험이며, 현재 fixture에 없는 부하를 실행한 것으로 표기하지 않는다.
 
 runtime 변경 후 direct UnrealBuildTool.exe로 관련 Editor/Game을 검증하고, 첫 오류부터 처리한다. UBT/dotnet/Editor/Live Coding/MSBuild/ShaderCompileWorker가 실행 중이면 새 빌드/검증을 겹치거나 중단하지 않는다. 기능 변경 범위에 맞춰 기존 AnimationDemandLifetime·ProxyLifetime·PipelinePolicy·RetargetBody·VisualBudget·OneShot/Turn/Continuity·CanonicalMeleeTrace/BladeTrajectory·MeleeLifetime·CombatPose·SSR/authority 시험과 실제 재생/원격 시험을 선택한다. 구현을 그대로 따라 쓰는 시험이나 무관한 전체 부하를 매번 반복하지 않는다.
 

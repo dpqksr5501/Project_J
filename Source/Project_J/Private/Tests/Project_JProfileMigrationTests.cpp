@@ -298,7 +298,6 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJProfileMigrationTest, "ProjectJ.MMO.Pe
 								 EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJProfileMigrationTest::RunTest(const FString &)
 {
-	AddExpectedError(TEXT("Character data registry is empty."), EAutomationExpectedErrorFlags::Contains, 1);
 	auto *GI = NewObject<UGameInstance>(GEngine);
 	GI->InitializeStandalone();
 	auto *World = GI->GetWorld();

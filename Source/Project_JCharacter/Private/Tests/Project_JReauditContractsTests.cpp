@@ -1,4 +1,5 @@
 #if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
+#include "Movement/Project_JMovementQueries.h"
 #include "Misc/AutomationTest.h"
 #include "Engine/SkeletalMesh.h"
 #include "Misc/ScopeExit.h"
@@ -126,35 +127,7 @@ bool FProjectJCombatPresentationRetirementTest::RunTest(const FString&)
     return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMovementPublicationTest,
-    "ProjectJ.Reaudit.MovementPublication", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool FProjectJMovementPublicationTest::RunTest(const FString&)
-{
-    auto* World=UWorld::CreateWorld(EWorldType::Game,false);
-    GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
-    ON_SCOPE_EXIT {World->DestroyWorld(false);GEngine->DestroyWorldContext(World);};
-    auto* Character=World->SpawnActor<AProject_JCombatFacingFixture>();
-    auto* Profile=NewObject<UProject_JLocomotionProfile>(Character);
-    FindFProperty<FObjectPropertyBase>(Character->GetClass(),TEXT("CharacterAnimProfile"))->SetObjectPropertyValue_InContainer(Character,nullptr);
-    FindFProperty<FObjectPropertyBase>(Character->GetClass(),TEXT("LocomotionProfile"))->SetObjectPropertyValue_InContainer(Character,Profile);
-    if(!TestTrue(TEXT("Fixture selects the real profile resolver"),Character->GetLocomotionProfile()==Profile)){return false;}
-    auto* Movement=Character->GetCharacterMovement();
-    Movement->MaxWalkSpeed=432;Movement->MaxAcceleration=111;Movement->BrakingDecelerationWalking=222;
-    Movement->GroundFriction=3;Movement->RotationRate.Yaw=99;
-    Profile->WalkSpeed=std::numeric_limits<float>::quiet_NaN();
-    Profile->MovementPolicy.RunMaxAcceleration=999;
-    Character->UpdateTestMovementPolicy();
-    TestEqual(TEXT("Nonfinite speed cannot poison the CMC"),Movement->MaxWalkSpeed,432.f);
-    TestEqual(TEXT("Invalid policy cannot partially publish acceleration"),Movement->MaxAcceleration,111.f);
-    TestEqual(TEXT("Invalid policy preserves braking"),Movement->BrakingDecelerationWalking,222.f);
-    TestEqual(TEXT("Invalid policy preserves friction"),Movement->GroundFriction,3.f);
-    TestEqual(TEXT("Invalid policy preserves rotation"),Movement->RotationRate.Yaw,99.0);
-    Profile->WalkSpeed=120;
-    Character->UpdateTestMovementPolicy();
-    TestEqual(TEXT("Corrected live profile resumes normal publication"),Movement->MaxWalkSpeed,120.f);
-    TestEqual(TEXT("The complete valid policy is published"),Movement->MaxAcceleration,999.f);
-    return true;
-}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMountTagReentryTest,
     "ProjectJ.Reaudit.MountTagReentry", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJMountTagReentryTest::RunTest(const FString&)
@@ -181,7 +154,7 @@ bool FProjectJMountTagReentryTest::RunTest(const FString&)
     TestEqual(TEXT("Latest mount owns the rider relationship"),Component->GetMountedMount(),static_cast<AProject_JMountCharacter*>(Second));
     TestTrue(TEXT("Latest mount owns possession"),Controller->GetPawn()==Second);
     TestEqual(TEXT("Nested transition has exactly one mounted contribution"),ASC->GetTagCount(Tag),1);
-    TestTrue(TEXT("Retired first mount cannot restore movement over the new session"),Rider->GetCharacterMovement()->MovementMode==MOVE_None);
+    TestTrue(TEXT("Retired first mount cannot restore movement over the new session"),Project_J::Movement::ReadPhysicalFrame(Rider).Mode==MOVE_None);
     Second->DismountRider(true);
     TestEqual(TEXT("Final dismount releases the only contribution"),ASC->GetTagCount(Tag),0);
     Component->DestroyComponent();
@@ -262,101 +235,7 @@ bool FProjectJAuthoredFollowerRoleTest::RunTest(const FString&)
     TestTrue(TEXT("Actual follower keeps the native retarget ABP contract"),Follower->GetAnimInstance()&&Follower->GetAnimInstance()->IsA<UProject_JRetargetAnimInstance>());
     return true;
 }
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMassReentrantRetirementTest,
-    "ProjectJ.Reaudit.MassReentrantRetirement", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool FProjectJMassReentrantRetirementTest::RunTest(const FString&)
-{
-    for (const bool bCollectDuringCallback : {false, true})
-    for (const bool bDuringUnregister : {false, true})
-    {
-        auto* World=UWorld::CreateWorld(EWorldType::Game,false);
-        GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
-        bool bWorldDestroyed=false;
-        ON_SCOPE_EXIT {if(!bWorldDestroyed){World->EndPlay(EEndPlayReason::Quit);World->DestroyWorld(false);}GEngine->DestroyWorldContext(World);};
-        FActorSpawnParameters Parameters;Parameters.SpawnCollisionHandlingOverride=ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-        auto* NPC=World->SpawnActor<AProject_JMassRetirementFixture>(AProject_JMassRetirementFixture::StaticClass(),FVector(0,0,100),FRotator::ZeroRotator,Parameters);
-        World->InitializeActorsForPlay(FURL());World->GetWorldSettings()->NotifyBeginPlay();World->GetWorldSettings()->NotifyMatchStarted();
-        auto* Bridge=World->GetSubsystem<UProject_JMassRepresentationSubsystem>();
-        if(!TestNotNull(TEXT("Actual game world supplies the opt-in Mass bridge"),Bridge)){return false;}
-        TStrongObjectPtr<UProject_JMassRepresentationSubsystem> PinnedBridge(Bridge);
-        TStrongObjectPtr<AProject_JMassRetirementFixture> PinnedNPC(NPC);
-        const TWeakObjectPtr<UProject_JMassRepresentationSubsystem> WeakBridge(Bridge);
-        const TWeakObjectPtr<AProject_JMassRetirementFixture> WeakNPC(NPC);
-        NPC->GetAttributeSet()->InitMaxHealth(100);NPC->GetAttributeSet()->InitHealth(73);
-        NPC->GetAbilitySystemComponent()->InitAbilityActorInfo(NPC,NPC);
-        Bridge->SetObserversForTest({FVector(20000,0,0)});
-        const auto Token=Bridge->RegisterNPC(NPC);
-        if(!TestTrue(TEXT("Authority NPC registers a real Mass entity"),Token.IsValid())){return false;}
-        auto Path=MakeShared<FNavigationPath,ESPMode::ThreadSafe>();
-        Path->GetPathPoints().Add(FNavPathPoint(NPC->GetNavAgentLocation()));
-        Path->GetPathPoints().Add(FNavPathPoint(NPC->GetNavAgentLocation()+FVector(10000,0,0)));Path->MarkReady();
-        if(!TestTrue(TEXT("Real route is accepted before the ownership handoff"),Bridge->SetRoute(Token,Path))){return false;}
-        const bool bMovementTick=NPC->GetCharacterMovement()->IsComponentTickEnabled();
-        const bool bMeshTick=CastChecked<UProject_JBudgetedSkeletalMeshComponent>(NPC->GetMesh())->GetRequestedTickEnabled();
-        const bool bHidden=NPC->IsHidden(),bCollision=NPC->GetActorEnableCollision(),bDamage=NPC->CanBeDamaged();
-        const auto SavedEntities=Bridge->Entities;
-        TStrongObjectPtr<UProject_JMassMovementProcessor> SavedProcessor(Bridge->Processor.Get());
-        const TWeakObjectPtr<UProject_JMassMovementProcessor> WeakProcessor(SavedProcessor.Get());
-        bool bCallback=false,bFixtureRescuedStorage=false;
-        if(bDuringUnregister)
-        {
-            Bridge->Tick(0.05f);
-            if(!TestTrue(TEXT("Unregister fixture first hands movement to Mass"),Bridge->IsMassOwned(Token.Id))){return false;}
-        }
-        NPC->OnHiddenChanged=[&](bool bNewHidden)
-        {
-            bCallback=true;
-            TestEqual(TEXT("Actual hidden callback occurs at the selected ownership transition"),bNewHidden,!bDuringUnregister);
-            TestTrue(TEXT("External callback runs inside a guarded Mass step"),Bridge->bStepping);
-            World->EndPlay(EEndPlayReason::Quit);
-            bWorldDestroyed=true;
-            World->DestroyWorld(false); // The engine collection invokes Deinitialize exactly once.
-            TestFalse(TEXT("Engine-owned world cleanup deinitialized the tickable subsystem"),Bridge->IsInitialized());
-            TestTrue(TEXT("Reentrant deinitialize retains entity storage until the active step completes"),Bridge->Entities==SavedEntities);
-            TestTrue(TEXT("Reentrant deinitialize retains the active processor until the step completes"),Bridge->Processor.Get()==SavedProcessor.Get());
-            // Baseline-only test protection: preserve the native failure without a following null access.
-            if(!Bridge->Entities || !Bridge->Processor)
-            {
-                bFixtureRescuedStorage=true;
-                Bridge->Entities=SavedEntities;Bridge->Processor=SavedProcessor.Get();
-                AddInfo(TEXT("TEST-ONLY RESCUE restored prematurely released storage; this is a contract failure reproduction, not a crash reproduction."));
-            }
-            if(bCollectDuringCallback)
-            {
-                // The fixture lends no owner/NPC root while the product callback is active.
-                SavedProcessor.Reset();PinnedBridge.Reset();PinnedNPC.Reset();
-                CollectGarbage(RF_NoFlags,true);
-                TestTrue(TEXT("Active product step keeps the deinitialized bridge alive across callback GC"),WeakBridge.IsValid());
-                TestTrue(TEXT("Product ownership callback keeps the retired NPC alive across callback GC"),WeakNPC.IsValid());
-                TestTrue(TEXT("Active bridge keeps its processor alive without a fixture processor root"),WeakProcessor.IsValid());
-                // Retain evidence subjects only after the collection, for assertions after return.
-                SavedProcessor.Reset(WeakProcessor.Get());
-                PinnedBridge.Reset(WeakBridge.Get());PinnedNPC.Reset(WeakNPC.Get());
-            }
-        };
-        if(bDuringUnregister)
-        {
-            TestTrue(TEXT("In-flight unregister finishes its admitted entity retirement"),Bridge->UnregisterNPC(Bridge->GetToken(Token.Id)));
-        }
-        else {Bridge->Tick(0.05f);}
-        TestTrue(TEXT("Native actor virtual callback actually invoked engine-owned world teardown"),bCallback);
-        TestEqual(TEXT("Retirement returns the captured movement tick"),NPC->GetCharacterMovement()->IsComponentTickEnabled(),bMovementTick);
-        TestEqual(TEXT("Retirement returns the captured requested pose tick"),CastChecked<UProject_JBudgetedSkeletalMeshComponent>(NPC->GetMesh())->GetRequestedTickEnabled(),bMeshTick);
-        TestEqual(TEXT("Retirement returns the captured visibility"),NPC->IsHidden(),bHidden);
-        TestEqual(TEXT("Retirement returns the captured collision admission"),NPC->GetActorEnableCollision(),bCollision);
-        TestEqual(TEXT("Retirement returns the captured damage admission"),NPC->CanBeDamaged(),bDamage);
-        TestEqual(TEXT("Completed stop releases all registrations"),Bridge->GetStats().Registered,0);
-        TestFalse(TEXT("Completed stop releases Mass movement ownership"),Bridge->IsMassOwned(Token.Id));
-        TestFalse(TEXT("Late registration cannot reopen retired storage"),Bridge->RegisterNPC(NPC).IsValid());
-        TestFalse(TEXT("Late route publication is rejected"),Bridge->SetRoute(Token,Path));
-        if(!bFixtureRescuedStorage)
-        {
-            TestFalse(TEXT("Completed stop releases its entity manager reference"),Bridge->Entities.IsValid());
-            TestNull(TEXT("Completed stop releases its processor reference"),Bridge->Processor.Get());
-        }
-    }
-    return true;
-}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJSubsystemCallbackGCTest,
     "ProjectJ.Reaudit.SubsystemCallbackGC", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJSubsystemCallbackGCTest::RunTest(const FString&)

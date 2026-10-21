@@ -79,7 +79,9 @@ struct FReadOnlySourceMount
 };
 }
 
-FString UProject_JFoleyMigrationLibrary::MigrateGaspFoley(const TArray<FString>& Packages, const FString& SourceContent, bool bApply, const TArray<FString>& VerifiedNamedEvents)
+namespace
+{
+FString MigrateLoadedFoley(const TArray<FString>& Packages, UClass* LegacyBase, const FString& ApprovedRoot, bool bApply, const TArray<FString>& VerifiedNamedEvents)
 {
 	check(IsInGameThread());
 	const auto Report = MakeShared<FJsonObject>();
@@ -91,24 +93,12 @@ FString UProject_JFoleyMigrationLibrary::MigrateGaspFoley(const TArray<FString>&
 		Item->SetStringField(TEXT("package"), Path); Item->SetStringField(TEXT("error"), Reason);
 		Results.Add(MakeShared<FJsonValueObject>(Item)); ++Errors;
 	};
-	// A more-specific temporary mount may never hide project-authored folders.
-	bool bSourceSafe = FPaths::IsRelative(SourceContent) == false;
-	for (const FString& Folder : {FString(TEXT("Blueprints")), FString(TEXT("Audio"))})
-	{
-		bSourceSafe &= IFileManager::Get().DirectoryExists(*FPaths::Combine(SourceContent, Folder));
-		bSourceSafe &= !IFileManager::Get().DirectoryExists(*FPaths::Combine(FPaths::ProjectContentDir(), Folder));
-	}
-	if (!bSourceSafe) { Fail(TEXT("source"), TEXT("Missing source folder or project mount collision")); }
+	if (!LegacyBase) { Fail(TEXT("source"), TEXT("Cannot load Foley base class")); }
 	else
-	{
-		FReadOnlySourceMount SourceMount(SourceContent);
-		TStrongObjectPtr<UClass> LegacyBase(LoadClass<UAnimNotify>(nullptr,
-			TEXT("/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent.BP_AnimNotify_FoleyEvent_C")));
-		if (!LegacyBase.IsValid()) { Fail(TEXT("source"), TEXT("Cannot load original Foley base class")); }
-		else for (const FString& Path : Packages)
+	for (const FString& Path : Packages)
 		{
 			// Explicit imported character animation roots only; source packages cannot be saved here.
-			if (!Path.StartsWith(TEXT("/Game/Characters/UEFN_Mannequin/Animations/")))
+			if (!Path.StartsWith(ApprovedRoot))
 			{
 				Fail(Path, TEXT("Package outside approved imported-animation root")); continue;
 			}
@@ -148,7 +138,7 @@ FString UProject_JFoleyMigrationLibrary::MigrateGaspFoley(const TArray<FString>&
 				{
 					Fail(Path, TEXT("Unresolved Foley instance after source restore")); bValid = false; break;
 				}
-				if (!Event.Notify || !Event.Notify->IsA(LegacyBase.Get())) { continue; }
+				if (!Event.Notify || !Event.Notify->IsA(LegacyBase)) { continue; }
 				FProject_JFoleyEvent Payload; FString Error;
 				if (!ReadPayload(Event.Notify, Payload, Error)) { Fail(Path, Error); bValid = false; break; }
 				Planned.Emplace(Index, Payload);
@@ -193,11 +183,32 @@ FString UProject_JFoleyMigrationLibrary::MigrateGaspFoley(const TArray<FString>&
 			}
 			Replacements += Planned.Num(); Results.Add(MakeShared<FJsonValueObject>(Item));
 		}
-	}
 	Report->SetBoolField(TEXT("apply"), bApply); Report->SetNumberField(TEXT("errors"), Errors);
 	Report->SetNumberField(TEXT("replacements"), Replacements); Report->SetNumberField(TEXT("saved"), Saved);
 	Report->SetArrayField(TEXT("packages"), Results);
 	FString Json; FJsonSerializer::Serialize(Report, TJsonWriterFactory<>::Create(&Json)); return Json;
+}
+
+}
+
+FString UProject_JFoleyMigrationLibrary::MigrateGaspFoley(const TArray<FString>& Packages, const FString& SourceContent, bool bApply, const TArray<FString>& VerifiedNamedEvents)
+{
+ bool bSourceSafe = !FPaths::IsRelative(SourceContent);
+ for (const FString& Folder : {FString(TEXT("Blueprints")), FString(TEXT("Audio"))})
+ {
+  bSourceSafe &= IFileManager::Get().DirectoryExists(*FPaths::Combine(SourceContent, Folder));
+  bSourceSafe &= !IFileManager::Get().DirectoryExists(*FPaths::Combine(FPaths::ProjectContentDir(), Folder));
+ }
+ if (!bSourceSafe) return TEXT("{\"errors\":1,\"error\":\"Missing source folder or project mount collision\"}");
+ FReadOnlySourceMount SourceMount(SourceContent);
+ TStrongObjectPtr<UClass> LegacyBase(LoadClass<UAnimNotify>(nullptr,TEXT("/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent.BP_AnimNotify_FoleyEvent_C")));
+ return MigrateLoadedFoley(Packages,LegacyBase.Get(),TEXT("/Game/Characters/UEFN_Mannequin/Animations/"),bApply,VerifiedNamedEvents);
+}
+
+FString UProject_JFoleyMigrationLibrary::MigrateFoundationFoley(const TArray<FString>& Packages, bool bApply)
+{
+ TStrongObjectPtr<UClass> LegacyBase(LoadClass<UAnimNotify>(nullptr,TEXT("/Game/GASP58Native/AnimNotifies/BP_AnimNotify_FoleyEvent.BP_AnimNotify_FoleyEvent_C")));
+ return MigrateLoadedFoley(Packages,LegacyBase.Get(),TEXT("/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/"),bApply,{});
 }
 
 FString UProject_JFoleyMigrationLibrary::RepairMissingGaspFoley(const TArray<FString>& Packages, const FString& SourceContent, bool bApply)

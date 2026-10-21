@@ -1,5 +1,7 @@
 # Strafe A/S/D 예측 안정화
 
+> **이전 이동 구조의 기록 — 2026-10-21:** 아래 CMC/MM·후보·재생 정책과 검증은 당시 구현이다. 현재 제작·입력·핀 계산은 [플레이어 로코모션](Player_Locomotion_Architecture.md)을 따른다. 기존 로그·실패·수치를 새 구조의 현재 상태로 해석하지 않는다.
+
 사용자가 보고한 문제는 A/S/D를 유지하며 카메라를 돌릴 때 모션이 버벅이는 현상이다. 실제 입력·카메라·CharacterMovement는 유지하고 Motion Matching이 사용하는 미래 경로의 회전율을 안정화한다. 상세 재현에서 남은 짧은 재선택을 확인한 뒤, 사용자 승인으로 Strafe Run Cycle의 Continuing Pose Cost Bias를 0에서 -0.03으로 저장했다. 현재 모션을 검색 비용에서 소폭 우대하며 Turn 후보나 특정 Diamond·Box 선택을 강제하지 않는다.
 
 ## 로그와 재현

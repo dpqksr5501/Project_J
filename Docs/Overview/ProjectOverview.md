@@ -13,7 +13,7 @@ Project J는 Unreal Engine 5.8 기반의 **3인칭 액션 MMORPG 프로토타입
 현재 Project J에서 가장 구체적으로 구현된 영역은 다음과 같다.
 
 - 3인칭 플레이어 캐릭터와 카메라
-- C++ locomotion state 및 Motion Matching 기반 이동 애니메이션
+- Mover 이동·C++ 상태/선택 계산과 Pose Match/BlendStack 기반 이동 애니메이션
 - Start, Stop, Turn, Jump, Fall, Landing 등 이동 단계
 - 원격 플레이어의 replicated movement를 고려한 애니메이션 처리
 - GAS 기반 능력, 속성, 전투 상태 및 InputTag 입력 경로
@@ -46,7 +46,7 @@ Project J가 지향하는 플레이 흐름은 다음과 같다.
 
 ```text
 Locomotion
-  -> Motion Matching
+  -> C++ 상태·Chooser 후보 선택 / Pose Match / BlendStack
   -> 기본 이동 pose 선택
 
 Combat / Skill
@@ -55,7 +55,7 @@ Combat / Skill
   -> 공격, 회피, 피격, 스킬 연출
 ```
 
-Motion Matching이 공격이나 스킬을 선택하지 않으며, 전투 조건을 locomotion state machine 내부에 직접 누적하지 않는 것이 현재 핵심 정책이다.
+이동 포즈 검색이 공격이나 스킬을 선택하지 않으며, 전투 조건을 locomotion state machine 내부에 직접 누적하지 않는 것이 현재 핵심 정책이다.
 
 ## 모듈 구조
 
@@ -91,7 +91,7 @@ Project_JCore
 ### Project_JCharacter
 
 - Base, Player, NPC character
-- locomotion 및 Motion Matching
+- Mover locomotion 및 native 애니메이션 계산
 - combat, skill input, equipment runtime
 - inventory 및 equipment component
 - UI ViewModel binding
@@ -138,20 +138,11 @@ NPC는 PlayerState가 없을 수 있으므로 `AProject_JBaseCharacter`의 chara
 
 ## 애니메이션 원칙
 
-- 플레이어와 가까운 원격 플레이어는 고품질 Motion Matching 경로를 사용한다.
-- NPC는 측정 결과가 필요하다고 증명되기 전까지 저비용 애니메이션 경로를 기본으로 한다.
-- 애니메이션 설정은 아래 순서로 해석한다.
+공통 `ABP_Player_Master`와 `UProject_JPlayerAnimInstance`를 사용한다. Mover가 이동을 시뮬레이션하고 GT snapshot/AnimInstanceProxy가 worker에 값을 전달한다. 상태·전환·Chooser 실행·핀 계산은 C++가 담당하며 ABP는 포즈 연결·콜백 시점·직업/탈것 레이어를 담당한다.
 
-```text
-CharacterAnimProfile
-  -> LocomotionProfile
-  -> MotionMatchingAssetSet
-```
+지상은 상태 선택·Pose Match·BlendStack, 공중은 프로젝트의 방향 재선택과 playhead 연속성을 사용한다. 모션 라이브러리는 Manny로 공용화하고, UE5 호환 몸체 직접 재생과 비표준 골격의 Family/Body 리타깃을 구분한다. Local/Near/Mid/Far/Hidden 예산과 필수 전투 포즈 보호는 별도 정책이다. NPC가 공통 그래프를 사용한다는 사실을 같은 갱신 비용이나 모든 NPC의 동일 품질 정책으로 해석하지 않는다.
 
-- `LocomotionAnimStateComponent`가 이동 상태를 계산한다.
-- `CharacterAnimInstance`가 thread-safe snapshot을 만들고 Chooser와 Motion Matching에 전달한다.
-- 데이터베이스 선택 비용은 거리별로 줄일 수 있지만 Pose Search trajectory 입력은 필요한 갱신 주기를 유지한다.
-- Local, Near, Mid, Far, Hidden budget tier를 사용해 비용을 단계적으로 조절한다.
+[현재 로코모션 구조](../Animation/Architecture/Player_Locomotion_Architecture.md)에서 실제 에셋 경로·제작·회귀를 확인한다. `MotionMatchingAssetSet`과 CMC 전용 이전 제작 경로를 새 콘텐츠 기준으로 복원하지 않는다.
 
 ## 전투와 스킬 원칙
 

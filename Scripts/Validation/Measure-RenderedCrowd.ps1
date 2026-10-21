@@ -14,7 +14,7 @@ if ($DisableEditorPython -and !$Executable) { $arguments += '-DisablePython' }
 if ($LocalPlayer) { $arguments += '-ProjectJRenderedCrowdLocalPlayer' }
 if($Trace){$arguments+=@('-trace=cpu,frame,gpu,bookmark,region,counters,task',"-tracefile=$out/Render.utrace")}
 $files=@('Project_J.uproject','Content/Character_BPs/GreatSword/BP_GreatSword.uasset',
- 'Content/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme.uasset','Content/Animation_Logic/ABPs/ABP_Humanoid_Master.uasset')
+ 'Content/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme.uasset','Content/Animation_Logic/ABPs/ABP_Player_Master.uasset')
 if (!$Executable) { $files += @('Binaries/Win64/UnrealEditor-Project_J.dll','Binaries/Win64/UnrealEditor-Project_JCharacter.dll') }
 $hashes=@($files|ForEach-Object{[ordered]@{path=$_;sha256=(Get-FileHash -LiteralPath "$root/$_").Hash}})
 [ordered]@{head=(& git -C $root -c core.fsmonitor=false rev-parse HEAD);cpu=(Get-CimInstance Win32_Processor).Name;gpu=(Get-CimInstance Win32_VideoController).Name;

@@ -4,9 +4,15 @@
 
 목록은 파일 위치와 문서 종류를 안내한다. 구현 완료·현재 성능을 판정하는 표가 아니며, 각 문서의 날짜·범위·후속 기록을 함께 읽는다. 통합 문서 안내는 이전 링크를 이어주는 진입점이고 상세 본문은 통합 가이드에 있다.
 
-문서 폴더 파일 3316개, Markdown 259개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
+문서 폴더 파일 3338개, Markdown 263개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
 
 ## 주제별 목록
+
+### 문서 시작점
+
+| 문서 | 종류 | 경로 |
+| --- | --- | --- |
+| [Project J 문서 시작점](../README.md) | 목차·문서 관리 | README.md |
 
 ### 프로젝트 개요
 
@@ -42,7 +48,7 @@
 | [애니메이션 파이프라인 리팩토링 — 2026-10-13](../Animation/Architecture/Animation_Pipeline_Refactor_2026-10-13.md) | 구조·계약 | Animation/Architecture/Animation_Pipeline_Refactor_2026-10-13.md |
 | [실제 캐릭터 애니메이션 CPU·소켓 검증 — 2026-10-05](../Animation/Architecture/Authored_Animation_Crowd_Network_2026-10-05.md) | 구조·계약 | Animation/Architecture/Authored_Animation_Crowd_Network_2026-10-05.md |
 | [캐릭터 Foley 기반과 군중 재생 정책](../Animation/Architecture/Foley_Audio_System.md) | 통합 상세 가이드 | Animation/Architecture/Foley_Audio_System.md |
-| [GASP 5.8 기반 locomotion 전환 책임 정리](../Animation/Architecture/GASP58_Locomotion_Migration_2026-10-19.md) | 구조·계약 | Animation/Architecture/GASP58_Locomotion_Migration_2026-10-19.md |
+| [플레이어 로코모션 전환 기록 안내](../Animation/Architecture/GASP58_Locomotion_Migration_2026-10-19.md) | 구조·계약 | Animation/Architecture/GASP58_Locomotion_Migration_2026-10-19.md |
 | [일반 이동 회전 후보와 수명](../Animation/Architecture/General_Turning_2026-10-06.md) | 구조·계약 | Animation/Architecture/General_Turning_2026-10-06.md |
 | [이동 착지의 MM 복귀와 연결 레이어 검색 완료 — 2026-10-05](../Animation/Architecture/Landing_Return_Linked_Search_2026-10-05.md) | 구조·계약 | Animation/Architecture/Landing_Return_Linked_Search_2026-10-05.md |
 | [Motion Matching 복귀 검색과 군중 검색 예산 — 2026-10-05](../Animation/Architecture/MotionMatching_Return_Crowd_2026-10-05.md) | 구조·계약 | Animation/Architecture/MotionMatching_Return_Crowd_2026-10-05.md |
@@ -51,6 +57,8 @@
 | [일회성 이동 동작의 요청 수명 — 2026-10-05](../Animation/Architecture/OneShot_Command_Lifetime_2026-10-05.md) | 구조·계약 | Animation/Architecture/OneShot_Command_Lifetime_2026-10-05.md |
 | [Start·Land의 입력 반응과 첫 MM 검색](../Animation/Architecture/OneShot_Input_Response_2026-10-11.md) | 구조·계약 | Animation/Architecture/OneShot_Input_Response_2026-10-11.md |
 | [외부 Blend Stack → Motion Matching의 실제 포즈 크로스페이드](../Animation/Architecture/OneShot_Live_Return_2026-10-11.md) | 구조·계약 | Animation/Architecture/OneShot_Live_Return_2026-10-11.md |
+| [플레이어 로코모션 아키텍처](../Animation/Architecture/Player_Locomotion_Architecture.md) | 구조·계약 | Animation/Architecture/Player_Locomotion_Architecture.md |
+| [플레이어 로코모션 전환·검증 기록](../Animation/Architecture/Player_Locomotion_Migration_2026-10-19.md) | 구조·계약 | Animation/Architecture/Player_Locomotion_Migration_2026-10-19.md |
 | [Palm과 WeaponGrip을 공유하는 정상 부착](../Animation/Architecture/Primary_Grip_Attachment.md) | 통합 문서 안내 | Animation/Architecture/Primary_Grip_Attachment.md |
 | [MMORPG 런타임 리타깃과 무기 손 접촉 구조](../Animation/Architecture/Runtime_Retarget_HandIK_Architecture.md) | 구조·계약 | Animation/Architecture/Runtime_Retarget_HandIK_Architecture.md |
 | [골격·몸체 프로필 기반 실시간 리타깃 — 2026-10-13](../Animation/Architecture/Runtime_Retarget_Profiles_2026-10-13.md) | 구조·계약 | Animation/Architecture/Runtime_Retarget_Profiles_2026-10-13.md |
@@ -65,9 +73,9 @@
 | [보이는 메시 기준의 애니메이션·장비 파이프라인](../Animation/Architecture/Visual_Presentation_Mesh_Ownership.md) | 구조·계약 | Animation/Architecture/Visual_Presentation_Mesh_Ownership.md |
 | [무기 접촉 복귀와 몸체 프로필](../Animation/Architecture/Weapon_Contact_Recovery.md) | 통합 문서 안내 | Animation/Architecture/Weapon_Contact_Recovery.md |
 | [무기 궤적과 손 파지의 소유권](../Animation/Architecture/Weapon_Grip_Drive_Policy.md) | 통합 문서 안내 | Animation/Architecture/Weapon_Grip_Drive_Policy.md |
-| [데이터 주도형 이동 컨텍스트 확장 가이드](../Animation/Authoring/DataDrivenLocomotionExtensionGuide.md) | 제작 가이드 | Animation/Authoring/DataDrivenLocomotionExtensionGuide.md |
+| [데이터 기반 이동 콘텐츠 확장](../Animation/Authoring/DataDrivenLocomotionExtensionGuide.md) | 제작 가이드 | Animation/Authoring/DataDrivenLocomotionExtensionGuide.md |
 | [손바닥 접촉 기준과 Guided Hand IK](../Animation/Authoring/Guided_Hand_Contact.md) | 통합 문서 안내 | Animation/Authoring/Guided_Hand_Contact.md |
-| [휴머노이드 스켈레톤 리타기팅 표준 및 MMORPG 에셋 확장 가이드](../Animation/Authoring/HumanoidSkeletonRetargetingStandards.md) | 제작 가이드 | Animation/Authoring/HumanoidSkeletonRetargetingStandards.md |
+| [인간형 스켈레톤과 추가 뼈 제작 기준](../Animation/Authoring/HumanoidSkeletonRetargetingStandards.md) | 제작 가이드 | Animation/Authoring/HumanoidSkeletonRetargetingStandards.md |
 | [캐릭터·의상·장비 LOD 제작](../Animation/Authoring/Mesh_LOD_Authoring.md) | 제작 가이드 | Animation/Authoring/Mesh_LOD_Authoring.md |
 | [애니메이션 제작 가이드](../Animation/Authoring/README.md) | 목차·문서 관리 | Animation/Authoring/README.md |
 | [보조 손 접촉과 직업별 파지 설정](../Animation/Authoring/Secondary_Hand_Contact.md) | 통합 문서 안내 | Animation/Authoring/Secondary_Hand_Contact.md |
@@ -150,6 +158,35 @@
 | [오픈 월드 레벨 설계와 확장 계획](../Gameplay/Planning/Open_World_Level_Design.md) | 계획·제안 | Gameplay/Planning/Open_World_Level_Design.md |
 | [오픈 월드 레벨 디자인과 최적화 조사 자료](../Gameplay/Planning/Open_World_Research_References.md) | 계획·제안 | Gameplay/Planning/Open_World_Research_References.md |
 | [게임플레이와 콘텐츠 제작](../Gameplay/README.md) | 목차·문서 관리 | Gameplay/README.md |
+
+### 월드 제작
+
+| 문서 | 종류 | 경로 |
+| --- | --- | --- |
+| [시작 권역 재제작: 확인한 기반](../World/Build/01_AUDIT.md) | 구조·계약 | World/Build/01_AUDIT.md |
+| [시작 권역 제작 구조](../World/Build/02_ARCHITECTURE.md) | 구조·계약 | World/Build/02_ARCHITECTURE.md |
+| [에셋과 콘텐츠의 남은 판단](../World/Build/03_ASSET_GAPS.md) | 구조·계약 | World/Build/03_ASSET_GAPS.md |
+| [메인 오픈 월드 — 레벨 디자이너 인계](../World/LEVEL_DESIGNER_GUIDE.md) | 구조·계약 | World/LEVEL_DESIGNER_GUIDE.md |
+| [Unreal Engine 5.8 — MMORPG Lv.1~30 시작 권역 8×8km 구축 마스터 프롬프트 (v3)](../World/MMORPG_8x8km_Starter_Lv1-30_Codex_Prompt_v3.md) | 당시 작업 요청 | World/MMORPG_8x8km_Starter_Lv1-30_Codex_Prompt_v3.md |
+| [MMORPG Lv.1~30 첫 번째 8×8km 오픈월드: Codex 패키지 v3](../World/MMORPG_Starter_8x8km_Lv1-30_Codex_Pack_v3/README_START_HERE.md) | 구조·계약 | World/MMORPG_Starter_8x8km_Lv1-30_Codex_Pack_v3/README_START_HERE.md |
+| [실제 게임 스크린샷 레퍼런스 — 개별 원본 링크](../World/MMORPG_Starter_8x8km_Lv1-30_Codex_Pack_v3/REAL_GAME_REFERENCES.md) | 구조·계약 | World/MMORPG_Starter_8x8km_Lv1-30_Codex_Pack_v3/REAL_GAME_REFERENCES.md |
+| [Unreal Engine 5.8 — MMORPG Lv.1~30 시작 권역 8×8km 구축 마스터 프롬프트 (v3)](../World/MMORPG_Starter_8x8km_Lv1-30_Codex_Pack_v3/WorldGen_Prompt_v3.md) | 당시 작업 요청 | World/MMORPG_Starter_8x8km_Lv1-30_Codex_Pack_v3/WorldGen_Prompt_v3.md |
+| [Project_J — 8×8km MMORPG 시작 권역 전체 제작 및 차기 권역 확장 아키텍처 (Codex 실행 지시서 v4)](../World/Project_J_8x8km_WorldGen_Completion_Expansion_v4.md) | 구조·계약 | World/Project_J_8x8km_WorldGen_Completion_Expansion_v4.md |
+| [Project_J — 8×8km 시작 권역 비주얼 품질·원경·수계·메모리 통합 개선 실행 지시서 (Codex v5)](../World/Project_J_World_Visual_Quality_Recovery_Codex_v5.md) | 구조·계약 | World/Project_J_World_Visual_Quality_Recovery_Codex_v5.md |
+| [메인 오픈 월드 제작](../World/README.md) | 목차·문서 관리 | World/README.md |
+| [월드 작업 인수인계 — 2026-10-18](../World/WORLD_HANDOFF_2026-10-18.md) | 구조·계약 | World/WORLD_HANDOFF_2026-10-18.md |
+
+### 월드 생성·설계
+
+| 문서 | 종류 | 경로 |
+| --- | --- | --- |
+| [v4 월드 제작 기준점 — 2026-10-18](../WorldGen/00_BASELINE.md) | 구조·계약 | WorldGen/00_BASELINE.md |
+| [v4 재사용 대응](../WorldGen/02_ASSET_REUSE.md) | 구조·계약 | WorldGen/02_ASSET_REUSE.md |
+| [월드 구현 상태 — 2026-10-18](../WorldGen/03_IMPLEMENTATION_STATUS.md) | 구조·계약 | WorldGen/03_IMPLEMENTATION_STATUS.md |
+| [8×8km 월드 공간 구성 — 진행 중](../WorldGen/04_WORLD_LAYOUT.md) | 구조·계약 | WorldGen/04_WORLD_LAYOUT.md |
+| [현재 재사용 계약과 미완료 범위](../WorldGen/05_WORLD_ARCHITECTURE.md) | 구조·계약 | WorldGen/05_WORLD_ARCHITECTURE.md |
+| [월드 경계 계약 — Starter 작성 중](../WorldGen/06_WORLD_EDGE_CONTRACT.md) | 구조·계약 | WorldGen/06_WORLD_EDGE_CONTRACT.md |
+| [게임플레이 공간 통합 — 현재 구현과 남은 연결](../WorldGen/07_GAMEPLAY_SPATIAL_INTEGRATION.md) | 구조·계약 | WorldGen/07_GAMEPLAY_SPATIAL_INTEGRATION.md |
 
 ### 플레이어 UI
 
@@ -236,6 +273,7 @@
 | [Project_J 전체 구조 심화 감사 — 구현·검증 결과 및 남은 범위](../Review/Audits/Project_J_Deep_Structure_Audit_2026-10-13.md) | 검토 기록 | Review/Audits/Project_J_Deep_Structure_Audit_2026-10-13.md |
 | [Project_J 구조·소유권·심화 검토 지도](../Review/Audits/Project_J_Deep_Structure_Map_2026-10-13.md) | 검토 기록 | Review/Audits/Project_J_Deep_Structure_Map_2026-10-13.md |
 | [main 통합과 Mirror Data 결정 반영](../Review/Audits/Project_J_Main_Integration_2026-10-15.md) | 검토 기록 | Review/Audits/Project_J_Main_Integration_2026-10-15.md |
+| [Mover·플레이어 애니메이션 전환 후 소스 재점검](../Review/Audits/Project_J_Mover_Animation_Source_Reaudit_2026-10-20.md) | 검토 기록 | Review/Audits/Project_J_Mover_Animation_Source_Reaudit_2026-10-20.md |
 | [PC BP·DA 잔여 구조 검토와 Door 정리 — 2026-10-15](../Review/Audits/Project_J_PC_Asset_Review_Closure_2026-10-15.md) | 검토 기록 | Review/Audits/Project_J_PC_Asset_Review_Closure_2026-10-15.md |
 | [PC 구조 정리 최종 확인과 커밋 경계 — 2026-10-15](../Review/Audits/Project_J_PC_Commit_Preparation_2026-10-15.md) | 검토 기록 | Review/Audits/Project_J_PC_Commit_Preparation_2026-10-15.md |
 | [PC 소스 누락 대조와 DT·Chooser·IA·IMC 구조 검토 — R19](../Review/Audits/Project_J_PC_Source_Data_Reconciliation_2026-10-15.md) | 검토 기록 | Review/Audits/Project_J_PC_Source_Data_Reconciliation_2026-10-15.md |
@@ -292,6 +330,7 @@
 | [문서 분류·본문 통합 결과 — 2026-10-03](Organization_Result_2026-10-03.md) | 목차·문서 관리 | Maintenance/Organization_Result_2026-10-03.md |
 | [문서 관리와 보존 규칙](README.md) | 목차·문서 관리 | Maintenance/README.md |
 | [로컬 검증 산출물 정리와 최적화 근거 보존 — 2026-10-16](Storage_Cleanup_2026-10-16.md) | 목차·문서 관리 | Maintenance/Storage_Cleanup_2026-10-16.md |
+| [저장 공간 정리와 현재 문서 갱신 — 2026-10-21](Storage_Cleanup_2026-10-21.md) | 목차·문서 관리 | Maintenance/Storage_Cleanup_2026-10-21.md |
 
 ### 보관 자료
 
@@ -323,6 +362,9 @@
 | --- | --- | --- |
 | [Animation/Architecture](../Animation/Architecture) | 7 | 문서 이동·보존 기록 |
 | [Animation/Architecture/Evidence/GASP58_2026-10-19](../Animation/Architecture/Evidence/GASP58_2026-10-19) | 4 | 문서 이동·보존 기록 |
+| [Animation/Archive/PreMover_20261019](../Animation/Archive/PreMover_20261019) | 2 | 문서 이동·보존 기록 |
+| [Animation/Archive/PreMover_20261019/Project_J/Testing](../Animation/Archive/PreMover_20261019/Project_J/Testing) | 6 | 문서 이동·보존 기록 |
+| [Animation/Archive/PreMover_20261019/Project_JCharacter/Private/Tests](../Animation/Archive/PreMover_20261019/Project_JCharacter/Private/Tests) | 7 | 문서 이동·보존 기록 |
 | [Animation/Diagnostics](../Animation/Diagnostics) | 4 | 문서 이동·보존 기록 |
 | [Animation/Planning/GASP_Backward_Reface_2026-10-12_Evidence](../Animation/Planning/GASP_Backward_Reface_2026-10-12_Evidence) | 6 | 문서 이동·보존 기록 |
 | [Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/Evidence](../Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/Evidence) | 5 | 문서 이동·보존 기록 |
@@ -337,6 +379,7 @@
 | [Archive/Navigation/2026-10-15/Docs/Handoffs](../Archive/Navigation/2026-10-15/Docs/Handoffs) | 1 | 문서 이동·보존 기록 |
 | [Archive/Navigation/2026-10-15/Docs/Overview](../Archive/Navigation/2026-10-15/Docs/Overview) | 1 | 문서 이동·보존 기록 |
 | [Archive/Navigation/2026-10-15/Docs/Review](../Archive/Navigation/2026-10-15/Docs/Review) | 1 | 문서 이동·보존 기록 |
+| [Archive/Navigation/2026-10-21](../Archive/Navigation/2026-10-21) | 2 | 문서 이동·보존 기록 |
 | [Archive/Requests/2026-10-15](../Archive/Requests/2026-10-15) | 2 | 문서 이동·보존 기록 |
 | [Archive/Requests/2026-10-15/Docs/Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06](../Archive/Requests/2026-10-15/Docs/Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06) | 1 | 문서 이동·보존 기록 |
 | [Archive/Requests/2026-10-15/Docs/Handoffs/SystemsModernization_2026-09-09](../Archive/Requests/2026-10-15/Docs/Handoffs/SystemsModernization_2026-09-09) | 1 | 문서 이동·보존 기록 |
@@ -353,7 +396,7 @@
 | [Handoffs/MotionMatchingCrowd_2026-10-05](../Handoffs/MotionMatchingCrowd_2026-10-05) | 1 | 문서 이동·보존 기록 |
 | [Handoffs/MotionMatchingCrowd_2026-10-05/Screenshots](../Handoffs/MotionMatchingCrowd_2026-10-05/Screenshots) | 15 | 문서 이동·보존 기록 |
 | [Handoffs/WholeProjectAudit_2026-10-14](../Handoffs/WholeProjectAudit_2026-10-14) | 1 | 문서 이동·보존 기록 |
-| [Maintenance]() | 3 | 문서 이동·보존 기록 |
+| [Maintenance]() | 4 | 문서 이동·보존 기록 |
 | [Performance/Reports](../Performance/Reports) | 1 | 문서 이동·보존 기록 |
 | [Reference](../Reference) | 2 | 참고 TXT 원문 |
 | [Review/Architecture](../Review/Architecture) | 12 | 문서 이동·보존 기록 |

@@ -153,7 +153,6 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJIdentityRetirementTest, "ProjectJ.PCSt
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJIdentityRetirementTest::RunTest(const FString&)
 {
-    AddExpectedError(TEXT("Character data registry is empty."), EAutomationExpectedErrorFlags::Contains, 1);
     TStrongObjectPtr<UGameInstance> GI(NewObject<UGameInstance>(GEngine));
     GI->InitializeStandalone();
     UWorld* World = GI->GetWorld();
@@ -180,7 +179,6 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJIdentityProjectionDetachTest, "Project
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJIdentityProjectionDetachTest::RunTest(const FString&)
 {
-    AddExpectedError(TEXT("Character data registry is empty."), EAutomationExpectedErrorFlags::Contains, 1);
     TStrongObjectPtr<UGameInstance> GI(NewObject<UGameInstance>(GEngine)); GI->InitializeStandalone();
     UWorld* World = GI->GetWorld();
     ON_SCOPE_EXIT { GI->Shutdown(); World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };

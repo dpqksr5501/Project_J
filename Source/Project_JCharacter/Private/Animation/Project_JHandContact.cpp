@@ -1,4 +1,6 @@
 #include "Animation/Project_JHandContact.h"
+#include "GameFramework/Pawn.h"
+#include "Movement/Project_JMovementQueries.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Animation/Project_JHandGripProfile.h"
@@ -14,7 +16,7 @@ bool IsInvertible(const FTransform& Transform)
 }
 
 FProject_JHandGripCalibration Project_J::Animation::ResolveHandGripCalibration(
-	const ACharacter* Character, const UProject_JHandGripProfile* VisualOverride)
+	const APawn* Character, const UProject_JHandGripProfile* VisualOverride)
 {
 	check(IsInGameThread());
 	if (VisualOverride) { return VisualOverride->Calibration; }

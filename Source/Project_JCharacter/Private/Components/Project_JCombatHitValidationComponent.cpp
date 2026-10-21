@@ -1,4 +1,6 @@
 #include "Components/Project_JCombatHitValidationComponent.h"
+#include "GameFramework/Pawn.h"
+#include "Movement/Project_JMovementQueries.h"
 #include "Components/Project_JCommandBudgetComponent.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
@@ -66,8 +68,8 @@ void UProject_JCombatHitValidationComponent::EndAttack()
 void UProject_JCombatHitValidationComponent::ProtectAttackPose()
 {
 	check(IsInGameThread());
-	const auto* Character = Cast<ACharacter>(GetOwner());
-	auto* Mesh = Character ? Character->GetMesh() : nullptr;
+	const auto* Character = Cast<APawn>(GetOwner());
+	auto* Mesh = Character ? Project_J::Movement::FindPoseSource(Character) : nullptr;
 	if (!Mesh) { return; }
 	if (ProtectedMesh.Get() != Mesh)
 	{

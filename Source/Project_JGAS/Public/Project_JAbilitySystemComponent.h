@@ -29,6 +29,12 @@ public:
 	UProject_JAbilitySystemComponent();
 	virtual void InitAbilityActorInfo(AActor* InOwnerActor,AActor* InAvatarActor) override;
 	virtual void ClearActorInfo() override;
+ virtual float PlayMontage(UGameplayAbility* Ability,FGameplayAbilityActivationInfo Activation,UAnimMontage* Montage,float Rate,FName Section=NAME_None,float Start=0.f) override;
+ virtual void CurrentMontageStop(float BlendOut=-1.f) override;
+ virtual void CurrentMontageJumpToSection(FName Section) override;
+ virtual void CurrentMontageSetPlayRate(float Rate) override;
+ virtual void ServerCurrentMontageJumpToSectionName_Implementation(UAnimSequenceBase* ClientAnimation,FName SectionName) override;
+ virtual void ServerCurrentMontageSetPlayRate_Implementation(UAnimSequenceBase* ClientAnimation,float Rate) override;
 	/** Runtime recipient epoch, separate from ability grant leases. Not persisted. */
 	uint64 GetActorInfoRevision() const { return ActorInfoRevision; }
 
@@ -48,7 +54,12 @@ public:
 	bool HasAbilityGrantSource(FName SourceId) const;
 	bool IsAbilityGrantSourceCurrent(FName SourceId, uint64 Generation) const;
 
+protected:
+	virtual void CancelAbilitySpec(FGameplayAbilitySpec& Spec, UGameplayAbility* Ignore) override;
+
 private:
+ void RefreshMoverMontage();
+ TWeakObjectPtr<class UProject_JMoverComponent> MontageMover;
 	bool HasGameplayTagReplicationAuthority() const;
 	TMap<FName, FProject_JAbilityGrantRecord> AbilityGrantRecords;
 	uint64 NextAbilityGrantGeneration = 0;

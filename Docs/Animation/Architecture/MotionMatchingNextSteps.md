@@ -1,5 +1,7 @@
 # Motion Matching Notes
 
+> **이전 이동 구조의 기록 — 2026-10-21:** 본문은 당시 CMC/MM·마스터·후보 정책의 구현·제안·측정 이력이다. 현재 생산 제작은 [플레이어 로코모션](Player_Locomotion_Architecture.md)을 따른다. 과거 구조를 복원하라는 지시나 현재 구조의 성능 결과로 해석하지 않는다.
+
 Project J uses a C++ locomotion state component, a thread-safe animation snapshot, and Pose Search databases selected from the character motion matching asset set. The player path is the primary Motion Matching path; NPC animation should stay on cheaper non-MM paths unless a later profiling pass proves otherwise.
 
 ## Current Architecture
@@ -259,7 +261,7 @@ The resolution is deliberately structural rather than a search-cost tweak:
   corrections in its continuous Dynamic Cycle PSD.
 - The previous direct Pivot restriction was cardinal-only. The current table
   contains eight directions with both feet, including real diagonal assets.
-  [The GASP 5.8 follow-up](GASP58_Locomotion_Migration_2026-10-19.md) removes the cardinal gate and enables the existing eight diagonal rows.
+  [The GASP 5.8 follow-up](Player_Locomotion_Migration_2026-10-19.md) removes the cardinal gate and enables the existing eight diagonal rows.
   The former claim that diagonal pivot assets did not exist was incorrect for the current data.
 - Phase-stability holds are never carried from OTM into Combat Strafe, or in the
   reverse direction.
