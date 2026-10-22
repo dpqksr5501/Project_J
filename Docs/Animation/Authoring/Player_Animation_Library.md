@@ -200,3 +200,18 @@ BP가 사용하던 공유 입력 4개·Quinn Simple·Unarmed ABP는 함께 삭�
 이전 절의 실제 후진/전방 회전 12조건·공중/착지 8조건·루프 회전 5조건·전신 몽타주 6개·관측 수명 검사는 동일한 생산 에셋과 런타임 로직의 근거로 재사용한다. 이번 추가 변경은 비사용 BP 퇴역과 에디터의 불필요 분기 제거이며, 새 세션의 기본 마스터 진입·지상 이동을 별도로 확인한다. 로컬 상세 근거는 `Saved/Validation/PlayerThirdRetirement_20261022`, native 결과는 `Saved/Validation/PlayerLocomotion/PlayerThirdRetired_20261022_Final`이다. API 삭제 직후의 미완료 검증과 추가 조회 스크립트의 `None` 반환 처리 오류도 보존하고 최종 성공 결과와 구분한다.
 
 삭제 후 새 네트워크 PIE의 지상 검사 2,372표본에서 OTM/Strafe·Start/Stop·Walk/Run/Sprint와 발 보정 유지가 통과했다(`Ground_20261022_151429_333760.json`). 새 세션 전체 대상 로드와 PIE에서 위 삭제된 클래스의 Linker 경고는 없었다. MCP 라이선스 안내는 별개다. 종료 시 미저장 패키지 0개, 나머지 38개 BP/ABP와 직전 Reface Ground Chooser 해시 동일, 진단 cvar 0과 원래 background throttle을 확인하고 에디터를 정상 종료했다. 포즈·속도·재생률·점프·IK의 추가 튜닝이나 모든 클립/경사/체형의 시각 검수는 수행하지 않았다.
+
+### 속도 커브·메타데이터 재확인 — 2026-10-22
+
+Run 500/Sprint 750 튜닝 이후 속도 관련 에셋 값의 갱신 누락 여부를 읽기 전용으로 재확인했다. 수입 카탈로그의 시퀀스 575개와 BlendSpace 11개를 확인했으며, 모든 시퀀스의 raw motion/curve/attribute 지문과 `RateScale`이 기존 target 기준과 같았다. 커브를 새 게임 목표 속도로 일괄 덮어쓰거나 카탈로그 기준을 갱신하지 않았다.
+
+- `MoveData_Speed`는 438개 시퀀스, `Enable_Warping`은 400개, `MaxDynamicPlayRate`는 16개에 있다. 조회한 관련 커브 키는 finite 값이다. 시퀀스의 별도 `UAnimMetaData`는 없었다. 누락된 Min/MaxDynamicPlayRate의 native 기본값은 각각 1.0/1.25이며, 명시된 Max 커브 16개는 1.1을 유지한다.
+- Neutral 전방 루프의 원본 기준 speed 커브는 Run 약 500/Sprint 약 700이다. Manny raw root-track을 주기 내 120구간으로 관측한 평균 이동 속도는 약 516.53/723.14cm/s다. 이 세 값(원본 커브·변환된 모션·게임 목표)은 같은 설정이 아니며, 원본 커브를 게임 목표 500/750으로 바꿀 근거가 아니다.
+- 실제 마스터의 Stride 노드는 `LocomotionSpeed`를 native `PlayerSpeed2D`로 바인딩한다. 설치 엔진의 graph-driven Stride 계산은 실제 root-motion delta 속도와의 비율을 사용한다. `EvaluateDynamicPlayRate`는 현재 지상 정책에서 커브 계산 전에 1.0을 반환한다. Ground/Air Chooser와 이전 관련 BP/ABP contract에도 위 speed/play-rate 커브의 별도 직접 바인딩은 없었다. 기존 함수의 비지상 분기와 원본 커브는 보존한다.
+- 두 생산 BP의 effective profile은 직접 필드가 아니라 `CharacterAnimProfile`이 가리키는 `DA_Player_Profile`로 확인했다. 승인 상한 500/750, Mover Walk/Run/Sprint 165/500/750과 지상 동적 배속 비활성 값이 일치했다. 모든 BlendSpace sample rate는 1.0이며, 유효 축은 slope·aim·pose 값으로 게임 이동 속도 축이 아니다. 시퀀스 RateScale은 573개가 1.0이고 Ragdoll flail 제작 시퀀스 2개만 기존 1.2를 유지한다.
+
+새 네트워크 PIE의 OTM/Strafe Run/Sprint 4조건, 1,188표본에서 정상 구간 실제 속도 500/750과 활성 루프 재생률 1.0이 통과했다. 원본 커브를 보존한 현재 구조에서 추가 수정이 필요한 근거는 발견하지 못했다. 모든 클립/전 프레임/경사/체형의 외형 승인이나 미래 동적 배속 정책의 검증을 뜻하지 않는다. 에셋·소스 변경은 없어서 동일 커밋의 직전 빌드/native 87개 근거를 재사용하며 이번에는 새 C++ 빌드를 실행하지 않았다.
+
+상세 근거는 `Saved/Validation/AnimationSpeedMetadata_20261022`와 `SpeedCadence_20261022_154139_937968.json`이다. 최초 BlendSpace에 존재하지 않는 RateScale 필드를 읽은 오류와 직접 profile 필드만 확인한 조회 실패는 소스의 실제 소비 계약을 따라 수정 후 재실행했다. 최종 575/11개 점검과 effective profile 검증은 모두 통과했으며, 이 진단 시행착오를 생산 오류로 분류하지 않는다.
+
+마지막에 미저장 패키지 0개, 보호 대상 BP/ABP 38개와 Ground Chooser 해시 동일, 원래 background throttle을 확인하고 에디터를 정상 종료했다. 이번 작업의 Git 변경은 설명·검증 결과를 보강한 문서 2개뿐이다.

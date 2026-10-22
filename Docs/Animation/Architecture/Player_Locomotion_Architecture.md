@@ -49,6 +49,10 @@ AnimGraph 노드는 엔진의 포즈 평가·스레드·디버깅·제작 경계
 
 프로필의 `bScaleGroundPlayRateWithSpeed=false`는 지상 BlendStack의 동적 재생률을 1.0으로 유지한다. 명시적인 에셋 `RateScale`이나 몽타주·공중 타이밍을 일괄 변경하는 기능이 아니다. 지상은 실제 `PlayerSpeed2D`를 입력받는 Stride Warping으로 보폭을 맞춘다. 원래 1.0이던 보폭 상한을 1.5로 확장하고 보간·FK 다리 길이 제한·허벅지 보정은 유지한다. 원본 재생률의 Neutral 전방 루프 평균 root 속도는 Manny 변환본 기준 Run 약 516.53 / Sprint 약 723.14cm/s이며 500/750의 평균 보폭 비율은 약 0.968/1.037이다. 전이·순간 속도·체형별 접지는 별도 검수 대상이다.
 
+시퀀스의 `MoveData_Speed`는 게임의 목표 속도 설정이 아니다. 원본 기준 커브를 보존하므로 Neutral 전방 루프는 Run 약 500/Sprint 약 700이며 Manny 변환 후 실제 root 속도와도 구분한다. 지상 동적 배속을 끈 현재 경로는 이 커브로 재생률을 계산하지 않는다. graph-driven Stride Warping은 `PlayerSpeed2D`와 해당 평가의 실제 root-motion delta 속도 비율을 사용한다. 따라서 게임 목표를 500/750으로 조정했다고 모든 속도 커브를 그 값으로 덮어쓰지 않는다. `Enable_Warping`, 재생률 제한 커브와 기존 비지상 계산 경로는 유지하고, 향후 동적 배속 정책을 켤 때는 이 소비 계약도 함께 검토한다. 라이브러리 전체 커브·재생률과 실제 속도의 재확인은 [속도 메타데이터 점검](../Authoring/Player_Animation_Library.md#속도-커브메타데이터-재확인--2026-10-22)을 따른다.
+
+현재는 검증된 속도·재생 템포·보폭 보정과 원본 커브를 유지한다. 미래 확장만을 이유로 커브 재생성이나 구조 변경을 선행하지 않는다. 실제로 이동 속도·새 모션·동적 배속 요구가 생기면 기존 설정과 데이터 경계를 사용하고, 변경 범위에 맞춰 보폭·전환·착지와 접지를 다시 검증한다.
+
 Pivot의 속도 상한은 GT에서 게시한 실제 Mover gait 튜닝에 기존 overspeed 여유를 보존해 계산한다(Sprint +115cm/s, Run은 Run +225와 Sprint +15 중 큰 값). Run 전환/착지에 남은 Sprint 관성도 수용한다. 고정 700 때문에 750 Sprint에서 Pivot이 배제되지 않는다. 속도와 재생률 정책은 기존 immutable proxy snapshot으로 전달하며 worker에서 pawn/프로필을 조회하지 않는다. 각 노드의 실행 시점과 Chooser/PSD·애니메이션 원본은 유지한다.
 
 - **OTM / Strafe:** 두 모드를 유지한다. Strafe Sprint는 전방·좌전방·우전방만 승인하며 측후방 요청은 Run 정책과 일치시킨다.
