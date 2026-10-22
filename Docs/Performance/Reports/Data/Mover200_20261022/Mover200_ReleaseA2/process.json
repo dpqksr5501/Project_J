@@ -1,0 +1,8 @@
+{
+  "exitCode": 0,
+  "nativeHandleCapturedBeforeWait": true,
+  "hasExited": true,
+  "sampledPeakWorkingSetBytes": 5042425856,
+  "sampledPeakPrivateBytes": 15646412800,
+  "memoryScope": "Entire editor game process including startup, sampled every 500ms; not incremental crowd memory."
+}

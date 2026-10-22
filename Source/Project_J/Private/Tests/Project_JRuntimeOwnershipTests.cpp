@@ -31,6 +31,19 @@
 #include "MoveLibrary/MovementUtils.h"
 #include "Project_JLocomotionAnimStateComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Project_JAttributeSet.h"
+#include "DefaultMovementSet/Modes/SimpleWalkingMode.h"
+#include "Mount/Project_JFlyingMountCharacter.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Testing/Project_JAuthoredAnimationFixture.h"
+#include "Animation/Project_JPlayerAnimInstance.h"
+#include "Animation/Project_JBudgetedSkeletalMeshComponent.h"
+#include "System/Project_JCharacterAnimationBudgetSubsystem.h"
+#include "Camera/CameraActor.h"
+#include "Camera/PlayerCameraManager.h"
+#include "Components/BoxComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "HAL/IConsoleManager.h"
 
 namespace ProjectJRuntimeOwnershipTests
 {
@@ -266,7 +279,7 @@ bool FProjectJMoverCommandAdmissionTest::RunTest(const FString&)
     TestNotNull(TEXT("Former authored input schema remains available for reference"),FormerView);
     TestNull(TEXT("Native ground solver no longer adds a Blueprint input projection"),Walking.InputCmd.InputCollection.FindDataByType(FormerView));
     TestNull(TEXT("Historical input is also free of the retired projection"),Historical.InputCollection.FindDataByType(FormerView));
-    TestEqual(TEXT("Unapproved sprint is capped at authored walk speed"), WalkInput->GetMoveInput().Size(), double(Profile->WalkSpeed));
+    TestTrue(TEXT("Player velocity input is rejected into the directional solver"), WalkInput->GetMoveInputType()==EMoveInputType::DirectionalIntent && WalkInput->GetMoveInput().IsZero());
     TestFalse(TEXT("Client cannot enable sprint without GAS"), WalkIntent->bSprint);
     TestFalse(TEXT("Client cannot enable combat Strafe"), WalkIntent->bStrafe);
     TestTrue(TEXT("Client cannot request Flying"), WalkInput->SuggestedMovementMode.IsNone());
@@ -277,7 +290,17 @@ bool FProjectJMoverCommandAdmissionTest::RunTest(const FString&)
     TestTrue(TEXT("Sprint ability activates"), ASC->TryActivateAbility(Handle));
     const auto Sprinting = Admit();
     TestTrue(TEXT("GAS-approved sprint is admitted"), Sprinting.InputCmd.InputCollection.FindDataByType<FProject_JMoverInputs>()->bSprint);
-    TestEqual(TEXT("Approved sprint respects authored speed"), Sprinting.InputCmd.InputCollection.FindDataByType<FCharacterDefaultInputs>()->GetMoveInput().Size(), double(Profile->SprintSpeed));
+    TestEqual(TEXT("Approved sprint respects authored solver speed"), Mover->FindSharedSettings<UCommonLegacyMovementSettings>()->MaxSpeed, Profile->SprintSpeed);
+    for (const FVector Forged : {FVector::ZeroVector,FVector(-500,0,0)})
+    {
+        Requested.SetMoveInput(EMoveInputType::Velocity,Forged);
+        const auto Rejected=Admit();
+        const auto* Accepted=Rejected.InputCmd.InputCollection.FindDataByType<FCharacterDefaultInputs>();
+        TestTrue(TEXT("Zero and reverse Velocity cannot select the velocity air branch"),Accepted->GetMoveInputType()==EMoveInputType::DirectionalIntent && Accepted->GetMoveInput().IsZero());
+    }
+    Requested.SetMoveInput(static_cast<EMoveInputType>(255),FVector::ForwardVector);
+    const auto Invalid=Admit();
+    TestTrue(TEXT("Unknown input enum is rejected"),Invalid.InputCmd.InputCollection.FindDataByType<FCharacterDefaultInputs>()->GetMoveInput().IsZero());
     ASC->CancelAbilityHandle(Handle);
     ASC->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_Attacking);
     const auto Attacking = Admit();
@@ -291,6 +314,12 @@ bool FProjectJMoverCommandAdmissionTest::RunTest(const FString&)
     TestTrue(TEXT("Directional commands preserve the acceleration/braking contract"), DirectionInput->GetMoveInputType() == EMoveInputType::DirectionalIntent);
     TestEqual(TEXT("Directional commands cannot amplify analog input"), DirectionInput->GetMoveInput().Size(), 1.);
     TestEqual(TEXT("Directional solver uses approved authored walk speed"), Mover->FindSharedSettings<UCommonLegacyMovementSettings>()->MaxSpeed, Profile->WalkSpeed);
+    auto* WalkingMode=CastChecked<USimpleWalkingMode>(Mover->MovementModes.FindRef(DefaultModeNames::Walking));
+    Intent.bWalk=true; Admit(); const float WalkLimit=WalkingMode->MaxSpeedOverride;
+    Intent.bWalk=false; Admit(); const float RunLimit=WalkingMode->MaxSpeedOverride;
+    WalkingMode->MaxSpeedOverride=1.f; Admit();
+    TestTrue(TEXT("Walk to Run increases the limit before desired velocity generation"),RunLimit>WalkLimit);
+    TestEqual(TEXT("Replaying a command cannot inherit a previous gait override"),WalkingMode->MaxSpeedOverride,RunLimit);
     TestTrue(TEXT("Admission preserves historical directional input"), Requested.GetMoveInput().Equals(FVector(10,0,0)));
     Avatar->GetLocomotionAnimStateComponent()->SetMoveInput(FVector2D(0,1));
     FMoverInputCmdContext Produced;
@@ -513,5 +542,112 @@ bool FProjectJLateControllerActorInfoTest::RunTest(const FString&)
     TestTrue(TEXT("Current persistent owner can still refresh metadata"), ASC->RefreshActorInfoForCurrentActor(State));
     TestTrue(TEXT("Replacement controller is resolved"), ASC->AbilityActorInfo->PlayerController.Get() == Controller);
     return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJRepossessAttributeDefaultsTest,"ProjectJ.Mover.RepossessPreservesAttributes",
+    EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FProjectJRepossessAttributeDefaultsTest::RunTest(const FString&)
+{
+    using namespace ProjectJRuntimeOwnershipTests;
+    auto* World=UWorld::CreateWorld(EWorldType::Game,false); Begin(World); ON_SCOPE_EXIT { End(World); };
+    auto* State=World->SpawnActor<AProject_JPlayerState>();
+    auto* Controller=World->SpawnActor<AAIController>(); State->SetOwner(Controller);Controller->SetPlayerState(State);
+    auto* Avatar=SpawnAvatar(World,State); if(!TestNotNull(TEXT("Avatar"),Avatar)) return false;
+    Controller->Possess(Avatar); auto* Attributes=Avatar->GetAttributeSet();
+    for(float Mana:{0.f,1.f,45.f})
+    {
+        Attributes->SetMana(Mana);Attributes->SetHealth(0.f);Attributes->SetAttackPower(0.f);Attributes->SetDefense(0.f);
+        Controller->UnPossess();Controller->Possess(Avatar);
+        TestEqual(TEXT("Repossession preserves depleted mana"),Attributes->GetMana(),Mana);
+        TestEqual(TEXT("Repossession is not a resurrection"),Attributes->GetHealth(),0.f);
+        TestEqual(TEXT("Zero attack remains gameplay state"),Attributes->GetAttackPower(),0.f);
+        TestEqual(TEXT("Zero defense remains gameplay state"),Attributes->GetDefense(),0.f);
+    }
+    Avatar->InitializeDefaultAttributes(true);
+    TestTrue(TEXT("Explicit reset still restores health and mana"),Attributes->GetHealth()>0 && Attributes->GetMana()>0);
+    return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJFlightSolverReplicationTest,"ProjectJ.Mover.FlightSolverReplicationOrder",
+    EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FProjectJFlightSolverReplicationTest::RunTest(const FString&)
+{
+    using namespace ProjectJRuntimeOwnershipTests;
+    auto* World=UWorld::CreateWorld(EWorldType::Game,false);Begin(World);ON_SCOPE_EXIT { End(World); };
+    auto* Class=LoadClass<AProject_JFlyingMountCharacter>(nullptr,TEXT("/Script/Project_JMount.Project_JMountRefinementFixture"));
+    if(!TestNotNull(TEXT("Concrete flight fixture"),Class)) return false;
+    auto* Server=World->SpawnActor<AProject_JFlyingMountCharacter>(Class);auto* Owner=World->SpawnActor<AProject_JFlyingMountCharacter>(Class);
+    if(!TestNotNull(TEXT("Authority fixture"),Server) || !TestNotNull(TEXT("Owner fixture"),Owner)) return false;
+    auto* State=FindFProperty<FProperty>(Server->GetClass(),TEXT("FlightState"));
+    auto* Glide=FindFProperty<FBoolProperty>(Server->GetClass(),TEXT("bIsGliding"));
+    const float GroundBrake=Owner->GetCharacterMovement()->BrakingDecelerationFlying;
+    for(bool GlideFirst:{false,true})
+    {
+        *State->ContainerPtrToValuePtr<EProject_JMountFlightState>(Server)=EProject_JMountFlightState::Flying;
+        Server->SetGliding(true);
+        auto ApplyGlide=[&]() { Glide->SetPropertyValue_InContainer(Owner,true);Owner->ProcessEvent(Owner->FindFunctionChecked(TEXT("OnRep_IsGliding")),nullptr); };
+        auto ApplyState=[&]() { auto Previous=EProject_JMountFlightState::Grounded;*State->ContainerPtrToValuePtr<EProject_JMountFlightState>(Owner)=EProject_JMountFlightState::Flying;Owner->ProcessEvent(Owner->FindFunctionChecked(TEXT("OnRep_FlightState")),&Previous); };
+        if(GlideFirst){ApplyGlide();ApplyState();}else{ApplyState();ApplyGlide();}
+        TestEqual(TEXT("Owner solver receives glide speed"),Owner->GetCharacterMovement()->MaxFlySpeed,Server->GetCharacterMovement()->MaxFlySpeed);
+        TestEqual(TEXT("Owner solver receives glide braking"),Owner->GetCharacterMovement()->BrakingDecelerationFlying,Server->GetCharacterMovement()->BrakingDecelerationFlying);
+        TestEqual(TEXT("Owner solver receives glide friction"),Owner->GetCharacterMovement()->BrakingFriction,Server->GetCharacterMovement()->BrakingFriction);
+        *State->ContainerPtrToValuePtr<EProject_JMountFlightState>(Owner)=EProject_JMountFlightState::Grounded;
+        auto Previous=EProject_JMountFlightState::Flying;Owner->ProcessEvent(Owner->FindFunctionChecked(TEXT("OnRep_FlightState")),&Previous);
+        TestEqual(TEXT("Grounded replication restores authored braking"),Owner->GetCharacterMovement()->BrakingDecelerationFlying,GroundBrake);
+        Glide->SetPropertyValue_InContainer(Owner,false);Owner->ProcessEvent(Owner->FindFunctionChecked(TEXT("OnRep_IsGliding")),nullptr);
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMoverPresentationQualityTest,"ProjectJ.Mover.PresentationQualityAdmission",
+ EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FProjectJMoverPresentationQualityTest::RunTest(const FString&)
+{
+ using namespace ProjectJRuntimeOwnershipTests;
+ auto* World=UWorld::CreateWorld(EWorldType::Game,false);Begin(World);ON_SCOPE_EXIT { End(World); };
+ auto* Floor=World->SpawnActor<AActor>();auto* Box=NewObject<UBoxComponent>(Floor);Floor->SetRootComponent(Box);
+ Box->SetBoxExtent(FVector(100000,100000,50));Box->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+ Box->SetCollisionObjectType(ECC_WorldStatic);Box->SetCollisionResponseToAllChannels(ECR_Block);Box->RegisterComponent();Box->SetWorldLocation(FVector(0,0,-50));
+ auto* AI=World->SpawnActor<AAIController>();auto* State=World->SpawnActor<AProject_JPlayerState>();AI->SetPlayerState(State);State->SetOwner(AI);
+ auto* Player=ProjectJAuthoredAnimationFixture::Spawn(World,AI,State,FVector(0,0,100),true);
+ if(!TestNotNull(TEXT("Actual authored moving player"),Player)) return false;
+ auto* Viewer=World->SpawnActor<APlayerController>();Viewer->SetAsLocalPlayerController();
+ auto* Camera=World->SpawnActor<ACameraActor>();Camera->SetActorLocation(FVector(50000,0,100));Viewer->SetViewTarget(Camera);
+ Viewer->PlayerCameraManager->UpdateCamera(0.f);
+ auto* Rate=IConsoleManager::Get().FindConsoleVariable(TEXT("ProjectJ.PlayerTrajectory.RemotePredictionHz"));
+ const int32 Previous=Rate->GetInt();Rate->Set(30,ECVF_SetByCode);ON_SCOPE_EXIT { Rate->Set(Previous,ECVF_SetByCode); };
+ auto Tick=[&](int32 Count)
+ {
+  for(int32 N=0;N<Count;++N)
+  {
+   TInlineComponentArray<USkeletalMeshComponent*> Meshes(Player);for(auto* Mesh:Meshes) Mesh->SetLastRenderTime(World->GetTimeSeconds());
+   World->Tick(LEVELTICK_All,1.f/60.f);
+  }
+ };
+ Tick(150);
+ auto* Anim=Cast<UProject_JPlayerAnimInstance>(Player->GetMesh()->GetAnimInstance());if(!TestNotNull(TEXT("Native production master"),Anim)) return false;
+ TestFalse(TEXT("Real floor simulation has settled"),Player->GetMover()->IsAirborne());
+ Anim->NativeUpdateAnimation(1.f/60.f);
+ TestFalse(TEXT("A settled visual-root trajectory cannot be a capsule-offset sharp turn"),Anim->NeedsFullRateVisualUpdate());
+ TestEqual(TEXT("Actual AI source publishes Far rather than default Local"),Anim->GetCurrentOptimizationPolicy().Tier,EProject_JAnimBudgetTier::Far);
+ TestEqual(TEXT("Settled remote uses measured prediction density"),Anim->GetTrajectoryPredictionRate(),30);
+ Player->GetLocomotionAnimStateComponent()->SetMoveInput(FVector2D(0,1));Tick(2);Anim->NativeUpdateAnimation(1.f/60.f);
+ TestEqual(TEXT("An accelerating remote retains full precision"),Anim->GetTrajectoryPredictionRate(),60);
+ AI->SetControlRotation(FRotator(0,180,0));Tick(2);Anim->NativeUpdateAnimation(1.f/60.f);
+ TestEqual(TEXT("A turning remote retains full precision"),Anim->GetTrajectoryPredictionRate(),60);
+ AI->SetPlayerState(nullptr);State->SetOwner(Viewer);Viewer->SetPlayerState(State);Viewer->Possess(Player);Tick(2);Anim->NativeUpdateAnimation(1.f/60.f);
+ TestTrue(TEXT("Actual possession establishes local ownership"),Player->GetController()==Viewer && Player->IsLocallyControlled());
+ TestEqual(TEXT("Local source quality remains full"),Anim->GetCurrentOptimizationPolicy().Tier,EProject_JAnimBudgetTier::Local);
+ TestEqual(TEXT("Local trajectory remains full precision"),Anim->GetTrajectoryPredictionRate(),60);
+ Player->GetLocomotionAnimStateComponent()->ClearMoveInput();
+ FActorSpawnParameters MountParams;MountParams.SpawnCollisionHandlingOverride=ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+ auto* Mount=World->SpawnActor<AProject_JMountLifecycleFixture>(Player->GetActorLocation()+FVector(150,0,0),FRotator::ZeroRotator,MountParams);
+ if(!TestTrue(TEXT("Actual local rider mounts"),Mount && Mount->TryMountRider(Player))) return false;
+ Tick(2);Anim->NativeUpdateAnimation(1.f/60.f);
+ TestNull(TEXT("Possession moved away from the rider"),Player->GetController());
+ TestEqual(TEXT("Mounted local rider keeps full source quality"),Anim->GetCurrentOptimizationPolicy().Tier,EProject_JAnimBudgetTier::Local);
+ TestEqual(TEXT("Mounted local rider keeps full prediction precision"),Anim->GetTrajectoryPredictionRate(),60);
+ TestFalse(TEXT("Mounted local rider cannot enter ABA"),CastChecked<UProject_JBudgetedSkeletalMeshComponent>(Player->GetMesh())->CanUseBudget());
+ TestTrue(TEXT("Forced exit restores the local rider"),Mount->DismountRider(true));
+ return true;
 }
 #endif

@@ -1,0 +1,17 @@
+{
+  "trackedLfsOidsChecked": 23300,
+  "unreferencedOwnIntermediateArchives": [
+    {
+      "path": ".git/lfs/objects/80/0b/800b90e9f274007f18903d4e78140edb23f92fe8708a5ea52cd87c101e90c3ea",
+      "sha256": "800b90e9f274007f18903d4e78140edb23f92fe8708a5ea52cd87c101e90c3ea",
+      "bytes": 894010986
+    },
+    {
+      "path": ".git/lfs/objects/b9/29/b92958f731e46d846b803d2fbe22a3c7f8903f1ef5789bc32ca4b66386fa5706",
+      "sha256": "b92958f731e46d846b803d2fbe22a3c7f8903f1ef5789bc32ca4b66386fa5706",
+      "bytes": 199542819
+    }
+  ],
+  "freeBefore": 165972209664,
+  "freeAfter": 167065505792
+}

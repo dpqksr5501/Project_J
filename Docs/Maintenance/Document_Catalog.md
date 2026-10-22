@@ -4,7 +4,7 @@
 
 목록은 파일 위치와 문서 종류를 안내한다. 구현 완료·현재 성능을 판정하는 표가 아니며, 각 문서의 날짜·범위·후속 기록을 함께 읽는다. 통합 문서 안내는 이전 링크를 이어주는 진입점이고 상세 본문은 통합 가이드에 있다.
 
-문서 폴더 파일 3340개, Markdown 265개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
+문서 폴더 파일 3470개, Markdown 269개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
 
 ## 주제별 목록
 
@@ -34,6 +34,7 @@
 | [Project_J MMORPG Execution Roadmap](../Architecture/Planning/ProjectJ_Mmorpg_Execution_Roadmap_2026-09-03.md) | 계획·제안 | Architecture/Planning/ProjectJ_Mmorpg_Execution_Roadmap_2026-09-03.md |
 | [전체 실행 계획](../Architecture/Planning/README.md) | 목차·문서 관리 | Architecture/Planning/README.md |
 | [아키텍처](../Architecture/README.md) | 목차·문서 관리 | Architecture/README.md |
+| [플레이어 캐릭터와 애니메이션 마스터](../Architecture/Runtime/Player_Character_Master.md) | 구조·계약 | Architecture/Runtime/Player_Character_Master.md |
 | [런타임 책임과 변경 보고서](../Architecture/Runtime/README.md) | 목차·문서 관리 | Architecture/Runtime/README.md |
 | [Architecture Refactor - 2026-06-19](../Architecture/Runtime/Reports/ArchitectureRefactor_20260619.md) | 시점별 보고·검증 | Architecture/Runtime/Reports/ArchitectureRefactor_20260619.md |
 | [캐릭터 컴포넌트 실행·수명 정리](../Architecture/Runtime/Reports/Character_Component_Ownership_2026-09-20.md) | 시점별 보고·검증 | Architecture/Runtime/Reports/Character_Component_Ownership_2026-09-20.md |
@@ -57,6 +58,7 @@
 | [일회성 이동 동작의 요청 수명 — 2026-10-05](../Animation/Architecture/OneShot_Command_Lifetime_2026-10-05.md) | 구조·계약 | Animation/Architecture/OneShot_Command_Lifetime_2026-10-05.md |
 | [Start·Land의 입력 반응과 첫 MM 검색](../Animation/Architecture/OneShot_Input_Response_2026-10-11.md) | 구조·계약 | Animation/Architecture/OneShot_Input_Response_2026-10-11.md |
 | [외부 Blend Stack → Motion Matching의 실제 포즈 크로스페이드](../Animation/Architecture/OneShot_Live_Return_2026-10-11.md) | 구조·계약 | Animation/Architecture/OneShot_Live_Return_2026-10-11.md |
+| [플레이어 애니메이션 실행 흐름 비교와 보강](../Animation/Architecture/Player_Animation_Flow_Review_2026-10-21.md) | 구조·계약 | Animation/Architecture/Player_Animation_Flow_Review_2026-10-21.md |
 | [플레이어 로코모션 아키텍처](../Animation/Architecture/Player_Locomotion_Architecture.md) | 구조·계약 | Animation/Architecture/Player_Locomotion_Architecture.md |
 | [플레이어 로코모션 전환·검증 기록](../Animation/Architecture/Player_Locomotion_Migration_2026-10-19.md) | 구조·계약 | Animation/Architecture/Player_Locomotion_Migration_2026-10-19.md |
 | [Palm과 WeaponGrip을 공유하는 정상 부착](../Animation/Architecture/Primary_Grip_Attachment.md) | 통합 문서 안내 | Animation/Architecture/Primary_Grip_Attachment.md |
@@ -224,6 +226,8 @@
 | [200명 전원 표시와 로컬 품질 보존 최적화 계획](../Performance/Planning/ProjectJ_200_Player_Optimization_Plan_2026-10-15.md) | 계획·제안 | Performance/Planning/ProjectJ_200_Player_Optimization_Plan_2026-10-15.md |
 | [Project_J Scalability Profiling & Validation Plan](../Performance/Planning/ProjectJ_Scalability_Profiling_Validation_Plan_2026-09-03.md) | 계획·제안 | Performance/Planning/ProjectJ_Scalability_Profiling_Validation_Plan_2026-09-03.md |
 | [성능 설계·수집·결과](../Performance/README.md) | 목차·문서 관리 | Performance/README.md |
+| [200명 Mover 측정 원자료](../Performance/Reports/Data/Mover200_20261022/README.md) | 목차·문서 관리 | Performance/Reports/Data/Mover200_20261022/README.md |
+| [Mover 구조 결함 수정과 200명 재검증 — 2026-10-22](../Performance/Reports/ProjectJ_Mover_200_2026-10-22.md) | 시점별 보고·검증 | Performance/Reports/ProjectJ_Mover_200_2026-10-22.md |
 | [Project_J Profiling Baseline Results](../Performance/Reports/ProjectJ_Profiling_Baseline_Results_2026-09-03.md) | 시점별 결과 | Performance/Reports/ProjectJ_Profiling_Baseline_Results_2026-09-03.md |
 | [Project_J Profiling Consolidated Summary](../Performance/Reports/ProjectJ_Profiling_Consolidated_Summary_2026-09-06.md) | 시점별 보고·검증 | Performance/Reports/ProjectJ_Profiling_Consolidated_Summary_2026-09-06.md |
 | [Project_J 시스템 현대화 및 단계적 리팩토링 — 2026-09-08](../Performance/Reports/ProjectJ_Systems_Modernization_Refactor_2026-09-08.md) | 시점별 보고·검증 | Performance/Reports/ProjectJ_Systems_Modernization_Refactor_2026-09-08.md |
@@ -400,6 +404,28 @@
 | [Handoffs/WholeProjectAudit_2026-10-14](../Handoffs/WholeProjectAudit_2026-10-14) | 1 | 문서 이동·보존 기록 |
 | [Maintenance]() | 4 | 문서 이동·보존 기록 |
 | [Performance/Reports](../Performance/Reports) | 1 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/Mover200_20261022](../Performance/Reports/Data/Mover200_20261022) | 8 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/Mover200_20261022/Mover200_A2](../Performance/Reports/Data/Mover200_20261022/Mover200_A2) | 6 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/Mover200_20261022/Mover200_B1](../Performance/Reports/Data/Mover200_20261022/Mover200_B1) | 6 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/Mover200_20261022/Mover200_B2](../Performance/Reports/Data/Mover200_20261022/Mover200_B2) | 6 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/Mover200_20261022/Mover200_FinalA2](../Performance/Reports/Data/Mover200_20261022/Mover200_FinalA2) | 6 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/Mover200_20261022/Mover200_FinalB1](../Performance/Reports/Data/Mover200_20261022/Mover200_FinalB1) | 6 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/Mover200_20261022/Mover200_FinalB2](../Performance/Reports/Data/Mover200_20261022/Mover200_FinalB2) | 6 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/Mover200_20261022/Mover200_ReleaseA1](../Performance/Reports/Data/Mover200_20261022/Mover200_ReleaseA1) | 6 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/Mover200_20261022/Mover200_ReleaseA2](../Performance/Reports/Data/Mover200_20261022/Mover200_ReleaseA2) | 6 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/Mover200_20261022/Mover200_ReleaseB1](../Performance/Reports/Data/Mover200_20261022/Mover200_ReleaseB1) | 6 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/Mover200_20261022/Mover200_ReleaseB2](../Performance/Reports/Data/Mover200_20261022/Mover200_ReleaseB2) | 6 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/Mover200_20261022/Mover200_VerifiedA1](../Performance/Reports/Data/Mover200_20261022/Mover200_VerifiedA1) | 6 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/Mover200_20261022/Mover200_VerifiedA2](../Performance/Reports/Data/Mover200_20261022/Mover200_VerifiedA2) | 6 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/Mover200_20261022/Mover200_VerifiedB1](../Performance/Reports/Data/Mover200_20261022/Mover200_VerifiedB1) | 6 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/Mover200_20261022/Mover200_VerifiedB2](../Performance/Reports/Data/Mover200_20261022/Mover200_VerifiedB2) | 6 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/Mover200_20261022/MoverFinalSanity100](../Performance/Reports/Data/Mover200_20261022/MoverFinalSanity100) | 4 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/Mover200_20261022/MoverFinalSanity50](../Performance/Reports/Data/Mover200_20261022/MoverFinalSanity50) | 4 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/Mover200_20261022/Validation](../Performance/Reports/Data/Mover200_20261022/Validation) | 14 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/Mover200_20261022/Validation/MoverAuditNetwork02](../Performance/Reports/Data/Mover200_20261022/Validation/MoverAuditNetwork02) | 4 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/Mover200_20261022/Validation/MoverAuditNetwork02/Server](../Performance/Reports/Data/Mover200_20261022/Validation/MoverAuditNetwork02/Server) | 2 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/Mover200_20261022/Validation/MoverAuditNetwork03](../Performance/Reports/Data/Mover200_20261022/Validation/MoverAuditNetwork03) | 4 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/Mover200_20261022/Validation/MoverAuditNetwork03/Server](../Performance/Reports/Data/Mover200_20261022/Validation/MoverAuditNetwork03/Server) | 2 | 문서 이동·보존 기록 |
 | [Reference](../Reference) | 2 | 참고 TXT 원문 |
 | [Review/Architecture](../Review/Architecture) | 12 | 문서 이동·보존 기록 |
 | [Review/Audits](../Review/Audits) | 1 | 문서 이동·보존 기록 |

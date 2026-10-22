@@ -31,7 +31,7 @@ for folder in saved.iterdir():
     if not folder.is_dir() or folder.name == 'RA27EditorBinaries':
         continue
     for name in ['arguments.json', 'process.json', 'index.json', 'SourceHashes.json',
-                 'EditorBinaryHashes.json', 'Preservation.json', 'TrackedSourceChanges.patch',
+                 'EditorBinaryHashes.json', 'Preservation.json', 'AssetHashes.json', 'ContentWorktreeHashes.json', 'HistoricalPreservation.json', 'Head.txt', 'TrackedSourceChanges.patch',
                  'BaselineCompiledSourceManifest.json', 'CurrentCompiledSourceManifest.json',
                  'ComparedCompiledSourceManifest.json',
                  'ComparisonManifest.json', 'RestoreEditorHashes.json', 'RestoreReceipt.json',

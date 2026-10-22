@@ -6,15 +6,24 @@
 #include "Project_JBaseCharacter.h"
 #include "Project_JPlayerCharacter.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
+#include "HAL/IConsoleManager.h"
+#include "GameFramework/PlayerController.h"
+
+namespace
+{
+TAutoConsoleVariable<int32> SourceQualityPolicy(TEXT("ProjectJ.AnimationQuality.SourcePolicy.Enabled"),1,
+ TEXT("Publish Mover source quality and visual-space turn urgency. 0 reproduces the previous constant Local/actor-yaw presentation policy for comparison. Simulation is unchanged."));
+}
 FProject_JAnimOptimizationPolicy UProject_JCharacterAnimInstance::BuildOptimizationPolicy() const
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_AnimBuildOptimizationPolicy);
+	if (!SourceQualityPolicy.GetValueOnGameThread()) return FProject_JAnimOptimizationPolicy();
 	ProjectJ::Animation::FQualityObservation Input;
 	Input.bHasOwner = OwningCharacter != nullptr;
 	FProject_JAnimationBudgetSettings Settings;
 	if (OwningCharacter)
 	{
-		Input.bLocal = IsLocallyControlledCharacter();
+		Input.bLocal = ProjectJ::Animation::IsLocalPlayerAvatar(OwningCharacter);
 		if (!Input.bLocal)
 		{
 			if (const auto* Mesh = Cast<UProject_JBudgetedSkeletalMeshComponent>(OwningCharacter->GetMesh()))

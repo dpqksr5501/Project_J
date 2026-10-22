@@ -8,6 +8,7 @@
 #include "IAnimationBudgetAllocator.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "HAL/IConsoleManager.h"
+#include "Animation/Project_JAnimationQualityPolicy.h"
 
 namespace Project_J::Anim
 {
@@ -75,7 +76,7 @@ float UProject_JBudgetedSkeletalMeshComponent::GetAnimationDistanceTier() const
 {
 	check(IsInGameThread());
 	const auto* Pawn = Cast<APawn>(GetOwner());
-	if (Pawn && Cast<APlayerController>(Pawn->GetController()) && Pawn->IsLocallyControlled()) return 0.f;
+	if (ProjectJ::Animation::IsLocalPlayerAvatar(Pawn)) return 0.f;
 	// No local view (including isolated fixtures and dedicated servers) retains
 	// the existing caller-provided tier without creating a second global writer.
 	const auto* Character = Cast<AProject_JBaseCharacter>(GetOwner());
@@ -108,7 +109,7 @@ bool UProject_JBudgetedSkeletalMeshComponent::CanUseBudget() const
 	const auto* World = GetWorld();
 	const auto* Pawn = Cast<APawn>(GetOwner());
 	const auto* Anim = GetAnimInstance();
-	const bool bLocalPlayer = Pawn && Cast<APlayerController>(Pawn->GetController()) && Pawn->IsLocallyControlled();
+	const bool bLocalPlayer = ProjectJ::Animation::IsLocalPlayerAvatar(Pawn);
 	return !bEnding && bAllowProjectBudget && !IsCombatCritical() && !bUpdateOverride && bRequestedTick && IsRegistered() && HasBegunPlay()
 		// ABA enables external control itself. A pre-existing foreign controller
 		// must retain ownership; do not reject our own active ABA registration.

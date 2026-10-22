@@ -1,0 +1,89 @@
+{
+  "succeeded": 13,
+  "succeededWithWarnings": 0,
+  "failed": 0,
+  "notRun": 0,
+  "inProcess": 0,
+  "tests": [
+    {
+      "fullTestPath": "ProjectJ.GroupA.PathPressure",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupB.CharacterBudgetLifecycle",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupC.AutomaticDirtyRecovery",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupC.NavigationLoad100",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupD.MassValues",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Integrated.ActionBudget",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Integrated.MovingTargetPursuit",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Integrated.NativeNavMovement",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.NPCAction.ContextSeparation",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.NPCAction.IntentLifecycle",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.NPCAction.LatePathCompletion",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.NPCAction.PathAdmission",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.NPCGameplay.GroundRootMotion",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    }
+  ],
+  "source_report": "Saved/Validation/GroupD_20260910/MoverAuditMass03/Automation/index.json",
+  "report_sha256": "aebe9f7cc4c3981ba403ea316112d22ec7904dedc5ba34c3bf575e3757e0af92"
+}

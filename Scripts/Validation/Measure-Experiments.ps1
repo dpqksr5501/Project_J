@@ -1,6 +1,6 @@
 param(
  [Parameter(Mandatory=$true)][ValidatePattern('^[A-Za-z0-9_-]+$')][string]$RunName,
- [string]$Filters='ProjectJ.GroupF.+ProjectJ.GroupE.AuthoringAudit+ProjectJ.GroupE.AnimationMigrationPreflight',
+ [string]$Filters='ProjectJ.GroupF.+ProjectJ.GroupE.AuthoringAudit+ProjectJ.PlayerLocomotion',
  [switch]$Rendered,
  [string]$EngineRoot='C:/Program Files/Epic Games/UE_5.8'
 )

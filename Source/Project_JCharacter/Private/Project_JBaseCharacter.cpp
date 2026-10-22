@@ -265,10 +265,11 @@ bool AProject_JBaseCharacter::ApplyAdvancementDefinition(
 void AProject_JBaseCharacter::InitializeDefaultAttributes(bool bForceReset) const
 {
 	UProject_JAttributeSet *CurrentAttributeSet = GetAttributeSet();
-	if (!HasAuthority() || !CurrentAttributeSet)
+	if (!HasAuthority() || !CurrentAttributeSet || (!bForceReset && CurrentAttributeSet->HasInitializedDefaults()))
 	{
 		return;
 	}
+	CurrentAttributeSet->MarkDefaultsInitialized();
 
 	const UProject_JDefaultAttributeSetData *EffectiveDefaultAttributeData = GetEffectiveDefaultAttributeData();
 	const float DefaultMaxHealth = EffectiveDefaultAttributeData ? EffectiveDefaultAttributeData->MaxHealth : 100.0f;

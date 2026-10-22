@@ -12,7 +12,7 @@
 
 namespace ProjectJAuthoredAnimationFixture
 {
-inline AProject_JPlayerCharacter* Spawn(UWorld* World, AController* Controller, AProject_JPlayerState* State, const FVector& Location)
+inline AProject_JPlayerCharacter* Spawn(UWorld* World, AController* Controller, AProject_JPlayerState* State, const FVector& Location, bool bSimulate = false)
 {
 	UClass* Class = LoadClass<AProject_JPlayerCharacter>(nullptr, TEXT("/Game/Character_BPs/GreatSword/BP_GreatSword.BP_GreatSword_C"));
 	auto* Item = LoadObject<UProject_JEquipmentItemDefinition>(nullptr, TEXT("/Game/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_Equip.DA_Greatsword_Equip"));
@@ -31,13 +31,13 @@ inline AProject_JPlayerCharacter* Spawn(UWorld* World, AController* Controller, 
 		Player->SetNetCullDistanceSquared(FMath::Square(100000.0f));
 	}
 	Player->SetPlayerState(State);
-	Player->SetActorEnableCollision(World->GetNetMode() != NM_Standalone);
+	Player->SetActorEnableCollision(bSimulate || World->GetNetMode() != NM_Standalone);
 	Player->FinishSpawning(FTransform(FRotator::ZeroRotator, Location));
 	Controller->Possess(Player);
 	State->GetEquipmentManagerComponent()->UnequipSlot(EProject_JEquipmentSlot::Weapon);
 	State->GetEquipmentManagerComponent()->EquipItem(Item);
 	// Static standalone diagnostics prescribe a frame. Real socket fixtures use Mover simulation.
-	if (World->GetNetMode()==NM_Standalone && !ProjectJ::Tests::PublishMoverFrame(Player,MOVE_None)) { Player->Destroy(); return nullptr; }
+	if (!bSimulate && World->GetNetMode()==NM_Standalone && !ProjectJ::Tests::PublishMoverFrame(Player,MOVE_None)) { Player->Destroy(); return nullptr; }
 	return Player;
 }
 }

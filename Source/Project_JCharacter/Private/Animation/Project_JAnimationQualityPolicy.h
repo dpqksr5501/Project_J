@@ -1,8 +1,11 @@
 #pragma once
 #include "Animation/Project_JAnimationBudgetTypes.h"
+class APawn;
 
 namespace ProjectJ::Animation
 {
+// Physical control moves to a mount; its local rider remains a protected avatar.
+bool IsLocalPlayerAvatar(const APawn* Pawn);
 // Gather on GT using the existing role/visibility owners. Pure decisions below
 // never look up the worker proxy, tick a mesh, or alter ABA registration.
 struct FQualityObservation

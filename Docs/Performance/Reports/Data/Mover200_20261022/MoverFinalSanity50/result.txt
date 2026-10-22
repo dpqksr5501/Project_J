@@ -1,0 +1,6 @@
+success=1
+cooked=0
+actors=50
+local_player=1
+local_quality_samples=6854
+reason=Actual authored retarget bodies; real viewport; no remote connections

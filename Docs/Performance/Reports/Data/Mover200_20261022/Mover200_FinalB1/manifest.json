@@ -1,0 +1,76 @@
+{
+  "head": "83edf6057ed1f614bce47156ae1b56b8eeb8ae95",
+  "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+  "gpu": [
+    "Parsec Virtual Display Adapter",
+    "AMD Radeon RX 9070 XT",
+    "AMD Radeon(TM) Graphics"
+  ],
+  "actors": 200,
+  "movement": true,
+  "consoleCommands": "ProjectJ.AnimationQuality.SourcePolicy.Enabled 1,ProjectJ.PlayerTrajectory.RemotePredictionHz 60",
+  "localPlayer": true,
+  "connections": 0,
+  "nullRHI": false,
+  "offscreenViewport": true,
+  "resolution": "1280x720",
+  "fpsCap": 0,
+  "vsync": 0,
+  "trace": false,
+  "packaged": false,
+  "executable": "C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe",
+  "executableSHA256": "4DBAB2739E7AFEF7EC96CDFE48A63211742209F9A56AF0620CF228913D64FB0C",
+  "arguments": [
+    "C:/Users/I/Documents/GitHub/Project_J/Project_J.uproject",
+    "/Engine/Maps/Entry?game=/Script/Engine.GameModeBase",
+    "-game",
+    "-unattended",
+    "-nop4",
+    "-nosplash",
+    "-nosound",
+    "-NoDDCCleanup",
+    "-NoLiveCoding",
+    "-RenderOffscreen",
+    "-windowed",
+    "-ResX=1280",
+    "-ResY=720",
+    "-ProjectJRenderedCrowdFixture",
+    "-ProjectJRenderedCrowdOutput=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/WholeProjectAudit_20261013/Mover200_FinalB1",
+    "-ABSLOG=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/WholeProjectAudit_20261013/Mover200_FinalB1/Run.log",
+    "-ExecCmds=t.MaxFPS 0,r.VSync 0,ProjectJ.AnimationQuality.SourcePolicy.Enabled 1,ProjectJ.PlayerTrajectory.RemotePredictionHz 60",
+    "-statnamedevents",
+    "-UserDir=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/WholeProjectAudit_20261013/Mover200_FinalB1/User/",
+    "-SaveToUserDir",
+    "-ProjectJRenderedCrowdCount=200",
+    "-ProjectJRenderedCrowdMovement",
+    "-DisablePython",
+    "-ProjectJRenderedCrowdLocalPlayer"
+  ],
+  "artifacts": [
+    {
+      "path": "Project_J.uproject",
+      "sha256": "4FDFB1ED047A4979799ECA3C965716BBEE9BAEEB804FFE6121E18273E1678E9F"
+    },
+    {
+      "path": "Content/Character_BPs/GreatSword/BP_GreatSword.uasset",
+      "sha256": "CD0815F704E90FDCE5EE997D61D5EFF955D8D7C17459C281334F563DFA2849F4"
+    },
+    {
+      "path": "Content/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme.uasset",
+      "sha256": "89572D72C84E3309CB5F22101337D0087FA3886962F60F372764D871B09CC5EF"
+    },
+    {
+      "path": "Content/Animation_Logic/ABPs/ABP_Player_Master.uasset",
+      "sha256": "F32C7D5BFAE61086064F10278D4AAA3767AA80542D7BBCD2CA035B9E1C404FE7"
+    },
+    {
+      "path": "Binaries/Win64/UnrealEditor-Project_J.dll",
+      "sha256": "914C741255418964013DE3058916D363ADC8405B1A796B9F59FE133FC73ECCB4"
+    },
+    {
+      "path": "Binaries/Win64/UnrealEditor-Project_JCharacter.dll",
+      "sha256": "8B2511893CD63F43B18EA38959BD04E252F9C8E5BE15E8D6F4A876AC840AF296"
+    }
+  ],
+  "sourceProvenanceFile": "../CandidateSourceProvenance.json"
+}

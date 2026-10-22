@@ -165,14 +165,14 @@ void UProject_JLocomotionAnimStateComponent::HandleLanded(const FHitResult&)
 		return;
 	}
 
-	if (bIsJumping && ShouldIgnoreJumpStartLanding(*PlayerOwner))
+	const float ImpactFallSpeed = FMath::Max(0.f, -float(PlayerOwner->GetLastLandingVelocity().Z));
+	if (ImpactFallSpeed < RemoteLandingMinFallSpeed && bIsJumping && ShouldIgnoreJumpStartLanding(*PlayerOwner))
 	{
 		RecordIgnoredJumpStartLanding(*PlayerOwner);
 		KeepJumpStartAirborneAfterIgnoredLanding();
 		return;
 	}
 
-	const float ImpactFallSpeed = FMath::Max(LastFallSpeed, FMath::Abs(PlayerOwner->GetVelocity().Z));
 	ClearJumpStartTimers();
 	bIgnoreNextLandingForJumpStart = false;
 	StartLanding(ImpactFallSpeed, true, true);

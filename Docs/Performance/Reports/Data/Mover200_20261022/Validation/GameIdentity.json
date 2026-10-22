@@ -1,0 +1,122 @@
+{
+  "editor_frozen_version": "Mover200_Final_20261022",
+  "actual_game_source_matches_frozen": true,
+  "checked_sources": 1115,
+  "mismatches": [],
+  "artifacts": [
+    {
+      "path": "Plugins/Mover/Binaries/Win64/UnrealEditor-Mover.dll",
+      "sha256": "2dad9dbc065d8d426909c832cd02d5009a3490cb309515ac444b954e543b606d"
+    },
+    {
+      "path": "Plugins/Mover/Binaries/Win64/UnrealEditor-MoverCVDData.dll",
+      "sha256": "cf9adfd64195fb5ffda4b4e44c72a007ec05f1539566cdc136623d6e28317acd"
+    },
+    {
+      "path": "Plugins/Mover/Binaries/Win64/UnrealEditor-MoverCVDEditor.dll",
+      "sha256": "1184461b20e02a188458043c2506cddaf87fcf609d6633d490f56934b894476c"
+    },
+    {
+      "path": "Plugins/Mover/Binaries/Win64/UnrealEditor-MoverEditor.dll",
+      "sha256": "bd2588555e36db1dd5457910a48ced3f5b94ab45faf3824d2a2fc55f61caf02b"
+    },
+    {
+      "path": "Plugins/Mover/Binaries/Win64/UnrealEditor.modules",
+      "sha256": "bc852746096b84441aba758937519aaadf68807b8103cab64325470ff4c35c43"
+    },
+    {
+      "path": "Plugins/NetworkPrediction/Binaries/Win64/UnrealEditor-NetworkPrediction.dll",
+      "sha256": "11e309b932307a46721123a7e40001ef588d78c47eb2ad827680a8bf1624ec21"
+    },
+    {
+      "path": "Plugins/NetworkPrediction/Binaries/Win64/UnrealEditor.modules",
+      "sha256": "b0a59c622418ac19a524cc51997b44d0c6d80dc4079beeb70420cd0345784938"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Binaries/Win64/UnrealEditor-ProjectJExperiments.dll",
+      "sha256": "ff564e31bac5516616c99a58ffe2c1cbd082dd59e15a7a40a8cdb3cc867f4c2a"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Binaries/Win64/UnrealEditor.modules",
+      "sha256": "8481d50b36d0dfa2e16bcd2a0ab03dafaeb7d7bf102b28b7515a12aa3af5748b"
+    },
+    {
+      "path": "Binaries/Win64/Project_J.exe",
+      "bytes": 349937152,
+      "sha256": "2504999295f0540fc071c25d1e2e7b8a37fe8f86c1b41b55778d0017882e9d8b"
+    },
+    {
+      "path": "Binaries/Win64/Project_J.pdb",
+      "bytes": 464424960,
+      "sha256": "113eefe43aa2ae299eabcbcc78e3809e1c042f1a4f11e4f9e7eaf525c142e59a"
+    },
+    {
+      "path": "Binaries/Win64/Project_J.target",
+      "bytes": 118501,
+      "sha256": "9140166e127f4e34fee128cfea455973b976187e1b294d76682832e929f1cb2e"
+    }
+  ],
+  "assets": [
+    {
+      "path": "Content/Animation_Logic/ABPs/ABP_Player_Master.uasset",
+      "sha256": "f32c7d5bfae61086064f10278d4aaa3767aa80542d7bbcd2ca035b9e1c404fe7"
+    },
+    {
+      "path": "Content/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Layers.uasset",
+      "sha256": "bd524c54a60cb0b0d110eea24d061977d7fc9dd003c279e494da9b9dd38aef77"
+    },
+    {
+      "path": "Content/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme.uasset",
+      "sha256": "89572d72c84e3309cb5f22101337d0087fa3886962f60f372764d871b09cc5ef"
+    },
+    {
+      "path": "Content/Character_BPs/GreatSword/BP_GreatSword.uasset",
+      "sha256": "cd0815f704e90fdce5ee997d61d5eff955d8d7c17459c281334f563dfa2849f4"
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB2.uasset",
+      "sha256": "f6fb3f5852544838dce1c8e23a62978f360dd1f64280333a7791872ae112006a"
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMBRMB.uasset",
+      "sha256": "620b52fd82f0d8e0ed2bc41ae0ee7e41bbaf06c502da9f645a2d517c79c6c7ab"
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR1.uasset",
+      "sha256": "c3f58140b260421d35d872c18d9828e641cd582a4ffcfdbfd2245c84780d3fb8"
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR2.uasset",
+      "sha256": "fd9fcfbbe85f2832abb2319a938495503365ddc380a8f7c5588823dd7b2b7edb"
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q1.uasset",
+      "sha256": "25d66f354da4bbf75c9b13917ce0105ba10663cc8570adc89effc31351979829"
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q2.uasset",
+      "sha256": "39bc10161f7802ba41dd152a9b40586963ecb10d40ed37b06641b2fe1032e3c6"
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_R.uasset",
+      "sha256": "18833229dc7eae4fb09e6642a7fd88e14ebd7516ba32db282fb1ce69c8429efc"
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB1.uasset",
+      "sha256": "1a56c07b2e2c0f011f12d66bf81a46097435a2a6c0770467e95cd45e105ca70c"
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB2.uasset",
+      "sha256": "5235d67272c0ad061b48444e5ce34471e0c8d3f1cbf9e8b4468763b912cdc0d6"
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_T.uasset",
+      "sha256": "76d16de663f8299c30400b39faab3aa6d184935141c1440e8a607462fdc24295"
+    },
+    {
+      "path": "Docs/Handoffs/WholeProjectAudit_2026-10-13/Project_J_Whole_Project_Audit_Handoff_2026-10-13.md",
+      "sha256": "db19c60ae025d12fb2c5ebb2edb084a113f543cd7d881aa4a81f2225be174315"
+    }
+  ],
+  "scope_ko": "직접 UBT Game 성공 뒤 실제 exe/pdb/target SHA와 frozen Source/Config/descriptor 대응. Editor-only branch와 모든 Cook/runtime 품질 완료는 별도."
+}

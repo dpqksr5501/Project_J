@@ -7,10 +7,11 @@ large-scale NPC combat, pooled gameplay actors, or a final rendering/content bud
 They are intentionally conservative: none of these foundations silently changes an
 Actor's behaviour, starts gameplay work on a worker thread, or enables object reuse.
 
-Project J is an UE 5.8 third-person action MMORPG prototype. Local players use the
-high-quality locomotion path; **NPCs, bosses, and monsters do not use Motion
-Matching**. They should use a low-cost blendspace/sequence/cached-pose animation
-path and opt into simulation quality reductions independently.
+Project J is an UE 5.8 third-person action MMORPG prototype. Local players retain
+the full locomotion path. Current test NPCs share the native player master and
+its data-driven pose selection; the earlier blanket claim that all NPCs avoid
+pose search is not a current runtime guarantee. Content may author a cheaper
+blendspace/sequence path, independently of movement simulation quality.
 
 ## Measurement comes first
 
@@ -55,6 +56,22 @@ Do not add parallel work, Mass representation, or pooling because an average FPS
 number is low. Identify the limiting thread or GPU pass first.
 
 ## Existing runtime policy
+
+### 2026-10-22 Mover consumption boundaries
+
+The primary mesh AnimInstance publishes source quality on the game thread;
+linked layers do not become additional follower tick owners. Trajectory turn
+urgency compares samples in the same visual-root space, and Strafe velocity
+reversal remains protected. Local PlayerController ownership includes the rider
+whose controller has transferred to a mount. ABA, source policy and the visual
+coordinator use that same ownership decision.
+
+The conditional remote prediction-density experiment changes only internal
+trajectory prediction sampling during settled, grounded Mid/Far presentation.
+Local, acceleration, turning, airborne and combat presentation retain 60Hz.
+Movement simulation, network prediction and output trajectory spacing retain
+their existing contracts. Adoption and the actual 200-body RHI comparison are
+recorded in the [Mover report](../Reports/ProjectJ_Mover_200_2026-10-22.md).
 
 ### 2026-10-12 시각 애니메이션 예산
 

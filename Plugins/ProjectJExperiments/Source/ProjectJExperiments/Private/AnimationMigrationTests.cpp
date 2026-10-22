@@ -69,10 +69,11 @@ static int32 ReplaceSnapshotGetters(UAnimBlueprint* BP)
 }
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAnimationMigrationPreflight, "ProjectJ.GroupE.AnimationMigrationPreflight",
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAnimationMigrationPreflight, "ProjectJ.Historical.AnimationMigrationPreflight",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJAnimationMigrationPreflight::RunTest(const FString&)
 {
+    // Historical CMC master migration: excluded from current regression runners.
     using namespace ProjectJ::Experiments;
     FString Csv = TEXT("asset,replaced_getters,bound_before,bound_after\n");
     for (const TCHAR* Path : {TEXT("/Game/Animation_Logic/ABPs/ABP_Humanoid_Master.ABP_Humanoid_Master"),

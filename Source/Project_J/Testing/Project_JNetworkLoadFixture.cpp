@@ -232,6 +232,13 @@ void AProject_JNetworkLoadController::ClientConfigure_Implementation(int32 InSta
 	if (!Enabled()) { return; }
 	CurrentStage = InStage; LocalSlot = Slot; ExpectedIds = Expected; ItemId = OwnItem;
 	bItemsExpected = bExpectItems; RequiredPulse = MinimumPulse; NextObservation = 0;
+	// Stage 2 is reached only after every real client has observed the authored
+	// actors, pose and ownership data for Stage 1. Capture that established stream,
+	// rather than the temporary travel world and initial asset-load burst.
+	if (InStage==2 && FParse::Param(FCommandLine::Get(),TEXT("ProjectJCaptureMoverBuffers")))
+	{
+		GEngine->Exec(GetWorld(),TEXT("ProjectJ.CaptureMoverBuffers 120"));
+	}
 }
 void AProject_JNetworkLoadController::PlayerTick(float DeltaSeconds)
 {

@@ -35,6 +35,7 @@ struct PROJECT_JCHARACTER_API FProject_JPlayerAirFrame
 /** Selection uses admitted movement values; a physical jump keeps its foot and playhead. */
 namespace ProjectJ::Animation::Air
 {
+ PROJECT_JCHARACTER_API FProject_JPlayerAirQuery ResolveEntryQuery(const FProject_JPlayerAirQuery& Query);
  PROJECT_JCHARACTER_API float ResolveLiveAngle(const FVector& Velocity, bool bHasInput, float InputAngle,
   float ActorYaw, float DesiredFacingYaw, EProject_JLocomotionRotationMode RotationMode);
  PROJECT_JCHARACTER_API FProject_JPlayerAirQuery ResolveReselectionQuery(

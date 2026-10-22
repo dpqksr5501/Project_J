@@ -255,7 +255,8 @@ EProject_JMountEligibilityFailure AProject_JMountCharacter::GetMountEligibilityF
 	{
 		return EProject_JMountEligibilityFailure::MountUnavailable;
 	}
-	if (!IsValid(NewRider) || NewRider->IsActorBeingDestroyed())
+	if (!IsValid(NewRider) || NewRider->IsActorBeingDestroyed() || !Project_J::Movement::FindCapsule(NewRider)
+		|| !Project_J::Movement::ReadPhysicalFrame(NewRider).bValid)
 	{
 		return EProject_JMountEligibilityFailure::InvalidRider;
 	}
@@ -331,6 +332,7 @@ bool AProject_JMountCharacter::TryMountRider(APawn* NewRider)
 	{
 		return IsValid(this) && !IsActorBeingDestroyed() && !bEndingPlay
 			&& IsValid(NewRider) && !NewRider->IsActorBeingDestroyed()
+			&& Project_J::Movement::FindCapsule(NewRider)
 			&& RiderTransitionRevision == Revision && Rider == NewRider
 			&& MountState == EProject_JMountState::Mounting;
 	};
@@ -548,7 +550,7 @@ bool AProject_JMountCharacter::AttachRider(APawn* NewRider)
 	{
 		RiderCollisionBeforeMount = Project_J::Movement::FindCapsule(NewRider)->GetCollisionEnabled();
 		RiderMovementBeforeMount = Project_J::Movement::ReadPhysicalFrame(NewRider).Mode;
-		RiderCustomMovementBeforeMount = 0;
+		RiderCustomMovementBeforeMount = Project_J::Movement::ReadPhysicalFrame(NewRider).CustomMode;
 		bHasRiderRestoreState = true;
 	}
 
@@ -570,7 +572,8 @@ void AProject_JMountCharacter::DetachRider(APawn* PreviousRider, const FVector& 
 	}
 
 	PreviousRider->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-	Project_J::Movement::FindCapsule(PreviousRider)->SetCollisionEnabled(bHasRiderRestoreState ? RiderCollisionBeforeMount : ECollisionEnabled::QueryAndPhysics);
+	if (auto* Capsule = Project_J::Movement::FindCapsule(PreviousRider))
+		Capsule->SetCollisionEnabled(bHasRiderRestoreState ? RiderCollisionBeforeMount : ECollisionEnabled::QueryAndPhysics);
 	PreviousRider->TeleportTo(DismountLocation, GetActorRotation(), false, true);
 	Project_J::Movement::SetMovementMode(PreviousRider, bHasRiderRestoreState ? RiderMovementBeforeMount : MOVE_Walking, RiderCustomMovementBeforeMount);
 }

@@ -1,5 +1,7 @@
 # Project J 프로젝트 맥락
 
+2026-10-22 Mover 구조의 지속 속성·명령 승인·착지·이력/품질 정책 수정과 200명 현재 → 결과는 [재검증 보고서](../Performance/Reports/ProjectJ_Mover_200_2026-10-22.md)를 따른다. 이전 CMC 성능·빌드 이력을 현재 구현의 검증으로 재사용하지 않는다.
+
 이 문서는 현재 구조·권위·상태 소유권과 작업 진입점을 설명한다. 현재 이동·애니메이션의 책임 분리는 [플레이어 로코모션 아키텍처](../Animation/Architecture/Player_Locomotion_Architecture.md), 에셋별 제작 규칙과 시점별 검증은 해당 전문 문서를 따른다.
 
 공통 생산 경로는 Mover + `UProject_JPlayerAnimInstance` + `ABP_Player_Master`다. 상태·전환·Chooser 호출·핀 계산은 C++가 소유하고, 포즈 연결과 노드별 실행 시점은 ABP가 소유한다. OTM/Strafe, 전방 세 방향 Strafe Sprint, 공중 방향 재선택·playhead 연속성과 수평 관성을 유지한다. 구형 CMC·독립 MM/단발 경로는 현재 제작 기준이 아니다.

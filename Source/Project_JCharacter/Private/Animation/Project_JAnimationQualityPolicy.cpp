@@ -1,7 +1,27 @@
 #include "Animation/Project_JAnimationQualityPolicy.h"
+#include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
+#include "Mount/Project_JMountComponent.h"
+#include "Mount/Project_JMountCharacter.h"
 
 namespace ProjectJ::Animation
 {
+bool IsLocalPlayerAvatar(const APawn* Pawn)
+{
+	if (!IsValid(Pawn) || Pawn->IsActorBeingDestroyed()) return false;
+	if (const auto* Controller=Pawn->GetController())
+	{
+		const auto* Player=Cast<APlayerController>(Controller);
+		return IsValid(Player) && !Player->IsActorBeingDestroyed() && Player->IsLocalController();
+	}
+	const auto* Rider=Pawn->FindComponentByClass<UProject_JMountComponent>();
+	const auto* Mount=Rider?Rider->GetMountedMount():nullptr;
+	if (!Mount) Mount=Cast<AProject_JMountCharacter>(Pawn->GetAttachParentActor());
+	if (!IsValid(Mount) || Mount->IsActorBeingDestroyed() || (Mount->GetRider() && Mount->GetRider()!=Pawn)) return false;
+	const auto* Player=Cast<APlayerController>(Mount->GetController());
+	return IsValid(Player) && !Player->IsActorBeingDestroyed() && Player->IsLocalController();
+}
+
 float ResolveAnimationDistanceTier(double DistanceSquared, const FProject_JAnimationBudgetSettings& S)
 {
 	// Malformed configuration preserves quality instead of silently reducing visual quality.

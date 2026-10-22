@@ -25,19 +25,24 @@ float ProjectJ::Animation::Air::ResolveLiveAngle(const FVector& Velocity, bool b
  return bHasInput?InputAngle:0.f;
 }
 
-FProject_JPlayerAirQuery ProjectJ::Animation::Air::ResolveReselectionQuery(
- const FProject_JPlayerAirQuery& Live,const FProject_JPlayerAirQuery& Committed,float LiveAngle)
+FProject_JPlayerAirQuery ProjectJ::Animation::Air::ResolveEntryQuery(const FProject_JPlayerAirQuery& Requested)
 {
- auto Query=Live;
- Query.Foot=Committed.Foot;
- Query.State=Committed.State;
- Query.Direction=Presentation::ResolveStateControllerStrafeDirection(LiveAngle,Committed.Direction,10.f);
+ auto Query=Requested;
  const bool bForward=Query.Direction==EProject_JStateControllerStrafeDirection::Forward ||
   Query.Direction==EProject_JStateControllerStrafeDirection::ForwardLeft || Query.Direction==EProject_JStateControllerStrafeDirection::ForwardRight;
  // The authored sprint jump family has forward clips only. A lateral/backward
  // request uses the matching Run jump, including when sprint was released in air.
  if (Query.Gait==EProject_JLocomotionGaitIntent::Sprint && !bForward) Query.Gait=EProject_JLocomotionGaitIntent::Run;
  return Query;
+}
+
+FProject_JPlayerAirQuery ProjectJ::Animation::Air::ResolveReselectionQuery(
+ const FProject_JPlayerAirQuery& Live,const FProject_JPlayerAirQuery& Committed,float LiveAngle)
+{
+ auto Query=Live;
+ Query.Foot=Committed.Foot;Query.State=Committed.State;
+ Query.Direction=Presentation::ResolveStateControllerStrafeDirection(LiveAngle,Committed.Direction,10.f);
+ return ResolveEntryQuery(Query);
 }
 
 void UProject_JPlayerAnimInstance::BuildProjectAirFrame(FProject_JAnimThreadSafeData& Data)
@@ -131,7 +136,7 @@ void UProject_JPlayerAnimInstance::UpdateProjectAir(const FAnimUpdateContext&,co
  const auto Blend=UBlendStackAnimNodeLibrary::ConvertToBlendStackNode(Node,Conversion);
  if (Conversion!=EAnimNodeReferenceConversionResult::Succeeded) return;
  const bool bEntry=bAirEntryPending || ActiveAirEpisode!=Frame.Episode;
- auto Query=bEntry?Frame.Query:CommittedAirQuery;
+ auto Query=bEntry?ProjectJ::Animation::Air::ResolveEntryQuery(Frame.Query):CommittedAirQuery;
  Query.State=CurrentState==LoopState?EProject_JStateControllerPresentationState::InAirLoop:EProject_JStateControllerPresentationState::TransitionToInAir;
  const float Playhead=UBlendStackAnimNodeLibrary::GetCurrentAssetTime(Blend);
  bool bReselect=false;

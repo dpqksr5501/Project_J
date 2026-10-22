@@ -267,8 +267,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAutomaticDirtyNavRecoveryTest, "Projec
  EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJAutomaticDirtyNavRecoveryTest::RunTest(const FString& Parameters)
 {
-	AddExpectedMessage(TEXT("SpawnMissingNavigationData: No saved navigation data found"), ELogVerbosity::Warning, EAutomationExpectedMessageFlags::Contains, 1, false);
-	AddExpectedMessage(TEXT("Unable to find RecastNavMesh instance while trying to create UCrowdManager instance"), ELogVerbosity::Warning, EAutomationExpectedMessageFlags::Contains, 1, false);
+	// FNativeNavCommand creates explicit Recast data and disables its unused
+	// crowd service before initialization. Its real dirty/repath assertions are
+	// the contract; the former missing-data/crowd warnings must no longer occur.
 	ADD_LATENT_AUTOMATION_COMMAND(FNativeNavCommand(this, true, true, true));
 	return true;
 }

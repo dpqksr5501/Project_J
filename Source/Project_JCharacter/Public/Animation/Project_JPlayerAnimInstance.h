@@ -14,6 +14,8 @@ UCLASS(Blueprintable, BlueprintType)
 class PROJECT_JCHARACTER_API UProject_JPlayerAnimInstance : public UProject_JCharacterAnimInstance
 {
 	GENERATED_BODY()
+	bool bNeedsLocomotionHistorySeed = true;
+	void SeedLocomotionHistory();
 public:
  UFUNCTION(BlueprintCallable, Category="Player Locomotion", meta=(BlueprintThreadSafe))
  void SetNativeInteractionTransform(FTransform Value) { PlayerInteractionTransform=Value; }
@@ -37,6 +39,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion", meta=(DevelopmentOnly))
 	FString InspectFoundationPlayback() const;
  FName GetFoundationStateName() const;
+ int32 GetTrajectoryPredictionRate() const;
 	UFUNCTION(BlueprintPure, Category="Project J|Player Locomotion", meta=(BlueprintThreadSafe))
 	FTransformTrajectory GetFoundationTrajectory() const;
  UPROPERTY(EditDefaultsOnly, Category="Project J|Player Locomotion") TObjectPtr<UChooserTable> AirAnimationChooser;

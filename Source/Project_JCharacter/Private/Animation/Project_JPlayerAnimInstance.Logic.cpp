@@ -39,7 +39,34 @@ void UProject_JPlayerAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSe
 void UProject_JPlayerAnimInstance::UpdateNativeLocomotionLogic()
 {
 	if (!PlayerHasOwningActor || !PlayerHasLocomotionSource || !PlayerUseThreadSafeUpdateAnimation) return;
-	UpdateNativeTrajectory();UpdateNativeEssentialValues();UpdateNativeStates();UpdateNativeAimOffset();UpdateNativeAdditiveLean();
+	if (bNeedsLocomotionHistorySeed) PlayerTrajectoryCirclingTime = 0.;
+	UpdateNativeTrajectory();
+	if (bNeedsLocomotionHistorySeed) SeedLocomotionHistory();
+	UpdateNativeEssentialValues();UpdateNativeStates();UpdateNativeAimOffset();UpdateNativeAdditiveLean();
+}
+
+void UProject_JPlayerAnimInstance::SeedLocomotionHistory()
+{
+	// Seed at the first admitted source frame, including after retained-instance reinit.
+	PlayerCharacterTransform = PlayerCharacterTransformLastFrame = PlayerCharacterProperties.ActorTransform;
+	PlayerVelocity = PlayerVelocityLastFrame = PlayerLastNonZeroVelocity = PlayerCharacterProperties.Velocity;
+	PlayerAcceleration = PlayerAccelerationLastFrame = PlayerCharacterProperties.InputAcceleration;
+	PlayerSmoothedGroundNormal = PlayerCharacterProperties.GroundNormal;
+	PlayerSmoothedAimTarget = PlayerCharacterProperties.AimingRotation;
+	PlayerAimAngularVelocity = FVector::ZeroVector;
+	PlayerAO = PlayerPreviousAO = FVector2D::ZeroVector;
+	PlayerFutureFacingDeltaLastFrame = PlayerFutureFacingDelta;
+	PlayerTrajectoryPreviousFutureVelocity = PlayerTrajectoryFutureVelocity;
+	PlayerFutureFacingOnTransitionStart = PlayerTrajectoryFutureFacing;
+	auto Seed=[]<typename T>(T& Value,T& Last,T& Recent,double& Time,double& LastTime,T New)
+	{ Value=Last=Recent=New; Time=LastTime=0.; };
+	Seed(PlayerMovementMode,PlayerMovementModeLastFrame,PlayerMovementModeRecent,PlayerMovementModeTime,PlayerMovementModeLastStateTime,PlayerCharacterProperties.MovementMode);
+	Seed(PlayerRotationMode,PlayerRotationModeLastFrame,PlayerRotationModeRecent,PlayerRotationModeTime,PlayerRotationModeLastStateTime,PlayerCharacterProperties.RotationMode);
+	Seed(PlayerMovementState,PlayerMovementStateLastFrame,PlayerMovementStateRecent,PlayerMovementStateTime,PlayerMovementStateLastStateTime,EvaluateIsMoving()?EProject_JPlayerMovementState::Moving:EProject_JPlayerMovementState::Idle);
+	Seed(PlayerGait,PlayerGaitLastFrame,PlayerGaitRecent,PlayerGaitTime,PlayerGaitLastStateTime,PlayerCharacterProperties.Gait==EProject_JLocomotionGaitIntent::Sprint && PlayerTrajectoryIsCircling?EProject_JLocomotionGaitIntent::Run:PlayerCharacterProperties.Gait);
+	Seed(PlayerStance,PlayerStanceLastFrame,PlayerStanceRecent,PlayerStanceTime,PlayerStanceLastStateTime,PlayerCharacterProperties.Stance);
+	Seed(PlayerMovementDirection,PlayerMovementDirectionLastFrame,PlayerMovementDirectionRecent,PlayerMovementDirectionTime,PlayerMovementDirectionLastStateTime,PlayerCharacterProperties.MovementDirection);
+	bNeedsLocomotionHistorySeed=false;
 }
 void UProject_JPlayerAnimInstance::NativePostEvaluateAnimation()
 {

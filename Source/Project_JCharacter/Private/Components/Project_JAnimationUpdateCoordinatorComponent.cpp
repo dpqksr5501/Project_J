@@ -252,7 +252,7 @@ void UProject_JAnimationUpdateCoordinatorComponent::RefreshVisualBudget(float De
 	if (bVisualWakeActive && Now >= VisualWakeUntil) { bVisualWakeActive = false; RefreshSourceRequirement(); }
 	DiscoveryElapsed += FMath::Max(0.f, DeltaTime);
 	if (DiscoveryElapsed >= .5f) { DiscoverVisualMeshes(); DiscoveryElapsed = 0; }
-	const bool bLocal = Cast<APlayerController>(Character->GetController()) && Character->IsLocallyControlled();
+	const bool bLocal = ProjectJ::Animation::IsLocalPlayerAvatar(Character);
 	const bool bAuthored = Native->NeedsFullRateVisualUpdate();
 	if (bSawAuthoredPresentation && !bAuthored) AuthoredReturnUntil = Now + .2;
 	bSawAuthoredPresentation = bAuthored;

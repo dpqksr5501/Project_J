@@ -1,0 +1,12 @@
+{
+  "archivePayloadVerification": "611 unique payloads / 1213 original paths, all SHA-256 verified",
+  "restoredRunFiles": 21,
+  "restoredHashesMatch": true,
+  "wrongArchiveHashRejected": true,
+  "existingDestinationRejected": true,
+  "publicEvidenceHashesVerified": 126,
+  "pythonTests": 48,
+  "docBrokenLinks": 0,
+  "preexistingAbsentLocalArchiveLinks": 12,
+  "nativeBuildAndRegression": "Reuse documented Editor/Game and native results; this closing turn changed documentation, archive utilities and attributes only."
+}

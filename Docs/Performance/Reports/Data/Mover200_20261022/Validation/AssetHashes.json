@@ -1,0 +1,62 @@
+[
+  {
+    "path": "Content/Animation_Logic/ABPs/ABP_Player_Master.uasset",
+    "sha256": "f32c7d5bfae61086064f10278d4aaa3767aa80542d7bbcd2ca035b9e1c404fe7"
+  },
+  {
+    "path": "Content/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Layers.uasset",
+    "sha256": "bd524c54a60cb0b0d110eea24d061977d7fc9dd003c279e494da9b9dd38aef77"
+  },
+  {
+    "path": "Content/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme.uasset",
+    "sha256": "89572d72c84e3309cb5f22101337d0087fa3886962f60f372764d871b09cc5ef"
+  },
+  {
+    "path": "Content/Character_BPs/GreatSword/BP_GreatSword.uasset",
+    "sha256": "cd0815f704e90fdce5ee997d61d5eff955d8d7c17459c281334f563dfa2849f4"
+  },
+  {
+    "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB2.uasset",
+    "sha256": "f6fb3f5852544838dce1c8e23a62978f360dd1f64280333a7791872ae112006a"
+  },
+  {
+    "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMBRMB.uasset",
+    "sha256": "620b52fd82f0d8e0ed2bc41ae0ee7e41bbaf06c502da9f645a2d517c79c6c7ab"
+  },
+  {
+    "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR1.uasset",
+    "sha256": "c3f58140b260421d35d872c18d9828e641cd582a4ffcfdbfd2245c84780d3fb8"
+  },
+  {
+    "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR2.uasset",
+    "sha256": "fd9fcfbbe85f2832abb2319a938495503365ddc380a8f7c5588823dd7b2b7edb"
+  },
+  {
+    "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q1.uasset",
+    "sha256": "25d66f354da4bbf75c9b13917ce0105ba10663cc8570adc89effc31351979829"
+  },
+  {
+    "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q2.uasset",
+    "sha256": "39bc10161f7802ba41dd152a9b40586963ecb10d40ed37b06641b2fe1032e3c6"
+  },
+  {
+    "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_R.uasset",
+    "sha256": "18833229dc7eae4fb09e6642a7fd88e14ebd7516ba32db282fb1ce69c8429efc"
+  },
+  {
+    "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB1.uasset",
+    "sha256": "1a56c07b2e2c0f011f12d66bf81a46097435a2a6c0770467e95cd45e105ca70c"
+  },
+  {
+    "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB2.uasset",
+    "sha256": "5235d67272c0ad061b48444e5ce34471e0c8d3f1cbf9e8b4468763b912cdc0d6"
+  },
+  {
+    "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_T.uasset",
+    "sha256": "76d16de663f8299c30400b39faab3aa6d184935141c1440e8a607462fdc24295"
+  },
+  {
+    "path": "Docs/Handoffs/WholeProjectAudit_2026-10-13/Project_J_Whole_Project_Audit_Handoff_2026-10-13.md",
+    "sha256": "db19c60ae025d12fb2c5ebb2edb084a113f543cd7d881aa4a81f2225be174315"
+  }
+]

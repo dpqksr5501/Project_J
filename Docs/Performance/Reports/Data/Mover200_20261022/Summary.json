@@ -1,0 +1,2358 @@
+{
+  "method": "ABBA listed in final_order. Arithmetic mean of two run means; percentile ranges retain both runs, nearest rank. Exclude first 1s per phase, screenshot request and next 2 frames; attack requires 200 simultaneous montages. GT/render/RHI overlap and are not summed. 30Hz candidate is not enabled by default.",
+  "final_order": [
+    "Mover200_ReleaseA1",
+    "Mover200_ReleaseB1",
+    "Mover200_ReleaseB2",
+    "Mover200_ReleaseA2"
+  ],
+  "candidate_runs": [],
+  "comparison": {
+    "idle": {
+      "frame_ms": {
+        "current_mean": 18.19074207695531,
+        "result_mean": 16.119514302955665,
+        "current_run_mean_range": [
+          18.12099195,
+          18.260492203910616
+        ],
+        "result_run_mean_range": [
+          16.109669197044337,
+          16.129359408866996
+        ],
+        "current_p50_range": [
+          17.9240015,
+          18.031149999999997
+        ],
+        "current_p95_range": [
+          19.561701,
+          19.6658
+        ],
+        "current_p99_range": [
+          20.599302,
+          24.896
+        ],
+        "result_p50_range": [
+          15.979249,
+          15.984747500000001
+        ],
+        "result_p95_range": [
+          17.0734,
+          17.473299
+        ],
+        "result_p99_range": [
+          17.9594,
+          18.126801
+        ],
+        "change_percent": -11.386164265522469
+      },
+      "gt_ms": {
+        "current_mean": 18.18341780459342,
+        "result_mean": 16.108390264778325,
+        "current_run_mean_range": [
+          18.114314955555557,
+          18.252520653631287
+        ],
+        "result_run_mean_range": [
+          16.098162302955664,
+          16.118618226600987
+        ],
+        "current_p50_range": [
+          17.906599999999997,
+          18.01865
+        ],
+        "current_p95_range": [
+          19.5776,
+          19.616199
+        ],
+        "current_p99_range": [
+          20.768999,
+          26.606899
+        ],
+        "result_p50_range": [
+          15.9767,
+          15.9809
+        ],
+        "result_p95_range": [
+          17.061701,
+          17.5935
+        ],
+        "result_p99_range": [
+          17.673901,
+          18.0662
+        ],
+        "change_percent": -11.411647480766296
+      },
+      "render_ms": {
+        "current_mean": 5.963628833022967,
+        "result_mean": 5.486984359605911,
+        "current_run_mean_range": [
+          5.947677777777778,
+          5.979579888268156
+        ],
+        "result_run_mean_range": [
+          5.482670935960591,
+          5.491297783251231
+        ],
+        "current_p50_range": [
+          5.86395,
+          5.87515
+        ],
+        "current_p95_range": [
+          6.5676,
+          6.575
+        ],
+        "current_p99_range": [
+          7.0616,
+          9.0898
+        ],
+        "result_p50_range": [
+          5.38505,
+          5.4301
+        ],
+        "result_p95_range": [
+          5.9319,
+          6.0882
+        ],
+        "result_p99_range": [
+          6.2386,
+          6.2913
+        ],
+        "change_percent": -7.992524128558898
+      },
+      "rhi_ms": {
+        "current_mean": 5.985805214928616,
+        "result_mean": 5.623577339901478,
+        "current_run_mean_range": [
+          5.977783055555555,
+          5.993827374301676
+        ],
+        "result_run_mean_range": [
+          5.607474876847291,
+          5.639679802955665
+        ],
+        "current_p50_range": [
+          5.8953,
+          5.9341
+        ],
+        "current_p95_range": [
+          6.5819,
+          6.7989
+        ],
+        "current_p99_range": [
+          7.0884,
+          7.7658
+        ],
+        "result_p50_range": [
+          5.53905,
+          5.55885
+        ],
+        "result_p95_range": [
+          6.0994,
+          6.3013
+        ],
+        "result_p99_range": [
+          6.5386,
+          6.7768
+        ],
+        "change_percent": -6.051447750483785
+      },
+      "gpu_ms": {
+        "current_mean": 6.814659342023588,
+        "result_mean": 6.803960960591134,
+        "current_run_mean_range": [
+          6.81006312849162,
+          6.819255555555555
+        ],
+        "result_run_mean_range": [
+          6.799342610837439,
+          6.808579310344828
+        ],
+        "current_p50_range": [
+          6.8128,
+          6.8262
+        ],
+        "current_p95_range": [
+          6.885,
+          6.8899
+        ],
+        "current_p99_range": [
+          6.9538,
+          6.9775
+        ],
+        "result_p50_range": [
+          6.83195,
+          6.8481000000000005
+        ],
+        "result_p95_range": [
+          6.889,
+          6.8948
+        ],
+        "result_p99_range": [
+          6.9241,
+          6.9302
+        ],
+        "change_percent": -0.15699070042255459
+      },
+      "current_samples": [
+        358,
+        360
+      ],
+      "result_samples": [
+        406,
+        406
+      ]
+    },
+    "move_pivot": {
+      "frame_ms": {
+        "current_mean": 21.04529258106942,
+        "result_mean": 19.423598629006904,
+        "current_run_mean_range": [
+          20.952369768292684,
+          21.138215393846153
+        ],
+        "result_run_mean_range": [
+          19.39118596056338,
+          19.456011297450424
+        ],
+        "current_p50_range": [
+          20.8869495,
+          21.0252
+        ],
+        "current_p95_range": [
+          21.899502,
+          22.246603
+        ],
+        "current_p99_range": [
+          22.582102,
+          23.302101
+        ],
+        "result_p50_range": [
+          19.259602,
+          19.3265
+        ],
+        "result_p95_range": [
+          20.370003,
+          20.577997
+        ],
+        "result_p99_range": [
+          22.203804,
+          22.970703
+        ],
+        "change_percent": -7.705732509137242
+      },
+      "gt_ms": {
+        "current_mean": 21.04110309749062,
+        "result_mean": 19.415058895327775,
+        "current_run_mean_range": [
+          20.949133210365854,
+          21.133072984615385
+        ],
+        "result_run_mean_range": [
+          19.382161949295774,
+          19.447955841359775
+        ],
+        "current_p50_range": [
+          20.883850000000002,
+          21.0229
+        ],
+        "current_p95_range": [
+          21.849199,
+          22.223301
+        ],
+        "current_p99_range": [
+          22.586201,
+          23.2659
+        ],
+        "result_p50_range": [
+          19.264799,
+          19.3358
+        ],
+        "result_p95_range": [
+          20.343599,
+          20.550301
+        ],
+        "result_p99_range": [
+          22.16,
+          22.9681
+        ],
+        "change_percent": -7.727941803378025
+      },
+      "render_ms": {
+        "current_mean": 5.957700565196998,
+        "result_mean": 5.623463836731437,
+        "current_run_mean_range": [
+          5.929444207317073,
+          5.985956923076923
+        ],
+        "result_run_mean_range": [
+          5.584165633802817,
+          5.662762039660056
+        ],
+        "current_p50_range": [
+          5.88145,
+          5.9466
+        ],
+        "current_p95_range": [
+          6.3687,
+          6.5037
+        ],
+        "current_p99_range": [
+          6.6559,
+          6.6748
+        ],
+        "result_p50_range": [
+          5.5196,
+          5.6116
+        ],
+        "result_p95_range": [
+          6.0883,
+          6.1316
+        ],
+        "result_p99_range": [
+          6.59,
+          6.6139
+        ],
+        "change_percent": -5.610163263626666
+      },
+      "rhi_ms": {
+        "current_mean": 5.742036692776736,
+        "result_mean": 5.539070378246818,
+        "current_run_mean_range": [
+          5.7313832317073174,
+          5.752690153846154
+        ],
+        "result_run_mean_range": [
+          5.53690647887324,
+          5.541234277620396
+        ],
+        "current_p50_range": [
+          5.6744,
+          5.6949
+        ],
+        "current_p95_range": [
+          6.314,
+          6.3552
+        ],
+        "current_p99_range": [
+          6.7131,
+          6.7751
+        ],
+        "result_p50_range": [
+          5.4873,
+          5.4977
+        ],
+        "result_p95_range": [
+          5.9382,
+          5.9583
+        ],
+        "result_p99_range": [
+          6.32,
+          6.6447
+        ],
+        "change_percent": -3.5347442970060206
+      },
+      "gpu_ms": {
+        "current_mean": 6.577937732176361,
+        "result_mean": 6.606023788054104,
+        "current_run_mean_range": [
+          6.575650769230769,
+          6.580224695121951
+        ],
+        "result_run_mean_range": [
+          6.600302816901409,
+          6.611744759206799
+        ],
+        "current_p50_range": [
+          6.5357,
+          6.5426
+        ],
+        "current_p95_range": [
+          6.7485,
+          6.7973
+        ],
+        "current_p99_range": [
+          6.8819,
+          6.884
+        ],
+        "result_p50_range": [
+          6.563,
+          6.5737
+        ],
+        "result_p95_range": [
+          6.7647,
+          6.8076
+        ],
+        "result_p99_range": [
+          6.8968,
+          7.0252
+        ],
+        "change_percent": 0.426973574717171
+      },
+      "current_samples": [
+        325,
+        328
+      ],
+      "result_samples": [
+        355,
+        353
+      ]
+    },
+    "jump_land": {
+      "frame_ms": {
+        "current_mean": 21.05676407130087,
+        "result_mean": 19.50251817193159,
+        "current_run_mean_range": [
+          21.009270327217127,
+          21.104257815384614
+        ],
+        "result_run_mean_range": [
+          19.361130929577463,
+          19.643905414285715
+        ],
+        "current_p50_range": [
+          20.9345,
+          20.978701
+        ],
+        "current_p95_range": [
+          21.899302,
+          22.3165
+        ],
+        "current_p99_range": [
+          22.851198,
+          23.1532
+        ],
+        "result_p50_range": [
+          19.179102,
+          19.311450999999998
+        ],
+        "result_p95_range": [
+          20.603903,
+          21.8755
+        ],
+        "result_p99_range": [
+          22.2225,
+          23.642797
+        ],
+        "change_percent": -7.381219137500916
+      },
+      "gt_ms": {
+        "current_mean": 21.048256010435193,
+        "result_mean": 19.48545354585513,
+        "current_run_mean_range": [
+          21.001281608562692,
+          21.095230412307693
+        ],
+        "result_run_mean_range": [
+          19.33875018028169,
+          19.63215691142857
+        ],
+        "current_p50_range": [
+          20.946899,
+          20.9652
+        ],
+        "current_p95_range": [
+          21.8745,
+          22.296301
+        ],
+        "current_p99_range": [
+          22.875,
+          23.2262
+        ],
+        "result_p50_range": [
+          19.1854,
+          19.311251
+        ],
+        "result_p95_range": [
+          20.541,
+          21.777599
+        ],
+        "result_p99_range": [
+          22.2048,
+          23.675301
+        ],
+        "change_percent": -7.424854884914289
+      },
+      "render_ms": {
+        "current_mean": 5.990283454716537,
+        "result_mean": 5.630778937625754,
+        "current_run_mean_range": [
+          5.972527217125382,
+          6.008039692307692
+        ],
+        "result_run_mean_range": [
+          5.579908732394366,
+          5.681649142857143
+        ],
+        "current_p50_range": [
+          5.9134,
+          5.9301
+        ],
+        "current_p95_range": [
+          6.4156,
+          6.6148
+        ],
+        "current_p99_range": [
+          6.7062,
+          6.899
+        ],
+        "result_p50_range": [
+          5.5233,
+          5.57925
+        ],
+        "result_p95_range": [
+          6.0552,
+          6.2881
+        ],
+        "result_p99_range": [
+          6.4004,
+          7.0853
+        ],
+        "change_percent": -6.001460862552699
+      },
+      "rhi_ms": {
+        "current_mean": 5.734099007762879,
+        "result_mean": 5.571544484909456,
+        "current_run_mean_range": [
+          5.72117247706422,
+          5.747025538461538
+        ],
+        "result_run_mean_range": [
+          5.552072112676056,
+          5.591016857142857
+        ],
+        "current_p50_range": [
+          5.6826,
+          5.7161
+        ],
+        "current_p95_range": [
+          6.1018,
+          6.118
+        ],
+        "current_p99_range": [
+          6.4136,
+          6.6226
+        ],
+        "result_p50_range": [
+          5.5062,
+          5.5179
+        ],
+        "result_p95_range": [
+          5.968,
+          6.1954
+        ],
+        "result_p99_range": [
+          6.4125,
+          6.528
+        ],
+        "change_percent": -2.8348747141155872
+      },
+      "gpu_ms": {
+        "current_mean": 6.593647625499882,
+        "result_mean": 6.613586806841046,
+        "current_run_mean_range": [
+          6.584373538461539,
+          6.602921712538226
+        ],
+        "result_run_mean_range": [
+          6.608947042253521,
+          6.618226571428571
+        ],
+        "current_p50_range": [
+          6.546,
+          6.5647
+        ],
+        "current_p95_range": [
+          6.7659,
+          6.843
+        ],
+        "current_p99_range": [
+          6.8565,
+          6.9244
+        ],
+        "result_p50_range": [
+          6.5764,
+          6.581799999999999
+        ],
+        "result_p95_range": [
+          6.7784,
+          6.7843
+        ],
+        "result_p99_range": [
+          7.0225,
+          7.0659
+        ],
+        "change_percent": 0.3023998623167712
+      },
+      "current_samples": [
+        325,
+        327
+      ],
+      "result_samples": [
+        355,
+        350
+      ]
+    },
+    "attack": {
+      "frame_ms": {
+        "current_mean": 30.104927129594195,
+        "result_mean": 30.08163508610843,
+        "current_run_mean_range": [
+          29.847592115044247,
+          30.362262144144143
+        ],
+        "result_run_mean_range": [
+          30.067599883928573,
+          30.09567028828829
+        ],
+        "current_p50_range": [
+          29.367201,
+          29.481199
+        ],
+        "current_p95_range": [
+          32.495998,
+          33.694302
+        ],
+        "current_p99_range": [
+          32.975101,
+          36.018497
+        ],
+        "result_p50_range": [
+          29.452599499999998,
+          29.567101
+        ],
+        "result_p95_range": [
+          32.688301,
+          32.811401
+        ],
+        "result_p99_range": [
+          33.388,
+          34.1506
+        ],
+        "change_percent": -0.07736953949596392
+      },
+      "gt_ms": {
+        "current_mean": 30.108562141553058,
+        "result_mean": 30.08699646641731,
+        "current_run_mean_range": [
+          29.85220178761062,
+          30.364922495495495
+        ],
+        "result_run_mean_range": [
+          30.077188455357142,
+          30.096804477477477
+        ],
+        "current_p50_range": [
+          29.4433,
+          29.469801
+        ],
+        "current_p95_range": [
+          32.483799,
+          33.776798
+        ],
+        "current_p99_range": [
+          33.023602,
+          35.872299
+        ],
+        "result_p50_range": [
+          29.495900499999998,
+          29.6028
+        ],
+        "result_p95_range": [
+          32.6469,
+          32.891998
+        ],
+        "result_p99_range": [
+          33.439999,
+          34.196499
+        ],
+        "change_percent": -0.0716263866549216
+      },
+      "render_ms": {
+        "current_mean": 6.525103193016024,
+        "result_mean": 6.352957050353925,
+        "current_run_mean_range": [
+          6.455895575221239,
+          6.594310810810811
+        ],
+        "result_run_mean_range": [
+          6.3488348214285715,
+          6.357079279279279
+        ],
+        "current_p50_range": [
+          6.3083,
+          6.4794
+        ],
+        "current_p95_range": [
+          7.6096,
+          7.6914
+        ],
+        "current_p99_range": [
+          7.7509,
+          8.9167
+        ],
+        "result_p50_range": [
+          6.116,
+          6.196
+        ],
+        "result_p95_range": [
+          7.6152,
+          7.7165
+        ],
+        "result_p99_range": [
+          7.9375,
+          8.3709
+        ],
+        "change_percent": -2.6382133365545957
+      },
+      "rhi_ms": {
+        "current_mean": 5.954397664035717,
+        "result_mean": 5.880813400900901,
+        "current_run_mean_range": [
+          5.905359292035398,
+          6.003436036036036
+        ],
+        "result_run_mean_range": [
+          5.844601801801802,
+          5.917025
+        ],
+        "current_p50_range": [
+          5.8454,
+          5.9653
+        ],
+        "current_p95_range": [
+          6.4769,
+          6.634
+        ],
+        "current_p99_range": [
+          6.6456,
+          6.9282
+        ],
+        "result_p50_range": [
+          5.7844,
+          5.8363
+        ],
+        "result_p95_range": [
+          6.3023,
+          6.6199
+        ],
+        "result_p99_range": [
+          6.5258,
+          6.8923
+        ],
+        "change_percent": -1.235796923327137
+      },
+      "gpu_ms": {
+        "current_mean": 7.463636358925297,
+        "result_mean": 7.4826368283462035,
+        "current_run_mean_range": [
+          7.3739585585585585,
+          7.553314159292035
+        ],
+        "result_run_mean_range": [
+          7.376749549549549,
+          7.588524107142857
+        ],
+        "current_p50_range": [
+          7.3209,
+          7.498
+        ],
+        "current_p95_range": [
+          7.8024,
+          8.0701
+        ],
+        "current_p99_range": [
+          7.9898,
+          8.1763
+        ],
+        "result_p50_range": [
+          7.3229,
+          7.519550000000001
+        ],
+        "result_p95_range": [
+          7.8152,
+          8.1656
+        ],
+        "result_p99_range": [
+          7.9829,
+          8.2682
+        ],
+        "change_percent": 0.2545738900875838
+      },
+      "current_samples": [
+        113,
+        111
+      ],
+      "result_samples": [
+        112,
+        111
+      ]
+    },
+    "return": {
+      "frame_ms": {
+        "current_mean": 18.31035746664137,
+        "result_mean": 18.33320733616312,
+        "current_run_mean_range": [
+          18.247661984084882,
+          18.37305294919786
+        ],
+        "result_run_mean_range": [
+          18.303165877659573,
+          18.363248794666667
+        ],
+        "current_p50_range": [
+          18.094801,
+          18.24915
+        ],
+        "current_p95_range": [
+          19.405001,
+          19.468502
+        ],
+        "current_p99_range": [
+          20.146702,
+          20.4417
+        ],
+        "result_p50_range": [
+          18.1089995,
+          18.2432
+        ],
+        "result_p95_range": [
+          19.525099,
+          19.796398
+        ],
+        "result_p99_range": [
+          20.475798,
+          21.243002
+        ],
+        "change_percent": 0.12479204495803309
+      },
+      "gt_ms": {
+        "current_mean": 18.306002029110342,
+        "result_mean": 18.328071162485813,
+        "current_run_mean_range": [
+          18.243624408488063,
+          18.36837964973262
+        ],
+        "result_run_mean_range": [
+          18.297339135638296,
+          18.358803189333333
+        ],
+        "current_p50_range": [
+          18.1134,
+          18.2292995
+        ],
+        "current_p95_range": [
+          19.367001,
+          19.5394
+        ],
+        "current_p99_range": [
+          20.190901,
+          20.4216
+        ],
+        "result_p50_range": [
+          18.110300000000002,
+          18.233
+        ],
+        "result_p95_range": [
+          19.5774,
+          19.7589
+        ],
+        "result_p99_range": [
+          20.645399,
+          21.242399
+        ],
+        "change_percent": 0.1205568170503657
+      },
+      "render_ms": {
+        "current_mean": 5.945031308600122,
+        "result_mean": 5.777246993262411,
+        "current_run_mean_range": [
+          5.920727055702918,
+          5.969335561497326
+        ],
+        "result_run_mean_range": [
+          5.77005505319149,
+          5.784438933333333
+        ],
+        "current_p50_range": [
+          5.8527,
+          5.8923000000000005
+        ],
+        "current_p95_range": [
+          6.4508,
+          6.4861
+        ],
+        "current_p99_range": [
+          6.661,
+          6.8944
+        ],
+        "result_p50_range": [
+          5.6788,
+          5.7282
+        ],
+        "result_p95_range": [
+          6.203,
+          6.338
+        ],
+        "result_p99_range": [
+          7.0231,
+          7.0325
+        ],
+        "change_percent": -2.822261256975933
+      },
+      "rhi_ms": {
+        "current_mean": 5.886393287848055,
+        "result_mean": 5.7669305421985815,
+        "current_run_mean_range": [
+          5.872206896551724,
+          5.900579679144385
+        ],
+        "result_run_mean_range": [
+          5.753567733333333,
+          5.78029335106383
+        ],
+        "current_p50_range": [
+          5.825,
+          5.8514
+        ],
+        "current_p95_range": [
+          6.3973,
+          6.484
+        ],
+        "current_p99_range": [
+          6.8567,
+          6.877
+        ],
+        "result_p50_range": [
+          5.672,
+          5.71565
+        ],
+        "result_p95_range": [
+          6.3553,
+          6.3699
+        ],
+        "result_p99_range": [
+          6.8126,
+          7.0643
+        ],
+        "change_percent": -2.0294727145753866
+      },
+      "gpu_ms": {
+        "current_mean": 6.827214855175251,
+        "result_mean": 6.804331038297873,
+        "current_run_mean_range": [
+          6.823300267379679,
+          6.8311294429708225
+        ],
+        "result_run_mean_range": [
+          6.799921276595745,
+          6.8087408
+        ],
+        "current_p50_range": [
+          6.83565,
+          6.8513
+        ],
+        "current_p95_range": [
+          6.8953,
+          6.9141
+        ],
+        "current_p99_range": [
+          6.9511,
+          7.0782
+        ],
+        "result_p50_range": [
+          6.832800000000001,
+          6.8528
+        ],
+        "result_p95_range": [
+          6.9022,
+          6.9168
+        ],
+        "result_p99_range": [
+          6.9531,
+          6.9666
+        ],
+        "change_percent": -0.3351852455622084
+      },
+      "current_samples": [
+        374,
+        377
+      ],
+      "result_samples": [
+        376,
+        375
+      ]
+    }
+  },
+  "runs": [
+    {
+      "run": "Mover200_ReleaseA1",
+      "phases": {
+        "idle": {
+          "total_frames": 416,
+          "excluded_frames": 58,
+          "rendered_200_frames": 358,
+          "duration_seconds": 7.99802,
+          "measured_span_seconds": 6.513680000000001,
+          "frame_ms": {
+            "samples": 358,
+            "mean": 18.260492203910616,
+            "p50": 18.031149999999997,
+            "p95": 19.561701,
+            "p99": 24.896
+          },
+          "gpu_ms": {
+            "samples": 358,
+            "mean": 6.81006312849162,
+            "p50": 6.8128,
+            "p95": 6.885,
+            "p99": 6.9775
+          },
+          "gt_ms": {
+            "samples": 358,
+            "mean": 18.252520653631287,
+            "p50": 18.01865,
+            "p95": 19.5776,
+            "p99": 26.606899
+          },
+          "render_ms": {
+            "samples": 358,
+            "mean": 5.979579888268156,
+            "p50": 5.87515,
+            "p95": 6.575,
+            "p99": 9.0898
+          },
+          "rhi_ms": {
+            "samples": 358,
+            "mean": 5.993827374301676,
+            "p50": 5.9341,
+            "p95": 6.5819,
+            "p99": 7.7658
+          },
+          "prediction30": {
+            "samples": 358,
+            "mean": 0,
+            "p50": 0.0,
+            "p95": 0,
+            "p99": 0
+          }
+        },
+        "move_pivot": {
+          "total_frames": 376,
+          "excluded_frames": 51,
+          "rendered_200_frames": 325,
+          "duration_seconds": 7.995069999999998,
+          "measured_span_seconds": 6.8452899999999985,
+          "frame_ms": {
+            "samples": 325,
+            "mean": 21.138215393846153,
+            "p50": 21.0252,
+            "p95": 22.246603,
+            "p99": 23.302101
+          },
+          "gpu_ms": {
+            "samples": 325,
+            "mean": 6.575650769230769,
+            "p50": 6.5357,
+            "p95": 6.7973,
+            "p99": 6.884
+          },
+          "gt_ms": {
+            "samples": 325,
+            "mean": 21.133072984615385,
+            "p50": 21.0229,
+            "p95": 22.223301,
+            "p99": 23.2659
+          },
+          "render_ms": {
+            "samples": 325,
+            "mean": 5.985956923076923,
+            "p50": 5.9466,
+            "p95": 6.5037,
+            "p99": 6.6748
+          },
+          "rhi_ms": {
+            "samples": 325,
+            "mean": 5.752690153846154,
+            "p50": 5.6949,
+            "p95": 6.3552,
+            "p99": 6.7131
+          },
+          "prediction30": {
+            "samples": 325,
+            "mean": 0,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0
+          }
+        },
+        "jump_land": {
+          "total_frames": 379,
+          "excluded_frames": 54,
+          "rendered_200_frames": 325,
+          "duration_seconds": 7.982080000000003,
+          "measured_span_seconds": 6.83287,
+          "frame_ms": {
+            "samples": 325,
+            "mean": 21.104257815384614,
+            "p50": 20.978701,
+            "p95": 22.3165,
+            "p99": 23.1532
+          },
+          "gpu_ms": {
+            "samples": 325,
+            "mean": 6.584373538461539,
+            "p50": 6.546,
+            "p95": 6.7659,
+            "p99": 6.8565
+          },
+          "gt_ms": {
+            "samples": 325,
+            "mean": 21.095230412307693,
+            "p50": 20.9652,
+            "p95": 22.296301,
+            "p99": 23.2262
+          },
+          "render_ms": {
+            "samples": 325,
+            "mean": 6.008039692307692,
+            "p50": 5.9301,
+            "p95": 6.6148,
+            "p99": 6.899
+          },
+          "rhi_ms": {
+            "samples": 325,
+            "mean": 5.747025538461538,
+            "p50": 5.7161,
+            "p95": 6.118,
+            "p99": 6.6226
+          },
+          "prediction30": {
+            "samples": 325,
+            "mean": 0,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0
+          }
+        },
+        "attack": {
+          "total_frames": 334,
+          "excluded_frames": 221,
+          "rendered_200_frames": 113,
+          "duration_seconds": 7.966610000000003,
+          "measured_span_seconds": 3.343109999999996,
+          "frame_ms": {
+            "samples": 113,
+            "mean": 29.847592115044247,
+            "p50": 29.367201,
+            "p95": 32.495998,
+            "p99": 32.975101
+          },
+          "gpu_ms": {
+            "samples": 113,
+            "mean": 7.553314159292035,
+            "p50": 7.498,
+            "p95": 8.0701,
+            "p99": 8.1763
+          },
+          "gt_ms": {
+            "samples": 113,
+            "mean": 29.85220178761062,
+            "p50": 29.4433,
+            "p95": 32.483799,
+            "p99": 33.023602
+          },
+          "render_ms": {
+            "samples": 113,
+            "mean": 6.455895575221239,
+            "p50": 6.3083,
+            "p95": 7.6096,
+            "p99": 7.7509
+          },
+          "rhi_ms": {
+            "samples": 113,
+            "mean": 5.905359292035398,
+            "p50": 5.8454,
+            "p95": 6.4769,
+            "p99": 6.6456
+          },
+          "prediction30": {
+            "samples": 113,
+            "mean": 0,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0
+          }
+        },
+        "return": {
+          "total_frames": 431,
+          "excluded_frames": 57,
+          "rendered_200_frames": 374,
+          "duration_seconds": 7.982100000000003,
+          "measured_span_seconds": 6.8496900000000025,
+          "frame_ms": {
+            "samples": 374,
+            "mean": 18.37305294919786,
+            "p50": 18.24915,
+            "p95": 19.468502,
+            "p99": 20.146702
+          },
+          "gpu_ms": {
+            "samples": 374,
+            "mean": 6.823300267379679,
+            "p50": 6.83565,
+            "p95": 6.8953,
+            "p99": 6.9511
+          },
+          "gt_ms": {
+            "samples": 374,
+            "mean": 18.36837964973262,
+            "p50": 18.2292995,
+            "p95": 19.5394,
+            "p99": 20.190901
+          },
+          "render_ms": {
+            "samples": 374,
+            "mean": 5.969335561497326,
+            "p50": 5.8923000000000005,
+            "p95": 6.4861,
+            "p99": 6.8944
+          },
+          "rhi_ms": {
+            "samples": 374,
+            "mean": 5.900579679144385,
+            "p50": 5.8514,
+            "p95": 6.484,
+            "p99": 6.877
+          },
+          "prediction30": {
+            "samples": 374,
+            "mean": 0,
+            "p50": 0.0,
+            "p95": 0,
+            "p99": 0
+          }
+        }
+      },
+      "frames_sha256": "08d9444321b7c4040bde34b42cef7608243ae54012c90147793cbec294260555",
+      "manifest": {
+        "head": "83edf6057ed1f614bce47156ae1b56b8eeb8ae95",
+        "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+        "gpu": [
+          "Parsec Virtual Display Adapter",
+          "AMD Radeon RX 9070 XT",
+          "AMD Radeon(TM) Graphics"
+        ],
+        "actors": 200,
+        "movement": true,
+        "consoleCommands": "ProjectJ.AnimationQuality.SourcePolicy.Enabled 0,ProjectJ.PlayerTrajectory.RemotePredictionHz 60",
+        "localPlayer": true,
+        "connections": 0,
+        "nullRHI": false,
+        "offscreenViewport": true,
+        "resolution": "1280x720",
+        "fpsCap": 0,
+        "vsync": 0,
+        "trace": false,
+        "packaged": false,
+        "executable": "C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe",
+        "executableSHA256": "4DBAB2739E7AFEF7EC96CDFE48A63211742209F9A56AF0620CF228913D64FB0C",
+        "arguments": [
+          "C:/Users/I/Documents/GitHub/Project_J/Project_J.uproject",
+          "/Engine/Maps/Entry?game=/Script/Engine.GameModeBase",
+          "-game",
+          "-unattended",
+          "-nop4",
+          "-nosplash",
+          "-nosound",
+          "-NoDDCCleanup",
+          "-NoLiveCoding",
+          "-RenderOffscreen",
+          "-windowed",
+          "-ResX=1280",
+          "-ResY=720",
+          "-ProjectJRenderedCrowdFixture",
+          "-ProjectJRenderedCrowdOutput=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/WholeProjectAudit_20261013/Mover200_ReleaseA1",
+          "-ABSLOG=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/WholeProjectAudit_20261013/Mover200_ReleaseA1/Run.log",
+          "-ExecCmds=t.MaxFPS 0,r.VSync 0,ProjectJ.AnimationQuality.SourcePolicy.Enabled 0,ProjectJ.PlayerTrajectory.RemotePredictionHz 60",
+          "-statnamedevents",
+          "-UserDir=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/WholeProjectAudit_20261013/Mover200_ReleaseA1/User/",
+          "-SaveToUserDir",
+          "-ProjectJRenderedCrowdCount=200",
+          "-ProjectJRenderedCrowdMovement",
+          "-DisablePython",
+          "-ProjectJRenderedCrowdLocalPlayer"
+        ],
+        "artifacts": [
+          {
+            "path": "Project_J.uproject",
+            "sha256": "4FDFB1ED047A4979799ECA3C965716BBEE9BAEEB804FFE6121E18273E1678E9F"
+          },
+          {
+            "path": "Content/Character_BPs/GreatSword/BP_GreatSword.uasset",
+            "sha256": "CD0815F704E90FDCE5EE997D61D5EFF955D8D7C17459C281334F563DFA2849F4"
+          },
+          {
+            "path": "Content/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme.uasset",
+            "sha256": "89572D72C84E3309CB5F22101337D0087FA3886962F60F372764D871B09CC5EF"
+          },
+          {
+            "path": "Content/Animation_Logic/ABPs/ABP_Player_Master.uasset",
+            "sha256": "F32C7D5BFAE61086064F10278D4AAA3767AA80542D7BBCD2CA035B9E1C404FE7"
+          },
+          {
+            "path": "Binaries/Win64/UnrealEditor-Project_J.dll",
+            "sha256": "EB97688E37D740828500463931487052AC24AA1946DA223C96D5E9AFF89A32B0"
+          },
+          {
+            "path": "Binaries/Win64/UnrealEditor-Project_JCharacter.dll",
+            "sha256": "1C18297D1A16C277B96E91FA2FD99C988FA2FE17C4DEEFFFFC0CC03D2EFBE478"
+          }
+        ],
+        "sourceProvenanceFile": "../SourceProvenance.json"
+      },
+      "verification": {
+        "success": true,
+        "exitCode": 0,
+        "frames": 2305,
+        "scope": "Real offscreen viewport/RHI and actual constructed retarget bodies; simplified camera/light scene; no remote clients. GPU counters may be delayed. Captures affect frame timing."
+      },
+      "log_sha256": "f9481836db0252138e56beb977ac97ce75b80c7eb77ba5ee005e80c8010e0cf2",
+      "process": {
+        "exitCode": 0,
+        "nativeHandleCapturedBeforeWait": true,
+        "hasExited": true,
+        "sampledPeakWorkingSetBytes": 5010423808,
+        "sampledPeakPrivateBytes": 15670603776,
+        "memoryScope": "Entire editor game process including startup, sampled every 500ms; not incremental crowd memory."
+      }
+    },
+    {
+      "run": "Mover200_ReleaseB1",
+      "phases": {
+        "idle": {
+          "total_frames": 472,
+          "excluded_frames": 66,
+          "rendered_200_frames": 406,
+          "duration_seconds": 7.99972,
+          "measured_span_seconds": 6.52627,
+          "frame_ms": {
+            "samples": 406,
+            "mean": 16.129359408866996,
+            "p50": 15.979249,
+            "p95": 17.473299,
+            "p99": 18.126801
+          },
+          "gpu_ms": {
+            "samples": 406,
+            "mean": 6.799342610837439,
+            "p50": 6.83195,
+            "p95": 6.889,
+            "p99": 6.9241
+          },
+          "gt_ms": {
+            "samples": 406,
+            "mean": 16.118618226600987,
+            "p50": 15.9809,
+            "p95": 17.5935,
+            "p99": 18.0662
+          },
+          "render_ms": {
+            "samples": 406,
+            "mean": 5.482670935960591,
+            "p50": 5.38505,
+            "p95": 6.0882,
+            "p99": 6.2913
+          },
+          "rhi_ms": {
+            "samples": 406,
+            "mean": 5.639679802955665,
+            "p50": 5.55885,
+            "p95": 6.3013,
+            "p99": 6.7768
+          },
+          "prediction30": {
+            "samples": 406,
+            "mean": 0,
+            "p50": 0.0,
+            "p95": 0,
+            "p99": 0
+          }
+        },
+        "move_pivot": {
+          "total_frames": 410,
+          "excluded_frames": 55,
+          "rendered_200_frames": 355,
+          "duration_seconds": 7.998219999999996,
+          "measured_span_seconds": 6.859129999999997,
+          "frame_ms": {
+            "samples": 355,
+            "mean": 19.39118596056338,
+            "p50": 19.259602,
+            "p95": 20.370003,
+            "p99": 22.970703
+          },
+          "gpu_ms": {
+            "samples": 355,
+            "mean": 6.600302816901409,
+            "p50": 6.563,
+            "p95": 6.7647,
+            "p99": 6.8968
+          },
+          "gt_ms": {
+            "samples": 355,
+            "mean": 19.382161949295774,
+            "p50": 19.264799,
+            "p95": 20.343599,
+            "p99": 22.9681
+          },
+          "render_ms": {
+            "samples": 355,
+            "mean": 5.584165633802817,
+            "p50": 5.5196,
+            "p95": 6.1316,
+            "p99": 6.59
+          },
+          "rhi_ms": {
+            "samples": 355,
+            "mean": 5.53690647887324,
+            "p50": 5.4977,
+            "p95": 5.9382,
+            "p99": 6.32
+          },
+          "prediction30": {
+            "samples": 355,
+            "mean": 0,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0
+          }
+        },
+        "jump_land": {
+          "total_frames": 417,
+          "excluded_frames": 62,
+          "rendered_200_frames": 355,
+          "duration_seconds": 7.981210000000004,
+          "measured_span_seconds": 6.842120000000001,
+          "frame_ms": {
+            "samples": 355,
+            "mean": 19.361130929577463,
+            "p50": 19.179102,
+            "p95": 20.603903,
+            "p99": 22.2225
+          },
+          "gpu_ms": {
+            "samples": 355,
+            "mean": 6.608947042253521,
+            "p50": 6.5764,
+            "p95": 6.7784,
+            "p99": 7.0225
+          },
+          "gt_ms": {
+            "samples": 355,
+            "mean": 19.33875018028169,
+            "p50": 19.1854,
+            "p95": 20.541,
+            "p99": 22.2048
+          },
+          "render_ms": {
+            "samples": 355,
+            "mean": 5.579908732394366,
+            "p50": 5.5233,
+            "p95": 6.0552,
+            "p99": 6.4004
+          },
+          "rhi_ms": {
+            "samples": 355,
+            "mean": 5.552072112676056,
+            "p50": 5.5062,
+            "p95": 5.968,
+            "p99": 6.4125
+          },
+          "prediction30": {
+            "samples": 355,
+            "mean": 0,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0
+          }
+        },
+        "attack": {
+          "total_frames": 336,
+          "excluded_frames": 224,
+          "rendered_200_frames": 112,
+          "duration_seconds": 7.973700000000001,
+          "measured_span_seconds": 3.3375700000000066,
+          "frame_ms": {
+            "samples": 112,
+            "mean": 30.067599883928573,
+            "p50": 29.452599499999998,
+            "p95": 32.811401,
+            "p99": 34.1506
+          },
+          "gpu_ms": {
+            "samples": 112,
+            "mean": 7.588524107142857,
+            "p50": 7.519550000000001,
+            "p95": 8.1656,
+            "p99": 8.2682
+          },
+          "gt_ms": {
+            "samples": 112,
+            "mean": 30.077188455357142,
+            "p50": 29.495900499999998,
+            "p95": 32.891998,
+            "p99": 34.196499
+          },
+          "render_ms": {
+            "samples": 112,
+            "mean": 6.3488348214285715,
+            "p50": 6.116,
+            "p95": 7.6152,
+            "p99": 7.9375
+          },
+          "rhi_ms": {
+            "samples": 112,
+            "mean": 5.917025,
+            "p50": 5.8363,
+            "p95": 6.6199,
+            "p99": 6.8923
+          },
+          "prediction30": {
+            "samples": 112,
+            "mean": 0,
+            "p50": 0.0,
+            "p95": 0,
+            "p99": 0
+          }
+        },
+        "return": {
+          "total_frames": 432,
+          "excluded_frames": 56,
+          "rendered_200_frames": 376,
+          "duration_seconds": 7.988970000000002,
+          "measured_span_seconds": 6.859830000000002,
+          "frame_ms": {
+            "samples": 376,
+            "mean": 18.303165877659573,
+            "p50": 18.1089995,
+            "p95": 19.796398,
+            "p99": 21.243002
+          },
+          "gpu_ms": {
+            "samples": 376,
+            "mean": 6.799921276595745,
+            "p50": 6.832800000000001,
+            "p95": 6.9022,
+            "p99": 6.9531
+          },
+          "gt_ms": {
+            "samples": 376,
+            "mean": 18.297339135638296,
+            "p50": 18.110300000000002,
+            "p95": 19.7589,
+            "p99": 21.242399
+          },
+          "render_ms": {
+            "samples": 376,
+            "mean": 5.77005505319149,
+            "p50": 5.6788,
+            "p95": 6.338,
+            "p99": 7.0231
+          },
+          "rhi_ms": {
+            "samples": 376,
+            "mean": 5.78029335106383,
+            "p50": 5.71565,
+            "p95": 6.3553,
+            "p99": 7.0643
+          },
+          "prediction30": {
+            "samples": 376,
+            "mean": 0,
+            "p50": 0.0,
+            "p95": 0,
+            "p99": 0
+          }
+        }
+      },
+      "frames_sha256": "178912a837e1ce0cc53156db30e6fc58be65844f630f13dfc222165c01ceafb8",
+      "manifest": {
+        "head": "83edf6057ed1f614bce47156ae1b56b8eeb8ae95",
+        "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+        "gpu": [
+          "Parsec Virtual Display Adapter",
+          "AMD Radeon RX 9070 XT",
+          "AMD Radeon(TM) Graphics"
+        ],
+        "actors": 200,
+        "movement": true,
+        "consoleCommands": "ProjectJ.AnimationQuality.SourcePolicy.Enabled 1,ProjectJ.PlayerTrajectory.RemotePredictionHz 60",
+        "localPlayer": true,
+        "connections": 0,
+        "nullRHI": false,
+        "offscreenViewport": true,
+        "resolution": "1280x720",
+        "fpsCap": 0,
+        "vsync": 0,
+        "trace": false,
+        "packaged": false,
+        "executable": "C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe",
+        "executableSHA256": "4DBAB2739E7AFEF7EC96CDFE48A63211742209F9A56AF0620CF228913D64FB0C",
+        "arguments": [
+          "C:/Users/I/Documents/GitHub/Project_J/Project_J.uproject",
+          "/Engine/Maps/Entry?game=/Script/Engine.GameModeBase",
+          "-game",
+          "-unattended",
+          "-nop4",
+          "-nosplash",
+          "-nosound",
+          "-NoDDCCleanup",
+          "-NoLiveCoding",
+          "-RenderOffscreen",
+          "-windowed",
+          "-ResX=1280",
+          "-ResY=720",
+          "-ProjectJRenderedCrowdFixture",
+          "-ProjectJRenderedCrowdOutput=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/WholeProjectAudit_20261013/Mover200_ReleaseB1",
+          "-ABSLOG=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/WholeProjectAudit_20261013/Mover200_ReleaseB1/Run.log",
+          "-ExecCmds=t.MaxFPS 0,r.VSync 0,ProjectJ.AnimationQuality.SourcePolicy.Enabled 1,ProjectJ.PlayerTrajectory.RemotePredictionHz 60",
+          "-statnamedevents",
+          "-UserDir=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/WholeProjectAudit_20261013/Mover200_ReleaseB1/User/",
+          "-SaveToUserDir",
+          "-ProjectJRenderedCrowdCount=200",
+          "-ProjectJRenderedCrowdMovement",
+          "-DisablePython",
+          "-ProjectJRenderedCrowdLocalPlayer"
+        ],
+        "artifacts": [
+          {
+            "path": "Project_J.uproject",
+            "sha256": "4FDFB1ED047A4979799ECA3C965716BBEE9BAEEB804FFE6121E18273E1678E9F"
+          },
+          {
+            "path": "Content/Character_BPs/GreatSword/BP_GreatSword.uasset",
+            "sha256": "CD0815F704E90FDCE5EE997D61D5EFF955D8D7C17459C281334F563DFA2849F4"
+          },
+          {
+            "path": "Content/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme.uasset",
+            "sha256": "89572D72C84E3309CB5F22101337D0087FA3886962F60F372764D871B09CC5EF"
+          },
+          {
+            "path": "Content/Animation_Logic/ABPs/ABP_Player_Master.uasset",
+            "sha256": "F32C7D5BFAE61086064F10278D4AAA3767AA80542D7BBCD2CA035B9E1C404FE7"
+          },
+          {
+            "path": "Binaries/Win64/UnrealEditor-Project_J.dll",
+            "sha256": "EB97688E37D740828500463931487052AC24AA1946DA223C96D5E9AFF89A32B0"
+          },
+          {
+            "path": "Binaries/Win64/UnrealEditor-Project_JCharacter.dll",
+            "sha256": "1C18297D1A16C277B96E91FA2FD99C988FA2FE17C4DEEFFFFC0CC03D2EFBE478"
+          }
+        ],
+        "sourceProvenanceFile": "../SourceProvenance.json"
+      },
+      "verification": {
+        "success": true,
+        "exitCode": 0,
+        "frames": 2473,
+        "scope": "Real offscreen viewport/RHI and actual constructed retarget bodies; simplified camera/light scene; no remote clients. GPU counters may be delayed. Captures affect frame timing."
+      },
+      "log_sha256": "1646468256c5cc31b64dfaf6defe2acc9403da8a63c99c5588e8aa6f2bea8d90",
+      "process": {
+        "exitCode": 0,
+        "nativeHandleCapturedBeforeWait": true,
+        "hasExited": true,
+        "sampledPeakWorkingSetBytes": 5009506304,
+        "sampledPeakPrivateBytes": 15584100352,
+        "memoryScope": "Entire editor game process including startup, sampled every 500ms; not incremental crowd memory."
+      }
+    },
+    {
+      "run": "Mover200_ReleaseB2",
+      "phases": {
+        "idle": {
+          "total_frames": 471,
+          "excluded_frames": 65,
+          "rendered_200_frames": 406,
+          "duration_seconds": 7.990380000000002,
+          "measured_span_seconds": 6.516750000000002,
+          "frame_ms": {
+            "samples": 406,
+            "mean": 16.109669197044337,
+            "p50": 15.984747500000001,
+            "p95": 17.0734,
+            "p99": 17.9594
+          },
+          "gpu_ms": {
+            "samples": 406,
+            "mean": 6.808579310344828,
+            "p50": 6.8481000000000005,
+            "p95": 6.8948,
+            "p99": 6.9302
+          },
+          "gt_ms": {
+            "samples": 406,
+            "mean": 16.098162302955664,
+            "p50": 15.9767,
+            "p95": 17.061701,
+            "p99": 17.673901
+          },
+          "render_ms": {
+            "samples": 406,
+            "mean": 5.491297783251231,
+            "p50": 5.4301,
+            "p95": 5.9319,
+            "p99": 6.2386
+          },
+          "rhi_ms": {
+            "samples": 406,
+            "mean": 5.607474876847291,
+            "p50": 5.53905,
+            "p95": 6.0994,
+            "p99": 6.5386
+          },
+          "prediction30": {
+            "samples": 406,
+            "mean": 0,
+            "p50": 0.0,
+            "p95": 0,
+            "p99": 0
+          }
+        },
+        "move_pivot": {
+          "total_frames": 408,
+          "excluded_frames": 55,
+          "rendered_200_frames": 353,
+          "duration_seconds": 7.987929999999999,
+          "measured_span_seconds": 6.843429999999998,
+          "frame_ms": {
+            "samples": 353,
+            "mean": 19.456011297450424,
+            "p50": 19.3265,
+            "p95": 20.577997,
+            "p99": 22.203804
+          },
+          "gpu_ms": {
+            "samples": 353,
+            "mean": 6.611744759206799,
+            "p50": 6.5737,
+            "p95": 6.8076,
+            "p99": 7.0252
+          },
+          "gt_ms": {
+            "samples": 353,
+            "mean": 19.447955841359775,
+            "p50": 19.3358,
+            "p95": 20.550301,
+            "p99": 22.16
+          },
+          "render_ms": {
+            "samples": 353,
+            "mean": 5.662762039660056,
+            "p50": 5.6116,
+            "p95": 6.0883,
+            "p99": 6.6139
+          },
+          "rhi_ms": {
+            "samples": 353,
+            "mean": 5.541234277620396,
+            "p50": 5.4873,
+            "p95": 5.9583,
+            "p99": 6.6447
+          },
+          "prediction30": {
+            "samples": 353,
+            "mean": 0,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0
+          }
+        },
+        "jump_land": {
+          "total_frames": 409,
+          "excluded_frames": 59,
+          "rendered_200_frames": 350,
+          "duration_seconds": 8.000059999999998,
+          "measured_span_seconds": 6.848709999999997,
+          "frame_ms": {
+            "samples": 350,
+            "mean": 19.643905414285715,
+            "p50": 19.311450999999998,
+            "p95": 21.8755,
+            "p99": 23.642797
+          },
+          "gpu_ms": {
+            "samples": 350,
+            "mean": 6.618226571428571,
+            "p50": 6.581799999999999,
+            "p95": 6.7843,
+            "p99": 7.0659
+          },
+          "gt_ms": {
+            "samples": 350,
+            "mean": 19.63215691142857,
+            "p50": 19.311251,
+            "p95": 21.777599,
+            "p99": 23.675301
+          },
+          "render_ms": {
+            "samples": 350,
+            "mean": 5.681649142857143,
+            "p50": 5.57925,
+            "p95": 6.2881,
+            "p99": 7.0853
+          },
+          "rhi_ms": {
+            "samples": 350,
+            "mean": 5.591016857142857,
+            "p50": 5.5179,
+            "p95": 6.1954,
+            "p99": 6.528
+          },
+          "prediction30": {
+            "samples": 350,
+            "mean": 0,
+            "p50": 0.0,
+            "p95": 0,
+            "p99": 0
+          }
+        },
+        "attack": {
+          "total_frames": 333,
+          "excluded_frames": 222,
+          "rendered_200_frames": 111,
+          "duration_seconds": 7.966999999999999,
+          "measured_span_seconds": 3.309040000000003,
+          "frame_ms": {
+            "samples": 111,
+            "mean": 30.09567028828829,
+            "p50": 29.567101,
+            "p95": 32.688301,
+            "p99": 33.388
+          },
+          "gpu_ms": {
+            "samples": 111,
+            "mean": 7.376749549549549,
+            "p50": 7.3229,
+            "p95": 7.8152,
+            "p99": 7.9829
+          },
+          "gt_ms": {
+            "samples": 111,
+            "mean": 30.096804477477477,
+            "p50": 29.6028,
+            "p95": 32.6469,
+            "p99": 33.439999
+          },
+          "render_ms": {
+            "samples": 111,
+            "mean": 6.357079279279279,
+            "p50": 6.196,
+            "p95": 7.7165,
+            "p99": 8.3709
+          },
+          "rhi_ms": {
+            "samples": 111,
+            "mean": 5.844601801801802,
+            "p50": 5.7844,
+            "p95": 6.3023,
+            "p99": 6.5258
+          },
+          "prediction30": {
+            "samples": 111,
+            "mean": 0,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0
+          }
+        },
+        "return": {
+          "total_frames": 432,
+          "excluded_frames": 57,
+          "rendered_200_frames": 375,
+          "duration_seconds": 7.991040000000005,
+          "measured_span_seconds": 6.864580000000004,
+          "frame_ms": {
+            "samples": 375,
+            "mean": 18.363248794666667,
+            "p50": 18.2432,
+            "p95": 19.525099,
+            "p99": 20.475798
+          },
+          "gpu_ms": {
+            "samples": 375,
+            "mean": 6.8087408,
+            "p50": 6.8528,
+            "p95": 6.9168,
+            "p99": 6.9666
+          },
+          "gt_ms": {
+            "samples": 375,
+            "mean": 18.358803189333333,
+            "p50": 18.233,
+            "p95": 19.5774,
+            "p99": 20.645399
+          },
+          "render_ms": {
+            "samples": 375,
+            "mean": 5.784438933333333,
+            "p50": 5.7282,
+            "p95": 6.203,
+            "p99": 7.0325
+          },
+          "rhi_ms": {
+            "samples": 375,
+            "mean": 5.753567733333333,
+            "p50": 5.672,
+            "p95": 6.3699,
+            "p99": 6.8126
+          },
+          "prediction30": {
+            "samples": 375,
+            "mean": 0,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0
+          }
+        }
+      },
+      "frames_sha256": "aef46c9392f244af55bbcd24b7e42edf45ff1eec5cb7d1d78825e4edae63a407",
+      "manifest": {
+        "head": "83edf6057ed1f614bce47156ae1b56b8eeb8ae95",
+        "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+        "gpu": [
+          "Parsec Virtual Display Adapter",
+          "AMD Radeon RX 9070 XT",
+          "AMD Radeon(TM) Graphics"
+        ],
+        "actors": 200,
+        "movement": true,
+        "consoleCommands": "ProjectJ.AnimationQuality.SourcePolicy.Enabled 1,ProjectJ.PlayerTrajectory.RemotePredictionHz 60",
+        "localPlayer": true,
+        "connections": 0,
+        "nullRHI": false,
+        "offscreenViewport": true,
+        "resolution": "1280x720",
+        "fpsCap": 0,
+        "vsync": 0,
+        "trace": false,
+        "packaged": false,
+        "executable": "C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe",
+        "executableSHA256": "4DBAB2739E7AFEF7EC96CDFE48A63211742209F9A56AF0620CF228913D64FB0C",
+        "arguments": [
+          "C:/Users/I/Documents/GitHub/Project_J/Project_J.uproject",
+          "/Engine/Maps/Entry?game=/Script/Engine.GameModeBase",
+          "-game",
+          "-unattended",
+          "-nop4",
+          "-nosplash",
+          "-nosound",
+          "-NoDDCCleanup",
+          "-NoLiveCoding",
+          "-RenderOffscreen",
+          "-windowed",
+          "-ResX=1280",
+          "-ResY=720",
+          "-ProjectJRenderedCrowdFixture",
+          "-ProjectJRenderedCrowdOutput=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/WholeProjectAudit_20261013/Mover200_ReleaseB2",
+          "-ABSLOG=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/WholeProjectAudit_20261013/Mover200_ReleaseB2/Run.log",
+          "-ExecCmds=t.MaxFPS 0,r.VSync 0,ProjectJ.AnimationQuality.SourcePolicy.Enabled 1,ProjectJ.PlayerTrajectory.RemotePredictionHz 60",
+          "-statnamedevents",
+          "-UserDir=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/WholeProjectAudit_20261013/Mover200_ReleaseB2/User/",
+          "-SaveToUserDir",
+          "-ProjectJRenderedCrowdCount=200",
+          "-ProjectJRenderedCrowdMovement",
+          "-DisablePython",
+          "-ProjectJRenderedCrowdLocalPlayer"
+        ],
+        "artifacts": [
+          {
+            "path": "Project_J.uproject",
+            "sha256": "4FDFB1ED047A4979799ECA3C965716BBEE9BAEEB804FFE6121E18273E1678E9F"
+          },
+          {
+            "path": "Content/Character_BPs/GreatSword/BP_GreatSword.uasset",
+            "sha256": "CD0815F704E90FDCE5EE997D61D5EFF955D8D7C17459C281334F563DFA2849F4"
+          },
+          {
+            "path": "Content/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme.uasset",
+            "sha256": "89572D72C84E3309CB5F22101337D0087FA3886962F60F372764D871B09CC5EF"
+          },
+          {
+            "path": "Content/Animation_Logic/ABPs/ABP_Player_Master.uasset",
+            "sha256": "F32C7D5BFAE61086064F10278D4AAA3767AA80542D7BBCD2CA035B9E1C404FE7"
+          },
+          {
+            "path": "Binaries/Win64/UnrealEditor-Project_J.dll",
+            "sha256": "EB97688E37D740828500463931487052AC24AA1946DA223C96D5E9AFF89A32B0"
+          },
+          {
+            "path": "Binaries/Win64/UnrealEditor-Project_JCharacter.dll",
+            "sha256": "1C18297D1A16C277B96E91FA2FD99C988FA2FE17C4DEEFFFFC0CC03D2EFBE478"
+          }
+        ],
+        "sourceProvenanceFile": "../SourceProvenance.json"
+      },
+      "verification": {
+        "success": true,
+        "exitCode": 0,
+        "frames": 2451,
+        "scope": "Real offscreen viewport/RHI and actual constructed retarget bodies; simplified camera/light scene; no remote clients. GPU counters may be delayed. Captures affect frame timing."
+      },
+      "log_sha256": "c372ec5cf88a27a3e8e8ba7306a0a2859b8121157e7958f408b038644bcfbeda",
+      "process": {
+        "exitCode": 0,
+        "nativeHandleCapturedBeforeWait": true,
+        "hasExited": true,
+        "sampledPeakWorkingSetBytes": 5009649664,
+        "sampledPeakPrivateBytes": 15641346048,
+        "memoryScope": "Entire editor game process including startup, sampled every 500ms; not incremental crowd memory."
+      }
+    },
+    {
+      "run": "Mover200_ReleaseA2",
+      "phases": {
+        "idle": {
+          "total_frames": 419,
+          "excluded_frames": 59,
+          "rendered_200_frames": 360,
+          "duration_seconds": 7.98414,
+          "measured_span_seconds": 6.5005099999999985,
+          "frame_ms": {
+            "samples": 360,
+            "mean": 18.12099195,
+            "p50": 17.9240015,
+            "p95": 19.6658,
+            "p99": 20.599302
+          },
+          "gpu_ms": {
+            "samples": 360,
+            "mean": 6.819255555555555,
+            "p50": 6.8262,
+            "p95": 6.8899,
+            "p99": 6.9538
+          },
+          "gt_ms": {
+            "samples": 360,
+            "mean": 18.114314955555557,
+            "p50": 17.906599999999997,
+            "p95": 19.616199,
+            "p99": 20.768999
+          },
+          "render_ms": {
+            "samples": 360,
+            "mean": 5.947677777777778,
+            "p50": 5.86395,
+            "p95": 6.5676,
+            "p99": 7.0616
+          },
+          "rhi_ms": {
+            "samples": 360,
+            "mean": 5.977783055555555,
+            "p50": 5.8953,
+            "p95": 6.7989,
+            "p99": 7.0884
+          },
+          "prediction30": {
+            "samples": 360,
+            "mean": 0,
+            "p50": 0.0,
+            "p95": 0,
+            "p99": 0
+          }
+        },
+        "move_pivot": {
+          "total_frames": 379,
+          "excluded_frames": 51,
+          "rendered_200_frames": 328,
+          "duration_seconds": 7.991419999999998,
+          "measured_span_seconds": 6.848589999999994,
+          "frame_ms": {
+            "samples": 328,
+            "mean": 20.952369768292684,
+            "p50": 20.8869495,
+            "p95": 21.899502,
+            "p99": 22.582102
+          },
+          "gpu_ms": {
+            "samples": 328,
+            "mean": 6.580224695121951,
+            "p50": 6.5426,
+            "p95": 6.7485,
+            "p99": 6.8819
+          },
+          "gt_ms": {
+            "samples": 328,
+            "mean": 20.949133210365854,
+            "p50": 20.883850000000002,
+            "p95": 21.849199,
+            "p99": 22.586201
+          },
+          "render_ms": {
+            "samples": 328,
+            "mean": 5.929444207317073,
+            "p50": 5.88145,
+            "p95": 6.3687,
+            "p99": 6.6559
+          },
+          "rhi_ms": {
+            "samples": 328,
+            "mean": 5.7313832317073174,
+            "p50": 5.6744,
+            "p95": 6.314,
+            "p99": 6.7751
+          },
+          "prediction30": {
+            "samples": 328,
+            "mean": 0,
+            "p50": 0.0,
+            "p95": 0,
+            "p99": 0
+          }
+        },
+        "jump_land": {
+          "total_frames": 384,
+          "excluded_frames": 57,
+          "rendered_200_frames": 327,
+          "duration_seconds": 7.991990000000001,
+          "measured_span_seconds": 6.844279999999998,
+          "frame_ms": {
+            "samples": 327,
+            "mean": 21.009270327217127,
+            "p50": 20.9345,
+            "p95": 21.899302,
+            "p99": 22.851198
+          },
+          "gpu_ms": {
+            "samples": 327,
+            "mean": 6.602921712538226,
+            "p50": 6.5647,
+            "p95": 6.843,
+            "p99": 6.9244
+          },
+          "gt_ms": {
+            "samples": 327,
+            "mean": 21.001281608562692,
+            "p50": 20.946899,
+            "p95": 21.8745,
+            "p99": 22.875
+          },
+          "render_ms": {
+            "samples": 327,
+            "mean": 5.972527217125382,
+            "p50": 5.9134,
+            "p95": 6.4156,
+            "p99": 6.7062
+          },
+          "rhi_ms": {
+            "samples": 327,
+            "mean": 5.72117247706422,
+            "p50": 5.6826,
+            "p95": 6.1018,
+            "p99": 6.4136
+          },
+          "prediction30": {
+            "samples": 327,
+            "mean": 0,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0
+          }
+        },
+        "attack": {
+          "total_frames": 333,
+          "excluded_frames": 222,
+          "rendered_200_frames": 111,
+          "duration_seconds": 7.963390000000004,
+          "measured_span_seconds": 3.340050000000005,
+          "frame_ms": {
+            "samples": 111,
+            "mean": 30.362262144144143,
+            "p50": 29.481199,
+            "p95": 33.694302,
+            "p99": 36.018497
+          },
+          "gpu_ms": {
+            "samples": 111,
+            "mean": 7.3739585585585585,
+            "p50": 7.3209,
+            "p95": 7.8024,
+            "p99": 7.9898
+          },
+          "gt_ms": {
+            "samples": 111,
+            "mean": 30.364922495495495,
+            "p50": 29.469801,
+            "p95": 33.776798,
+            "p99": 35.872299
+          },
+          "render_ms": {
+            "samples": 111,
+            "mean": 6.594310810810811,
+            "p50": 6.4794,
+            "p95": 7.6914,
+            "p99": 8.9167
+          },
+          "rhi_ms": {
+            "samples": 111,
+            "mean": 6.003436036036036,
+            "p50": 5.9653,
+            "p95": 6.634,
+            "p99": 6.9282
+          },
+          "prediction30": {
+            "samples": 111,
+            "mean": 0,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0
+          }
+        },
+        "return": {
+          "total_frames": 433,
+          "excluded_frames": 56,
+          "rendered_200_frames": 377,
+          "duration_seconds": 7.988250000000001,
+          "measured_span_seconds": 6.858779999999996,
+          "frame_ms": {
+            "samples": 377,
+            "mean": 18.247661984084882,
+            "p50": 18.094801,
+            "p95": 19.405001,
+            "p99": 20.4417
+          },
+          "gpu_ms": {
+            "samples": 377,
+            "mean": 6.8311294429708225,
+            "p50": 6.8513,
+            "p95": 6.9141,
+            "p99": 7.0782
+          },
+          "gt_ms": {
+            "samples": 377,
+            "mean": 18.243624408488063,
+            "p50": 18.1134,
+            "p95": 19.367001,
+            "p99": 20.4216
+          },
+          "render_ms": {
+            "samples": 377,
+            "mean": 5.920727055702918,
+            "p50": 5.8527,
+            "p95": 6.4508,
+            "p99": 6.661
+          },
+          "rhi_ms": {
+            "samples": 377,
+            "mean": 5.872206896551724,
+            "p50": 5.825,
+            "p95": 6.3973,
+            "p99": 6.8567
+          },
+          "prediction30": {
+            "samples": 377,
+            "mean": 0,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0
+          }
+        }
+      },
+      "frames_sha256": "6ef52314cbdb614e0bc187764527e1c40dad6feaf02a8a0c4f35297adf58cdab",
+      "manifest": {
+        "head": "83edf6057ed1f614bce47156ae1b56b8eeb8ae95",
+        "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+        "gpu": [
+          "Parsec Virtual Display Adapter",
+          "AMD Radeon RX 9070 XT",
+          "AMD Radeon(TM) Graphics"
+        ],
+        "actors": 200,
+        "movement": true,
+        "consoleCommands": "ProjectJ.AnimationQuality.SourcePolicy.Enabled 0,ProjectJ.PlayerTrajectory.RemotePredictionHz 60",
+        "localPlayer": true,
+        "connections": 0,
+        "nullRHI": false,
+        "offscreenViewport": true,
+        "resolution": "1280x720",
+        "fpsCap": 0,
+        "vsync": 0,
+        "trace": false,
+        "packaged": false,
+        "executable": "C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe",
+        "executableSHA256": "4DBAB2739E7AFEF7EC96CDFE48A63211742209F9A56AF0620CF228913D64FB0C",
+        "arguments": [
+          "C:/Users/I/Documents/GitHub/Project_J/Project_J.uproject",
+          "/Engine/Maps/Entry?game=/Script/Engine.GameModeBase",
+          "-game",
+          "-unattended",
+          "-nop4",
+          "-nosplash",
+          "-nosound",
+          "-NoDDCCleanup",
+          "-NoLiveCoding",
+          "-RenderOffscreen",
+          "-windowed",
+          "-ResX=1280",
+          "-ResY=720",
+          "-ProjectJRenderedCrowdFixture",
+          "-ProjectJRenderedCrowdOutput=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/WholeProjectAudit_20261013/Mover200_ReleaseA2",
+          "-ABSLOG=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/WholeProjectAudit_20261013/Mover200_ReleaseA2/Run.log",
+          "-ExecCmds=t.MaxFPS 0,r.VSync 0,ProjectJ.AnimationQuality.SourcePolicy.Enabled 0,ProjectJ.PlayerTrajectory.RemotePredictionHz 60",
+          "-statnamedevents",
+          "-UserDir=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/WholeProjectAudit_20261013/Mover200_ReleaseA2/User/",
+          "-SaveToUserDir",
+          "-ProjectJRenderedCrowdCount=200",
+          "-ProjectJRenderedCrowdMovement",
+          "-DisablePython",
+          "-ProjectJRenderedCrowdLocalPlayer"
+        ],
+        "artifacts": [
+          {
+            "path": "Project_J.uproject",
+            "sha256": "4FDFB1ED047A4979799ECA3C965716BBEE9BAEEB804FFE6121E18273E1678E9F"
+          },
+          {
+            "path": "Content/Character_BPs/GreatSword/BP_GreatSword.uasset",
+            "sha256": "CD0815F704E90FDCE5EE997D61D5EFF955D8D7C17459C281334F563DFA2849F4"
+          },
+          {
+            "path": "Content/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme.uasset",
+            "sha256": "89572D72C84E3309CB5F22101337D0087FA3886962F60F372764D871B09CC5EF"
+          },
+          {
+            "path": "Content/Animation_Logic/ABPs/ABP_Player_Master.uasset",
+            "sha256": "F32C7D5BFAE61086064F10278D4AAA3767AA80542D7BBCD2CA035B9E1C404FE7"
+          },
+          {
+            "path": "Binaries/Win64/UnrealEditor-Project_J.dll",
+            "sha256": "EB97688E37D740828500463931487052AC24AA1946DA223C96D5E9AFF89A32B0"
+          },
+          {
+            "path": "Binaries/Win64/UnrealEditor-Project_JCharacter.dll",
+            "sha256": "1C18297D1A16C277B96E91FA2FD99C988FA2FE17C4DEEFFFFC0CC03D2EFBE478"
+          }
+        ],
+        "sourceProvenanceFile": "../SourceProvenance.json"
+      },
+      "verification": {
+        "success": true,
+        "exitCode": 0,
+        "frames": 2322,
+        "scope": "Real offscreen viewport/RHI and actual constructed retarget bodies; simplified camera/light scene; no remote clients. GPU counters may be delayed. Captures affect frame timing."
+      },
+      "log_sha256": "0316ec699eabfdcc2028b46d75d6d14eb73598cda51e3b0c52561a600a0de6a1",
+      "process": {
+        "exitCode": 0,
+        "nativeHandleCapturedBeforeWait": true,
+        "hasExited": true,
+        "sampledPeakWorkingSetBytes": 5042425856,
+        "sampledPeakPrivateBytes": 15646412800,
+        "memoryScope": "Entire editor game process including startup, sampled every 500ms; not incremental crowd memory."
+      }
+    }
+  ],
+  "summarizer_sha256": "7c8c70ec1959cd2e872fa34f7d1195928571ad96c9582b9719c285b9661c2b5e"
+}

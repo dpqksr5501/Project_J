@@ -1,0 +1,29 @@
+{
+  "passed": true,
+  "capture": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\GroupD_20260910\\MoverAuditNetwork02\\Client1User\\Saved\\Validation\\MoverBuffers\\20261022_203743.csv",
+  "worlds": [
+    {
+      "world": "/Engine/Maps/Entry.Entry",
+      "frames": 926,
+      "total_frames": 926,
+      "warmup_frames": 0,
+      "total_duration_seconds": 30.835032,
+      "measured_duration_seconds": 30.835032,
+      "min_buffer_ms": 6.83,
+      "max_buffer_ms": 106.01,
+      "max_frame_ms": 33.351,
+      "tail_min_buffer_ms": 8.02,
+      "tail_mean_buffer_ms": 62.317588888888885,
+      "tail_receive_hz": 14.821207396186704,
+      "future_frames": 0,
+      "rewinds": 0
+    }
+  ],
+  "diagnostics": {
+    "startup_diagnostics": [
+      "[2026.10.22-11.37.39:560][120]LogNetworkPrediction: Warning: Independent Interpolation fell behind. BufferedMS: 699"
+    ],
+    "captured_diagnostics": [],
+    "capture_start_line": 1661
+  }
+}

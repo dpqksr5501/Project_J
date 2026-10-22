@@ -26,9 +26,18 @@ AProject_JFlyingMountCharacter::AProject_JFlyingMountCharacter()
 	MovementComponent->bUseSeparateBrakingFriction = true;
 }
 
+void AProject_JFlyingMountCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	// Capture Blueprint-authored defaults before initial replication invokes rep-notifies.
+	DefaultBrakingDecelerationFlying = GetCharacterMovement()->BrakingDecelerationFlying;
+	DefaultBrakingFriction = GetCharacterMovement()->BrakingFriction;
+}
+
 void AProject_JFlyingMountCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	RefreshFlightMovementSettings();
 	bHasBlueprintTick = GetClass()->IsFunctionImplementedInScript(TEXT("ReceiveTick"));
 	RefreshFlightTickEnabled();
 }
@@ -51,6 +60,7 @@ void AProject_JFlyingMountCharacter::UnPossessed()
 void AProject_JFlyingMountCharacter::OnRep_Controller()
 {
 	Super::OnRep_Controller();
+	RefreshFlightMovementSettings();
 	if (!IsLocallyControlled())
 	{
 		ClearFlightInputBindings();
@@ -113,8 +123,6 @@ bool AProject_JFlyingMountCharacter::BeginFlight()
 	bIsGliding = false;
 	GetCharacterMovement()->StopMovementImmediately();
 	GetCharacterMovement()->SetMovementMode(MOVE_Flying);
-	GetCharacterMovement()->MaxFlySpeed = FlightSpeed;
-	ApplyFlightBraking(false);
 	SetFlightState(EProject_JMountFlightState::TakingOff);
 	ActiveTakeOffImpulseTime = ResolveTakeOffImpulseTime();
 	return true;
@@ -157,8 +165,6 @@ bool AProject_JFlyingMountCharacter::AbortLanding(EProject_JMountLandingFailure 
 	bIsGliding = false;
 	GetCharacterMovement()->StopMovementImmediately();
 	GetCharacterMovement()->SetMovementMode(MOVE_Flying);
-	GetCharacterMovement()->MaxFlySpeed = FlightSpeed;
-	ApplyFlightBraking(false);
 	SetFlightState(EProject_JMountFlightState::Flying);
 	K2_OnLandingFailed(Reason, Attempt);
 	return true;
@@ -172,8 +178,8 @@ void AProject_JFlyingMountCharacter::SetGliding(bool bNewGliding)
 	}
 
 	bIsGliding = bNewGliding;
-	GetCharacterMovement()->MaxFlySpeed = bIsGliding ? GlideSpeed : FlightSpeed;
-	ApplyFlightBraking(bIsGliding);
+	RefreshFlightMovementSettings();
+	ForceNetUpdate();
 }
 
 void AProject_JFlyingMountCharacter::HandleFlightAnimationCue(EProject_JMountFlightAnimationCue Cue)
@@ -302,7 +308,6 @@ bool AProject_JFlyingMountCharacter::BeginLanding()
 	LandingElapsed = LandingStalledSeconds = 0.0f;
 	LastLandingProgressZ = GetActorLocation().Z;
 	GetCharacterMovement()->StopMovementImmediately();
-	ApplyFlightBraking(false);
 	ActiveLandingTouchdownTime = ResolveFlightCueTime(LandingCueAnimation, EProject_JMountFlightAnimationCue::LandingTouchdown, 0.0f);
 	SetFlightState(EProject_JMountFlightState::Landing);
 	return true;
@@ -318,9 +323,6 @@ void AProject_JFlyingMountCharacter::FinishLanding()
 	bIsGliding = false;
 	GetCharacterMovement()->StopMovementImmediately();
 	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-	GetCharacterMovement()->MaxFlySpeed = FlightSpeed;
-	GetCharacterMovement()->BrakingDecelerationFlying = DefaultBrakingDecelerationFlying;
-	GetCharacterMovement()->BrakingFriction = DefaultBrakingFriction;
 	bLandingTouchdownConfirmed = false;
 	bLandingTouchdownCueReached = false;
 	SetFlightState(EProject_JMountFlightState::Grounded);
@@ -389,6 +391,23 @@ void AProject_JFlyingMountCharacter::ApplyFlightBraking(bool bGliding)
 	MovementComponent->BrakingFriction = bGliding ? GlideBrakingFriction : FlyingBrakingFriction;
 }
 
+void AProject_JFlyingMountCharacter::RefreshFlightMovementSettings()
+{
+	const bool bGlide = FlightState == EProject_JMountFlightState::Flying && bIsGliding;
+	GetCharacterMovement()->MaxFlySpeed = bGlide ? GlideSpeed : FlightSpeed;
+	if (FlightState == EProject_JMountFlightState::Grounded)
+	{
+		GetCharacterMovement()->BrakingDecelerationFlying = DefaultBrakingDecelerationFlying;
+		GetCharacterMovement()->BrakingFriction = DefaultBrakingFriction;
+	}
+	else { ApplyFlightBraking(bGlide); }
+}
+
+void AProject_JFlyingMountCharacter::OnRep_IsGliding()
+{
+	RefreshFlightMovementSettings();
+}
+
 void AProject_JFlyingMountCharacter::SetFlightState(EProject_JMountFlightState NewState)
 {
 	if (FlightState == NewState)
@@ -400,6 +419,7 @@ void AProject_JFlyingMountCharacter::SetFlightState(EProject_JMountFlightState N
 	const TStrongObjectPtr<AProject_JFlyingMountCharacter> KeepSelf(this);
 	const uint32 Revision = ++FlightStateRevision;
 	FlightState = NewState;
+	RefreshFlightMovementSettings();
 	FlightPhaseStartServerTime = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0f;
 	RefreshFlightTickEnabled();
 	ApplyFlightStateTags(NewState);
@@ -410,6 +430,7 @@ void AProject_JFlyingMountCharacter::SetFlightState(EProject_JMountFlightState N
 
 void AProject_JFlyingMountCharacter::OnRep_FlightState(EProject_JMountFlightState PreviousState)
 {
+	RefreshFlightMovementSettings();
 	if (FlightState != EProject_JMountFlightState::Grounded)
 	{
 		ClearPendingTakeOffRequest();
@@ -505,6 +526,7 @@ void AProject_JFlyingMountCharacter::SetupPlayerInputComponent(UInputComponent* 
 void AProject_JFlyingMountCharacter::PawnClientRestart()
 {
 	Super::PawnClientRestart();
+	RefreshFlightMovementSettings();
 	if (IsLocallyControlled() && InputComponent) { RestoreFlightInputBindings(InputComponent); }
 }
 

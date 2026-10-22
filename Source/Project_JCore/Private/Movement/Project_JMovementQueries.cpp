@@ -62,6 +62,7 @@ FPhysicalFrame ReadPhysicalFrame(const AActor* Owner)
 			Frame.GroundFriction = CMC->GroundFriction;
 			Frame.MaxStepHeight = CMC->MaxStepHeight;
 			Frame.Mode = CMC->MovementMode;
+			Frame.CustomMode = CMC->CustomMovementMode;
 			Frame.Floor = CMC->CurrentFloor.HitResult;
 		}
 	}

@@ -3,7 +3,8 @@ import json,math,time,traceback
 from pathlib import Path
 import unreal
 
-out=Path(__file__).resolve().parents[2]/'Saved/Validation/StarterWorld'
+out=Path(globals().get('smoke_output',Path(__file__).resolve().parents[2]/'Saved/Validation/StarterWorld'))
+out.mkdir(parents=True,exist_ok=True)
 editor=unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
 phase=0;began=None;changed=None;clear_lux=None;rain_lux=None
 network='-StarterNetworkSmoke' in unreal.SystemLibrary.get_command_line()
@@ -47,9 +48,10 @@ def smoke(dt):
     if began is None:began=now
     pawn=None
     try:
-        if now-began>90:raise RuntimeError('Starter PIE readiness/weather timeout')
-        pawn=unreal.GameplayStatics.get_player_character(game,0)
+        pawn=unreal.GameplayStatics.get_player_pawn(game,0)
+        if now-began>90:raise RuntimeError('Player pawn did not spawn' if pawn is None else 'Starter readiness/weather timeout with an existing pawn')
         if pawn is None or now-began<5:return
+        assert isinstance(pawn,unreal.Project_JPlayerCharacter), 'Unexpected player pawn type: '+pawn.get_class().get_path_name()
         if network and len(worlds)<2:return
         presentation=next((w for w in worlds if w!=game),game)
         states=unreal.GameplayStatics.get_all_actors_of_class(game,unreal.Project_JWorldState)
@@ -79,7 +81,8 @@ def smoke(dt):
             assert values and values[0],'No loaded Landscape collision beneath PlayerStart pawn'
             assert 0<location.z-values[4].z<250,'Pawn is not supported near the terrain'
             if network:
-                client_pawn=unreal.GameplayStatics.get_player_character(presentation,0);assert client_pawn
+                client_pawn=unreal.GameplayStatics.get_player_pawn(presentation,0);assert client_pawn
+                assert isinstance(client_pawn,unreal.Project_JPlayerCharacter), 'Unexpected client pawn type'
                 assert not client_pawn.has_authority()
                 assert (client_pawn.get_actor_location()-location).length()<150,'Server/client spawn mismatch'
             clear_lux=light.get_editor_property('intensity');assert clear_lux>10000,clear_lux
@@ -115,12 +118,12 @@ def smoke(dt):
         unreal.unregister_slate_post_tick_callback(smoke_handle)
         restore_play_settings()
     except Exception:
-        diagnostics=dict(passed=False,error=traceback.format_exc(),world=game.get_path_name(),phase=phase)
+        diagnostics=dict(passed=False,error=traceback.format_exc(),world=game.get_path_name(),phase=phase,pawn_status='not_spawned' if pawn is None else 'valid_type' if isinstance(pawn,unreal.Project_JPlayerCharacter) else 'wrong_type',pawn_class=pawn.get_class().get_path_name() if pawn else None)
         if pawn:
             diagnostics['pawn_position_cm']=list(pawn.get_actor_location().to_tuple())
             diagnostics['player_starts_cm']=[list(a.get_actor_location().to_tuple()) for a in unreal.GameplayStatics.get_all_actors_of_class(game,unreal.PlayerStart)]
             diagnostics['loaded_landscape_proxies']=len(unreal.GameplayStatics.get_all_actors_of_class(game,unreal.LandscapeProxy))
-        diagnostics['worlds']=[dict(world=w.get_path_name(),authoritative=bool(unreal.GameplayStatics.get_game_mode(w)),pawn_position_cm=list(unreal.GameplayStatics.get_player_character(w,0).get_actor_location().to_tuple()) if unreal.GameplayStatics.get_player_character(w,0) else None,landscape_proxies=len(unreal.GameplayStatics.get_all_actors_of_class(w,unreal.LandscapeProxy))) for w in worlds]
+        diagnostics['worlds']=[dict(world=w.get_path_name(),authoritative=bool(unreal.GameplayStatics.get_game_mode(w)),pawn_position_cm=list(unreal.GameplayStatics.get_player_pawn(w,0).get_actor_location().to_tuple()) if unreal.GameplayStatics.get_player_pawn(w,0) else None,landscape_proxies=len(unreal.GameplayStatics.get_all_actors_of_class(w,unreal.LandscapeProxy))) for w in worlds]
         (out/report_name).write_text(json.dumps(diagnostics,indent=2),encoding='utf-8')
         unreal.log_error('STARTER_WORLD_PIE_SMOKE_FAIL '+traceback.format_exc())
         unreal.unregister_slate_post_tick_callback(smoke_handle)

@@ -9,10 +9,11 @@
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "Project_J.h"
 #include "Project_JPlayerCharacter.h"
+#include "Project_JLocomotionAnimStateComponent.h"
 
 namespace
 {
-	constexpr int32 MaxProfilingCrowdCount = 100;
+	constexpr int32 MaxProfilingCrowdCount = 200;
 	constexpr int32 MaxReplicatedMovementProfileCount = 50;
 	constexpr float CrowdSpacing = 260.0f;
 	constexpr float CrowdForwardOffset = 700.0f;
@@ -212,7 +213,8 @@ void UProject_JProfilingCrowdComponent::TickComponent(float DeltaTime, ELevelTic
 		// transitions without artificial jitter.
 		const float Phase = (ElapsedSeconds * CrowdTravelFrequency) + PhaseOffsets[Index];
 		const float DirectionSign = FMath::Cos(Phase) >= 0.0f ? 1.0f : -1.0f;
-		Character->AddMovementInput(TravelAxes[Index] * DirectionSign, 1.0f, true);
+		const FVector Local = FRotator(0, Character->GetControlRotation().Yaw, 0).UnrotateVector(TravelAxes[Index] * DirectionSign);
+		if (auto* State = Character->GetLocomotionAnimStateComponent()) State->SetMoveInput(FVector2D(Local.Y, Local.X));
 	}
 
 	if (SpawnedCharacters.IsEmpty())

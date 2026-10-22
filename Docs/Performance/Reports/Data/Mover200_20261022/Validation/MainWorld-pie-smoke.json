@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "one_world_state": true,
+  "one_environment": true,
+  "player_start_count": 1,
+  "pawn_spawned": true,
+  "clear_sun_lux": 60000.0,
+  "rain_sun_lux": 15000.0,
+  "rain_transition_and_recovery": true,
+  "preparation_uses_world_definition": true,
+  "pawn_position_cm": [
+    -93200.0,
+    -93200.0,
+    2348.75
+  ],
+  "scope": "Single local authority PIE at PlayerStart; no remote multiplayer, flight/pop-in, navigation, or performance acceptance"
+}

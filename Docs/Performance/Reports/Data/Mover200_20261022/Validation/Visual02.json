@@ -1,0 +1,23 @@
+{
+  "succeeded": 2,
+  "succeededWithWarnings": 0,
+  "failed": 0,
+  "notRun": 0,
+  "inProcess": 0,
+  "tests": [
+    {
+      "fullTestPath": "ProjectJ.Animation.VisualBudget.Lifecycle",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.RuntimeOwnership.MontageBlendOutDrainsBeforeBudget",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    }
+  ],
+  "source_report": "Saved/Validation/EF_20260912/MoverAuditVisual02/Automation/index.json",
+  "report_sha256": "cd67a18dc811af6300a880fe582e9509ee0635a9ebe75740e89145b494b5cd3b"
+}

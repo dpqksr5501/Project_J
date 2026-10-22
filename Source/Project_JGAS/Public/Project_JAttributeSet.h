@@ -25,6 +25,10 @@ class PROJECT_JGAS_API UProject_JAttributeSet : public UAttributeSet
 public:
 	UProject_JAttributeSet();
 
+	// Initialization belongs to the persistent set, not to a replaceable avatar.
+	bool HasInitializedDefaults() const { return bDefaultsInitialized; }
+	void MarkDefaultsInitialized() { bDefaultsInitialized = true; }
+
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
 	virtual void PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const override;
@@ -81,5 +85,8 @@ public:
 	virtual void OnRep_Defense(const FGameplayAttributeData& OldDefense);
 
 private:
+	UPROPERTY(Transient)
+	bool bDefaultsInitialized = false;
+
 	void ClampAttribute(const FGameplayAttribute& Attribute, float& NewValue) const;
 };

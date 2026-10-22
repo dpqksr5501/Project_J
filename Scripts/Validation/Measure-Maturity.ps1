@@ -8,8 +8,8 @@ if(@(Get-Process UnrealEditor*,Project_J,UnrealBuildTool,dotnet,LiveCoding*,MSBu
 $maturityOutput="$maturityRoot/Saved/Validation/Maturity/$RunName"
 if(Test-Path -LiteralPath $maturityOutput){throw 'Use a new RunName to preserve evidence.'}
 New-Item -ItemType Directory -Path $maturityOutput | Out-Null
-$maturityFilters='ProjectJ.Maturity+ProjectJ.Modernization+ProjectJ.Architecture+ProjectJ.Presentation+ProjectJ.Combat+ProjectJ.Animation+ProjectJ.NPCAction+ProjectJ.NPCDecision+ProjectJ.NPCPath+ProjectJ.GroupD+ProjectJ.Internal.Mount+ProjectJ.Authoring.Bundle+ProjectJ.GroupB.CombatPosePolicy+ProjectJ.GroupE.AnimationMigrationPreflight+ProjectJ.MMO'
-# Preflight uses transient copies. No asset-saving commandlet is invoked.
+$maturityFilters='ProjectJ.Maturity+ProjectJ.Modernization+ProjectJ.Architecture+ProjectJ.Presentation+ProjectJ.Combat+ProjectJ.Animation+ProjectJ.NPCAction+ProjectJ.NPCDecision+ProjectJ.NPCPath+ProjectJ.GroupD+ProjectJ.Internal.Mount+ProjectJ.Authoring.Bundle+ProjectJ.GroupB.CombatPosePolicy+ProjectJ.PlayerLocomotion+ProjectJ.MMO'
+# Current locomotion regression uses the production native master. No asset-saving commandlet is invoked.
 & "$EngineRoot/Engine/Binaries/Win64/UnrealEditor-Cmd.exe" "$maturityRoot/Project_J.uproject" -EnablePlugins=ProjectJExperiments -unattended -NullRHI -nosound -NoLiveCoding -nop4 -nosplash "-ExecCmds=Automation RunTests $maturityFilters" '-TestExit=Automation Test Queue Empty' "-ReportExportPath=$maturityOutput/Automation" "-abslog=$maturityOutput/Run.log"
 $maturityExit=$LASTEXITCODE
 $maturityIndex="$maturityOutput/Automation/index.json"

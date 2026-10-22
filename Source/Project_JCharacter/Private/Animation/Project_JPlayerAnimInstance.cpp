@@ -17,9 +17,31 @@
 #include "BoneControllers/AnimNode_Steering.h"
 #include "Animation/AnimRootMotionProvider.h"
 #include "Animation/BuiltInAttributeTypes.h"
+#include "HAL/IConsoleManager.h"
+#include "UObject/UnrealType.h"
+#include "GameFramework/PlayerController.h"
+#include "Animation/Project_JAnimationQualityPolicy.h"
+
+namespace
+{
+TAutoConsoleVariable<int32> PredictionRate(TEXT("ProjectJ.PlayerTrajectory.RemotePredictionHz"),60,
+ TEXT("Mover presentation prediction for unprotected Mid/Far ground actors, 30..60 Hz. Local, air, attacks and sharp turns retain 60 Hz. Simulation rate is unchanged."));
+const FStructProperty* PredictionRateProperty()
+{
+ static const auto* Property=FindFProperty<FStructProperty>(UMoverTrajectoryPredictor::StaticClass(),TEXT("MoverSamplingFrameRate"));
+ return Property;
+}
+}
+
+int32 UProject_JPlayerAnimInstance::GetTrajectoryPredictionRate() const
+{
+ const auto* Property=PredictionRateProperty();
+ return MoverPredictor && Property ? Property->ContainerPtrToValuePtr<FFrameRate>(MoverPredictor.Get())->Numerator : 60;
+}
 
 void UProject_JPlayerAnimInstance::NativeInitializeAnimation()
 {
+ bNeedsLocomotionHistorySeed = true;
  // A retained anim instance must wait for this owner's first completed source
  // frame. Proxy reinitialization alone does not clear these graph admission flags.
  PlayerHasOwningActor = PlayerHasLocomotionSource = PlayerUseThreadSafeUpdateAnimation = false;
@@ -37,6 +59,7 @@ void UProject_JPlayerAnimInstance::NativeInitializeAnimation()
 
 void UProject_JPlayerAnimInstance::NativeUninitializeAnimation()
 {
+ bNeedsLocomotionHistorySeed = true;
  PlayerHasOwningActor = PlayerHasLocomotionSource = PlayerUseThreadSafeUpdateAnimation = false;
  if(auto* Previous=BasedMovementSource.Get()) Previous->OnBasedMovementApplied.RemoveAll(this);
  BasedMovementSource.Reset(); PendingBasedMovementDelta=FTransform::Identity;
@@ -77,6 +100,7 @@ void UProject_JPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
   Mover->OnBasedMovementApplied.AddUniqueDynamic(this,&ThisClass::AccumulateBasedMovement);
  }
 	if (NeedsOwnerReferenceRefresh()) CacheOwnerReferences();
+	if (IsPrimaryMeshAnimInstance()) ApplyOptimizationPolicy(BuildOptimizationPolicy());
 	FProject_JAnimThreadSafeData Data;
 	Data.DeltaTime = DeltaSeconds;
 	FillPlayerThreadSafeData(Data);
@@ -126,11 +150,26 @@ void UProject_JPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		MoverPredictor->Setup(Mover);
 	}
 	TScriptInterface<IPoseSearchTrajectoryPredictorInterface> Predictor(MoverPredictor);
+	const bool bSettledTranslation=(Move.IsNearlyZero() && Data.Movement.GroundSpeed<1.f) ||
+		(!Move.IsNearlyZero() && Settings && FMath::Abs(Data.Movement.GroundSpeed-Settings->MaxSpeed)<1.f &&
+		FVector::DotProduct(Move.GetSafeNormal2D(),Data.Movement.Velocity.GetSafeNormal2D())>.999f);
+	const bool bSettledFacing=FMath::Abs(FMath::FindDeltaAngleDegrees(Pawn->GetActorRotation().Yaw,Data.LocomotionContext.DesiredFacingYaw))<1.f;
+	const bool bBudgetEligible=bSettledTranslation && bSettledFacing && !ProjectJ::Animation::IsLocalPlayerAvatar(Pawn) && !Data.Air.bIsInAir &&
+		!Data.Combat.bIsAttacking && !Data.Combat.bIsDodging && !Data.Combat.bIsHitReacting &&
+		!IsAnyMontagePlaying() && !NeedsFullRateVisualUpdate() &&
+		(CurrentOptimizationPolicy.Tier==EProject_JAnimBudgetTier::Mid || CurrentOptimizationPolicy.Tier==EProject_JAnimBudgetTier::Far);
+	if (const auto* Property=PredictionRateProperty())
+		*Property->ContainerPtrToValuePtr<FFrameRate>(MoverPredictor.Get())=FFrameRate(bBudgetEligible?FMath::Clamp(PredictionRate.GetValueOnGameThread(),30,60):60,1);
 	UPoseSearchTrajectoryLibrary::PoseSearchGenerateTransformTrajectoryWithPredictor(Predictor, DeltaSeconds,
 		MoverTrajectory, PredictorYaw, Data.Movement.Trajectory, .033f, 15, .1f, 15);
 	Data.Movement.FutureTrajectoryVelocity = (Data.Movement.Trajectory.GetSampleAtTime(.6f).Position -
 		Data.Movement.Trajectory.GetSampleAtTime(.4f).Position) / .2f;
-	Data.Movement.FutureTrajectoryTurnAngle = FMath::FindDeltaAngleDegrees(Pawn->GetActorRotation().Yaw,
+	// Prediction is in visual-root space (Manny's mesh carries a -90 degree offset).
+	// Compare two samples in that space; actor yaw made straight motion look urgent.
+	static const auto* SourcePolicy=IConsoleManager::Get().FindConsoleVariable(TEXT("ProjectJ.AnimationQuality.SourcePolicy.Enabled"));
+	const float ReferenceYaw=SourcePolicy && SourcePolicy->GetInt()==0 ? Pawn->GetActorRotation().Yaw :
+		Data.Movement.Trajectory.GetSampleAtTime(0.f).Facing.Rotator().Yaw;
+	Data.Movement.FutureTrajectoryTurnAngle = FMath::FindDeltaAngleDegrees(ReferenceYaw,
 		Data.Movement.Trajectory.GetSampleAtTime(.5f).Facing.Rotator().Yaw);
 	Data.Movement.bHasTrajectory = !Data.Movement.Trajectory.Samples.IsEmpty();
 	BuildProjectAirFrame(Data);

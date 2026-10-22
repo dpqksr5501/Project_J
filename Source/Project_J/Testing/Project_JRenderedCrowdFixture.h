@@ -20,9 +20,16 @@ private:
 	void Finish(bool bSuccess, const TCHAR* Reason);
 	UPROPERTY() TArray<TObjectPtr<AProject_JPlayerCharacter>> Players;
 	FTSTicker::FDelegateHandle Handle;
-	FString Output, Rows = TEXT("phase,elapsed_s,frame_delta_ms,gpu_ms,actors,rendered_actors,montages,capture_requested,body_lod0,body_lod1,body_lod2,local_body_lod\n");
+	FString Output, Rows = TEXT("phase,elapsed_s,frame_delta_ms,gpu_ms,actors,rendered_actors,montages,capture_requested,body_lod0,body_lod1,body_lod2,local_body_lod,gt_ms,render_ms,rhi_ms,prediction30\n");
 	double Started = 0, PhaseAt = 0;
-	int32 Phase = 0, Samples = 0, VisibleSamples = 0;
+	int32 Phase = 0, Samples = 0, VisibleSamples = 0, CrowdCount = 200;
+	bool bSimulateMovement = false;
+	TArray<FVector> PreviousPositions;
+	TArray<double> TravelDistances;
+	TArray<int32> Reversals, Landings;
+	TArray<bool> WasInAir;
+	TArray<float> LastDirection;
+	bool bJumpRequested = false;
 	bool bShot = false, bFinished = false;
 	bool bWithLocalPlayer = false;
 	int32 LocalQualitySamples = 0;

@@ -22,10 +22,12 @@ bool FProjectJAirLoopOutputTest::RunTest(const FString&)
  for(auto GaitValue:{Gait::Walk,Gait::Run,Gait::Sprint})
  for(auto FootValue:{Foot::Left,Foot::Right})
  for(auto StateValue:{State::TransitionToInAir,State::InAirLoop})
+ for(bool bEntry:{false,true})
  for(float Angle:{-135.f,-90.f,-45.f,0.f,45.f,90.f,135.f,180.f})
  {
   FProject_JPlayerAirQuery Live;Live.RotationMode=ModeValue;Live.Gait=GaitValue;Live.Foot=FootValue;Live.State=StateValue;
   auto Query=ResolveReselectionQuery(Live,Live,Angle);
+  if(bEntry) { Query.Gait=GaitValue; Query=ResolveEntryQuery(Query); }
   FChooserPlayerSettings Settings;FProject_JStateControllerChooserOutput Output;
   FChooserEvaluationContext Context;Context.AddStructParam(Query);Context.AddStructParam(Settings);Context.AddStructParam(Output);
   UAnimSequenceBase* Selected=nullptr;

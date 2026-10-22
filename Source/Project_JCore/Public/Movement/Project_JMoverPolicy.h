@@ -9,6 +9,8 @@ struct FProject_JMoverPolicy
  bool bStrafe=false;
  bool bSprint=false;
  bool bAllowJump=false;
+ // Player commands cannot select a solver branch; native navigation can use Velocity.
+ bool bRequireDirectionalIntent=false;
 };
 UINTERFACE(MinimalAPI)
 class UProject_JMoverPolicySource : public UInterface { GENERATED_BODY() };

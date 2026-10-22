@@ -1,0 +1,26 @@
+{
+  "passed": true,
+  "map": "/Game/World/MainWorld/Maps/L_MainWorld",
+  "place_count": 20,
+  "hunting_candidates": 9,
+  "boss_candidates": 2,
+  "connections": 7,
+  "world_state_actors": 1,
+  "landscape_components": 1024,
+  "landscape_extent_cm": [
+    806400.0,
+    806400.0
+  ],
+  "terrain_collision_samples": 20,
+  "maximum_collision_source_error_cm": 0.4720449447631836,
+  "runtime_hash": "WorldPartitionRuntimeHashSet",
+  "nav_unverified": true,
+  "performance_measured": false,
+  "packaging_verified": false,
+  "visual_quality_approved": false,
+  "player_start_count": 1,
+  "lighting_saved": true,
+  "saved_directional_light_lux": 60000.0,
+  "authoring_repairs_executed": false,
+  "verified_at_utc": "2026-10-22T11:40:21.036042+00:00"
+}

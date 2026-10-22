@@ -18,6 +18,7 @@ float AProject_JPlayerCharacter::GetMoverMaxSpeed(bool bAcceptedSprint) const
 FProject_JMoverPolicy AProject_JPlayerCharacter::ResolveMoverPolicy(const FProject_JMoverInputs& Requested,const FCharacterDefaultInputs* Input) const
 {
  FProject_JMoverPolicy Policy;
+ Policy.bRequireDirectionalIntent=true;
  Policy.bStrafe=IsCombatModeActive() && ShouldUseCombatRotationMode();
  const bool bSprintDirectionAllowed=!Policy.bStrafe || (Input &&
   UProject_JGroundMovementLibrary::SupportsStrafeSprint(Input->GetMoveInput_WorldSpace(),FRotator(0,Input->ControlRotation.Yaw,0).Vector()));

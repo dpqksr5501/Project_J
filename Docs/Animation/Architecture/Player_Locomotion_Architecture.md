@@ -4,7 +4,7 @@ Project J의 이동 애니메이션은 **Mover 이동 시뮬레이션, C++ 상�
 
 캐릭터 제작 부모는 `BP_Player_Master`이며 기존 `BP_GreatSword`가 이를 상속한다. 기존 테스트 BP의 로컬 상태·능력 기본값과 중복 프로필 지정을 제거하고, 대검 의상 8개의 연결은 native modular component 등록 수명으로 옮겼다. 직업/몸체 프로필·입력·리타기터·공통 ABP의 포즈 순서는 유지한다. [캐릭터/ABP 마스터 계약](../../Architecture/Runtime/Player_Character_Master.md)의 상속·제작·저장 기준을 따른다.
 
-이 문서는 2026-10-21 현재 구현의 시작점이다. 시점별 원인·실패·복구·실행 결과는 [전환·검증 기록](Player_Locomotion_Migration_2026-10-19.md), 실제 제작 절차는 [이동 콘텐츠 확장](../Authoring/DataDrivenLocomotionExtensionGuide.md), 골격과 추가 뼈는 [스켈레톤 제작 기준](../Authoring/HumanoidSkeletonRetargetingStandards.md)을 따른다.
+이 문서는 2026-10-22 현재 구현의 시작점이다. 시점별 원인·실패·복구·실행 결과는 [전환·검증 기록](Player_Locomotion_Migration_2026-10-19.md)과 [Mover 수정·200명 재검증](../../Performance/Reports/ProjectJ_Mover_200_2026-10-22.md), 실제 제작 절차는 [이동 콘텐츠 확장](../Authoring/DataDrivenLocomotionExtensionGuide.md), 골격과 추가 뼈는 [스켈레톤 제작 기준](../Authoring/HumanoidSkeletonRetargetingStandards.md)을 따른다.
 
 ## 입력에서 표시 포즈까지
 
@@ -36,6 +36,7 @@ flowchart TD
 | `ABP_Player_Master` | 포즈 노드 연결, StateEntry/OnUpdate/BecomeRelevant 호출 시점, 슬롯·레이어·Pose History |
 | Chooser·PSD·BlendSpace·프로필 | 후보·검색 기준·전환 출력·튜닝과 제작 데이터 |
 | 표시 몸체 프로필·ABP | 골격별 리타깃, 손 접촉 역할·소켓, 해당 몸체의 물리·추가 뼈 |
+| source 정책·ABA·visual coordinator | primary source의 GT 품질 게시, 단일 메시 tick 소유권, 로컬/탑승자·게임플레이 포즈·몽타주 수명 보호 |
 
 프레임 계산과 핀 입력은 native 상속 프로퍼티·함수를 사용한다. 마스터 BP 소유 상태 변수는 0개다. BP 중계 함수를 제거하면서 Property Access·노드 바인딩·Chooser 함수 경로도 함께 이주했다. 같은 계산 함수라도 player별 재생 시각·커브·NodeRef가 다르면 결과를 전역 캐시로 합치지 않는다. 계산을 C++로 옮겼다는 이유로 노드 평가 시점을 변경하지 않는다.
 

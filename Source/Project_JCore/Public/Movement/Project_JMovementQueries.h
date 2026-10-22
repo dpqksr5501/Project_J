@@ -28,6 +28,7 @@ struct FPhysicalFrame
 	float GroundFriction = 0.f;
 	float MaxStepHeight = 0.f;
 	EMovementMode Mode = MOVE_None;
+	uint8 CustomMode = 0;
 	FHitResult Floor;
 };
 

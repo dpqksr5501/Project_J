@@ -14,13 +14,8 @@ if(!$identity.actual_game_source_matches_frozen){throw 'Game has no verified com
 foreach($artifact in $identity.artifacts){
  if((Get-FileHash -LiteralPath "$projectRoot/$($artifact.path)").Hash -ne $artifact.sha256){throw 'Game artifacts changed; do not restore automatically.'}
 }
-$sources=Get-Content -LiteralPath "$saved/$($identity.editor_frozen_version)/SourceHashes.json" -Raw | ConvertFrom-Json
-$runtime=@($sources | Where-Object { $_.path -match '^(Source/|Config/|Plugins/ProjectJExperiments/Source/)' -or $_.path -eq 'Project_J.uproject' })
-$currentPaths=@(& git -C $projectRoot -c core.fsmonitor=false ls-files --cached --others --exclude-standard -- Source Config Plugins/ProjectJExperiments/Source Project_J.uproject | Sort-Object -Unique | Where-Object { Test-Path -LiteralPath "$projectRoot/$_" -PathType Leaf })
-if(@(Compare-Object -ReferenceObject @($runtime.path | Sort-Object) -DifferenceObject @($currentPaths | Sort-Object)).Count){throw 'Runtime file set changed after Game compilation.'}
-foreach($source in $runtime){
- if((Get-FileHash -LiteralPath "$projectRoot/$($source.path)").Hash -ne $source.sha256){throw 'Runtime source changed after Game compilation.'}
-}
+& python "$PSScriptRoot/Check-ContinuationProvenance.py" "$saved/$Game/GameVersion.json" $Mode
+if($LASTEXITCODE){throw 'Source/plugin/binary provenance changed after compilation.'}
 $out="$saved/$Name"
 if(Test-Path -LiteralPath $out){throw 'Preserve prior run; choose a new name.'}
 if($Mode -eq 'Package'){

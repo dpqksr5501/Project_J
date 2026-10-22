@@ -9,8 +9,10 @@
 #include "Components/Project_JReplicatedAnimEventComponent.h"
 #include "Tests/Project_JMoverFrameFixture.h"
 #include "Animation/Project_JPlayerAnimInstance.h"
+#include "Animation/Project_JCharacterAnimInstanceProxy.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "UObject/UnrealType.h"
+#include "Movement/Project_JMoverLifecycle.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJPlayerLocomotionMoverAimPublication,
     "ProjectJ.PlayerLocomotion.AnimationUsesMoverViewRotation",
@@ -53,6 +55,8 @@ bool FProjectJPlayerLocomotionMoverAimPublication::RunTest(const FString&)
         PublishInput(View);
         TestTrue(TEXT("Animation uses the view from the consumed Mover command, including the 180-degree seam"),ReadAim().Equals(View,.001f));
         TestFalse(TEXT("The fixture distinguishes input view from the pawn body fallback"),ReadAim().Equals(Player->GetBaseAimRotation(),.001f));
+        auto& Proxy=Anim->GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>();Proxy.ConsumeQueuedGameThreadData();
+        TestEqual(TEXT("Common combat layer uses the same completed pitch"),Proxy.GetThreadSafeData().Aim.AimPitch,float(View.Pitch));
     }
     return true;
 }
@@ -136,5 +140,27 @@ bool FProjectJPlayerLocomotionRemoteLandingOwnership::RunTest(const FString&)
     State->HandleReplicatedLandingStarted(2,0.f,450.f,false,false,false);
     TestEqual(TEXT("The new authority event opens exactly one next landing"),State->LandingPresentationRevision,2);
     return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJConfirmedLandingImpactTest,"ProjectJ.PlayerLocomotion.ConfirmedLandingWithoutSampling",
+ EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FProjectJConfirmedLandingImpactTest::RunTest(const FString&)
+{
+ auto* World=UWorld::CreateWorld(EWorldType::Game,false);GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
+ World->InitializeActorsForPlay(FURL());World->GetWorldSettings()->NotifyBeginPlay();World->GetWorldSettings()->NotifyMatchStarted();
+ ON_SCOPE_EXIT { World->EndPlay(EEndPlayReason::Quit);World->DestroyWorld(false);GEngine->DestroyWorldContext(World); };
+ auto* Player=World->SpawnActor<AProject_JGreatswordCharacter>();
+ TestTrue(TEXT("Grounded physical frame"),ProjectJ::Tests::PublishMoverFrame(Player,MOVE_Walking));
+ auto* Locomotion=Player->GetLocomotionAnimStateComponent();Locomotion->SetComponentTickEnabled(false);
+ Locomotion->LastFallSpeed=Locomotion->VerticalSpeed=0.f;Locomotion->bIsJumping=true;
+ auto State=Player->GetMover()->GetSyncState();auto& Life=State.SyncStateCollection.FindOrAddMutableDataByType<FProject_JMoverLifecycle>();
+ Life.LandingSequence=3;Life.LandingVelocity=FVector(0,0,-900);
+ Player->GetMover()->OnPostFinalize.Broadcast(State,FMoverAuxStateContext());
+ TestEqual(TEXT("The public landing/foley path receives confirmed impact despite no sampling"),Locomotion->LandStartFallSpeed,900.f);
+ TestTrue(TEXT("Confirmed hard impact selects heavy landing"),Locomotion->bUseHeavyLand);
+ const auto Revision=Locomotion->LandingPresentationRevision;
+ Player->GetMover()->OnPostFinalize.Broadcast(State,FMoverAuxStateContext());
+ TestEqual(TEXT("Re-finalizing one physical episode cannot duplicate the landing event"),Locomotion->LandingPresentationRevision,Revision);
+ return true;
 }
 #endif

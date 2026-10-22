@@ -1,0 +1,10 @@
+{
+  "head": "83edf6057ed1f614bce47156ae1b56b8eeb8ae95",
+  "clientCount": 2,
+  "npcCount": 200,
+  "scenario": "Dedicated server plus separate real socket clients and static AOI counter probes, NullRHI; authored animation uses actual Mover player avatars. Includes production PlayerState owner-only inventory and equipment FastArrays. Optional authored player animation: Start, Stop, landing, hidden cancellation, coalesced boundaries; simulated proxies, no fake roles. Total driver bytes include fixture control traffic.",
+  "packetLag": 0,
+  "packetLoss": 0,
+  "animation": true,
+  "combatInput": true
+}

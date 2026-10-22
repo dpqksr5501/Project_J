@@ -90,8 +90,11 @@ FProject_JMoverPolicy ApplyGameplayPolicy(UMoverComponent* Mover,const FMoverTic
  {
   const float MaxSpeed=FMath::Max(0.f,Policy.MaxSpeed);
   const FVector Requested=Input->GetMoveInput().ContainsNaN()?FVector::ZeroVector:Input->GetMoveInput();
-  if (Input->GetMoveInputType()==EMoveInputType::Velocity) Input->SetMoveInput(EMoveInputType::Velocity,Requested.GetClampedToMaxSize(MaxSpeed));
+  if (Policy.bRequireDirectionalIntent && Input->GetMoveInputType()!=EMoveInputType::DirectionalIntent)
+   Input->SetMoveInput(EMoveInputType::DirectionalIntent,FVector::ZeroVector);
+  else if (Input->GetMoveInputType()==EMoveInputType::Velocity) Input->SetMoveInput(EMoveInputType::Velocity,Requested.GetClampedToMaxSize(MaxSpeed));
   else if(Input->GetMoveInputType()==EMoveInputType::DirectionalIntent) Input->SetMoveInput(EMoveInputType::DirectionalIntent,MaxSpeed>0.f?Requested.GetClampedToMaxSize(1.f):FVector::ZeroVector);
+  else Input->SetMoveInput(EMoveInputType::DirectionalIntent,FVector::ZeroVector);
   // Gameplay mode changes are queued by their owning action, never requested by a client command.
   Input->SuggestedMovementMode=NAME_None;
   if (Policy.bStrafe && (!Input->GetMoveInput().IsNearlyZero() || Start.SyncState.MovementMode==DefaultModeNames::Falling))
@@ -122,7 +125,7 @@ void UProject_JMoverComponent::OnPreSimulate(const FMoverTimeStep& Step,const FM
  // sample's actual Blueprint class and cap the speed before its solver reads it.
  if(auto* Walking=Cast<USimpleWalkingMode>(MovementModes.FindRef(DefaultModeNames::Walking)))
   if(const auto* Settings=FindSharedSettings<UCommonLegacyMovementSettings>())
-   if(Walking->MaxSpeedOverride>=0.f) Walking->MaxSpeedOverride=FMath::Min(Walking->MaxSpeedOverride,Settings->MaxSpeed);
+   Walking->MaxSpeedOverride=Settings->MaxSpeed;
  Super::OnPreSimulate(Step,Start);
 }
 void UProject_JMoverComponent::OnPostSimulate(const FMoverTimeStep& Step,const FMoverTickStartData& Start,FMoverTickEndData& End)

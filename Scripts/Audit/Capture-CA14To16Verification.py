@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 import hashlib
 import json
 import subprocess
+from continuation_provenance import source_hashes, compare_sources, check_artifacts
 
 root = Path(__file__).resolve().parents[2]
 saved = root / 'Saved/Validation/Continuation_20261014'
@@ -20,20 +21,20 @@ read = lambda p: json.loads(p.read_text(encoding='utf-8-sig'))
 sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
 git = lambda *a: subprocess.check_output(['git', '-c', 'core.fsmonitor=false', *a], cwd=root).decode('utf-8').strip()
 frozen = saved / args.version
-runtime = [r for r in read(frozen / 'SourceHashes.json') if r['path'].startswith(('Source/', 'Config/', 'Plugins/ProjectJExperiments/Source/')) or r['path'] == 'Project_J.uproject']
+runtime = read(frozen / 'SourceHashes.json')
 editor = read(frozen / 'EditorBinaryHashes.json')
 preserved = read(frozen / 'Preservation.json')
 report = read(saved / args.regression / 'index.json')
 combat = root / 'Saved/Validation/EF_20260912' / args.combat
 remote = root / 'Saved/Validation/GroupD_20260910' / args.remote
 runtime_paths = {r['path'] for r in runtime}
-actual_paths = {p for p in git('ls-files', '--cached', '--others', '--exclude-standard', '--', 'Source', 'Config', 'Plugins/ProjectJExperiments/Source', 'Project_J.uproject').splitlines() if (root / p).is_file()}
+actual_paths = {r['path'] for r in source_hashes(root)}
 receipt = {
     'utc': datetime.now(timezone.utc).isoformat(), 'head': git('rev-parse', 'HEAD'),
     'branch': git('branch', '--show-current'), 'version': frozen.name,
-    'runtime_count': len(runtime), 'runtime_mismatches': [r['path'] for r in runtime if sha(root / r['path']) != r['sha256']],
+    'runtime_count': len(runtime), 'runtime_mismatches': [r['path'] for r in compare_sources(root,runtime)],
     'runtime_path_difference': sorted(runtime_paths ^ actual_paths),
-    'editor_count': len(editor), 'editor_mismatches': [r['file'] for r in editor if sha(root / 'Binaries/Win64' / r['file']) != r['sha256']],
+    'editor_count': len(editor), 'editor_mismatches': check_artifacts(root,[dict(path=r['path'] if 'path' in r else 'Binaries/Win64/'+r['file'],sha256=r['sha256']) for r in editor]),
     'preserved_count': len(preserved), 'preserved_mismatches': [r['path'] for r in preserved if sha(root / r['path']) != r['sha256']],
     'user_handoff_diff_preserved': git('diff', '--binary', '--', 'Docs/Handoffs/WholeProjectAudit_2026-10-14/Project_J_Complete_Audit_Continuation_2026-10-14.md') == (saved / 'InitialUserChanges.patch').read_text(encoding='utf-8').strip(),
     'content_git_diff_empty': not git('diff', '--name-only', '--', 'Content'),

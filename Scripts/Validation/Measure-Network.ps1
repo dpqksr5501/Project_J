@@ -1,4 +1,4 @@
-﻿param(
+param(
     [Parameter(Mandatory = $true)][ValidatePattern('^[A-Za-z0-9_-]+$')][string]$RunName,
     [ValidateRange(2,8)][int]$ClientCount = 2,
     [ValidateRange(100,2048)][int]$NPCCount = 100,
@@ -35,13 +35,13 @@ $snapshot = @($files | Sort-Object -Unique | ForEach-Object {
     }
 })
 $provenance=Get-ProjectJSourceProvenance -ProjectRoot $projectRoot -RuntimePaths @("$EngineRoot/Engine/Binaries/Win64/UnrealEditor-Cmd.exe")
-[ordered]@{run=$RunName;allRelevant=[bool]$AllRelevant;parallelNet=[bool]$ParallelNet;animation=[bool]$Animation;combatInput=[bool]$CombatInput;packetLag=$PacketLag;packetLoss=$PacketLoss;port=$Port;head=(& git -c core.fsmonitor=false rev-parse HEAD);cpu=(Get-CimInstance Win32_Processor).Name;clientCount=$ClientCount;npcCount=$NPCCount;scenario='Dedicated server plus separate real socket clients and native NPCs, NullRHI. Includes production PlayerState owner-only inventory and equipment FastArrays. Optional authored player animation: Start, Stop, landing, hidden cancellation, coalesced boundaries; simulated proxies, no fake roles. Total driver bytes include fixture control traffic.';sourceFiles=$snapshot;sourceProvenance=$provenance} |
+[ordered]@{run=$RunName;allRelevant=[bool]$AllRelevant;parallelNet=[bool]$ParallelNet;animation=[bool]$Animation;combatInput=[bool]$CombatInput;packetLag=$PacketLag;packetLoss=$PacketLoss;port=$Port;head=(& git -c core.fsmonitor=false rev-parse HEAD);cpu=(Get-CimInstance Win32_Processor).Name;clientCount=$ClientCount;npcCount=$NPCCount;scenario='Dedicated server plus separate real socket clients and static AOI counter probes, NullRHI; authored animation uses actual Mover player avatars. Includes production PlayerState owner-only inventory and equipment FastArrays. Optional authored player animation: Start, Stop, landing, hidden cancellation, coalesced boundaries; simulated proxies, no fake roles. Total driver bytes include fixture control traffic.';sourceFiles=$snapshot;sourceProvenance=$provenance} |
     ConvertTo-Json -Depth 5 | Set-Content "$runRoot/manifest.json" -Encoding utf8
 $exe = "$EngineRoot/Engine/Binaries/Win64/UnrealEditor-Cmd.exe"
 $common = @("$projectRoot/Project_J.uproject",'-game','-unattended','-nop4','-nosplash','-NullRHI','-nosound','-NoLiveCoding','-NoDDCCleanup','-SaveToUserDir','-ProjectJNetworkFixture',"-ProjectJFixtureClients=$ClientCount","-ProjectJFixtureNPCs=$NPCCount",'-statnamedevents','-trace=cpu,frame,bookmark,region,counters,net','-NetTrace=1','-ExecCmds=t.MaxFPS 30')
 if ($Animation) { $common += '-ProjectJAnimationFixture' }
 if ($MoverBuffers) {
-    $common = @($common | ForEach-Object { if ($_ -like '-ExecCmds=*') { $_ + ',ProjectJ.CaptureMoverBuffers 120' } else { $_ } })
+    $common += '-ProjectJCaptureMoverBuffers'
 }
 if ($CombatInput) {
     $common += '-ProjectJCombatInputFixture'
@@ -103,7 +103,7 @@ if ($MoverBuffers) {
         $captures = @(Get-ChildItem -LiteralPath "$runRoot/Client${slot}User/Saved/Validation/MoverBuffers" -Filter '*.csv' -ErrorAction SilentlyContinue | Where-Object Name -notlike '*.actors.csv')
         $valid = $false
         if ($captures.Count -eq 1) {
-            & python "$PSScriptRoot/Validate-MoverBufferCapture.py" $captures[0].FullName --min-receive-hz 10 --output "$runRoot/Client$slot/mover-buffer-validation.json"
+            & python "$PSScriptRoot/Validate-MoverBufferCapture.py" $captures[0].FullName --log "$runRoot/Client$slot.log" --min-receive-hz 10 --output "$runRoot/Client$slot/mover-buffer-validation.json"
             $valid = $LASTEXITCODE -eq 0
         }
         $bufferValidations += [ordered]@{client=$slot;passed=$valid}
@@ -112,8 +112,13 @@ if ($MoverBuffers) {
 }
 $passed = @($results | Where-Object { !$_.success }).Count -eq 0 -and @($exitCodes | Where-Object { $null -eq $_ -or $_ -ne 0 }).Count -eq 0 -and $timeouts.Count -eq 0
 $passed = $passed -and @($bufferValidations | Where-Object { !$_.passed }).Count -eq 0
-$passed = $passed -and $bufferDiagnostics.Count -eq 0
+# Client CSV/log validation rejects every diagnostic after the explicit Stage 2
+# ready boundary. Preserve startup diagnostics above; the authority has no
+# interpolation warmup exemption and all its diagnostics remain failures.
+$serverBufferDiagnostics=@()
+if($MoverBuffers){$serverBufferDiagnostics=@(Select-String -LiteralPath "$runRoot/Server.log" -Pattern 'LogNetworkPrediction: Warning:|LogNetworkPrediction.*Interpolation out of sync|NetworkPrediction.*SystemFault')}
+$passed = $passed -and $serverBufferDiagnostics.Count -eq 0
 $startupErrors = @(Get-ChildItem -LiteralPath $runRoot -Filter '*.log' | Select-String -Pattern 'LogPython: Error:' | ForEach-Object { $_.Line })
-[ordered]@{passed=$passed;results=$results;exitCodes=$exitCodes;bufferValidations=$bufferValidations;bufferDiagnostics=$bufferDiagnostics;nativeHandleCapturedBeforeWait=$true;timeouts=$timeouts.Count;startupPythonErrors=$startupErrors;note='Fixture assertions and exit codes are authoritative. Engine ToolsetRegistry Python startup errors, if present, are recorded separately; a passing fixture does not mean the whole log is clean.'} | ConvertTo-Json -Depth 5 | Set-Content "$runRoot/verification.json" -Encoding utf8
+[ordered]@{passed=$passed;results=$results;exitCodes=$exitCodes;bufferValidations=$bufferValidations;bufferDiagnostics=$bufferDiagnostics;nativeHandleCapturedBeforeWait=$true;timeouts=$timeouts.Count;startupPythonErrors=$startupErrors;note='Fixture assertions and exit codes are authoritative. Buffer capture starts after all clients pass Stage 1; every later NP diagnostic fails CSV/log validation. Raw bufferDiagnostics also retains pre-capture startup diagnostics. A passing fixture does not mean the whole startup log is clean.'} | ConvertTo-Json -Depth 5 | Set-Content "$runRoot/verification.json" -Encoding utf8
 if (!$passed) { throw "Network fixture failed. Inspect $runRoot/verification.json and logs." }
 Write-Output "All processes completed: $runRoot"

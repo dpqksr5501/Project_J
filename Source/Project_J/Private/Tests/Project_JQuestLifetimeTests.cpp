@@ -8,6 +8,9 @@
 #include "Game/Project_JQuestComponent.h"
 #include "CharacterClass/Project_JProgressionComponent.h"
 #include "Project_JAbilitySystemComponent.h"
+#include "AIController.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJQuestLifetimeTest, "ProjectJ.RuntimeOwnership.QuestRetirement",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -41,6 +44,16 @@ bool FProjectJQuestLifetimeTest::RunTest(const FString&)
     auto* Pending = NewObject<UProject_JQuestComponent>(State); Pending->RegisterComponent();
     Pending->Definitions = {Definition}; Pending->Accept(Definition->QuestId);
     TestTrue(TEXT("Incomplete travel objective owns its sampling timer"), World->GetTimerManager().TimerExists(Pending->TravelTimer));
+    auto* Controller=World->SpawnActor<AAIController>();Controller->SetPlayerState(State);
+    auto* Pawn=World->SpawnActor<ACharacter>();Controller->Possess(Pawn);
+    Pawn->GetCharacterMovement()->Velocity=FVector(200,0,0);
+    Pending->SampleTravel();const auto Committed=Pending->CaptureSnapshot();
+    bool bAdmission=false;Pending->PersistentAdmission=[&]() { return bAdmission; };
+    for(int32 Step=1;Step<=3;++Step) { Pawn->SetActorLocation(FVector(Step*100,0,0));Pending->SampleTravel(); }
+    TestEqual(TEXT("Pending travel does not mutate a durable command snapshot"),Pending->States[0].Count,0);
+    Pending->InstallCommittedQuests(Committed);bAdmission=true;Pending->SampleTravel();
+    TestEqual(TEXT("Travel sampled during commit is published after snapshot installation"),Pending->States[0].Count,FMath::Min(3,Definition->RequiredCount));
+    Pending->States[0].Count=0;
     Pending->DestroyComponent();
     TestFalse(TEXT("Incomplete objective's timer retires on component destruction"), World->GetTimerManager().TimerExists(Pending->TravelTimer));
     Pending->RecordObjective(Definition->ObjectiveEvent, 1);

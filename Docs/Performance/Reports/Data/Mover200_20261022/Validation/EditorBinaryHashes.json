@@ -1,0 +1,74 @@
+[
+  {
+    "path": "Binaries/Win64/UnrealEditor-Project_JMMO.dll",
+    "sha256": "56103a4c9b9c6ee6b404f973e2a65a22744dfcc1b34fcb10a2b7fc73351b6e5f"
+  },
+  {
+    "path": "Binaries/Win64/UnrealEditor-Project_J.dll",
+    "sha256": "eb97688e37d740828500463931487052ac24aa1946da223c96d5e9aff89a32b0"
+  },
+  {
+    "path": "Binaries/Win64/UnrealEditor-Project_JCore.dll",
+    "sha256": "9d3128715ac685e86659689988d4cc9085cd5568036e86055833a1a485017458"
+  },
+  {
+    "path": "Binaries/Win64/UnrealEditor-Project_JGAS.dll",
+    "sha256": "4fb926c9f4444dfacbbf2aab7ddffaf6a0e5ee2d5700410104382a426204430b"
+  },
+  {
+    "path": "Binaries/Win64/UnrealEditor-Project_JMount.dll",
+    "sha256": "36fe9e48a153e3d791cd0bae3735f507b98afc103918fa313df258ecc4eb46a6"
+  },
+  {
+    "path": "Binaries/Win64/UnrealEditor-Project_JCharacter.dll",
+    "sha256": "1c18297d1a16c277b96e91fa2fd99c988fa2fe17c4deeffffc0cc03d2efbe478"
+  },
+  {
+    "path": "Binaries/Win64/UnrealEditor-Project_JCharacterEditor.dll",
+    "sha256": "16e7fbb13994968a149c7ebaa221e64341faecdfee6607a1dbd53282c0df73dd"
+  },
+  {
+    "path": "Binaries/Win64/UnrealEditor-Project_JAnimationNodes.dll",
+    "sha256": "104b92289b7561d50fab9227409b10209c06251234bb27364ccae44f199afed8"
+  },
+  {
+    "path": "Binaries/Win64/UnrealEditor.modules",
+    "sha256": "108dca6766d8052fa767709f547b2e75e39676dff75c3627ec863f8520e6fadf"
+  },
+  {
+    "path": "Plugins/Mover/Binaries/Win64/UnrealEditor-Mover.dll",
+    "sha256": "2dad9dbc065d8d426909c832cd02d5009a3490cb309515ac444b954e543b606d"
+  },
+  {
+    "path": "Plugins/Mover/Binaries/Win64/UnrealEditor-MoverCVDData.dll",
+    "sha256": "cf9adfd64195fb5ffda4b4e44c72a007ec05f1539566cdc136623d6e28317acd"
+  },
+  {
+    "path": "Plugins/Mover/Binaries/Win64/UnrealEditor-MoverCVDEditor.dll",
+    "sha256": "1184461b20e02a188458043c2506cddaf87fcf609d6633d490f56934b894476c"
+  },
+  {
+    "path": "Plugins/Mover/Binaries/Win64/UnrealEditor-MoverEditor.dll",
+    "sha256": "bd2588555e36db1dd5457910a48ced3f5b94ab45faf3824d2a2fc55f61caf02b"
+  },
+  {
+    "path": "Plugins/Mover/Binaries/Win64/UnrealEditor.modules",
+    "sha256": "bc852746096b84441aba758937519aaadf68807b8103cab64325470ff4c35c43"
+  },
+  {
+    "path": "Plugins/NetworkPrediction/Binaries/Win64/UnrealEditor-NetworkPrediction.dll",
+    "sha256": "11e309b932307a46721123a7e40001ef588d78c47eb2ad827680a8bf1624ec21"
+  },
+  {
+    "path": "Plugins/NetworkPrediction/Binaries/Win64/UnrealEditor.modules",
+    "sha256": "b0a59c622418ac19a524cc51997b44d0c6d80dc4079beeb70420cd0345784938"
+  },
+  {
+    "path": "Plugins/ProjectJExperiments/Binaries/Win64/UnrealEditor-ProjectJExperiments.dll",
+    "sha256": "ff564e31bac5516616c99a58ffe2c1cbd082dd59e15a7a40a8cdb3cc867f4c2a"
+  },
+  {
+    "path": "Plugins/ProjectJExperiments/Binaries/Win64/UnrealEditor.modules",
+    "sha256": "8481d50b36d0dfa2e16bcd2a0ab03dafaeb7d7bf102b28b7515a12aa3af5748b"
+  }
+]

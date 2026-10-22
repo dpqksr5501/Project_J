@@ -1,0 +1,220 @@
+{
+  "automation": {
+    "Native07": {
+      "succeeded": 100,
+      "succeededWithWarnings": 0,
+      "failed": 0,
+      "notRun": 0,
+      "inProcess": 0,
+      "source_report": "Saved/Validation/PlayerLocomotion/MoverAudit07/Automation/index.json",
+      "report_sha256": "b267f3abfb08b1c233ffc12a3a93275e1d873fd9d446794de36c90c8cca9301d"
+    },
+    "Mass03": {
+      "succeeded": 13,
+      "succeededWithWarnings": 0,
+      "failed": 0,
+      "notRun": 0,
+      "inProcess": 0,
+      "source_report": "Saved/Validation/GroupD_20260910/MoverAuditMass03/Automation/index.json",
+      "report_sha256": "aebe9f7cc4c3981ba403ea316112d22ec7904dedc5ba34c3bf575e3757e0af92"
+    },
+    "Visual02": {
+      "succeeded": 2,
+      "succeededWithWarnings": 0,
+      "failed": 0,
+      "notRun": 0,
+      "inProcess": 0,
+      "source_report": "Saved/Validation/EF_20260912/MoverAuditVisual02/Automation/index.json",
+      "report_sha256": "cd67a18dc811af6300a880fe582e9509ee0635a9ebe75740e89145b494b5cd3b"
+    },
+    "Experiments01": {
+      "succeeded": 48,
+      "succeededWithWarnings": 0,
+      "failed": 0,
+      "notRun": 0,
+      "inProcess": 0,
+      "source_report": "Saved/Validation/EF_20260912/MoverAuditExperiments01/Automation/index.json",
+      "report_sha256": "c94fbd458102544649e1be59cba0fb621f9fe39024ed0e73ccff869ca9abb47b"
+    },
+    "Maturity01": {
+      "succeeded": 135,
+      "succeededWithWarnings": 4,
+      "failed": 0,
+      "notRun": 0,
+      "inProcess": 0,
+      "source_report": "Saved/Validation/Maturity/MoverAuditMaturity01/Automation/index.json",
+      "report_sha256": "62632fe092c8dad223ab012821f9bdc2e70e9aaf0f32594651d9c1e4ba8a5803"
+    }
+  },
+  "network": {
+    "MoverAuditNetwork02": {
+      "passed": true,
+      "conditions": {
+        "clientCount": 2,
+        "npcCount": 200,
+        "packetLag": 0,
+        "packetLoss": 0
+      },
+      "raw_diagnostics": [
+        "[2026.10.22-11.37.39:560][120]LogNetworkPrediction: Warning: Independent Interpolation fell behind. BufferedMS: 699",
+        "[2026.10.22-11.37.39:531][119]LogNetworkPrediction: Warning: Independent Interpolation fell behind. BufferedMS: 666"
+      ],
+      "clients": [
+        {
+          "passed": true,
+          "capture": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\GroupD_20260910\\MoverAuditNetwork02\\Client1User\\Saved\\Validation\\MoverBuffers\\20261022_203743.csv",
+          "worlds": [
+            {
+              "world": "/Engine/Maps/Entry.Entry",
+              "frames": 926,
+              "total_frames": 926,
+              "warmup_frames": 0,
+              "total_duration_seconds": 30.835032,
+              "measured_duration_seconds": 30.835032,
+              "min_buffer_ms": 6.83,
+              "max_buffer_ms": 106.01,
+              "max_frame_ms": 33.351,
+              "tail_min_buffer_ms": 8.02,
+              "tail_mean_buffer_ms": 62.317588888888885,
+              "tail_receive_hz": 14.821207396186704,
+              "future_frames": 0,
+              "rewinds": 0
+            }
+          ],
+          "diagnostics": {
+            "startup_diagnostics": [
+              "[2026.10.22-11.37.39:560][120]LogNetworkPrediction: Warning: Independent Interpolation fell behind. BufferedMS: 699"
+            ],
+            "captured_diagnostics": [],
+            "capture_start_line": 1661
+          }
+        },
+        {
+          "passed": true,
+          "capture": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\GroupD_20260910\\MoverAuditNetwork02\\Client2User\\Saved\\Validation\\MoverBuffers\\20261022_203743.csv",
+          "worlds": [
+            {
+              "world": "/Engine/Maps/Entry.Entry",
+              "frames": 924,
+              "total_frames": 924,
+              "warmup_frames": 0,
+              "total_duration_seconds": 30.769094,
+              "measured_duration_seconds": 30.769094,
+              "min_buffer_ms": 6.54,
+              "max_buffer_ms": 111.227,
+              "max_frame_ms": 33.337,
+              "tail_min_buffer_ms": 16.898,
+              "tail_mean_buffer_ms": 66.48633333333333,
+              "tail_receive_hz": 15.154071444374965,
+              "future_frames": 0,
+              "rewinds": 0
+            }
+          ],
+          "diagnostics": {
+            "startup_diagnostics": [
+              "[2026.10.22-11.37.39:531][119]LogNetworkPrediction: Warning: Independent Interpolation fell behind. BufferedMS: 666"
+            ],
+            "captured_diagnostics": [],
+            "capture_start_line": 1659
+          }
+        }
+      ],
+      "source_manifest_sha256": "b36037410b9d17a0025244e3a32975add97120b474896629e0eaa141aa5e8b1d"
+    },
+    "MoverAuditNetwork03": {
+      "passed": true,
+      "conditions": {
+        "clientCount": 2,
+        "npcCount": 200,
+        "packetLag": 80,
+        "packetLoss": 2
+      },
+      "raw_diagnostics": [],
+      "clients": [
+        {
+          "passed": true,
+          "capture": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\GroupD_20260910\\MoverAuditNetwork03\\Client1User\\Saved\\Validation\\MoverBuffers\\20261022_203906.csv",
+          "worlds": [
+            {
+              "world": "/Engine/Maps/Entry.Entry",
+              "frames": 980,
+              "total_frames": 980,
+              "warmup_frames": 0,
+              "total_duration_seconds": 32.634713,
+              "measured_duration_seconds": 32.634713,
+              "min_buffer_ms": 1.0,
+              "max_buffer_ms": 199.333,
+              "max_frame_ms": 33.346,
+              "tail_min_buffer_ms": 1.0,
+              "tail_mean_buffer_ms": 72.27654444444444,
+              "tail_receive_hz": 14.48476186209361,
+              "future_frames": 0,
+              "rewinds": 0
+            }
+          ],
+          "diagnostics": {
+            "startup_diagnostics": [],
+            "captured_diagnostics": [],
+            "capture_start_line": 1660
+          }
+        },
+        {
+          "passed": true,
+          "capture": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\GroupD_20260910\\MoverAuditNetwork03\\Client2User\\Saved\\Validation\\MoverBuffers\\20261022_203906.csv",
+          "worlds": [
+            {
+              "world": "/Engine/Maps/Entry.Entry",
+              "frames": 975,
+              "total_frames": 975,
+              "warmup_frames": 0,
+              "total_duration_seconds": 32.468082,
+              "measured_duration_seconds": 32.468082,
+              "min_buffer_ms": 1.0,
+              "max_buffer_ms": 199.333,
+              "max_frame_ms": 33.347,
+              "tail_min_buffer_ms": 1.0,
+              "tail_mean_buffer_ms": 72.30887777777778,
+              "tail_receive_hz": 14.48529372133258,
+              "future_frames": 0,
+              "rewinds": 0
+            }
+          ],
+          "diagnostics": {
+            "startup_diagnostics": [],
+            "captured_diagnostics": [],
+            "capture_start_line": 1658
+          }
+        }
+      ],
+      "source_manifest_sha256": "07f1390a84f2589093a525ba528e7eff669e9bcc26c047cf014e85a456852e20"
+    }
+  },
+  "scope": "Separate runs overlap; test counts are not summed. Maturity and Experiments are earlier expanded runs; final focused checks cover changed production paths.",
+  "main_world": {
+    "passed": true,
+    "reason": "Saved MainWorld and pawn/weather smoke",
+    "elapsed_seconds": 33.625
+  },
+  "python_tests": {
+    "passed": 48,
+    "log_sha256": "f4db2ece4eebc4c2418c60bacce3bafcc3b42894895d72483d81ea306b0e62b8"
+  },
+  "editor_build": {
+    "result": "Succeeded",
+    "log": "Saved/Validation/MoverAudit/EditorBuild14.log",
+    "log_sha256": "b449e6a86f4a802ae16ed9754e66bfdd9223b92f495c8c329b87e1b23c6aa924"
+  },
+  "render_source_matches_game_freeze": true,
+  "game_build": {
+    "result": "Succeeded",
+    "log_sha256": "86fa9152c92a8dfbc23ad2a5851ebf20cf1c60af2b8bf91e721aff63c39cbb11",
+    "identity": "GameIdentity.json"
+  },
+  "not_verified": [
+    "200 real socket connections",
+    "Flight owning-client speed/correction and automatic ascent/landing E2E",
+    "New Cook/package/Shipping",
+    "All clip/body/contact visual approval",
+    "Sustained large battle tail latency"
+  ]
+}

@@ -50,8 +50,6 @@ class FNavLoadCommand : public IAutomationLatentCommand
 public:
 	explicit FNavLoadCommand(FAutomationTestBase* InTest, int32 InCount = 100) : Count(InCount), Test(InTest), Started(FPlatformTime::Seconds())
 	{
-		Test->AddExpectedMessage(TEXT("SpawnMissingNavigationData: No saved navigation data found"), ELogVerbosity::Warning, EAutomationExpectedMessageFlags::Contains, 1, false);
-		Test->AddExpectedMessage(TEXT("Unable to find RecastNavMesh instance while trying to create UCrowdManager instance"), ELogVerbosity::Warning, EAutomationExpectedMessageFlags::Contains, 1, false);
 		FString Root;
 		if (!FParse::Value(FCommandLine::Get(), TEXT("ProjectJNavOutput="), Root))
 		{
@@ -87,17 +85,24 @@ public:
 		auto* Bounds = World->SpawnActor<ANavMeshBoundsVolume>();
 		auto* Builder = NewObject<UCubeBuilder>(); Builder->X = 9800; Builder->Y = 5800; Builder->Z = 1000;
 		UActorFactory::CreateBrushForVolumeActor(Bounds, Builder);
-		FNavigationSystem::AddNavigationSystemToWorld(*World, FNavigationSystemRunMode::GameMode);
+		// Match the single-agent native fixture: register explicit Recast data
+		// before initialization instead of requiring missing-data startup warnings.
+		FNavigationSystem::AddNavigationSystemToWorld(*World, FNavigationSystemRunMode::GameMode, nullptr, false);
 		Nav = FNavigationSystem::GetCurrent<UNavigationSystemV1>(World);
 		if (Nav)
 		{
-			Nav->OnNavigationBoundsUpdated(Bounds);
-			if (auto* Data = Nav->GetDefaultNavDataInstance(FNavigationSystem::Create))
+			auto* CrowdClass=FindFProperty<FSoftClassProperty>(Nav->GetClass(),TEXT("CrowdManagerClass"));
+			check(CrowdClass);
+			CrowdClass->SetObjectPropertyValue_InContainer(Nav,nullptr);
+			if (auto* Data = World->SpawnActor<ARecastNavMesh>())
 			{
+				Data->SetConfig(UNavigationSystemV1::GetDefaultSupportedAgent());
 				auto* Property = FindFProperty<FEnumProperty>(ANavigationData::StaticClass(), TEXT("RuntimeGeneration"));
 				Property->GetUnderlyingProperty()->SetIntPropertyValue(Property->ContainerPtrToValuePtr<void>(Data), int64(ERuntimeGenerationType::Dynamic));
 				Data->MarkRequiresInitialRebuild();
 			}
+			Nav->InitializeForWorld(*World,FNavigationSystemRunMode::GameMode);
+			Nav->OnNavigationBoundsUpdated(Bounds);
 			Nav->Build(); // Setup only. Measured dirty stage never calls Build/invalidate/AddDirtyArea.
 		}
 		FActorSpawnParameters P; P.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;

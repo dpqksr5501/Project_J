@@ -99,6 +99,7 @@ private:
  friend class UProject_JAnimationUpdateCoordinatorComponent;
  friend class UProject_JCharacterAnimationBudgetSubsystem;
  friend class FProjectJPlayerLocomotionSnapshotBoundaryTest;
+ friend class FProjectJPlayerLocomotionMoverAimPublication;
  friend class FProjectJAnimationProxyLifetimeTest;
  friend class FProjectJPlaybackObservationLifetimeTest;
  void ReleaseFollowerTickOverride(bool bRestoreTick=true);

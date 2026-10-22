@@ -81,6 +81,9 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category="Mount|Flight")
 	void K2_OnLandingFailed(EProject_JMountLandingFailure Reason, int32 AttemptId);
 	void ApplyFlightBraking(bool bGliding);
+	virtual void PostInitializeComponents() override;
+	void RefreshFlightMovementSettings();
+	UFUNCTION() void OnRep_IsGliding();
 	void ApplyFlightStateTags(EProject_JMountFlightState NewState);
 	uint32 FlightStateRevision = 0;
 	float ResolveTakeOffImpulseTime() const;
@@ -107,7 +110,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Mount|Flight|Braking", meta=(ClampMin="0.0")) float GlideBrakingDeceleration = 350.0f;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Mount|Flight|Braking", meta=(ClampMin="0.0")) float FlyingBrakingFriction = 4.5f;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Mount|Flight|Braking", meta=(ClampMin="0.0")) float GlideBrakingFriction = 1.0f;
-	UPROPERTY(Replicated, BlueprintReadOnly, Category="Mount|Flight") bool bIsGliding = false;
+	UPROPERTY(ReplicatedUsing=OnRep_IsGliding, BlueprintReadOnly, Category="Mount|Flight") bool bIsGliding = false;
 	UPROPERTY(ReplicatedUsing=OnRep_FlightState, BlueprintReadOnly, Category="Mount|Flight") EProject_JMountFlightState FlightState = EProject_JMountFlightState::Grounded;
 	UPROPERTY(Replicated, BlueprintReadOnly, Category="Mount|Flight") float FlightPhaseStartServerTime = 0.0f;
 	UPROPERTY(Replicated, BlueprintReadOnly, Category="Mount|Flight") EProject_JMountLandingFailure LastLandingFailure = EProject_JMountLandingFailure::None;

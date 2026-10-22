@@ -231,58 +231,39 @@ void UProject_JQuestComponent::ServerTracking_Implementation(FName Id, bool bTra
 }
 void UProject_JQuestComponent::SampleTravel()
 {
-	if (!CanMutate())
+	if (!CanPublish() || !GetOwner()->HasAuthority() || bChanging) return;
+	const bool bActive = States.ContainsByPredicate([this](const FProject_JQuestState& State)
 	{
-		return;
-	}
-	bool bActive = false;
-	for (const auto &State : States)
-		if (const auto *Def = FindDefinition(State.QuestId);
-			Def && Def->bTravelObjective && !State.bClaimed && State.Count < Def->RequiredCount)
-			bActive = true;
-	if (!bActive)
-	{
-		GetWorld()->GetTimerManager().ClearTimer(TravelTimer);
-		return;
-	}
-	auto *PS = Cast<APlayerState>(GetOwner());
-	auto *Pawn = PS ? PS->GetPawn() : nullptr;
-	if (!Pawn)
-	{
-		TravelPawn.Reset();
-		return;
-	}
+		const auto* Def = FindDefinition(State.QuestId);
+		return Def && Def->bTravelObjective && !State.bClaimed && State.Count < Def->RequiredCount;
+	});
+	if (!bActive) { ReconcileTravelSampling(); return; }
+	auto* PS = Cast<APlayerState>(GetOwner());
+	auto* Pawn = PS ? PS->GetPawn() : nullptr;
+	if (!Pawn) { TravelPawn.Reset(); TravelRemainder = 0; return; }
 	const FVector Position = Pawn->GetActorLocation();
 	if (TravelPawn.Get() == Pawn)
 	{
 		const double Distance = FVector::Dist2D(Position, LastLocation);
-		// Count sampled horizontal movement; ignore large teleport/respawn jumps.
+		// Keep sampling during a durable command; never turn a long pause into a teleport.
 		if (Distance > 0 && Distance < 1000 && !Pawn->GetVelocity().IsNearlyZero())
-		{
-			TravelRemainder += Distance / 100.;
-			const int32 Count = FMath::FloorToInt(TravelRemainder);
-			TravelRemainder -= Count;
-			if (Count > 0)
-			{
-				TSet<FName> Events;
-				for (const UProject_JQuestDefinition *Def : Definitions)
-					if (Def && Def->bTravelObjective)
-						Events.Add(Def->ObjectiveEvent);
-				for (FName Event : Events)
-				{
-					RecordObjective(Event, Count);
-					if (!CanPublish() || !TravelTimer.IsValid())
-					{
-						return;
-					}
-				}
-			}
-		}
+			TravelRemainder = FMath::Min(1000000., TravelRemainder + Distance / 100.);
 	}
-	else
-		TravelRemainder = 0;
-	TravelPawn = Pawn;
-	LastLocation = Position;
+	else TravelRemainder = 0;
+	TravelPawn = Pawn; LastLocation = Position;
+	// Only publish after the committed snapshot has been installed. Pending distance
+	// is bounded and belongs to this pawn; it never mutates the in-flight snapshot.
+	if (!CanMutate()) return;
+	const int32 Count = FMath::FloorToInt(TravelRemainder);
+	if (Count <= 0) return;
+	TravelRemainder -= Count;
+	TSet<FName> Events;
+	for (const UProject_JQuestDefinition* Def : Definitions) if (Def && Def->bTravelObjective) Events.Add(Def->ObjectiveEvent);
+	for (FName Event : Events)
+	{
+		RecordObjective(Event, Count);
+		if (!CanPublish() || !TravelTimer.IsValid()) return;
+	}
 }
 FProject_JQuestSnapshot UProject_JQuestComponent::CaptureSnapshot() const
 {

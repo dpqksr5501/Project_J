@@ -2,7 +2,8 @@
 import array,datetime,json,time,traceback,runpy
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];OUT=ROOT/'Saved/Validation/StarterWorld'
+ROOT=Path(__file__).resolve().parents[2];OUT=Path(globals().get('verification_output',ROOT/'Saved/Validation/StarterWorld'))
+OUT.mkdir(parents=True,exist_ok=True)
 SOURCE=ROOT/'Content/World/MainWorld/Source'
 plan=json.loads((SOURCE/'MainWorld.plan.json').read_text(encoding='utf-8'))
 manifest=json.loads((SOURCE/'MainWorld.manifest.json').read_text(encoding='utf-8'))
@@ -81,7 +82,7 @@ def verify(dt):
         (OUT/'world-build.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
         unreal.log('STARTER_WORLD_SAVED_MAP_VERIFIED '+json.dumps(report))
         if '-StarterVisualOnly' not in unreal.SystemLibrary.get_command_line():
-            smoke_fixture.update(runpy.run_path(str(ROOT/'Scripts/World/Smoke-StarterWorld.py')))
+            smoke_fixture.update(runpy.run_path(str(ROOT/'Scripts/World/Smoke-StarterWorld.py'),init_globals={'smoke_output':OUT}))
     except Exception:
         (OUT/'verification-error.txt').write_text(traceback.format_exc(),encoding='utf-8');unreal.log_error(traceback.format_exc())
         unreal.EditorPythonScripting.set_keep_python_script_alive(False)

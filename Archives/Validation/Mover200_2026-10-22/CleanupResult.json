@@ -1,0 +1,11 @@
+{
+  "deletedFiles": 959,
+  "deletedLogicalBytes": 1374298581,
+  "archiveBytes": 215908297,
+  "logicalReductionAfterArchiveBytes": 1158390284,
+  "retiredIncidentalTraceBytes": 1042436636,
+  "freeImmediatelyBeforeDeletion": 155568361472,
+  "freeImmediatelyAfterDeletion": 155645497344,
+  "observedFreeIncreaseDuringDeletion": 77135872,
+  "note": "Free-space deltas include concurrent disk activity and exclude later Git LFS object storage. Retired traces cannot be restored; retained payloads are SHA-256 verified."
+}

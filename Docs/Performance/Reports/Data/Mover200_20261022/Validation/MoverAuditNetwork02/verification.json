@@ -1,0 +1,43 @@
+{
+  "passed": true,
+  "results": [
+    {
+      "file": "Server/server.json",
+      "success": true,
+      "reason": "Five AOI/FastArray stages and graceful disconnect passed"
+    },
+    {
+      "file": "Client1/client.json",
+      "success": true,
+      "reason": "Server completed connection/AOI/FastArray assertions"
+    },
+    {
+      "file": "Client2/client.json",
+      "success": true,
+      "reason": "Server completed connection/AOI/FastArray assertions"
+    }
+  ],
+  "exitCodes": [
+    0,
+    0,
+    0
+  ],
+  "bufferValidations": [
+    {
+      "client": 1,
+      "passed": true
+    },
+    {
+      "client": 2,
+      "passed": true
+    }
+  ],
+  "bufferDiagnostics": [
+    "[2026.10.22-11.37.39:560][120]LogNetworkPrediction: Warning: Independent Interpolation fell behind. BufferedMS: 699",
+    "[2026.10.22-11.37.39:531][119]LogNetworkPrediction: Warning: Independent Interpolation fell behind. BufferedMS: 666"
+  ],
+  "nativeHandleCapturedBeforeWait": true,
+  "timeouts": 0,
+  "startupPythonErrors": [],
+  "note": "Fixture assertions and exit codes are authoritative. Buffer capture starts after all clients pass Stage 1; every later NP diagnostic fails CSV/log validation. Raw bufferDiagnostics also retains pre-capture startup diagnostics. A passing fixture does not mean the whole startup log is clean."
+}

@@ -86,6 +86,7 @@ class PROJECT_JCHARACTER_API AProject_JBaseCharacter : public AProject_JMoverPaw
 	}
 
   protected:
+	friend class FProjectJRepossessAttributeDefaultsTest;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Foley")
 	TObjectPtr<UProject_JFoleyComponent> FoleyComponent;
 

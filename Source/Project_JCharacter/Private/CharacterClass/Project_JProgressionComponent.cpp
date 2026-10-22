@@ -591,7 +591,9 @@ void UProject_JProgressionComponent::InstallCommittedProgression(
 {
 	check(IsInGameThread());
 	TArray<TObjectPtr<UProject_JCharacterAdvancementDefinition>> Active;
-	check(ValidateRestoreSnapshot(Snapshot, Class, History, Active, true));
+	const bool bValidSnapshot = ValidateRestoreSnapshot(Snapshot, Class, History, Active, true);
+	checkf(bValidSnapshot, TEXT("Committed progression snapshot must have been validated"));
+	if (!bValidSnapshot) { return; }
 	bRebuildCommittedClass = State.ClassDefinition != Class;
 	bRebuildCommittedAdvancements = false;
 	CommittedGrantsToAdd.Reset();

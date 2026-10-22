@@ -37,6 +37,7 @@ public class Project_J : ModuleRules
 			"JsonUtilities",
 			"NetCore",
 			"RHI",
+			"RenderCore",
 			"Niagara"
 		});
 

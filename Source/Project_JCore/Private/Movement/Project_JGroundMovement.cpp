@@ -41,6 +41,24 @@ void UProject_JGroundMovementLibrary::GenerateGroundMove(USmoothWalkingMode* Mod
 	const auto& Tuning=Mover->GroundMovementSettings;
 	const auto* Intent=StartState.InputCmd.InputCollection.FindDataByType<FProject_JMoverInputs>();
 	const auto* Input=StartState.InputCmd.InputCollection.FindDataByType<FCharacterDefaultInputs>();
+	FVector Velocity=DesiredVelocity;
+	if (Mover->HasGameplayTag(FGameplayTag::RequestGameplayTag(TEXT("Mover.AnimRootMotion"),false),false)) Velocity=InOutVelocity;
+	else if (Tuning.bSlopeRelativeVelocity)
+	{
+		FHitResult Floor;
+		Mover->TryGetFloorCheckHitResult(Floor);
+		Velocity=FQuat::FindBetweenNormals(FVector::UpVector,Floor.Normal).RotateVector(Velocity);
+	}
+	// NavMover's velocity command already owns arrival and stopping. Feeding it
+	// through the player's acceleration spring retains energy after path aborts
+	// and makes fast NPCs repeatedly leave their arrival radius. Reuse the engine
+	// velocity solver; player admission accepts only DirectionalIntent below.
+	if (Input && Input->GetMoveInputType()==EMoveInputType::Velocity)
+	{
+		Mode->USimpleWalkingMode::GenerateWalkMove_Implementation(StartState,DeltaSeconds,SimContext,Velocity,
+			DesiredFacing,CurrentFacing,InOutAngularVelocityDegrees,InOutVelocity);
+		return;
+	}
 	const float Speed=InOutVelocity.Size2D();
 	const bool bIdle=!Input || Input->GetMoveInput().IsNearlyZero();
 	const uint8 Gait=Intent?(Intent->bSprint?2:Intent->bWalk?0:1):1;
@@ -64,14 +82,6 @@ void UProject_JGroundMovementLibrary::GenerateGroundMove(USmoothWalkingMode* Mod
 	const float RotationOffset=Intent && Intent->bStrafe && FMath::IsFinite(Intent->RotationOffset)?FMath::Clamp(Intent->RotationOffset,-180.f,180.f):0.f;
 	float CurrentOffset;
 	const FQuat Facing=ResolveGroundFacing(CurrentFacing,DesiredFacing,RotationOffset,CurrentOffset);
-	FVector Velocity=DesiredVelocity;
-	if (Mover->HasGameplayTag(FGameplayTag::RequestGameplayTag(TEXT("Mover.AnimRootMotion"),false),false)) Velocity=InOutVelocity;
-	else if (Tuning.bSlopeRelativeVelocity)
-	{
-		FHitResult Floor;
-		Mover->TryGetFloorCheckHitResult(Floor);
-		Velocity=FQuat::FindBetweenNormals(FVector::UpVector,Floor.Normal).RotateVector(Velocity);
-	}
 	// Keep the engine's rollback-owned spring state and simulation implementation.
 	Mode->USmoothWalkingMode::GenerateWalkMove_Implementation(StartState,DeltaSeconds,SimContext,Velocity,Facing,CurrentFacing,InOutAngularVelocityDegrees,InOutVelocity);
 	const float ControlRate=Intent && FMath::IsFinite(Intent->ControlRotationRate)?Intent->ControlRotationRate:0.f;

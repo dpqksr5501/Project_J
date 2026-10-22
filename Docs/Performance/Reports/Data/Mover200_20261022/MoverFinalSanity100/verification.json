@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "exitCode": 0,
+  "frames": 4849,
+  "scope": "Real offscreen viewport/RHI and actual constructed retarget bodies; simplified camera/light scene; no remote clients. GPU counters may be delayed. Captures affect frame timing."
+}

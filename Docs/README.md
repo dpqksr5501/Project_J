@@ -7,7 +7,7 @@
 1. [프로젝트 맥락](Overview/ProjectContext.md): 시스템·권위·상태 소유권과 실제 사용 구조.
 2. [애니메이션](Animation/README.md): Mover·native 상태/핀 계산·공용 포즈 재생·골격/몸체 제작의 현재 기준. 이전 MM/CMC 이력과 mirror 메타데이터를 구분한다.
 3. [검토 목차](Review/README.md): main 통합·R19/R20·소스/BP/DA 정리와 이전 감사의 구분, 유지·보류 범위.
-4. [성능](Performance/README.md): 과거 수치의 조건과 남은 CPU·렌더 차이. 현재 반복 성능 조사·대규모 부하는 보류한다.
+4. [성능](Performance/README.md): **기존 최적화 → Mover 전환 → 이번 재최적화**의 구조와 비교 가능한 수치를 읽는다. [200명 수정·재측정](Performance/Reports/ProjectJ_Mover_200_2026-10-22.md)은 기존 최적화 위의 추가 효과이며, 동시 공격은 기존 품질을 유지한다.
 
 과거 인계의 미완료 목록과 Prompt는 현재 작업 지시가 아니다. 이미 구현한 기능을 다시 만들지 않고, 재개 범위는 최신 사용자 요청으로 정한다. 전체 감사 요약을 여러 README에 복제하지 않으며 통합 전 안내는 [보관 자료](Archive/README.md)에 남겼다.
 
@@ -20,6 +20,7 @@
 | 이동·리타깃·손 접촉 설정 | [애니메이션](Animation/README.md) |
 | 현재 단발→MM 구조·느린 회전·Master 정리 | [통합 재생](Animation/Planning/Unified_Locomotion_Implementation_2026-10-12.md) → [지속 곡선 판정](Animation/Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md) |
 | 200명 시각 예산·기존 병렬 구조·성능 비교 | [2026-10-12 구현과 검증](Animation/Planning/Crowd_Visual_Presentation_Budget_2026-10-12.md) |
+| 측정 원자료 수신·압축 검증·복원 | [Git LFS 검증 자료 보관소](../Archives/Validation/README.md) |
 | 공격·콤보·전투 VFX 제작 | [전투](Combat/README.md) |
 | 직업·스킬·장비·탈것 확장 | [게임플레이](Gameplay/README.md) |
 | 시작 권역 8×8km 재제작·MCP 에셋 조사 | [현재 월드 제작](World/README.md) → [최신 중단·인수인계](World/WORLD_HANDOFF_2026-10-18.md) |

@@ -15,7 +15,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJPresentationAudit, "ProjectJ.GroupE.Au
 bool FProjectJPresentationAudit::RunTest(const FString&)
 {
     TArray<TSharedPtr<FJsonValue>> Assets;
-    for (const TCHAR* Path : {TEXT("/Game/Animation_Logic/ABPs/ABP_Humanoid_Master.ABP_Humanoid_Master"),
+    for (const TCHAR* Path : {TEXT("/Game/Animation_Logic/ABPs/ABP_Player_Master.ABP_Player_Master"),
         TEXT("/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Layers.ABP_Greatsword_Layers")})
     {
         auto* BP = LoadObject<UAnimBlueprint>(nullptr, Path);

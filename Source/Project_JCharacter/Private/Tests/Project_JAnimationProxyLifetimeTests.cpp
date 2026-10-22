@@ -63,6 +63,29 @@ bool FProjectJPlayerLocomotionSnapshotBoundaryTest::RunTest(const FString&)
     TestEqual(TEXT("Reinitialize clears the prior owner's snapshot"), Proxy.GetThreadSafeData().Movement.GroundSpeed, 0.f);
     TestTrue(TEXT("Reinitialize clears stale playback observations"), Proxy.GetLatestPostSelection().SelectedAnimation.IsNone());
     TestFalse(TEXT("Reinitialize cannot retain a previous owner's cadence policy"),Proxy.GetThreadSafeData().Ground.bScalePlayRateWithSpeed);
+    Anim->PlayerMovementMode=Anim->PlayerMovementModeRecent=EProject_JPlayerMovementMode::InAir;
+    Anim->PlayerVelocity=FVector(0,0,-900);
+    Anim->NativeInitializeAnimation();
+    Anim->UpdateNativeLocomotionLogic();
+    TestFalse(TEXT("Reinitialized graph remains closed until a completed source"),Anim->PlayerHasLocomotionSource);
+    Anim->PlayerCharacterProperties={};
+    Anim->PlayerCharacterProperties.MovementMode=EProject_JPlayerMovementMode::OnGround;
+    Anim->PlayerHasOwningActor=Anim->PlayerHasLocomotionSource=Anim->PlayerUseThreadSafeUpdateAnimation=true;
+    Anim->UpdateNativeLocomotionLogic();
+    TestFalse(TEXT("The first admitted frame cannot fabricate a heavy landing"),Anim->EvaluateHeavyLanding());
+    TestFalse(TEXT("The first admitted frame cannot fabricate a light landing"),Anim->EvaluateLightLanding());
+    TestTrue(TEXT("First frame derivatives are seeded from the new source"),Anim->PlayerVelocityAcceleration.IsNearlyZero());
+    TestEqual(TEXT("Recent mode belongs to the new lifetime"),Anim->PlayerMovementModeRecent,EProject_JPlayerMovementMode::OnGround);
+    Anim->PlayerCharacterProperties.MovementMode=EProject_JPlayerMovementMode::InAir;
+    Anim->PlayerCharacterProperties.Velocity=FVector(0,0,-900);Anim->UpdateNativeLocomotionLogic();
+    Anim->PlayerCharacterProperties.MovementMode=EProject_JPlayerMovementMode::OnGround;
+    Anim->PlayerCharacterProperties.Velocity=FVector::ZeroVector;Anim->UpdateNativeLocomotionLogic();
+    TestTrue(TEXT("A real landing in the new lifetime is retained"),Anim->EvaluateHeavyLanding());
+    Anim->ThreadSafeData={};Anim->ThreadSafeData.Input.bHasMoveInput=true;
+    Anim->ThreadSafeData.Movement.Velocity=FVector(300,0,0);Anim->ThreadSafeData.Movement.Acceleration=FVector(-4000,0,0);
+    TestTrue(TEXT("Strafe velocity reversal retains full visual evaluation without a facing turn"),Anim->NeedsFullRateVisualUpdate());
+    Anim->ThreadSafeData.Movement.Acceleration=FVector(4000,0,0);
+    TestFalse(TEXT("Steady straight movement can use the authored visual budget"),Anim->NeedsFullRateVisualUpdate());
     return true;
 }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJPlaybackObservationLifetimeTest, "ProjectJ.PlayerLocomotion.PlaybackObservationLifetime",

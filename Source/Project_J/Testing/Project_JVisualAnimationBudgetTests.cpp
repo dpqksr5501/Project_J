@@ -169,7 +169,10 @@ public:
 		if (Frame == 660) { Local->UnPossess(); Player->SetPlayerState(nullptr); Coordinator->bAllowVisualBudget = false; }
 		if (auto* Tier = FindFProperty<FFloatProperty>(AProject_JBaseCharacter::StaticClass(), TEXT("CurrentSignificance")))
 			Tier->SetPropertyValue_InContainer(Player, Frame < 180 ? 0 : 2);
-		Test->TestTrue(TEXT("Synthetic budget frame published"),ProjectJ::Tests::PublishMoverFrame(Player,MOVE_None,FVector(200,0,0))); Player->AddActorWorldOffset(FVector(200.f/60,0,0));
+		// Prescribe the component transform before publishing the matching Mover
+		// frame. This is a visual-policy fixture, not an out-of-band physics move.
+		Player->AddActorWorldOffset(FVector(200.f/60,0,0));
+		Test->TestTrue(TEXT("Synthetic budget frame published"),ProjectJ::Tests::PublishMoverFrame(Player,MOVE_None,FVector(200,0,0)));
 		TInlineComponentArray<USkeletalMeshComponent*> Meshes(Player);
 		for (auto* Mesh : Meshes) Mesh->SetLastRenderTime(bHidden ? -1000 : World->GetTimeSeconds());
 		const int16 Before = Body->GetAnimInstance()->GetUpdateCounter().Get();

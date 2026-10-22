@@ -1,0 +1,27 @@
+{
+  "passed": true,
+  "capture": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\GroupD_20260910\\MoverAuditNetwork03\\Client2User\\Saved\\Validation\\MoverBuffers\\20261022_203906.csv",
+  "worlds": [
+    {
+      "world": "/Engine/Maps/Entry.Entry",
+      "frames": 975,
+      "total_frames": 975,
+      "warmup_frames": 0,
+      "total_duration_seconds": 32.468082,
+      "measured_duration_seconds": 32.468082,
+      "min_buffer_ms": 1.0,
+      "max_buffer_ms": 199.333,
+      "max_frame_ms": 33.347,
+      "tail_min_buffer_ms": 1.0,
+      "tail_mean_buffer_ms": 72.30887777777778,
+      "tail_receive_hz": 14.48529372133258,
+      "future_frames": 0,
+      "rewinds": 0
+    }
+  ],
+  "diagnostics": {
+    "startup_diagnostics": [],
+    "captured_diagnostics": [],
+    "capture_start_line": 1658
+  }
+}

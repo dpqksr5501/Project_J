@@ -10,6 +10,7 @@
 #include "Mount/Project_JFlyingMountCharacter.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
+#include "DefaultMovementSet/CharacterMoverComponent.h"
 
 UProject_JCharacterAnimInstance::UProject_JCharacterAnimInstance() { bUseMultiThreadedAnimationUpdate=true; }
 void UProject_JCharacterAnimInstance::NativeInitializeAnimation()
@@ -30,6 +31,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
  Super::NativeUpdateAnimation(DeltaSeconds);
  if (NeedsOwnerReferenceRefresh()) CacheOwnerReferences();
+ if (IsPrimaryMeshAnimInstance()) ApplyOptimizationPolicy(BuildOptimizationPolicy());
  FProject_JAnimThreadSafeData Data;
  Data.DeltaTime=DeltaSeconds;
  if (OwningCharacter)
@@ -254,11 +256,10 @@ bool UProject_JCharacterAnimInstance::FillPlayerThreadSafeData(FProject_JAnimThr
 		Data.Combat.PresentationMode = WeaponAnimProfile->CombatPresentationMode;
 	}
 
-	// GetBaseAimRotation uses the owning controller for the autonomous proxy and
-	// the engine-replicated remote view pitch for simulated proxies. Reading the
-	// controller directly left remote combat overlays at zero aim whenever that
-	// client did not own the pawn.
-	const FRotator AimRotation = OwningCharacter->GetBaseAimRotation();
+	// Combat layers and the master consume the same completed movement command.
+	const auto* Mover = OwningPlayerCharacter->GetMover();
+	const auto* Input = Mover ? Mover->GetLastInputCmd().InputCollection.FindDataByType<FCharacterDefaultInputs>() : nullptr;
+	const FRotator AimRotation = Input ? Input->ControlRotation : OwningCharacter->GetBaseAimRotation();
 	const FRotator ActorRotation = OwningCharacter->GetActorRotation();
 	Data.Aim.AimYaw = FMath::Clamp(FMath::FindDeltaAngleDegrees(ActorRotation.Yaw, AimRotation.Yaw), -MaxAimYaw, MaxAimYaw);
 	Data.Aim.AimPitch = FMath::Clamp(FRotator::NormalizeAxis(AimRotation.Pitch), -MaxAimPitch, MaxAimPitch);
@@ -335,7 +336,10 @@ FString UProject_JCharacterAnimInstance::GetAnimationDebugSummary() const
 bool UProject_JCharacterAnimInstance::NeedsFullRateVisualUpdate() const
 {
  check(IsInGameThread());
+ const auto& Movement=ThreadSafeData.Movement;
+ const bool bPivot=ThreadSafeData.Input.bHasMoveInput && Movement.Velocity.SizeSquared2D()>FMath::Square(50.f) &&
+  !Movement.Acceleration.IsNearlyZero() && FVector::DotProduct(Movement.Velocity.GetSafeNormal2D(),Movement.Acceleration.GetSafeNormal2D())<.5f;
  return ThreadSafeData.Air.bIsInAir || ThreadSafeData.Combat.bIsAttacking || ThreadSafeData.Combat.bIsDodging ||
   ThreadSafeData.Combat.bIsHitReacting || ThreadSafeData.Montage.FullBodyMontageWeight>ZERO_ANIMWEIGHT_THRESH ||
-  FMath::Abs(ThreadSafeData.Movement.FutureTrajectoryTurnAngle)>=60.f;
+  bPivot || FMath::Abs(Movement.FutureTrajectoryTurnAngle)>=60.f;
 }
