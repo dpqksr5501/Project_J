@@ -4,6 +4,8 @@
 
 ## 책임부터 선택한다
 
+현재 기본 속도는 Walk 165 / Run 500 / Sprint 750cm/s다. `GroundMovementSettings`의 gait 목표와 `DA_Player_Profile`의 승인 상한을 같이 확인한다. 프로필의 직렬화 필드 `WalkSpeed`는 일반 Run 상한이다. `bScaleGroundPlayRateWithSpeed=false`를 유지하면 지상 템포를 가속하지 않고 보폭으로 대응한다. 향후 더 빠르게 조정할 때에는 [속도·보폭 계약](../Architecture/Player_Locomotion_Architecture.md#이동과-점프-계약)과 실제 재생률·접지를 검수한다. 프로필만 바꾸거나 재생률·클립 `RateScale`을 일괄 수정하지 않는다.
+
 | 바꾸려는 것 | 수정할 곳 |
 | --- | --- |
 | 이동 속도·가속·제동·facing·공중 입력 승인 | Mover의 native 이동 설정과 입력/정책 코드 |
@@ -34,7 +36,7 @@
 
 ## 새 직업·몸체·탈것
 
-직업은 얇은 native class + 직업 BP + 전투 레이어/프로필을 사용한다. 공통 source/master는 유지하며, 다른 골격의 외형은 Family RTG와 Body/HandGrip 프로필로 연결한다. 같은 UE5 Skeleton의 몸체는 직접 재생할 수 있지만 체형별 접지·소켓·도달 범위는 별도로 검수한다. 장비의 LeaderPose/CopyPose와 추가 뼈 물리는 독립 계약이다.
+플레이어 직업 BP는 `BP_Player_Master`를 상속하고 기존 직업·장비·전투 레이어/프로필을 지정한다. 실제 행동 차이가 없는 직업마다 빈 native 클래스를 추가하지 않는다. `BP_GreatSword`도 이 구조이며 테스트용 로컬 능력·속성 값을 부모에 추가하지 않는다. 공통 source/master는 유지하며, 다른 골격의 외형은 Family RTG와 Body/HandGrip 프로필로 연결한다. 같은 UE5 Skeleton의 몸체는 직접 재생할 수 있지만 체형별 접지·소켓·도달 범위는 별도로 검수한다. 장비의 LeaderPose/CopyPose와 추가 뼈 물리는 독립 계약이다. [캐릭터 마스터 제작](../../Architecture/Runtime/Player_Character_Master.md)을 따른다.
 
 `EProject_JAnimationLocomotionMode`는 큰 전신 문맥을 구분한다. 종·모델·코스메틱 이름을 enum으로 늘리지 않는다. 탑승은 `UProject_JMountedAnimationLayerComponent`, Rider Profile과 공통 mounted layer를 사용한다. enum에 수영·차량·변신 값이 있다는 사실은 해당 모드의 이동·입력·게임플레이 구현 완료를 뜻하지 않는다.
 

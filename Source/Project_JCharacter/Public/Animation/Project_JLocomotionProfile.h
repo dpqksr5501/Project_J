@@ -68,10 +68,14 @@ public:
 #endif
  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Locomotion|Player|Air")
  FProject_JPlayerAirPolicy AirPolicy;
+ /** Serialized legacy name: normal Run admission cap. Ctrl Walk is owned by Mover tuning. */
+ UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Locomotion|Movement", meta=(ClampMin="0.0", DisplayName="Run Speed Limit"))
+ float WalkSpeed=500.f;
  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Locomotion|Movement", meta=(ClampMin="0.0"))
- float WalkSpeed=375.f;
- UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Locomotion|Movement", meta=(ClampMin="0.0"))
- float SprintSpeed=585.f;
+ float SprintSpeed=750.f;
+ /** Keep authored ground cadence unless explicitly opting into speed/turn-driven time scaling. Air and montage timing are independent. */
+ UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Locomotion|Player|Ground")
+ bool bScaleGroundPlayRateWithSpeed=false;
  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Locomotion|Gameplay")
  FProject_JLocomotionTransitionPolicy TransitionPolicy;
  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Locomotion|Remote Visual")

@@ -26,9 +26,14 @@ def main():
     parser.add_argument('--verify', action='store_true')
     parser.add_argument('--restore', action='store_true')
     parser.add_argument('--package', action='append', default=[])
+    parser.add_argument('--bundle', default=FOLDER.name,
+                        help='Bundle directory name inside Archives/AnimationSources')
     args = parser.parse_args()
-    manifest = json.loads((FOLDER / 'ArchiveManifest.json').read_text(encoding='utf-8-sig'))
-    archive = FOLDER / 'Originals.zip'
+    if Path(args.bundle).name != args.bundle or args.bundle in ('', '.', '..'):
+        raise ValueError('Expected one archive bundle directory name')
+    folder = FOLDER.parent / args.bundle
+    manifest = json.loads((folder / 'ArchiveManifest.json').read_text(encoding='utf-8-sig'))
+    archive = folder / 'Originals.zip'
     with archive.open('rb') as stream:
         if digest(stream) != manifest['archive_sha256']:
             raise ValueError('Source archive checksum mismatch')

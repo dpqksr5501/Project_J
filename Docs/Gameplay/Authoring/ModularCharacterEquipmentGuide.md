@@ -2,6 +2,8 @@
 
 이 문서는 `Project_J`의 테스트 캐릭터(`GreatSword_Woman`) 및 모듈러 의상(`Clothes/`) 에셋을 프로젝트에 임포트하고, 머티리얼을 올바르게 매핑하며, 리더 포즈 컴포넌트와 본 기반 2차 물리 시뮬레이션(`RigidBody`)을 구축하는 표준 워크플로를 정리한 가이드입니다.
 
+현재 캐릭터 제작 계층은 `BP_Player_Master → BP_GreatSword`, 공통 모션은 Manny `ABP_Player_Master`입니다. 대검의 Bip01 몸체에는 별도 Family 리타깃을 적용합니다. 상속·프로필·native 의상 연결의 기준은 [플레이어 마스터](../../Architecture/Runtime/Player_Character_Master.md)를 따릅니다. 아래 머티리얼·임포트 수치는 해당 에셋의 제작 기록이며 모든 신규 몸체의 공통 설정값을 뜻하지 않습니다.
+
 ---
 
 ## 1. 아키텍처 개요 (Architecture Overview)
@@ -25,9 +27,9 @@
 1. **단일 마스터 스켈레톤 공유**: 모든 모듈러 의상 FBX는 메인 캐릭터와 동일한 `GreatSword_Woman_Skeleton`을 공유합니다.
 2. **리더 포즈 컴포넌트 (`SetLeaderPoseComponent`)**:
    * 의상 파츠 컴포넌트들은 메인 캐릭터 메시를 Leader(부모)로 설정하여 애니메이션 본 트랜스폼을 실시간 동기화합니다.
-   * `Attach and Set Leader` 노드 사용 시 **`Main Mesh` 입력 핀에 캐릭터 메시를 반드시 연결**해야 합니다.
+   * 대검의 authored 의상 8개는 `UProject_JModularMeshComponent`의 **Follow Attach Parent Pose**를 켜고 실제 표시 몸체의 자식으로 배치합니다. 등록·재등록·부모 교체 때 native 연결이 적용되므로 Construction Script에서 `Attach and Set Leader`를 반복 호출하지 않습니다. 런타임 장비는 기존 EquipmentRuntime이 명시적으로 연결합니다.
 3. **런타임 물리 시뮬레이션 합성 (`RigidBody`)**:
-   * 리더 포즈 상태에서도 스켈레톤의 보조 뼈대(`phy_cloth_...`)에 피직스 에셋 바디를 생성하고 캐릭터 애님 그래프(AnimGraph)에 `RigidBody` 노드를 배치하면, 관성과 속도에 반응하는 자연스러운 2차 물리(망토, 머리카락, 치마 펄럭임)가 구동됩니다.
+   * LeaderPose 파츠는 자신의 애니메이션 그래프를 평가하지 않습니다. 표시 몸체가 평가한 보조 뼈는 공유할 수 있지만 파츠만의 추가 뼈를 독립 시뮬레이션하려면 자동 LeaderPose를 끄고 기존 CopyPose + 해당 Post Process 경로를 사용합니다.
 
 ---
 
@@ -102,6 +104,10 @@
 
 ## 5. 본 기반 2차 물리 시뮬레이션 (`RigidBody` / Physics Asset)
 
+현재 대검은 표시 몸체 `ABP_Greatsword_Woman_RunTIme`에서 세 RigidBody 노드가 망토 24개·헤어 4개·치마 2개의 dynamic bone을 계산합니다. 의상 8개는 최종 포즈를 LeaderPose로 공유하고 별도 AnimInstance/Tick을 평가하지 않습니다. 실험용 망토 Chaos Cloth 데이터 3개는 원본 메시 백업 후 제거했으며 `cloak_Physics`와 물리 본·skin weights는 유지했습니다. Physics Asset과 vertex Chaos Cloth 데이터는 다른 자원입니다.
+
+향후 독립 Chaos Cloth 장비는 bone 평가를 공유해도 component Tick을 유지합니다. 기존 modular component가 활성 cloth metadata/resources로 구분합니다. 추가 본을 가진 장비의 CopyPose/Post Process 물리는 별도 그래프가 필요합니다. 등록 전 source 연결, 같은 source의 강제 재연결 금지, 교체·비동기 취소·해제에 대한 계약은 [플레이어 마스터](../../Architecture/Runtime/Player_Character_Master.md)를 따릅니다.
+
 스켈레톤에는 이미 모션 물리 전용 뼈대 체인이 구축되어 있습니다:
 * **망토**: `phy_anchor_cape_00~40` (고정점) ➔ `phy_cloth_cape_01~05` (5단계 체인)
 * **머리카락**: `phy_anchor_Hair_00~60` (고정점) ➔ `phy_cloth_Hair_01~64`
@@ -127,11 +133,11 @@
 1. 피직스 에셋 뷰포트에서 등 캡슐(`Bip01-Spine2`) 또는 머리 캡슐(`Bip01-Head`)을 클릭합니다.
 2. `Ctrl` 키를 누른 채 망토(`phy_cloth_cape_...`) 또는 머리카락 캡슐들을 다중 선택합니다.
 3. 상단 툴바의 **`콜리전` ➔ `선택 간 콜리전 켜기 (Enable Collision Between Selected)`**를 실행합니다.
-4. 캐릭터 등이나 볼을 뚫지 않고 겉면을 타고 매끄럽게 흘러내리게 됩니다.
+4. 실제 이동·급회전·착지·몽타주에서 collider 크기/위치, constraint 범위, 체인 길이와 skin weight를 함께 확인합니다. 충돌 pair 활성화만으로 모든 관통이 해결되지는 않습니다. 불필요한 체인 전체 상호 충돌은 추가하지 않습니다.
 
 ### 5.4. 런타임 애님 그래프 (`RigidBody` 노드)
-* 캐릭터 애니메이션 블루프린트(`ABP_Player` 등)의 AnimGraph 최종 포즈 출력 직전에 **`RigidBody`** 노드를 배치합니다.
-* 피직스 에셋을 연결하면 캐릭터가 뛰고, 회전하고, 대검을 휘두를 때마다 모든 물리 체인이 완벽하게 연동됩니다.
+* Bip01 의상 물리는 해당 표시 몸체의 ABP/Post Process에서 구성합니다. 공통 Manny `ABP_Player_Master`에 몸체 전용 뼈나 피직스 에셋을 추가하지 않습니다.
+* CopyPose 파츠가 독립 물리를 평가하면 source 선행 평가·충돌·LOD·숨김/재표시·부모 해제를 확인합니다. 피직스 에셋 지정만으로 모든 체인의 품질을 보장하지 않습니다.
 * **묵직한 질감 팁**: 피직스 에셋에서 캡슐 바디의 `Angular Damping (각 댐핑)`을 `1.5 ~ 3.0`으로 주면 펄럭임이 차분하고 고급스러워집니다.
 
 ---
@@ -144,7 +150,7 @@
 4. [ ] **헤어 숱 확인**: `MT_Hair`의 `Opacity Mask Clip Value`가 `0.05` 수준이며 `Hair` 쉐이딩 모델이 적용되었는가?
 5. [ ] **의상 소매 매핑 확인**: `sho`(어깨) 및 `upper`(상의) 슬롯 0에 `pdw_00_hand_0001` 머티리얼이 할당되어 회색 격자가 없는가?
 6. [ ] **양면 렌더링 확인**: 망토(`cloak`), 치마, 머리카락 머티리얼의 `Two Sided`가 켜져 있어 뒷면이 투명해지지 않는가?
-7. [ ] **리더 포즈 부모 연결**: `Attach and Set Leader`의 `Main Mesh` 핀에 캐릭터 메시 변수가 올바르게 꽂혀 있는가?
+7. [ ] **리더 포즈 부모 연결**: authored 파츠의 Follow Attach Parent Pose가 켜져 있고 실제 표시 몸체에 붙어 있는가? 추가 뼈 독립 평가 파츠는 기존 CopyPose 경로를 사용하는가?
 8. [ ] **피직스 에셋 바디 검증**: `Bip01` 및 `phy_anchor` 본은 `Kinematic`, `phy_cloth` 체인은 `Simulated`인가?
 9. [ ] **몸체 관통 방지**: 등/머리 캡슐과 클로스 캡슐 간 `선택 간 콜리전 켜기`가 수행되었는가?
-10. [ ] **인게임 물리 구동**: AnimGraph 끝단에 `RigidBody` 노드가 정상 배치되어 있는가?
+10. [ ] **인게임 물리 구동**: 해당 몸체/독립 파츠의 물리 그래프가 평가되며 공통 Manny 로코모션과 중복 실행되지 않는가?

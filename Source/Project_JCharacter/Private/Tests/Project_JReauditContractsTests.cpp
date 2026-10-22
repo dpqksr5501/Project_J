@@ -1,5 +1,6 @@
 #if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
 #include "Movement/Project_JMovementQueries.h"
+#include "Project_JPlayerCharacter.h"
 #include "Misc/AutomationTest.h"
 #include "Engine/SkeletalMesh.h"
 #include "Misc/ScopeExit.h"
@@ -222,10 +223,10 @@ bool FProjectJAuthoredFollowerRoleTest::RunTest(const FString&)
     auto* World=UWorld::CreateWorld(EWorldType::Game,false);
     GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
     ON_SCOPE_EXIT {World->DestroyWorld(false);GEngine->DestroyWorldContext(World);};
-    auto* Class=LoadClass<ACharacter>(nullptr,TEXT("/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C"));
+    auto* Class=LoadClass<AProject_JPlayerCharacter>(nullptr,TEXT("/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C"));
     if(!TestNotNull(TEXT("Actual character Blueprint class loads"),Class)){return false;}
     FActorSpawnParameters Parameters;Parameters.SpawnCollisionHandlingOverride=ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    auto* Character=World->SpawnActor<ACharacter>(Class,Parameters);
+    auto* Character=World->SpawnActor<AProject_JPlayerCharacter>(Class,Parameters);
     if(!TestNotNull(TEXT("Actual Blueprint construction creates a character"),Character)){return false;}
     auto* Source=Character->GetMesh();auto* Anim=Cast<UProject_JCharacterAnimInstance>(Source->GetAnimInstance());
     if(!TestNotNull(TEXT("Actual source uses native Master anim instance"),Anim)){return false;}

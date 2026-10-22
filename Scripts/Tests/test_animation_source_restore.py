@@ -80,6 +80,17 @@ class SourceRestoreTests(unittest.TestCase):
         self.invoke('--verify')
         self.assertFalse((self.root / 'Content').exists())
 
+    def test_explicit_bundle_uses_its_own_manifest(self):
+        other = self.root / 'Neutral'
+        self.folder.rename(other)
+        self.invoke('--bundle', 'Neutral', '--verify')
+        self.assertFalse((self.root / 'Content').exists())
+
+    def test_bundle_cannot_escape_archive_directory(self):
+        for value in ('..', '../Neutral', '/Neutral'):
+            with self.assertRaises(ValueError):
+                self.invoke('--bundle', value, '--verify')
+
 
 if __name__ == '__main__':
     unittest.main()

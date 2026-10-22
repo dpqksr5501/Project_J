@@ -36,7 +36,7 @@ def check_air(report):
     assert all(not s['PlayerNoValidAnim'] for s in samples), 'Missing animation during a tested transition'
     assert all(s['PlayerFootPlacementEnable'] and s['PlayerOffsetRootBoneEnabled'] for s in samples), 'GASP correction was globally disabled'
     assert all(s['LastAirReselectionToTime'] + .001 >= s['LastAirReselectionFromTime'] for s in samples), 'Air reselection rewound playback'
-    for case in range(8):
+    for case in range(len(report['rotation_modes_expected'])):
         frames = [s for s in samples if s['case'] == case]
         assert len(frames) >= 20, 'Insufficient samples for case ' + str(case)
         assert any('Falling' in s['mode'] for s in frames), 'Jump did not physically enter air: ' + str(case)
@@ -45,7 +45,7 @@ def check_air(report):
         assert any('Walking' in s['mode'] and s['u'] > 3.5 for s in frames), 'Jump did not return to ground: ' + str(case)
     counts = [s['AirReselectionCount'] for s in samples]
     assert max(counts) > min(counts), 'No live air reselection was exercised'
-    return {'frames': len(samples), 'cases': 8, 'reselection_count_delta': max(counts) - min(counts), 'invalid_animations': 0, 'playhead_rewinds': 0}
+    return {'frames': len(samples), 'cases': len(report['rotation_modes_expected']), 'reselection_count_delta': max(counts) - min(counts), 'invalid_animations': 0, 'playhead_rewinds': 0}
 
 
 def check_network(report):

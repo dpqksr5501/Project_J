@@ -19,6 +19,34 @@ pawn=unreal.GameplayStatics.get_player_pawn(world,0)
 controller=unreal.GameplayStatics.get_player_controller(world,0)
 anim=pawn.get_source_mesh().get_anim_instance()
 inputs=local_inputs(world)
+# The actor and BlendStack clocks can advance while a retargeted body holds a
+# cached pose. Observe knee rotations relative to their parents on both sides.
+# This fixture supports the production Manny and Bip01 bodies; it does not
+# infer a retarget mapping for arbitrary skeletons.
+pose_meshes=[]
+for mesh in pawn.get_components_by_class(unreal.SkeletalMeshComponent):
+    if not mesh.get_anim_instance():continue
+    bones=[b for b in ['calf_l','calf_r','Bip01-L-Calf','Bip01-R-Calf'] if mesh.get_bone_index(b)>=0]
+    assert bones,'Add explicit knee observations for this fixture body: '+mesh.get_name()
+    pose_meshes.append((mesh,bones))
+assert pose_meshes,'No evaluated skeletal meshes'
+
+def knee_pose(mesh,bones):
+    result=[]
+    for bone in bones:
+        q=mesh.get_socket_transform(bone,unreal.RelativeTransformSpace.RTS_PARENT_BONE_SPACE).rotation
+        result.extend([q.x,q.y,q.z,q.w])
+    return result
+
+def longest_frozen_pose(frames,name):
+    last=None;since=None;maximum=0.
+    for frame in frames:
+        pose=frame['knee_pose'][name]
+        if last is None or frame['t']-last['t']>.15 or max(abs(a-b)for a,b in zip(pose,last['knee_pose'][name]))>1.e-5:
+            since=frame['t']
+        maximum=max(maximum,frame['t']-since)
+        last=frame
+    return maximum
 actions={n:unreal.load_asset('/Game/Input/Actions/IA_'+n) for n in ['Move','MoveIntent_Forward','Sprint','ToggleCombat']}
 cases=[('OTM','Walk'),('OTM','Run'),('OTM','Sprint'),('OTM','SprintToRun'),('Strafe','Run')]
 original_combat=pawn.is_combat_mode_active()
@@ -54,8 +82,11 @@ def validate():
         assert max(s['control'] for s in frames)-min(s['control'] for s in frames)>60.,'Gradual turn must execute while remaining in the loop'
         maximum=max(angle(s['root'],s['yaw']) for s in frames)
         assert maximum<15.,'Displayed loop root froze or diverged from physical facing: '+str((mode,gait,maximum))
+        frozen={mesh.get_name():longest_frozen_pose(frames,mesh.get_name()) for mesh,bones in pose_meshes}
+        assert all(span<.5 for span in frozen.values()),'Moving loop held a frozen knee pose: '+str((mode,gait,frozen))
         assert not any(s['invalid'] for s in report['samples'] if s['case']==case),'Missing animation'
-        results.append({'mode':mode,'gait':gait,'loop_frames':len(frames),'max_root_actor_error_degrees':maximum})
+        results.append({'mode':mode,'gait':gait,'loop_frames':len(frames),'max_root_actor_error_degrees':maximum,
+                        'longest_unchanged_knee_pose_seconds':frozen})
     return results
 
 def finish(error=None):
@@ -107,6 +138,7 @@ def tick(dt):
         root=anim.get_editor_property('PlayerRootTransform').rotation.rotator().yaw
         blend=anim.get_editor_property('PlayerBlendStackInputs')
         report['samples'].append({'t':t,'u':u,'case':case,'control':yaw,'yaw':pawn.get_actor_rotation().yaw,'root':root,
+            'knee_pose':{mesh.get_name():knee_pose(mesh,bones) for mesh,bones in pose_meshes},
             'speed':pawn.get_velocity().length2d(),'loop':blend.get_editor_property('Loop'),
             'moving':anim.evaluate_is_moving(),'invalid':anim.get_editor_property('PlayerNoValidAnim'),
             'state':str(anim.get_editor_property('PlayerStateName')),'played':anim.inspect_foundation_playback()})

@@ -15,6 +15,8 @@
 #include "Animation/Project_JPresentationMeshResolver.h"
 #include "Misc/DataValidation.h"
 #include <limits>
+#include "UObject/StrongObjectPtr.h"
+#include "Tests/Project_JClothPolicyFixture.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJVisualAssetAdmissions,
     "ProjectJ.Continuation.VisualAssetAdmissions", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -101,8 +103,11 @@ bool FProjectJVisualAssetAdmissions::RunTest(const FString&)
     Coordinator->RefreshVisualBudget(1.f/60);
     TestFalse(TEXT("Switching to engine LeaderPose releases independent graph budgeting"),Part->IsUsingExternalTickRateControl());
     Part->SetLeaderPoseComponent(nullptr);
-    auto* Clothed=LoadObject<USkeletalMesh>(nullptr,TEXT("/Game/Characters/GreatSword/Clothes/cloak.cloak"));
-    if(!TestNotNull(TEXT("Real mesh with independent cloth bindings"),Clothed)) return false;
+    // Cloth admission is a generic budget contract, independent of whether the
+    // current avatar retains the old experimental vertex-cloth setup.
+    TStrongObjectPtr<USkeletalMesh> ClothFixture(MakeProjectJClothPolicyFixture(Manny));
+    auto* Clothed=ClothFixture.Get();
+    if(!TestNotNull(TEXT("Private cloth admission metadata fixture"),Clothed)) return false;
     Part->SetSkeletalMeshAsset(Clothed);
     Part->AnimScriptInstance=NewObject<UProject_JRetargetAnimInstance>(Part);
     TestTrue(TEXT("Independent cloth bindings or resources are recognized"),Project_J::Animation::UsesIndependentClothSimulation(*Part));

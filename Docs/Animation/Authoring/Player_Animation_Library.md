@@ -1,6 +1,21 @@
 # 플레이어 애니메이션 라이브러리와 추가 수입
 
-실제 로코모션은 Manny `SK_Mannequin` 기준이다. 최초 이관한 448개 시퀀스·10개 BlendSpace의 원본 계약과 결과를 [라이브러리 카탈로그](../../../Scripts/Authoring/Data/PlayerAnimationLibrary.json)에 기록한다. 현재 모션·노티파이와 독립적인 원본 무릎 표본을 검사하므로, 회귀 실행을 위해 UEFN 원본 뱅크를 다시 복원하지 않는다. OTM/Strafe와 기존 공중 재선택·재생 연속성은 이번 보관/수입 도구의 수정 대상이 아니다.
+실제 로코모션은 Manny `SK_Mannequin` 기준이다. 최초 448개에 Neutral 127개를 추가한 **시퀀스 575개·BlendSpace 11개**의 원본 계약과 결과를 [라이브러리 카탈로그](../../../Scripts/Authoring/Data/PlayerAnimationLibrary.json)에 기록한다. 현재 모션·노티파이와 독립적인 원본 무릎 표본을 검사하므로, 회귀 실행을 위해 UEFN 원본 뱅크를 다시 복원하지 않는다. OTM/Strafe와 기존 공중 재선택·재생 연속성은 유지한다.
+
+## 현재 표현 구성
+
+Run·Sprint와 연결된 시작/정지·방향 전환·보행 전환·점프/착지는 Neutral을 사용한다. Idle과 Walk의 일반 루프·시작/정지는 기존 Relaxed를 유지한다. 공중 Chooser의 Neutral 21개는 다시 변환하지 않았고 Ground의 점프 연결에서도 기존 Neutral 16개를 재사용했다. 신규 변환은 Run 65개·Sprint 20개·Walk 연결 4개·Jump 38개다.
+
+[Neutral 연결 명세](../../../Scripts/Authoring/Data/PlayerNeutralLocomotion.json)는 원래 자산과 실제 대체 자산·선택 이유를 기록한다. 이는 별도 runtime 선택기나 중복 writer가 아니라 제작 근거다. 실제 선택 권위는 기존 `CHT_ProjectJ_Ground`/`CHT_ProjectJ_Air`와 C++ 상태 로직이다. Chooser 조건·행 순서·출력·mirror/sample 설정을 유지하며 자산 참조만 이주했다. Relaxed 자산은 독립 제작 variant와 기존 카탈로그 기준점이므로 삭제하지 않는다.
+
+- Neutral에 동일한 Reface Stop/Spin 동작이 없으면 발/방향에 맞는 Neutral Stop·Pivot·Turn·Box로 연결한다. 장식적 360도 Spin은 180도 Turn으로 대체한다. 원본과 동일한 회전 연출이라는 의미가 아니며 실제 급회전 품질은 플레이에서 검수한다.
+- Neutral에는 Run 오르막/내리막 전용 원본이 없어 `BS_Neutral_Run_Loop_F`를 프로젝트에서 구성했다. 기존 입력 축과 정규화 동기화 계약을 유지하고 Neutral 전방 Run을 사용한다. 기존 slope/foot placement 보정은 유지하지만, 전용 경사 모션이 추가됐다는 의미는 아니다.
+- 새 시퀀스는 기존 공식 RTG의 최종 Manny IK helper 재구성을 거친다. 커브 이름·float 키, sync marker, notify timing/payload, root/additive 계약을 비교한다. 프로젝트의 `ForceRootLock`/정규화 root scale 정책은 명시적으로 적용한다. cosmetic Foley는 native notify로 변환하며 Branch In은 staging에서 제거하고 생산의 명시적 PSD 연결을 사용한다.
+- 새 Sprint→Run은 Neutral 원본의 전이 구간을 사용한다. 과거 Relaxed 클립에 사용자가 만든 `Transition To Loop / Always` 구간은 그 Relaxed variant에 보존하며 Neutral에 무조건 복사하지 않는다.
+
+2026-10-22 Sprint→Run 표현 확인에서는 OTM/Strafe 각 4개 해제 시점을 실제 PIE에서 추적했다. 양발 `M_Neutral_Transition_Sprint_to_Run_Lfoot/Rfoot`의 실제 재생과 Neutral Run Loop 복귀를 확인했고 Relaxed 전환 플레이어는 0개였다. 두 Neutral의 raw motion/재생 계약도 카탈로그와 일치하고, 구 Relaxed 전환 둘의 registry referencer는 없었다. 이는 선택 연결 확인이며 감속 제스처의 주관적 차이를 보증하지 않는다. 상세 근거는 `Saved/Validation/SprintRunStyle_20261022`다. 연결과 클립은 유지했다.
+
+추가 원본 130개(시퀀스 127개·notify BP 의존성 3개)는 [Neutral 보관본](../../../Archives/AnimationSources/Neutral_2026-10-22/ArchiveManifest.json)에 정확한 원본 바이트로 보존한다. source kit는 공유하고, 변환 중에만 쓰는 원본 모션을 생산 Content에 계속 남기지 않는다.
 
 ## 원본 보존과 현재 제작 도구
 
@@ -56,6 +71,8 @@ runpy.run_path(str(root / 'Scripts/Authoring/Plan-PlayerAnimationImport.py'),
 
 신규 upstream 원본에 프로젝트 Foley로 변환되지 않은 notify가 있으면 raw motion이 같아도 계약 차이를 검토해야 한다. 기존 원본의 수정 상태와 새 upstream 원본의 차이를 숨겨서 재사용하지 않는다.
 
+원본 `/Game` 경로가 현재 프로젝트와 겹치면 새 에디터 세션에서 명시한 staging package와 package-remap으로 `prepare_staged_animation_sources`를 사용한다. 이 editor C++ 도구는 notify BP를 scoped linker 문맥에서 먼저 로드해 부모 class 누락에 따른 payload 손실을 막는다. upstream PSD는 임시 메모리 객체로 격리하고 staging의 Branch In만 제거하며 생산 PSD는 변경하지 않는다. 반환 개수와 strict Foley dry-run을 확인한 뒤 해당 원본만 저장한다. `Notify=None`을 정상 named marker로 간주하거나 누락 허용 목록을 추가하지 않는다. 실제 전이는 명시적 Manny 변환과 기존 참조 이주 도구로 수행한다.
+
 ## 회귀와 복원
 
 `CHT_RotationOffsetCurve`의 context는 native `FProject_JPlayerRotationOffsetQuery`다. MovementMode/MovementDirection 열은 native enum에 바인딩하고 기존 방향 커브·행 우선순위를 편집한다. BP UserDefinedStruct의 생성 필드명 접두사에 런타임 코드를 의존시키지 않는다. 구형 제작 table의 명시적 이주가 필요할 때는 `unreal.Project_JPlayerLocomotionLibrary.use_native_rotation_offset_query(table)`를 사용한다. 이 도구는 PIE 밖에서 구조를 확인하고 전체 36개 mode/direction의 결과를 비교하며, 성공 후 제작자가 해당 table만 저장한다. 현재 table에 다시 적용하면 변경하지 않는다. 함수 반환 성공만으로 임의의 다른 table을 자동 저장하거나 기존 참조 자산을 삭제하지 않는다.
@@ -75,3 +92,66 @@ Strafe Sprint 공중 8방향 검사는 32초 연속 경로를 사용하므로 �
 - [복원 도구](../../../Scripts/Authoring/Restore-AnimationSources.py)는 ZIP 무결성·manifest·경로·기존 파일 충돌을 먼저 검사한다. 명시한 package의 보관된 의존성을 포함하고 다른 현재 데이터를 덮어쓰지 않는다.
 
 원본 비교가 다시 필요한 재제작·새 retarget recipe 검증은 명시적으로 복원 후 별도 작업한다. 카탈로그의 현재 baseline을 원인 확인 없이 새 결과로 덮어써 회귀를 통과시키지 않는다.
+
+### Neutral 확장 검증 — 2026-10-22
+
+- direct Editor UBT 성공, 새 프로세스 자동 회귀 81개 성공(실패·미실행·경고 0). `NeutralSelection`은 master의 실제 Ground/Air Chooser, 활성 행과 fallback, embedded PSD 및 BlendSpace sample을 따라가 Run/Sprint/Jump의 Neutral 선택과 Relaxed Walk 유지를 검사한다. `GroundLoopRootMotion`은 새 Neutral Run과 기존 제작 variant의 루프 경계 root delta를 검사한다.
+- 새 원본 127개의 커브 716개와 sync marker, notify timing/payload·재생 계약 비교 완료. Foley 1,121개를 strict dry-run 후 native로 변환했고 실행 payload가 없는 Foley는 0개다. Chooser column/context/출력/disabled 설정 751줄은 계획한 자산 참조 치환 외 변경이 없다. 이 수입 당시 SamplingRange는 기본 전체 클립 구간이었다. 후속 착지 검색 보정은 아래 별도 기록을 따른다.
+- Manny 라이브러리 575개·authored-frame 표본 2,875개에서 손발 helper 최대 위치 오차 약 0.0202cm. 새 Neutral Run/Sprint는 독립 원본 주기 표본 대비 무릎 굽힘 최대 차이 각각 약 0.814도/0.716도다. 모든 프레임·모든 체형의 시각 품질을 보증하는 수치는 아니다.
+- 실제 PIE: Ground 시작/정지·OTM/Strafe·Walk/Sprint, Sprint 170/179/181/190도 회전 양 모드 8조건, 공중 방향 변경/착지 8조건, 루프/감속 후 연속 마우스 회전 5조건 성공. 공중 재선택 2회, playhead 되감김·invalid 선택 0. 루프 표시 root와 actor yaw 최대 차이는 약 1.67도 이내다.
+- import/catalog Python 12개·원본 복원 Python 7개 성공. 새 보관 ZIP 130개 파일 무결성 확인. 임시 원본 130개는 hard/soft/search/management 외부 referencer가 없는 것을 확인하고 에디터 정상 종료 후 정리했다. 생산 Manny·기존 Relaxed variant·공유 제작 kit·기존 보관 ZIP은 유지했다.
+
+이번 검증은 새 표현 구성의 데이터·동작 계약을 확인한다. 대규모 MMO 부하, 모든 경사/체형·전 클립 전 프레임의 주관적 품질 검수와 패키지 Cook은 수행 범위에 포함하지 않았다. 로컬 상세 근거는 `Saved/Validation/NeutralLocomotion_20261022`와 `Saved/Validation/PlayerLocomotion/Neutral_20261022_Final` 및 같은 날짜의 PIE JSON이다. 에디터는 정상 종료했고 background throttle 설정도 원래 값으로 복원했다.
+
+### 정지·발 보정 점검 — 2026-10-22
+
+사용자가 조정한 Neutral Sprint→Run L/R의 `Transition To Loop / Always` 구간은 현재 디스크 저장값으로 보존하고 타깃 카탈로그만 갱신했다. 원본 계약·모션 지문과 기존 L 12개/R 11개 노티파이를 유지했다. 이 조기 Loop 구간은 정지 후보 필터와 별개다.
+
+Run 500에서 Sprint Stop이 실제 선택되는 것을 확인해 `Stand Stops`에 최근 gait Enum 필터를 추가했다. Run/Sprint 은행을 분리하되 저속 Walk 정지·좌우 발·방향·Pose Match·기존 blend 출력은 유지한다. 제작 도구 `configure_standing_stop_gait_filter`는 PIE 밖에서 명시적으로 실행하고 대상 Chooser만 저장한다. 새로운 은행/다른 후보 구조는 자동 추정하지 않으며, 새 행을 추가할 때 필터 조건도 함께 저작한다. 원본 시퀀스나 접촉 커브는 변경하지 않는다.
+
+[정지 검사](../../../Scripts/Validation/Validate-PlayerLocomotionStopping.py)는 새 PIE의 평지와 `PLAYER_STOP_SLOPE_PITCH=12` 경사면에서 OTM/Strafe Run/Sprint를 구동한다. 실제 정지 클립·Idle 복귀·접촉이 낮아진 발의 잠금 해제와 발 보정 유지까지 기록하고, 임시 바닥 변환을 복원한다. 실행 중 다른 입력/에디터 콘솔 명령을 보내지 않는다. 이 검사는 발바닥 외형 검수를 대신하지 않는다. [루프 회전 검사](../../../Scripts/Validation/Validate-PlayerLocomotionLoopTurning.py)도 Manny와 Bip01 무릎의 부모 기준 회전을 기록해 이동 중 포즈 고정을 검사한다.
+
+이 후속 변경 기준 direct UBT Editor 빌드와 native 회귀 83개가 성공했다(실패·경고·미실행 0). 별도 PIE의 평지/12도 경사 정지 8조건은 올바른 Stop 선택과 Idle 복귀, foot correction 활성, 낮은 접촉에서 지속 잠금 0초를 확인했다. Walk/Run/Sprint/Sprint→Run/Strafe Run 루프 회전 5조건도 성공했고 source와 대검의 무릎 포즈가 계속 갱신됐다. 근거는 `Saved/Validation/StopFeet_20261022` 및 `Saved/Validation/PlayerLocomotion/StopFeet_20261022_Final`이다.
+
+진단 도중 제작 도구의 `Modify` 이후 변경 완료 알림 누락으로 종속 인덱스가 중단된 상태도 재현했다. 도구가 `PostEditChange`까지 완료하도록 수정하고 새 세션에서 인덱스 회귀를 확인했다. 사용자가 이전 에디터에서 겪은 포즈 고정과 같은 증상이지만, 그 세션의 원인까지 동일했다고 확정하지 않는다.
+
+### 속도·템포 튜닝 — 2026-10-22
+
+Run 500 / Sprint 750cm/s, 지상 동적 재생률 1.0 유지와 Stride Warping 상한 1.5를 적용했다. Walk 165와 기존 OTM/Strafe·전방 세 방향 Sprint 승인·공중 재선택·공중 관성·몽타주 시간은 유지한다. [이동 계약](../Architecture/Player_Locomotion_Architecture.md#이동과-점프-계약)에 속도 목표/승인 상한, 프로필의 `Run Speed Limit` 표시(기존 직렬화 이름 `WalkSpeed`), GT→proxy 게시와 Pivot의 Sprint 관성 수용 범위를 설명한다. 향후 동적 지상 템포가 필요하면 프로필의 `bScaleGroundPlayRateWithSpeed`로 명시적으로 선택한다.
+
+- direct Editor·Game Development UBT 성공. 최종 자동 회귀 82개 성공, 실패·미실행·경고 0. `GroundSpeedAndCadence`는 실제 master/대검의 목표·승인 속도와 컴파일된 Stride 인스턴스 전부의 상한·FK 길이 보호를 검사한다. 작성 노드 1개가 BlendStack 상태 플레이어별로 5개 인스턴스로 컴파일되는 것은 중복된 BP 계산이 아니다.
+- 실제 네트워크 PIE의 OTM/Strafe Run·Sprint 4조건에서 정상 구간 속도 500/750, 실제 루프 재생률 1.0 확인. 지상 시작/정지·Walk/Sprint 전환, 750 Sprint의 170~190도 회전 8조건, 일반 점프/착지 8조건, Sprint 점프 후 입력을 Run으로 낮추고 방향을 바꾸는 착지 8조건, 연속 루프 회전 5조건 성공. Sprint 해제 뒤 공중 수평 속도 750 유지와 공중 재선택·playhead 연속성을 확인했다.
+- [속도·템포 PIE 검사](../../../Scripts/Validation/Validate-PlayerLocomotionSpeedCadence.py)는 접촉 커브 구간의 source foot 세계 좌표 변화도 관측한다. 발 뼈의 움직임에는 발 구름/회전이 포함되므로 이를 고정 접촉점의 미끄러짐과 동일시하거나 전 구간 미끄러짐 0으로 승인하지 않는다. 표본에서 무릎 굽힘이 유지됐지만 모든 체형·경사·프레임의 시각 품질 승인은 별개다.
+- Sprint 관성 착지 검사는 [기존 공중 검사](../../../Scripts/Validation/Validate-PlayerLocomotionAirLanding.py)에 `PLAYER_AIR_SPRINT_BEFORE_JUMP=True`를 전달한다. 임시 40,000-unit 바닥은 `get_pie_worlds(True)`로 dedicated authority까지 포함해 확장한 뒤 복원한다. 최초 client-only 바닥 확장에서는 서버의 기본 바닥 밖 추락으로 실패했고, 양쪽을 맞춘 재실행에서 통과했다. 생산 맵은 저장·변경하지 않는다.
+- ABP 재컴파일 후 최초 PIE에서 PoseSearch 비동기 index 준비 경고 1회가 있었고 캐시 완료 후 후속 검사에서 재현되지 않았다. 최종 자동 회귀의 경고 0과 cold-DDC 초기 로드의 무경고 보장은 구분한다. 애니메이션·커브·Chooser·PSD를 다시 변환하거나 카탈로그 baseline을 덮지 않았다.
+
+상세 근거는 `Saved/Validation/SpeedTuning_20261022`, `Saved/Validation/PlayerLocomotion/Speed500750_20261022_Verified`와 같은 날짜의 SpeedCadence/Ground/SprintTurn/AirLanding/AirSprintLanding/LoopTurning JSON이다. 에디터 정상 종료와 원래 background throttle 복원을 확인했다. Cook·Shipping·대규모 군중 부하는 이번 검증에 포함하지 않는다.
+### 착지 접근 구간 재생 수정 — 2026-10-22
+
+Shift를 계속 누른 Sprint 점프에서 물리 접지 직후 `M_Neutral_Jump_F_Land_Sprint_Light_Rfoot`가 약 0.01초부터 시작하는 것을 실제 PIE로 확인했다. 클립의 처음 약 0.5초는 낙하 접근 구간이다. 일부 Run Light와 달리 Sprint 원본에는 그 구간을 제외하는 노티파이가 없어 전체 구간의 Pose Match가 접근 포즈를 다시 골랐다. 이 기록에서 별도 Fall Loop가 재생됐다고 설명하지 않는다. 500/750 튜닝에 의한 순수 물리 오류라고 단정하지 않으며, 튜닝 이후 두드러진 기존 검색 범위의 결함으로 분류한다.
+
+제작 함수 `configure_grounded_landing_search`로 Ground Chooser의 착지 전용 32행에 검색 시작 하한을 적용했다. 기준은 기존 native Land 이벤트와 전환 금지 구간 시작이며 한 원본 프레임의 접근 블렌드는 남긴다. 행 선택·후보·재생 출력·커브·노티파이·애니메이션 원본·보관 ZIP·카탈로그는 바꾸지 않았다. 독립 export 비교에서도 32행의 SamplingRange 외 변경은 없었다. 앞으로 착지 은행을 교체/추가한 뒤 이 함수를 PIE 밖에서 실행하고 해당 Chooser만 저장한다. 기존 구간과 양립하지 않는 제작 데이터는 추측해서 고치지 않고 실패한다. `GroundedLandingPhase`는 실제 embedded PSD 인덱스의 검색 가능 표본과 후보 존재를 확인한다.
+
+[착지 검사](../../../Scripts/Validation/Validate-PlayerLocomotionAirLanding.py)는 `PLAYER_AIR_SPRINT_THROUGH_LANDING=True`로 Shift를 착지까지 유지한다. 각 OTM/Strafe에서 직선과 착지 직전/직후 90·180도 방향 변경, 총 10조건이다. 기본 Run 8조건과 `PLAYER_AIR_SPRINT_BEFORE_JUMP=True`의 공중 Sprint 해제 8조건도 보존한다. 실제 접지 이후 Mover의 재낙하, 공중 상태 재진입, 클립 접근 구간 재생과 직선 Sprint의 750 속도 손실을 함께 확인한다. 실행 중 다른 키 입력·콘솔 명령을 보내지 않는다.
+
+착지 Foley는 기존 물리 착지 이벤트가 소유한다. 검색 시작 시각이 시퀀스의 Foley 마커 뒤로 이동해도 해당 오디오를 노티파이로 중복 재생하거나 별도 타이머로 보충하지 않는다. 원래 마커·발 접촉·IK 잠금 해제·경사 보정과 공중 방향 재선택/관성은 유지했다.
+
+이 변경 기준 direct Editor UBT와 새 프로세스 native 회귀 **84개**가 성공했다(실패·경고·미실행 0). Shift 유지 착지 10조건, 공중 Shift 해제 8조건, 일반 Run 착지 8조건, Run/Sprint 속도·재생률 4조건, Sprint 170~190도 급회전 8조건, 연속 루프 회전 5조건과 지상 시작/정지·Walk/Sprint 전환이 통과했다. Shift 유지 직선 착지는 약 0.51초부터 시작하고, 속도 750을 유지하며 접지 후 다시 Falling으로 진입하지 않았다. 부모 기준 무릎 관측에서도 Manny와 대검 몸체가 정지 포즈로 굳지 않았다.
+
+추가로 PIE 인스턴스의 점프 속도를 임시 900으로 올린 무거운 착지 10조건을 확인했다. 최초 40,000-unit 바닥에서는 마지막 경로가 바닥 밖으로 나가 실패했고, 120,000-unit 임시 바닥을 양 네트워크 월드에 적용한 재실행이 통과했다. 생산 맵·기본 점프 속도는 저장/변경하지 않았다. 이 시험을 모든 낙하 높이·지형의 검증으로 일반화하지 않는다.
+
+Mover의 승인 속도, SmoothWalking의 속도별 가속/회전, trajectory snapshot, 공중 관성, Pivot 범위와 Chooser의 시작/감속/정지 조건을 함께 검토했다. 추가적인 Mover 강제 reset·속도 클램프 교체가 필요한 근거는 발견하지 못했다. 최종 발바닥 외형, 모든 경사·체형, Cook/Shipping·대규모 부하와 cache를 삭제한 cold-DDC 시작은 이번 검증 범위가 아니다. 인덱스 변경 직후 첫 PIE에는 비동기 재구성 대기 경고가 있었으며, 최종 native 회귀 경고 0과 구분한다. 상세 근거는 `Saved/Validation/LandingSpeed_20261022`와 `Saved/Validation/PlayerLocomotion/LandingSpeed_20261022_Final`이다.
+
+에디터를 완전히 종료한 뒤 새 세션의 네트워크 PIE에서도 Shift 유지 착지 10조건을 재실행해 통과했다. 기존 DDC를 보존한 프로세스 재시작 검증이며, 캐시 삭제 시험은 아니다. 마지막에 미저장 패키지 0개를 확인하고 에디터를 정상 종료했다.
+
+### 전환 검색 범위 추가 점검 — 2026-10-22
+
+새 `TransitionSearchAvailability` 검사는 실제 Ground Chooser에서 활성 행과 fallback을 따라 도달하는 40개 테이블의 검색 행 308개를 확인한다. embedded PSD의 실제 인덱스에서 진입 가능한 포즈가 남아 있고, 시각이 유효하며 시퀀스의 검색 제외 구간이 선택 가능한 진입 프레임으로 돌아오지 않는 것을 확인했다. 비활성/도달 불가능한 제작 테이블을 생산 경로로 오인하지 않는다. direct Editor UBT와 확장된 native 회귀 85개가 성공했고 실패·경고·미실행은 0개다.
+
+에디터에서 Sprint 착지의 진입 구간을 확인하려면 `CHT_ProjectJ_Ground` → `Locomotion Transitions` → `Sprint Mode Transitions`의 해당 착지 행 Pose Match 데이터를 확인한다. `SamplingRange`는 검색 후보 구간이며 고정 재생 시작값이 아니다. 실제 시작 시각은 Pose Match가 출력하는 StartTime이고, native BlendStack 입력으로 전달된다. 시퀀스에 새 Notify State를 추가하지 않았다. 기존 Land 이벤트/BlockTransition 시각을 제작 단계 계산 기준으로만 사용하며 기존 커브·노티파이·카탈로그를 보존한다.
+
+[보행 전환 검사](../../../Scripts/Validation/Validate-PlayerLocomotionGaitTransitions.py)는 OTM/Strafe 각각 Walk→Run, Run→Walk, Run→Sprint, Sprint→Run, Walk→Sprint, Sprint→Walk의 12조건에서 실제 신규 재생 진입과 전환 전후 속도를 확인했다. 예상한 각 전환 클립이 모두 관측됐고 다른 출발/도착 gait의 신규 전환 선택은 없었다. 입력 적용 직전의 이전 클립 잔여 재생과 새 선택을 구분한다. 속도 후보 범위가 겹친다는 이유만으로 최근 gait 필터를 추가하거나 기존 전환 후보를 제거하지 않았다.
+
+[중단·복귀 검사](../../../Scripts/Validation/Validate-PlayerLocomotionInterruptions.py)는 시작 중 취소, 빠른 Sprint→Run→Sprint, 정지 중 180도 재출발, 감속 중 점프를 양 회전 모드에서 총 8조건으로 확인했다. 정상 속도 복귀·valid 선택·발 보정 유지·점프 후 접지 복귀가 통과했고 Manny/대검 무릎의 부모 기준 포즈 고정도 관측되지 않았다. 기존 landing·공중 재선택과 발 접지 로직은 변경하지 않았다.
+
+최초 보행 fixture는 모드 전환이 확정되기 전 검사해 중단됐다. 이후 모드 수립 대기와 실제 신규 클립 진입 관측을 보강한 독립 PIE에서 12조건이 통과했다. 이 최초 결과는 실행 근거와 함께 보존하며 생산 버그로 분류하지 않는다. 이번 점검에서 추가로 확정된 전환 결함은 없어서 생산 Chooser·ABP·시퀀스·카탈로그를 수정하지 않았다. 영구 검사와 문서를 보강했고, 미저장 패키지 0개 확인 후 에디터를 정상 종료했다. 상세 근거는 `Saved/Validation/TransitionAudit_20261022`와 `Saved/Validation/PlayerLocomotion/TransitionAudit_20261022_First`다. 전 시점/체형·경사에서의 주관적 품질, 모든 입력 순서와 네트워크 지연 조합의 무결함을 보장하는 검사는 아니다.

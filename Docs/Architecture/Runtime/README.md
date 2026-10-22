@@ -3,6 +3,7 @@
 ## 읽는 순서
 
 1. [현재 작업 문맥](../../Overview/ProjectContext.md)에서 모듈과 코드 진입점을 확인한다.
+   현재 플레이어 BP 상속·직업/몸체 프로필·공통 ABP의 경계는 [플레이어 마스터](Player_Character_Master.md)를 따른다.
 2. [캐릭터 컴포넌트 실행·수명 정리](Reports/Character_Component_Ownership_2026-09-20.md)와 대응 [검증 JSON](Reports/Character_Component_Ownership_Validation_2026-09-20.json)을 읽는다.
 3. 이후 캐릭터·이동·AnimInstance 책임 변경은 [캐릭터 런타임 후속 결과](../../Review/CharacterRuntime/README.md)에서 이어 읽는다.
 

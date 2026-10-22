@@ -2,6 +2,8 @@
 #include "Movement/Project_JMoverLifecycle.h"
 #include "Animation/Project_JCharacterAnimInstanceProxy.h"
 #include "Movement/Project_JMoverPawn.h"
+#include "Movement/Project_JMoverComponent.h"
+#include "Animation/Project_JLocomotionProfile.h"
 #include "Movement/Project_JMoverInputs.h"
 #include "Movement/Project_JMovementQueries.h"
 #include "Project_JPlayerCharacter.h"
@@ -103,13 +105,21 @@ void UProject_JPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	Data.LocomotionContext.RotationMode = bStrafe ? EProject_JLocomotionRotationMode::Strafe : EProject_JLocomotionRotationMode::OrientToMovement;
 	Data.LocomotionContext.GaitIntent = Intent && Intent->bWalk && !bSprint ? EProject_JLocomotionGaitIntent::Walk : EProject_JLocomotionGaitIntent::Run;
 	Data.Ground.bWantsSprint = bSprint;
+	if (const auto* ProjectMover=Cast<UProject_JMoverComponent>(Mover))
+	{
+		Data.Ground.RunSpeed=ProjectMover->GroundMovementSettings.RunSpeed;
+		Data.Ground.SprintSpeed=ProjectMover->GroundMovementSettings.SprintSpeed;
+	}
 	if (const auto* Player = Cast<AProject_JPlayerCharacter>(Pawn))
+	{
+		if (const auto* Profile=Player->GetLocomotionProfile()) Data.Ground.bScalePlayRateWithSpeed=Profile->bScaleGroundPlayRateWithSpeed;
 		if (const auto* State = Player->GetLocomotionAnimStateComponent())
 		{
 			Data.Air.bIsJumping = State->bIsJumping;
 			Data.Air.bIsFallOffStart = State->bIsFallOffStart;
 
 		}
+	}
 	if (const auto* Life=Mover->GetSyncState().SyncStateCollection.FindDataByType<FProject_JMoverLifecycle>()) Data.Air.bIsJumping=Life->bJumpEpisode && Data.Air.bIsInAir;
 	if (!MoverPredictor)
 	{

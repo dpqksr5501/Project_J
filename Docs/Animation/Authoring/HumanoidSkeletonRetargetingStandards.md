@@ -54,6 +54,8 @@ UEFN 호환 직접 재생은 Idle에서 상완 벌어짐을 좁게 만들었고,
 
 본체 자체에 망토 뼈가 있다면 공통 master로 기본 몸체 포즈를 평가하고, 메시의 authored Post Process ABP에서 AnimDynamics/RigidBody/ControlRig 등 필요한 추가 뼈 처리를 작성한다. 추가 뼈만 있다는 이유로 IK retarget 단계를 추가하지 않는다. 물리 자산·충돌·LOD·시뮬레이션 소유자는 해당 몸체가 가진다.
 
+현재 비표준 Bip01 대검은 별도 예다. 표시 몸체의 runtime retarget ABP 안에서 망토/헤어/치마 RigidBody 세 개를 평가하고 의상은 그 결과를 공유한다. 현행 메시에는 Post Process ABP나 독립 vertex cloth가 없다. 새 UE5 호환 몸체의 위 제작 지침과 현행 대검의 실제 구성을 혼동하지 않는다.
+
 분리 장비는 `UProject_JEquipmentItemDefinition.PoseMode`로 선택한다.
 
 - `LeaderPose`(기본): 본체의 포즈 버퍼를 공유하는 일반 갑옷·장화. 독립 뼈 애니메이션 평가가 필요 없는 파츠다.

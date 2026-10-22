@@ -34,6 +34,13 @@
 #include "K2Node_VariableGet.h"
 #include "Animation/Project_JRetargetAnimInstance.h"
 #include "Animation/AnimNotifyQueue.h"
+#include "BoneControllers/AnimNode_StrideWarping.h"
+#include "Movement/Project_JMoverComponent.h"
+#include "EnumColumn.h"
+#include "ChooserIndexArray.h"
+#include "MultiEnumColumn.h"
+#include "PoseSearch/Chooser/PoseSearchChooserColumn.h"
+#include "PoseSearch/PoseSearchAnimNotifies.h"
 
 namespace
 {
@@ -94,7 +101,7 @@ bool FProjectJPlayerLocomotionProductionGraph::RunTest(const FString&)
  TestTrue(TEXT("Full-body skills override the result of all procedural feet/body corrections"),Linked(FullSlot->FindPin(TEXT("Source")),Procedural->FindPin(TEXT("Pose"))));
  TestTrue(TEXT("Mounted blending receives the final skill pose"),Linked(Ground->FindPin(TEXT("Pose")),FullSlot->FindPin(TEXT("Pose"))));
  TestTrue(TEXT("UpperBody stays in its masked layering branch"),UpperSlot->FindPin(TEXT("Pose")) && UpperSlot->FindPin(TEXT("Pose"))->LinkedTo.Num()==1 && UpperSlot->FindPin(TEXT("Pose"))->LinkedTo[0]->GetOwningNode()->GetClass()->GetFName()==TEXT("AnimGraphNode_LayeredBoneBlend"));
- for (const TCHAR* Path:{TEXT("/Game/Character_BPs/BP_Player.BP_Player_C"),TEXT("/Game/Character_BPs/GreatSword/BP_GreatSword.BP_GreatSword_C")})
+ for (const TCHAR* Path:{TEXT("/Game/Character_BPs/BP_Player_Master.BP_Player_Master_C"),TEXT("/Game/Character_BPs/GreatSword/BP_GreatSword.BP_GreatSword_C")})
  {
   const auto* Class=LoadClass<AProject_JPlayerCharacter>(nullptr,Path);if(!TestNotNull(TEXT("Production avatar"),Class))continue;
   const auto* Pawn=CastChecked<AProject_JPlayerCharacter>(Class->GetDefaultObject());
@@ -145,9 +152,13 @@ bool FProjectJGroundLoopRootMotion::RunTest(const FString&)
  // Exercise the engine's actual sample tick, not just the author's checkbox.
  // Steering needs nonzero root deltas even when the capsule is already facing
  // its target. Repeat across loop wraps and every authored slope sample.
- for (const TCHAR* Gait : {TEXT("Walk"), TEXT("Run")})
+ // Current production styles plus the retained Relaxed authoring variant.
+ for (const TCHAR* RelativePath : {
+  TEXT("Walk/BS_Relaxed_Walk_Loop_F_Slopes"),
+  TEXT("Run/BS_Neutral_Run_Loop_F"),
+  TEXT("Run/BS_Relaxed_Run_Loop_F_Slopes")})
  {
-  const FString Path=FString::Printf(TEXT("/Game/Characters/Mannequins/Animations/Locomotion/%s/BS_Relaxed_%s_Loop_F_Slopes"),Gait,Gait);
+  const FString Path=FString(TEXT("/Game/Characters/Mannequins/Animations/Locomotion/"))+RelativePath;
   auto* BlendSpace=LoadObject<UBlendSpace>(nullptr,*Path);
   if (!TestNotNull(TEXT("Production ground loop"),BlendSpace)) continue;
   for (const FBlendSample& Sample : BlendSpace->GetBlendSamples())
@@ -167,10 +178,87 @@ bool FProjectJGroundLoopRootMotion::RunTest(const FString&)
     const double Step=Context.RootMotionMovementParams.GetRootMotionTransform().GetTranslation().Size();
     if (Frame>=2) { MissingDeltas+=!FMath::IsFinite(Step) || Step<=UE_KINDA_SMALL_NUMBER; Distance+=Step; }
    }
-   TestEqual(FString::Printf(TEXT("%s slope %.1f retains every root delta through loop wraps"),Gait,Sample.SampleValue.X),MissingDeltas,0);
+   TestEqual(FString::Printf(TEXT("%s sample %.1f retains every root delta through loop wraps"),RelativePath,Sample.SampleValue.X),MissingDeltas,0);
    TestTrue(TEXT("Loop provides animated translation for steering and stride warping"),Distance>100.);
   }
  }
+ return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJGroundSpeedAndCadence,"ProjectJ.PlayerLocomotion.GroundSpeedAndCadence",PlayerLocomotionTestFlags)
+bool FProjectJGroundSpeedAndCadence::RunTest(const FString&)
+{
+ for(const TCHAR* Path:{TEXT("/Game/Character_BPs/BP_Player_Master.BP_Player_Master_C"),TEXT("/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C")})
+ {
+  const auto* Class=LoadClass<AProject_JPlayerCharacter>(nullptr,Path);if(!TestNotNull(TEXT("Production player"),Class))continue;
+  const auto* Pawn=Class->GetDefaultObject<AProject_JPlayerCharacter>();
+  TestEqual(TEXT("Run admission matches tuned simulation speed"),Pawn->GetMoverMaxSpeed(false),500.f);
+  TestEqual(TEXT("Sprint admission matches tuned simulation speed"),Pawn->GetMoverMaxSpeed(true),750.f);
+  const auto* Mover=CastChecked<UProject_JMoverComponent>(Pawn->GetMover());
+  TestEqual(TEXT("Run simulation and prediction target"),Mover->GroundMovementSettings.RunSpeed,500.f);
+  TestEqual(TEXT("Sprint simulation and prediction target"),Mover->GroundMovementSettings.SprintSpeed,750.f);
+  TestEqual(TEXT("Ctrl Walk is preserved"),Mover->GroundMovementSettings.WalkSpeed,165.f);
+ }
+ const auto* BP=Foundation();if(!BP || !BP->GeneratedClass)return false;
+ int32 Strides=0;
+ for(TFieldIterator<FStructProperty> Property(BP->GeneratedClass);Property;++Property)
+  if(Property->Struct==FAnimNode_StrideWarping::StaticStruct())
+  {
+   ++Strides;
+   const auto* Stride=Property->ContainerPtrToValuePtr<FAnimNode_StrideWarping>(BP->GeneratedClass->GetDefaultObject());
+   TestTrue(TEXT("Stride expansion is bounded and interpolated"),Stride->StrideScaleModifier.bClampResult && Stride->StrideScaleModifier.bInterpResult);
+   TestEqual(TEXT("Compiled stride can accommodate increased speed without time scaling"),Stride->StrideScaleModifier.ClampMax,1.5f);
+   TestTrue(TEXT("FK leg reach and thigh compensation remain enabled"),Stride->bClampIKUsingFKLimits && Stride->bCompensateIKUsingFKThighRotation);
+  }
+ // BlendStack compiles its authored sample graph for multiple state players.
+ // Every runtime instance above must retain the limits, not just one template.
+ TestTrue(TEXT("Compiled stride instances were checked"),Strides>0);
+ return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJNeutralLocomotionSelection,"ProjectJ.PlayerLocomotion.NeutralSelection",PlayerLocomotionTestFlags)
+bool FProjectJNeutralLocomotionSelection::RunTest(const FString&)
+{
+ const auto* BP=Foundation();if(!BP || !BP->GeneratedClass)return false;
+ const auto* Defaults=CastChecked<UProject_JPlayerAnimInstance>(BP->GeneratedClass->GetDefaultObject());
+ TSet<const UObject*> Seen;int32 NeutralClips=0,WalkClips=0;
+ TFunction<void(const UObject*)> Inspect;
+ Inspect=[&](const UObject* Object)
+ {
+  if(!Object || Seen.Contains(Object))return;Seen.Add(Object);
+  if(const auto* Asset=Cast<UAnimationAsset>(Object))
+  {
+   const FString Path=Asset->GetPathName();
+   if(Path.Contains(TEXT("/Run/")) || Path.Contains(TEXT("/Sprint/")) || Path.Contains(TEXT("/Jump/")))
+   {
+    ++NeutralClips;
+    TestTrue(TEXT("Selected Run/Sprint/Jump assets use the Neutral family: ")+Path,
+     Asset->GetName().StartsWith(TEXT("M_Neutral_")) || Asset->GetName().StartsWith(TEXT("BS_Neutral_")));
+   }
+   if(Path.Contains(TEXT("/Walk/M_Relaxed_Walk_Loop")))++WalkClips;
+   if(const auto* Space=Cast<UBlendSpace>(Asset))for(const auto& Sample:Space->GetBlendSamples())Inspect(Sample.Animation);
+  }
+  else if(const auto* Database=Cast<UPoseSearchDatabase>(Object))
+  {
+   for(int32 Index=0;Index<Database->GetNumAnimationAssets();++Index)
+    if(const auto* Entry=Database->GetDatabaseAnimationAsset(Index);Entry && Entry->IsEnabled())Inspect(Entry->GetAnimationAsset());
+  }
+  else if(const auto* Table=Cast<UChooserTable>(Object))
+  {
+   auto Follow=[&](const FInstancedStruct& Result)
+   {
+    if(Result.GetScriptStruct()==FAssetChooser::StaticStruct())Inspect(Result.Get<FAssetChooser>().Asset);
+    else if(Result.GetScriptStruct()==FEvaluateChooser::StaticStruct())Inspect(Result.Get<FEvaluateChooser>().Chooser);
+    else if(Result.GetScriptStruct()==FNestedChooser::StaticStruct())Inspect(Result.Get<FNestedChooser>().Chooser);
+   };
+   for(int32 Index=0;Index<Table->ResultsStructs.Num();++Index)
+    if(!Table->DisabledRows.IsValidIndex(Index) || !Table->DisabledRows[Index])Follow(Table->ResultsStructs[Index]);
+   Follow(Table->FallbackResult);
+  }
+ };
+ Inspect(Defaults->GroundAnimationChooser.Get());Inspect(Defaults->AirAnimationChooser.Get());
+ TestTrue(TEXT("Actual ground/air selection and embedded databases were followed"),NeutralClips>100);
+ TestTrue(TEXT("Existing Relaxed Walk is preserved"),WalkClips>0);
  return true;
 }
 
@@ -300,6 +388,154 @@ bool FProjectJPlayerNativeStateContract::RunTest(const FString&)
  TestEqual(TEXT("Steering curve is evaluated per BlendStack player"),PlayerCurves,1);
  FCompilerResultsLog Compiler;Compiler.bSilentMode=true;FKismetEditorUtilities::CompileBlueprint(BP,EBlueprintCompileOptions::SkipGarbageCollection,&Compiler);
  TestEqual(TEXT("Master compiles without errors"),Compiler.NumErrors,0);TestEqual(TEXT("Master compiles without warnings"),Compiler.NumWarnings,0);
+ return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJStandingStopFamily,"ProjectJ.PlayerLocomotion.StandingStopFamily",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FProjectJStandingStopFamily::RunTest(const FString&)
+{
+ auto* Root=LoadObject<UChooserTable>(nullptr,TEXT("/Game/Animation_Logic/Chooser/CHT_ProjectJ_Ground.CHT_ProjectJ_Ground"));
+ if (!TestNotNull(TEXT("Production ground chooser"),Root)) return false;
+ TArray<UObject*> Nested;GetObjectsWithOuter(Root,Nested,EGetObjectsFlags::IncludeNestedObjects);
+ UChooserTable* Stops=nullptr;for (UObject* Object:Nested) if (auto* T=Cast<UChooserTable>(Object);T && T->GetFName()==TEXT("Stand Stops")) Stops=T;
+ if (!TestNotNull(TEXT("Standing stop candidates"),Stops)) return false;
+ auto* Mesh=NewObject<USkeletalMeshComponent>();auto* Anim=NewObject<UProject_JPlayerAnimInstance>(Mesh);
+ using Gait=EProject_JLocomotionGaitIntent;
+ struct FCase {Gait Recent;Gait Current;float Speed;const TCHAR* Family;};
+ const FCase Cases[]={{Gait::Walk,Gait::Walk,165.f,TEXT("Walk")},{Gait::Run,Gait::Run,500.f,TEXT("Run")},
+  {Gait::Sprint,Gait::Sprint,750.f,TEXT("Sprint")},{Gait::Sprint,Gait::Run,745.f,TEXT("Sprint")},
+  {Gait::Run,Gait::Walk,490.f,TEXT("Run")},{Gait::Run,Gait::Run,100.f,TEXT("Walk")}};
+ for (const auto& Case:Cases)
+ {
+  Anim->PlayerGaitRecent=Case.Recent;Anim->PlayerGait=Case.Current;Anim->PlayerSpeed2D=Case.Speed;
+  Anim->PlayerMovementDirectionRecent=EProject_JPlayerMovementDirection::Forward;Anim->PlayerFutureFacingDelta=0.;
+  FChooserEvaluationContext Context;Context.AddObjectParam(Anim);FProject_JPlayerGroundChooserOutput Output;Context.AddStructParam(Output);
+  TArray<FChooserIndexArray::FIndexData> A,B;A.Reserve(Stops->ResultsStructs.Num());B.SetNumUninitialized(Stops->ResultsStructs.Num());
+  for (int32 Index=0;Index<Stops->ResultsStructs.Num();++Index) if (!Stops->IsRowDisabled(Index)) A.Emplace(Index,0.f);
+  FChooserIndexArray In(A.GetData(),Stops->ResultsStructs.Num()),Out(B.GetData(),Stops->ResultsStructs.Num());In.SetNum(A.Num());
+  for (const auto& Struct:Stops->ColumnsStructs) if (const auto* Column=Struct.GetPtr<FChooserColumnBase>();Column && Column->HasFilters() && !Column->HasCosts() && !Column->bDisabled)
+  {Out.SetNum(0);Column->Filter(Context,In,Out);In=Out;}
+  TestFalse(TEXT("Every supported stopping condition retains candidates"),In.IsEmpty());
+  for (const auto& Index:In)
+  {
+   const auto* Choice=Stops->ResultsStructs[Index.Index].GetPtr<FAssetChooser>();
+   TestTrue(TEXT("Pose search cannot choose a different stop gait"),Choice && Choice->Asset && Choice->Asset->GetPathName().Contains(FString::Printf(TEXT("/Locomotion/%s/"),Case.Family)));
+  }
+ }
+ return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJGroundedLandingPhase,"ProjectJ.PlayerLocomotion.GroundedLandingPhase",PlayerLocomotionTestFlags)
+bool FProjectJGroundedLandingPhase::RunTest(const FString&)
+{
+ auto* BP=Foundation();if (!BP || !BP->GeneratedClass) return false;
+ auto* Root=CastChecked<UProject_JPlayerAnimInstance>(BP->GeneratedClass->GetDefaultObject())->GroundAnimationChooser.Get();
+ TArray<UObject*> Owned;GetObjectsWithOuter(Root,Owned,EGetObjectsFlags::IncludeNestedObjects);
+ TSet<UPoseSearchDatabase*> Built;int32 LandingRows=0;
+ const auto* RowsProperty=FindFProperty<FArrayProperty>(FPoseSearchColumn::StaticStruct(),TEXT("RowValues"));
+ if (!TestNotNull(TEXT("Serialized pose-search rows"),RowsProperty)) return false;
+ for (UObject* Object:Owned) if (auto* Table=Cast<UChooserTable>(Object))
+ {
+  const FMultiEnumColumn* Modes=nullptr;
+  for (const auto& C:Table->ColumnsStructs) if (const auto* M=C.GetPtr<FMultiEnumColumn>())
+   if (const auto* P=M->InputValue.GetPtr<FEnumContextProperty>();P &&
+    P->Binding.PropertyBindingChain==TArray<FName>{GET_MEMBER_NAME_CHECKED(UProject_JPlayerAnimInstance,PlayerMovementModeRecent)}) Modes=M;
+  if (!Modes) continue;
+  for (auto& C:Table->ColumnsStructs) if (auto* Search=C.GetMutablePtr<FPoseSearchColumn>())
+   for (int32 Row=0;Row<Search->GetNumRows();++Row)
+   {
+    if ((Table->DisabledRows.IsValidIndex(Row) && Table->DisabledRows[Row]) || !Modes->RowValues.IsValidIndex(Row) || Modes->RowValues[Row].Value!=2u) continue;
+    const auto& Value=(*RowsProperty->ContainerPtrToValuePtr<TArray<FPoseSearchColumnRow>>(Search))[Row];
+    const auto* Sequence=Cast<UAnimSequence>(Value.Data.GetAnimationAsset());
+    if (!TestNotNull(TEXT("Grounded landing sequence"),Sequence)) continue;
+    float Impact=MAX_flt;
+    for (const FAnimNotifyEvent& Event:Sequence->Notifies)
+     if (const auto* Foley=Cast<UProject_JAnimNotify_FoleyEvent>(Event.Notify);Foley && Foley->FoleyEvent.Event==Project_J::Foley::Land) Impact=FMath::Min(Impact,Event.GetTime());
+    TestTrue(TEXT("Landing retains its authored impact event"),Impact<Sequence->GetPlayLength());
+    auto* DB=Value.Database.Get();if (!TestNotNull(TEXT("Landing's actual embedded database"),DB)) continue;
+    using namespace UE::PoseSearch;
+    if (!Built.Contains(DB))
+    {
+     if (!TestTrue(TEXT("Landing index builds"),FAsyncPoseSearchDatabasesManagement::RequestAsyncBuildIndex(DB,ERequestAsyncBuildFlag::ContinueRequest|ERequestAsyncBuildFlag::WaitForCompletion)==EAsyncBuildIndexResult::Success)) return false;
+     Built.Add(DB);
+    }
+    int32 Source=INDEX_NONE;
+    for (int32 I=0;I<DB->GetNumAnimationAssets();++I) if (DB->GetDatabaseAnimationAsset(I)==&Value.Data) {Source=I;break;}
+    TestTrue(TEXT("Chooser row maps to its database entry"),Source!=INDEX_NONE);
+    const auto& Index=DB->GetSearchIndex();int32 Selectable=0;
+    for (const auto& Asset:Index.Assets) if (Asset.GetSourceAssetIdx()==Source)
+     for (int32 Pose=Asset.GetFirstPoseIdx();Pose<Asset.GetFirstPoseIdx()+Asset.GetNumPoses();++Pose)
+      if (!Index.PoseMetadata[Pose].IsBlockTransition())
+      {
+       ++Selectable;
+       const float Time=Asset.GetTimeFromPoseIndex(Pose,DB->Schema->SampleRate);
+       TestTrue(TEXT("Physical landing cannot replay the airborne approach"),Time>=Impact-.1f);
+      }
+    TestTrue(TEXT("Every landing keeps a searchable impact pose"),Selectable>0);++LandingRows;
+   }
+ }
+ TestTrue(TEXT("Standing, walking, running and sprint landing rows were inspected"),LandingRows>=32);
+ return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJTransitionSearchAvailability,"ProjectJ.PlayerLocomotion.TransitionSearchAvailability",PlayerLocomotionTestFlags)
+bool FProjectJTransitionSearchAvailability::RunTest(const FString&)
+{
+ auto* BP=Foundation();if (!BP || !BP->GeneratedClass) return false;
+ auto* Root=CastChecked<UProject_JPlayerAnimInstance>(BP->GeneratedClass->GetDefaultObject())->GroundAnimationChooser.Get();
+ const auto* RowsProperty=FindFProperty<FArrayProperty>(FPoseSearchColumn::StaticStruct(),TEXT("RowValues"));
+ if (!TestNotNull(TEXT("Serialized search-row contract"),RowsProperty)) return false;
+ TArray<UChooserTable*> Pending{Root};TSet<UChooserTable*> Seen;TSet<UPoseSearchDatabase*> Built;
+ int32 RowsChecked=0;
+ while (!Pending.IsEmpty())
+ {
+  auto* Table=Pending.Pop(EAllowShrinking::No);if (!Table || Seen.Contains(Table)) continue;Seen.Add(Table);
+  auto Follow=[&](const FInstancedStruct& Result)
+  {
+   if (const auto* Nested=Result.GetPtr<FNestedChooser>()) Pending.Add(Nested->Chooser);
+   else if (const auto* Evaluate=Result.GetPtr<FEvaluateChooser>()) Pending.Add(Evaluate->Chooser);
+   else if (const auto* Asset=Result.GetPtr<FAssetChooser>()) if (auto* Child=Cast<UChooserTable>(Asset->Asset)) Pending.Add(Child);
+  };
+  for (int32 Row=0;Row<Table->ResultsStructs.Num();++Row)
+   if (!Table->DisabledRows.IsValidIndex(Row) || !Table->DisabledRows[Row]) Follow(Table->ResultsStructs[Row]);
+  Follow(Table->FallbackResult);
+  for (auto& C:Table->ColumnsStructs) if (auto* Search=C.GetMutablePtr<FPoseSearchColumn>())
+  {
+   const auto& Rows=*RowsProperty->ContainerPtrToValuePtr<TArray<FPoseSearchColumnRow>>(Search);
+   for (int32 Row=0;Row<Rows.Num();++Row)
+   {
+    if (Table->DisabledRows.IsValidIndex(Row) && Table->DisabledRows[Row]) continue;
+    const auto& Value=Rows[Row];if (!Value.Data.IsEnabled()) continue;
+    auto* Animation=Cast<UAnimationAsset>(Value.Data.GetAnimationAsset());
+    const FString Label=FString::Printf(TEXT("%s row %d (%s)"),*Table->GetName(),Row,*GetNameSafe(Animation));
+    if (!TestNotNull(*Label,Animation)) continue;
+    auto* DB=Value.Database.Get();if (!TestNotNull(*Label,DB)) continue;
+    using namespace UE::PoseSearch;
+    if (!Built.Contains(DB))
+    {
+     if (!TestTrue(*Label,FAsyncPoseSearchDatabasesManagement::RequestAsyncBuildIndex(DB,ERequestAsyncBuildFlag::ContinueRequest|ERequestAsyncBuildFlag::WaitForCompletion)==EAsyncBuildIndexResult::Success)) return false;
+     Built.Add(DB);
+    }
+    int32 Source=INDEX_NONE;
+    for (int32 I=0;I<DB->GetNumAnimationAssets();++I) if (DB->GetDatabaseAnimationAsset(I)==&Value.Data) {Source=I;break;}
+    TestTrue(*Label,Source!=INDEX_NONE);
+    const auto& Index=DB->GetSearchIndex();int32 Selectable=0;
+    const auto* Sequence=Cast<UAnimSequence>(Animation);
+    for (const auto& Asset:Index.Assets) if (Asset.GetSourceAssetIdx()==Source)
+     for (int32 Pose=Asset.GetFirstPoseIdx();Pose<Asset.GetFirstPoseIdx()+Asset.GetNumPoses();++Pose)
+      if (!Index.PoseMetadata[Pose].IsBlockTransition())
+      {
+       ++Selectable;const float Time=Asset.GetTimeFromPoseIndex(Pose,DB->Schema->SampleRate);
+       TestTrue(*Label,FMath::IsFinite(Time) && Time>=0.f);
+       if (Sequence) TestTrue(*Label,Time<=Sequence->GetPlayLength()+UE_KINDA_SMALL_NUMBER);
+       if (Sequence) for (const auto& Event:Sequence->Notifies)
+        if (Event.NotifyStateClass && Event.NotifyStateClass->IsA<UAnimNotifyState_PoseSearchExcludeFromDatabase>())
+         TestFalse(TEXT("An excluded sequence segment cannot become an entry pose"),Time>Event.GetTime()+UE_KINDA_SMALL_NUMBER && Time<Event.GetEndTriggerTime()-UE_KINDA_SMALL_NUMBER);
+      }
+    TestTrue(*FString::Printf(TEXT("%s retains an entry pose outside transition blocks"),*Label),Selectable>0);
+    ++RowsChecked;
+   }
+  }
+ }
+ AddInfo(FString::Printf(TEXT("Inspected %d active search rows in %d reachable tables"),RowsChecked,Seen.Num()));
+ TestTrue(TEXT("Ground transition families were actually inspected"),RowsChecked>200);
  return true;
 }
 #endif

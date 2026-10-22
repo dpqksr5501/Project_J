@@ -1,0 +1,1334 @@
+{
+  "style": "Neutral",
+  "preserved": [
+    "Walk loops/start/stop",
+    "Idle",
+    "project air logic",
+    "OTM/Strafe policy"
+  ],
+  "replacements": [
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/BS_Relaxed_Run_Loop_F_Slopes",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/BS_Neutral_Run_Loop_F",
+      "source": null,
+      "role": "Neutral flat run with existing procedural slope correction"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Box_B_LL_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Box_B_LL_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_LL_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Box_B_LL_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Box_B_LL_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_LL_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Box_B_RL_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Box_B_RL_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_RL_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Box_B_RL_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Box_B_RL_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_RL_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Box_F_LL_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Box_F_LL_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_LL_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Box_F_LL_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Box_F_LL_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_LL_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Box_F_RL_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Box_F_RL_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_RL_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Box_F_RL_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Box_F_RL_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_RL_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Box_LL_B_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Box_LL_B_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_B_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Box_LL_B_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Box_LL_B_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_B_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Box_LL_F_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Box_LL_F_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_F_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Box_LL_F_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Box_LL_F_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_F_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Box_RL_B_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Box_RL_B_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_B_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Box_RL_B_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Box_RL_B_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_B_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Box_RL_F_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Box_RL_F_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_F_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Box_RL_F_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Box_RL_F_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_F_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Loop_B",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Loop_B",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_B",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Loop_LL",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Loop_LL",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_LL",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Loop_RL",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Loop_RL",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_RL",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Pivot_B_F_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Pivot_B_F_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_B_F_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Pivot_B_F_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Pivot_B_F_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_B_F_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Pivot_F_B_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Pivot_F_B_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_F_B_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Pivot_F_B_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Pivot_F_B_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_F_B_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Pivot_LL_RL_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Pivot_LL_RL_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_LL_RL_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Pivot_LL_RL_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Pivot_LL_RL_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_LL_RL_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Pivot_RL_LL_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Pivot_RL_LL_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_RL_LL_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Pivot_RL_LL_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Pivot_RL_LL_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_RL_LL_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Reface_Start_090_L_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Reface_Start_F_L_090",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_L_090",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Reface_Start_090_R_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Reface_Start_F_R_090",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_R_090",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Reface_Start_180_L_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Reface_Start_F_L_180",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_L_180",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Reface_Start_180_R_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Reface_Start_F_R_180",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_R_180",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Reface_Start_B_090_L_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Reface_Start_B_L_090",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_L_090",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Reface_Start_B_090_R_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Reface_Start_B_R_090",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_R_090",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Reface_Start_B_180_L_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Reface_Start_B_L_180",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_L_180",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Reface_Start_B_180_R_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Reface_Start_B_R_180",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_R_180",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Reface_Stop_090_L_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Stop_F_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_F_Lfoot",
+      "role": "Neutral stop ends in idle; existing root steering supplies facing change"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Reface_Stop_090_L_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Stop_F_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_F_Rfoot",
+      "role": "Neutral stop ends in idle; existing root steering supplies facing change"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Reface_Stop_090_R_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Stop_F_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_F_Lfoot",
+      "role": "Neutral stop ends in idle; existing root steering supplies facing change"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Reface_Stop_090_R_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Stop_F_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_F_Rfoot",
+      "role": "Neutral stop ends in idle; existing root steering supplies facing change"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Reface_Stop_180_L_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Stop_F_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_F_Lfoot",
+      "role": "Neutral stop ends in idle; existing root steering supplies facing change"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Reface_Stop_180_L_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Stop_F_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_F_Rfoot",
+      "role": "Neutral stop ends in idle; existing root steering supplies facing change"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Reface_Stop_180_R_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Stop_F_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_F_Lfoot",
+      "role": "Neutral stop ends in idle; existing root steering supplies facing change"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Reface_Stop_180_R_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Stop_F_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_F_Rfoot",
+      "role": "Neutral stop ends in idle; existing root steering supplies facing change"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Spin_B_F_L_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Pivot_B_F_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_B_F_Lfoot",
+      "role": "Neutral directional reversal replaces style-specific spin; foot preserved"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Spin_B_F_L_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Pivot_B_F_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_B_F_Rfoot",
+      "role": "Neutral directional reversal replaces style-specific spin; foot preserved"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Spin_B_F_R_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Pivot_B_F_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_B_F_Lfoot",
+      "role": "Neutral directional reversal replaces style-specific spin; foot preserved"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Spin_B_F_R_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Pivot_B_F_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_B_F_Rfoot",
+      "role": "Neutral directional reversal replaces style-specific spin; foot preserved"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Spin_F_360_L_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Turn_L_180_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_180_Lfoot",
+      "role": "Neutral shortest-facing turn replaces ornamental full spin; direction/foot preserved"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Spin_F_360_L_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Turn_L_180_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_180_Rfoot",
+      "role": "Neutral shortest-facing turn replaces ornamental full spin; direction/foot preserved"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Spin_F_360_R_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Turn_R_180_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_180_Lfoot",
+      "role": "Neutral shortest-facing turn replaces ornamental full spin; direction/foot preserved"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Spin_F_360_R_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Turn_R_180_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_180_Rfoot",
+      "role": "Neutral shortest-facing turn replaces ornamental full spin; direction/foot preserved"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Spin_F_B_L_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Pivot_F_B_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_F_B_Lfoot",
+      "role": "Neutral directional reversal replaces style-specific spin; foot preserved"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Spin_F_B_L_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Pivot_F_B_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_F_B_Rfoot",
+      "role": "Neutral directional reversal replaces style-specific spin; foot preserved"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Spin_F_B_R_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Pivot_F_B_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_F_B_Lfoot",
+      "role": "Neutral directional reversal replaces style-specific spin; foot preserved"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Spin_F_B_R_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Pivot_F_B_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_F_B_Rfoot",
+      "role": "Neutral directional reversal replaces style-specific spin; foot preserved"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Spin_LL_F_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Box_LL_F_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_F_Lfoot",
+      "role": "Neutral same-direction-pair locomotion transition replaces style-specific spin"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Spin_RL_B_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Box_RL_B_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_B_Rfoot",
+      "role": "Neutral same-direction-pair locomotion transition replaces style-specific spin"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Start_B_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Start_B_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_B_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Start_B_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Start_B_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_B_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Start_F_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Start_F_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_F_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Start_F_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Start_F_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_F_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Start_LL_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Start_LL_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_LL_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Start_RL_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Start_RL_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_RL_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Stop_B_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Stop_B_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_B_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Stop_B_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Stop_B_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_B_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Stop_F_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Stop_F_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_F_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Stop_F_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Stop_F_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_F_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Stop_LL_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Stop_LL_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_LL_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Stop_LL_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Stop_LL_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_LL_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Stop_RL_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Stop_RL_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_RL_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Stop_RL_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Stop_RL_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_RL_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Switch_LR_LL_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Shuffle_LR_to_LL_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Shuffle_LR_to_LL_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Switch_LR_LL_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Shuffle_LR_to_LL_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Shuffle_LR_to_LL_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Switch_RR_RL_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Shuffle_RR_to_RL_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Shuffle_RR_to_RL_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Turn_L_090_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Turn_L_090_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_090_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Turn_L_090_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Turn_L_090_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_090_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Turn_L_180_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Turn_L_180_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_180_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Turn_L_180_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Turn_L_180_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_180_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Turn_R_090_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Turn_R_090_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_090_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Turn_R_090_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Turn_R_090_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_090_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Turn_R_180_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Turn_R_180_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_180_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Run_Turn_R_180_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Turn_R_180_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_180_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Transition_Sprint_to_Run_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Transition_Sprint_to_Run_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Sprint_to_Run_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Transition_Sprint_to_Run_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Transition_Sprint_to_Run_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Sprint_to_Run_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Transition_Walk_to_Run_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Transition_Walk_to_Run_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Walk_to_Run_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Relaxed_Transition_Walk_to_Run_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Transition_Walk_to_Run_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Walk_to_Run_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Relaxed_Sprint_Loop_F",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Neutral_Sprint_Loop_F",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Loop_F",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Relaxed_Sprint_Reface_Start_090_L",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Neutral_Sprint_Reface_Start_F_L_090",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_L_090",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Relaxed_Sprint_Reface_Start_090_R",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Neutral_Sprint_Reface_Start_F_R_090",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_R_090",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Relaxed_Sprint_Reface_Start_180_L",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Neutral_Sprint_Reface_Start_F_L_180",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_L_180",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Relaxed_Sprint_Reface_Start_180_R",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Neutral_Sprint_Reface_Start_F_R_180",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_R_180",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Relaxed_Sprint_Start_F_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Neutral_Sprint_Start_F_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Start_F_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Relaxed_Sprint_Stop_F_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Neutral_Sprint_Stop_F_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Stop_F_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Relaxed_Sprint_Stop_F_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Neutral_Sprint_Stop_F_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Stop_F_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Relaxed_Sprint_Turn_090_L_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Neutral_Sprint_Turn_L_090_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_090_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Relaxed_Sprint_Turn_090_L_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Neutral_Sprint_Turn_L_090_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_090_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Relaxed_Sprint_Turn_090_R_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Neutral_Sprint_Turn_R_090_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_090_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Relaxed_Sprint_Turn_090_R_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Neutral_Sprint_Turn_R_090_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_090_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Relaxed_Sprint_Turn_180_L_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Neutral_Sprint_Turn_L_180_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_180_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Relaxed_Sprint_Turn_180_L_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Neutral_Sprint_Turn_L_180_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_180_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Relaxed_Sprint_Turn_180_R_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Neutral_Sprint_Turn_R_180_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_180_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Relaxed_Sprint_Turn_180_R_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Neutral_Sprint_Turn_R_180_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_180_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Relaxed_Transition_Run_to_Sprint_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Neutral_Transition_Run_to_Sprint_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Run_to_Sprint_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Relaxed_Transition_Run_to_Sprint_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Neutral_Transition_Run_to_Sprint_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Run_to_Sprint_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Relaxed_Transition_Walk_to_Sprint_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Neutral_Transition_Walk_to_Sprint_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Walk_to_Sprint_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Relaxed_Transition_Walk_to_Sprint_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Sprint/M_Neutral_Transition_Walk_to_Sprint_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Walk_to_Sprint_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Walk/M_Relaxed_Transition_Run_to_Walk_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Walk/M_Neutral_Transition_Run_to_Walk_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Run_to_Walk_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Walk/M_Relaxed_Transition_Run_to_Walk_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Walk/M_Neutral_Transition_Run_to_Walk_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Run_to_Walk_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Walk/M_Relaxed_Transition_Sprint_to_Walk_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Walk/M_Neutral_Transition_Sprint_to_Walk_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Sprint_to_Walk_Lfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Walk/M_Relaxed_Transition_Sprint_to_Walk_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Walk/M_Neutral_Transition_Sprint_to_Walk_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Sprint_to_Walk_Rfoot",
+      "role": "matching authored motion"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_B_Land_Run_Heavy",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_B_Land_Run_Heavy",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Run_Heavy",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_B_Land_Run_Light",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_B_Land_Run_Light",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Run_Light",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_B_Land_Stand_Heavy_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_B_Land_Stand_Heavy_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Heavy_Lfoot",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_B_Land_Stand_Heavy_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_B_Land_Stand_Heavy_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Heavy_Rfoot",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_B_Land_Stand_Light_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_B_Land_Stand_Light_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Light_Lfoot",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_B_Land_Stand_Light_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_B_Land_Stand_Light_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Light_Rfoot",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_B_Land_Walk_Heavy",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_B_Land_Walk_Heavy",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Walk_Heavy",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_B_Land_Walk_Light",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_B_Land_Walk_Light",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Walk_Light",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_B_Off_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/ProjectJump/Jump/M_Neutral_Jump_B_Off_Run_Rfoot",
+      "source": null,
+      "role": "Reuse existing Neutral air clip; retain project airborne playback/notify contract"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_B_Start_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/ProjectJump/Jump/M_Neutral_Jump_B_Start_Lfoot",
+      "source": null,
+      "role": "Reuse existing Neutral air clip; retain project airborne playback/notify contract"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_B_Start_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/ProjectJump/Jump/M_Neutral_Jump_B_Start_Rfoot",
+      "source": null,
+      "role": "Reuse existing Neutral air clip; retain project airborne playback/notify contract"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_F_Land_Run_Heavy_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_F_Land_Run_Heavy_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Heavy_Lfoot",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_F_Land_Run_Heavy_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_F_Land_Run_Heavy_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Heavy_Rfoot",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_F_Land_Run_Light_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_F_Land_Run_Light_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Light_Lfoot",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_F_Land_Run_Light_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_F_Land_Run_Light_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Light_Rfoot",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_F_Land_Sprint_Heavy_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_F_Land_Sprint_Heavy_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Heavy_Lfoot",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_F_Land_Sprint_Heavy_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_F_Land_Sprint_Heavy_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Heavy_Rfoot",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_F_Land_Sprint_Light_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_F_Land_Sprint_Light_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Light_Lfoot",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_F_Land_Sprint_Light_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_F_Land_Sprint_Light_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Light_Rfoot",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_F_Land_Stand_Heavy_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_F_Land_Stand_Heavy_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Heavy_Lfoot",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_F_Land_Stand_Heavy_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_F_Land_Stand_Heavy_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Heavy_Rfoot",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_F_Land_Stand_Light_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_F_Land_Stand_Light_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Light_Lfoot",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_F_Land_Stand_Light_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_F_Land_Stand_Light_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Light_Rfoot",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_F_Land_Walk_Heavy_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_F_Land_Walk_Heavy_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Heavy_Lfoot",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_F_Land_Walk_Heavy_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_F_Land_Walk_Heavy_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Heavy_Rfoot",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_F_Land_Walk_Light_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_F_Land_Walk_Light_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Light_Lfoot",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_F_Land_Walk_Light_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_F_Land_Walk_Light_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Light_Rfoot",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_F_Off_Run_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/ProjectJump/Jump/M_Neutral_Jump_F_Off_Run_Lfoot",
+      "source": null,
+      "role": "Reuse existing Neutral air clip; retain project airborne playback/notify contract"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_F_Off_Run_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/ProjectJump/Jump/M_Neutral_Jump_F_Off_Run_Rfoot",
+      "source": null,
+      "role": "Reuse existing Neutral air clip; retain project airborne playback/notify contract"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_F_Off_Walk_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_F_Off_Walk_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Off_Walk_Lfoot",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_F_Off_Walk_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_F_Off_Walk_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Off_Walk_Rfoot",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_F_Start_Run_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_F_Start_Run_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Run_Lfoot",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_F_Start_Run_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_F_Start_Run_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Run_Rfoot",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_F_Start_Sprint_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/ProjectJump/Jump/M_Neutral_Jump_F_Start_Sprint_Lfoot",
+      "source": null,
+      "role": "Reuse existing Neutral air clip; retain project airborne playback/notify contract"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_F_Start_Sprint_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/ProjectJump/Jump/M_Neutral_Jump_F_Start_Sprint_Rfoot",
+      "source": null,
+      "role": "Reuse existing Neutral air clip; retain project airborne playback/notify contract"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_F_Start_Stand_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/ProjectJump/Jump/M_Neutral_Jump_F_Start_Stand_Lfoot",
+      "source": null,
+      "role": "Reuse existing Neutral air clip; retain project airborne playback/notify contract"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_F_Start_Stand_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/ProjectJump/Jump/M_Neutral_Jump_F_Start_Stand_Rfoot",
+      "source": null,
+      "role": "Reuse existing Neutral air clip; retain project airborne playback/notify contract"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_F_Start_Walk_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_F_Start_Walk_Lfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Walk_Lfoot",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_F_Start_Walk_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_F_Start_Walk_Rfoot",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Walk_Rfoot",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_LL_Land_Run_Heavy",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_LL_Land_Run_Heavy",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Run_Heavy",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_LL_Land_Run_Light",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_LL_Land_Run_Light",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Run_Light",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_LL_Land_Walk_Heavy",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_LL_Land_Walk_Heavy",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Walk_Heavy",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_LL_Land_Walk_Light",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_LL_Land_Walk_Light",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Walk_Light",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_LR_Off_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/ProjectJump/Jump/M_Neutral_Jump_LL_Off_Run_Lfoot",
+      "source": null,
+      "role": "Reuse existing Neutral air clip; retain project airborne playback/notify contract"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_LR_Start_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/ProjectJump/Jump/M_Neutral_Jump_LL_Start_Lfoot",
+      "source": null,
+      "role": "Reuse existing Neutral air clip; retain project airborne playback/notify contract"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_LR_Start_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/ProjectJump/Jump/M_Neutral_Jump_LL_Start_Rfoot",
+      "source": null,
+      "role": "Reuse existing Neutral air clip; retain project airborne playback/notify contract"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_Loop_Fall",
+      "target": "/Game/Characters/Mannequins/Animations/ProjectJump/Jump/M_Neutral_Jump_Loop_Fall",
+      "source": null,
+      "role": "Reuse existing Neutral air clip; retain project airborne playback/notify contract"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_RL_Land_Run_Heavy",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_RL_Land_Run_Heavy",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Run_Heavy",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_RL_Land_Run_Light",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_RL_Land_Run_Light",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Run_Light",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_RL_Land_Walk_Heavy",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_RL_Land_Walk_Heavy",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Walk_Heavy",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_RL_Land_Walk_Light",
+      "target": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_RL_Land_Walk_Light",
+      "source": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Walk_Light",
+      "role": "Neutral landing / gait-specific fallback air clip, same foot and impact category"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_RL_Off_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/ProjectJump/Jump/M_Neutral_Jump_RL_Off_Run_Rfoot",
+      "source": null,
+      "role": "Reuse existing Neutral air clip; retain project airborne playback/notify contract"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_RL_Start_Lfoot",
+      "target": "/Game/Characters/Mannequins/Animations/ProjectJump/Jump/M_Neutral_Jump_RL_Start_Lfoot",
+      "source": null,
+      "role": "Reuse existing Neutral air clip; retain project airborne playback/notify contract"
+    },
+    {
+      "old": "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Relaxed_Jump_RL_Start_Rfoot",
+      "target": "/Game/Characters/Mannequins/Animations/ProjectJump/Jump/M_Neutral_Jump_RL_Start_Rfoot",
+      "source": null,
+      "role": "Reuse existing Neutral air clip; retain project airborne playback/notify contract"
+    }
+  ],
+  "sources": [
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Run_Heavy",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Run_Light",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Heavy_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Heavy_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Light_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Light_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Walk_Heavy",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Walk_Light",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Heavy_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Heavy_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Light_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Light_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Heavy_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Heavy_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Light_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Light_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Heavy_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Heavy_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Light_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Light_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Heavy_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Heavy_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Light_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Light_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Off_Walk_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Off_Walk_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Run_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Run_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Walk_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Walk_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Run_Heavy",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Run_Light",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Walk_Heavy",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Walk_Light",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Run_Heavy",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Run_Light",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Walk_Heavy",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Walk_Light",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_LL_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_LL_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_RL_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_RL_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_LL_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_LL_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_RL_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_RL_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_B_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_B_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_F_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_F_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_B_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_B_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_F_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_F_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_B",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_F",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_LL",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_RL",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_B_F_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_B_F_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_F_B_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_F_B_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_LL_RL_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_LL_RL_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_RL_LL_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_RL_LL_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_L_090",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_L_180",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_R_090",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_R_180",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_L_090",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_L_180",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_R_090",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_R_180",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Shuffle_LR_to_LL_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Shuffle_LR_to_LL_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Shuffle_RR_to_RL_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_B_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_B_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_F_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_F_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_LL_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_RL_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_B_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_B_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_F_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_F_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_LL_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_LL_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_RL_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_RL_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_090_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_090_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_180_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_180_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_090_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_090_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_180_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_180_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Sprint_to_Run_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Sprint_to_Run_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Walk_to_Run_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Walk_to_Run_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Loop_F",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_L_090",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_L_180",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_R_090",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_R_180",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Start_F_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Stop_F_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Stop_F_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_090_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_090_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_180_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_180_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_090_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_090_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_180_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_180_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Run_to_Sprint_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Run_to_Sprint_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Walk_to_Sprint_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Walk_to_Sprint_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Run_to_Walk_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Run_to_Walk_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Sprint_to_Walk_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Sprint_to_Walk_Rfoot"
+  ],
+  "package_remaps": {
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_LL_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_LL_Lfoot",
+    "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Run_L": "/Game/GASP58Native/AnimNotifies/BP_AnimNotify_FoleyEvent_Run_L",
+    "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Run_R": "/Game/GASP58Native/AnimNotifies/BP_AnimNotify_FoleyEvent_Run_R",
+    "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_L": "/Game/GASP58Native/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_L",
+    "/Game/Characters/UEFN_Mannequin/Meshes/SK_UEFN_Mannequin": "/Game/GASP58Native/Characters/UEFN_Mannequin/Meshes/SK_UEFN_Mannequin",
+    "/Game/Misc/SandboxAnimCurveCompressionSettings": "/Game/GASP58Native/Misc/SandboxAnimCurveCompressionSettings",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_LL_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_LL_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/ExperimentalStateMachineData/PSD_SM_CMC_Transitions": "/Temp/PlayerAnimationImport/PSD_SM_CMC_Transitions",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_RL_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_RL_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_RL_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_RL_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_LL_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_LL_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_LL_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_LL_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_RL_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_RL_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_RL_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_RL_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_B_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_B_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_B_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_B_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_F_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_F_Lfoot",
+    "/Game/Blueprints/AnimNotifies/E_EarlyTransition_Condition": "/Game/GASP58Native/AnimNotifies/E_EarlyTransition_Condition",
+    "/Game/Blueprints/AnimNotifies/E_EarlyTransition_Destination": "/Game/GASP58Native/AnimNotifies/E_EarlyTransition_Destination",
+    "/Game/Blueprints/Data/E_Gait": "/Game/GASP58Native/Data/E_Gait",
+    "/Game/Blueprints/AnimNotifies/BP_NotifyState_EarlyTransition": "/Game/GASP58Native/AnimNotifies/BP_NotifyState_EarlyTransition",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_F_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_F_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_B_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_B_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_B_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_B_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_F_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_F_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_F_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_F_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_B": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_B",
+    "/Game/Characters/UEFN_Mannequin/Animations/ExperimentalStateMachineData/PSD_SM_CMC_Loops": "/Temp/PlayerAnimationImport/PSD_SM_CMC_Loops",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_F": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_F",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_LL": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_LL",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_RL": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_RL",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_B_F_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_B_F_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_B_F_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_B_F_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_F_B_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_F_B_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_F_B_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_F_B_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_LL_RL_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_LL_RL_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_LL_RL_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_LL_RL_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_RL_LL_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_RL_LL_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_RL_LL_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_RL_LL_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_L_090": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_L_090",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_L_180": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_L_180",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_R_090": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_R_090",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_R_180": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_R_180",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_L_090": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_L_090",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_L_180": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_L_180",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_R_090": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_R_090",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_R_180": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_R_180",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Shuffle_LR_to_LL_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Shuffle_LR_to_LL_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Shuffle_LR_to_LL_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Shuffle_LR_to_LL_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Shuffle_RR_to_RL_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Shuffle_RR_to_RL_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_B_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_B_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_B_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_B_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_F_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_F_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_F_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_F_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_LL_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_LL_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_RL_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_RL_Rfoot",
+    "/Game/Blueprints/AnimNotifies/E_FoleyEventSide": "/Game/GASP58Native/AnimNotifies/E_FoleyEventSide",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_B_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_B_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_B_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_B_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_F_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_F_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_F_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_F_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_LL_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_LL_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_LL_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_LL_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_RL_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_RL_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_RL_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_RL_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_090_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_090_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_090_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_090_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_180_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_180_Lfoot",
+    "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R": "/Game/GASP58Native/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_180_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_180_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_090_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_090_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_090_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_090_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_180_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_180_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_180_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_180_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Sprint_to_Run_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Sprint_to_Run_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Sprint_to_Run_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Sprint_to_Run_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Walk_to_Run_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Walk_to_Run_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Walk_to_Run_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Walk_to_Run_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Loop_F": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Loop_F",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_L_090": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_L_090",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_L_180": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_L_180",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_R_090": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_R_090",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_R_180": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_R_180",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Start_F_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Start_F_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Stop_F_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Stop_F_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Stop_F_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Stop_F_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_090_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_090_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_090_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_090_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_180_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_180_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_180_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_180_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_090_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_090_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_090_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_090_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_180_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_180_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_180_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_180_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Run_to_Sprint_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Run_to_Sprint_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Run_to_Sprint_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Run_to_Sprint_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Walk_to_Sprint_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Walk_to_Sprint_Lfoot",
+    "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Walk_L": "/Game/GASP58Native/AnimNotifies/BP_AnimNotify_FoleyEvent_Walk_L",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Walk_to_Sprint_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Walk_to_Sprint_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Run_to_Walk_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Run_to_Walk_Lfoot",
+    "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Walk_R": "/Game/GASP58Native/AnimNotifies/BP_AnimNotify_FoleyEvent_Walk_R",
+    "/Game/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Run_to_Walk_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Run_to_Walk_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Sprint_to_Walk_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Sprint_to_Walk_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Sprint_to_Walk_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Sprint_to_Walk_Rfoot",
+    "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent": "/Game/GASP58Native/AnimNotifies/BP_AnimNotify_FoleyEvent",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Run_Heavy": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Run_Heavy",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Run_Light": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Run_Light",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Heavy_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Heavy_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Heavy_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Heavy_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Light_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Light_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Light_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Light_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Walk_Heavy": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Walk_Heavy",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Walk_Light": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Walk_Light",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Heavy_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Heavy_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Heavy_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Heavy_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Light_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Light_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Light_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Light_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Heavy_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Heavy_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Heavy_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Heavy_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Light_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Light_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Light_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Light_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Heavy_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Heavy_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Heavy_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Heavy_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Light_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Light_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Light_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Light_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Heavy_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Heavy_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Heavy_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Heavy_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Light_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Light_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Light_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Light_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Off_Walk_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Off_Walk_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Off_Walk_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Off_Walk_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Run_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Run_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Run_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Run_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Walk_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Walk_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Walk_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Walk_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Run_Heavy": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Run_Heavy",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Run_Light": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Run_Light",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Walk_Heavy": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Walk_Heavy",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Walk_Light": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Walk_Light",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Run_Heavy": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Run_Heavy",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Run_Light": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Run_Light",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Walk_Heavy": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Walk_Heavy",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Walk_Light": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Walk_Light",
+    "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land": "/Game/GASP58Native/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+    "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump": "/Game/GASP58Native/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+  },
+  "temporary_dependencies": [
+    {
+      "source": "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "target": "/Game/GASP58Native/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R"
+    },
+    {
+      "source": "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "target": "/Game/GASP58Native/AnimNotifies/BP_AnimNotify_FoleyEvent_Land"
+    },
+    {
+      "source": "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump",
+      "target": "/Game/GASP58Native/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    }
+  ],
+  "new_jump_sources": [
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Run_Heavy",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Run_Light",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Heavy_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Heavy_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Light_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Light_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Walk_Heavy",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Walk_Light",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Heavy_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Heavy_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Light_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Light_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Heavy_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Heavy_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Light_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Light_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Heavy_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Heavy_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Light_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Light_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Heavy_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Heavy_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Light_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Light_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Off_Walk_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Off_Walk_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Run_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Run_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Walk_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Walk_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Run_Heavy",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Run_Light",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Walk_Heavy",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Walk_Light",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Run_Heavy",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Run_Light",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Walk_Heavy",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Walk_Light"
+  ],
+  "schema_version": 1,
+  "source_archive": "Archives/AnimationSources/Neutral_2026-10-22/Originals.zip",
+  "conversion_profile": "9bdc217be7ae3e7486670fffad421bc56b448613f8d63bbfaccc09a654d8a6dd"
+}

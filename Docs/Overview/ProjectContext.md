@@ -6,7 +6,9 @@
 
 2026-10-21 원본 BP/ABP 실행 흐름 재검토에서 회전 Chooser 입력을 native 타입과 실제 table binding으로 이주하고, AnimInstance owner 교체의 source 유효성과 비표현 월드의 무기 콜백 경계를 보강했다. 후속 점검에서는 client-capable target의 Voice 모듈을 Iris 연결 전에 로드하고, UE 5.8.3 에디터의 영문 기대값 검사 3개의 언어 상태를 실행 경계에서 격리·복원한다. native 67개와 엔진 검사 3개, 총 70개가 경고·실패·미실행 없이 통과했다. 원본과 동일한 부분·프로젝트 고유 차이·PIE 검증 범위는 [애니메이션 흐름 검토](../Animation/Architecture/Player_Animation_Flow_Review_2026-10-21.md)를 따른다. 아래 61/62개는 각 시점의 과거 결과다.
 
-공통 Skeleton은 Manny `SK_Mannequin`이다. UEFN 원본에서 변환한 448개 시퀀스·BlendSpace 10개를 생산 Chooser/PSD에 연결하며 원본 뱅크는 Content 밖에 압축 보관하고 최소 변환 kit만 유지한다. [추가 수입·중복 검사](../Animation/Authoring/Player_Animation_Library.md)는 원본 ID·실제 모션·재생 계약·recipe로 기존 Manny 결과를 재사용한다. UE5 호환 몸체는 직접 재생하고, 현재 Bip01 대검 몸체는 Family RTG와 몸체별 손 보정을 사용한다. 추가 망토 뼈의 처리는 [스켈레톤·추가 뼈 기준](../Animation/Authoring/HumanoidSkeletonRetargetingStandards.md)을 따른다. Quinn Simple은 같은 Skeleton의 직접 재생을 확인했지만, 체형별 접지·무기 접촉의 실제 플레이 검수는 별개다.
+2026-10-22 속도 튜닝은 Run 500/Sprint 750cm/s와 지상 재생률 1.0을 사용한다. 최근 gait 기반 정지 후보 분리와 접지 이후 착지 검색 범위 보정을 적용했고, 착지 수정 회귀 84개와 후속 전환 검색 점검 85개가 각각 실패·경고·미실행 없이 통과했다. 착지 시퀀스의 공중 접근 구간을 접지 뒤 다시 검색하지 않으며, 발 IK·접촉·잠금 해제·경사 보정과 공중 재선택·관성은 유지한다. 실제 PIE 조건과 남은 시각 검수 범위는 [라이브러리 검증 기록](../Animation/Authoring/Player_Animation_Library.md)을 따른다.
+
+공통 Skeleton은 Manny `SK_Mannequin`이다. UEFN 원본에서 변환한 575개 시퀀스·BlendSpace 11개를 라이브러리로 관리한다. 현재 Run/Sprint·점프/착지는 Neutral, Idle/Walk 기본 동작은 Relaxed로 선택하며 원본 뱅크는 Content 밖에 압축 보관하고 최소 변환 kit만 유지한다. [추가 수입·중복 검사](../Animation/Authoring/Player_Animation_Library.md)는 원본 ID·실제 모션·재생 계약·recipe로 기존 Manny 결과를 재사용한다. UE5 호환 몸체는 직접 재생하고, 현재 Bip01 대검 몸체는 Family RTG와 몸체별 손 보정을 사용한다. 추가 망토 뼈의 처리는 [스켈레톤·추가 뼈 기준](../Animation/Authoring/HumanoidSkeletonRetargetingStandards.md)을 따른다. Quinn Simple은 같은 Skeleton의 직접 재생을 확인했지만, 체형별 접지·무기 접촉의 실제 플레이 검수는 별개다.
 
 2026-10-21 마지막 IK 수정 기준 direct UBT와 집중 native 회귀 61개, 실제 지상·Sprint 회전·공중/착지·전신 몽타주 검증이 통과했다. 이전 빌드·성능·네트워크 수치를 이 결과에 합산하지 않는다. 팔 기준 포즈, 손가락 마디, Bip01 limb 시작점 누락의 원인·수정·실패 자료는 [전환·검증 기록](../Animation/Architecture/Player_Locomotion_Migration_2026-10-19.md)에 남겼다. 전체 클립 외형·새 군중 성능·Cook/Shipping 완료를 뜻하지 않는다.
 
@@ -19,7 +21,7 @@ MMORPG의 운영 인증·영속 저장·실제 존 이전 등 구현/보류 경�
 - Unreal Engine **5.8** 기반의 3인칭 액션 MMORPG 지향 프로젝트다.
 - 핵심은 C++ 기반 캐릭터 이동, GAS, 데이터 기반 직업/장비/전투, 네트워크 권한, 그리고 Mover·데이터 기반 로코모션 애니메이션이다.
 - 현재 기본 맵은 `Lvl_ThirdPerson`, 기본 GameMode는 `BP_Project_JGameMode`다. 이 Blueprint는 `Project_JGameMode`를 상속하고, GameState/PlayerState는 C++ 클래스다. 실제 CDO의 Pawn은 `BP_GreatSword`, Controller는 `BP_ThirdPersonPlayerController`의 override다. Third Person 샘플 에셋이 남아 있지만 최종 게임 구조를 의미하지는 않는다.
-- 대검은 첫 번째 실제 직업 수직 슬라이스다. `BP_Player`는 공통 아바타 제작 기반이며, 생산 대검·NPC와 함께 `ABP_Player_Master`를 사용한다. 구형 `ABP_Player`는 퇴역했다.
+- 대검은 첫 번째 실제 직업 수직 슬라이스다. 기존 테스트 `BP_Player`는 `BP_Player_Master`로 승격했고 `BP_GreatSword`는 그 자식이다. 공통 컴포넌트·입력·Manny source는 부모, 직업·장비·몸체 프로필은 자식이 공급한다. 테스트용 로컬 능력·속성 기본값과 의상 연결 BP 호출을 정리했다. 생산 대검·현재 테스트 NPC는 공통 `ABP_Player_Master`를 사용하며, NPC는 플레이어 BP를 상속하지 않는다. [마스터 제작 계약](../Architecture/Runtime/Player_Character_Master.md)을 따른다. 구형 `ABP_Player`는 퇴역했다.
 - 아직 실제 백엔드/메가서버/거래소/길드/대규모 군중을 완성한 상태가 아니다. 관련 타입과 경계는 장래 확장을 위해 존재한다.
 - NPC 타깃 후보는 중앙 스케줄러의 공간 질의를 사용하며, 장비 메시 스트리밍은 `VisualAssetSubsystem`의 요청·수명 관리를 사용한다. 전투/탑승 애니메이션 레이어에는 컴포넌트 로컬 `FStreamableHandle` 경로도 남아 있다. 이를 모든 전투 질의·표현 로딩의 단일 서비스로 일반화하지 않는다. 서버 간 이동은 handover envelope/상태 머신/transport 계약이며 실제 라이브 서버 연결 완료를 의미하지 않는다.
 
@@ -151,7 +153,7 @@ Enhanced Input / NavMover → GAS 정책 검증 → Mover / Network Prediction
 
 ```text
 AProject_JPlayerCharacter
-  → AProject_JGreatswordCharacter
+  → BP_Player_Master
     → BP_GreatSword
 
 ABP_Player_Master
@@ -159,11 +161,12 @@ ABP_Player_Master
   + ABP_Greatsword_Layers
 ```
 
-- 새 휴머노이드 직업은 얇은 native 직업 클래스 + 해당 Blueprint + 직업 layer/DA 조합으로 확장한다.
+- 새 플레이어 직업은 `BP_Player_Master` 자식 + 기존 직업 layer/DA로 확장한다. 값 차이만 있는 직업마다 native 클래스를 추가하지 않는다. `AProject_JGreatswordCharacter`는 기존 native 테스트 fixture용으로 유지한다. 사람형 NPC는 입력/PlayerState 계약까지 플레이어 부모에서 상속하지 않는다.
 - 공통 입력, GAS 소유권, 장비 시스템, SSR, locomotion graph를 직업 Blueprint에 복사하지 않는다.
 - `ABP_Player_Master`는 지상 상태 선택·재생/보정, Project_J 점프 재선택·원본 일반 추락, 슬롯·Aim·접지·Pose History·Mount 선택을 소유한다. 실제 BP_Player/GreatSword/NPC 연결을 저장했다. 직업/몸체 DA의 역할은 유지한다.
 - State Controller/Chooser는 gameplay 권위를 갖지 않는다. 물리 입력과 lifecycle은 Mover, 전투·장비 상태는 기존 GAS/장비 컴포넌트가 소유한다.
 - 직업 layer는 무기 자세/상체 오버레이/직업 고유 전투 이동 등 **차이가 실제로 필요한 부분만** 구현한다.
+- 현재 대검의 망토/헤어/치마는 표시 몸체의 세 RigidBody 노드가 계산하고 의상은 LeaderPose를 공유한다. 실험용 embedded Chaos Cloth 3개는 mesh 원본 백업 후 제거했다. 공통 본 파츠의 Tick은 꺼지지만, 향후 독립 vertex cloth 장비에는 기존 modular component가 Tick 예외를 적용한다. 구성과 검증 범위는 [플레이어 마스터](../Architecture/Runtime/Player_Character_Master.md)를 따른다.
 
 ### 태그와 데이터의 역할
 

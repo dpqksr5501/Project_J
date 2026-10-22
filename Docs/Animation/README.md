@@ -7,6 +7,7 @@ Project J는 **Mover 이동, C++ 상태·선택 계산, 데이터 기반 포즈 
 | 목적 | 기준 문서 |
 | --- | --- |
 | 이동·스냅샷·상태 선택·ABP 노드의 책임과 현재 에셋 경로 | [플레이어 로코모션 아키텍처](Architecture/Player_Locomotion_Architecture.md) |
+| 플레이어 부모/자식 BP·직업/몸체 프로필·의상 연결 | [캐릭터와 ABP 마스터](../Architecture/Runtime/Player_Character_Master.md) |
 | 원본 BP/ABP와 native 실행 흐름 대조·의도한 차이·초기화/Iris 경고 해결 | [애니메이션 흐름 최종 점검](Architecture/Player_Animation_Flow_Review_2026-10-21.md) |
 | 원본 보관·Manny 카탈로그·추가 수입 중복 검사 | [라이브러리 제작](Authoring/Player_Animation_Library.md) |
 | 새 이동 클립·Chooser·프로필·직업/탈것 콘텐츠 연결 | [이동 콘텐츠 확장](Authoring/DataDrivenLocomotionExtensionGuide.md) |
@@ -18,9 +19,11 @@ Project J는 **Mover 이동, C++ 상태·선택 계산, 데이터 기반 포즈 
 
 OTM/Strafe, 전방 세 방향 Strafe Sprint, 현재 점프의 공중 방향 재선택·playhead 연속성·수평 관성을 유지한다. 계산·Chooser 호출·핀 입력은 C++가 소유하고 포즈 연결과 노드별 실행 시점은 ABP가 소유한다. 전신 몽타주 하체를 이후 로코모션 IK가 덮지 않도록 합성 순서를 유지한다.
 
-UEFN 원본에서 변환한 Manny 시퀀스 448개·BlendSpace 10개를 생산 Chooser/PSD/가산 base/Branch In에 연결했다. 원본은 [Content 밖에 별도 보관](../../Archives/AnimationSources/README.md)하고, [수입·중복 판별 카탈로그](Authoring/Player_Animation_Library.md)와 Manny 기반 회귀를 사용한다. UE5 호환 몸체 직접 재생과 현재 Bip01 대검의 실시간 리타깃을 구분한다. 추가 망토 뼈만으로 리타깃이 필수인 것은 아니다. Quinn Simple도 같은 Skeleton에서 직접 재생하지만 체형별 접지·무기 접촉은 별도 확인한다.
+UEFN 원본에서 변환한 Manny 시퀀스 575개·BlendSpace 11개를 관리하며 생산 Chooser/PSD/가산 base에 연결한다. 현재 Run/Sprint·점프/착지는 Neutral, Idle/Walk 기본 동작은 Relaxed다. 원본은 [Content 밖에 별도 보관](../../Archives/AnimationSources/README.md)하고, [수입·중복 판별 카탈로그](Authoring/Player_Animation_Library.md)와 Manny 기반 회귀를 사용한다. UE5 호환 몸체 직접 재생과 현재 Bip01 대검의 실시간 리타깃을 구분한다. 추가 망토 뼈만으로 리타깃이 필수인 것은 아니다. Quinn Simple도 같은 Skeleton에서 직접 재생하지만 체형별 접지·무기 접촉은 별도 확인한다.
 
 ## 검증을 읽을 때
+
+캐릭터 마스터 승격 후에는 의상 등록·활성화 수명, 부모/자식 조립과 기존 handover·실제 GAS 소유권·몸체 검사를 포함한 76개 회귀가 경고·실패 없이 통과했다. 실제 PIE 조건·의도적으로 유지한 ABP 경계는 [마스터 제작 계약](../Architecture/Runtime/Player_Character_Master.md)을 따른다. 아래 수치는 각 이전 단계의 검증이다.
 
 2026-10-21 후속 최종 점검에서는 Editor/Game Development direct UBT와 native 67개·엔진 문자열 검사 3개, 총 70개 회귀가 경고·실패·미실행 없이 통과했다. 현재 생산 BP/ABP 7개의 연결을 재확인하고 새 네트워크 PIE에서 루프 회전·OTM/Strafe 공중·착지를 검사했다. 초기화 검사 언어 상태는 실행 경계에서 복원하며 Voice는 Iris 연결 전에 로드한다. 아래 61/62개는 이전 단계 결과다. 범위와 호환 처리의 적용 버전·비용은 위 최종 점검 문서를 따른다.
 

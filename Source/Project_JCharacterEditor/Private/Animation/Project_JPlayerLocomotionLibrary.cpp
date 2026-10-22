@@ -46,6 +46,119 @@
 #include "Animation/BlendSpace.h"
 #include "Animation/AnimData/IAnimationDataController.h"
 #include "Animation/AnimData/IAnimationDataModel.h"
+#include "Animation/Project_JAnimNotify_FoleyEvent.h"
+#include "MultiEnumColumn.h"
+#include "PoseSearch/Chooser/PoseSearchChooserColumn.h"
+#include "PoseSearch/PoseSearchAnimNotifies.h"
+
+int32 UProject_JPlayerLocomotionLibrary::ConfigureGroundedLandingSearch(UChooserTable* Root)
+{
+ if (!Root || (GEditor && GEditor->PlayWorld)) return INDEX_NONE;
+ struct FChange {UChooserTable* Table;int32 Column;int32 Row;FFloatInterval Range;};
+ // UE 5.8 exposes these row accessors without module exports. Use the
+ // serialized UPROPERTY boundary rather than changing the installed engine.
+ const auto* RowsProperty=FindFProperty<FArrayProperty>(FPoseSearchColumn::StaticStruct(),TEXT("RowValues"));
+ const auto* RowProperty=RowsProperty?CastField<FStructProperty>(RowsProperty->Inner):nullptr;
+ if (!RowProperty || RowProperty->Struct!=FPoseSearchColumnRow::StaticStruct()) return INDEX_NONE;
+ auto Rows=[RowsProperty](FPoseSearchColumn* Search)->TArray<FPoseSearchColumnRow>&
+ {return *RowsProperty->ContainerPtrToValuePtr<TArray<FPoseSearchColumnRow>>(Search);};
+ TArray<FChange> Changes;
+ TArray<UObject*> Owned;GetObjectsWithOuter(Root,Owned,EGetObjectsFlags::IncludeNestedObjects);
+ int32 LandingRows=0;
+ for (UObject* Object:Owned) if (auto* Table=Cast<UChooserTable>(Object))
+ {
+  const FMultiEnumColumn* Modes=nullptr;
+  for (const auto& C:Table->ColumnsStructs) if (const auto* Mode=C.GetPtr<FMultiEnumColumn>())
+   if (const auto* P=Mode->InputValue.GetPtr<FEnumContextProperty>();P && P->Binding.ContextIndex==0 &&
+    P->Binding.PropertyBindingChain==TArray<FName>{GET_MEMBER_NAME_CHECKED(UProject_JPlayerAnimInstance,PlayerMovementModeRecent)})
+   {if (Modes) return INDEX_NONE;Modes=Mode;}
+  if (!Modes) continue;
+  for (int32 C=0;C<Table->ColumnsStructs.Num();++C) if (auto* Search=Table->ColumnsStructs[C].GetMutablePtr<FPoseSearchColumn>())
+   for (int32 Row=0;Row<Search->GetNumRows();++Row)
+   {
+    if ((Table->DisabledRows.IsValidIndex(Row) && Table->DisabledRows[Row]) || !Modes->RowValues.IsValidIndex(Row) ||
+     Modes->RowValues[Row].Value!=(1u<<uint8(EProject_JPlayerMovementMode::InAir))) continue;
+    const auto& Data=Rows(Search)[Row].Data;
+    const auto* Sequence=Cast<UAnimSequence>(Data.GetAnimationAsset());
+    if (!Sequence || !Data.IsEnabled()) return INDEX_NONE;
+    float Impact=MAX_flt,Block=MAX_flt;
+    for (const FAnimNotifyEvent& Event:Sequence->Notifies)
+    {
+     if (const auto* Foley=Cast<UProject_JAnimNotify_FoleyEvent>(Event.Notify);Foley && Foley->FoleyEvent.Event==Project_J::Foley::Land)
+      Impact=FMath::Min(Impact,Event.GetTime());
+     if (Event.NotifyStateClass && Event.NotifyStateClass->IsA<UAnimNotifyState_PoseSearchBlockTransition>())
+      Block=FMath::Min(Block,Event.GetTime());
+    }
+    // These rows are entered after physical contact. Their full sequences also
+    // contain the approach from the air; pose cost alone must not replay it.
+    // One authored frame of anticipation keeps a blend into impact available.
+    if (Impact==MAX_flt || Block==MAX_flt || Impact<=0.f || Block<=0.f) return INDEX_NONE;
+    const float Frame=Sequence->GetSamplingFrameRate().AsInterval();
+    const auto Effective=Data.GetEffectiveSamplingRange(FVector::ZeroVector);
+    const float Minimum=FMath::Max(Effective.Min,FMath::Max(0.f,FMath::Min(Impact,Block)-Frame));
+    if (!FMath::IsFinite(Minimum) || Minimum>=FMath::Min(Block,Effective.Max)) return INDEX_NONE;
+    ++LandingRows;
+    if (!FMath::IsNearlyEqual(Data.SamplingRange.Min,Minimum) || Data.SamplingRange.Max!=Effective.Max)
+     Changes.Add({Table,C,Row,FFloatInterval(Minimum,Effective.Max)});
+   }
+ }
+ if (!LandingRows) return INDEX_NONE;
+ if (Changes.IsEmpty()) return 0;
+ Root->Modify();TSet<UChooserTable*> Changed;
+ for (const auto& Change:Changes)
+ {
+  if (!Changed.Contains(Change.Table)) {Change.Table->Modify();Changed.Add(Change.Table);}
+  Rows(&Change.Table->ColumnsStructs[Change.Column].GetMutable<FPoseSearchColumn>())[Change.Row].Data.SamplingRange=Change.Range;
+ }
+ for (UChooserTable* Table:Changed) {Table->Compile(true);Table->PostEditChange();}
+ Root->Compile(true);Root->PostEditChange();Root->MarkPackageDirty();
+ return Changes.Num();
+}
+
+bool UProject_JPlayerLocomotionLibrary::ConfigureStandingStopGaitFilter(UChooserTable* Root)
+{
+ if (!Root || (GEditor && GEditor->PlayWorld)) return false;
+ TArray<UObject*> Nested;GetObjectsWithOuter(Root,Nested,EGetObjectsFlags::IncludeNestedObjects);
+ UChooserTable* Stops=nullptr;
+ for (UObject* Object:Nested) if (auto* Table=Cast<UChooserTable>(Object);Table && Table->GetFName()==TEXT("Stand Stops"))
+ {if (Stops) return false;Stops=Table;}
+ if (!Stops || Stops->ResultsStructs.IsEmpty()) return false;
+ FInstancedStruct NewColumn=FInstancedStruct::Make<FEnumColumn>();auto& Column=NewColumn.GetMutable<FEnumColumn>();
+ Column.InputValue.InitializeAs<FEnumContextProperty>();auto& Binding=Column.InputValue.GetMutable<FEnumContextProperty>().Binding;
+ Binding.ContextIndex=0;Binding.PropertyBindingChain={GET_MEMBER_NAME_CHECKED(UProject_JPlayerAnimInstance,PlayerGaitRecent)};
+ Binding.Enum=StaticEnum<EProject_JLocomotionGaitIntent>();Binding.DisplayName=TEXT("Recent Gait (Stop Family)");
+ Column.DefaultRowValue.Comparison=EEnumColumnCellValueComparison::MatchAny;
+ int32 RunCount=0,SprintCount=0,WalkCount=0;
+ for (int32 Index=0;Index<Stops->ResultsStructs.Num();++Index)
+ {
+  auto& Row=Column.RowValues.AddDefaulted_GetRef();Row.Comparison=EEnumColumnCellValueComparison::MatchAny;
+  Row.Value=uint8(EProject_JLocomotionGaitIntent::Sprint);Row.ValueName=Binding.Enum->GetNameByValue(Row.Value);
+  if (Stops->DisabledRows.IsValidIndex(Index) && Stops->DisabledRows[Index]) continue;
+  const auto* Asset=Stops->ResultsStructs[Index].GetPtr<FAssetChooser>();
+  if (!Asset || !Asset->Asset || !Asset->Asset->IsA<UAnimSequence>()) return false;
+  const FString Path=Asset->Asset->GetPathName();
+  if (Path.StartsWith(TEXT("/Game/Characters/Mannequins/Animations/Locomotion/Run/")))
+  {Row.Comparison=EEnumColumnCellValueComparison::MatchNotEqual;++RunCount;}
+  else if (Path.StartsWith(TEXT("/Game/Characters/Mannequins/Animations/Locomotion/Sprint/")))
+  {Row.Comparison=EEnumColumnCellValueComparison::MatchEqual;++SprintCount;}
+  else if (Path.StartsWith(TEXT("/Game/Characters/Mannequins/Animations/Locomotion/Walk/"))) ++WalkCount;
+  else return false; // An unfamiliar bank needs an explicit authoring decision.
+ }
+ if (!RunCount || !SprintCount || !WalkCount) return false;
+ int32 Existing=INDEX_NONE;
+ for (int32 Index=0;Index<Stops->ColumnsStructs.Num();++Index)
+  if (const auto* C=Stops->ColumnsStructs[Index].GetPtr<FEnumColumn>())
+   if (const auto* P=C->InputValue.GetPtr<FEnumContextProperty>();P && P->Binding.PropertyBindingChain==Binding.PropertyBindingChain)
+   {if (Existing!=INDEX_NONE) return false;Existing=Index;}
+ if (Existing!=INDEX_NONE && Stops->ColumnsStructs[Existing]==NewColumn) return true;
+ Stops->Modify();Root->Modify();
+ if (Existing==INDEX_NONE) Stops->ColumnsStructs.Insert(MoveTemp(NewColumn),0);
+ else Stops->ColumnsStructs[Existing]=MoveTemp(NewColumn);
+ Stops->Compile(true);Root->Compile(true);
+ // Modify cancels dependent Pose Search tasks. Complete the editor change
+ // notification so their manager can leave PreCancelled and rebuild indexes.
+ Stops->PostEditChange();Root->PostEditChange();Root->MarkPackageDirty();return true;
+}
 
 bool UProject_JPlayerLocomotionLibrary::UseNativeRotationOffsetQuery(UChooserTable* Table)
 {
@@ -546,9 +659,9 @@ bool UProject_JPlayerLocomotionLibrary::ConfigureGameplayAvatar(UBlueprint* Avat
  if(!WalkingClass) return false;
  auto* CurrentWalking=Mover->MovementModes.FindRef(DefaultModeNames::Walking).Get();
  if(!CurrentWalking || CurrentWalking->GetClass()!=WalkingClass)
-  Mover->MovementModes.Add(DefaultModeNames::Walking,NewObject<UBaseMovementMode>(Mover,WalkingClass,NAME_None,RF_Transactional|RF_ArchetypeObject));
+  Mover->MovementModes.Add(DefaultModeNames::Walking,NewObject<UBaseMovementMode>(Mover,WalkingClass,NAME_None,RF_Public|RF_Transactional|RF_ArchetypeObject));
  if(!Cast<UProject_JFallingMode>(Mover->MovementModes.FindRef(DefaultModeNames::Falling)))
-  Mover->MovementModes.Add(DefaultModeNames::Falling,NewObject<UProject_JFallingMode>(Mover,NAME_None,RF_Transactional|RF_ArchetypeObject));
+  Mover->MovementModes.Add(DefaultModeNames::Falling,NewObject<UProject_JFallingMode>(Mover,NAME_None,RF_Public|RF_Transactional|RF_ArchetypeObject));
  FPropertyChangedEvent ModesChanged(FindFProperty<FProperty>(UMoverComponent::StaticClass(),GET_MEMBER_NAME_CHECKED(UMoverComponent,MovementModes)));
  static_cast<UObject*>(Mover)->PostEditChangeProperty(ModesChanged);
  if (auto* Property = FindFProperty<FObjectPropertyBase>(Defaults->GetClass(), TEXT("MotionMatchingTrajectoryComponent")))
@@ -563,6 +676,7 @@ bool UProject_JPlayerLocomotionLibrary::ConfigureGameplayAvatar(UBlueprint* Avat
  Defaults->GetMesh()->SetSkeletalMeshAsset(SourceMesh);
  Defaults->GetMesh()->SetAnimInstanceClass(Foundation->GeneratedClass);
  Defaults->GetMesh()->ComponentTags.AddUnique(TEXT("ProjectJ.PoseSource"));
+ if (Defaults->IsA<AProject_JPlayerCharacter>()) FinalizePlayerAvatarTemplates(Avatar);
  Avatar->MarkPackageDirty();
  return true;
 }

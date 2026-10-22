@@ -132,7 +132,7 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Combat|Animation", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UProject_JCombatIntroComponent> CombatIntroComponent = nullptr;
 
-	/** Generic runtime linker for job/weapon Anim Layers; it does not depend on BP_Player. */
+	/** Generic runtime linker for job/weapon Anim Layers; independent of concrete avatar BPs. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Combat|Animation", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UProject_JCombatAnimationLayerComponent> CombatAnimationLayerComponent = nullptr;
 

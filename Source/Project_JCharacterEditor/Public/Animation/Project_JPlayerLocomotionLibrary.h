@@ -8,6 +8,7 @@ class UAnimBlueprint;
 class UAnimInstance;
 class UBlueprint;
 class USkeletalMesh;
+class USkeletalMeshComponent;
 class UChooserTable;
 class UIKRetargeter;
 class UAnimationAsset;
@@ -22,6 +23,15 @@ class PROJECT_JCHARACTEREDITOR_API UProject_JPlayerLocomotionLibrary : public UB
 {
 	GENERATED_BODY()
 public:
+ /** Limit grounded landing pose searches to the authored impact phase, using Land/BlockTransition timing. Preserves animation data, curves and airborne searches. No save; refuses PIE; INDEX_NONE on incompatible data. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
+ static int32 ConfigureGroundedLandingSearch(UChooserTable* Root);
+ /** Restrict standing Sprint stops to the recent Sprint gait before pose matching. Keeps low-speed Walk stops, timing, row order and search data. No save; refuses PIE. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
+ static bool ConfigureStandingStopGaitFilter(UChooserTable* Root);
+ /** Set an explicit upper stride bound on authored nodes and compile their defaults. Preserves interpolation, FK reach limits, bindings and timing. No save. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
+ static bool ConfigureStrideWarpingMaximum(UAnimBlueprint* Blueprint, float Maximum);
  /** Migrate the reviewed rotation-curve Chooser input; keep every row and curve result. No save. */
  UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
  static bool UseNativeRotationOffsetQuery(UChooserTable* Table);
@@ -37,6 +47,15 @@ public:
  /** Read-only comparison of the runtime retarget output, final body pose and a fresh processor using the same source pose. */
  UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Diagnostics")
  static FString InspectVisualRetargetPose(UAnimInstance* Instance);
+ /** Read final secondary-bone poses and completed cloth particle samples. No CVar, asset or simulation reset. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Diagnostics")
+ static FString InspectSecondaryPhysics(USkeletalMeshComponent* Mesh);
+ /** Explicitly retire embedded vertex-cloth data using the editor unbind lifecycle. Keeps skinning, skeleton and physics assets; no save. Refuses PIE or externally owned cloth. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
+ static int32 RetireEmbeddedClothingData(USkeletalMesh* Mesh);
+ /** Load explicitly copied upstream animation packages with scoped import remaps. Removes upstream BranchIn registration only; never writes the upstream project or saves packages. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
+ static TArray<UAnimSequence*> PrepareStagedAnimationSources(const TArray<FString>& StagedPackages, const TMap<FString,FString>& PackageRemaps);
  /** Evaluate the selected sequence on the exact source/target meshes used by a retargeter; no live instance mutation. */
  UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Diagnostics")
  static FString InspectRetargetAnimation(UIKRetargeter* Retargeter, UAnimSequence* Sequence, USkeletalMesh* Source, USkeletalMesh* Target, double Time);
@@ -45,6 +64,12 @@ public:
  static int32 AlignOneToOneRetargetChains(UIKRetargeter* Retargeter, const TArray<FName>& TargetChains);
  UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
  static FString ExportNativeLocomotionContract(UBlueprint* Target);
+ /** Remove prototype-local state/grants before promoting the existing test avatar to the shared player base. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
+ static bool PreparePlayerMaster(UBlueprint* Target);
+ /** Repair class-owned inline archetype visibility for inheritance. Does not change movement settings or compile/save. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
+ static int32 FinalizePlayerAvatarTemplates(UBlueprint* Target);
  UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
  static bool InstallNativeLocomotionPins(UAnimBlueprint* Target);
  /** Inline pure native query adapters, updating authored calls and Chooser bindings together. */

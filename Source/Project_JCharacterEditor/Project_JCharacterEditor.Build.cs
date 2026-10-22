@@ -21,6 +21,7 @@ public class Project_JCharacterEditor : ModuleRules
 			"Foliage", // LandscapeEdit's public editing interface includes foliage snapping types.
 			"Project_JAnimationNodes",
 			"Json",
+			"ClothingSystemRuntimeInterface",
 			"AssetRegistry",
 			"AssetTools",
 			"Chooser",
@@ -35,6 +36,7 @@ public class Project_JCharacterEditor : ModuleRules
 			"GameplayAbilities",
 			"Persona",
 			"AnimGraph",
+			"AnimGraphRuntime",
 			"BlueprintGraph",
 			"PoseSearch",
 			"PoseSearchEditor",

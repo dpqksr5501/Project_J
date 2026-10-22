@@ -51,7 +51,7 @@ bool FProjectJMannyFoundation::RunTest(const FString&)
   if(Property->Struct==FAnimNode_ControlRig::StaticStruct())
   {++CompiledRigs;CheckRig(*Property->ContainerPtrToValuePtr<FAnimNode_ControlRig>(BP->GeneratedClass->GetDefaultObject()));}
  TestEqual(TEXT("One compiled foot solver was inspected"),CompiledRigs,1);
- for(const TCHAR* Path:{TEXT("/Game/Character_BPs/BP_Player.BP_Player_C"),TEXT("/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C"),TEXT("/Game/NPCs/BP_NPC_Test.BP_NPC_Test_C")})
+ for(const TCHAR* Path:{TEXT("/Game/Character_BPs/BP_Player_Master.BP_Player_Master_C"),TEXT("/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C"),TEXT("/Game/NPCs/BP_NPC_Test.BP_NPC_Test_C")})
  {
   auto* Class=LoadClass<AProject_JMoverPawn>(nullptr,Path);if(!TestNotNull(TEXT("Production avatar"),Class))continue;
   const auto* Pawn=Class->GetDefaultObject<AProject_JMoverPawn>();const auto* Mesh=Pawn->GetMesh()->GetSkeletalMeshAsset();

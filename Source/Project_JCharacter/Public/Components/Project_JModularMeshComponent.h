@@ -4,10 +4,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Project_JModularMeshComponent.generated.h"
 
-/**
- * Custom Skeletal Mesh Component optimized for large-scale MMORPG modular characters.
- * Pillar 5: Nanite Skeletal Extreme Rendering & Modular Character Structure.
- */
+/** Modular visual part with explicit shared-pose or independent extra-bone evaluation. */
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class PROJECT_JCHARACTER_API UProject_JModularMeshComponent : public USkeletalMeshComponent
 {
@@ -15,6 +12,15 @@ class PROJECT_JCHARACTER_API UProject_JModularMeshComponent : public USkeletalMe
 
 public:
 	UProject_JModularMeshComponent();
+	virtual void Activate(bool bReset = false) override;
+	virtual void SetSkeletalMesh(USkeletalMesh* NewMesh, bool bReinitPose = true) override;
+
+	/** Authored parts may follow their skeletal attach parent without a BP construction chain.
+	 * Leave disabled for socket attachments. AttachAndSetLeader enables the same lifecycle for runtime equipment.
+	 * Parts requiring their own extra-bone graph must use AttachAndCopyPose instead.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ModularMesh")
+	bool bFollowAttachParentPose = false;
 
 	/**
 	 * Attaches this modular part to the main character mesh and forces it to use the main mesh's leader pose.
@@ -31,7 +37,10 @@ public:
 protected:
 	virtual void OnRegister() override;
 	virtual void OnUnregister() override;
+	virtual void OnAttachmentChanged() override;
 private:
+	void RefreshAttachParentPose();
+	void RefreshSharedPoseTick();
 	void ClearPosePrerequisite();
 	TWeakObjectPtr<USkeletalMeshComponent> PosePrerequisite;
 

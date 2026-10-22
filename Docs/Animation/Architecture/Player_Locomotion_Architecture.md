@@ -2,6 +2,8 @@
 
 Project J의 이동 애니메이션은 **Mover 이동 시뮬레이션, C++ 상태·선택 계산, 데이터 기반 포즈 재생, 몸체별 표현**으로 구성한다. 공통 마스터 `ABP_Player_Master`를 플레이어·대검·현재 테스트 NPC가 공유한다. 직업마다 이동 그래프를 복사하지 않고 전투 레이어와 제작 프로필을 확장한다.
 
+캐릭터 제작 부모는 `BP_Player_Master`이며 기존 `BP_GreatSword`가 이를 상속한다. 기존 테스트 BP의 로컬 상태·능력 기본값과 중복 프로필 지정을 제거하고, 대검 의상 8개의 연결은 native modular component 등록 수명으로 옮겼다. 직업/몸체 프로필·입력·리타기터·공통 ABP의 포즈 순서는 유지한다. [캐릭터/ABP 마스터 계약](../../Architecture/Runtime/Player_Character_Master.md)의 상속·제작·저장 기준을 따른다.
+
 이 문서는 2026-10-21 현재 구현의 시작점이다. 시점별 원인·실패·복구·실행 결과는 [전환·검증 기록](Player_Locomotion_Migration_2026-10-19.md), 실제 제작 절차는 [이동 콘텐츠 확장](../Authoring/DataDrivenLocomotionExtensionGuide.md), 골격과 추가 뼈는 [스켈레톤 제작 기준](../Authoring/HumanoidSkeletonRetargetingStandards.md)을 따른다.
 
 ## 입력에서 표시 포즈까지
@@ -43,12 +45,26 @@ AnimGraph 노드는 엔진의 포즈 평가·스레드·디버깅·제작 경계
 
 ## 이동과 점프 계약
 
+기본 지상 튜닝은 **Walk 165 / Run 500 / Sprint 750cm/s**다. Mover `GroundMovementSettings`는 시뮬레이션·예측의 gait 목표, `DA_Player_Profile`의 속도는 gameplay 승인 상한이다. 직렬화 호환을 위해 프로필의 `WalkSpeed` 필드 이름을 유지하지만 이는 일반 Run 상한이며 Ctrl Walk 속도가 아니다. 두 역할이 서로 제한하지 않도록 함께 튜닝한다. 가속·감속·회전 보간·공중 관성 정책은 유지한다.
+
+프로필의 `bScaleGroundPlayRateWithSpeed=false`는 지상 BlendStack의 동적 재생률을 1.0으로 유지한다. 명시적인 에셋 `RateScale`이나 몽타주·공중 타이밍을 일괄 변경하는 기능이 아니다. 지상은 실제 `PlayerSpeed2D`를 입력받는 Stride Warping으로 보폭을 맞춘다. 원래 1.0이던 보폭 상한을 1.5로 확장하고 보간·FK 다리 길이 제한·허벅지 보정은 유지한다. 원본 재생률의 Neutral 전방 루프 평균 root 속도는 Manny 변환본 기준 Run 약 516.53 / Sprint 약 723.14cm/s이며 500/750의 평균 보폭 비율은 약 0.968/1.037이다. 전이·순간 속도·체형별 접지는 별도 검수 대상이다.
+
+Pivot의 속도 상한은 GT에서 게시한 실제 Mover gait 튜닝에 기존 overspeed 여유를 보존해 계산한다(Sprint +115cm/s, Run은 Run +225와 Sprint +15 중 큰 값). Run 전환/착지에 남은 Sprint 관성도 수용한다. 고정 700 때문에 750 Sprint에서 Pivot이 배제되지 않는다. 속도와 재생률 정책은 기존 immutable proxy snapshot으로 전달하며 worker에서 pawn/프로필을 조회하지 않는다. 각 노드의 실행 시점과 Chooser/PSD·애니메이션 원본은 유지한다.
+
 - **OTM / Strafe:** 두 모드를 유지한다. Strafe Sprint는 전방·좌전방·우전방만 승인하며 측후방 요청은 Run 정책과 일치시킨다.
 - **지상:** SmoothWalking 이동 모드와 native 이동 계산을 연결한다. BP 이동 모드는 엔진 override를 잇는 어댑터다. 퇴역한 CMC 전용 입력·TIP·독립 MM 경로를 복원하지 않는다.
 - **공중:** 현재 입력·facing·승인 gait에 따라 점프 모션을 재선택한다. 같은 물리 점프의 foot과 실제 playhead 연속성을 보존하고, 새 후보가 재생 시각을 되감지 않도록 한다.
 - **관성:** 공중 제어율은 가속도에 적용한다. 입력 해제나 gait 변경만으로 수평 속도를 없애지 않으며, 역방향 입력은 물리적으로 궤도를 바꾼다.
 - **착지·큰 방향 전환:** Falling 회전과 착지 전환은 이동 상태·실제 재생 문맥을 사용한다. 카메라 각도 하나로 특정 클립을 강제하지 않는다.
 - **네트워크:** 이동의 Independent/Interpolated 정책과 표현용 점프·착지 이벤트를 구분한다. ABP의 클립 선택은 이동·전투 결과의 권위가 아니다.
+
+## 정지 모션과 발 접지
+
+2026-10-22부터 `Stand Stops`는 포즈 검색 전에 native `PlayerGaitRecent`로 Run/Sprint 후보를 분리한다. 기존 속도 200 이상 조건만으로는 Run 500에서도 Sprint Stop이 검색됐다. Sprint 입력 해제와 정지가 같은 프레임에 일어나면 현재 gait가 먼저 Run으로 바뀌므로, 기존 최근 gait의 유지 계약을 사용한다. 낮은 속도의 Walk Stop, 좌우 발·방향 후보, Pose Match, 재생 시작 시각과 blend 출력은 유지한다. 이 필터는 정지 직전 안정된 gait에 대한 기준이며, Run으로 낮춘 직후 남은 모든 overspeed 조건의 외형을 보증하지 않는다.
+
+발 IK·발 잠금·경사 보정은 Stop/Idle 전환에서 계속 평가한다. 특정 클립 이름이나 상태 진입으로 IK를 끄거나 강제로 초기화하지 않는다. 접촉 커브가 낮은 발은 기존 Control Rig의 잠금 해제와 blend-out을 따르며, 접촉한 발은 경사면 접지를 유지한다. 현재 제작 경로는 `ConfigureStandingStopGaitFilter`이며, 후보/타이밍을 바꾸지 않고 Enum 필터만 추가한다. 에디터 변경 완료 알림까지 전달해 `Modify`로 중단된 종속 검색 인덱스의 재구성을 허용한다.
+
+정지 후보 경계는 `StandingStopFamily`, 실제 평지/12도 경사의 OTM·Strafe Run/Sprint 정지와 Idle 복귀·접촉 기반 발 잠금 해제는 [정지 PIE 검사](../../../Scripts/Validation/Validate-PlayerLocomotionStopping.py)로 확인한다. source solver의 정상 잠금 해제는 최종 대검 신발의 접지 외형까지 승인했다는 뜻이 아니다. 발바닥 형상·몸체 리타깃·각 클립의 시각 품질은 별도 검수한다.
 
 ## 지상 루프의 회전과 동기화
 
@@ -58,9 +74,19 @@ Walk/Run slopes BlendSpace는 정규화 재생 시각으로 샘플을 맞춘다.
 
 UE 5.8에서 Run의 마커 기반 위상 맞춤을 켜면 leader sample의 이전 시각이 재설정되어 루트 모션 델타가 0이 되는 경로를 확인했다. 이때 물리 이동과 카메라는 회전해도 Steering/OffsetRootBone에 회전 보정이 공급되지 않아 표시 몸이 이전 방향에 남았다. Sprint→Run 조기 종료 노티파이와 별개의 원인이며, 회전 강제 reset이나 Root Offset 해제로 가리지 않는다. `GroundLoopRootMotion`은 Walk/Run의 여섯 경사 샘플을 실제 엔진 틱으로 재생해 루프 경계까지 루트 델타를 검사한다. [완만 회전 PIE 검사](../../../Scripts/Validation/Validate-PlayerLocomotionLoopTurning.py)는 물리 yaw와 표시 root를 함께 비교한다.
 
+## 접지 이후의 착지 검색 구간
+
+물리적으로 접지한 뒤 진입하는 landing 행은 전체 클립의 낙하 준비 구간을 다시 선택하면 안 된다. 2026-10-22 Shift 유지 Sprint 점프에서 실제 접지 직후 Neutral Sprint 착지가 0초부터 재생되는 것을 확인했다. 별도 Fall Loop가 선택된 기록과는 구분한다. 원본 착지 시퀀스에는 약 0.5초/1초의 공중 접근 구간도 있으며, 일부 Run Light에만 검색 제외 노티파이가 있어 전체 클립 검색의 비용만으로 안전한 시작점을 보장하지 못했다.
+
+`ConfigureGroundedLandingSearch`는 Ground Chooser에서 `PlayerMovementModeRecent`가 InAir인 착지 전용 행을 확인하고, native Land 이벤트와 `PoseSearchBlockTransition` 시작 중 이른 시각보다 원본 한 프레임 앞부터 검색하도록 `SamplingRange`를 제한한다. 32행의 후보·출력·커브·노티파이·재생률·블렌드 설정은 유지한다. 동일 시퀀스를 공중에서 재생하는 다른 경로에는 영향을 주지 않으며, 이름별 런타임 예외나 강제 IK 해제는 추가하지 않는다. 제작 데이터가 불완전하면 변경 전에 실패하고, 재실행은 동일 결과를 유지한다. 새 착지 은행을 연결할 때도 이 제작 검사를 수행한다.
+
+착지의 `StartTime`은 시퀀스에 새 Notify State를 넣어 고정한 값이 아니다. Ground Chooser의 착지 행 `SamplingRange`가 진입 후보 구간을 제한하고, 마지막 Pose Match 열이 현재 포즈에 맞는 검색 결과 시각을 출력 구조의 `StartTime`에 쓴다. native `SelectNativeStateAnimation`이 이를 `PlayerBlendStackInputs.StartTime`으로 전달한다. Output Struct 열의 기본 StartTime 0만 보고 항상 0초부터 재생한다고 해석하지 않는다. 기존 `PoseSearchBlockTransition`은 진입을 막는 구간이고, 사용자 `Transition To Loop` 노티파이는 재생 중 Loop 복귀 요청이며 시작 시각과 역할이 다르다.
+
+`GroundedLandingPhase`는 실제 재구성된 embedded PSD에서 각 landing 행의 선택 가능한 포즈가 접지 부근에 있고 후보가 사라지지 않았는지 검사한다. [공중·착지 PIE 검사](../../../Scripts/Validation/Validate-PlayerLocomotionAirLanding.py)의 `PLAYER_AIR_SPRINT_THROUGH_LANDING=True`는 Shift 유지 직선/90·180도 전환을 양 회전 모드에서 검사한다. 실제 접지 이후 공중 상태 재진입·Mover의 재낙하, 착지 클립의 낙하 준비 구간 재생, 직선 Sprint 750의 속도 손실도 검사한다. 전체 클립의 시각 품질이나 모든 높이/지형의 물리 검증과는 구분한다.
+
 ## 공용 모션과 몸체 확장
 
-공통 Skeleton은 `/Game/Characters/Mannequins/Meshes/SK_Mannequin`, 생산 source mesh는 `SKM_Manny_Simple`이다. 외부 UEFN 라이브러리 448개 시퀀스와 BlendSpace 10개를 Manny용으로 변환해 Chooser·PSD·가산 base·Branch In 연결까지 이주했다. 원본 뱅크는 Content 밖의 압축 보관본으로 보존하고, 실제 필요한 최소 retarget kit만 제작 자원으로 남긴다. 추가 수입과 중복 판별은 [라이브러리 제작 기준](../Authoring/Player_Animation_Library.md)을 따른다. 변환본에 원본 FBX를 직접 재임포트하거나 Skeleton만 바꾸어 덮지 않는다.
+공통 Skeleton은 `/Game/Characters/Mannequins/Meshes/SK_Mannequin`, 생산 source mesh는 `SKM_Manny_Simple`이다. 최초 변환본에 Neutral 127개와 프로젝트 Run BlendSpace를 추가해 시퀀스 575개·BlendSpace 11개를 관리한다. Run/Sprint·점프/착지는 Neutral, Idle/Walk 기본 동작은 Relaxed로 선택한다. Chooser·PSD·가산 base는 Manny용을 사용하고, 신규 원본의 Branch In은 가져오지 않고 생산 PSD가 후보를 명시적으로 소유한다. 원본 뱅크는 Content 밖의 압축 보관본으로 보존하고, 실제 필요한 최소 retarget kit만 제작 자원으로 남긴다. 추가 수입과 중복 판별은 [라이브러리 제작 기준](../Authoring/Player_Animation_Library.md)을 따른다. 변환본에 원본 FBX를 직접 재임포트하거나 Skeleton만 바꾸어 덮지 않는다.
 
 같은 Skeleton을 사용하는 `SKM_Quinn_Simple`도 모션을 직접 공유한다. 실제 6클립·두 시점·두 메시의 포즈 평가 24표본을 확인했다. 체형이 다르면 관절 위치와 발·손 접촉은 달라질 수 있다. 현재 Manny 발 Rig의 초기 길이·접지·무기 접촉을 Quinn 플레이에서도 검수하기 전까지 외형 품질까지 검증 완료로 표시하지 않는다.
 

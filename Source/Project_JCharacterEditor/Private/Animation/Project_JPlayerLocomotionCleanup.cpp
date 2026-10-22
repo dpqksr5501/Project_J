@@ -1,6 +1,7 @@
 #include "Animation/Project_JPlayerLocomotionLibrary.h"
 #include "Animation/Project_JPlayerAnimInstance.h"
 #include "Animation/AnimBlueprint.h"
+#include "AnimGraph/AnimGraphNode_StrideWarping.h"
 #include "AnimGraphNode_BlendListByInt.h"
 #include "AnimGraphNode_MotionMatching.h"
 #include "AnimGraphNode_LinkedInputPose.h"
@@ -25,6 +26,33 @@
 #include "KismetCompiler.h"
 #include "Misc/DefaultValueHelper.h"
 #include "AnimGraphNode_LinkedAnimLayer.h"
+#include "Engine/SkeletalMesh.h"
+#include "ClothingAssetBase.h"
+#include "ScopedTransaction.h"
+
+int32 UProject_JPlayerLocomotionLibrary::RetireEmbeddedClothingData(USkeletalMesh* Mesh)
+{
+ if (!Mesh || (GEditor && GEditor->PlayWorld)) return INDEX_NONE;
+ const auto Assets = Mesh->GetMeshClothingAssets();
+ for (const UClothingAssetBase* Asset : Assets)
+  if (!Asset || Asset->GetOuter() != Mesh) return INDEX_NONE;
+ if (Assets.IsEmpty()) return 0;
+ const FScopedTransaction Transaction(NSLOCTEXT("ProjectJ", "RetireEmbeddedCloth", "Retire embedded clothing data"));
+ Mesh->Modify();
+ FScopedSkeletalMeshPostEditChange PostEdit(Mesh);
+ Mesh->PreEditChange(nullptr);
+ // Matches the engine cloth editor's deletion path. Each unbind updates the
+ // authored LOD/section data before the array and embedded objects are removed.
+ for (UClothingAssetBase* Asset : Assets)
+ {
+  Asset->Modify();
+  Asset->UnbindFromSkeletalMesh(Mesh, INDEX_NONE, INDEX_NONE);
+  Mesh->GetMeshClothingAssets().Remove(Asset);
+  Asset->Rename(nullptr, GetTransientPackage());
+ }
+ Mesh->MarkPackageDirty();
+ return Assets.Num();
+}
 
 namespace
 {
@@ -282,4 +310,26 @@ bool UProject_JPlayerLocomotionLibrary::UseNativeRetargetWristTarget(UAnimBluepr
  }
  if(!Replaced)return true;
  FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(Target);FCompilerResultsLog Compiler;Compiler.bSilentMode=true;FKismetEditorUtilities::CompileBlueprint(Target,EBlueprintCompileOptions::SkipGarbageCollection,&Compiler);Target->MarkPackageDirty();for(const auto& Message:Compiler.Messages)if(Message->GetSeverity()<=EMessageSeverity::Warning)UE_LOG(LogTemp,Error,TEXT("Wrist compile: %s"),*Message->ToText().ToString());return Compiler.NumErrors==0 && Compiler.NumWarnings==0 && Target->Status!=BS_Error;
+}
+
+
+bool UProject_JPlayerLocomotionLibrary::ConfigureStrideWarpingMaximum(UAnimBlueprint* Blueprint, float Maximum)
+{
+ if (!Blueprint || !FMath::IsFinite(Maximum) || Maximum<1.f || (GEditor && GEditor->PlayWorld)) return false;
+ TArray<UEdGraph*> Graphs;Blueprint->GetAllGraphs(Graphs);
+ TArray<UAnimGraphNode_StrideWarping*> Nodes;
+ for (auto* Graph:Graphs) for (UEdGraphNode* Node:Graph->Nodes)
+  if (auto* Stride=Cast<UAnimGraphNode_StrideWarping>(Node)) Nodes.Add(Stride);
+ if (Nodes.IsEmpty()) return false;
+ for (const auto* Stride:Nodes) if (Maximum<Stride->Node.StrideScaleModifier.ClampMin) return false;
+ Blueprint->Modify();
+ for (auto* Stride:Nodes)
+ {
+  Stride->Modify();
+  Stride->Node.StrideScaleModifier.bClampResult=true;
+  Stride->Node.StrideScaleModifier.ClampMax=Maximum;
+ }
+ FBlueprintEditorUtils::MarkBlueprintAsModified(Blueprint);
+ FKismetEditorUtilities::CompileBlueprint(Blueprint);
+ return Blueprint->Status!=BS_Error;
 }

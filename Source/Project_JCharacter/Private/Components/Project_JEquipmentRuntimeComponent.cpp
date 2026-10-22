@@ -329,7 +329,6 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentMeshLoaded(EProject_JEquipm
 	}
 
 	UProject_JModularMeshComponent* NewMeshComp = NewObject<UProject_JModularMeshComponent>(OwnerCharacter);
-	NewMeshComp->RegisterComponent();
 	NewMeshComp->SetSkeletalMesh(LoadedMesh);
 	NewMeshComp->SetCastShadow(ItemDef->bCastDynamicShadow);
 	NewMeshComp->SetCullDistance(ItemDef->MaxDrawDistance);
@@ -354,6 +353,9 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentMeshLoaded(EProject_JEquipm
 		NewMeshComp->SetLeaderPoseComponent(nullptr); 
 	}
 
+	// Install the mesh and pose source before registration can initialize cloth
+	// or post-process dynamics. Do not reset the already-running body simulation.
+	NewMeshComp->RegisterComponent();
 	RuntimeItem.SpawnedMesh = NewMeshComp;
 }
 

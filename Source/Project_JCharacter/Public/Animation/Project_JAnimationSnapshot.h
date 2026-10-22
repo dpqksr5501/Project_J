@@ -46,6 +46,13 @@ struct PROJECT_JCHARACTER_API FProject_JAnimGroundThreadSafeData
  GENERATED_BODY()
  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation|Snapshot")
  bool bWantsSprint = false;
+ // Completed GT tuning snapshot; worker graph logic must not read the pawn/profile.
+ UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation|Snapshot")
+ float RunSpeed = 500.f;
+ UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation|Snapshot")
+ float SprintSpeed = 750.f;
+ UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation|Snapshot")
+ bool bScalePlayRateWithSpeed = false;
 };
 
 USTRUCT(BlueprintType)

@@ -363,7 +363,7 @@ bool FProjectJPlayerCharacterSerializationTest::RunTest(const FString& Parameter
 		TestNull(TEXT("Serialization fixture releases its world context"), GEngine->GetWorldContextFromWorld(World));
 	};
 
-	FString PlayerClassPathString = TEXT("/Game/Character_BPs/BP_Player.BP_Player_C");
+	FString PlayerClassPathString = TEXT("/Game/Character_BPs/BP_Player_Master.BP_Player_Master_C");
 	GConfig->GetString(TEXT("ProjectJ.Tests"), TEXT("PlayerCharacterClassPath"), PlayerClassPathString, GEngineIni);
 
 	FSoftClassPath PlayerClassPath(PlayerClassPathString);

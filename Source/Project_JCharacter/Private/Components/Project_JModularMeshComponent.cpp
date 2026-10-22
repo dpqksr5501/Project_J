@@ -2,6 +2,7 @@
 #include "Engine/SkeletalMesh.h"
 #include "Animation/Project_JCopyPoseAnimInstance.h"
 #include "Animation/Skeleton.h"
+#include "Animation/Project_JPresentationMeshResolver.h"
 
 UProject_JModularMeshComponent::UProject_JModularMeshComponent()
 {
@@ -14,17 +15,10 @@ UProject_JModularMeshComponent::UProject_JModularMeshComponent()
 
 void UProject_JModularMeshComponent::AttachAndSetLeader(USkeletalMeshComponent* MainMesh)
 {
-	if (!MainMesh) return;
-	ClearPosePrerequisite();
-	SetAnimInstanceClass(nullptr);
-
-	// Attach to the main mesh
-	AttachToComponent(MainMesh, FAttachmentTransformRules::KeepRelativeTransform);
-
-	// Force this component to blindly follow the main mesh's evaluated pose.
-	// This zeroes out the animation evaluation overhead for modular parts (armor, boots, etc.).
-	SetLeaderPoseComponent(MainMesh, true, true);
-	SetComponentTickEnabled(false);
+	if (!MainMesh || MainMesh == this) return;
+	if (!AttachToComponent(MainMesh, FAttachmentTransformRules::KeepRelativeTransform)) return;
+	bFollowAttachParentPose = true;
+	RefreshAttachParentPose();
 }
 
 bool UProject_JModularMeshComponent::CanCopyBasePose(const USkeletalMesh* Source,const USkeletalMesh* Target)
@@ -50,9 +44,12 @@ bool UProject_JModularMeshComponent::CanCopyBasePose(const USkeletalMesh* Source
 bool UProject_JModularMeshComponent::AttachAndCopyPose(USkeletalMeshComponent* MainMesh)
 {
  if(!MainMesh || MainMesh==this || !CanCopyBasePose(MainMesh->GetSkeletalMeshAsset(),GetSkeletalMeshAsset()))return false;
+ const bool PreviousAuto = bFollowAttachParentPose;
+ bFollowAttachParentPose = false;
+ if(!AttachToComponent(MainMesh,FAttachmentTransformRules::KeepRelativeTransform))
+ {bFollowAttachParentPose=PreviousAuto;return false;}
  ClearPosePrerequisite();
  SetLeaderPoseComponent(nullptr);
- if(!AttachToComponent(MainMesh,FAttachmentTransformRules::KeepRelativeTransform))return false;
  AddTickPrerequisiteComponent(MainMesh);PosePrerequisite=MainMesh;
  SetAnimInstanceClass(UProject_JCopyPoseAnimInstance::StaticClass());
  SetComponentTickEnabled(true);
@@ -67,13 +64,64 @@ void UProject_JModularMeshComponent::ClearPosePrerequisite()
 void UProject_JModularMeshComponent::OnUnregister()
 {
  ClearPosePrerequisite();
+	if (bFollowAttachParentPose) SetLeaderPoseComponent(nullptr);
  Super::OnUnregister();
 }
 void UProject_JModularMeshComponent::OnRegister()
 {
  Super::OnRegister();
+	if (bFollowAttachParentPose)
+	{
+		RefreshAttachParentPose();
+		return;
+	}
  if(GetAnimClass()==UProject_JCopyPoseAnimInstance::StaticClass())
   if(auto* Source=Cast<USkeletalMeshComponent>(GetAttachParent()))
    if(CanCopyBasePose(Source->GetSkeletalMeshAsset(),GetSkeletalMeshAsset()))
    {AddTickPrerequisiteComponent(Source);PosePrerequisite=Source;SetComponentTickEnabled(true);}
+}
+
+void UProject_JModularMeshComponent::OnAttachmentChanged()
+{
+	Super::OnAttachmentChanged();
+	if (bFollowAttachParentPose && IsRegistered()) RefreshAttachParentPose();
+}
+
+void UProject_JModularMeshComponent::RefreshAttachParentPose()
+{
+	// SCS establishes the attach parent before registration. Reattachment and
+	// re-registration must replace the old source without a Tick or owner-name lookup.
+	ClearPosePrerequisite();
+	if (auto* Source = Cast<USkeletalMeshComponent>(GetAttachParent()))
+	{
+		if (GetAnimClass()) SetAnimInstanceClass(nullptr);
+		// Rebinding an unchanged source must not recreate cloth or reset its history.
+		SetLeaderPoseComponent(Source, LeaderPoseComponent.Get() != Source || bFollowerShouldTickPose, false);
+	}
+	else
+	{
+		SetLeaderPoseComponent(nullptr);
+	}
+	RefreshSharedPoseTick();
+}
+
+void UProject_JModularMeshComponent::Activate(bool bReset)
+{
+	Super::Activate(bReset);
+	if (bFollowAttachParentPose) RefreshSharedPoseTick();
+}
+
+void UProject_JModularMeshComponent::RefreshSharedPoseTick()
+{
+	// Bone sharing does not replace Chaos Cloth's vertex simulation. Cloth needs
+	// the component tick, but bFollowerShouldTickPose=false prevents another AnimGraph.
+	const bool bNeedsCloth = LeaderPoseComponent.IsValid() && !IsNetMode(NM_DedicatedServer) &&
+		Project_J::Animation::UsesIndependentClothSimulation(*this);
+	SetComponentTickEnabled(bNeedsCloth);
+}
+
+void UProject_JModularMeshComponent::SetSkeletalMesh(USkeletalMesh* NewMesh, bool bReinitPose)
+{
+	Super::SetSkeletalMesh(NewMesh, bReinitPose);
+	if (bFollowAttachParentPose && IsRegistered()) RefreshAttachParentPose();
 }

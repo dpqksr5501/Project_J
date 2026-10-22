@@ -127,8 +127,23 @@ bool FProjectJEquipmentLoadLifecycleTest::RunTest(const FString& Parameters)
  Runtime->OnEquipmentMeshLoaded(Item->EquipmentSlot, Item);
  auto* Visual = Runtime->RuntimeItems[Item->EquipmentSlot].SpawnedMesh;
  TestNotNull(TEXT("Completed asset creates visual"), Visual);
+ if (Visual)
+ {
+  TestTrue(TEXT("First registered frame already has the authored pose source"), Visual->IsRegistered() && Visual->LeaderPoseComponent.Get() == Owner->GetMesh());
+  TestTrue(TEXT("Runtime and authored parts share one lifecycle policy"), Visual->bFollowAttachParentPose);
+  TestFalse(TEXT("Plain equipment has no independent pose tick"), Visual->IsComponentTickEnabled());
+  TestNull(TEXT("Plain equipment has no duplicate graph"), Visual->GetAnimInstance());
+ }
  Runtime->OnEquipmentMeshLoaded(Item->EquipmentSlot, Item);
  TestEqual(TEXT("No duplicated visual"), Runtime->RuntimeItems[Item->EquipmentSlot].SpawnedMesh, Visual);
+ auto* Replacement = NewObject<UProject_JEquipmentItemDefinition>(Runtime);
+ Replacement->EquipmentSlot = Item->EquipmentSlot; Replacement->EquipmentMesh = Item->EquipmentMesh;
+ Runtime->OnEquipmentEquipped(Replacement->EquipmentSlot, Replacement);
+ TestTrue(TEXT("Replacing the slot destroys its previous mesh"), !IsValid(Visual) || Visual->IsBeingDestroyed());
+ Runtime->OnEquipmentMeshLoaded(Replacement->EquipmentSlot, Item);
+ TestNull(TEXT("Stale previous item completion cannot recreate the old visual"), Runtime->RuntimeItems[Item->EquipmentSlot].SpawnedMesh);
+ Runtime->OnEquipmentMeshLoaded(Replacement->EquipmentSlot, Replacement);
+ TestNotNull(TEXT("Replacement creates exactly its own visual"), Runtime->RuntimeItems[Item->EquipmentSlot].SpawnedMesh);
  Runtime->BeginPlay(); Runtime->EndPlay(EEndPlayReason::LevelTransition);
  TestEqual(TEXT("World transition releases lease"), Service->GetLeaseCount(), 0);
  TestTrue(TEXT("World transition clears runtime"), Runtime->RuntimeItems.IsEmpty());

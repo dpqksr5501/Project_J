@@ -7,11 +7,10 @@
 #include "Project_JGreatswordCharacter.generated.h"
 
 /**
- * Native foundation for the greatsword job family.
- *
- * Class/advancement data, visual mesh, weapon profile, and AnimBP remain
- * authored in BP_GreatswordCharacter and Data Assets. This class only owns
- * greatsword-specific runtime extension points.
+ * Behavior-free compatibility type for native test/network fixtures.
+ * Production BP_GreatSword inherits BP_Player_Master / AProject_JPlayerCharacter;
+ * job, equipment and body differences are authored in existing profiles.
+ * Retain this type for its native subclasses and serialized fixture consumers.
  */
 UCLASS(Blueprintable)
 class PROJECT_JCHARACTER_API AProject_JGreatswordCharacter : public AProject_JPlayerCharacter

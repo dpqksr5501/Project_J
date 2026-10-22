@@ -12,8 +12,8 @@ struct PROJECT_JCORE_API FProject_JGroundMovementSettings
 {
 	GENERATED_BODY()
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Speed", meta=(ClampMin="0")) float WalkSpeed=165.f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Speed", meta=(ClampMin="0")) float RunSpeed=375.f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Speed", meta=(ClampMin="0")) float SprintSpeed=585.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Speed", meta=(ClampMin="0")) float RunSpeed=500.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Speed", meta=(ClampMin="0")) float SprintSpeed=750.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Acceleration", meta=(ClampMin="0")) float WalkAcceleration=500.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Acceleration", meta=(ClampMin="0")) float RunAcceleration=800.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Acceleration", meta=(ClampMin="0")) float SprintAcceleration=300.f;

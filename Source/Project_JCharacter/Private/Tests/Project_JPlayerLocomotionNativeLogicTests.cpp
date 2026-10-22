@@ -4,6 +4,7 @@
 #include "Movement/Project_JMoverLifecycle.h"
 #include "Movement/Project_JGroundMovement.h"
 #include "Animation/Project_JPlayerAirTypes.h"
+#include "Animation/Project_JCharacterAnimInstanceProxy.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "UObject/UnrealType.h"
 #include "Serialization/MemoryReader.h"
@@ -35,8 +36,12 @@ bool FProjectJPlayerLocomotionNativeThresholds::RunTest(const FString&)
 	Anim->PlayerTrajectoryIsCircling=true;
 	TestTrue(TEXT("GASP Sprint uses its 60-degree decision even when the retired MM setup field is absent"),Anim->EvaluateIsPivoting());
 	Anim->PlayerSpeed2D=199.9;TestFalse(TEXT("Sprint decision excludes speeds below 200"),Anim->EvaluateIsPivoting());
-	Anim->PlayerSpeed2D=700.;TestTrue(TEXT("Sprint includes the authored 700 speed boundary"),Anim->EvaluateIsPivoting());
-	Anim->PlayerSpeed2D=700.1;TestFalse(TEXT("Sprint excludes speeds above its range"),Anim->EvaluateIsPivoting());
+	Anim->PlayerSpeed2D=750.;TestTrue(TEXT("Tuned Sprint top speed remains eligible for pivoting"),Anim->EvaluateIsPivoting());
+	Anim->PlayerSpeed2D=865.;TestTrue(TEXT("Sprint preserves 115 cm/s of overspeed headroom"),Anim->EvaluateIsPivoting());
+	Anim->PlayerSpeed2D=865.1;TestFalse(TEXT("Sprint excludes speeds above its tuned range"),Anim->EvaluateIsPivoting());
+	Anim->PlayerMovementMode=EProject_JPlayerMovementMode::OnGround;
+	Anim->PlayerSpeed2D=750.;Anim->PlayerTrajectoryCurrentAngularVelocity=FVector(0,0,400);Anim->PlayerTrajectoryCirclingTime=1.;
+	TestEqual(TEXT("Ground cadence does not accelerate with speed or circling"),Anim->EvaluateDynamicPlayRate(FAnimNodeReference()),1.);
 	Anim->PlayerGait=static_cast<EProject_JLocomotionGaitIntent>(int32(1.));Anim->PlayerSpeed2D=175.;Anim->PlayerTrajectoryTurnAngle=75.;
 	Anim->PlayerMovementModeRecent=EProject_JPlayerMovementMode::OnGround;TestTrue(TEXT("GASP Run keeps its own speed and angle boundary"),Anim->EvaluateIsPivoting());
 	Anim->PlayerTrajectoryTurnAngle=74.9;TestFalse(TEXT("Run does not inherit the Sprint angle"),Anim->EvaluateIsPivoting());

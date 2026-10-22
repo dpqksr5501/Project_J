@@ -10,7 +10,8 @@
 float AProject_JPlayerCharacter::GetMoverMaxSpeed(bool bAcceptedSprint) const
 {
  const auto* Profile=GetLocomotionProfile();
- const float Speed=IsMoveInputIgnored()?0.f:bAcceptedSprint?(Profile?Profile->SprintSpeed:585.f):(Profile?Profile->WalkSpeed:375.f);
+ const FProject_JGroundMovementSettings Defaults;
+ const float Speed=IsMoveInputIgnored()?0.f:bAcceptedSprint?(Profile?Profile->SprintSpeed:Defaults.SprintSpeed):(Profile?Profile->WalkSpeed:Defaults.RunSpeed);
  return FMath::IsFinite(Speed) && Speed>=0.f?Speed:0.f;
 }
 

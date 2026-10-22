@@ -15,6 +15,14 @@ python Scripts/Authoring/Restore-AnimationSources.py --restore --package /Game/C
 
 모든 UEFN 자료가 삭제 대상은 아니다. 향후 추가 수입에 사용하는 `RTG_Player_UEFN_to_Manny`와 실제 연결된 최소 source mesh/rig/preview pose는 현재 제작 자원으로 유지한다. 공용 Manny 에셋이 참조하는 Foley·노티파이·커브·압축/수정 도구도 유지한다. 이들과 보관된 비활성 원본 모션 뱅크의 역할을 구분한다.
 
+`Neutral_2026-10-22/Originals.zip`은 Neutral Run/Sprint/Jump 확장 때 사용한 새 upstream 시퀀스 127개와 notify BP 3개를 보존한다. 기존 보관본을 덮거나 같은 이름을 동일 revision으로 간주하지 않는다. 별도 [명세](Neutral_2026-10-22/ArchiveManifest.json)에 원본 바이트 해시·제작용 package remap·변환 recipe 지문을 남겼다. 의존성 목록은 포함된 notify BP를 보수적으로 함께 복원하며, 공유 source kit와 생산 프로젝트 전체를 이 ZIP만으로 복원하지는 않는다.
+
+```powershell
+python Scripts/Authoring/Restore-AnimationSources.py --bundle Neutral_2026-10-22 --verify
+```
+
+복원은 앞의 명시적 `--restore --package` 절차를 따르고, 새 에디터에서 staging/import 검사를 다시 수행한다. `--bundle`을 생략하면 기존 최초 보관본을 사용한다.
+
 ## 보관 ZIP의 Git 비교와 임시 파일
 
 ZIP은 `.gitattributes`에서 `filter=lfs -diff merge=lfs -text`로 관리한다. 원본은 LFS에 보존하고 내용 검토는 옆의 JSON 명세·체크섬으로 한다. `-diff`만으로 Git의 clean filter 실행까지 차단되는 것은 아니다.

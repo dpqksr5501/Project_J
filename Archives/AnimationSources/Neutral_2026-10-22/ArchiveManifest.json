@@ -1,0 +1,1577 @@
+{
+  "schema_version": 1,
+  "engine": "5.8.3",
+  "upstream": "Epic Games Game Animation Sample 5.8",
+  "files": [
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_LL_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_LL_Lfoot",
+      "bytes": 1291604,
+      "sha256": "7e8a63f435a26fc6d9656d8413a558ac1e548aa0ed509a992259952f705bde9e"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_LL_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_LL_Rfoot",
+      "bytes": 1249051,
+      "sha256": "da122ce9261958f9f8ec381878be4f97848656dfe90068f68d3408282fd90f94"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_RL_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_RL_Lfoot",
+      "bytes": 981718,
+      "sha256": "ad0b704b67be061438621254fde08b9dc3f6e5164af7c72618f84986d4c89a42"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_RL_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_RL_Rfoot",
+      "bytes": 981860,
+      "sha256": "e8c007b3017911cb0c54df5a80c6a2e32638107a9a849e382fb392be613f93b3"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_LL_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_LL_Lfoot",
+      "bytes": 887451,
+      "sha256": "f1dbec87c23a8046d7cb9ed52465029204da83e204ccbae82a7178f0401d8f49"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_LL_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_LL_Rfoot",
+      "bytes": 889156,
+      "sha256": "b2827cd60cc5c6fe3e7b90b8381ceee689d20a6253a56c75413d418c150158d4"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_RL_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_RL_Lfoot",
+      "bytes": 989865,
+      "sha256": "f862ec40de23aa37c601f2d155de12e346ae4c9beb4b6d613128c54a1b38a459"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_RL_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_RL_Rfoot",
+      "bytes": 982636,
+      "sha256": "a429b419efb819fa8a941b321da2882deab4d4aa4c3441615dd3708f2d6c1a34"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_B_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_B_Lfoot",
+      "bytes": 949181,
+      "sha256": "dc79e24d2574edda53e0de954b8e062fb23bec77bfbf55c62d2ae95df74927af"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_B_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_B_Rfoot",
+      "bytes": 960103,
+      "sha256": "e073c5eb6cadd97bee8ccb99c8021dfc913d06b07f373328f2a7653997841387"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_F_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_F_Lfoot",
+      "bytes": 1405982,
+      "sha256": "99997384de921ef8f11d205a973bc4a5cac77f938d16be40f0f051962a3f84a1"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_F_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_F_Rfoot",
+      "bytes": 948136,
+      "sha256": "72439e4709e07c299033cca04f27eac97be766747e6e19eee9f348918ae90ae8"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_B_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_B_Lfoot",
+      "bytes": 1287626,
+      "sha256": "a2b948667cc20763b69ceea608ac70d2bbfcc40f658045af8e5a39dafa98b1e3"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_B_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_B_Rfoot",
+      "bytes": 1245217,
+      "sha256": "9aba70a32cc3541468dcb25f20f990d4fde82863a64df5c7075f8e46831442e4"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_F_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_F_Lfoot",
+      "bytes": 929946,
+      "sha256": "75644009834932be2042c1777fbac55e941488f947b92c02e62e74ff3b6933c3"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_F_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_F_Rfoot",
+      "bytes": 935966,
+      "sha256": "d672356e32a01712d7219eee7622a7e605e7072f59de768ecb111dde1f73239f"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_B.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_B",
+      "bytes": 788174,
+      "sha256": "f4947d2cac84db28dd6c6632f733f376ffc9e8dd95dd38ef67a3cdf032a987eb"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_F.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_F",
+      "bytes": 767191,
+      "sha256": "4c2886f9a2c3e1693fe54c5d9fc20772120dee38b83908302cad5cc8db52db79"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_LL.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_LL",
+      "bytes": 721141,
+      "sha256": "0bbfc02f603a186e94fc045cd680887c4270f54c1e60671c65d129d7617995c6"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_RL.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_RL",
+      "bytes": 761082,
+      "sha256": "75007b952581a0db662a4e66abcdb05e4954e558df1271a991ee14db64a5d10e"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_B_F_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_B_F_Lfoot",
+      "bytes": 1451075,
+      "sha256": "004d2973a6938d496b867f0568e98f0d8b90eb85423d35dc57e07eaa9bf14595"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_B_F_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_B_F_Rfoot",
+      "bytes": 1528393,
+      "sha256": "3f3601529fb2786ba8ed15574ee9e76d7e5990241ef77cb5f03f7158cd79ec50"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_F_B_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_F_B_Lfoot",
+      "bytes": 975828,
+      "sha256": "cd5360f82a44fabfb182ebe573bfd2c54b69871abd5430da135cf3ff9cd6307d"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_F_B_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_F_B_Rfoot",
+      "bytes": 958940,
+      "sha256": "cba148cadaa20ec031d5045decf4ea2d28974e5e62d3311d00a3eee38473ebe6"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_LL_RL_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_LL_RL_Lfoot",
+      "bytes": 958584,
+      "sha256": "ec8a33d8d5dcbef1587e80e0b725c25fd8a91c39de99acef541e6a8f61256525"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_LL_RL_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_LL_RL_Rfoot",
+      "bytes": 1144361,
+      "sha256": "e457dd36587d2b39f379fcba73568b82186a033f70d197f5ef62679dd972ae8c"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_RL_LL_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_RL_LL_Lfoot",
+      "bytes": 902301,
+      "sha256": "a5e78b8a9c7f32e5f3ca0a8cb3292a88bb35a4ae3443f8acc0e885bfe0679a10"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_RL_LL_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_RL_LL_Rfoot",
+      "bytes": 952518,
+      "sha256": "e737e511695e1c1e4f72516e779602a4a1bf6e18fcadd272262ac0e7264be939"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_L_090.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_L_090",
+      "bytes": 1467321,
+      "sha256": "bb661bd10a393d569bafc40f6bc2dc544dbee5f76e7746bb543ded4d00605ffd"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_L_180.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_L_180",
+      "bytes": 1507403,
+      "sha256": "3edb3867964a473d3a0cf71ecb372e57385506b3edbd7efb22be95ee3e55ce66"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_R_090.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_R_090",
+      "bytes": 1510143,
+      "sha256": "b1eaac9df9360b4797ecdba7867f019e5df243cba5c7a0c3599e39111a062edb"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_R_180.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_R_180",
+      "bytes": 1505044,
+      "sha256": "2b7fc4174f792188d02ac5137a996d992009280abf0148cb78a1ca89a1a40faa"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_L_090.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_L_090",
+      "bytes": 1441073,
+      "sha256": "8e9a4547639b6e32012f7be54c9922bc0afa9a7bbbae4835b82ac7473183d423"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_L_180.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_L_180",
+      "bytes": 1442599,
+      "sha256": "3d33c3feee9a5a5a5004de383a7a0396d65d3eea915857d8b6df47a8412cc6f8"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_R_090.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_R_090",
+      "bytes": 1486679,
+      "sha256": "301a022cfec70fb577e98ed36e335275901395660501623a66bae46b9d4370fe"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_R_180.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_R_180",
+      "bytes": 1425685,
+      "sha256": "7b6bd3493fbc6a7953baa231f78e5ae35eaf4c0a7c194e10bbe59957e98ba112"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Shuffle_LR_to_LL_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Shuffle_LR_to_LL_Lfoot",
+      "bytes": 846065,
+      "sha256": "ec2431498a438ed12c6f67ea06807c81bfc14261e69aaebd28f5490edd83331c"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Shuffle_LR_to_LL_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Shuffle_LR_to_LL_Rfoot",
+      "bytes": 765491,
+      "sha256": "8db3a6f20e1a5d152fa5d36b29a0cf31554bbc975f71aa2b5bc219f1d886b452"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Shuffle_RR_to_RL_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Shuffle_RR_to_RL_Lfoot",
+      "bytes": 837719,
+      "sha256": "9424989f0816646358b500da04e2fbd8bb22f13d529e5306d3a60527e3c2ed30"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_B_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_B_Lfoot",
+      "bytes": 981776,
+      "sha256": "f6a10db21649f38dd50c724f087b67247cc40b5c1f3ebb3428537d23683dfd4a"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_B_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_B_Rfoot",
+      "bytes": 968121,
+      "sha256": "efb6810de9bb93beb59a8718bc8b2dff2c5ae78d32aefef47a581e94cbaf2bc7"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_F_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_F_Lfoot",
+      "bytes": 996185,
+      "sha256": "904de9a49d8b0a6aa3de698ed068481721df80052e9668e21e575e032b50674d"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_F_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_F_Rfoot",
+      "bytes": 1063847,
+      "sha256": "bbac4da939d1c5cf5737a9d3e1d6da6f58c2ab29717e37bdef411437a9b3cd96"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_LL_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_LL_Lfoot",
+      "bytes": 906708,
+      "sha256": "6a2579bb45856836dc310c94d82c8fa8fc55eb52e7aa2eaa0a9f6fe89d3ebe80"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_RL_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_RL_Rfoot",
+      "bytes": 1023364,
+      "sha256": "96de51421dd446c5361b2701e612ca250c5b6a09b1e1dcb702543d16395015b0"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_B_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_B_Lfoot",
+      "bytes": 1579061,
+      "sha256": "0ccde95e477f7d899443a9d41f24b0cb5bc46039b4fe8f55b01d8befcce876eb"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_B_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_B_Rfoot",
+      "bytes": 1703906,
+      "sha256": "425c444ece3a47616329b9e1bbfd434cf6cf3b37ad9f2d337ef3619e23e318dc"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_F_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_F_Lfoot",
+      "bytes": 1676080,
+      "sha256": "a077e57bd78fd5beb479d4b31c8de7cf5328a5b761211ab7bca6eb35d54a135a"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_F_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_F_Rfoot",
+      "bytes": 1686001,
+      "sha256": "a702d92ae026993556d86d2728f7cc20afb041fbb9e35d660fb99b201cf62cf0"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_LL_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_LL_Lfoot",
+      "bytes": 1653766,
+      "sha256": "99d287dea6603461c05751347cabbd7c7d80da9845679cc02bd488c13671b97a"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_LL_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_LL_Rfoot",
+      "bytes": 1700600,
+      "sha256": "63725c4bb670a3743ef894bef3bfbb24eb9194f3e085fe06d372b7130e1d7d93"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_RL_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_RL_Lfoot",
+      "bytes": 1743668,
+      "sha256": "1eced5e90b61fda4ef10a0012a890ae6164b1ba165235afd12cf3005bcfe4829"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_RL_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_RL_Rfoot",
+      "bytes": 1330084,
+      "sha256": "1607ca6b794e1b44a15358972ab3913bfa53ad60d82dfe79716f530a04925300"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_090_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_090_Lfoot",
+      "bytes": 1369464,
+      "sha256": "8ae5e3dd9513413b4fcc9729859beaa27c71d072d1f398c1d0c6f08271ee0c76"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_090_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_090_Rfoot",
+      "bytes": 1340051,
+      "sha256": "5486c5374c5c9ef592f5f82f735f5c1a27aba19426efb423fe191bcd9ba9df16"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_180_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_180_Lfoot",
+      "bytes": 1422820,
+      "sha256": "46c1e2461ace700f5bf5eb557e5a98001720c9c8dac5d74badb28768fc3da4ed"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_180_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_180_Rfoot",
+      "bytes": 1453987,
+      "sha256": "7a4ac4e49995857c9101dc94f1f327e55fb86b4147d9940eb16be84e84ee1656"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_090_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_090_Lfoot",
+      "bytes": 1349769,
+      "sha256": "82432f27ae070117a4628b57b93bb7f1c543cf50a1cb4509ba4d9edf56347e00"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_090_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_090_Rfoot",
+      "bytes": 1356309,
+      "sha256": "e64bb9554e0c63d0932ff956dc232820259d52513f713a2e8d62830843743cee"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_180_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_180_Lfoot",
+      "bytes": 1454857,
+      "sha256": "afea15cd2a2f288a3ffdcc05a3990d2d3bf88409e1c1d779c7037a2bb3657f84"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_180_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_180_Rfoot",
+      "bytes": 1415142,
+      "sha256": "37fc5cf83f6361731258f8da02fe4213ea8e1aebe2b5b8ef7837942030ae48df"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Sprint_to_Run_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Sprint_to_Run_Lfoot",
+      "bytes": 1511971,
+      "sha256": "e0910ce4023d997c3f9fd35381ea7a0a6660d9d2a26b6f65c23441128ddd3c48"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Sprint_to_Run_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Sprint_to_Run_Rfoot",
+      "bytes": 1475163,
+      "sha256": "adb6e8a3f6f70c4c7e340d1c343bdece0b95472c108d7d495ee292cf5af9a959"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Walk_to_Run_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Walk_to_Run_Lfoot",
+      "bytes": 1324895,
+      "sha256": "b62816c5e93366fd6e632a63c00635a1dad9bd793b573e1fcf0bfa564bc1c740"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Walk_to_Run_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Walk_to_Run_Rfoot",
+      "bytes": 1176160,
+      "sha256": "39428c8e13ab08b5cbe86d0f4934949e4b741ac1c7f387dc30142b80f0235261"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Loop_F.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Loop_F",
+      "bytes": 1069813,
+      "sha256": "39de01846329b0b23c6229ee40c48f5c32baaaf3783c7f2610a6354de952aad6"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_L_090.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_L_090",
+      "bytes": 1201705,
+      "sha256": "4425cab696256e9b96c96eeaad070b3be6f462d3579ce5a7171e4a8e739e1864"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_L_180.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_L_180",
+      "bytes": 1376227,
+      "sha256": "aca8e308e9872204ae9998f2299f6e53c2fa74c2965a45dbbe4bfff7f6737e6f"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_R_090.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_R_090",
+      "bytes": 1186957,
+      "sha256": "595c9a27ca7ce4820f1485fb30404bb8f6758399dc1c34a554e07b098322d8af"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_R_180.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_R_180",
+      "bytes": 1331383,
+      "sha256": "434af739f1b68de9e3114e8dec34f69672806696092796585d111683dcce0773"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Start_F_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Start_F_Lfoot",
+      "bytes": 1267978,
+      "sha256": "73f5828ba998aa64f36f0803e33a8521a21e31fa3acce9e39480f708a42ae29b"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Stop_F_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Stop_F_Lfoot",
+      "bytes": 1784663,
+      "sha256": "729625ea6ea0d7c720d31b60449a10ce5b02a346dfad626af961b43b38e21089"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Stop_F_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Stop_F_Rfoot",
+      "bytes": 1849707,
+      "sha256": "6e6d4e366b37a390866851b20f76493baed78d5f7685ed864da1e3f1488fb21e"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_090_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_090_Lfoot",
+      "bytes": 1343428,
+      "sha256": "de82908c5e59d19fd6499a08bab27803aa7050ec5f9a8d563eca68b6a944877d"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_090_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_090_Rfoot",
+      "bytes": 1410046,
+      "sha256": "2d5447a59ee6d10504ab3f627ce3275dfefca0b66b6d1ae02ba920f45dcf4145"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_180_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_180_Lfoot",
+      "bytes": 1567245,
+      "sha256": "cbea74c87241577c6baba56765c935ba8ad651bd2631a12d3155cb0f99e75187"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_180_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_180_Rfoot",
+      "bytes": 1547220,
+      "sha256": "f05450009ea95ba0f0799aa1c8d547687665ed19f333a7498196743920bf27f2"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_090_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_090_Lfoot",
+      "bytes": 1365691,
+      "sha256": "3a26e79dfc9c1cb0338ad5331d478c4e3349ee7e19247fd6413a92e2c082f636"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_090_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_090_Rfoot",
+      "bytes": 1382140,
+      "sha256": "55e482d26f1a1e9522fc6bba6c260402770d1ccd5443b8725d3849ecc3d9c255"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_180_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_180_Lfoot",
+      "bytes": 1521147,
+      "sha256": "7d1d4350c34dde521f1a67693ec978ff6c32e786b5f42e34b332be2d1dbc7825"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_180_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_180_Rfoot",
+      "bytes": 1569890,
+      "sha256": "a917248bc0190b6f23d1fffebdee903316efcd48cd0c3dafc1ac8141e809bbe4"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Run_to_Sprint_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Run_to_Sprint_Lfoot",
+      "bytes": 1382583,
+      "sha256": "5d4127bbb05b02a7e357f76001e588f6dc4ca2e73454bc2760bbdb1bb7538de2"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Run_to_Sprint_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Run_to_Sprint_Rfoot",
+      "bytes": 1356088,
+      "sha256": "b5c9e94c296514a0b4bee2d254ccf2d3b982200198e50dcdb5eb455e51c0a59f"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Walk_to_Sprint_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Walk_to_Sprint_Lfoot",
+      "bytes": 1640992,
+      "sha256": "da52ff5df17773bd9062d16a3617e785503cb064bc08dea31b2a19720e22414b"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Walk_to_Sprint_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Walk_to_Sprint_Rfoot",
+      "bytes": 1640499,
+      "sha256": "5d573ac6cebd8b8721eed59b8a22e6f9b8c9fedce8199ffeaa650cfba26f68e6"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Run_to_Walk_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Run_to_Walk_Lfoot",
+      "bytes": 1495131,
+      "sha256": "5eb34c17edd3b66eb94482c79eab7796bec182150f17072102082a849704c8ee"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Run_to_Walk_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Run_to_Walk_Rfoot",
+      "bytes": 1475906,
+      "sha256": "758a92754dda2d1c700f1de83a40a33d4acfe30e46ec794bd9ad9d41d9e85533"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Sprint_to_Walk_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Sprint_to_Walk_Lfoot",
+      "bytes": 1987900,
+      "sha256": "f267cda4ae11442b244ec1f8080c353e01950e928b13639b12c7289d1f2c8d83"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Sprint_to_Walk_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Sprint_to_Walk_Rfoot",
+      "bytes": 1937245,
+      "sha256": "041f0ff4619d352cd40f4602d8c4ece89dc6559bb9ce62e8d72178368035ac80"
+    },
+    {
+      "path": "Content/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R.uasset",
+      "package": "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "bytes": 5309,
+      "sha256": "3196b2ae24463168c0e44a70967d92da8adda7340306e0d95bd3c157764ac4d8"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Run_Heavy.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Run_Heavy",
+      "bytes": 1306381,
+      "sha256": "3a5e925513a381319ebf7e5f34fdf9f00505cf3da36ad9941923a8a6ccd72875"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Run_Light.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Run_Light",
+      "bytes": 1022728,
+      "sha256": "5b9e536c0894f59f0553f4c517e27ef7c6dc32d561ba8d51e8bacb576f6c61a2"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Heavy_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Heavy_Lfoot",
+      "bytes": 1395761,
+      "sha256": "049c1fe705c3c9773bb896324dc7f4abc05b2671a354c726b470631229164f5b"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Heavy_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Heavy_Rfoot",
+      "bytes": 1405008,
+      "sha256": "d5646be36bb0ee94ffa2cbbd228cc980b008ae4ccc921ed0b0c6780462c17222"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Light_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Light_Lfoot",
+      "bytes": 1143471,
+      "sha256": "40e2414b0829a22dc013ad825282a61846cd3ca948d55b9e42fd609eb0aec2f2"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Light_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Light_Rfoot",
+      "bytes": 1121270,
+      "sha256": "05948d6a5d1871520616bd8afa947c9f563ed62e01b3f605593df8322611f7f5"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Walk_Heavy.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Walk_Heavy",
+      "bytes": 1501519,
+      "sha256": "c80682ffdae79935b39c43a098dfebdf452a63939808a1d1b3d1c807055f1006"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Walk_Light.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Walk_Light",
+      "bytes": 1167127,
+      "sha256": "75cf18ddc7e13114161d27873af63dcfa4e9f5ca2e844b8ba07ea4c9601c0618"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Heavy_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Heavy_Lfoot",
+      "bytes": 1176887,
+      "sha256": "0d3fbbe3c415050dba4fc0cb0ed8c6a71d4dc5f7a3d1a96befcc280f948c13ea"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Heavy_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Heavy_Rfoot",
+      "bytes": 1220453,
+      "sha256": "12b335678cc905f5c0db36ec587e4e97299508228aa65e7c2e01029a0892625f"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Light_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Light_Lfoot",
+      "bytes": 911383,
+      "sha256": "f2eed862ec94ace4237729e3c9c8b2a9d6f5e2c46efae01ce0de69be9fe78d5b"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Light_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Light_Rfoot",
+      "bytes": 894359,
+      "sha256": "ed41326a7592a1379a09c0bb0a570fd594cc7f9697d8976c94cef20c5f0edcc2"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Heavy_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Heavy_Lfoot",
+      "bytes": 1777768,
+      "sha256": "240707372a0ce15d54130bae382fd91875ec7d237a7afcfc82c5bb97c9d9f77c"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Heavy_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Heavy_Rfoot",
+      "bytes": 1745023,
+      "sha256": "e41eb0da36e02523700e3f75fb0ad8f17c4c973dade326680992b0f273a06f5a"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Light_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Light_Lfoot",
+      "bytes": 1507736,
+      "sha256": "daf12a64e04d08dc65c3a0f35bf2a7bee02c26b19a78c305a055b9b89e39c508"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Light_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Light_Rfoot",
+      "bytes": 1502699,
+      "sha256": "d4dc2ce37afbf2ed75f71e5bb810ff75c80cfc96203ca0ee0a9eac7787f2084d"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Heavy_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Heavy_Lfoot",
+      "bytes": 1393895,
+      "sha256": "252ad6523796d4e58506c5c2c34dc82eba24071cbf135bf7d38a4724dff4a7fc"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Heavy_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Heavy_Rfoot",
+      "bytes": 1405313,
+      "sha256": "d206e2fb16dc429cc3b2be9f8374931dda4e04015eddea4b210c7d175c619645"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Light_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Light_Lfoot",
+      "bytes": 1073838,
+      "sha256": "b5d20ea633f27de2bec24463374b1d7933d46f3abda01425de5fb0df3b34d531"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Light_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Light_Rfoot",
+      "bytes": 954932,
+      "sha256": "ed45ab541b7f7655721c9f17339bfce19fff427743a957667518a8fa5521a13f"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Heavy_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Heavy_Lfoot",
+      "bytes": 1609740,
+      "sha256": "4198a21c911d0a181f509baff3aed634a120a8c8a60515583ea85a2bab1adc59"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Heavy_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Heavy_Rfoot",
+      "bytes": 1618655,
+      "sha256": "fe1a8d16891b026fa5cdd93375e3831ac834e01177730e609487e4cda4855bbc"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Light_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Light_Lfoot",
+      "bytes": 1244920,
+      "sha256": "c349c0a669021dd2d93a17628a340b2b60ec89ef209377dbff591c497f04f440"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Light_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Light_Rfoot",
+      "bytes": 982693,
+      "sha256": "f44b2a3d44f5c6fcf2d4db0fd40e0aad7ed5d22437a189cf55997940a17e0ef7"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Off_Walk_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Off_Walk_Lfoot",
+      "bytes": 797179,
+      "sha256": "25830a083782659d70fff4582de9dcf5f4798945401543c95ab249a020edfe7b"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Off_Walk_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Off_Walk_Rfoot",
+      "bytes": 807332,
+      "sha256": "e362d1cc4f6e290a83e24a558a562812adbe9a6a803c59cb24824a0f1e7de5e9"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Run_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Run_Lfoot",
+      "bytes": 998512,
+      "sha256": "f4147ed9151c180926f8cfa4c7d446e2268dd59625b3f6943315197d0f518ae6"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Run_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Run_Rfoot",
+      "bytes": 952074,
+      "sha256": "3d8ee212a57d845f461b69d2728c5146d8e465e62c734ba3093dc1ea1a4b0eb5"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Walk_Lfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Walk_Lfoot",
+      "bytes": 1014418,
+      "sha256": "3186a8a0b9b4da8a4be008753a42ff98811886aa387728178e70b5e76faaa27a"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Walk_Rfoot.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Walk_Rfoot",
+      "bytes": 1013605,
+      "sha256": "948a4e28501bba0882fda70cfcd47dc5a2d7764c5545456a8226427328c4956f"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Run_Heavy.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Run_Heavy",
+      "bytes": 1204314,
+      "sha256": "0ee435a9a1840d9c45ff8650b44940321b6576953275cb5d7d2596f29d6f6258"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Run_Light.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Run_Light",
+      "bytes": 1026491,
+      "sha256": "16aafea9a55f30940086cc4ac4c259bc424939213a1818d0a6caba1f6ff8d72c"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Walk_Heavy.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Walk_Heavy",
+      "bytes": 1470870,
+      "sha256": "e75d44d681d278ff8f76b17eec3a398f7dd571f159e31a7de3409b62fd986989"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Walk_Light.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Walk_Light",
+      "bytes": 1115011,
+      "sha256": "385df0f701b2a5eb6c76ba59878ccef375945ded51cbaeb6811c9e368b6cd695"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Run_Heavy.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Run_Heavy",
+      "bytes": 1255322,
+      "sha256": "1bcc15454b6a7bdb48386b54d9ffb1fdf17d06b242c1aad4ed34a93c768ed3c8"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Run_Light.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Run_Light",
+      "bytes": 1056929,
+      "sha256": "180224f0dc4472a22e8901cea82a20963a70dcfd8a0b545967d5c6ad34a40f4f"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Walk_Heavy.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Walk_Heavy",
+      "bytes": 1444220,
+      "sha256": "7add0851a97a56399cf9ab98388a1467b385eb96d31cb75469a9781a1ceaa593"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Walk_Light.uasset",
+      "package": "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Walk_Light",
+      "bytes": 1150959,
+      "sha256": "7adf847eeedbedc9b5ea666ca0d4c399469d325bcd1d5401b451c83f65d7bf11"
+    },
+    {
+      "path": "Content/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land.uasset",
+      "package": "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "bytes": 5061,
+      "sha256": "ca097208c27e90d4d3a9c0e3f2f815bf07f82f1a8806596bda9d309e20a3b1bb"
+    },
+    {
+      "path": "Content/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump.uasset",
+      "package": "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump",
+      "bytes": 5059,
+      "sha256": "d8478249c00dc07f34384390239e3672ab59392bf3cdaab560e9bbbe356eaaf6"
+    }
+  ],
+  "package_remaps": {
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_LL_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_LL_Lfoot",
+    "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Run_L": "/Game/GASP58Native/AnimNotifies/BP_AnimNotify_FoleyEvent_Run_L",
+    "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Run_R": "/Game/GASP58Native/AnimNotifies/BP_AnimNotify_FoleyEvent_Run_R",
+    "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_L": "/Game/GASP58Native/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_L",
+    "/Game/Characters/UEFN_Mannequin/Meshes/SK_UEFN_Mannequin": "/Game/GASP58Native/Characters/UEFN_Mannequin/Meshes/SK_UEFN_Mannequin",
+    "/Game/Misc/SandboxAnimCurveCompressionSettings": "/Game/GASP58Native/Misc/SandboxAnimCurveCompressionSettings",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_LL_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_LL_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/ExperimentalStateMachineData/PSD_SM_CMC_Transitions": "/Temp/PlayerAnimationImport/PSD_SM_CMC_Transitions",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_RL_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_RL_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_RL_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_RL_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_LL_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_LL_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_LL_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_LL_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_RL_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_RL_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_RL_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_RL_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_B_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_B_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_B_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_B_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_F_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_F_Lfoot",
+    "/Game/Blueprints/AnimNotifies/E_EarlyTransition_Condition": "/Game/GASP58Native/AnimNotifies/E_EarlyTransition_Condition",
+    "/Game/Blueprints/AnimNotifies/E_EarlyTransition_Destination": "/Game/GASP58Native/AnimNotifies/E_EarlyTransition_Destination",
+    "/Game/Blueprints/Data/E_Gait": "/Game/GASP58Native/Data/E_Gait",
+    "/Game/Blueprints/AnimNotifies/BP_NotifyState_EarlyTransition": "/Game/GASP58Native/AnimNotifies/BP_NotifyState_EarlyTransition",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_F_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_F_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_B_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_B_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_B_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_B_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_F_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_F_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_F_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_F_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_B": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_B",
+    "/Game/Characters/UEFN_Mannequin/Animations/ExperimentalStateMachineData/PSD_SM_CMC_Loops": "/Temp/PlayerAnimationImport/PSD_SM_CMC_Loops",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_F": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_F",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_LL": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_LL",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_RL": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_RL",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_B_F_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_B_F_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_B_F_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_B_F_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_F_B_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_F_B_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_F_B_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_F_B_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_LL_RL_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_LL_RL_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_LL_RL_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_LL_RL_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_RL_LL_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_RL_LL_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_RL_LL_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_RL_LL_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_L_090": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_L_090",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_L_180": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_L_180",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_R_090": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_R_090",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_R_180": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_R_180",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_L_090": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_L_090",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_L_180": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_L_180",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_R_090": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_R_090",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_R_180": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_R_180",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Shuffle_LR_to_LL_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Shuffle_LR_to_LL_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Shuffle_LR_to_LL_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Shuffle_LR_to_LL_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Shuffle_RR_to_RL_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Shuffle_RR_to_RL_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_B_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_B_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_B_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_B_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_F_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_F_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_F_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_F_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_LL_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_LL_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_RL_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_RL_Rfoot",
+    "/Game/Blueprints/AnimNotifies/E_FoleyEventSide": "/Game/GASP58Native/AnimNotifies/E_FoleyEventSide",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_B_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_B_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_B_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_B_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_F_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_F_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_F_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_F_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_LL_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_LL_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_LL_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_LL_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_RL_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_RL_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_RL_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_RL_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_090_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_090_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_090_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_090_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_180_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_180_Lfoot",
+    "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R": "/Game/GASP58Native/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_180_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_180_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_090_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_090_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_090_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_090_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_180_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_180_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_180_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_180_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Sprint_to_Run_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Sprint_to_Run_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Sprint_to_Run_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Sprint_to_Run_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Walk_to_Run_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Walk_to_Run_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Walk_to_Run_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Walk_to_Run_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Loop_F": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Loop_F",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_L_090": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_L_090",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_L_180": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_L_180",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_R_090": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_R_090",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_R_180": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_R_180",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Start_F_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Start_F_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Stop_F_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Stop_F_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Stop_F_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Stop_F_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_090_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_090_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_090_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_090_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_180_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_180_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_180_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_180_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_090_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_090_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_090_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_090_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_180_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_180_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_180_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_180_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Run_to_Sprint_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Run_to_Sprint_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Run_to_Sprint_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Run_to_Sprint_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Walk_to_Sprint_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Walk_to_Sprint_Lfoot",
+    "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Walk_L": "/Game/GASP58Native/AnimNotifies/BP_AnimNotify_FoleyEvent_Walk_L",
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Walk_to_Sprint_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Walk_to_Sprint_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Run_to_Walk_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Run_to_Walk_Lfoot",
+    "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Walk_R": "/Game/GASP58Native/AnimNotifies/BP_AnimNotify_FoleyEvent_Walk_R",
+    "/Game/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Run_to_Walk_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Run_to_Walk_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Sprint_to_Walk_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Sprint_to_Walk_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Sprint_to_Walk_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Sprint_to_Walk_Rfoot",
+    "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent": "/Game/GASP58Native/AnimNotifies/BP_AnimNotify_FoleyEvent",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Run_Heavy": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Run_Heavy",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Run_Light": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Run_Light",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Heavy_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Heavy_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Heavy_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Heavy_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Light_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Light_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Light_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Light_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Walk_Heavy": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Walk_Heavy",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Walk_Light": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Walk_Light",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Heavy_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Heavy_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Heavy_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Heavy_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Light_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Light_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Light_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Light_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Heavy_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Heavy_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Heavy_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Heavy_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Light_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Light_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Light_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Light_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Heavy_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Heavy_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Heavy_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Heavy_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Light_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Light_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Light_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Light_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Heavy_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Heavy_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Heavy_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Heavy_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Light_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Light_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Light_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Light_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Off_Walk_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Off_Walk_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Off_Walk_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Off_Walk_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Run_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Run_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Run_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Run_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Walk_Lfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Walk_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Walk_Rfoot": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Walk_Rfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Run_Heavy": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Run_Heavy",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Run_Light": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Run_Light",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Walk_Heavy": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Walk_Heavy",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Walk_Light": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Walk_Light",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Run_Heavy": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Run_Heavy",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Run_Light": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Run_Light",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Walk_Heavy": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Walk_Heavy",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Walk_Light": "/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Walk_Light",
+    "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land": "/Game/GASP58Native/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+    "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump": "/Game/GASP58Native/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+  },
+  "conversion_profile": "9bdc217be7ae3e7486670fffad421bc56b448613f8d63bbfaccc09a654d8a6dd",
+  "package_dependencies": {
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_LL_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_LL_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_RL_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_B_RL_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_LL_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_LL_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_RL_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_F_RL_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_B_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_B_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_F_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_LL_F_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_B_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_B_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_F_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Box_RL_F_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_B": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_F": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_LL": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Loop_RL": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_B_F_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_B_F_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_F_B_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_F_B_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_LL_RL_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_LL_RL_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_RL_LL_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Pivot_RL_LL_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_L_090": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_L_180": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_R_090": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_B_R_180": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_L_090": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_L_180": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_R_090": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Reface_Start_F_R_180": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Shuffle_LR_to_LL_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Shuffle_LR_to_LL_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Shuffle_RR_to_RL_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_B_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_B_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_F_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_F_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_LL_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_RL_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_B_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_B_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_F_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_F_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_LL_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_LL_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_RL_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Stop_RL_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_090_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_090_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_180_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_180_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_090_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_090_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_180_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_R_180_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Sprint_to_Run_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Sprint_to_Run_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Walk_to_Run_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Transition_Walk_to_Run_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Loop_F": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_L_090": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_L_180": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_R_090": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Reface_Start_F_R_180": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Start_F_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Stop_F_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Stop_F_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_090_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_090_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_180_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_L_180_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_090_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_090_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_180_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Sprint_Turn_R_180_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Run_to_Sprint_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Run_to_Sprint_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Walk_to_Sprint_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Sprint/M_Neutral_Transition_Walk_to_Sprint_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Run_to_Walk_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Run_to_Walk_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Sprint_to_Walk_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Walk/M_Neutral_Transition_Sprint_to_Walk_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R": [],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Run_Heavy": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Run_Light": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Heavy_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Heavy_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Light_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Stand_Light_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Walk_Heavy": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_B_Land_Walk_Light": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Heavy_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Heavy_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Light_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Light_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Heavy_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Heavy_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Light_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Sprint_Light_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Heavy_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Heavy_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Light_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Stand_Light_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Heavy_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Heavy_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Light_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Walk_Light_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Off_Walk_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Off_Walk_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Run_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Run_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Walk_Lfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Walk_Rfoot": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Run_Heavy": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Run_Light": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Walk_Heavy": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_LL_Land_Walk_Light": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Run_Heavy": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Run_Light": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Walk_Heavy": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_RL_Land_Walk_Light": [
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Scuff_R",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land",
+      "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump"
+    ],
+    "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Land": [],
+    "/Game/Blueprints/AnimNotifies/BP_AnimNotify_FoleyEvent_Jump": []
+  },
+  "archive_sha256": "9791ebb6c9b3124ec9cd7552c6bb492c4e3cbd0d264288c9a0290ebebabbbd4d",
+  "archive_bytes": 20423307
+}

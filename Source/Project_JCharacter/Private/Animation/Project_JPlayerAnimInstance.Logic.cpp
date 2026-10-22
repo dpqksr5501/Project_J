@@ -203,6 +203,10 @@ bool UProject_JPlayerAnimInstance::EvaluateSteering(const FAnimNodeReference& No
 
 double UProject_JPlayerAnimInstance::EvaluateDynamicPlayRate(const FAnimNodeReference& Node)
 {
+	// Preserve authored ground cadence; stride warping consumes actual locomotion
+	// speed. Keep the existing air curve policy and montage clocks independent.
+	const auto& Ground=GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Ground;
+	if (PlayerMovementMode==EProject_JPlayerMovementMode::OnGround && !Ground.bScalePlayRateWithSpeed) return 1.;
 	auto* Sequence=Cast<UAnimSequence>(UBlendStackAnimNodeLibrary::GetCurrentBlendStackAnimAsset(Node));
 	const float Time=Sequence?UBlendStackAnimNodeLibrary::GetCurrentBlendStackAnimAssetTime(Node):0.f;
 	auto ReadCurve=[&](FName Name,float& Value)
@@ -226,7 +230,11 @@ bool UProject_JPlayerAnimInstance::EvaluateIsPivoting()
 	// is no longer authored; treating its missing value as zero selected the old rule.
 	const int32 Gait=int32(static_cast<double>(PlayerGait));const double Speed=PlayerSpeed2D;
 	const double Minimum=Gait==2?200.:Gait==1?175.:50.;
-	const double Maximum=Gait==2?700.:600.;
+	const auto& Ground=GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Ground;
+	// Preserve authored headroom (700-585 / 600-375 / 600-585). Run must
+	// also admit carried Sprint momentum after a downshift or landing.
+	const double Maximum=Gait==2?double(Ground.SprintSpeed)+115.:
+		FMath::Max(double(Ground.RunSpeed)+225.,double(Ground.SprintSpeed)+15.);
 	const bool bSpeed=(PlayerStance == EProject_JPlayerStance::Crouch)?Speed>=50. && Speed<=200.:Speed>=Minimum && Speed<=Maximum;
 	const double Threshold=Gait==2?60.:
 		(PlayerMovementModeRecent == EProject_JPlayerMovementMode::InAir) || (PlayerMovementModeRecent == EProject_JPlayerMovementMode::Sliding)?100.:
