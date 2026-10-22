@@ -406,14 +406,7 @@ public:
 	/** Returns LocomotionAnimStateComponent subobject **/
 	FORCEINLINE class UProject_JLocomotionAnimStateComponent* GetLocomotionAnimStateComponent() const { return LocomotionAnimStateComponent; }
 
-	/** Returns MotionMatchingTrajectoryComponent subobject **/
-
-	/**
-	 * True only when the actor is expected to face its travel direction. Remote
-	 * trajectory repair must not reinterpret intentional strafe/lock-on facing
-	 * as a stale straight-running query.
-	 */
-FORCEINLINE class UProject_JMountComponent* GetMountComponent() const { return MountComponent; }
+	FORCEINLINE class UProject_JMountComponent* GetMountComponent() const { return MountComponent; }
 	FORCEINLINE UProject_JMountedAnimationLayerComponent* GetMountedAnimationLayerComponent() const { return MountedAnimationLayerComponent; }
 	const TSoftClassPtr<UAnimInstance>& GetFallbackMountedAnimationLayerClass() const { return MountedAnimationLayerClass; }
 

@@ -423,6 +423,47 @@ bool FProjectJStandingStopFamily::RunTest(const FString&)
  }
  return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJBackwardFacingCandidates,"ProjectJ.PlayerLocomotion.BackwardFacingCandidates",PlayerLocomotionTestFlags)
+bool FProjectJBackwardFacingCandidates::RunTest(const FString&)
+{
+ auto* Root=LoadObject<UChooserTable>(nullptr,TEXT("/Game/Animation_Logic/Chooser/CHT_ProjectJ_Ground.CHT_ProjectJ_Ground"));
+ if (!TestNotNull(TEXT("Production ground chooser"),Root)) return false;
+ TArray<UObject*> Owned;GetObjectsWithOuter(Root,Owned,EGetObjectsFlags::IncludeNestedObjects);
+ UChooserTable* Table=nullptr;for (UObject* Object:Owned) if (auto* T=Cast<UChooserTable>(Object);T && T->GetFName()==TEXT("Run B Loco Transitions")) Table=T;
+ if (!TestNotNull(TEXT("Backward locomotion table"),Table)) return false;
+ const bool WasDirty=Root->GetOutermost()->IsDirty();
+ TestEqual(TEXT("Reapplying the authoring operation cannot duplicate candidates"),UProject_JPlayerLocomotionLibrary::ConfigureBackwardFacingTransitions(Root),0);
+ TestEqual(TEXT("An idempotent operation does not dirty production"),Root->GetOutermost()->IsDirty(),WasDirty);
+ auto* Mesh=NewObject<USkeletalMeshComponent>();auto* Anim=NewObject<UProject_JPlayerAnimInstance>(Mesh);
+ Anim->PlayerGait=EProject_JLocomotionGaitIntent::Run;Anim->PlayerStance=EProject_JPlayerStance::Stand;
+ Anim->PlayerMovementState=EProject_JPlayerMovementState::Moving;Anim->PlayerMovementModeRecent=EProject_JPlayerMovementMode::OnGround;
+ struct FCase {double Speed;double Facing;double Turn;EProject_JPlayerMovementDirection Recent;const TCHAR* Expected;};
+ using Direction=EProject_JPlayerMovementDirection;
+ const FCase Cases[]={{500.,-90.,-90.,Direction::Backward,TEXT("B_L_090")},{500.,90.,90.,Direction::Backward,TEXT("B_R_090")},
+  {500.,-170.,-170.,Direction::Backward,TEXT("B_L_180")},{500.,170.,170.,Direction::Backward,TEXT("B_R_180")},
+  {175.,170.,90.,Direction::Backward,TEXT("B_R_180")},{174.9,170.,90.,Direction::Backward,TEXT("B_R_180")},{765.1,170.,90.,Direction::Backward,nullptr},
+  {500.,170.,74.9,Direction::Backward,nullptr},{500.,0.,170.,Direction::Backward,nullptr},
+  {500.,170.,170.,Direction::Forward,nullptr},{500.,-170.,-170.,Direction::LeftLeftFootForward,nullptr},
+  {100.,170.,0.,Direction::Backward,TEXT("B_R_180")}};
+ for (const auto& Case:Cases)
+ {
+  Anim->PlayerSpeed2D=Case.Speed;Anim->PlayerFutureFacingDelta=Case.Facing;Anim->PlayerTrajectoryTurnAngle=Case.Turn;Anim->PlayerMovementDirectionRecent=Case.Recent;
+  FChooserEvaluationContext Context;Context.AddObjectParam(Anim);FProject_JPlayerGroundChooserOutput Output;Context.AddStructParam(Output);
+  const int32 Count=Table->ResultsStructs.Num();TArray<FChooserIndexArray::FIndexData> A,B;A.SetNumUninitialized(Count);B.SetNumUninitialized(Count);
+  FChooserIndexArray In(A.GetData(),Count),Out(B.GetData(),Count);
+  for (int32 Row=0;Row<Count;++Row) if (!Table->IsRowDisabled(Row)) In.Push(FChooserIndexArray::FIndexData(Row,0.f));
+  for (const auto& Struct:Table->ColumnsStructs) if (!Struct.GetPtr<FPoseSearchColumn>())
+   if (const auto* Column=Struct.GetPtr<FChooserColumnBase>();Column && Column->HasFilters() && !Column->bDisabled)
+   {Out.SetNum(0);Column->Filter(Context,In,Out);In=Out;}
+  int32 Refacing=0;
+  for (const auto& Index:In) if (const auto* Choice=Table->ResultsStructs[Index.Index].GetPtr<FAssetChooser>();Choice && Choice->Asset && Choice->Asset->GetName().Contains(TEXT("Reface")))
+  {
+   ++Refacing;TestTrue(TEXT("Only the matching side/angle family survives before pose matching"),Case.Expected && Choice->Asset->GetName().EndsWith(Case.Expected));
+  }
+  TestEqual(TEXT("Backward pivot has a candidate; other direction/low-turn conditions retain their prior policy"),Refacing,Case.Expected?1:0);
+ }
+ return true;
+}
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJGroundedLandingPhase,"ProjectJ.PlayerLocomotion.GroundedLandingPhase",PlayerLocomotionTestFlags)
 bool FProjectJGroundedLandingPhase::RunTest(const FString&)
 {
@@ -510,7 +551,7 @@ bool FProjectJTransitionSearchAvailability::RunTest(const FString&)
     using namespace UE::PoseSearch;
     if (!Built.Contains(DB))
     {
-     if (!TestTrue(*Label,FAsyncPoseSearchDatabasesManagement::RequestAsyncBuildIndex(DB,ERequestAsyncBuildFlag::ContinueRequest|ERequestAsyncBuildFlag::WaitForCompletion)==EAsyncBuildIndexResult::Success)) return false;
+     if (!TestTrue(*Label,FAsyncPoseSearchDatabasesManagement::RequestAsyncBuildIndex(DB,ERequestAsyncBuildFlag::NewRequest|ERequestAsyncBuildFlag::WaitForCompletion)==EAsyncBuildIndexResult::Success)) return false;
      Built.Add(DB);
     }
     int32 Source=INDEX_NONE;
@@ -527,7 +568,7 @@ bool FProjectJTransitionSearchAvailability::RunTest(const FString&)
        if (Sequence) TestTrue(*Label,Time<=Sequence->GetPlayLength()+UE_KINDA_SMALL_NUMBER);
        if (Sequence) for (const auto& Event:Sequence->Notifies)
         if (Event.NotifyStateClass && Event.NotifyStateClass->IsA<UAnimNotifyState_PoseSearchExcludeFromDatabase>())
-         TestFalse(TEXT("An excluded sequence segment cannot become an entry pose"),Time>Event.GetTime()+UE_KINDA_SMALL_NUMBER && Time<Event.GetEndTriggerTime()-UE_KINDA_SMALL_NUMBER);
+         TestFalse(*FString::Printf(TEXT("%s: entry %.4fs cannot be inside excluded interval [%.4f, %.4f]"),*Label,Time,Event.GetTime(),Event.GetEndTriggerTime()),Time>Event.GetTime()+UE_KINDA_SMALL_NUMBER && Time<Event.GetEndTriggerTime()-UE_KINDA_SMALL_NUMBER);
       }
     TestTrue(*FString::Printf(TEXT("%s retains an entry pose outside transition blocks"),*Label),Selectable>0);
     ++RowsChecked;

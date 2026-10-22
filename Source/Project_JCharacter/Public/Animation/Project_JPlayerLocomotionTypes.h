@@ -124,14 +124,10 @@ struct PROJECT_JCHARACTER_API FProject_JPlayerCharacterPropertiesForAnimation
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Player Locomotion") FVector Velocity = FVector::ZeroVector;
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Player Locomotion") FVector InputAcceleration = FVector::ZeroVector;
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Player Locomotion") double CurrentMaxAcceleration = 0.000000;
- UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Player Locomotion") double CurrentMaxDeceleration = 0.000000;
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Player Locomotion") FRotator OrientationIntent = FRotator::ZeroRotator;
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Player Locomotion") FRotator AimingRotation = FRotator::ZeroRotator;
- UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Player Locomotion") bool JustLanded = false;
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Player Locomotion") FVector LandVelocity = FVector::ZeroVector;
- UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Player Locomotion") double SteeringTime = 0.000000;
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Player Locomotion") FVector GroundNormal = FVector::ZeroVector;
- UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Player Locomotion") FVector GroundLocation = FVector::ZeroVector;
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Player Locomotion") FTransform BasedMovementDelta = FTransform::Identity;
 };
 

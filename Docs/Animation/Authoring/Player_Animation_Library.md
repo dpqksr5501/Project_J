@@ -155,3 +155,48 @@ Mover의 승인 속도, SmoothWalking의 속도별 가속/회전, trajectory sna
 [중단·복귀 검사](../../../Scripts/Validation/Validate-PlayerLocomotionInterruptions.py)는 시작 중 취소, 빠른 Sprint→Run→Sprint, 정지 중 180도 재출발, 감속 중 점프를 양 회전 모드에서 총 8조건으로 확인했다. 정상 속도 복귀·valid 선택·발 보정 유지·점프 후 접지 복귀가 통과했고 Manny/대검 무릎의 부모 기준 포즈 고정도 관측되지 않았다. 기존 landing·공중 재선택과 발 접지 로직은 변경하지 않았다.
 
 최초 보행 fixture는 모드 전환이 확정되기 전 검사해 중단됐다. 이후 모드 수립 대기와 실제 신규 클립 진입 관측을 보강한 독립 PIE에서 12조건이 통과했다. 이 최초 결과는 실행 근거와 함께 보존하며 생산 버그로 분류하지 않는다. 이번 점검에서 추가로 확정된 전환 결함은 없어서 생산 Chooser·ABP·시퀀스·카탈로그를 수정하지 않았다. 영구 검사와 문서를 보강했고, 미저장 패키지 0개 확인 후 에디터를 정상 종료했다. 상세 근거는 `Saved/Validation/TransitionAudit_20261022`와 `Saved/Validation/PlayerLocomotion/TransitionAudit_20261022_First`다. 전 시점/체형·경사에서의 주관적 품질, 모든 입력 순서와 네트워크 지연 조합의 무결함을 보장하는 검사는 아니다.
+
+
+### 후진 이동 중 시선 급회전 — 2026-10-22
+
+Strafe에서 S를 유지하고 시선을 급히 돌릴 때는 최근 방향이 Backward로 유지된다. 기존 Run B 전환은 저속·비 Pivot Reface 출발 또는 다른 방향에서 들어오는 고속 Pivot/Box로 나뉘어, 후진→후진 급회전은 후보 없이 Loop로 복귀했다. 전방 급회전의 Turn 선택과 차이가 있음을 실제 입력 기록으로 확인했다.
+
+Ground Chooser의 `Run B Loco Transitions`에 기존 Neutral 후진 Reface 좌우 90/180도를 재사용하는 4행을 추가했다. 최근 방향 Backward와 native Pivot 판정, 기존 미래 시선각 필터를 함께 적용한다. 블렌드 시간·프로필·태그는 기존 이동 중 Pivot 행의 출력 설정을 제작 시 복사한다. 마지막 Pose Match가 실제 진입 시각을 결정한다. 저속 출발 6행을 포함한 기존 24행과 다른 48개 테이블의 결과·필터·출력·검색 설정은 텍스트 export 비교에서 동일했다. 애니메이션 추가 수입·복제·커브/노티파이 수정은 없으며 라이브러리 카탈로그도 유지한다.
+
+C++ 제작 함수 `ConfigureBackwardFacingTransitions`는 행 구성과 binding을 먼저 검증하고, Pose Match 열을 통째로 복사하지 않고 개별 행과 원래 embedded PSD 연결을 보존한다. 행 수 변경 후 엔진 Initialize로 전체 column→database 매핑을 갱신하고, 해당 PSD의 Modify/PostEditChange와 Chooser Compile/PostEditChange를 완료한다. 재실행은 0행 추가이며 PIE 중 실행하지 않는다. 새 키 처리·강제 클립 선택·회전 reset·IK 비활성화는 런타임에 추가하지 않았다.
+
+최초 시험에서는 새 행의 매핑 갱신 누락을 실제 PIE와 인덱스 검사에서 포착했다. 해당 시험 데이터의 이전 행 번호를 담은 DDC 결과도 발견했고, 별도 엔진 강제 재색인 비교는 불일치 경고 1개와 함께 통과했다. 이 진단 결과를 최종 경고 0 결과로 합산하지 않는다. 전체 캐시나 원본 에셋을 삭제하지 않았고 진단 cvar를 프로젝트 설정에 저장하지 않았다. 최종 제작 데이터와 기본 설정의 새 프로세스에서 native 회귀 **86개가 모두 성공**, 실패·경고·미실행은 0개다. `TransitionSearchAvailability`는 현재 키로 새 요청을 생성하고 실제 40개 테이블의 검색 행 312개를 검사한다.
+
+[후진 회전 PIE 검사](../../../Scripts/Validation/Validate-PlayerLocomotionBackwardTurning.py)는 후진 좌우 90/135/170/190도 8조건과 전방 Strafe/OTM 좌우 170도 4조건, 총 12조건이 통과했다. 큰 후진 회전에서는 기존처럼 Loop만 재선택하지 않고 실제 L/R Reface가 선택됐으며, 진입 시각은 약 0.017~0.183초로 포즈에 따라 달랐다. `PLAYER_BACKWARD_REPEAT_TURNS=True`의 좌우 각 4회, 총 8회 반복 회전도 통과했다. 정상 속도·Root 방향 복귀, Manny와 대검 몸체의 무릎 포즈 갱신, 발 보정 유지와 valid 선택을 검사했다. 별도 OTM/Strafe 점프·착지 8조건도 통과했다.
+
+에디터 미저장 패키지 0개와 진단 cvar 3개의 기본값 0을 확인하고 정상 종료했다. 근거는 `Saved/Validation/BackwardReface_20261022`, 새 프로세스 회귀는 `Saved/Validation/PlayerLocomotion/BackwardReface_20261022_Validated`에 있다. 이 결과를 모든 경사·체형·입력 속도의 주관적 외형 승인으로 일반화하지 않는다. 최종 체감은 현재 대검 캐릭터의 S+마우스 급회전에서 확인한다.
+
+### 완료된 이관 코드 정리 — 2026-10-22
+
+이번 정리는 직전 후진 Reface 수정 이후의 C++·제작 도구 정리다. AssetRegistry의 runtime/editor 모듈 참조와 관련 캐릭터·애니메이션 BP/ABP 39개를 조회하고, 실제 함수 호출·프로퍼티 경로·연결 핀을 export했다. Source/Scripts/Config의 호출과 현재 회귀·추가 수입 경로도 함께 확인했다. 직접 참조가 없다는 이유로 제작·테스트 자산을 삭제하지 않았다.
+
+완료된 초기 설치 API 6개(`PrepareFoundation`, `RestoreFoundationTrajectory`, `RebindFoundationChoosers`, `ConfigureStandingLocomotion`, `InstallNativeLocomotionLogic`, `PreparePlayerMaster`)와 전용 helper/설치 파일을 제거했다. 현행 구조 대신 옛 원본 그래프·초기 프로토타입 설정을 다시 설치하던 경로다. 현재 자식 BP 제작, 그래프/핀/발 Rig 수리, 상속 템플릿 보정, 새 모션 수입·복원·중복 판별·Manny 변환·Foley 변환 도구와 테스트는 유지한다. 실제 BP 바인딩이 있는 Ragdoll 관측, native 계산과 검사에서 소비하는 가속 정보도 보존한다.
+
+런타임은 중복 대입·전달 전용 transform 멤버와 소비처가 없는 transient 4필드만 제거했다. BlendStack 진단 순회는 요청 시에만 수행하고 같은 완료 traversal의 조회는 캐시를 공유한다. 실제 갱신 frame/revision을 사용해 메시가 정지해도 관측 나이를 새로 꾸미지 않는다. 이동·상태 선택·재생·노드 실행 경계와 발 보정은 바꾸지 않는다. 상세 소유권과 [관측 검사](../../../Scripts/Validation/Validate-PlayerPlaybackObservation.py)는 [아키텍처](../Architecture/Player_Locomotion_Architecture.md#완료된-이관-코드와-런타임-관측-정리)를 따른다.
+
+direct Editor UBT 최종 빌드와 새 프로세스 native 회귀 **87개**가 성공했다(실패·경고·미실행 0). import/catalog/원본 복원 Python 검사 **19개**도 통과했다. 변경 후 같은 BP/ABP 39개를 전부 로드·컴파일해 `BS_UP_TO_DATE`와 디스크 파일 해시 동일, 미저장 패키지 0개를 확인했다. 이번 정리에서는 애니메이션·Chooser·PSD·BP/ABP·리그를 수정하거나 저장하지 않았다. 직전 Reface 수정으로 이미 변경돼 있던 Ground Chooser도 이번 정리 시작 해시 그대로 유지한다.
+
+MCP로 시작한 실제 PIE에서 지상 시작/정지·OTM/Strafe·Walk/Sprint, 후진/전방 급회전 12조건, 공중 재선택/착지 8조건, 연속 루프 회전 5조건과 전신 몽타주 6개가 통과했다. Manny source와 대검 몸체의 무릎 포즈 갱신·발 보정과 몽타주 하체를 함께 검사했다. 별도 진단 관측 검사 17쌍은 반복 조회의 동일 결과, 테스트 메시 정지 중 고정된 capture frame과 증가하는 나이, 재개 후 정상 갱신을 확인했다. 이동 속도·재생률·공중 관성·접촉 커브·잠금 해제·경사 보정과 몸체 리타깃 설정을 변경하지 않았다.
+
+미확정 보존 항목은 `/Game/ThirdPerson/Blueprints/BP_Player_Third`다. 전체 로드 때 이미 삭제된 `Project_JMotionMatchingTrajectoryComponent` subobject의 Linker 경고가 발생했다. 현재 hard/soft/search/management referencer와 Source/Scripts/Config 호출은 없고, 과거 점검에도 독립 샘플로 남아 있다. 제작 용도 폐기 근거가 부족하므로 삭제·기본값 재설정·강제 저장하지 않았다. 현행 GameMode의 생산 Pawn은 `BP_GreatSword`다. 이 샘플을 새 제작의 시작점으로 쓰지 않고 `BP_Player_Master` 자식을 사용한다. 향후 샘플을 유지·수리할지 별도 퇴역할지 결정할 항목이며, 경고가 해결됐다고 보고하지 않는다.
+
+GUI 전체 경고 0건을 뜻하지 않는다. MCP의 라이선스 안내, 위 샘플 Linker 경고, 반복 진단 명령 dispatch에서 `DumpAnimBudget` 콘솔 검색 성능 안내가 남았다. 마지막 추가 조회 스크립트의 잘못된 Python getter도 읽기 전용 오류 후 수정해 재실행한 근거를 보존한다. 최종 native 회귀의 경고 0건과 구분한다. Cook/Shipping·대규모 군중 성능·모든 경사/체형/프레임의 외형 검수는 이번 범위가 아니다.
+
+상세 근거는 `Saved/Validation/LocomotionCleanup_20261022`와 `Saved/Validation/PlayerLocomotion/LocomotionCleanup_20261022_First`, 같은 날짜 12:29~12:40의 PlaybackObservation/Ground/BackwardTurning/AirLanding/LoopTurning/MontagePose JSON이다. 종료 시 미저장 패키지 0개, 점검 에셋 39개와 Ground Chooser 해시 동일, 진단 cvar 기본값 0과 원래 background throttle 설정 복원을 확인하고 에디터를 정상 종료했다.
+
+### 구형 ThirdPerson 플레이어 퇴역과 마감 재점검 — 2026-10-22
+
+앞 절에서 보류했던 `BP_Player_Third`는 사용자가 향후 사용하지 않기로 확정했다. AssetRegistry의 hard/soft/search/management 참조와 `FindPackageReferencersForAsset`의 실제 로드 확인, Source/Scripts/Config·제작/테스트 진입점을 재검사해 참조 없음과 현행 마스터에서의 비사용을 확인했다. 삭제 전 원본을 로컬 검증 폴더에 복사하고 SHA-256을 대조했다. 에디터 삭제 API의 성공 반환 이후에도 디스크 파일이 남은 것을 포착했으므로 완료로 간주하지 않았다. 미저장 패키지 0개로 정상 종료한 뒤 백업 해시가 같은 해당 파일 하나만 제거했다. 새 세션에서 디스크·AssetRegistry·참조 모두 없음과 나머지 공유 의존 자원의 존재를 확인했다. Git 이력의 원본도 유지한다.
+
+BP가 사용하던 공유 입력 4개·Quinn Simple·Unarmed ABP는 함께 삭제하지 않았다. 제작/복원 kit·기존 테스트·노티파이·현재 그래프 수리 도구도 유지한다. 현행 GameMode/Pawn·Master/대검 자식·ABP·리타깃/발 Rig의 기존 역할은 바꾸지 않는다. `ConfigureGameplayAvatar`에 남았던 삭제된 궤적 컴포넌트의 이름 기반 정리 분기와 플레이어 헤더의 고아 주석을 제거했다. 남은 BP/ABP 38개의 함수 참조·프로퍼티 바인딩·BP 변수에서 퇴역 API/필드/컴포넌트 이름이 소비되지 않는 것을 확인했다. 같은 38개를 새 세션에서 컴파일하고 정리 전 파일 해시 동일을 재확인했다.
+
+최종 direct Editor UBT 빌드는 28 actions/약 53.7초로 성공했고, 삭제 이후 새 프로세스 native 회귀 **87개**가 실패·경고·미실행 0개로 통과했다. Python import/catalog/복원 **19개**도 다시 통과했다. 빌드 중 UBA가 메모리 압력으로 자체 재시도한 기록은 보존하며, 빌드를 수동 중단하거나 다른 빌드와 겹치지 않았다. Game/Cook/Shipping과 대규모 부하는 이번에 재실행하지 않았다.
+
+이전 절의 실제 후진/전방 회전 12조건·공중/착지 8조건·루프 회전 5조건·전신 몽타주 6개·관측 수명 검사는 동일한 생산 에셋과 런타임 로직의 근거로 재사용한다. 이번 추가 변경은 비사용 BP 퇴역과 에디터의 불필요 분기 제거이며, 새 세션의 기본 마스터 진입·지상 이동을 별도로 확인한다. 로컬 상세 근거는 `Saved/Validation/PlayerThirdRetirement_20261022`, native 결과는 `Saved/Validation/PlayerLocomotion/PlayerThirdRetired_20261022_Final`이다. API 삭제 직후의 미완료 검증과 추가 조회 스크립트의 `None` 반환 처리 오류도 보존하고 최종 성공 결과와 구분한다.
+
+삭제 후 새 네트워크 PIE의 지상 검사 2,372표본에서 OTM/Strafe·Start/Stop·Walk/Run/Sprint와 발 보정 유지가 통과했다(`Ground_20261022_151429_333760.json`). 새 세션 전체 대상 로드와 PIE에서 위 삭제된 클래스의 Linker 경고는 없었다. MCP 라이선스 안내는 별개다. 종료 시 미저장 패키지 0개, 나머지 38개 BP/ABP와 직전 Reface Ground Chooser 해시 동일, 진단 cvar 0과 원래 background throttle을 확인하고 에디터를 정상 종료했다. 포즈·속도·재생률·점프·IK의 추가 튜닝이나 모든 클립/경사/체형의 시각 검수는 수행하지 않았다.

@@ -12,6 +12,7 @@ void FProject_JCharacterAnimInstanceProxy::Initialize(UAnimInstance* Instance)
  FAnimInstanceProxy::Initialize(Instance);
  PendingGameThreadData={}; ThreadSafeData={}; LatestPostSelection={};
  PublishedSnapshotRevision=ConsumedSnapshotRevision=0;
+ PlaybackUpdateRevision=CapturedPlaybackRevision=PlaybackUpdateFrame=0;
  bUpdatingGraph=false;
 }
 void FProject_JCharacterAnimInstanceProxy::AddReferencedObjects(UAnimInstance* Instance,FReferenceCollector& Collector)
@@ -41,5 +42,8 @@ void FProject_JCharacterAnimInstanceProxy::UpdateAnimationNode_WithRoot(const FA
  ConsumeQueuedGameThreadData();
  ThreadSafeData.DeltaTime=Context.GetDeltaTime();
  FAnimInstanceProxy::UpdateAnimationNode_WithRoot(Context,Root,Layer);
- CapturePlayerLocomotionPostSelection();
+ // Observation metadata is cheap and belongs to this completed traversal.
+ // The diagnostic node walk is deferred until a GT consumer requests it.
+ PlaybackUpdateFrame=GFrameCounter;
+ ++PlaybackUpdateRevision;
 }

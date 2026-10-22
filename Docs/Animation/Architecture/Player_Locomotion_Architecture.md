@@ -74,6 +74,12 @@ Walk/Run slopes BlendSpace는 정규화 재생 시각으로 샘플을 맞춘다.
 
 UE 5.8에서 Run의 마커 기반 위상 맞춤을 켜면 leader sample의 이전 시각이 재설정되어 루트 모션 델타가 0이 되는 경로를 확인했다. 이때 물리 이동과 카메라는 회전해도 Steering/OffsetRootBone에 회전 보정이 공급되지 않아 표시 몸이 이전 방향에 남았다. Sprint→Run 조기 종료 노티파이와 별개의 원인이며, 회전 강제 reset이나 Root Offset 해제로 가리지 않는다. `GroundLoopRootMotion`은 Walk/Run의 여섯 경사 샘플을 실제 엔진 틱으로 재생해 루프 경계까지 루트 델타를 검사한다. [완만 회전 PIE 검사](../../../Scripts/Validation/Validate-PlayerLocomotionLoopTurning.py)는 물리 yaw와 표시 root를 함께 비교한다.
 
+## 후진 중 시선 급회전
+
+Strafe에서 카메라와 이동 방향이 함께 바뀌어도 최근 이동 방향은 Backward로 유지될 수 있다. `Run B Loco Transitions`의 기존 고속 Pivot/Box 행은 다른 방향에서 Backward로 들어오는 조건이고, 기존 Reface 출발 행은 저속·비 Pivot 조건이다. 이 둘만 있으면 후진 중 큰 회전이 감지돼도 전환 후보가 없어 Loop로 돌아간다.
+
+`ConfigureBackwardFacingTransitions`는 기존 후진 Reface 좌우 90/180도 행에서 별도의 회전 후보 4개를 제작한다. 최근 방향 Backward와 native `EvaluateIsPivoting` 조건을 함께 요구하고, 기존 미래 시선각 필터·Pose Match·embedded PSD·시퀀스 검색 제외 구간을 재사용한다. 블렌드 시간·프로필·태그는 기존 이동 중 Pivot 행의 출력 설정을 제작 시 복사하며 저속 출발 행의 짧은 블렌드를 그대로 가져오지 않는다. 진입 시각은 Pose Match가 출력하며, `Pivot` 태그가 기존 전환 중단 규칙을 사용한다. 저속 출발·다른 방향 진입·W/OTM 선택 경로는 유지한다. 키 입력이나 클립 이름에 따른 런타임 예외, 강제 회전·IK 해제는 추가하지 않는다. 제작 함수는 PIE 중 실행을 거부하고 재실행으로 행을 중복 생성하지 않는다. 행 개수가 바뀌면 Pose Match 열의 엔진 `Initialize` 경로로 전체 column→database 매핑을 갱신하고, 변경한 embedded PSD에도 Modify/PostEditChange를 전달해 인덱스를 재구성한다. 필터 통과만으로 인덱스 연결이나 실제 재생 성공을 판단하지 않는다.
+
 ## 접지 이후의 착지 검색 구간
 
 물리적으로 접지한 뒤 진입하는 landing 행은 전체 클립의 낙하 준비 구간을 다시 선택하면 안 된다. 2026-10-22 Shift 유지 Sprint 점프에서 실제 접지 직후 Neutral Sprint 착지가 0초부터 재생되는 것을 확인했다. 별도 Fall Loop가 선택된 기록과는 구분한다. 원본 착지 시퀀스에는 약 0.5초/1초의 공중 접근 구간도 있으며, 일부 Run Light에만 검색 제외 노티파이가 있어 전체 클립 검색의 비용만으로 안전한 시작점을 보장하지 못했다.
@@ -109,7 +115,19 @@ UE5 호환 몸체에 추가 망토 뼈만 있다는 이유로 실시간 리타�
 
 현재 생산 mirror metadata는 `MDT_Player_Manny`지만 검색·재생에 mirrored 후보를 활성화한 것은 아니다. 원본 비교 자산과 제작용 비활성 자산은 생산 후보와 구분하며, 직접 참조가 없다는 이유만으로 제거하지 않는다.
 
+## 완료된 이관 코드와 런타임 관측 정리
+
+2026-10-22 현재 캐릭터/애니메이션 BP·ABP 39개의 실제 그래프·함수 참조·프로퍼티 경로·연결 핀과 에디터 모듈 참조를 확인했다. 완료된 초기 이관 API `PrepareFoundation`, `RestoreFoundationTrajectory`, `RebindFoundationChoosers`, `ConfigureStandingLocomotion`, `InstallNativeLocomotionLogic`, `PreparePlayerMaster`와 그 전용 내부 helper를 퇴역했다. 옛 원본 그래프/폴더에 의존하던 초기 설치 경로이며 현재 제작 스크립트·테스트·에셋 호출은 없었다. native 설치 파일 1개도 제거했다. 새 모션 수입·소스 복원·중복 판별·Foley 변환·Manny 재제작·현재 그래프/핀/발 Rig 점검 도구와 회귀 검사는 유지한다. 에디터 이관 함수 삭제를 런타임 FPS 개선으로 해석하지 않는다.
+
+런타임에서는 최초 로컬 제어 여부 중복 대입과 전달만 하던 `SourceActorTransform` 멤버를 제거했다. transient `PlayerCharacterProperties`에서 소비처가 없던 `CurrentMaxDeceleration`, `JustLanded`, `SteeringTime`, `GroundLocation` 4필드와 writer를 제거했다. 실제 착지 판단은 기존 이동 모드 경계·속도·Mover 착지 이벤트가 소유하며 변경하지 않았다. `CurrentMaxAcceleration`은 native 계산에서 소비되고, 가속 관측은 기존 검사에서 사용하므로 이번 정리에서 유지한다. Ragdoll 필드도 현재 마스터 그래프의 바인딩이 있어 보존하며, 기능 완성을 의미하지 않는다.
+
+진단용 BlendStack 노드 순회는 매 outer graph 업데이트에서 수행하지 않는다. 프록시는 완료된 traversal의 revision/frame만 기록하고, 컨트롤러·무기 진단·네트워크 검증이 `GetPlaybackSnapshot`을 요청할 때 `GetProxyOnGameThread`의 병렬 작업 완료 경계에서 읽는다. 같은 revision의 추가 조회는 캐시를 재사용하고, 한 프레임의 여러 traversal도 revision으로 구분한다. `CaptureFrame`은 요청 시각이 아니라 실제 마지막 traversal 시각이다. 예산에 의해 갱신을 건너뛰거나 메시가 정지돼도 새 프레임으로 꾸미지 않는다. `ResultLastChangedFrame`과 변경 여부는 마지막 관측 대비 결과이며 관측하지 않은 이력을 재구성하지 않는다. owner 재초기화 시 관측 캐시·revision·frame을 비운다. 이동·검색·BlendStack·발 보정 계산의 실행 시점은 유지한다.
+
+[진단 관측 PIE 검사](../../../Scripts/Validation/Validate-PlayerPlaybackObservation.py)는 기존 컨트롤러 진단 명령을 사용해 같은 traversal의 반복 조회, 테스트용 메시 일시 정지 중의 실제 관측 나이, 재개 후 갱신을 확인한다. 일시 정지는 테스트 인스턴스에만 적용하고 원래 상태를 복원한다. production의 상태/클립별 IK 해제나 강제 reset은 추가하지 않는다. native 회귀에는 stale 관측과 owner 재초기화 검사도 포함한다.
+
 ## 검증과 남은 범위
+
+2026-10-22 완료 후 정리 기준 direct Editor UBT, native **87개**(실패·경고·미실행 0)와 import/복원 Python **19개**가 통과했다. BP/ABP 39개를 다시 컴파일하고 파일 해시 동일을 확인했다. 실제 지상·후진/전방 회전·공중/착지·루프 회전·전신 몽타주와 진단 관측 수명을 재검증했다. 당시 Linker 경고가 있던 옛 독립 샘플 BP는 이후 사용자의 용도 폐기 확인과 참조 재검사를 거쳐 퇴역했다. 남은 BP/ABP 38개와 현재 마스터 구조를 유지한다. 구체적 수치·후속 검증·남은 범위는 [라이브러리 정리 기록](../Authoring/Player_Animation_Library.md)을 따른다. 아래 수치는 각 이전 수정 시점의 결과다.
 
 후속 최종 점검은 native 회귀 67개와 엔진 문자열 검사 3개, **70개 모두 성공, 경고·실패·미실행 0개**다. 원본의 실제 질의 반환값 910개와 native 계산, 회전 Chooser 36조합도 확인했다. 한국어 초기화 검사 조건과 첫 연결의 Iris 모듈 로드 경계를 보강했고, 새 네트워크 PIE의 해당 경고 0개와 한국어 설정 복원을 확인했다. 아래 수치는 각 이전 수정 시점의 결과이며 최신 상세와 PIE 조건은 [흐름 검토](Player_Animation_Flow_Review_2026-10-21.md)를 따른다.
 

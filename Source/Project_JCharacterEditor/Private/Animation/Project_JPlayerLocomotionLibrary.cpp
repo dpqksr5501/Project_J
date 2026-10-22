@@ -9,20 +9,16 @@
 #include "EdGraph/EdGraph.h"
 #include "EdGraph/EdGraphPin.h"
 #include "EdGraphSchema_K2.h"
-#include "K2Node_Event.h"
-#include "K2Node_CustomEvent.h"
 #include "K2Node_FunctionEntry.h"
 #include "K2Node_FunctionResult.h"
 #include "K2Node_CallFunction.h"
 #include "K2Node_IfThenElse.h"
 #include "Misc/PackageName.h"
 #include "UObject/UnrealType.h"
-#include "AssetRegistry/AssetRegistryModule.h"
 #include "Chooser.h"
 #include "Serialization/ArchiveReplaceObjectRef.h"
 #include "Retargeter/IKRetargeter.h"
 #include "ChooserPropertyAccess.h"
-#include "EdGraphUtilities.h"
 #include "K2Node_VariableGet.h"
 #include "AnimGraphNode_LinkedAnimLayer.h"
 #include "AnimGraphNode_SaveCachedPose.h"
@@ -48,8 +44,108 @@
 #include "Animation/AnimData/IAnimationDataModel.h"
 #include "Animation/Project_JAnimNotify_FoleyEvent.h"
 #include "MultiEnumColumn.h"
+#include "FloatRangeColumn.h"
+#include "BoolColumn.h"
+#include "OutputStructColumn.h"
 #include "PoseSearch/Chooser/PoseSearchChooserColumn.h"
 #include "PoseSearch/PoseSearchAnimNotifies.h"
+
+int32 UProject_JPlayerLocomotionLibrary::ConfigureBackwardFacingTransitions(UChooserTable* Root)
+{
+ if (!Root || (GEditor && GEditor->PlayWorld)) return INDEX_NONE;
+ TArray<UObject*> Owned;GetObjectsWithOuter(Root,Owned,EGetObjectsFlags::IncludeNestedObjects);
+ UChooserTable* Table=nullptr;
+ for (UObject* Object:Owned) if (auto* Candidate=Cast<UChooserTable>(Object);Candidate && Candidate->GetFName()==TEXT("Run B Loco Transitions"))
+ {if (Table) return INDEX_NONE;Table=Candidate;}
+ if (!Table || Table->ColumnsStructs.Num()!=6) return INDEX_NONE;
+ auto* Speed=Table->ColumnsStructs[0].GetMutablePtr<FFloatRangeColumn>();
+ auto* Facing=Table->ColumnsStructs[1].GetMutablePtr<FFloatRangeColumn>();
+ auto* Pivot=Table->ColumnsStructs[2].GetMutablePtr<FBoolColumn>();
+ auto* Recent=Table->ColumnsStructs[3].GetMutablePtr<FMultiEnumColumn>();
+ auto* Output=Table->ColumnsStructs[4].GetMutablePtr<FOutputStructColumn>();
+ auto* Search=Table->ColumnsStructs[5].GetMutablePtr<FPoseSearchColumn>();
+ auto FloatBinding=[](const FFloatRangeColumn* C,FName Name)
+ {const auto* P=C?C->InputValue.GetPtr<FFloatContextProperty>():nullptr;return P && P->Binding.ContextIndex==0 && P->Binding.PropertyBindingChain==TArray<FName>{Name};};
+ const auto* PivotBinding=Pivot?Pivot->InputValue.GetPtr<FBoolContextProperty>():nullptr;
+ const auto* RecentBinding=Recent?Recent->InputValue.GetPtr<FEnumContextProperty>():nullptr;
+ if (!FloatBinding(Speed,GET_MEMBER_NAME_CHECKED(UProject_JPlayerAnimInstance,PlayerSpeed2D)) ||
+  !FloatBinding(Facing,GET_MEMBER_NAME_CHECKED(UProject_JPlayerAnimInstance,PlayerFutureFacingDelta)) || !PivotBinding ||
+  PivotBinding->Binding.PropertyBindingChain!=TArray<FName>{TEXT("EvaluateIsPivoting")} || !RecentBinding ||
+  RecentBinding->Binding.PropertyBindingChain!=TArray<FName>{GET_MEMBER_NAME_CHECKED(UProject_JPlayerAnimInstance,PlayerMovementDirectionRecent)} || !Output || !Search) return INDEX_NONE;
+ const auto* RowsProperty=FindFProperty<FArrayProperty>(FPoseSearchColumn::StaticStruct(),TEXT("RowValues"));
+ const auto* RowProperty=RowsProperty?CastField<FStructProperty>(RowsProperty->Inner):nullptr;
+ if (!RowProperty || RowProperty->Struct!=FPoseSearchColumnRow::StaticStruct()) return INDEX_NONE;
+ auto& SearchRows=*RowsProperty->ContainerPtrToValuePtr<TArray<FPoseSearchColumnRow>>(Search);
+ const int32 Count=Table->ResultsStructs.Num();
+ if (Speed->RowValues.Num()!=Count || Facing->RowValues.Num()!=Count || Pivot->RowValuesWithAny.Num()!=Count ||
+  Recent->RowValues.Num()!=Count || Output->RowValues.Num()!=Count || SearchRows.Num()!=Count || Table->DisabledRows.Num()!=Count) return INDEX_NONE;
+ constexpr uint32 Backward=1u<<uint8(EProject_JPlayerMovementDirection::Backward);
+ FInstancedStruct TurnSettings;
+ for (int32 Row=0;Row<Count;++Row) if (!Table->DisabledRows[Row] &&
+  Pivot->RowValuesWithAny[Row]==EBoolColumnCellValue::MatchTrue && Recent->RowValues[Row].Value!=Backward)
+  if (const auto* Settings=Output->RowValues[Row].GetPtr<FProject_JPlayerGroundChooserOutput>();Settings && Settings->Tags.Contains(TEXT("Pivot")))
+  {
+   if (!TurnSettings.IsValid()) TurnSettings=Output->RowValues[Row];
+   else if (TurnSettings!=Output->RowValues[Row]) return INDEX_NONE;
+  }
+ if (!TurnSettings.IsValid()) return INDEX_NONE;
+ TArray<int32> Sources;
+ for (int32 Row=0;Row<Count;++Row)
+ {
+  const auto* Asset=Table->ResultsStructs[Row].GetPtr<FAssetChooser>();
+  if (Table->DisabledRows[Row] || !Asset || !Asset->Asset || !Asset->Asset->GetName().StartsWith(TEXT("M_Neutral_Run_Reface_Start_B_"))) continue;
+  if (Pivot->RowValuesWithAny[Row]!=EBoolColumnCellValue::MatchFalse) continue;
+  if (SearchRows[Row].Data.GetAnimationAsset()!=Asset->Asset || !SearchRows[Row].Database ||
+   !Output->RowValues[Row].GetPtr<FProject_JPlayerGroundChooserOutput>()) return INDEX_NONE;
+  Sources.Add(Row);
+ }
+ if (Sources.Num()!=4) return INDEX_NONE;
+ TArray<int32> Missing;
+ for (int32 Source:Sources)
+ {
+  int32 Matches=0;
+  for (int32 Row=0;Row<Count;++Row)
+   if (!Table->DisabledRows[Row] && Table->ResultsStructs[Row]==Table->ResultsStructs[Source] &&
+    Recent->RowValues[Row].Value==Backward && Pivot->RowValuesWithAny[Row]==EBoolColumnCellValue::MatchTrue)
+   {
+    if (!Speed->RowValues[Row].bNoMin || !Speed->RowValues[Row].bNoMax ||
+     Facing->RowValues[Row].Min!=Facing->RowValues[Source].Min || Facing->RowValues[Row].Max!=Facing->RowValues[Source].Max ||
+     Facing->RowValues[Row].bNoMin!=Facing->RowValues[Source].bNoMin || Facing->RowValues[Row].bNoMax!=Facing->RowValues[Source].bNoMax ||
+     !(SearchRows[Row]==SearchRows[Source]) || Output->RowValues[Row]!=TurnSettings) return INDEX_NONE;
+    ++Matches;
+   }
+  if (Matches>1) return INDEX_NONE;
+  if (!Matches) Missing.Add(Source);
+ }
+ if (Missing.IsEmpty()) return 0;
+ Root->Modify();Table->Modify();
+ TSet<UPoseSearchDatabase*> ChangedDatabases;
+ for (int32 Source:Missing) ChangedDatabases.Add(SearchRows[Source].Database);
+ // Match the engine's CopyRow lifecycle: the database's index topology changed
+ // too. Invalidate it before editing, then publish after rebuilding its mapping.
+ for (UPoseSearchDatabase* Database:ChangedDatabases) Database->Modify();
+ for (int32 Source:Missing)
+ {
+  // Copy individual rows, never FPoseSearchColumn (its copy constructor clears
+  // database references). The native pivot predicate owns the speed/turn gate.
+  auto Result=Table->ResultsStructs[Source];Table->ResultsStructs.Add(MoveTemp(Result));Table->DisabledRows.Add(false);
+  FChooserFloatRangeRowData SpeedRange;SpeedRange.bNoMin=SpeedRange.bNoMax=true;Speed->RowValues.Add(SpeedRange);
+  const auto FacingRange=Facing->RowValues[Source];Facing->RowValues.Add(FacingRange);
+  Pivot->RowValuesWithAny.Add(EBoolColumnCellValue::MatchTrue);
+  auto Direction=Recent->RowValues[Source];Direction.Value=Backward;Recent->RowValues.Add(Direction);
+  // Use the existing moving-turn blend contract, not the low-speed start's
+  // shorter blend. Pose matching still writes the actual entry time last.
+  Output->RowValues.Add(TurnSettings);
+  const auto PoseRow=SearchRows[Source];SearchRows.Add(PoseRow);
+ }
+ // Row topology changed: Compile/PostEditChange rebuild search data but do not
+ // refresh the column-to-database mapping. Use the engine's virtual authoring
+ // lifecycle, which also updates every sibling column sharing that database.
+ Table->ColumnsStructs[5].GetMutable<FChooserColumnBase>().Initialize(Table);
+ for (UPoseSearchDatabase* Database:ChangedDatabases) Database->PostEditChange();
+ Table->Compile(true);Table->PostEditChange();Root->Compile(true);Root->PostEditChange();Root->MarkPackageDirty();
+ return Missing.Num();
+}
 
 int32 UProject_JPlayerLocomotionLibrary::ConfigureGroundedLandingSearch(UChooserTable* Root)
 {
@@ -339,53 +435,6 @@ bool ReplaceVoidFunction(UBlueprint* Blueprint, FName Name, UFunction* Replaceme
 	return true;
 }
 
-void KeepExecution(UEdGraphNode* Node, TSet<UEdGraphNode*>& Keep)
-{
-	if (!Node || Keep.Contains(Node)) return;
-	Keep.Add(Node);
-	for (auto* Pin : Node->Pins)
-	{
-		if (Pin->Direction != EGPD_Output || Pin->PinType.PinCategory != UEdGraphSchema_K2::PC_Exec) continue;
-		for (auto* Linked : Pin->LinkedTo) KeepExecution(Linked->GetOwningNode(), Keep);
-	}
-}
-
-void KeepInputDependencies(UEdGraphNode* Node, TSet<UEdGraphNode*>& Keep)
-{
-	for (auto* Pin : Node->Pins)
-	{
-		if (Pin->Direction != EGPD_Input || Pin->PinType.PinCategory == UEdGraphSchema_K2::PC_Exec) continue;
-		for (auto* Linked : Pin->LinkedTo)
-		{
-			auto* Provider = Linked->GetOwningNode();
-			if (Keep.Contains(Provider)) continue;
-			Keep.Add(Provider);
-			KeepInputDependencies(Provider, Keep);
-		}
-	}
-}
-
-void ReplaceSampleLifecycle(UBlueprint* Blueprint)
-{
-	for (UEdGraph* Graph : Blueprint->UbergraphPages)
-	{
-		TSet<UEdGraphNode*> Keep;
-		for (UEdGraphNode* Node : Graph->Nodes)
-		{
-			if (Cast<UK2Node_CustomEvent>(Node)) KeepExecution(Node, Keep);
-			else if (const auto* Event = Cast<UK2Node_Event>(Node))
-			{
-				const FName Name = Event->EventReference.GetMemberName();
-				if (Name != TEXT("BlueprintInitializeAnimation") && Name != TEXT("BlueprintBeginPlay") &&
-					Name != TEXT("BlueprintUpdateAnimation")) KeepExecution(Node, Keep);
-			}
-		}
-		const auto Executable = Keep.Array();
-		for (auto* Node : Executable) KeepInputDependencies(Node, Keep);
-		const auto Nodes = Graph->Nodes;
-		for (UEdGraphNode* Node : Nodes) if (!Keep.Contains(Node)) FBlueprintEditorUtils::RemoveNode(Blueprint, Node, true);
-	}
-}
 }
 
 bool UProject_JPlayerLocomotionLibrary::InstallNativeTransitionNotify(UBlueprint* Notify)
@@ -430,124 +479,6 @@ bool UProject_JPlayerLocomotionLibrary::InstallNativeTransitionNotify(UBlueprint
  FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(Notify);FKismetEditorUtilities::CompileBlueprint(Notify);
  Notify->MarkPackageDirty();return Notify->Status!=BS_Error;
 }
-
-UAnimBlueprint* UProject_JPlayerLocomotionLibrary::PrepareFoundation(UAnimBlueprint* Source, const FString& DestinationPackage)
-{
-	if (!Source || !FPackageName::IsValidLongPackageName(DestinationPackage) || FPackageName::DoesPackageExist(DestinationPackage)) return nullptr;
-	auto& Tools = FModuleManager::LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools")).Get();
-	auto* Blueprint = Cast<UAnimBlueprint>(Tools.DuplicateAsset(FPackageName::GetLongPackageAssetName(DestinationPackage),
-		FPackageName::GetLongPackagePath(DestinationPackage), Source));
-	if (!Blueprint) return nullptr;
-	Blueprint->ParentClass = UProject_JPlayerAnimInstance::StaticClass();
-	ReplaceSampleLifecycle(Blueprint);
-	if (!ReplaceVoidFunction(Blueprint, TEXT("Update_PropertiesFromCharacter"), nullptr))
-	{
-		UE_LOG(LogTemp, Error, TEXT("Actual GASP source contract changed; refusing incomplete backend replacement"));
-		return nullptr;
-	}
-	FBlueprintEditorUtils::RenameMemberVariable(Blueprint, TEXT("HasMover"), TEXT("HasLocomotionSource"));
-	FBlueprintEditorUtils::RemoveMemberVariable(Blueprint, TEXT("Mover"));
-	FBlueprintEditorUtils::RemoveMemberVariable(Blueprint, TEXT("Predictor"));
-	ReplaceVoidFunction(Blueprint, TEXT("DebugDraws"), nullptr);
-	if (!RestoreFoundationTrajectory(Source,Blueprint)) return nullptr;
-	FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(Blueprint);
-	FBlueprintEditorUtils::RefreshAllNodes(Blueprint);
-	FKismetEditorUtilities::CompileBlueprint(Blueprint);
-	if (Blueprint->Status == BS_Error) return nullptr;
-	if (auto* Defaults = Blueprint->GeneratedClass ? Blueprint->GeneratedClass->GetDefaultObject() : nullptr)
-	{
-		if (auto* Setup = FindFProperty<FIntProperty>(Defaults->GetClass(), TEXT("LocomotionSetup"))) Setup->SetPropertyValue_InContainer(Defaults, 1);
-		if (auto* MMI = FindFProperty<FBoolProperty>(Defaults->GetClass(), TEXT("Enable_MMI_IK"))) MMI->SetPropertyValue_InContainer(Defaults, false);
-	}
-	Blueprint->MarkPackageDirty();
-	return Blueprint;
-}
-
-int32 UProject_JPlayerLocomotionLibrary::RebindFoundationChoosers(UAnimBlueprint* Source, UAnimBlueprint* Target)
-{
-	if (!Source || !Target || !Source->GeneratedClass || !Target->GeneratedClass || Target->Status == BS_Error) return INDEX_NONE;
-	ReplaceVoidFunction(Target, TEXT("DebugDraws"), nullptr);
-	FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(Target);
-	FKismetEditorUtilities::CompileBlueprint(Target);
-	if (Target->Status == BS_Error) return INDEX_NONE;
-	Target->MarkPackageDirty();
-	FARFilter Filter;
-	Filter.PackagePaths.Add(TEXT("/Game/GASP58Native"));
-	Filter.ClassPaths.Add(UChooserTable::StaticClass()->GetClassPathName());
-	Filter.bRecursivePaths = true;
-	TArray<FAssetData> Assets;
-	FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry")).Get().GetAssets(Filter, Assets);
-	int32 Changed = 0;
-	for (const FAssetData& Asset : Assets)
-	{
-		auto* Table = Cast<UChooserTable>(Asset.GetAsset());
-		if (!Table) continue;
-		bool bChanged = false;
-		for (auto& Parameter : Table->ContextData)
-		{
-			auto* Context = Parameter.GetMutablePtr<FContextObjectTypeClass>();
-			if (!Context || (Context->Class != Source->GeneratedClass && Context->Class != Target->GeneratedClass)) continue;
-			Table->Modify();
-			Context->Class = Target->GeneratedClass;
-			bChanged = true;
-		}
-		if (bChanged)
-		{
-			Table->Compile(true);
-			TArray<UObject*> NestedObjects;
-			GetObjectsWithOuter(Table, NestedObjects, EGetObjectsFlags::IncludeNestedObjects);
-			for (UObject* Object : NestedObjects)
-				if (auto* NestedTable = Cast<UChooserTable>(Object)) NestedTable->Compile(true);
-			Table->MarkPackageDirty();
-			++Changed;
-		}
-	}
-	return Changed;
-}
-
-bool UProject_JPlayerLocomotionLibrary::RestoreFoundationTrajectory(UAnimBlueprint* Source, UAnimBlueprint* Target)
-{
-	if (!Source || !Target) return false;
-	auto* Original = FindFoundationFunctionGraph(Source, TEXT("Update_Trajectory"));
-	auto* Existing = FindFoundationFunctionGraph(Target, TEXT("Update_Trajectory"));
-	if (!Original || !Existing) return false;
-	FBlueprintEditorUtils::RemoveGraph(Target, Existing, EGraphRemoveFlags::None);
-	Existing->Rename(nullptr, GetTransientPackage(), REN_DontCreateRedirectors | REN_NonTransactional);
-	auto* Graph = FEdGraphUtilities::CloneGraph(Original, Target);
-	if (!Graph) return false;
-	if (!Graph->Rename(TEXT("Update_Trajectory"), Target, REN_DontCreateRedirectors | REN_NonTransactional)) return false;
-	Target->FunctionGraphs.Add(Graph);
-	UK2Node_CallFunction* Producer = nullptr;
-	for (UEdGraphNode* Node : Graph->Nodes)
-		if (auto* Call = Cast<UK2Node_CallFunction>(Node); Call && Call->FunctionReference.GetMemberName() == TEXT("PoseSearchGenerateTransformTrajectoryWithPredictor")) Producer = Call;
-	if (!Producer) return false;
-	FGraphNodeCreator<UK2Node_CallFunction> Creator(*Graph);
-	auto* ReadSnapshot = Creator.CreateNode();
-	ReadSnapshot->SetFromFunction(UProject_JPlayerAnimInstance::StaticClass()->FindFunctionByName(
-		GET_FUNCTION_NAME_CHECKED(UProject_JPlayerAnimInstance, GetFoundationTrajectory)));
-	Creator.Finalize();
-	auto* Return = ReadSnapshot->FindPin(UEdGraphSchema_K2::PN_ReturnValue);
-	auto* Trajectory = Producer->FindPin(TEXT("OutTrajectory"));
-	if (!Return || !Trajectory || !Producer->GetExecPin() || !Producer->GetThenPin()) return false;
-	const auto Consumers = Trajectory->LinkedTo;
-	const auto Before = Producer->GetExecPin()->LinkedTo;
-	const auto After = Producer->GetThenPin()->LinkedTo;
-	Trajectory->BreakAllPinLinks();
-	for (auto* Pin : Consumers) if (!Graph->GetSchema()->TryCreateConnection(Return, Pin)) return false;
-	Producer->GetExecPin()->BreakAllPinLinks();
-	Producer->GetThenPin()->BreakAllPinLinks();
-	for (auto* From : Before) for (auto* To : After) if (!Graph->GetSchema()->TryCreateConnection(From, To)) return false;
-	FBlueprintEditorUtils::RemoveNode(Target, Producer, true);
-	const auto Nodes = Graph->Nodes;
-	for (UEdGraphNode* Node : Nodes)
-		if (auto* Get = Cast<UK2Node_VariableGet>(Node); Get && Get->GetVarName() == TEXT("Predictor")) FBlueprintEditorUtils::RemoveNode(Target, Get, true);
-	FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(Target);
-	FBlueprintEditorUtils::RefreshAllNodes(Target);
-	FKismetEditorUtilities::CompileBlueprint(Target);
-	Target->MarkPackageDirty();
-	return Target->Status != BS_Error;
-}
-
 
 bool UProject_JPlayerLocomotionLibrary::RepairFullBodyMontageOrder(UAnimBlueprint* Target)
 {
@@ -664,15 +595,6 @@ bool UProject_JPlayerLocomotionLibrary::ConfigureGameplayAvatar(UBlueprint* Avat
   Mover->MovementModes.Add(DefaultModeNames::Falling,NewObject<UProject_JFallingMode>(Mover,NAME_None,RF_Public|RF_Transactional|RF_ArchetypeObject));
  FPropertyChangedEvent ModesChanged(FindFProperty<FProperty>(UMoverComponent::StaticClass(),GET_MEMBER_NAME_CHECKED(UMoverComponent,MovementModes)));
  static_cast<UObject*>(Mover)->PostEditChangeProperty(ModesChanged);
- if (auto* Property = FindFProperty<FObjectPropertyBase>(Defaults->GetClass(), TEXT("MotionMatchingTrajectoryComponent")))
- {
-  if (auto* Retired = Cast<UActorComponent>(Property->GetObjectPropertyValue_InContainer(Defaults)))
-  {
-   Defaults->RemoveOwnedComponent(Retired);
-   Property->SetObjectPropertyValue_InContainer(Defaults, nullptr);
-   Retired->DestroyComponent();
-  }
- }
  Defaults->GetMesh()->SetSkeletalMeshAsset(SourceMesh);
  Defaults->GetMesh()->SetAnimInstanceClass(Foundation->GeneratedClass);
  Defaults->GetMesh()->ComponentTags.AddUnique(TEXT("ProjectJ.PoseSource"));
@@ -771,45 +693,6 @@ TArray<FString> UProject_JPlayerLocomotionLibrary::InspectProjectAirCoverage(UCh
   Result.Add(FString::Printf(TEXT("Mode=%d Direction=%d Asset=%s Start=%.3f Blend=%.3f"),int32(Mode),int32(Direction),*GetPathNameSafe(Asset),Output.StartTime,Output.BlendTime));
  }
  return Result;
-}
-
-int32 UProject_JPlayerLocomotionLibrary::ConfigureStandingLocomotion(UChooserTable* Root)
-{
- if (!Root || !Root->GetPathName().StartsWith(TEXT("/Game/GASP58Native/"))) return INDEX_NONE;
- TArray<UChooserTable*> Tables{Root};
- TArray<UObject*> Nested; GetObjectsWithOuter(Root,Nested,EGetObjectsFlags::IncludeNestedObjects);
- for (UObject* Object : Nested) if(auto* Table=Cast<UChooserTable>(Object)) Tables.AddUnique(Table);
- int32 Removed=0;
- for (UChooserTable* Table : Tables)
- {
-  TArray<int32> Rows;
-  for (auto& Struct : Table->ColumnsStructs)
-  {
-   auto* Column=Struct.GetMutablePtr<FEnumColumn>();
-   auto* Parameter=Column?Column->InputValue.GetMutablePtr<FEnumContextProperty>():nullptr;
-   if (!Parameter || Parameter->Binding.PropertyBindingChain.Num()!=1) continue;
-   const bool bStance=Parameter->Binding.PropertyBindingChain[0]==TEXT("Stance");
-   // This source table's Any row is a pose-matched crouch->stand fallback.
-   // There are no stance changes in Project J's standing-only locomotion contract.
-   const bool bStanceTransition=Table->GetName()==TEXT("Stand Stance Transitions") && Parameter->Binding.PropertyBindingChain[0]==TEXT("Stance_LastFrame");
-   if (!bStance && !bStanceTransition) continue;
-   for (int32 Row=0;Row<Column->RowValues.Num();++Row)
-    if (((Column->RowValues[Row].Comparison==EEnumColumnCellValueComparison::MatchEqual && Column->RowValues[Row].Value!=0) || (Column->RowValues[Row].Comparison==EEnumColumnCellValueComparison::MatchNotEqual && Column->RowValues[Row].Value==0)) || (bStanceTransition && Column->RowValues[Row].Comparison==EEnumColumnCellValueComparison::MatchAny)) Rows.AddUnique(Row);
-  }
-  Rows.Sort(TGreater<int32>());
-  if (Rows.IsEmpty()) continue;
-  Table->Modify();
-  for (int32 Row : Rows)
-  {
-   if (!Table->ResultsStructs.IsValidIndex(Row)) return INDEX_NONE;
-   Table->ResultsStructs.RemoveAt(Row);
-   if (Table->DisabledRows.IsValidIndex(Row)) Table->DisabledRows.RemoveAt(Row);
-  }
-  for (auto& Column : Table->ColumnsStructs) if (Column.IsValid()) Column.GetMutable<FChooserColumnBase>().DeleteRows(Rows);
-  Table->Compile(true); Removed+=Rows.Num();
- }
- Root->PostEditChange(); Root->MarkPackageDirty();
- return Removed;
 }
 
 int32 UProject_JPlayerLocomotionLibrary::CleanImportedBlueprintReferences(UBlueprint* Source,UBlueprint* Target)

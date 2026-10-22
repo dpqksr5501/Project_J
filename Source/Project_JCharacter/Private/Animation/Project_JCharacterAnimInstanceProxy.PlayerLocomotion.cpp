@@ -3,7 +3,18 @@
 #include "BlendStack/AnimNode_BlendStack.h"
 #include "Animation/AnimationAsset.h"
 
-void FProject_JCharacterAnimInstanceProxy::CapturePlayerLocomotionPostSelection()
+const FProject_JAnimPlaybackSnapshot& FProject_JCharacterAnimInstanceProxy::GetLatestPostSelection() const
+{
+ check(IsInGameThread());
+ if (CapturedPlaybackRevision!=PlaybackUpdateRevision)
+ {
+  CapturePlayerLocomotionPostSelection();
+  CapturedPlaybackRevision=PlaybackUpdateRevision;
+ }
+ return LatestPostSelection;
+}
+
+void FProject_JCharacterAnimInstanceProxy::CapturePlayerLocomotionPostSelection() const
 {
 	const auto* Interface = GetAnimClassInterface();
 	const FAnimNode_BlendStack_Standalone* Selected = nullptr;
@@ -25,7 +36,7 @@ void FProject_JCharacterAnimInstanceProxy::CapturePlayerLocomotionPostSelection(
 	const FName Animation = GetFNameSafe(Selected->GetAnimAsset());
 	const bool bChanged = LatestPostSelection.ProducerNodeIndex != SelectedIndex || LatestPostSelection.SelectedAnimation != Animation;
 	LatestPostSelection.ProducerNodeIndex = SelectedIndex;
-	LatestPostSelection.CaptureFrame = GFrameCounter;
+	LatestPostSelection.CaptureFrame = PlaybackUpdateFrame;
 	LatestPostSelection.CachedNodeWeight = Selected->GetCachedBlendWeight();
 	LatestPostSelection.SelectedAnimation = Animation;
 	LatestPostSelection.SelectedAnimationTime = Selected->GetCurrentAssetTime();
@@ -33,5 +44,5 @@ void FProject_JCharacterAnimInstanceProxy::CapturePlayerLocomotionPostSelection(
 	LatestPostSelection.WantedPlayRate = Selected->AnimPlayers.IsEmpty() ? 1.f : Selected->AnimPlayers[0].GetPlayRate();
 	LatestPostSelection.bNewBlend = Selected->AnyNewBlendToThisFrame();
 	LatestPostSelection.bResultChangedSincePreviousCapture = bChanged;
-	if (bChanged) LatestPostSelection.ResultLastChangedFrame = GFrameCounter;
+	if (bChanged) LatestPostSelection.ResultLastChangedFrame = PlaybackUpdateFrame;
 }

@@ -78,7 +78,6 @@ void UProject_JPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
  }
 	if (NeedsOwnerReferenceRefresh()) CacheOwnerReferences();
 	FProject_JAnimThreadSafeData Data;
-	Data.bIsLocallyControlled = Pawn->IsLocallyControlled();
 	Data.DeltaTime = DeltaSeconds;
 	FillPlayerThreadSafeData(Data);
 	FillMountThreadSafeData(Data);
@@ -186,23 +185,18 @@ void UProject_JPlayerAnimInstance::PublishPlayerLocomotionSourceFrame(const FPro
 	const auto* Mover = Project_J::Movement::FindMover(Pawn);
 	const auto* Settings = Mover ? Mover->FindSharedSettings<UCommonLegacyMovementSettings>() : nullptr;
 	if (!Mover || !Settings) return;
-	SourceActorTransform = Pawn->GetActorTransform();
 	if (bWasPhysicallyInAir && !Data.Air.bIsInAir) LastLandVelocity = CastChecked<AProject_JMoverPawn>(Pawn)->GetLastLandingVelocity();
- PlayerCharacterProperties.ActorTransform = SourceActorTransform;
+ PlayerCharacterProperties.ActorTransform = Pawn->GetActorTransform();
  PlayerCharacterProperties.Velocity = Data.Movement.Velocity;
  const auto* Command=Mover->GetLastInputCmd().InputCollection.FindDataByType<FCharacterDefaultInputs>();
  PlayerCharacterProperties.InputAcceleration=Command?Command->GetMoveInput_WorldSpace():FVector::ZeroVector;
  // Preserve the sample's zero-valued legacy acceleration fields.
  PlayerCharacterProperties.CurrentMaxAcceleration=0.;
- PlayerCharacterProperties.CurrentMaxDeceleration=0.;
  PlayerCharacterProperties.OrientationIntent=FRotator(0.f,Data.LocomotionContext.DesiredFacingYaw,0.f);
  PlayerCharacterProperties.AimingRotation=Command?Command->ControlRotation:Pawn->GetBaseAimRotation();
- PlayerCharacterProperties.JustLanded=bWasPhysicallyInAir && !Data.Air.bIsInAir;
  PlayerCharacterProperties.LandVelocity=LastLandVelocity;
- PlayerCharacterProperties.SteeringTime=0.;
  FHitResult Floor;Mover->TryGetFloorCheckHitResult(Floor);
  PlayerCharacterProperties.GroundNormal=Floor.bBlockingHit?Floor.ImpactNormal:FVector::UpVector;
- PlayerCharacterProperties.GroundLocation=Floor.ImpactPoint;
  PlayerCharacterProperties.BasedMovementDelta=PendingBasedMovementDelta;
  PendingBasedMovementDelta=FTransform::Identity;
  PlayerCharacterProperties.MovementMode=Data.Air.bIsInAir?EProject_JPlayerMovementMode::InAir:EProject_JPlayerMovementMode::OnGround;

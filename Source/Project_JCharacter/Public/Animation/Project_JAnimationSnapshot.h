@@ -123,11 +123,11 @@ struct PROJECT_JCHARACTER_API FProject_JAnimPlaybackSnapshot
  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation|Snapshot")
  int32 ProducerNodeIndex = INDEX_NONE;
  UPROPERTY()
- uint64 CaptureFrame = 0;
+ uint64 CaptureFrame = 0; // Completed graph traversal frame, never the diagnostic request frame.
  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation|Snapshot")
  float CachedNodeWeight = 0.f;
  UPROPERTY()
- uint64 ResultLastChangedFrame = 0;
+ uint64 ResultLastChangedFrame = 0; // Last observed result change; unsampled history is not reconstructed.
  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation|Snapshot")
  bool bResultChangedSincePreviousCapture = false;
  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation|Snapshot")

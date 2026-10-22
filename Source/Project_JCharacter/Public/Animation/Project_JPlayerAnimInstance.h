@@ -296,7 +296,6 @@ private:
  UPROPERTY(VisibleAnywhere, Transient, Category="Project J|Player Locomotion") int32 AirLoopEntryCount=0;
  UPROPERTY(VisibleAnywhere, Transient, Category="Project J|Player Locomotion") float LastAirReselectionFromTime=0.f;
  UPROPERTY(VisibleAnywhere, Transient, Category="Project J|Player Locomotion") float LastAirReselectionToTime=0.f;
-	FTransform SourceActorTransform;
 	bool bWasPhysicallyInAir = false;
 	FVector LastLandVelocity;
 	UPROPERTY(Transient) TObjectPtr<class UMoverTrajectoryPredictor> MoverPredictor;

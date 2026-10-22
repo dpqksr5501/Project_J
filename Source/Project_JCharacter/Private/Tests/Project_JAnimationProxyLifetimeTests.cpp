@@ -65,4 +65,34 @@ bool FProjectJPlayerLocomotionSnapshotBoundaryTest::RunTest(const FString&)
     TestFalse(TEXT("Reinitialize cannot retain a previous owner's cadence policy"),Proxy.GetThreadSafeData().Ground.bScalePlayRateWithSpeed);
     return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJPlaybackObservationLifetimeTest, "ProjectJ.PlayerLocomotion.PlaybackObservationLifetime",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJPlaybackObservationLifetimeTest::RunTest(const FString&)
+{
+    TStrongObjectPtr<USkeletalMeshComponent> Mesh(NewObject<USkeletalMeshComponent>());
+    TStrongObjectPtr<UProject_JCharacterAnimInstance> Anim(NewObject<UProject_JCharacterAnimInstance>(Mesh.Get()));
+    auto& Proxy=Anim->GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>();
+    // A consumer requesting the same completed traversal must not manufacture
+    // a fresh frame or alter the previously observed result-change history.
+    Proxy.PlaybackUpdateRevision=Proxy.CapturedPlaybackRevision=1;
+    Proxy.PlaybackUpdateFrame=1;
+    Proxy.LatestPostSelection.SelectedAnimation=TEXT("PreviouslyObservedPose");
+    Proxy.LatestPostSelection.CaptureFrame=1;
+    Proxy.LatestPostSelection.ResultLastChangedFrame=1;
+    const auto Cached=Anim->GetPlaybackSnapshot();
+    TestEqual(TEXT("A request retains the real completed traversal frame"),Cached.CaptureFrame,uint64(1));
+    TestEqual(TEXT("Observed result history is not stamped with the request frame"),Cached.ResultLastChangedFrame,uint64(1));
+    TestEqual(TEXT("Same-traversal consumers share the captured result"),Cached.SelectedAnimation,FName(TEXT("PreviouslyObservedPose")));
+    // The next completed traversal has no active BlendStack in this native
+    // fixture. A previous owner's/graph's result must not survive that boundary.
+    ++Proxy.PlaybackUpdateRevision;
+    const auto Empty=Anim->GetPlaybackSnapshot();
+    TestTrue(TEXT("A completed traversal without a player clears stale observations"),Empty.SelectedAnimation.IsNone());
+    TestEqual(TEXT("A missing player cannot satisfy network pose freshness"),Empty.CaptureFrame,uint64(0));
+    Proxy.Initialize(Anim.Get());
+    TestEqual(TEXT("Owner reinitialization clears the observation revision"),Proxy.PlaybackUpdateRevision,uint64(0));
+    TestEqual(TEXT("Owner reinitialization clears captured revision"),Proxy.CapturedPlaybackRevision,uint64(0));
+    TestEqual(TEXT("Owner reinitialization clears the previous traversal frame"),Proxy.PlaybackUpdateFrame,uint64(0));
+    return true;
+}
 #endif

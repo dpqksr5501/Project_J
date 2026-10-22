@@ -29,6 +29,9 @@ public:
  /** Restrict standing Sprint stops to the recent Sprint gait before pose matching. Keeps low-speed Walk stops, timing, row order and search data. No save; refuses PIE. */
  UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
  static bool ConfigureStandingStopGaitFilter(UChooserTable* Root);
+ /** Add pose-matched backward-to-backward facing turns from the table's authored Reface entries. Preserves low-speed starts and other direction families. No save; returns added rows or INDEX_NONE on an unfamiliar layout. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
+ static int32 ConfigureBackwardFacingTransitions(UChooserTable* Root);
  /** Set an explicit upper stride bound on authored nodes and compile their defaults. Preserves interpolation, FK reach limits, bindings and timing. No save. */
  UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
  static bool ConfigureStrideWarpingMaximum(UAnimBlueprint* Blueprint, float Maximum);
@@ -64,9 +67,6 @@ public:
  static int32 AlignOneToOneRetargetChains(UIKRetargeter* Retargeter, const TArray<FName>& TargetChains);
  UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
  static FString ExportNativeLocomotionContract(UBlueprint* Target);
- /** Remove prototype-local state/grants before promoting the existing test avatar to the shared player base. */
- UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
- static bool PreparePlayerMaster(UBlueprint* Target);
  /** Repair class-owned inline archetype visibility for inheritance. Does not change movement settings or compile/save. */
  UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
  static int32 FinalizePlayerAvatarTemplates(UBlueprint* Target);
@@ -102,26 +102,12 @@ public:
 	/** Remove only disconnected default actor/animation events, without touching construction or pose logic. */
 	UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
 	static int32 CleanDisconnectedLocomotionEvents(UBlueprint* Target);
-	/** Replace calculation graphs with native adapters without changing pose nodes or Chooser schemas. */
-	UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
-	static bool InstallNativeLocomotionLogic(UAnimBlueprint* Target, UBlueprint* GroundMode);
-	/** Duplicate the actual 5.8 foundation and replace its gameplay input backend. */
-	UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
-	static UAnimBlueprint* PrepareFoundation(UAnimBlueprint* Source, const FString& DestinationPackage);
-	/** Remove crouch-only rows and stance-change fallback from the standing-only foundation. */
-	UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
-	static int32 ConfigureStandingLocomotion(UChooserTable* Root);
 	/** Remap a duplicated foundation's self references and remove proven unused local variables. */
 	UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
 	static int32 CleanImportedBlueprintReferences(UBlueprint* Source,UBlueprint* Target);
 	/** Rebind the humanoid body graph default to its explicit source-family retargeter. */
 	UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
 	static int32 RebindGameplayRetargeter(UAnimBlueprint* Target,UIKRetargeter* Previous,UIKRetargeter* Replacement);
-	/** Rebind only the imported namespace's animation-class Chooser parameters. */
-	UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
-	static int32 RebindFoundationChoosers(UAnimBlueprint* Source, UAnimBlueprint* Target);
-	UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
-	static bool RestoreFoundationTrajectory(UAnimBlueprint* Source, UAnimBlueprint* Target);
 	/** Full-body skills own the final on-foot pose; GASP foot IK must not overwrite their legs. */
 	UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
 	static bool RepairFullBodyMontageOrder(UAnimBlueprint* Target);

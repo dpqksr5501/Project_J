@@ -100,6 +100,7 @@ private:
  friend class UProject_JCharacterAnimationBudgetSubsystem;
  friend class FProjectJPlayerLocomotionSnapshotBoundaryTest;
  friend class FProjectJAnimationProxyLifetimeTest;
+ friend class FProjectJPlaybackObservationLifetimeTest;
  void ReleaseFollowerTickOverride(bool bRestoreTick=true);
  TWeakObjectPtr<USkeletalMeshComponent> FallbackFollowerTickMesh;
  bool bSavedFollowerTick=true;

@@ -8,6 +8,12 @@
 
 2026-10-22 속도 튜닝은 Run 500/Sprint 750cm/s와 지상 재생률 1.0을 사용한다. 최근 gait 기반 정지 후보 분리와 접지 이후 착지 검색 범위 보정을 적용했고, 착지 수정 회귀 84개와 후속 전환 검색 점검 85개가 각각 실패·경고·미실행 없이 통과했다. 착지 시퀀스의 공중 접근 구간을 접지 뒤 다시 검색하지 않으며, 발 IK·접촉·잠금 해제·경사 보정과 공중 재선택·관성은 유지한다. 실제 PIE 조건과 남은 시각 검수 범위는 [라이브러리 검증 기록](../Animation/Authoring/Player_Animation_Library.md)을 따른다.
 
+2026-10-22 후진 급회전은 기존 Reface 4개를 재사용하는 Chooser 후보를 추가해 최근 Backward 방향에서의 전환 공백을 보완했다. 저속 출발·전방/OTM·점프·발 보정은 유지한다. 새 프로세스 native 회귀 86개가 실패·경고 없이 통과했고, 실제 후진/전방 회전 12조건·반복 회전 8회·공중/착지 8조건을 확인했다. 상세 제작 계약과 최초 실패·최종 검증의 구분은 [라이브러리 검증 기록](../Animation/Authoring/Player_Animation_Library.md)을 따른다.
+
+같은 날짜 완료 후 정리에서는 실제 BP/ABP 39개의 호출·바인딩과 제작/테스트 경로를 확인해 초기 설치 API 6개, 미소비 transient 4필드와 중복 대입을 제거했다. 현재 수입·복원·중복 판별·수리 도구는 유지하고, 진단 노드 순회는 완료 평가 기준의 요청 시 캐시로 바꿨다. direct Editor UBT·native 87개·Python 19개, 실제 지상/급회전/공중/루프/몽타주·관측 수명 검사가 통과했다. 생산 에셋은 이번 정리에서 변경하지 않았다. 옛 `BP_Player_Third`는 처음에는 제작 용도 미확정으로 보존했다가, 사용자 폐기 확정 후 모든 종류의 참조와 제작/테스트 경로를 재확인해 퇴역했다. 현재 제작 시작점은 `BP_Player_Master` 자식이다. 상세 경고 구분·검증 범위는 [라이브러리 정리 기록](../Animation/Authoring/Player_Animation_Library.md)을 따른다.
+
+퇴역 후 direct Editor UBT와 새 프로세스 native 87개·Python 19개를 다시 통과했다. 남은 BP/ABP 38개의 컴파일·파일 해시 동일과 새 PIE의 지상 2,372표본을 확인했으며 삭제된 궤적 클래스 경고는 재현되지 않았다. 공유 입력·Quinn·제작 kit는 유지했고, 미저장 패키지 0개 확인 후 에디터를 정상 종료했다.
+
 공통 Skeleton은 Manny `SK_Mannequin`이다. UEFN 원본에서 변환한 575개 시퀀스·BlendSpace 11개를 라이브러리로 관리한다. 현재 Run/Sprint·점프/착지는 Neutral, Idle/Walk 기본 동작은 Relaxed로 선택하며 원본 뱅크는 Content 밖에 압축 보관하고 최소 변환 kit만 유지한다. [추가 수입·중복 검사](../Animation/Authoring/Player_Animation_Library.md)는 원본 ID·실제 모션·재생 계약·recipe로 기존 Manny 결과를 재사용한다. UE5 호환 몸체는 직접 재생하고, 현재 Bip01 대검 몸체는 Family RTG와 몸체별 손 보정을 사용한다. 추가 망토 뼈의 처리는 [스켈레톤·추가 뼈 기준](../Animation/Authoring/HumanoidSkeletonRetargetingStandards.md)을 따른다. Quinn Simple은 같은 Skeleton의 직접 재생을 확인했지만, 체형별 접지·무기 접촉의 실제 플레이 검수는 별개다.
 
 2026-10-21 마지막 IK 수정 기준 direct UBT와 집중 native 회귀 61개, 실제 지상·Sprint 회전·공중/착지·전신 몽타주 검증이 통과했다. 이전 빌드·성능·네트워크 수치를 이 결과에 합산하지 않는다. 팔 기준 포즈, 손가락 마디, Bip01 limb 시작점 누락의 원인·수정·실패 자료는 [전환·검증 기록](../Animation/Architecture/Player_Locomotion_Migration_2026-10-19.md)에 남겼다. 전체 클립 외형·새 군중 성능·Cook/Shipping 완료를 뜻하지 않는다.

@@ -56,6 +56,10 @@ UProject_JPlayerAnimInstance
 
 새 플레이어 BP는 `BP_Player_Master`의 자식으로 만들고 기존 프로필을 지정한다. 값만 달라지는 직업마다 빈 native 클래스를 추가하지 않는다. 추가 런타임 행동이 실제로 필요한 경우에만 native 확장을 검토한다. NPC의 상태 소유권과 플레이어 부모를 혼동하지 않는다.
 
+초기 부모 승격용 `PreparePlayerMaster`는 이관 완료 후 퇴역했다. 현재 자식 제작에 초기 프로토타입을 다시 설치하거나 기본값을 덮는 함수를 사용하지 않는다. 기존 프로필·컴포넌트와 상속 템플릿 보정 도구는 계속 사용한다. 로코모션 초기 설치 함수의 퇴역과 BP/ABP 실제 소비 검사는 [완료 후 정리 기록](../../Animation/Authoring/Player_Animation_Library.md#완료된-이관-코드-정리--2026-10-22)을 따른다.
+
+옛 `/Game/ThirdPerson/Blueprints/BP_Player_Third`는 사용자 용도 폐기 확인과 hard/soft/search/management·실제 로드 참조 검사를 거쳐 제거했다. 공유 입력·Quinn Simple·기존 Unarmed 제작 자산은 함께 지우지 않는다. `ConfigureGameplayAvatar`의 삭제된 궤적 컴포넌트 이름 기반 정리 분기도 제거했으며, 현재 Mover·source mesh·상속 템플릿 구성 기능은 유지한다.
+
 Mover의 class-owned inline mode는 자식 BP의 archetype이므로 `RF_Public | RF_ArchetypeObject` 계약을 지켜야 한다. 이전 제작 함수에서 public 플래그 누락을 수정했고, 기존 템플릿은 editor 전용 `FinalizePlayerAvatarTemplates`로 보정한다. 이동 모드 설정은 바꾸지 않으며 저장 검사를 끄지 않는다.
 
 마스터 이관 당시 76개 회귀가 경고·실패·미실행 없이 통과했다. 새 검사는 실제 부모·자식 상속/기본값, native 컴포넌트 단일성, 8개 의상 실제 연결, 등록·활성화·교체·해제 수명과 상속 템플릿 저장 계약을 확인한다. 기존 handover·실제 대검의 PlayerState/GAS 소유권·표시 몸체 검사를 실행기에 포함했고, 마지막 검사의 예전 CMC `ACharacter` 타입 가정도 현재 플레이어 Mover 타입으로 갱신했다. 대검의 제작 기본값·몸체·입력 매핑은 변경 전후 비교했다.
