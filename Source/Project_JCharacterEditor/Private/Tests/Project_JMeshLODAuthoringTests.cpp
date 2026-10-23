@@ -11,6 +11,7 @@
 #include "AssetCompilingManager.h"
 #include "LODUtilities.h"
 #include "UObject/SavePackage.h"
+#include "UObject/Package.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "HAL/FileManager.h"
@@ -167,10 +168,38 @@ bool FProjectJMeshLODValidator::RunTest(const FString&)
     auto* Body=LoadObject<USkeletalMesh>(nullptr,TEXT("/Game/Characters/GreatSword/GreatSword_Woman.GreatSword_Woman"));
     auto* Cloak=LoadObject<USkeletalMesh>(nullptr,TEXT("/Game/Characters/GreatSword/Clothes/cloak.cloak"));
     if(!Body || !Cloak)return false;
+    auto* Policy=ProjectJ::MeshLODAuthoring::LoadPolicy();
+    if(!TestNotNull(TEXT("Existing shared authoring policy"),Policy))return false;
+    const auto OriginalManualAssets=Policy->ManualReviewAssets;
+    ON_SCOPE_EXIT {Policy->ManualReviewAssets=OriginalManualAssets;};
+    Policy->ManualReviewAssets.Remove(FSoftObjectPath(Cloak));
     auto* Validator=NewObject<UProject_JMeshLODAssetValidator>();FDataValidationContext Existing,Missing;
     TestEqual(TEXT("Existing production LOD chain passes engine validation"),Validator->ValidateLoadedAsset(FAssetData(Body),Body,Existing),EDataValidationResult::Valid);
     TestEqual(TEXT("Existing LOD chain emits no missing-LOD warning"),Existing.GetNumWarnings(),0);
     TestEqual(TEXT("Cloth review is diagnostic, not destructive generation or false asset failure"),Validator->ValidateLoadedAsset(FAssetData(Cloak),Cloak,Missing),EDataValidationResult::Valid);
-    TestTrue(TEXT("Missing/cloth path reports a useful review warning"),Missing.GetNumWarnings()>0);return true;
+    TestTrue(TEXT("Unclassified cloth still reports a useful review warning"),Missing.GetNumWarnings()>0);
+    Policy->ManualReviewAssets.AddUnique(FSoftObjectPath(Cloak));
+    FDataValidationContext Native;
+    TestEqual(TEXT("Explicit native workflow passes without changing geometry"),Validator->ValidateLoadedAsset(FAssetData(Cloak),Cloak,Native),EDataValidationResult::Valid);
+    TestEqual(TEXT("An explicitly selected native workflow is not a recurring warning"),Native.GetNumWarnings(),0);
+    TArray<FText> Warnings,Errors;TArray<TSharedRef<FTokenizedMessage>> Messages;
+    Native.SplitIssues(Warnings,Errors,&Messages);
+    TestEqual(TEXT("Native workflow remains visible as information"),Messages.Num(),1);
+    // Exercise the full validator, including its configured root gate. A plain
+    // /Engine/Transient fixture is intentionally outside those roots.
+    auto* FixturePackage=CreatePackage(*FString::Printf(TEXT("/Game/Characters/__MeshLODValidation_%s"),*FGuid::NewGuid().ToString(EGuidFormats::Digits)));
+    FixturePackage->SetFlags(RF_Transient);
+    ON_SCOPE_EXIT {FixturePackage->SetDirtyFlag(false);};
+    auto* MinimumFixture=SingleBody();
+    if(!TestNotNull(TEXT("Single-LOD validation fixture"),MinimumFixture))return false;
+    MinimumFixture->Rename(TEXT("Minimum"),FixturePackage,REN_DontCreateRedirectors|REN_NonTransactional);
+    MinimumFixture->ClearFlags(RF_Public|RF_Standalone);MinimumFixture->SetFlags(RF_Transient);
+    Policy->ManualReviewAssets.AddUnique(FSoftObjectPath(MinimumFixture));
+    MinimumFixture->SetMinLod(FPerPlatformInt(1));FDataValidationContext Minimum;
+    Validator->ValidateLoadedAsset(FAssetData(MinimumFixture),MinimumFixture,Minimum);
+    TestTrue(TEXT("Explicit native workflow cannot suppress a latent platform MinLOD warning"),Minimum.GetNumWarnings()>0);
+    auto* InvalidFixture=NewObject<UStaticMesh>(FixturePackage,TEXT("Invalid"),RF_Transient);Policy->ManualReviewAssets.AddUnique(FSoftObjectPath(InvalidFixture));FDataValidationContext Invalid;
+    TestEqual(TEXT("Explicit native workflow cannot bypass missing LOD0 validation"),Validator->ValidateLoadedAsset(FAssetData(InvalidFixture),InvalidFixture,Invalid),EDataValidationResult::Invalid);
+    return true;
 }
 #endif

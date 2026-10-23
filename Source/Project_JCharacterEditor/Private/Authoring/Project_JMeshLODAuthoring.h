@@ -12,6 +12,7 @@ namespace ProjectJ::MeshLODAuthoring
         EStatus Status=EStatus::Invalid;
         int32 LODs=0;
         FString Reason;
+        bool bExplicitNativeWorkflow=false;
     };
     const TCHAR* DefaultPolicyPath();
     UProject_JMeshLODSettings* LoadPolicy(const FString& Path=FString());

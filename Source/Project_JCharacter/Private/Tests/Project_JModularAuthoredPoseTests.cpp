@@ -46,6 +46,7 @@ bool FProjectJModularAuthoredPose::RunTest(const FString&)
 	TestTrue(TEXT("Changing parent replaces the pose owner"), Part->LeaderPoseComponent.Get() == Second);
 	Part->UnregisterComponent();
 	TestNull(TEXT("Unregistration releases the authored source"), Part->LeaderPoseComponent.Get());
+	TestFalse(TEXT("Releasing the leader after unregister must not recreate orphaned physics"), Part->IsPhysicsStateCreated());
 	Part->RegisterComponent();
 	TestTrue(TEXT("Re-registration restores the current source"), Part->LeaderPoseComponent.Get() == Second);
 	Part->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
@@ -86,7 +87,9 @@ bool FProjectJModularClothTick::RunTest(const FString&)
 		Part->LeaderPoseComponent.Get() == Source && Part->IsComponentTickEnabled());
 	Part->Deactivate(); Part->Activate(true);
 	TestTrue(TEXT("Activation preserves required cloth ticking"), Part->IsComponentTickEnabled());
-	Part->UnregisterComponent(); Part->RegisterComponent();
+	Part->UnregisterComponent();
+	TestFalse(TEXT("Cloth unregister cannot recreate rigid physics after the engine destroyed it"), Part->IsPhysicsStateCreated());
+	Part->RegisterComponent();
 	TestTrue(TEXT("Re-registration restores cloth policy"), Part->IsComponentTickEnabled());
 	Part->SetSkeletalMeshAsset(Body);
 	TestFalse(TEXT("Changing to a non-cloth mesh removes the extra tick"), Part->IsComponentTickEnabled());

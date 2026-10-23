@@ -64,8 +64,11 @@ void UProject_JModularMeshComponent::ClearPosePrerequisite()
 void UProject_JModularMeshComponent::OnUnregister()
 {
  ClearPosePrerequisite();
-	if (bFollowAttachParentPose) SetLeaderPoseComponent(nullptr);
+ // SetLeaderPoseComponent recreates physics while registered. The engine has
+ // already destroyed physics before OnUnregister, so clear the leader only
+ // after Super marks us unregistered and releases the clothing resources.
  Super::OnUnregister();
+	if (bFollowAttachParentPose) SetLeaderPoseComponent(nullptr);
 }
 void UProject_JModularMeshComponent::OnRegister()
 {

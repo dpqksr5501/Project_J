@@ -51,6 +51,8 @@ $meshes = @('/Game/Characters/NewBody/SK_NewBody.SK_NewBody',
 
 새 에셋의 의미·WPO·custom deformer를 이름이나 형상만으로 완전히 알아낼 수 없다. `Surface` 선언은 제작자의 일반 표면 검수를 뜻하며 모든 예외의 자동 탐지 보장이 아니다. 검수된 의상과 헤어를 임의로 같은 그룹에 묶지 않는다.
 
+`ManualReviewAssets`에 명시한 에셋은 이미 native 제작 경로를 선택한 대상이므로 저장 시 반복적인 일반 LOD 경고 대신 정보 메시지를 남긴다. 자동 축소 제외와 inspector/commandlet의 `Review` 판정은 유지하며 시각 품질 승인을 뜻하지 않는다. 명시하지 않은 단일 LOD/Cloth 메시의 검토 경고, 유효한 LOD0 누락 오류, 0이 아닌 플랫폼/품질 MinLOD 경고는 유지한다. 대검 `cloak`은 세 Cloth section을 직접 제작하므로 공통 설정에서 이 경로로 명시한다. 메시 이름을 하드코딩한 경고 예외나 전체 검증 경고 비활성화를 사용하지 않는다.
+
 이 경로의 `Surface`는 표시용 geometry다. canonical 게임플레이 pose를 생성하는 메시의 LOD나, 실제 ABP/PP graph의 IK·RigidBody `LODThreshold`까지 에셋 단독으로 보장하지 않는다. 연결 후 실제 node의 LOD별 실행·physics 참여·소켓을 확인한다. 동일 mesh를 다른 graph나 독립적인 장비 액터에 사용하는 경우에도 해당 소비 계약을 검수한다.
 
 ## 저장·실패·품질 보존

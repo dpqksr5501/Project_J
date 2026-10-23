@@ -17,6 +17,11 @@ EDataValidationResult UProject_JMeshLODAssetValidator::ValidateLoadedAsset_Imple
     const auto* Policy=LoadPolicy();if(!Policy)return EDataValidationResult::NotValidated;
     const auto R=Inspect(Asset,*Policy,ERole::Unclassified);
     if(R.Status==EStatus::Invalid){AssetFails(Asset,FText::FromString(R.Reason));return EDataValidationResult::Invalid;}
-    if(R.Status!=EStatus::Existing)Context.AddWarning(FText::FromString(FString::Printf(TEXT("Mesh LOD: %s Use Project J Mesh LOD inspection; no assets are generated on import/validation."),*R.Reason)));
+    if(R.Status!=EStatus::Existing)
+    {
+        const FText Message=FText::FromString(FString::Printf(TEXT("Mesh LOD: %s Use Project J Mesh LOD inspection; no assets are generated on import/validation."),*R.Reason));
+        if(R.bExplicitNativeWorkflow)Context.AddMessage(EMessageSeverity::Info,Message);
+        else Context.AddWarning(Message);
+    }
     AssetPasses(Asset);return EDataValidationResult::Valid;
 }

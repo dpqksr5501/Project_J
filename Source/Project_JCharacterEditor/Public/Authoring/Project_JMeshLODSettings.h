@@ -14,7 +14,7 @@ public:
     UPROPERTY(EditAnywhere, Category="Equipment") FStaticMeshReductionOptions StaticMeshLODs;
     /** Paths for the engine's read-only Data Validation integration, not a recursive generation list. */
     UPROPERTY(EditAnywhere, Category="Validation") TArray<FString> ValidationRoots;
-    /** Card hair/fur or other deformation-sensitive meshes requiring their native authoring workflow. */
+    /** Explicit native authoring workflow for card hair/fur or deformation-sensitive meshes. Preserves generic-reduction exclusion; validation reports information instead of a recurring review warning. Invalid LOD0 and platform MinLOD checks still apply. */
     UPROPERTY(EditAnywhere, Category="Validation") TArray<FSoftObjectPath> ManualReviewAssets;
     virtual bool IsEditorOnly() const override { return true; }
     virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;

@@ -17,12 +17,25 @@ class UAnimSequence;
 class UMirrorDataTable;
 class UPoseSearchDatabase;
 class UBlendSpace;
+class UPhysicsAsset;
 
 UCLASS()
 class PROJECT_JCHARACTEREDITOR_API UProject_JPlayerLocomotionLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 public:
+ /** Create standard embedded Chaos clothing for each LOD0 section, with a pinned upper band and a smooth max-distance transition. Refuses PIE/existing clothing; never saves. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
+ static FString CreateSurfaceClothing(USkeletalMesh* Mesh, UPhysicsAsset* Collisions, float PinnedTopDepth=8.f, float TransitionDepth=25.f, float MaxDistance=70.f);
+ /** Rebuild embedded cloth caches and section bindings after authoring. Refuses PIE or a non section-per-asset layout; never saves. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
+ static bool RefreshSurfaceClothing(USkeletalMesh* Mesh);
+ /** Paint a smooth 0..1 bending weight only within the lowest HemDepth cm of each embedded cloth section. Preserves fixed vertices and max-distance masks; refreshes bindings but never saves. Refuses PIE/unsupported targets or conflicting artist masks. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
+ static FString PaintSurfaceClothingHemBending(USkeletalMesh* Mesh, float HemDepth=12.f);
+ /** Remove only the RigidBody node using the explicitly supplied physics asset, reconnecting its pose input/output. Refuses PIE; never saves. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
+ static bool RemoveSecondaryRigidBody(UAnimBlueprint* Blueprint, UPhysicsAsset* PhysicsAsset);
  /** Limit grounded landing pose searches to the authored impact phase, using Land/BlockTransition timing. Preserves animation data, curves and airborne searches. No save; refuses PIE; INDEX_NONE on incompatible data. */
  UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
  static int32 ConfigureGroundedLandingSearch(UChooserTable* Root);
@@ -53,6 +66,9 @@ public:
  /** Read final secondary-bone poses and completed cloth particle samples. No CVar, asset or simulation reset. */
  UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Diagnostics")
  static FString InspectSecondaryPhysics(USkeletalMeshComponent* Mesh);
+ /** Read completed cloth simulation topology when active, otherwise LOD bone skinning, in world space. Supports LeaderPose followers; diagnostic only, no simulation/asset mutation. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Diagnostics")
+ static FString InspectSkinnedMeshSurface(USkeletalMeshComponent* Mesh, int32 LODIndex = 0);
  /** Explicitly retire embedded vertex-cloth data using the editor unbind lifecycle. Keeps skinning, skeleton and physics assets; no save. Refuses PIE or externally owned cloth. */
  UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
  static int32 RetireEmbeddedClothingData(USkeletalMesh* Mesh);

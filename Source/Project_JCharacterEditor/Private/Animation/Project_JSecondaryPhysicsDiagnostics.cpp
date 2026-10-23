@@ -7,8 +7,12 @@
 #include "PhysicsEngine/PhysicsAsset.h"
 #include "PhysicsEngine/SkeletalBodySetup.h"
 #include "ClothingSystemRuntimeTypes.h"
+#include "ClothingAsset.h"
 #include "Dom/JsonObject.h"
 #include "Serialization/JsonSerializer.h"
+#include "Rendering/SkeletalMeshRenderData.h"
+#include "Rendering/SkeletalMeshLODRenderData.h"
+#include "Rendering/SkinWeightVertexBuffer.h"
 
 namespace
 {
@@ -16,6 +20,72 @@ TArray<TSharedPtr<FJsonValue>> VectorJSON(const FVector& V)
 {
 	return {MakeShared<FJsonValueNumber>(V.X), MakeShared<FJsonValueNumber>(V.Y), MakeShared<FJsonValueNumber>(V.Z)};
 }
+}
+
+FString UProject_JPlayerLocomotionLibrary::InspectSkinnedMeshSurface(USkeletalMeshComponent* Mesh, int32 LODIndex)
+{
+	check(IsInGameThread());
+	if (!IsValid(Mesh) || !Mesh->GetSkeletalMeshAsset()) return TEXT("{}");
+	auto* PoseOwner = Cast<USkeletalMeshComponent>(Mesh->LeaderPoseComponent.Get());
+	if (!PoseOwner) PoseOwner = Mesh;
+	PoseOwner->HandleExistingParallelEvaluationTask(true, true);
+	Mesh->WaitForExistingParallelClothSimulation_GameThread();
+	const FSkeletalMeshRenderData* RenderData = Mesh->GetSkeletalMeshRenderData();
+	if (!RenderData || !RenderData->LODRenderData.IsValidIndex(LODIndex)) return TEXT("{}");
+	const FSkeletalMeshLODRenderData& LOD = RenderData->LODRenderData[LODIndex];
+	const FSkinWeightVertexBuffer* Weights = Mesh->GetSkinWeightBuffer(LODIndex);
+	if (!Weights || Weights->GetNumVertices() != LOD.GetNumVertices() || LOD.GetNumVertices() == 0) return TEXT("{}");
+	TArray<FMatrix44f> RefToLocal;
+	Mesh->GetCurrentRefToLocalMatrices(RefToLocal, LODIndex);
+	TArray<FVector3f> Positions;
+	USkinnedMeshComponent::ComputeSkinnedPositions(Mesh, Positions, RefToLocal, LOD, *Weights);
+	TArray<uint32> Indices;
+	LOD.MultiSizeIndexContainer.GetIndexBuffer(Indices);
+	TArray<FVector> WorldPositions;
+	const auto& ClothData = Mesh->GetCurrentClothingData_AnyThread();
+	if (!ClothData.IsEmpty())
+	{
+		// Completed simulation particles and their native topology, rather than the
+		// underlying bone-skinned input that the cloth replaces.
+		Indices.Reset();
+		const auto& Assets = Mesh->GetSkeletalMeshAsset()->GetMeshClothingAssets();
+		for (const auto& Pair : ClothData)
+		{
+			if (!Assets.IsValidIndex(Pair.Key)) return TEXT("{}");
+			const auto* Asset = Cast<UClothingAssetCommon>(Assets[Pair.Key]);
+			if (!Asset || !Asset->LodData.IsValidIndex(Pair.Value.LODIndex)) return TEXT("{}");
+			const auto& Physical = Asset->LodData[Pair.Value.LODIndex].PhysicalMeshData;
+			if (Physical.Vertices.Num() != Pair.Value.Positions.Num()) return TEXT("{}");
+			const uint32 Offset = WorldPositions.Num();
+			for (const FVector3f& Position : Pair.Value.Positions)
+				WorldPositions.Add(Pair.Value.Transform.TransformPosition(FVector(Position)));
+			for (uint32 Index : Physical.Indices) Indices.Add(Offset + Index);
+		}
+	}
+	else
+		for (const FVector3f& Position : Positions)
+			WorldPositions.Add(Mesh->GetComponentTransform().TransformPosition(FVector(Position)));
+	const auto Result = MakeShared<FJsonObject>();
+	Result->SetStringField(TEXT("mesh"), Mesh->GetPathName());
+	Result->SetStringField(TEXT("asset"), Mesh->GetSkeletalMeshAsset()->GetPathName());
+	Result->SetStringField(TEXT("leader"), GetPathNameSafe(Mesh->LeaderPoseComponent.Get()));
+	Result->SetNumberField(TEXT("lod"), LODIndex);
+	Result->SetNumberField(TEXT("bone_revision"), PoseOwner->GetBoneTransformRevisionNumber());
+	Result->SetStringField(TEXT("surface_source"), ClothData.IsEmpty() ? TEXT("bone_skinning") : TEXT("cloth_simulation"));
+	TArray<TSharedPtr<FJsonValue>> Vertices, Triangles;
+	Vertices.Reserve(WorldPositions.Num());
+	bool bFinite = true;
+	for (const FVector& WorldPosition : WorldPositions)
+	{
+		bFinite &= !WorldPosition.ContainsNaN();
+		Vertices.Add(MakeShared<FJsonValueArray>(VectorJSON(WorldPosition)));
+	}
+	Triangles.Reserve(Indices.Num());
+	for (uint32 Index : Indices) Triangles.Add(MakeShared<FJsonValueNumber>(Index));
+	Result->SetBoolField(TEXT("finite"), bFinite);
+	Result->SetArrayField(TEXT("positions"), Vertices);
+	Result->SetArrayField(TEXT("indices"), Triangles);
+	FString Text; FJsonSerializer::Serialize(Result, TJsonWriterFactory<>::Create(&Text)); return Text;
 }
 
 FString UProject_JPlayerLocomotionLibrary::InspectSecondaryPhysics(USkeletalMeshComponent* Mesh)

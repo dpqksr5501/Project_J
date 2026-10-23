@@ -85,8 +85,12 @@ bool FProjectJPlayerMasterAssembly::RunTest(const FString&)
 		TestEqual(TEXT("Inheritance does not duplicate input binding"), Inputs.Num(), 1);
 		TestEqual(TEXT("Existing animation budget coordinator remains the sole owner"), Budgets.Num(), 1);
 	}
+	TWeakObjectPtr<UWorld> ReleasedWorld = World;
 	World->DestroyWorld(false);
 	GEngine->DestroyWorldContext(World);
+	World = nullptr;
+	CollectGarbage(RF_NoFlags);
+	TestFalse(TEXT("Assembly teardown releases the world through GC, including cloth physics references"), ReleasedWorld.IsValid());
 	return true;
 }
 #endif

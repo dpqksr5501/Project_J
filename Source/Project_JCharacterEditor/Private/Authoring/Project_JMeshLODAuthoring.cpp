@@ -87,7 +87,7 @@ FInspection Inspect(UObject* Asset,const UProject_JMeshLODSettings& Policy,ERole
     if(R.LODs!=1){R.Reason=TEXT("No valid LOD0.");return R;}
     if(HasNonzeroMinLOD(Asset)){R.Status=EStatus::Review;R.Reason=TEXT("Nonzero platform/quality MinLOD could become active after generation; preserve it and review local quality.");return R;}
     if(Role==ERole::Hair || Policy.ManualReviewAssets.Contains(FSoftObjectPath(Asset)))
-    {R.Status=EStatus::Review;R.Reason=TEXT("Declare ordinary surface geometry explicitly; hair/fur/cards require manual review.");return R;}
+    {R.Status=EStatus::Review;R.bExplicitNativeWorkflow=true;R.Reason=TEXT("Explicit native authoring workflow; existing data preserved and generic reduction excluded.");return R;}
     if(Skel && (Skel->HasActiveClothingAssets() || !Skel->GetMeshClothingAssets().IsEmpty() || !Skel->GetMorphTargets().IsEmpty() ||
         !Skel->GetSkinWeightProfiles().IsEmpty() || Skel->GetDefaultMeshDeformer() || Skel->GetTargetMeshDeformers() || Skel->GetNaniteSettings().bEnabled ||
         Skel->GetLODSettings()))

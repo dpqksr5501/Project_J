@@ -22,6 +22,7 @@ public class Project_JCharacterEditor : ModuleRules
 			"Project_JAnimationNodes",
 			"Json",
 			"ClothingSystemRuntimeInterface",
+			"ClothingSystemRuntimeCommon", "ClothingSystemEditor", "SkeletalMeshEditor",
 			"AssetRegistry",
 			"AssetTools",
 			"Chooser",
