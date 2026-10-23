@@ -1,6 +1,10 @@
 # Project J 프로젝트 맥락
 
+2026-10-23 애니메이션 소스 수명·취소 경계 재점검과 뒤대각선 Strafe 출발 보완을 마쳤다. 기존 전역 샘플 스타일 대신 유효한 Locomotion Profile의 방향 구간·각도 hysteresis가 앞/옆/뒤 계열을 소유한다. 뒤대각선은 키 순서와 관계없이 기존 후진 모션·회전 커브를 사용하며 몸을 강제 고정하거나 입력 대기 timer를 추가하지 않는다. Editor/Game direct UBT, 관련 회귀 134개·BP/ABP 38개, 실제 Strafe Start/재출발 36회·Pivot 36조건과 지상/공중/루프/몽타주를 확인했다. 확인한 수명 문제·정리·유지 이유·실패 및 남은 검수 범위는 [애니메이션 소스·Strafe 출발 점검](../Animation/Diagnostics/Animation_Source_Review_2026-10-23.md)을 따른다. 아래 100개 등은 각 이전 시점의 결과다.
+
 2026-10-22 Mover 구조의 지속 속성·명령 승인·착지·이력/품질 정책 수정과 200명 현재 → 결과는 [재검증 보고서](../Performance/Reports/ProjectJ_Mover_200_2026-10-22.md)를 따른다. 이전 CMC 성능·빌드 이력을 현재 구현의 검증으로 재사용하지 않는다.
+
+2026-10-23 고정 카메라 Strafe 반전은 native 상태 판단 전에 최종 snapshot을 소비하고, 궤적 계산의 강제 Backward 이력 쓰기를 제거해 보완했다. 키/클립 예외·입력 대기·새 전환 타이머와 생산 에셋 변경 없이 direct Editor UBT, native 100개, 8방향·대각선 키 시차 36조건과 지상/공중/루프/몽타주 검사를 통과했다. 범위·최초 실패·최종 결과는 [라이브러리 검증 기록](../Animation/Authoring/Player_Animation_Library.md)을 따른다.
 
 이 문서는 현재 구조·권위·상태 소유권과 작업 진입점을 설명한다. 현재 이동·애니메이션의 책임 분리는 [플레이어 로코모션 아키텍처](../Animation/Architecture/Player_Locomotion_Architecture.md), 에셋별 제작 규칙과 시점별 검증은 해당 전문 문서를 따른다.
 

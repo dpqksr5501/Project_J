@@ -24,12 +24,22 @@ void UProject_JLocomotionAnimStateComponent::ApplyTransitionPolicy(const FProjec
 void UProject_JLocomotionAnimStateComponent::BeginPlay()
 {
 	bMovementTagOwnershipEnding = false;
+	// Streaming can begin the same component again after EndPlay. Its timers
+	// and tag contributions were retired with the previous presentation episode.
+	bIsJumping = bPredictedRemoteJumpStart = bIgnoreNextLandingForJumpStart = false;
+	JumpStartElapsedTime = JumpStartTimeoutElapsedTime = 0.f;
+	StopFallOffStart();
+	ClearActiveLandingState();
+	bIsPhysicallyInAir = bLandingIgnoresRemoteGroundSpeed = bLandingCancelEventDispatched = bRemoteMoveReleasedWhileAirborne = false;
 	Super::BeginPlay();
 }
 
 void UProject_JLocomotionAnimStateComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	bMovementTagOwnershipEnding = true;
+	ClearJumpStartTimers();
+	ClearFallOffStartTimers();
+	ClearLandingTimers();
 	ClearOwnedMovementGameplayTags();
 	Super::EndPlay(EndPlayReason);
 }
@@ -37,13 +47,16 @@ void UProject_JLocomotionAnimStateComponent::EndPlay(const EEndPlayReason::Type 
 void UProject_JLocomotionAnimStateComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 {
 	bMovementTagOwnershipEnding = true;
+	ClearJumpStartTimers();
+	ClearFallOffStartTimers();
+	ClearLandingTimers();
 	ClearOwnedMovementGameplayTags();
 	Super::OnComponentDestroyed(bDestroyingHierarchy);
 }
 
 void UProject_JLocomotionAnimStateComponent::UpdateState(float DeltaTime)
 {
- if(!IsRegistered() || !FMath::IsFinite(DeltaTime) || DeltaTime<=0.f) return;
+ if(bMovementTagOwnershipEnding || !IsRegistered() || !FMath::IsFinite(DeltaTime) || DeltaTime<=0.f) return;
  AProject_JPlayerCharacter* PlayerOwner=nullptr;
  if(!RefreshOwnerReferencesForUpdate(PlayerOwner)) { HiddenRemoteUpdateAccumulator=0.f; return; }
  AdvanceStateClocks(DeltaTime);

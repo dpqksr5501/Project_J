@@ -4,7 +4,7 @@ Project J의 이동 애니메이션은 **Mover 이동 시뮬레이션, C++ 상�
 
 캐릭터 제작 부모는 `BP_Player_Master`이며 기존 `BP_GreatSword`가 이를 상속한다. 기존 테스트 BP의 로컬 상태·능력 기본값과 중복 프로필 지정을 제거하고, 대검 의상 8개의 연결은 native modular component 등록 수명으로 옮겼다. 직업/몸체 프로필·입력·리타기터·공통 ABP의 포즈 순서는 유지한다. [캐릭터/ABP 마스터 계약](../../Architecture/Runtime/Player_Character_Master.md)의 상속·제작·저장 기준을 따른다.
 
-이 문서는 2026-10-22 현재 구현의 시작점이다. 시점별 원인·실패·복구·실행 결과는 [전환·검증 기록](Player_Locomotion_Migration_2026-10-19.md)과 [Mover 수정·200명 재검증](../../Performance/Reports/ProjectJ_Mover_200_2026-10-22.md), 실제 제작 절차는 [이동 콘텐츠 확장](../Authoring/DataDrivenLocomotionExtensionGuide.md), 골격과 추가 뼈는 [스켈레톤 제작 기준](../Authoring/HumanoidSkeletonRetargetingStandards.md)을 따른다.
+이 문서는 2026-10-23 현재 구현의 시작점이다. 시점별 원인·실패·복구·실행 결과는 [전환·검증 기록](Player_Locomotion_Migration_2026-10-19.md)과 [Mover 수정·200명 재검증](../../Performance/Reports/ProjectJ_Mover_200_2026-10-22.md), 실제 제작 절차는 [이동 콘텐츠 확장](../Authoring/DataDrivenLocomotionExtensionGuide.md), 골격과 추가 뼈는 [스켈레톤 제작 기준](../Authoring/HumanoidSkeletonRetargetingStandards.md)을 따른다.
 
 ## 입력에서 표시 포즈까지
 
@@ -41,6 +41,14 @@ flowchart TD
 프레임 계산과 핀 입력은 native 상속 프로퍼티·함수를 사용한다. 마스터 BP 소유 상태 변수는 0개다. BP 중계 함수를 제거하면서 Property Access·노드 바인딩·Chooser 함수 경로도 함께 이주했다. 같은 계산 함수라도 player별 재생 시각·커브·NodeRef가 다르면 결과를 전역 캐시로 합치지 않는다. 계산을 C++로 옮겼다는 이유로 노드 평가 시점을 변경하지 않는다.
 
 Strafe 회전 오프셋 Chooser도 `FProject_JPlayerRotationOffsetQuery`와 native enum을 소비한다. 매 입력의 BP 구조체 생성·문자열 필드 탐색을 제거했으며 실제 table context/열 binding까지 이주했다. AnimInstance 초기화·해제 시 source 유효성을 무효화하고 새 owner의 정상 GT 게시 이후에만 worker 계산을 허용한다. 원본 함수군·writer/consumer·유지한 실행 시점은 [실행 흐름 비교와 보강](Player_Animation_Flow_Review_2026-10-21.md)을 따른다.
+
+Strafe 방향 계열은 유효한 `LocomotionProfile.StrafeDirectionPolicy`가 소유한다. 카메라 기준 이동 벡터의 각도를 앞·옆·뒤 구간으로 분류하며 기본 경계는 67.5/112.5도, 이력 유지 폭은 10도다. 일반적인 앞대각선 45도·측면 90도·뒤대각선 135도는 경계 밴드 밖에 있어 앞선 키 순서에 따라 다른 계열로 남지 않는다. 뒤대각선은 Backward 후보와 기존 회전 오프셋 커브·Steering·Warping을 사용한다. 원본의 전역 `DDCvar.StrafeStyle=1`에서 135도를 전방/후방 모두로 유지하던 선택은 프로젝트 프로필로 교체했다. 샘플 기본값과 동일하다고 설명하지 않는다. 프로필 편집 시 비유한 값·뒤집힌 구간·겹치는 보정 밴드는 데이터 검증에서 거부한다.
+
+이 정책은 키 이름·클립 이름·입력 대기 시간에 의존하지 않으며 기존 Mover 명령에 분류 결과와 커브 오프셋을 함께 게시한다. 승인된 전방 Strafe Sprint, OTM과 공중에서 실제 진행 방향을 사용하는 계약은 유지한다. 후진에서 몸을 카메라 yaw로 강제 고정하지 않으며 기존 커브의 자연스러운 비스듬한 후진을 허용한다. 원인·사용자 재현·검증 범위는 [소스 점검과 Strafe 출발 기록](../Diagnostics/Animation_Source_Review_2026-10-23.md)을 따른다.
+
+최종 GT snapshot은 공통 `NativeThreadSafeUpdateAnimation` 시작에서 소비한다. 엔진의 proxy `PreUpdate` 뒤에 `NativeUpdateAnimation`이 새 궤적을 게시할 수 있고, 파생 Player AnimInstance의 상태 계산은 graph traversal보다 먼저 실행되기 때문이다. 소비를 graph 노드 갱신까지 미루면 현재 Strafe 방향과 이전 프레임 궤적이 섞여, 키보드 앞뒤 반전에서 Pivot 판정 전에 Box 전환이 선택될 수 있다. native 상태 계산·공통 immutable 핀·linked layer·Chooser는 같은 최종 게시본을 유지한다. 노드별 평가 시점·방향 분류·최근 상태 유지·전환 시간·포즈 검색 후보와 재생 계약은 유지한다.
+
+이동 방향과 최근 방향은 `UpdateNativeStates`가 입력 분류와 기존 상태 이력으로 갱신한다. 궤적의 누적 facing이 각도 경계를 넘었다는 이유로 두 값을 Backward로 덮어쓰지 않는다. 이 이중 writer는 대각선 키의 해제가 어긋날 때 최근 방향에 없던 후진을 만들어 다른 전환 행을 열었다. 누적 facing 자체와 기존 불연속 전환 판정은 유지하므로 180도를 넘는 실제 회전 정보를 정규화로 지우지 않는다.
 
 AnimGraph 노드는 엔진의 포즈 평가·스레드·디버깅·제작 경계를 사용한다. 이 연결을 유지하는 것은 BP에 동일 상태 계산을 중복 보관하는 것과 다르다. 서버 권위와 클라이언트 표현, GT 수집과 worker 계산도 별도 책임으로 유지한다.
 

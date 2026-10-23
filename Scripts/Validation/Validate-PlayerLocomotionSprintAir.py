@@ -27,7 +27,7 @@ def val(o,n):
         if hasattr(v,'export_text'):return v.export_text()
         return str(v)
     except Exception as e:raise RuntimeError('Missing native locomotion observation: '+n) from e
-props=['PlayerRotationMode','LastAirReselectionFromTime','LastAirReselectionToTime','PlayerStateName','PlayerStateMachineState','PlayerMovementState','PlayerMovementStateLastFrame','PlayerHasVelocity','PlayerHasAcceleration','PlayerSpeed2D','PlayerAcceleration','PlayerVelocityAcceleration','PlayerBlendStackInputs','AirReselectionCount','PlayerFootPlacementEnable','PlayerOffsetRootBoneEnabled','PlayerCharacterProperties','PlayerTrajectory','PlayerNoValidAnim']
+props=['PlayerRotationMode','LastAirReselectionFromTime','LastAirReselectionToTime','PlayerStateName','PlayerStateMachineState','PlayerMovementState','PlayerMovementStateLastFrame','PlayerHasVelocity','PlayerSpeed2D','PlayerAcceleration','PlayerVelocityAcceleration','PlayerBlendStackInputs','AirReselectionCount','PlayerFootPlacementEnable','PlayerOffsetRootBoneEnabled','PlayerCharacterProperties','PlayerTrajectory','PlayerNoValidAnim']
 report={'project':unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_dir()),'world':world.get_path_name(),'pawn':pawn.get_path_name(),'anim':anim.get_class().get_path_name(),'samples':[]}
 report['rotation_modes_expected']=['Strafe']*8
 start=unreal.GameplayStatics.get_time_seconds(world)

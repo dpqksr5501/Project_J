@@ -3,7 +3,6 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "GameplayTagContainer.h"
-#include "Input/Project_JMoveIntentState.h"
 #include "Project_JPlayerInputBindingComponent.generated.h"
 
 class AProject_JPlayerCharacter;
@@ -22,12 +21,6 @@ struct FProject_JPlayerInputActionSet
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> MoveAction = nullptr;
-
-	/** Optional semantic direction actions. They do not drive CharacterMovement. */
-	TObjectPtr<UInputAction> MoveIntentForwardAction = nullptr;
-	TObjectPtr<UInputAction> MoveIntentBackwardAction = nullptr;
-	TObjectPtr<UInputAction> MoveIntentLeftAction = nullptr;
-	TObjectPtr<UInputAction> MoveIntentRightAction = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> LookAction = nullptr;
@@ -92,15 +85,11 @@ private:
 	void HandleMove(const FInputActionValue& Value);
 	void HandleLook(const FInputActionValue& Value);
 	void HandleMoveStopped();
-	void HandleMoveIntentDirectionStarted(EProject_JMoveIntentDirection Direction);
-	void HandleMoveIntentDirectionStopped(EProject_JMoveIntentDirection Direction);
 	void FinalizeMoveStopped();
 	void FinalizeMoveStoppedForCharacter(AProject_JPlayerCharacter* PlayerCharacter);
 	bool MayRetirePlayerState(AProject_JPlayerCharacter* PlayerCharacter, uint64 ReleaseRevision) const;
 	bool IsCurrentBinding(AProject_JPlayerCharacter* PlayerCharacter, uint64 Revision) const;
 	void CancelPendingMoveStopReconciliation();
-	void QueueSemanticMoveIntentRefresh();
-	void RefreshSemanticMoveIntent();
 	void HandleJumpStarted();
 	void HandleWalkToggle();
 	void HandleJumpStopped();
@@ -122,19 +111,6 @@ private:
 	// W+S, gamepad direction changes). Defer semantic Stop until that update has
 	// settled; gameplay movement remains immediate in HandleMove.
 	bool bPendingMoveStopReconciliation = false;
-
-	// Enhanced Input can dispatch several Boolean direction edges for one physical
-	// chord change. Coalesce only this cosmetic semantic snapshot at the end of
-	// the input update; IA_Move and CharacterMovement remain immediate.
-	bool bPendingSemanticMoveIntentRefresh = false;
-	/**
-	 * Semantic direction input is an all-or-nothing optional presentation
-	 * contract. A class/profile with only some of the four actions configured
-	 * keeps the existing IA_Move Axis2D fallback instead of publishing a partial
-	 * (and therefore misleading) semantic intent.
-	 */
-	bool bSemanticMoveIntentActionsBound = false;
-	FProject_JMoveIntentState SemanticMoveIntent;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UProject_JSkillInputMappingData> ActiveSkillInputMappingData = nullptr;

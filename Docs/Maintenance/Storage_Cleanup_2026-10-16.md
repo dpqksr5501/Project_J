@@ -111,3 +111,11 @@ Manny 이관 후 늘어난 용량과 불필요 스크립트의 안전한 정리�
 로컬 명세는 `Saved/StorageCleanup_20261020/Inventory.json`, `Plan.json`, `Deleted.jsonl`, `Result.json`, `Verification.json`에 있다. 일회성 스크립트는 `RetiredSessionScripts.zip`, 이번 정리 실행 원형은 `CleanupImplementation.zip`에 보관했다. 입력 원문과 압축 위치·해시가 Plan에 기록돼 있다. 원자료를 다시 분석하려면 인접 `.gz`를 해제하고, 퇴역 스크립트를 조사하려면 ZIP에서 필요한 파일만 꺼낸다. 실험용 과거 Binaries/Intermediate는 폐기했으므로 과거 실험 프로젝트가 즉시 실행 가능한 완전 아카이브는 아니며 실행하려면 해당 당시 소스/환경으로 다시 빌드해야 한다.
 
 파일 정리 후 빈 폴더 마감에서 Windows PowerShell의 `Path.GetRelativePath` 미지원이 확인돼, 삭제 명세의 완료를 먼저 대조하고 호환 방식으로 빈 폴더만 마감했다. 파일 삭제 작업을 다시 실행하지 않았다. 상세는 Result에 남겼으며 최종 보존·압축 복원 검증은 통과했다.
+
+## 2026-10-23 반복 검증 기록 압축
+
+최근 용량 증가에 대한 안전한 정리 요청으로, 종료된 세션의 `Saved/Validation`·`Saved/Logs`에서 2MiB 이상인 JSON/JSONL/CSV/log/utrace 원자료 358개를 인접 `.gz`로 무손실 압축했다. 원문 3,022,388,202 bytes → 압축본 342,440,219 bytes로 논리 크기가 **2.50GiB 감소**했다. 성공·실패·사용자 재현 기록을 모두 보존했으며, 원문 제거 전과 제거 후 압축 해제 스트리밍으로 SHA-256 일치를 확인했다. 기존 분석기가 원문 경로를 요구하면 해당 `.gz`를 원래 이름으로 해제해야 한다. 요약·Automation index·이미지·검증 스크립트와 작은 기록은 그대로 유지했다.
+
+에디터·빌드·IDE 프로세스가 없는 상태에서 처리했다. Content·원본/백업 에셋·Source·Config·Scripts·현재 Binaries/Intermediate·DDC·IDE 캐시·Git/LFS 이력은 정리 대상에서 제외했다. 기존 수정/미추적 파일 45개의 SHA-256도 정리 전후 일치했다. 실행 로직 변경이 없어 빌드나 PIE를 반복하지 않았다.
+
+C 드라이브 여유는 158,205,583,360 → 163,498,909,696 bytes로 **4.93GiB 증가를 관측**했다. 이는 파일 논리 감소량과 다르므로 전부 이번 정리의 회수량으로 귀속하지 않는다. 정리 후 관측 여유는 약 152.27GiB다. 원문/압축 경로·크기·해시와 측정값은 로컬 `Saved/Validation/StorageCleanup_20261023/VerifiedCompression.json`, `Result.json`에 남겼다.

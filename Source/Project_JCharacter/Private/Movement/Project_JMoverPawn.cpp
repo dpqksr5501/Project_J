@@ -14,12 +14,18 @@
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Animation/Project_JPlayerLocomotionTypes.h"
+#include "Animation/Project_JLocomotionProfile.h"
 #include "Chooser.h"
 #include "Curves/CurveFloat.h"
 #include "Engine/World.h"
 #include "HAL/IConsoleManager.h"
 #include "DefaultMovementSet/LayeredMoves/AnimRootMotionLayeredMove.h"
 const FName AProject_JMoverPawn::MeshComponentName(TEXT("CharacterMesh0"));
+const FProject_JStrafeDirectionPolicy& AProject_JMoverPawn::GetStrafeDirectionPolicy() const
+{
+ static const FProject_JStrafeDirectionPolicy Default;
+ return Default;
+}
 AProject_JMoverPawn::AProject_JMoverPawn(const FObjectInitializer& OI):Super(OI)
 {
  bReplicates=true; SetReplicatingMovement(false); bUseControllerRotationYaw=false;
@@ -207,13 +213,8 @@ void AProject_JMoverPawn::PopulateMoverInput(FMoverInputCmdContext& InputCmd,FVe
    if(PreviousOffset>0.f && Angle>=-180.f && Angle<=-170.f) Angle=179.f;
    else if(PreviousOffset<=0.f && Angle>=170.f && Angle<=180.f) Angle=-179.f;
   }
-  static IConsoleVariable* StyleVar=nullptr;
-  if(!StyleVar) StyleVar=IConsoleManager::Get().FindConsoleVariable(TEXT("DDCvar.StrafeStyle"));
-  const int32 Style=StyleVar?StyleVar->GetInt():1;
-  const bool bSide=LastMovementDirection>=2;
-  const float Front=Style==0?(bSide?40.f:60.f):Style==1?(LastMovementDirection==1?120.f:140.f):180.f;
-  const float Back=Style==0?(bSide?140.f:120.f):Front;
-  Intent.MovementDirection=bUseSprint || FMath::Abs(Angle)<=Front?0:Angle>=-Back && Angle<=-Front?2:Angle>=Front && Angle<=Back?4:1;
+  Intent.MovementDirection=uint8(bUseSprint?EProject_JPlayerMovementDirection::Forward:
+   GetStrafeDirectionPolicy().Resolve(Angle,static_cast<EProject_JPlayerMovementDirection>(LastMovementDirection)));
   FProject_JPlayerRotationOffsetQuery Query;
   Query.MovementMode=Mover->IsAirborne()?EProject_JPlayerMovementMode::InAir:EProject_JPlayerMovementMode::OnGround;
   Query.MovementDirection=static_cast<EProject_JPlayerMovementDirection>(Intent.MovementDirection);

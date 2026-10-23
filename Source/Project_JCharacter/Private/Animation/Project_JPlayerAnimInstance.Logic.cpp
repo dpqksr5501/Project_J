@@ -39,7 +39,13 @@ void UProject_JPlayerAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSe
 void UProject_JPlayerAnimInstance::UpdateNativeLocomotionLogic()
 {
 	if (!PlayerHasOwningActor || !PlayerHasLocomotionSource || !PlayerUseThreadSafeUpdateAnimation) return;
-	if (bNeedsLocomotionHistorySeed) PlayerTrajectoryCirclingTime = 0.;
+	if (bNeedsLocomotionHistorySeed)
+	{
+		// Turn-angle evaluation consumes current velocity before the full history
+		// seed below. Do not compare a new source's prediction to the old source.
+		PlayerVelocity = PlayerCharacterProperties.Velocity;
+		PlayerTrajectoryCirclingTime = 0.;
+	}
 	UpdateNativeTrajectory();
 	if (bNeedsLocomotionHistorySeed) SeedLocomotionHistory();
 	UpdateNativeEssentialValues();UpdateNativeStates();UpdateNativeAimOffset();UpdateNativeAdditiveLean();
@@ -54,9 +60,8 @@ void UProject_JPlayerAnimInstance::SeedLocomotionHistory()
 	PlayerSmoothedGroundNormal = PlayerCharacterProperties.GroundNormal;
 	PlayerSmoothedAimTarget = PlayerCharacterProperties.AimingRotation;
 	PlayerAimAngularVelocity = FVector::ZeroVector;
-	PlayerAO = PlayerPreviousAO = FVector2D::ZeroVector;
+	PlayerAO = FVector2D::ZeroVector;
 	PlayerFutureFacingDeltaLastFrame = PlayerFutureFacingDelta;
-	PlayerTrajectoryPreviousFutureVelocity = PlayerTrajectoryFutureVelocity;
 	PlayerFutureFacingOnTransitionStart = PlayerTrajectoryFutureFacing;
 	auto Seed=[]<typename T>(T& Value,T& Last,T& Recent,double& Time,double& LastTime,T New)
 	{ Value=Last=Recent=New; Time=LastTime=0.; };
@@ -255,15 +260,17 @@ bool UProject_JPlayerAnimInstance::EvaluateIsPivoting()
 	const double Angle=FMath::Abs(PlayerTrajectoryTurnAngle);
 	// Production owns the GASP state-controller path. The retired MM setup switch
 	// is no longer authored; treating its missing value as zero selected the old rule.
-	const int32 Gait=int32(static_cast<double>(PlayerGait));const double Speed=PlayerSpeed2D;
-	const double Minimum=Gait==2?200.:Gait==1?175.:50.;
+	const bool bSprint=PlayerGait==EProject_JLocomotionGaitIntent::Sprint;
+	const bool bRun=PlayerGait==EProject_JLocomotionGaitIntent::Run;
+	const double Speed=PlayerSpeed2D;
+	const double Minimum=bSprint?200.:bRun?175.:50.;
 	const auto& Ground=GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Ground;
 	// Preserve authored headroom (700-585 / 600-375 / 600-585). Run must
 	// also admit carried Sprint momentum after a downshift or landing.
-	const double Maximum=Gait==2?double(Ground.SprintSpeed)+115.:
+	const double Maximum=bSprint?double(Ground.SprintSpeed)+115.:
 		FMath::Max(double(Ground.RunSpeed)+225.,double(Ground.SprintSpeed)+15.);
 	const bool bSpeed=(PlayerStance == EProject_JPlayerStance::Crouch)?Speed>=50. && Speed<=200.:Speed>=Minimum && Speed<=Maximum;
-	const double Threshold=Gait==2?60.:
+	const double Threshold=bSprint?60.:
 		(PlayerMovementModeRecent == EProject_JPlayerMovementMode::InAir) || (PlayerMovementModeRecent == EProject_JPlayerMovementMode::Sliding)?100.:
 		(PlayerMovementModeRecent == EProject_JPlayerMovementMode::Ragdoll) || (PlayerMovementModeRecent == EProject_JPlayerMovementMode::Flying)?0.:75.;
 	return bSpeed && Angle>=Threshold;
@@ -276,22 +283,19 @@ void UProject_JPlayerAnimInstance::UpdateNativeTrajectory()
 	{
 		UPoseSearchTrajectoryLibrary::GetTransformTrajectoryVelocity(Trajectory,A,B,Value,false);
 	};
-	Velocity(PlayerTrajectoryPastVelocity,-.3f,-.2f);Velocity(PlayerTrajectoryNearFutureVelocity,.1f,.2f);
-	PlayerTrajectoryPreviousFutureVelocity = PlayerTrajectoryFutureVelocity;
+	Velocity(PlayerTrajectoryNearFutureVelocity,.1f,.2f);
 	Velocity(PlayerTrajectoryFutureVelocity,.4f,.5f);
 	PlayerTrajectoryTurnAngle = EvaluateTrajectoryTurnAngle();
 	PlayerTrajectoryFutureFacing = Trajectory.GetSampleAtTime(1.5f,false).Facing.Rotator();
-	const double Previous=PlayerFutureFacingDelta;
-	PlayerFutureFacingDeltaLastFrame = Previous;
-	const double Future=EvaluateTotalFacingDelta({0.,.25,.75,1.5});PlayerFutureFacingDelta = Future;
-	if (FMath::Abs(Future-Previous)>200.)
-	{
-		PlayerMovementDirection = EProject_JPlayerMovementDirection::Backward;PlayerMovementDirectionRecent = EProject_JPlayerMovementDirection::Backward;
-	}
+	PlayerFutureFacingDeltaLastFrame = PlayerFutureFacingDelta;
+	PlayerFutureFacingDelta = EvaluateTotalFacingDelta({0.,.25,.75,1.5});
+	// Facing can cross its angular seam while the movement classification stays
+	// unchanged (for example, staggered diagonal keys in Strafe). Trajectory owns
+	// the facing delta; UpdateNativeStates alone owns movement-direction history.
 	FVector Past,Current;
 	UPoseSearchTrajectoryLibrary::GetTransformTrajectoryAngularVelocity(Trajectory,-.4f,-.3f,Past,false);
 	UPoseSearchTrajectoryLibrary::GetTransformTrajectoryAngularVelocity(Trajectory,0.f,.1f,Current,false);
-	PlayerTrajectoryPastAngularVelocity = Past;PlayerTrajectoryCurrentAngularVelocity = Current;
+	PlayerTrajectoryCurrentAngularVelocity = Current;
 	const bool bCircling=((Past.Z>200. && Current.Z>200.) || (Past.Z<-200. && Current.Z<-200.)) && FMath::Abs(PlayerTrajectoryTurnAngle)>50.;
 	PlayerTrajectoryIsCircling = bCircling;
 	PlayerTrajectoryCirclingTime = bCircling?PlayerTrajectoryCirclingTime+GetDeltaSeconds():0.;
@@ -309,9 +313,6 @@ void UProject_JPlayerAnimInstance::UpdateNativeEssentialValues()
 	PlayerRootTransform = Root;
 	PlayerAccelerationLastFrame = PlayerAcceleration;
 	const FVector Acceleration=PlayerCharacterProperties.InputAcceleration;PlayerAcceleration = Acceleration;
-	const double Maximum=PlayerCharacterProperties.CurrentMaxAcceleration;
-	const double Amount=Maximum!=0.?Acceleration.Size()/Maximum:0.;
-	PlayerAccelerationAmount = Amount;PlayerHasAcceleration = Amount>0.;
 	const FVector Previous=PlayerVelocity;PlayerVelocityLastFrame = Previous;
 	const FVector Velocity=PlayerCharacterProperties.Velocity;PlayerVelocity = Velocity;
 	const double Speed=Velocity.Size2D();PlayerSpeed2D = Speed;PlayerHasVelocity = Speed>5.;
@@ -366,7 +367,7 @@ bool UProject_JPlayerAnimInstance::EvaluateAnimationAlmostComplete()
 	EAnimNodeReferenceConversionResult Result;const auto Node=UBlendStackAnimNodeLibrary::ConvertToBlendStackNode(FindFoundationNode(TEXT("State Machine Blend Stack")),Result);
 	return Result==EAnimNodeReferenceConversionResult::Succeeded && !UBlendStackAnimNodeLibrary::IsCurrentAssetLooping(Node) && UBlendStackAnimNodeLibrary::GetCurrentAssetTimeRemaining(Node)<=.75f;
 }
-void UProject_JPlayerAnimInstance::SelectNativeStateAnimation(FName Name,uint8 State,bool)
+void UProject_JPlayerAnimInstance::SelectNativeStateAnimation(FName Name,uint8 State,bool /*ForceBlend*/)
 {
 #if WITH_EDITOR
 	// Asset/map previews have no simulated locomotion source. Do not run pose
@@ -377,7 +378,7 @@ void UProject_JPlayerAnimInstance::SelectNativeStateAnimation(FName Name,uint8 S
  // Preserve selection at state entry, including per-node pose history.
  PlayerStateName=Name;PlayerStateMachineState=static_cast<EProject_JPlayerPlaybackState>(State);
  PlayerNotifyTransitionReTransition=PlayerNotifyTransitionToLoop=false;
- PlayerPreviousBlendStackInputs=PlayerBlendStackInputs;PlayerNoValidAnim=false;
+ PlayerNoValidAnim=false;
  FProject_JPlayerGroundChooserOutput Output;
  FChooserEvaluationContext Context;Context.AddObjectParam(this);Context.AddStructParam(Output);
  EAnimNodeReferenceConversionResult Result;
@@ -391,6 +392,9 @@ void UProject_JPlayerAnimInstance::SelectNativeStateAnimation(FName Name,uint8 S
  PlayerBlendStackInputs.StartTime=Output.StartTime;PlayerBlendStackInputs.BlendTime=Output.BlendTime;
  PlayerBlendStackInputs.BlendCurve=Output.BlendCurve;PlayerBlendStackInputs.Tags=MoveTemp(Output.Tags);
  PlayerBlendStackInputs.BlendProfile=const_cast<UBlendProfile*>(GetBlendProfileByName(Output.BlendProfile));
+	// The imported interface still forwards ForceBlend. Playback policy belongs
+	// to the selected asset: a new non-looping state entry must replay even when
+	// pose matching selects the same asset; loops retain their current playhead.
 	if (!Loop)
 	{
 		const auto Stack=UBlendStackAnimNodeLibrary::ConvertToBlendStackNode(FindFoundationNode(TEXT("State Machine Blend Stack")),Result);
@@ -418,7 +422,7 @@ void UProject_JPlayerAnimInstance::UpdateNativeAimOffset()
 	const FRotator Target=PlayerCharacterProperties.AimingRotation;
 	FRotator Smoothed=PlayerSmoothedAimTarget;FVector AngularVelocity=PlayerAimAngularVelocity;
 	UBlueprintSpringMathLibrary::CriticalSpringDampRotator(Smoothed,AngularVelocity,Target,GetDeltaSeconds(),.2f);
-	const FVector2D Previous=PlayerAO;PlayerPreviousAO = Previous;
+	const FVector2D Previous=PlayerAO;
 	const FRotator Root=PlayerRootTransform.Rotator();const FRotator Delta=(Smoothed-Root).GetNormalized();
 	const FVector2D AO(Delta.Yaw,Delta.Pitch);PlayerAO = AO;
 	const bool Enabled=FMath::Abs((Target-Root).GetNormalized().Yaw)<=((PlayerMovementState == EProject_JPlayerMovementState::Idle)?110.:180.)
@@ -459,6 +463,6 @@ void UProject_JPlayerAnimInstance::RequestLocomotionTransition(bool bToLoop, boo
  EProject_JLocomotionGaitIntent ExcludedGait)
 {
  check(IsInGameThread());
- if (bRequireGaitChange && int32(static_cast<double>(PlayerGait)) == int32(ExcludedGait)) return;
+ if (bRequireGaitChange && PlayerGait == ExcludedGait) return;
  if(bToLoop)PlayerNotifyTransitionToLoop=true;else PlayerNotifyTransitionReTransition=true;
 }

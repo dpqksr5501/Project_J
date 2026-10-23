@@ -9,6 +9,7 @@
 | 바꾸려는 것 | 수정할 곳 |
 | --- | --- |
 | 이동 속도·가속·제동·facing·공중 입력 승인 | Mover의 native 이동 설정과 입력/정책 코드 |
+| 카메라 기준 Strafe의 앞·옆·뒤 방향 구간과 각도 hysteresis | 유효한 Locomotion Profile의 `StrafeDirectionPolicy`; 기본 67.5/112.5도 경계와 10도 보정 폭 |
 | 상태·전환·선택 조건·노드별 Steering 등 핀 계산 | `UProject_JPlayerAnimInstance`와 native 계약 |
 | 클립 후보·검색 기준·선택 출력·전환 튜닝 | 현재 Chooser·PSD·Schema·BlendSpace·프로필 |
 | 포즈 합성·콜백 위치·전신 슬롯·직업 표현 | 공통 ABP와 Linked Anim Layer |

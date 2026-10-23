@@ -105,6 +105,11 @@ bool FProjectJPresentationMeshResolverTest::RunTest(const FString&)
 	UProject_JWeaponPresentationComponent* Presentation = NewObject<UProject_JWeaponPresentationComponent>(Character);
 	Character->AddInstanceComponent(Presentation);
 	Presentation->RegisterComponent();
+	// The component is installed after the visual's original initialization.
+	// Complete its real subscription/attachment refresh before injecting a mock
+	// weapon which deliberately has no spawnable authoring class.
+	Follower->GetAnimInstance()->NativeInitializeAnimation();
+	Presentation->GetWeaponGripTargetsForAnimation(0.f);
 	AActor* Weapon = World->SpawnActor<AActor>();
 	UStaticMesh* WeaponAsset = NewObject<UStaticMesh>(Weapon);
 	UStaticMeshSocket* GripSocket = NewObject<UStaticMeshSocket>(WeaponAsset);

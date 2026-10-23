@@ -7,6 +7,7 @@
 #include "Components/Project_JPlayerInputBindingComponent.h"
 #include "EnhancedInputComponent.h"
 #include "InputAction.h"
+#include "Input/Project_JMoveIntentState.h"
 
 namespace ProjectJQueuedInputTests
 {
@@ -34,29 +35,28 @@ bool FProjectJQueuedInputOriginTest::RunTest(const FString&)
     auto* OldInput = NewObject<UEnhancedInputComponent>(Previous); OldInput->RegisterComponent();
     auto* NewInput = NewObject<UEnhancedInputComponent>(Current); NewInput->RegisterComponent();
     FProject_JPlayerInputActionSet Actions;
-    Actions.MoveIntentForwardAction = NewObject<UInputAction>(); Actions.MoveIntentBackwardAction = NewObject<UInputAction>();
-    Actions.MoveIntentLeftAction = NewObject<UInputAction>(); Actions.MoveIntentRightAction = NewObject<UInputAction>();
+    Actions.MoveAction = NewObject<UInputAction>(); Actions.MoveAction->ValueType=EInputActionValueType::Axis2D;
     TestTrue(TEXT("Original action bindings"), Binding->BindInput(OldInput, Previous, Actions));
     // EnhancedPlayerInput copies these delegates before executing any of them.
-    auto OldStart = ProjectJQueuedInputTests::CopyEvent(OldInput, Actions.MoveIntentForwardAction, ETriggerEvent::Started);
-    auto OldRelease = ProjectJQueuedInputTests::CopyEvent(OldInput, Actions.MoveIntentBackwardAction, ETriggerEvent::Completed);
-    if (!TestTrue(TEXT("Real engine binding clones retained"), OldStart && OldRelease)) { return false; }
+    auto OldCompleted = ProjectJQueuedInputTests::CopyEvent(OldInput, Actions.MoveAction, ETriggerEvent::Completed);
+    auto OldCanceled = ProjectJQueuedInputTests::CopyEvent(OldInput, Actions.MoveAction, ETriggerEvent::Canceled);
+    if (!TestTrue(TEXT("Real engine binding clones retained"), OldCompleted && OldCanceled)) { return false; }
     TestTrue(TEXT("A prior queued callback rebinds to the new pawn/device"), Binding->BindInput(NewInput, Current, Actions));
     TestEqual(TEXT("Old owned bindings are removed"), OldInput->GetActionEventBindings().Num(), 0);
-    TestFalse(TEXT("New binding initially has no semantic update"), Binding->IsComponentTickEnabled());
-    OldStart->Execute(FInputActionInstance(Actions.MoveIntentForwardAction));
-    TestFalse(TEXT("Queued old press cannot enqueue semantic input on the new pawn"), Binding->IsComponentTickEnabled());
+    TestFalse(TEXT("New binding initially has no pending stop"), Binding->IsComponentTickEnabled());
+    OldCompleted->Execute(FInputActionInstance(Actions.MoveAction));
+    TestFalse(TEXT("Queued old completion cannot stop the new pawn"), Binding->IsComponentTickEnabled());
     Binding->TickComponent(0, LEVELTICK_All, nullptr);
-    auto NewStart = ProjectJQueuedInputTests::CopyEvent(NewInput, Actions.MoveIntentBackwardAction, ETriggerEvent::Started);
-    if (!TestTrue(TEXT("Fresh engine binding exists"), NewStart.IsValid())) { return false; }
-    NewStart->Execute(FInputActionInstance(Actions.MoveIntentBackwardAction));
-    TestTrue(TEXT("Fresh press still schedules its own semantic input"), Binding->IsComponentTickEnabled());
+    auto NewCompleted = ProjectJQueuedInputTests::CopyEvent(NewInput, Actions.MoveAction, ETriggerEvent::Completed);
+    if (!TestTrue(TEXT("Fresh engine binding exists"), NewCompleted.IsValid())) { return false; }
+    NewCompleted->Execute(FInputActionInstance(Actions.MoveAction));
+    TestTrue(TEXT("Fresh completion still schedules its own stop reconciliation"), Binding->IsComponentTickEnabled());
     Binding->TickComponent(0, LEVELTICK_All, nullptr);
-    OldRelease->Execute(FInputActionInstance(Actions.MoveIntentBackwardAction));
-    TestFalse(TEXT("Queued old release cannot retire the new pawn's held direction"), Binding->IsComponentTickEnabled());
+    OldCanceled->Execute(FInputActionInstance(Actions.MoveAction));
+    TestFalse(TEXT("Queued old cancellation cannot enqueue a stop on the new pawn"), Binding->IsComponentTickEnabled());
     Binding->UnbindInput();
-    NewStart->Execute(FInputActionInstance(Actions.MoveIntentBackwardAction));
-    TestFalse(TEXT("An unbound clone cannot restore a retired semantic update"), Binding->IsComponentTickEnabled());
+    NewCompleted->Execute(FInputActionInstance(Actions.MoveAction));
+    TestFalse(TEXT("An unbound clone cannot restore retired stop work"), Binding->IsComponentTickEnabled());
     return !HasAnyErrors();
 }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMoveIntentOrderTest, "ProjectJ.Continuation.MoveIntentOrder",

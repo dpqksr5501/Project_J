@@ -118,7 +118,9 @@ FVector UProject_JFoleyComponent::ResolveContactLocation(const UProject_JFoleyAu
 		}
 	}
 	// Offscreen/URO poses can be stale. Use a current movement-space contact without waking all bones.
-	return Character->GetActorLocation() - Character->GetActorUpVector() * Project_J::Movement::FindCapsule(Character)->GetScaledCapsuleHalfHeight();
+	const auto* Capsule = Project_J::Movement::FindCapsule(Character);
+	return Capsule ? Character->GetActorLocation() - Character->GetActorUpVector() * Capsule->GetScaledCapsuleHalfHeight()
+		: Character->GetActorLocation();
 }
 
 void UProject_JFoleyComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)

@@ -86,34 +86,6 @@ bool UProject_JPlayerInputBindingComponent::BindInput(UInputComponent* PlayerInp
 	BindOwnedAction(ActionSet.MoveAction, ETriggerEvent::Completed, this, &UProject_JPlayerInputBindingComponent::HandleMoveStopped);
 	BindOwnedAction(ActionSet.MoveAction, ETriggerEvent::Canceled, this, &UProject_JPlayerInputBindingComponent::HandleMoveStopped);
 
-	const bool bHasCompleteSemanticMoveIntentActionSet =
-		ActionSet.MoveIntentForwardAction &&
-		ActionSet.MoveIntentBackwardAction &&
-		ActionSet.MoveIntentLeftAction &&
-		ActionSet.MoveIntentRightAction;
-	bSemanticMoveIntentActionsBound = bHasCompleteSemanticMoveIntentActionSet;
-	bPendingSemanticMoveIntentRefresh = false;
-	SemanticMoveIntent.Clear();
-
-	const auto BindMoveIntentAction = [BindOwnedAction, this](UInputAction* Action, const EProject_JMoveIntentDirection Direction)
-	{
-		if (!Action)
-		{
-			return;
-		}
-
-		BindOwnedAction(Action, ETriggerEvent::Started, this, &UProject_JPlayerInputBindingComponent::HandleMoveIntentDirectionStarted, Direction);
-		BindOwnedAction(Action, ETriggerEvent::Completed, this, &UProject_JPlayerInputBindingComponent::HandleMoveIntentDirectionStopped, Direction);
-		BindOwnedAction(Action, ETriggerEvent::Canceled, this, &UProject_JPlayerInputBindingComponent::HandleMoveIntentDirectionStopped, Direction);
-	};
-	if (bSemanticMoveIntentActionsBound)
-	{
-		BindMoveIntentAction(ActionSet.MoveIntentForwardAction, EProject_JMoveIntentDirection::Forward);
-		BindMoveIntentAction(ActionSet.MoveIntentBackwardAction, EProject_JMoveIntentDirection::Backward);
-		BindMoveIntentAction(ActionSet.MoveIntentLeftAction, EProject_JMoveIntentDirection::Left);
-		BindMoveIntentAction(ActionSet.MoveIntentRightAction, EProject_JMoveIntentDirection::Right);
-	}
-
 	BindOwnedAction(ActionSet.MouseLookAction, ETriggerEvent::Triggered, this, &UProject_JPlayerInputBindingComponent::HandleLook);
 	BindOwnedAction(ActionSet.LookAction, ETriggerEvent::Triggered, this, &UProject_JPlayerInputBindingComponent::HandleLook);
 
@@ -194,9 +166,7 @@ void UProject_JPlayerInputBindingComponent::UnbindInput()
 	BoundEnhancedInputComponent.Reset();
 	BoundPlayerCharacter = nullptr;
 	ActiveSkillInputMappingData = nullptr;
-	bPendingMoveStopReconciliation = bPendingSemanticMoveIntentRefresh = false;
-	bSemanticMoveIntentActionsBound = false;
-	SemanticMoveIntent.Clear();
+	bPendingMoveStopReconciliation = false;
 	SetComponentTickEnabled(false);
 	if (UEnhancedInputComponent* Input = PreviousInput.Get())
 	{
@@ -248,12 +218,6 @@ void UProject_JPlayerInputBindingComponent::TickComponent(
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (bPendingSemanticMoveIntentRefresh)
-	{
-		bPendingSemanticMoveIntentRefresh = false;
-		RefreshSemanticMoveIntent();
-	}
-
 	if (bPendingMoveStopReconciliation)
 	{
 		// This tick runs after Enhanced Input has dispatched all mappings for the
@@ -263,7 +227,7 @@ void UProject_JPlayerInputBindingComponent::TickComponent(
 		FinalizeMoveStopped();
 	}
 
-	if (!bPendingMoveStopReconciliation && !bPendingSemanticMoveIntentRefresh)
+	if (!bPendingMoveStopReconciliation)
 	{
 		SetComponentTickEnabled(false);
 	}
@@ -365,47 +329,6 @@ void UProject_JPlayerInputBindingComponent::HandleMoveStopped()
 	// this Enhanced Input update (for example, holding A while pressing D).
 	bPendingMoveStopReconciliation = true;
 	SetComponentTickEnabled(true);
-}
-
-void UProject_JPlayerInputBindingComponent::HandleMoveIntentDirectionStarted(const EProject_JMoveIntentDirection Direction)
-{
-	if (SemanticMoveIntent.Press(Direction)) { QueueSemanticMoveIntentRefresh(); }
-}
-
-void UProject_JPlayerInputBindingComponent::HandleMoveIntentDirectionStopped(const EProject_JMoveIntentDirection Direction)
-{
-	if (SemanticMoveIntent.Release(Direction)) { QueueSemanticMoveIntentRefresh(); }
-}
-
-void UProject_JPlayerInputBindingComponent::QueueSemanticMoveIntentRefresh()
-{
-	if (!bSemanticMoveIntentActionsBound)
-	{
-		return;
-	}
-
-	bPendingSemanticMoveIntentRefresh = true;
-	SetComponentTickEnabled(true);
-
-	if (BoundPlayerCharacter && BoundPlayerCharacter->LocomotionAnimStateComponent)
-	{
-		BoundPlayerCharacter->LocomotionAnimStateComponent->BeginSemanticMoveIntentUpdate();
-	}
-}
-
-void UProject_JPlayerInputBindingComponent::RefreshSemanticMoveIntent()
-{
-	if (!BoundPlayerCharacter || !BoundPlayerCharacter->LocomotionAnimStateComponent)
-	{
-		return;
-	}
-
-	const bool bHasActiveIntent = SemanticMoveIntent.HasActiveIntent();
-	const FVector2D Intent = SemanticMoveIntent.GetIntent();
-	BoundPlayerCharacter->LocomotionAnimStateComponent->SetSemanticMoveIntentInput(
-		Intent, bHasActiveIntent);
-
-
 }
 
 void UProject_JPlayerInputBindingComponent::CancelPendingMoveStopReconciliation()

@@ -20,6 +20,9 @@
 #include "Animation/Project_JCharacterAnimInstance.h"
 #include "GameFramework/GameStateBase.h"
 #include "GameplayTagsManager.h"
+#include "Project_JNPCCharacter.h"
+#include "AbilitySystemComponent.h"
+#include "Components/CapsuleComponent.h"
 
 class FGameStateTestAccessor : public AGameStateBase
 {
@@ -130,6 +133,43 @@ bool FProjectJCanonicalBladeTrajectoryTest::RunTest(const FString&)
 		Notify->TraceStates.FindChecked(LeaderMesh).FindChecked(EventReference.GetNotifyInstanceID()).PreviousLocation.Equals(SecondTip));
 	Notify->NotifyEnd(LeaderMesh, nullptr, EventReference);
 	TestTrue(TEXT("Notify end releases its execution state"), Notify->TraceStates.IsEmpty());
+
+	// Gameplay event delivery is synchronous. A hit can cancel the swing and
+	// open another one before the original sweep has dispatched all candidates.
+	auto* Attacker = World->SpawnActor<AProject_JNPCCharacter>(Params);
+	auto* ASC = Attacker->GetAbilitySystemComponent(); ASC->InitAbilityActorInfo(Attacker,Attacker);
+	auto* Validation = NewObject<UProject_JCombatHitValidationComponent>(Attacker);
+	Attacker->AddInstanceComponent(Validation); Validation->RegisterComponent();
+	Validation->BeginAttackNode(AttackTag,Attack,100);
+	auto* AttackMesh = Attacker->GetMesh();
+	const FVector Start = AttackMesh->GetSocketLocation(NAME_None);
+	const FVector End = Notify->ResolveTraceLocation(AttackMesh);
+	for (double Fraction : {.3,.7})
+	{
+		auto* Target = World->SpawnActor<ACharacter>(Params);
+		Target->SetActorLocation(FMath::Lerp(Start,End,Fraction));
+		Target->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		Target->GetCapsuleComponent()->SetCollisionObjectType(ECC_Pawn);
+	}
+	const uint64 OldWindow = Validation->BeginHitWindow();
+	Notify->TraceStates.FindOrAdd(AttackMesh).Add(EventReference.GetNotifyInstanceID(),{Start,Validation,OldWindow});
+	int32 Delivered = 0; uint64 NewWindow = 0;
+	const auto Callback = ASC->GenericGameplayEventCallbacks.FindOrAdd(AttackTag).AddLambda([&](const FGameplayEventData*)
+	{
+		++Delivered;
+		if (Delivered==1)
+		{
+			Validation->EndAttack();Validation->BeginAttackNode(AttackTag,Attack,101);
+			NewWindow=Validation->BeginHitWindow();
+		}
+	});
+	Notify->NotifyTick(AttackMesh,nullptr,1.f/60,EventReference);
+	TestEqual(TEXT("A canceled sweep cannot dispatch its remaining candidates into a new attack"),Delivered,1);
+	TestTrue(TEXT("The new attack's window survives cancellation of the old sweep"),NewWindow && Validation->IsHitWindowCurrent(NewWindow));
+	Notify->NotifyEnd(AttackMesh,nullptr,EventReference);
+	TestTrue(TEXT("Late notify End cannot close the replacement window"),Validation->IsHitWindowCurrent(NewWindow));
+	ASC->GenericGameplayEventCallbacks.FindChecked(AttackTag).Remove(Callback);
+	Validation->EndAttack();
 	World->DestroyWorld(false);
 	return true;
 }
@@ -289,6 +329,12 @@ bool FProjectJStableGripTargetsTest::RunTest(const FString&)
 	MeshComp->RegisterComponent();
 
 	// 2. Setup WeaponPresentationProfile with authored alphas
+	auto* SourceAsset = LoadObject<USkeletalMesh>(nullptr,TEXT("/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple"));
+	if (!TestNotNull(TEXT("Authored return-attachment fixture"),SourceAsset))
+	{ GEngine->DestroyWorldContext(World);World->DestroyWorld(false);return false; }
+	Character->GetMesh()->SetSkeletalMeshAsset(SourceAsset);
+	Character->GetMesh()->SetWorldTransform(FTransform::Identity);
+	Character->GetMesh()->RefreshBoneTransforms();
 	UProject_JWeaponPresentationProfile* Profile = NewObject<UProject_JWeaponPresentationProfile>(Character);
 	Profile->MotionPresentation.PrimaryGripSocketName = TEXT("WeaponGrip_R");
 	Profile->MotionPresentation.SecondaryGripSocketName = TEXT("WeaponGrip_L");
@@ -296,7 +342,7 @@ bool FProjectJStableGripTargetsTest::RunTest(const FString&)
 	Profile->MotionPresentation.DefaultDrawnSecondaryIKAlpha = 0.85f;
 	Profile->MotionPresentation.DefaultSheathedPrimaryIKAlpha = 0.5f;
 	Profile->MotionPresentation.DefaultSheathedSecondaryIKAlpha = 0.0f;
-	Profile->DrawnSocketName = NAME_None; // No character skeletal asset in this isolated value test.
+	Profile->DrawnSocketName = TEXT("root"); // Preserve the mock weapon's identity transform on motion return.
 
 	Presentation->AppliedProfile = Profile;
 	Presentation->SpawnedWeapon = MockWeapon;
@@ -387,6 +433,24 @@ bool FProjectJStableGripTargetsTest::RunTest(const FString&)
 	TestEqual(TEXT("Teardown: Secondary Alpha reset to 0.0"), Targets.SecondaryIKAlpha, 0.0f);
 	TestTrue(TEXT("Teardown: socket component cache invalidated"), Presentation->CachedSocketComponents.IsEmpty());
 	TestTrue(TEXT("Teardown: missing socket cache invalidated"), Presentation->MissingSocketNames.IsEmpty());
+	auto* Retarget = NewObject<UProject_JRetargetAnimInstance>(VisualFollower);
+	Retarget->NativeInitializeAnimation();
+	TestTrue(TEXT("Initialized retarget subscribes to its presentation owner"), Presentation->RegisteredRetargetAnimInstances.Contains(Retarget));
+	Retarget->NativePostEvaluateAnimation();
+	Retarget->NativeUninitializeAnimation();
+	TestFalse(TEXT("Uninitialize releases subscription before garbage collection"), Presentation->RegisteredRetargetAnimInstances.Contains(Retarget));
+	TestEqual(TEXT("An uninitialized body cannot report an evaluated grip pose"), Retarget->GetGripPoseEvaluationFrame(), MAX_uint64);
+	Retarget->NativeInitializeAnimation();
+	TestTrue(TEXT("A retained body can subscribe again"), Presentation->RegisteredRetargetAnimInstances.Contains(Retarget));
+	auto* NextOwner = World->SpawnActor<ACharacter>();
+	auto* NextPresentation = NewObject<UProject_JWeaponPresentationComponent>(NextOwner);
+	NextPresentation->RegisterComponent();
+	Retarget->Rename(nullptr, NextOwner->GetMesh(), REN_DontCreateRedirectors | REN_NonTransactional);
+	Retarget->NativeUpdateAnimation(1.f / 60.f);
+	TestFalse(TEXT("A retained body releases the previous live presentation owner"), Presentation->RegisteredRetargetAnimInstances.Contains(Retarget));
+	TestTrue(TEXT("A changed owner establishes the same subscription as initialization"), NextPresentation->RegisteredRetargetAnimInstances.Contains(Retarget));
+	Retarget->NativeUninitializeAnimation();
+	TestFalse(TEXT("Uninitialize releases the replacement owner"), NextPresentation->RegisteredRetargetAnimInstances.Contains(Retarget));
 
 	GEngine->DestroyWorldContext(World);
 	World->DestroyWorld(false);

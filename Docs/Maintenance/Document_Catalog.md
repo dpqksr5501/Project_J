@@ -4,7 +4,7 @@
 
 목록은 파일 위치와 문서 종류를 안내한다. 구현 완료·현재 성능을 판정하는 표가 아니며, 각 문서의 날짜·범위·후속 기록을 함께 읽는다. 통합 문서 안내는 이전 링크를 이어주는 진입점이고 상세 본문은 통합 가이드에 있다.
 
-문서 폴더 파일 3470개, Markdown 269개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
+문서 폴더 파일 3471개, Markdown 270개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
 
 ## 주제별 목록
 
@@ -84,6 +84,7 @@
 | [보조 손 접촉과 직업별 파지 설정](../Animation/Authoring/Secondary_Hand_Contact.md) | 통합 문서 안내 | Animation/Authoring/Secondary_Hand_Contact.md |
 | [무기 파지와 손 접촉 통합 가이드](../Animation/Authoring/Weapon_Hand_Contact_System.md) | 통합 상세 가이드 | Animation/Authoring/Weapon_Hand_Contact_System.md |
 | [마우스 회전 끊김 콘솔 진단](../Animation/Debug/Mouse_Turn_Trace_2026-10-06.md) | 구조·계약 | Animation/Debug/Mouse_Turn_Trace_2026-10-06.md |
+| [애니메이션 소스 수명과 Strafe 출발 점검 — 2026-10-23](../Animation/Diagnostics/Animation_Source_Review_2026-10-23.md) | 진단·수정 기록 | Animation/Diagnostics/Animation_Source_Review_2026-10-23.md |
 | [EarlyTransition 누락 복원 — 2026-10-10](../Animation/Diagnostics/EarlyTransition_Recovery_2026-10-10.md) | 진단·수정 기록 | Animation/Diagnostics/EarlyTransition_Recovery_2026-10-10.md |
 | [마네킹 Foley 확장과 초기 오디오 연결](../Animation/Diagnostics/Foley_Extension_2026-10-08.md) | 진단·수정 기록 | Animation/Diagnostics/Foley_Extension_2026-10-08.md |
 | [정면 달리기 Foley 누락 복구 — 2026-10-08](../Animation/Diagnostics/Foley_Forward_Run_Fix_2026-10-08.md) | 진단·수정 기록 | Animation/Diagnostics/Foley_Forward_Run_Fix_2026-10-08.md |

@@ -55,7 +55,7 @@ def tick(dt):
             v=mover.get_velocity();p=pawn.get_actor_location()
             report['samples'].append({'t':t,'dt':dt,'yaw':pawn.get_actor_rotation().yaw,'control_yaw':controller.get_control_rotation().yaw,
                 'pos':[p.x,p.y,p.z],'vel':[v.x,v.y,v.z],'mode':str(mover.get_movement_mode_name()),
-                **{n:value(anim,n)for n in ['PlayerStateName','PlayerMovementState','PlayerMovementDirection','PlayerRotationMode','PlayerGait','PlayerTrajectoryFutureVelocity','PlayerTrajectoryTurnAngle','PlayerRootTransform','PlayerCharacterTransform','PlayerBlendStackInputs','PlayerHasAcceleration','PlayerOffsetRootBoneEnabled','PlayerFootPlacementEnable','PlayerNoValidAnim']},
+                **{n:value(anim,n)for n in ['PlayerStateName','PlayerMovementState','PlayerMovementDirection','PlayerRotationMode','PlayerGait','PlayerTrajectoryFutureVelocity','PlayerTrajectoryTurnAngle','PlayerRootTransform','PlayerCharacterTransform','PlayerBlendStackInputs','PlayerOffsetRootBoneEnabled','PlayerFootPlacementEnable','PlayerNoValidAnim']},
                 'custom':value(anim,'PlayerCharacterProperties'),'played':anim.inspect_foundation_playback(),'physical':pawn.inspect_physical_lifecycle(), 'walking_class':mover.get_editor_property('MovementModes')['Walking'].get_class().get_path_name()})
     except Exception:finish(traceback.format_exc())
 handle=unreal.register_slate_post_tick_callback(tick)

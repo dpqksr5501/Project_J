@@ -6,6 +6,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Components/Project_JCombatHitValidationComponent.h"
 #include "Combat/Project_JAttackDefinition.h"
+#include "UObject/StrongObjectPtr.h"
 
 UProject_JAnimNotifyState_MeleeHit::UProject_JAnimNotifyState_MeleeHit()
 {
@@ -59,6 +60,11 @@ void UProject_JAnimNotifyState_MeleeHit::NotifyTick(USkeletalMeshComponent* Mesh
 	{
 		return;
 	}
+	// Event handlers may retire objects and collect garbage before returning.
+	// Keep the execution's storage alive while still rejecting destroyed owners.
+	const TStrongObjectPtr<UProject_JAnimNotifyState_MeleeHit> PinnedNotify(this);
+	const TStrongObjectPtr<USkeletalMeshComponent> PinnedMesh(MeshComp);
+	const TStrongObjectPtr<AActor> PinnedOwner(OwnerActor);
 
 	UWorld* World = MeshComp->GetWorld();
 	if (!World)
@@ -73,6 +79,8 @@ void UProject_JAnimNotifyState_MeleeHit::NotifyTick(USkeletalMeshComponent* Mesh
 	const FVector TraceLocation = ResolveTraceLocation(MeshComp, AttackDefinition);
 	const FVector TraceStart = State->PreviousLocation;
 	State->PreviousLocation = TraceLocation;
+	const FTraceState Execution = *State;
+	const int32 InstanceID = EventReference.GetNotifyInstanceID();
 	float EffectiveTraceRadius = TraceRadius;
 	if (AttackDefinition) { EffectiveTraceRadius = AttackDefinition->HitSpec.TraceRadius; }
 
@@ -103,6 +111,15 @@ void UProject_JAnimNotifyState_MeleeHit::NotifyTick(USkeletalMeshComponent* Mesh
 
 	for (const FHitResult& Hit : OutHits)
 	{
+		// A hit event can synchronously end this notify, destroy its owner, or
+		// start a new attack. Reacquire by execution identity after each callback;
+		// neither a map pointer nor an old sweep belongs to the replacement window.
+		const auto* CurrentStates = TraceStates.Find(MeshComp);
+		const auto* Current = CurrentStates ? CurrentStates->Find(InstanceID) : nullptr;
+		if (!IsValid(OwnerActor) || OwnerActor->IsActorBeingDestroyed() || !IsValid(MeshComp) ||
+			MeshComp->GetOwner() != OwnerActor || !Current || Current->WindowToken != Execution.WindowToken ||
+			Current->Validation != Execution.Validation || (Execution.WindowToken &&
+			(!Execution.Validation.IsValid() || !Execution.Validation->IsHitWindowCurrent(Execution.WindowToken)))) break;
 		if (AActor* HitActor = Hit.GetActor())
 		{
 			FGameplayEventData Payload;

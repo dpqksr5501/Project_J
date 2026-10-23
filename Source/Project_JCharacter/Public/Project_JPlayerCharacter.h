@@ -81,6 +81,7 @@ public:
 	virtual void ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdContext& InputCmd) override;
 	virtual FProject_JMoverPolicy ResolveMoverPolicy(const FProject_JMoverInputs& Requested,const FCharacterDefaultInputs* Input=nullptr) const override;
 	virtual float GetMoverMaxSpeed(bool bAcceptedSprint) const override;
+	virtual const FProject_JStrafeDirectionPolicy& GetStrafeDirectionPolicy() const override;
 
 private:
 

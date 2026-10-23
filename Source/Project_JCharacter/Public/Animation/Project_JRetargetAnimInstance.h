@@ -46,6 +46,7 @@ public:
 
 	virtual void BeginDestroy() override;
 	virtual void NativeInitializeAnimation() override;
+	virtual void NativeUninitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 	virtual void NativeThreadSafeUpdateAnimation(float DeltaSeconds) override;
 	virtual void NativePostEvaluateAnimation() override;

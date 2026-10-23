@@ -8,6 +8,7 @@
 #include "Engine/World.h"
 #include "Engine/SkeletalMesh.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SceneComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameplayTagsManager.h"
 #include "GameFramework/Character.h"
@@ -134,6 +135,15 @@ bool FProjectJFoleyContactTest::RunTest(const FString&)
 		Mesh->SetLastRenderTime(-100.f);
 		TestTrue(TEXT("Offscreen hand events do not consume stale bones"), Component->ResolveContactLocation(*Profile, EProject_JFoleySide::Left, &Definition).Equals(CapsuleContact));
 	}
+	// Foley is a Pawn component; custom avatars need not have a capsule root.
+	auto* Pawn = World->SpawnActor<APawn>();
+	auto* Root = NewObject<USceneComponent>(Pawn); Pawn->SetRootComponent(Root); Root->RegisterComponent();
+	Pawn->SetActorLocation(FVector(120,240,360));
+	auto* PawnFoley = NewObject<UProject_JFoleyComponent>(Pawn); PawnFoley->RegisterComponent();
+	FProject_JFoleySoundSet CapsuleDefinition; CapsuleDefinition.Contact=EProject_JFoleyContact::Capsule;
+	TestTrue(TEXT("Capsule-less pawn retains a finite movement-space contact"), PawnFoley->ResolveContactLocation(*Profile,EProject_JFoleySide::None,&CapsuleDefinition).Equals(Pawn->GetActorLocation()));
+	FProject_JFoleySoundSet MissingSocket; MissingSocket.Contact=EProject_JFoleyContact::Socket;MissingSocket.ContactSocket=TEXT("MissingSocket");
+	TestTrue(TEXT("Missing mesh/socket on a capsule-less pawn uses its origin"), PawnFoley->ResolveContactLocation(*Profile,EProject_JFoleySide::Left,&MissingSocket).Equals(Pawn->GetActorLocation()));
 	GEngine->DestroyWorldContext(World); World->DestroyWorld(false);
 	return true;
 }

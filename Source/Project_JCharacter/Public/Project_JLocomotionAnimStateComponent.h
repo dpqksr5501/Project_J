@@ -72,8 +72,6 @@ public:
 	void ClearMoveInput();
 	FVector2D GetHeldLocalMoveInput() const { return GetLocalMovementInputForState(); }
 
-	void SetSemanticMoveIntentInput(const FVector2D& InMoveIntent, bool bHasActiveIntent);
-	void BeginSemanticMoveIntentUpdate();
 	void HandleSprintStarted();
 	void HandleSprintStopped();
 	bool CanStartJumpForAnimation() const;
@@ -341,9 +339,6 @@ private:
 	FTimerHandle LandingExitTimerHandle;
 
 	FVector2D CachedMoveInput = FVector2D::ZeroVector;
-	FVector2D CachedSemanticMoveIntentInput = FVector2D::ZeroVector;
-bool bHasSemanticMoveIntentInput = false;
-	bool bSemanticMoveIntentUpdatePending = false;
 bool bWasInAir = false;
 	bool bSuppressFallOffStart = false;
 	bool bRealLandingEventRequested = false;

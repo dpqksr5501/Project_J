@@ -7,6 +7,12 @@
 #include "Movement/Project_JGroundMovement.h"
 #include "MoverDataModelTypes.h"
 
+const FProject_JStrafeDirectionPolicy& AProject_JPlayerCharacter::GetStrafeDirectionPolicy() const
+{
+ const auto* Profile=GetLocomotionProfile();
+ return Profile?Profile->StrafeDirectionPolicy:Super::GetStrafeDirectionPolicy();
+}
+
 float AProject_JPlayerCharacter::GetMoverMaxSpeed(bool bAcceptedSprint) const
 {
  const auto* Profile=GetLocomotionProfile();

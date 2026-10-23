@@ -1,5 +1,14 @@
 #if WITH_DEV_AUTOMATION_TESTS && WITH_EDITOR
 #include "Misc/AutomationTest.h"
+#include "Misc/ScopeExit.h"
+#include "Animation/Project_JLocomotionProfile.h"
+#include "Movement/Project_JMoverPawn.h"
+#include "Movement/Project_JMoverInputs.h"
+#include "DefaultMovementSet/CharacterMoverSimulationTypes.h"
+#include "Project_JGreatswordCharacter.h"
+#include "Engine/World.h"
+#include "GameFramework/PlayerController.h"
+#include <limits>
 #include "Animation/Project_JPlayerAnimInstance.h"
 #include "Movement/Project_JMoverLifecycle.h"
 #include "Movement/Project_JGroundMovement.h"
@@ -141,5 +150,69 @@ bool FProjectJPlayerLocomotionAirDirection::RunTest(const FString&)
 	for (FVector Input:{FVector(1,0,0),FVector(1,1,0),FVector(1,-1,0)}) TestTrue(TEXT("Strafe forward and forward diagonals allow sprint"),UProject_JGroundMovementLibrary::SupportsStrafeSprint(Input,FVector::ForwardVector));
 	for (FVector Input:{FVector(0,1,0),FVector(0,-1,0),FVector(-1,0,0),FVector(-1,1,0),FVector(-1,-1,0),FVector::ZeroVector}) TestFalse(TEXT("Strafe lateral, backward and idle input reject sprint"),UProject_JGroundMovementLibrary::SupportsStrafeSprint(Input,FVector::ForwardVector));
 	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJStrafeDirectionPolicyTest,"ProjectJ.PlayerLocomotion.StrafeDirectionPolicy",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FProjectJStrafeDirectionPolicyTest::RunTest(const FString&)
+{
+ using D=EProject_JPlayerMovementDirection;
+ const FProject_JStrafeDirectionPolicy Policy;
+ TestTrue(TEXT("Default sectors are valid authored data"),Policy.IsValid());
+ const TPair<float,D> Directions[]={{0.f,D::Forward},{45.f,D::Forward},{-45.f,D::Forward},{90.f,D::RightLeftFootForward},
+  {-90.f,D::LeftLeftFootForward},{135.f,D::Backward},{-135.f,D::Backward},{180.f,D::Backward},{-180.f,D::Backward}};
+ for(const auto& [Angle,Expected]:Directions)
+  for(int32 Previous=0;Previous<6;++Previous)
+   for(const float Jitter:{-.1f,0.f,.1f})
+   {
+    const auto Resolved=Policy.Resolve(Angle+Jitter,static_cast<D>(Previous));
+    const bool bSameFamily=Resolved==Expected || (Expected==D::LeftLeftFootForward && Resolved==D::LeftRightFootForward) ||
+     (Expected==D::RightLeftFootForward && Resolved==D::RightRightFootForward);
+    TestTrue(TEXT("Canonical camera-relative inputs have one family regardless of edge order or small angular noise"),bSameFamily);
+   }
+ TestEqual(TEXT("Analog motion retains Forward within its boundary band"),Policy.Resolve(70.f,D::Forward),D::Forward);
+ TestEqual(TEXT("The same boundary retains Right when approached from the side"),Policy.Resolve(70.f,D::RightLeftFootForward),D::RightLeftFootForward);
+ TestEqual(TEXT("Analog motion retains Backward within its boundary band"),Policy.Resolve(110.f,D::Backward),D::Backward);
+ TestEqual(TEXT("Leaving the band admits a new sector"),Policy.Resolve(100.f,D::Backward),D::RightLeftFootForward);
+ auto* Profile=NewObject<UProject_JLocomotionProfile>();
+ TestTrue(TEXT("Profile movement contract accepts its default direction policy"),Profile->GetMovementValidationFailure().IsNone());
+ Profile->StrafeDirectionPolicy.HysteresisAngle=30.f;
+ TestEqual(TEXT("Overlapping direction bands are rejected by profile validation"),Profile->GetMovementValidationFailure(),FName(TEXT("StrafeDirectionPolicy")));
+ Profile->StrafeDirectionPolicy=Policy;Profile->StrafeDirectionPolicy.BackwardStartAngle=std::numeric_limits<float>::quiet_NaN();
+ TestEqual(TEXT("Nonfinite direction authoring is rejected"),Profile->GetMovementValidationFailure(),FName(TEXT("StrafeDirectionPolicy")));
+ return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJStrafeInputFamilyTest,"ProjectJ.PlayerLocomotion.StrafeInputFamily",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FProjectJStrafeInputFamilyTest::RunTest(const FString&)
+{
+ using D=EProject_JPlayerMovementDirection;
+ auto* World=UWorld::CreateWorld(EWorldType::Game,false);
+ ON_SCOPE_EXIT {World->DestroyWorld(false);};
+ auto* Pawn=World->SpawnActor<AProject_JMoverPawn>();
+ auto* Controller=World->SpawnActor<APlayerController>();Controller->Possess(Pawn);Pawn->SetStrafe(true);
+ for(const float View:{-160.f,0.f,75.f})
+ {
+  Controller->SetControlRotation(FRotator(0.f,View,0.f));
+  for(const FVector2D Lead:{FVector2D(0,1),FVector2D(0,-1),FVector2D(1,0),FVector2D(-1,0),FVector2D::ZeroVector})
+   for(const float Side:{-1.f,1.f})
+   {
+    FMoverInputCmdContext Before;Pawn->SetMoveIntent(Lead);Pawn->ProduceInput_Implementation(0,Before);
+    FMoverInputCmdContext Final;Pawn->SetMoveIntent(FVector2D(Side,-1));Pawn->ProduceInput_Implementation(0,Final);
+    const auto* Intent=Final.InputCollection.FindDataByType<FProject_JMoverInputs>();
+    const auto* Input=Final.InputCollection.FindDataByType<FCharacterDefaultInputs>();
+    if(!TestNotNull(TEXT("Production input publishes movement intent"),Intent) || !TestNotNull(TEXT("Production input publishes facing"),Input)) return false;
+    TestEqual(TEXT("Rear diagonal input reaches the authored Backward chooser family for either key edge order"),Intent->MovementDirection,uint8(D::Backward));
+    TestTrue(TEXT("The existing curve keeps the front of the body in the camera-facing hemisphere"),FMath::Abs(Intent->RotationOffset)<90.f);
+    TestTrue(TEXT("Strafe orientation still comes from the camera"),FMath::Abs(FMath::FindDeltaAngleDegrees(Input->OrientationIntent.Rotation().Yaw,View))<.001f);
+   }
+ }
+ auto* Player=World->SpawnActor<AProject_JGreatswordCharacter>();
+ auto* Profile=NewObject<UProject_JLocomotionProfile>(Player);
+ FindFProperty<FObjectPropertyBase>(Player->GetClass(),TEXT("CharacterAnimProfile"))->SetObjectPropertyValue_InContainer(Player,nullptr);
+ FindFProperty<FObjectPropertyBase>(Player->GetClass(),TEXT("LocomotionProfile"))->SetObjectPropertyValue_InContainer(Player,Profile);
+ Profile->StrafeDirectionPolicy.ForwardHalfAngle=30.f;Profile->StrafeDirectionPolicy.HysteresisAngle=5.f;
+ TestTrue(TEXT("The effective locomotion profile owns player direction authoring"),&Player->GetStrafeDirectionPolicy()==&Profile->StrafeDirectionPolicy);
+ TestEqual(TEXT("Authored sector edits reach input classification without changing keys or clips"),Player->GetStrafeDirectionPolicy().Resolve(45.f,D::Forward),D::RightLeftFootForward);
+ return true;
 }
 #endif

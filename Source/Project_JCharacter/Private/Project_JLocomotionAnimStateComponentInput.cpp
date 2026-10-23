@@ -23,15 +23,6 @@ void UProject_JLocomotionAnimStateComponent::SetMoveInput(const FVector2D& InMov
 void UProject_JLocomotionAnimStateComponent::ClearMoveInput()
 { ClearLocalMoveInputState(); }
 
-void UProject_JLocomotionAnimStateComponent::BeginSemanticMoveIntentUpdate()
-{ bSemanticMoveIntentUpdatePending=true; }
-
-void UProject_JLocomotionAnimStateComponent::SetSemanticMoveIntentInput(const FVector2D& InMoveIntent, const bool bHasActiveIntent)
-{
- bSemanticMoveIntentUpdatePending=false;
- bHasSemanticMoveIntentInput=bHasActiveIntent;
- CachedSemanticMoveIntentInput=bHasActiveIntent ? InMoveIntent.GetClampedToMaxSize(1.f):FVector2D::ZeroVector;
-}
 
 void UProject_JLocomotionAnimStateComponent::HandleSprintStarted()
 { bSprintInputHeld=bWantsSprint=true; }

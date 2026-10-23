@@ -82,6 +82,19 @@ void UProject_JRetargetAnimInstance::UpdateWeaponTarget(USceneComponent* InWeapo
 	}
 }
 
+void UProject_JRetargetAnimInstance::NativeUninitializeAnimation()
+{
+	// An uninitialized instance may stay alive until GC or be reused. End its
+	// event subscription now, rather than waiting for BeginDestroy/reinitialize.
+	if (CachedPresentationComp.IsValid()) CachedPresentationComp->UnregisterRetargetAnimInstance(this);
+	CachedPresentationComp.Reset();CachedWeaponComponent.Reset();
+	bHasValidRightSnapshot = bHasValidLeftSnapshot = bHasPrimaryHandSpaceGripSnapshot = false;
+	bRightContactTargetValid = bLeftContactTargetValid = bUsePrimaryHandSpaceGrip = false;
+	RightGripAlpha = LeftGripAlpha = GripIKAlpha = 0.f;
+	GripTargetSnapshotFrame = GripPoseEvaluationFrame = MAX_uint64;
+	Super::NativeUninitializeAnimation();
+}
+
 void UProject_JRetargetAnimInstance::SetCombatMode(bool bInCombatMode)
 {
 	bIsCombatMode = bInCombatMode;
@@ -173,29 +186,34 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	}
 
 	APawn* OwnerPawn = TryGetPawnOwner();
+	if (CachedPresentationComp.IsValid() && CachedPresentationComp->GetOwner() != OwnerPawn)
+	{
+		CachedPresentationComp->UnregisterRetargetAnimInstance(this);
+		CachedPresentationComp.Reset();
+		CachedWeaponComponent.Reset();
+	}
 	if (!OwnerPawn)
 	{
 		return;
 	}
 
-	// 1. Synchronize animation quality tier from Leader Mesh policy
-	if (const APawn* OwnerChar = Cast<APawn>(OwnerPawn))
+	// Capture one complete policy each update. A missing/replaced source returns
+	// to the standalone contract instead of retaining another source's Hidden tier.
+	FProject_JAnimOptimizationPolicy Policy;
+	if (const USkeletalMeshComponent* LeaderMesh = Project_J::Movement::FindPoseSource(OwnerPawn))
 	{
-		if (const USkeletalMeshComponent* LeaderMesh = Project_J::Movement::FindPoseSource(OwnerChar))
+		if (const UProject_JCharacterAnimInstance* LeaderAnim = Cast<UProject_JCharacterAnimInstance>(LeaderMesh->GetAnimInstance()))
 		{
-			if (const UProject_JCharacterAnimInstance* LeaderAnim = Cast<UProject_JCharacterAnimInstance>(LeaderMesh->GetAnimInstance()))
-			{
-				const FProject_JAnimOptimizationPolicy& Policy = LeaderAnim->GetCurrentOptimizationPolicy();
-				CurrentQualityTier = Policy.Tier;
-				bEnableFollowerRetarget = Policy.bEnableFollowerRetarget;
-				bTierAllowsHandIK = Policy.bEnableHandIK;
-				bTierAllowsFootIK = Policy.bEnableFootIK;
-				bTierAllowsRetargetIK = Policy.bEnableRetargetIK;
-				RetargetIKLODThreshold = Policy.RetargetIKLODThreshold;
-				RetargetLODThreshold = Policy.RetargetLODThreshold;
-			}
+			Policy = LeaderAnim->GetCurrentOptimizationPolicy();
 		}
 	}
+	CurrentQualityTier = Policy.Tier;
+	bEnableFollowerRetarget = Policy.bEnableFollowerRetarget;
+	bTierAllowsHandIK = Policy.bEnableHandIK;
+	bTierAllowsFootIK = Policy.bEnableFootIK;
+	bTierAllowsRetargetIK = Policy.bEnableRetargetIK;
+	RetargetIKLODThreshold = Policy.RetargetIKLODThreshold;
+	RetargetLODThreshold = Policy.RetargetLODThreshold;
 
 	// Early out if tier forbids Follower Retarget / Hand IK or if character is off-screen/hidden
 	if (!bEnableFollowerRetarget || !bTierAllowsHandIK || CurrentQualityTier == EProject_JAnimBudgetTier::Hidden)
@@ -254,6 +272,7 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	if (!CachedPresentationComp.IsValid())
 	{
 		CachedPresentationComp = OwnerPawn->FindComponentByClass<UProject_JWeaponPresentationComponent>();
+		if (CachedPresentationComp.IsValid()) CachedPresentationComp->RegisterRetargetAnimInstance(this);
 	}
 
 	bool bResolvedFromPresentation = false;

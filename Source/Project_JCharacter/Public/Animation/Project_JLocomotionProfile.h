@@ -5,6 +5,24 @@
 #include "Project_JLocomotionAnimTypes.h"
 #include "Project_JLocomotionProfile.generated.h"
 class UBlendProfile;
+enum class EProject_JPlayerMovementDirection : uint8;
+
+/** Camera-relative sectors for locomotion family selection, independent of keys
+ * and animation names. Hysteresis stabilizes analog input near sector borders. */
+USTRUCT(BlueprintType)
+struct PROJECT_JCHARACTER_API FProject_JStrafeDirectionPolicy
+{
+ GENERATED_BODY()
+ // Midpoints between the forward diagonals / side and side / rear diagonals.
+ UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Strafe", meta=(ClampMin="0.0",ClampMax="180.0",Units="deg"))
+ float ForwardHalfAngle=67.5f;
+ UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Strafe", meta=(ClampMin="0.0",ClampMax="180.0",Units="deg"))
+ float BackwardStartAngle=112.5f;
+ UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Strafe", meta=(ClampMin="0.0",Units="deg"))
+ float HysteresisAngle=10.f;
+ bool IsValid() const;
+ EProject_JPlayerMovementDirection Resolve(float SignedAngle,EProject_JPlayerMovementDirection Previous) const;
+};
 USTRUCT(BlueprintType)
 struct PROJECT_JCHARACTER_API FProject_JStateControllerChooserOutput
 {
@@ -61,6 +79,8 @@ class PROJECT_JCHARACTER_API UProject_JLocomotionProfile : public UDataAsset
 {
  GENERATED_BODY()
 public:
+ UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Locomotion|Player|Strafe")
+ FProject_JStrafeDirectionPolicy StrafeDirectionPolicy;
  FName GetMovementValidationFailure() const;
  FProject_JAnimationBudgetSettings GetResolvedAnimationBudgetSettings() const { return AnimationBudget; }
 #if WITH_EDITOR

@@ -35,11 +35,10 @@ void FProject_JCharacterAnimInstanceProxy::PreUpdate(UAnimInstance* Instance,flo
 }
 void FProject_JCharacterAnimInstanceProxy::UpdateAnimationNode_WithRoot(const FAnimationUpdateContext& Context,FAnimNode_Base* Root,FName Layer)
 {
- // Linked layers retain the outer traversal's snapshot. NativeUpdate may have
- // published after PreUpdate, so consume its final publication at this boundary.
+ // NativeThreadSafeUpdate already consumed the final GT publication before
+ // state decisions. Linked layers retain that same snapshot during traversal.
  if(bUpdatingGraph) { FAnimInstanceProxy::UpdateAnimationNode_WithRoot(Context,Root,Layer); return; }
  TGuardValue<bool> Scope(bUpdatingGraph,true);
- ConsumeQueuedGameThreadData();
  ThreadSafeData.DeltaTime=Context.GetDeltaTime();
  FAnimInstanceProxy::UpdateAnimationNode_WithRoot(Context,Root,Layer);
  // Observation metadata is cheap and belongs to this completed traversal.

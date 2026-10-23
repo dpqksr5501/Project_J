@@ -87,6 +87,7 @@ bool UProject_JLocomotionAnimStateComponent::HandleConfirmedRemoteJump(
 
 void UProject_JLocomotionAnimStateComponent::HandleReplicatedFallOffStarted()
 {
+	if (bMovementTagOwnershipEnding || IsBeingDestroyed()) return;
 	AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
 	if (!PlayerOwner || ShouldUseLocalInputState())
 	{
@@ -117,6 +118,7 @@ void UProject_JLocomotionAnimStateComponent::HandleReplicatedLandingStarted(
 	bool bWasSprinting,
 	bool bWasHeavy)
 {
+	if (bMovementTagOwnershipEnding || IsBeingDestroyed()) return;
 	if (ShouldUseLocalInputState() || Sequence <= LastConfirmedRemoteLandingSequence)
 	{
 		return;
@@ -144,6 +146,7 @@ void UProject_JLocomotionAnimStateComponent::HandleReplicatedLandingStarted(
 
 void UProject_JLocomotionAnimStateComponent::HandleReplicatedLandingCancelled(int32 Sequence)
 {
+	if (bMovementTagOwnershipEnding || IsBeingDestroyed()) return;
 	if (ShouldUseLocalInputState() ||
 		Sequence < LastConfirmedRemoteLandingSequence ||
 		!IsLandingStateActive())
@@ -159,6 +162,7 @@ void UProject_JLocomotionAnimStateComponent::HandleReplicatedLandingCancelled(in
 
 void UProject_JLocomotionAnimStateComponent::HandleLanded(const FHitResult&)
 {
+	if (bMovementTagOwnershipEnding || IsBeingDestroyed()) return;
 	AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
 	if (!PlayerOwner)
 	{
@@ -220,6 +224,7 @@ void UProject_JLocomotionAnimStateComponent::KeepJumpStartAirborneAfterIgnoredLa
 
 void UProject_JLocomotionAnimStateComponent::FinishLanding(bool bForceFinish)
 {
+	if (bMovementTagOwnershipEnding || IsBeingDestroyed()) return;
 	if (!IsLandingStateActive())
 	{
 		return;
@@ -248,6 +253,7 @@ void UProject_JLocomotionAnimStateComponent::FinishLanding(bool bForceFinish)
 
 bool UProject_JLocomotionAnimStateComponent::CanStartJumpForAnimation() const
 {
+	if (bMovementTagOwnershipEnding || IsBeingDestroyed()) return false;
 	const AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
 	if (PlayerOwner && !PlayerOwner->IsJumpLocomotionAllowed())
 	{

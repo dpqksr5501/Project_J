@@ -40,13 +40,43 @@ bool FProjectJPlayerLocomotionSnapshotBoundaryTest::RunTest(const FString&)
     Data.Ground.RunSpeed=500.f;Data.Ground.SprintSpeed=750.f;
     Proxy.QueueGameThreadData(Data);
     TestEqual(TEXT("GT publication cannot mutate the current traversal"), Proxy.GetThreadSafeData().Movement.GroundSpeed, 0.f);
+    Proxy.PreUpdate(Anim.Get(), 1.f/60.f);
+    TestEqual(TEXT("Proxy PreUpdate can precede the producer's final publication"), Proxy.GetThreadSafeData().Movement.GroundSpeed, 100.f);
     Data.Movement.GroundSpeed = 585.f;
     Data.Ground.RunSpeed=600.f;Data.Ground.bScalePlayRateWithSpeed=true;
+    for (float Time : {0.f,.4f,.5f,1.5f})
+    {
+        auto& Sample=Data.Movement.Trajectory.Samples.AddDefaulted_GetRef();
+        Sample.TimeInSeconds=Time;Sample.Position=FVector(-500.f*Time,0.,0.);Sample.Facing=FQuat::Identity;
+    }
     Proxy.QueueGameThreadData(Data);
-    Proxy.ConsumeQueuedGameThreadData();
-    TestEqual(TEXT("Traversal consumes the final completed publication"), Proxy.GetThreadSafeData().Movement.GroundSpeed, 585.f);
+    Anim->NativeThreadSafeUpdateAnimation(1.f/60.f);
+    TestEqual(TEXT("Native decisions consume the final publication before graph traversal"), Proxy.GetThreadSafeData().Movement.GroundSpeed, 585.f);
+    TestEqual(TEXT("Immutable graph pins use that same publication"), Anim->GraphCombatSpeed, 585.f);
+    Anim->PlayerVelocity=FVector(500.,0.,0.);
+    Anim->UpdateNativeTrajectory();
+    TestEqual(TEXT("A keyboard reversal is visible before state entry selects its clip"), FMath::Abs(Anim->PlayerTrajectoryTurnAngle), 180.);
     TestEqual(TEXT("Speed tuning uses the same completed publication as movement"),Proxy.GetThreadSafeData().Ground.RunSpeed,600.f);
     TestTrue(TEXT("Cadence policy is published with its speed tuning"),Proxy.GetThreadSafeData().Ground.bScalePlayRateWithSpeed);
+    using Direction=EProject_JPlayerMovementDirection;
+    for (Direction Value : {Direction::Forward,Direction::Backward,Direction::LeftLeftFootForward,Direction::LeftRightFootForward,Direction::RightLeftFootForward,Direction::RightRightFootForward})
+    for (double Side : {-1.,1.})
+    {
+        FProject_JAnimThreadSafeData FacingData;
+        for (float Time : {0.f,.25f,.75f,1.5f})
+        {
+            auto& Sample=FacingData.Movement.Trajectory.Samples.AddDefaulted_GetRef();
+            Sample.TimeInSeconds=Time;Sample.Position=FVector(500.f*Time,0.,0.);
+            Sample.Facing=FRotator(0.,Side*(Time==0.f?0.:Time==.25f?135.:225.),0.).Quaternion();
+        }
+        Proxy.QueueGameThreadData(FacingData);Anim->NativeThreadSafeUpdateAnimation(1.f/60.f);
+        Anim->PlayerVelocity=FVector(500.,0.,0.);Anim->PlayerFutureFacingDelta=0.;
+        Anim->PlayerMovementDirection=Anim->PlayerMovementDirectionRecent=Value;
+        Anim->UpdateNativeTrajectory();
+        TestTrue(TEXT("The accumulated facing path retains turns beyond a half rotation"),FMath::IsNearlyEqual(Anim->PlayerFutureFacingDelta,Side*225.,.001));
+        TestEqual(TEXT("A facing discontinuity cannot fabricate a movement direction"),Anim->PlayerMovementDirection,Value);
+        TestEqual(TEXT("Recent direction remains owned by the state history, on either side of the seam"),Anim->PlayerMovementDirectionRecent,Value);
+    }
     Anim->PlayerMovementState=EProject_JPlayerMovementState::Moving;Anim->PlayerStance=EProject_JPlayerStance::Stand;
     Anim->PlayerGait=EProject_JLocomotionGaitIntent::Sprint;Anim->PlayerTrajectoryTurnAngle=60.;
     Data.Ground.SprintSpeed=900.f;Proxy.QueueGameThreadData(Data);Proxy.ConsumeQueuedGameThreadData();

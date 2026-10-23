@@ -8,6 +8,7 @@ class UNavMoverComponent;
 class UCapsuleComponent;
 class USkeletalMeshComponent;
 class UAnimMontage;
+struct FProject_JStrafeDirectionPolicy;
 /** Physical avatar foundation. Mover is the sole transform and prediction owner. */
 UCLASS(Blueprintable)
 class PROJECT_JCHARACTER_API AProject_JMoverPawn : public APawn, public IMoverInputProducerInterface, public IProject_JMoverPolicySource
@@ -25,6 +26,7 @@ public:
  virtual void ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdContext& InputCmd) override;
  virtual FProject_JMoverPolicy ResolveMoverPolicy(const FProject_JMoverInputs& Requested,const FCharacterDefaultInputs* Input=nullptr) const override;
  virtual float GetMoverMaxSpeed(bool bAcceptedSprint) const override;
+ virtual const FProject_JStrafeDirectionPolicy& GetStrafeDirectionPolicy() const;
  void FaceGameplayDirection(FRotator Facing);
  UFUNCTION(BlueprintPure, Category="Movement") UCharacterMoverComponent* GetMover() const { return Mover; }
  UFUNCTION(BlueprintPure, Category="Animation") USkeletalMeshComponent* GetMesh() const { return Mesh; }

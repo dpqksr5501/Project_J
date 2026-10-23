@@ -41,29 +41,38 @@ int32 UProject_JPlayerAnimInstance::GetTrajectoryPredictionRate() const
 
 void UProject_JPlayerAnimInstance::NativeInitializeAnimation()
 {
- bNeedsLocomotionHistorySeed = true;
+ BindLocomotionSource(nullptr);
  // A retained anim instance must wait for this owner's first completed source
  // frame. Proxy reinitialization alone does not clear these graph admission flags.
  PlayerHasOwningActor = PlayerHasLocomotionSource = PlayerUseThreadSafeUpdateAnimation = false;
- if(auto* Previous=BasedMovementSource.Get()) Previous->OnBasedMovementApplied.RemoveAll(this);
- BasedMovementSource.Reset(); PendingBasedMovementDelta=FTransform::Identity;
-	ActiveAirEpisode=0; bAirEntryPending=bAirLoop=false;
-	AirSelectedAsset=nullptr; LastAirReselection=-1.; AirReselectionCount=AirTransitionEntryCount=AirLoopEntryCount=0;
-	bWasPhysicallyInAir = false;
-	LastLandVelocity = FVector::ZeroVector;
-	MoverPredictor = nullptr;
-	MoverTrajectory.Samples.Reset();
-	PredictorYaw = 0.f;
 	Super::NativeInitializeAnimation();
 }
 
 void UProject_JPlayerAnimInstance::NativeUninitializeAnimation()
 {
- bNeedsLocomotionHistorySeed = true;
+ BindLocomotionSource(nullptr);
  PlayerHasOwningActor = PlayerHasLocomotionSource = PlayerUseThreadSafeUpdateAnimation = false;
- if(auto* Previous=BasedMovementSource.Get()) Previous->OnBasedMovementApplied.RemoveAll(this);
- BasedMovementSource.Reset(); PendingBasedMovementDelta=FTransform::Identity;
  Super::NativeUninitializeAnimation();
+}
+
+void UProject_JPlayerAnimInstance::BindLocomotionSource(UMoverComponent* Source)
+{
+ check(IsInGameThread());
+ if (Source && LocomotionSource.Get()==Source) return;
+ if (auto* Previous=LocomotionSource.Get()) Previous->OnBasedMovementApplied.RemoveAll(this);
+ LocomotionSource=Source;
+ // These values belong to one physical source, not to the retained AnimInstance.
+ // Prediction, direction derivatives and air episode identity must change owners
+ // together with the based-movement subscription.
+ PendingBasedMovementDelta=FTransform::Identity;
+ MoverPredictor=nullptr;MoverTrajectory.Samples.Reset();PredictorYaw=0.f;
+ bNeedsLocomotionHistorySeed=true;PlayerHasLocomotionSource=false;
+ ActiveAirEpisode=0;bAirEntryPending=bAirLoop=false;AirSelectedAsset=nullptr;
+ CommittedAirQuery={};AirEntryStartTime=0.f;LastAirReselection=-1.;LastAirBlendTime=.15f;
+ AirReselectionCount=AirTransitionEntryCount=AirLoopEntryCount=0;
+ LastAirReselectionFromTime=LastAirReselectionToTime=0.f;
+ bWasPhysicallyInAir=false;LastLandVelocity=FVector::ZeroVector;
+ if (Source) Source->OnBasedMovementApplied.AddUniqueDynamic(this,&ThisClass::AccumulateBasedMovement);
 }
 
 void UProject_JPlayerAnimInstance::AccumulateBasedMovement(const FTransform& Delta,const FMoverTimeStep&)
@@ -80,6 +89,7 @@ void UProject_JPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	auto* Mover = Project_J::Movement::FindMover(Pawn);
 	if (!Mover)
 	{
+		BindLocomotionSource(nullptr);
 		PlayerHasOwningActor = TryGetPawnOwner() != nullptr;
 		PlayerUseThreadSafeUpdateAnimation = TryGetPawnOwner() != nullptr;
 		PlayerHasLocomotionSource = false;
@@ -88,17 +98,12 @@ void UProject_JPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	}
 	if (!Mover->HasBeenInitialized() || !Mover->HasBegunPlay())
 	{
-		PlayerHasLocomotionSource = false;
+		BindLocomotionSource(nullptr);
 		return;
 	}
 	UAnimInstance::NativeUpdateAnimation(DeltaSeconds);
 	UpdateNativeConsoleVariables();
- if(BasedMovementSource!=Mover)
- {
-  if(auto* Previous=BasedMovementSource.Get()) Previous->OnBasedMovementApplied.RemoveAll(this);
-  BasedMovementSource=Mover; PendingBasedMovementDelta=FTransform::Identity;
-  Mover->OnBasedMovementApplied.AddUniqueDynamic(this,&ThisClass::AccumulateBasedMovement);
- }
+ BindLocomotionSource(Mover);
 	if (NeedsOwnerReferenceRefresh()) CacheOwnerReferences();
 	if (IsPrimaryMeshAnimInstance()) ApplyOptimizationPolicy(BuildOptimizationPolicy());
 	FProject_JAnimThreadSafeData Data;

@@ -141,7 +141,24 @@ bool FProjectJAudit3MovementOwnerTest::RunTest(const FString&) {
         TestEqual(TEXT("Fall-off owns one local tag contribution"),ASC->GetTagCount(Tag),1);
         if(Mode==0){ASC->InitAbilityActorInfo(Player,Next);State->AddOwnedInAirGameplayTag();TestEqual(TEXT("Retained old owner cannot maintain a tag on reassigned ASC"),ASC->GetTagCount(Tag),0);}
         if(Mode==1){State->HandleReplicatedLandingStarted(1,0.f,100.f,false,false,false);State->FinishLanding(true);TestEqual(TEXT("Remote landing releases its fall-off tag demand"),ASC->GetTagCount(Tag),0);}
+        if(Mode==2){
+            State->BeginJumpStartState();State->ScheduleJumpStartTimeout(1.f);
+            bool RetiredCallback=false;
+            const auto Callback=ASC->RegisterGameplayTagEvent(Tag,EGameplayTagEventType::NewOrRemoved).AddLambda([&](FGameplayTag,int32 Count){
+                if(Count==0){RetiredCallback=true;State->HandleReplicatedFallOffStarted();State->HandleReplicatedLandingStarted(99,0.f,100.f,false,false,false);State->FinishLanding();}
+            });
+            State->EndPlay(EEndPlayReason::RemovedFromWorld);
+            ASC->RegisterGameplayTagEvent(Tag,EGameplayTagEventType::NewOrRemoved).Remove(Callback);
+            TestTrue(TEXT("The real tag release reenters through presentation callbacks"),RetiredCallback);
+            TestFalse(TEXT("EndPlay cancels jump work on a retained component"),W->GetTimerManager().TimerExists(State->JumpTimerHandle));
+            TestFalse(TEXT("Retirement callbacks cannot schedule replacement fall-off or landing work"),W->GetTimerManager().TimerExists(State->FallOffStartTimerHandle) || W->GetTimerManager().TimerExists(State->LandingTimerHandle) || W->GetTimerManager().TimerExists(State->LandingExitTimerHandle));
+            State->BeginPlay();
+            TestFalse(TEXT("A new BeginPlay cannot inherit a retired jump/landing episode"),State->bIsJumping || State->bIsLanding || State->bIsFallOffStart);
+        }
         State->DestroyComponent();TestEqual(TEXT("Retirement releases its contribution"),ASC->GetTagCount(Tag),0);
+        TestFalse(TEXT("Retirement cancels the component's fall-off callback before GC"),W->GetTimerManager().TimerExists(State->FallOffStartTimerHandle));
+        TestFalse(TEXT("Retirement cancels its jump callback"),W->GetTimerManager().TimerExists(State->JumpTimerHandle));
+        TestFalse(TEXT("Retirement cancels both landing callbacks"),W->GetTimerManager().TimerExists(State->LandingTimerHandle) || W->GetTimerManager().TimerExists(State->LandingExitTimerHandle));
         ASC->AddLooseGameplayTag(Tag);++GFrameCounter;W->GetTimerManager().Tick(6.f);
         TestEqual(TEXT("Retired timers cannot modify a subsequent owner's contribution"),ASC->GetTagCount(Tag),1);ASC->RemoveLooseGameplayTag(Tag);
     }return true;

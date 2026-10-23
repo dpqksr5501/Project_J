@@ -221,3 +221,30 @@ Run 500/Sprint 750 튜닝 이후 속도 관련 에셋 값의 갱신 누락 여�
 `ABP_Player_Master`의 설명 상자를 실제 상태 결정·포즈 선택·레이어 합성·루트/보폭/발 보정 순서에 맞춰 한글로 정리했다. 원본의 MM 대체 경로·슬라이드 상태·빈 사전 보정 영역·예전 슬롯 위치 설명 4개를 제거하고, 남은 설명 상자 21개와 Pose History/Aim Offset 노드 말풍선 2개를 갱신했다. 포즈 이력 상자는 현재 전신 슬롯·Pose History 위치에 맞춰 축소했다. 엔진이 생성하는 노드 이름·함수/상태 식별자와 실험 노드 진단은 변경하지 않았다.
 
 주석 제외 75개 그래프의 native 계약과 실행 노드 373개의 직렬화된 설정·위치·핀 연결이 정리 전과 같음을 확인했다. 비교에서는 주석/말풍선 표시, 렌더된 노드 크기와 같은 편집기 정보만 제외했고, 저장 시 생성되는 FText localization key는 실제 문자열이 같은지 정규화해 확인했다. ABP는 `BS_UP_TO_DATE`로 컴파일·저장됐다. 이번 작업은 설명/배치 편집이며 C++ 빌드나 이동 로직 변경·추가 전체 회귀는 수행하지 않았다. 에디터 화면에서 한글 표시도 확인했다. 로컬 원자료와 원본 복구 사본은 `Saved/Validation/PlayerMasterComments_20261022`에 있다.
+
+### 고정 카메라 Strafe 키보드 반전 — 2026-10-23
+
+현재 방향과 예측 궤적의 게시 프레임이 달라 Run 전진↔후진에서 Pivot 판정 전에 비 Pivot Box 전환이 선택됐다. 공통 `NativeThreadSafeUpdateAnimation` 시작에서 최종 GT snapshot을 소비하도록 옮겼다. 대각선의 늦은 키 해제에서는 누적 facing이 각도 경계를 넘을 때 궤적 계산이 현재/최근 방향을 Backward로 덮어쓰는 두 번째 writer도 재현했다. 이 쓰기를 제거해 방향 이력은 기존 `UpdateNativeStates`가 소유한다. 180도를 넘는 누적 회전 정보와 불연속 전환 조건은 유지한다.
+
+키/클립별 런타임 예외, 입력을 모으는 대기 버퍼, 새 전환 타이머·강제 reset은 추가하지 않았다. 기존 방향 분류와 이력 유지, Chooser 후보·포즈 검색·블렌드·발 보정과 생산 에셋은 유지했다. 별도 후보 필터나 대각선 전용 상태가 필요하지 않았다. 동일 snapshot 소비·공통 핀·정반대 궤적 판정, 양쪽 각도 경계에서 여섯 방향의 이력 보존을 기존 `SnapshotPublicationAndReinitialize` 회귀에 통합했다.
+
+최종 direct Editor UBT는 5 actions/13.34초로 성공했고 새 프로세스 native **100개**가 실패·경고·미실행 0개로 통과했다. `Validate-PlayerLocomotionStrafePivot.py`는 평지의 고정 카메라에서 Walk/Run 8방향 동시 반전 16조건과 Run 대각선의 축별 16.7/50ms 시차·100ms 늦은 해제·50ms 전체 해제 20조건, 총 **36조건·19,423표본**을 통과했다. 앞뒤 반전의 올바른 클립 계열, 실제 BlendStack 평가, 최종 이동 방향·속도 회복, 방향 복구, 보정 유지와 source/몸체·의상 10개 메시의 무릎 포즈 진행을 검사했다. 안정 구간 facing 오차는 최대 0.83도 미만, 관측된 동일 무릎 포즈 유지 최장은 0.034초 미만이었다. 자동 입력과 평가 포즈의 근거이며 모든 키 시차·지형·프레임률 및 손 조작 외형의 전수 승인은 아니다.
+
+초기 스냅샷 수정만 적용한 36조건 검사에서 늦은 해제 1조건의 Pivot 분류 실패를 확인한 뒤 두 번째 writer를 제거했다. 검사 초기화 API 조회·입력 준비 시간 오류와 추가 테스트의 protected proxy 접근 컴파일 실패는 각각 fixture 준비 및 기존 테스트 경계 통합으로 수정했으며, 실패 기록도 보존한다. 최종 성공과 이 시행착오를 합산하지 않는다. 로컬 근거는 `Saved/Validation/StrafePivot_20261023`, native는 `Saved/Validation/PlayerLocomotion/StrafePivotFinal_20261023`, 최종 입력은 `StrafePivot_20261023_022618_301841.json`이다.
+
+같은 최종 바이너리의 실제 PIE에서 기존 지상 2,376표본, 공중/착지 8조건·2,392표본, 완만한 루프 회전 5조건·1,490표본, 전신 몽타주 6개·281포즈 표본도 통과했다. 순차 검사 러너가 루프의 중간 체크포인트를 완료로 오인한 기록과 전투 전환 몽타주가 남은 상태의 준비 실패는 보존하고, 남은 검사를 준비 상태의 새 세션에서 완료했다. 각 최종 성공 파일은 `Ground_20261023_023144_476794.json`, `AirLanding_20261023_023224_212011.json`, `LoopTurning_20261023_023356_439056.json`, `MontagePose_20261023_023622_959962.json`이다. 생산 Content/Config 변경은 없고 임시 검증 레벨은 저장하지 않았으며 에디터를 정상 종료했다. Game/Cook/Shipping과 새 군중 성능·원격 역할별 플레이는 이번에 실행하지 않았다.
+
+### 로코모션 전환·갱신 잔여 정리 — 2026-10-23
+
+상태 진입·전환 조건, 궤적/방향 이력, AO·lean, 공중 재선택과 물리 점프/착지·원격 이벤트의 연결을 점검했다. C++·Config·검증 스크립트와 실제 BP/ABP 38개의 노드·property-access 바인딩, 중첩 Chooser 57개의 열을 확인해 미소비 transient 7개를 제거했다. 대상은 `PlayerTrajectoryPastVelocity`, `PlayerTrajectoryPreviousFutureVelocity`, `PlayerTrajectoryPastAngularVelocity`, `PlayerPreviousAO`, `PlayerPreviousBlendStackInputs`, `PlayerAccelerationAmount`, `PlayerHasAcceleration`이다. 소비 없는 과거 속도 샘플링·상태 복사와 항상 0인 legacy 최대 가속도로 계산하던 정규화 값을 함께 제거했다. 실제 circling 판정의 과거 각속도 지역 값과 AO 경계 판정의 직전 AO 지역 값은 유지한다. 마지막 필드를 진단 출력하던 지상·공중/착지·질주 점프 fixture 3개도 수정했다. Pivot·notify의 gait 판정은 숫자/실수 변환을 거치지 않고 기존 enum을 직접 비교한다.
+
+검토 후 유지한 시간·각도 기준은 원본 상태 전환의 블렌드 보호·이력 안정화와 기존 프로필 튜닝이다. 공중 후보 재선택의 cooldown/진행률·잔여 시간 기준은 같은 물리 에피소드의 playhead 연속성을 보호한다. 점프/착지 컴포넌트의 timeout은 게임플레이 태그·Foley·순서 있는 원격 이벤트의 수명을 관리하며 시각 Land 전환과 분리돼 있다. 이를 새 timer나 강제 상태 reset으로 교체하지 않았다. 공유 BP 인터페이스가 넘기는 `ForceBlend` 인자는 호환 서명을 유지하고, 실제 native 재생 정책은 선택된 non-loop 에셋의 상태 진입 재생과 loop의 playhead 보존으로 결정됨을 코드에 명시했다. 원본 속성 구조체·향후 상태 enum·제작/테스트 자산도 이번 미소비 내부 상태 정리와 구분해 보존했다.
+
+새 direct Editor UBT는 18 actions/47.27초로 성공했고 기존 자동 회귀 **100개**가 실패·경고·미실행 0개로 통과했다. 관련 BP/ABP 38개를 새 바이너리에서 다시 컴파일해 모두 `BS_UP_TO_DATE`와 파일 해시 동일을 확인했다. 로컬 사용처·컴파일 근거는 `Saved/Validation/LocomotionResidual_20261023`, 자동 회귀는 `Saved/Validation/PlayerLocomotion/LocomotionResidual_20261023`이다. 최초 Chooser 조회의 타입 경로를 수정한 뒤 57개 중첩 테이블까지 확인했으며, 빈 조회를 미사용 근거로 사용하지 않았다. 전체 프로젝트의 미사용 소스·모든 전환 외형을 전수 검수한 결과는 아니며 Game/Cook/Shipping·새 원격 역할별 플레이는 실행하지 않았다. 앞 절의 Strafe 36조건·루프/몽타주 결과는 정리 직전 기준점이고 이번 바이너리의 새 실행으로 합산하지 않는다.
+
+같은 새 바이너리의 임시 평지 PIE에서 지상 **2,399표본**, OTM/Strafe 공중·착지 **8조건·2,393표본**, Strafe 질주 점프 **8조건·1,920표본**이 모두 통과했다. 실제 선택·재생과 포즈/물리 관측을 사용했으며 제거한 진단 필드에 대한 접근 오류도 없었다. 결과는 각각 `Ground_20261023_091859_805264.json`, `AirLanding_20261023_091939_898798.json`, `SprintAir_20261023_092019_936008.json`이다. 생산 Content/Config를 변경하거나 임시 레벨을 저장하지 않았고, 검증 후 에디터를 정상 종료해 관련 프로세스가 남지 않은 것을 확인했다.
+
+
+### 뒤대각선 Strafe 출발의 계열 선택 — 2026-10-23
+
+뒤대각선이 입력 순서에 따라 전방 Reface와 후진 Start 사이에서 바뀌던 선택은 유효한 Locomotion Profile의 `StrafeDirectionPolicy`로 보완했다. 기존 후진 모션·회전 오프셋 Curve Chooser·Pose Match·Steering/Warping을 사용하며 시퀀스 추가 수입이나 생산 에셋 저장은 없다. 방향 구간과 각도 hysteresis의 제작 기준은 [아키텍처](../Architecture/Player_Locomotion_Architecture.md), 실제 사용자 재현·소스 수명 정리·최종 검증과 한계는 [소스·출발 점검 기록](../Diagnostics/Animation_Source_Review_2026-10-23.md)을 따른다. 뒤대각선 입력 순서·정지/감속 재출발 검사는 `Validate-PlayerLocomotionStrafeStarts.py`에 유지한다.

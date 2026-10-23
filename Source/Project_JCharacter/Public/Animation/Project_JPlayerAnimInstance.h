@@ -146,13 +146,9 @@ public:
  UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Player Locomotion|Essential Values", meta=(AllowPrivateAccess="true"))
  FTransform PlayerRootTransform = FTransform::Identity;
  UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Player Locomotion|Essential Values", meta=(AllowPrivateAccess="true"))
- bool PlayerHasAcceleration = false;
- UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Player Locomotion|Essential Values", meta=(AllowPrivateAccess="true"))
  FVector PlayerAcceleration = FVector::ZeroVector;
  UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Player Locomotion|Essential Values", meta=(AllowPrivateAccess="true"))
  FVector PlayerAccelerationLastFrame = FVector::ZeroVector;
- UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Player Locomotion|Essential Values", meta=(AllowPrivateAccess="true"))
- double PlayerAccelerationAmount = 0.000000;
  UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Player Locomotion|Essential Values", meta=(AllowPrivateAccess="true"))
  bool PlayerHasVelocity = false;
  UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Player Locomotion|Essential Values", meta=(AllowPrivateAccess="true"))
@@ -178,8 +174,6 @@ public:
  UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Player Locomotion|Essential Values", meta=(AllowPrivateAccess="true"))
  FTransform PlayerInteractionTransform = FTransform::Identity;
  UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Player Locomotion|Trajectory", meta=(AllowPrivateAccess="true"))
- FVector PlayerTrajectoryPastVelocity = FVector::ZeroVector;
- UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Player Locomotion|Trajectory", meta=(AllowPrivateAccess="true"))
  FVector PlayerTrajectoryNearFutureVelocity = FVector::ZeroVector;
  UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Player Locomotion|Trajectory", meta=(AllowPrivateAccess="true"))
  FVector PlayerTrajectoryFutureVelocity = FVector::ZeroVector;
@@ -187,8 +181,6 @@ public:
  bool PlayerOffsetRootBoneEnabled = false;
  UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Player Locomotion|State Machine (Experimental)", meta=(AllowPrivateAccess="true"))
  FProject_JPlayerBlendStackInputs PlayerBlendStackInputs = {};
- UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Player Locomotion|State Machine (Experimental)", meta=(AllowPrivateAccess="true"))
- FProject_JPlayerBlendStackInputs PlayerPreviousBlendStackInputs = {};
  UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Player Locomotion|State Machine (Experimental)", meta=(AllowPrivateAccess="true"))
  EProject_JPlayerPlaybackState PlayerStateMachineState = EProject_JPlayerPlaybackState::IdleLoop;
  UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Player Locomotion|State Machine (Experimental)", meta=(AllowPrivateAccess="true"))
@@ -223,14 +215,10 @@ public:
  bool PlayerHasLocomotionSource = false;
  UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Player Locomotion|디폴트", meta=(AllowPrivateAccess="true"))
  bool PlayerUseThreadSafeUpdateAnimation = false;
- UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Player Locomotion|Trajectory", meta=(AllowPrivateAccess="true"))
- FVector PlayerTrajectoryPreviousFutureVelocity = FVector::ZeroVector;
  UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Player Locomotion|궤적", meta=(AllowPrivateAccess="true"))
  FRotator PlayerTrajectoryFutureFacing = FRotator::ZeroRotator;
  UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Player Locomotion|궤적", meta=(AllowPrivateAccess="true"))
  double PlayerTrajectoryTurnAngle = 0.000000;
- UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Player Locomotion|궤적", meta=(AllowPrivateAccess="true"))
- FVector PlayerTrajectoryPastAngularVelocity = FVector::ZeroVector;
  UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Player Locomotion|궤적", meta=(AllowPrivateAccess="true"))
  FVector PlayerTrajectoryCurrentAngularVelocity = FVector::ZeroVector;
  UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Player Locomotion|궤적", meta=(AllowPrivateAccess="true"))
@@ -249,8 +237,6 @@ public:
  FRotator PlayerFutureFacingOnTransitionStart = FRotator::ZeroRotator;
  UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Player Locomotion|Aim Offset", meta=(AllowPrivateAccess="true"))
  FVector2D PlayerAO = FVector2D::ZeroVector;
- UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Player Locomotion|Aim Offset", meta=(AllowPrivateAccess="true"))
- FVector2D PlayerPreviousAO = FVector2D::ZeroVector;
  UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Player Locomotion|States", meta=(AllowPrivateAccess="true"))
  EProject_JPlayerMovementDirection PlayerMovementDirectionRecent = EProject_JPlayerMovementDirection::Forward;
  UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Player Locomotion|상태", meta=(AllowPrivateAccess="true"))
@@ -283,7 +269,8 @@ private:
  FTransform ReadOffsetRootTransform();
  FAnimNodeReference FindFoundationNode(FName Tag);
  UFUNCTION() void AccumulateBasedMovement(const FTransform& Delta, const FMoverTimeStep& Step);
- TWeakObjectPtr<class UMoverComponent> BasedMovementSource;
+ void BindLocomotionSource(class UMoverComponent* Source);
+ TWeakObjectPtr<class UMoverComponent> LocomotionSource;
  FTransform PendingBasedMovementDelta=FTransform::Identity;
  void BuildProjectAirFrame(FProject_JAnimThreadSafeData& Data);
  bool bAirEntryPending=false;

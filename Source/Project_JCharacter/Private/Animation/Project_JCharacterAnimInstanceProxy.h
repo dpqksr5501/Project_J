@@ -17,6 +17,7 @@ protected:
  virtual void PreUpdate(UAnimInstance* Instance,float DeltaSeconds) override;
  virtual void UpdateAnimationNode_WithRoot(const FAnimationUpdateContext& Context,FAnimNode_Base* Root,FName Layer) override;
 private:
+ friend class UProject_JCharacterAnimInstance;
  friend class FProjectJPlayerLocomotionSnapshotBoundaryTest;
  friend class FProjectJPlayerLocomotionMoverAimPublication;
  friend class FProjectJPlaybackObservationLifetimeTest;

@@ -49,10 +49,15 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 }
 void UProject_JCharacterAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeconds)
 {
+	// NativeUpdate publishes after proxy PreUpdate. Consume before native state
+	// decisions as well as graph traversal: otherwise current Strafe direction
+	// reaches Chooser one frame before the trajectory used to admit its pivot.
+	auto& Proxy = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>();
+	Proxy.ConsumeQueuedGameThreadData();
 	// The engine owns update/evaluation ordering for both primary and linked
 	// instances. Copy only immutable snapshot values here: state-controller values
 	// can change later during graph traversal and must keep their existing getters.
-	const auto& Snapshot = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
+	const auto& Snapshot = Proxy.GetThreadSafeData();
 	GraphAimYaw = Snapshot.Aim.AimYaw;
 	GraphAimPitch = Snapshot.Aim.AimPitch;
 	GraphAimOffsetAlpha = Snapshot.Aim.AimOffsetAlpha;

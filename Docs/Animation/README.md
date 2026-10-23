@@ -9,6 +9,7 @@ Project J는 **Mover 이동, C++ 상태·선택 계산, 데이터 기반 포즈 
 | 이동·스냅샷·상태 선택·ABP 노드의 책임과 현재 에셋 경로 | [플레이어 로코모션 아키텍처](Architecture/Player_Locomotion_Architecture.md) |
 | 플레이어 부모/자식 BP·직업/몸체 프로필·의상 연결 | [캐릭터와 ABP 마스터](../Architecture/Runtime/Player_Character_Master.md) |
 | 원본 BP/ABP와 native 실행 흐름 대조·의도한 차이·초기화/Iris 경고 해결 | [애니메이션 흐름 최종 점검](Architecture/Player_Animation_Flow_Review_2026-10-21.md) |
+| 소스 수명·취소 경계 점검과 뒤대각선 Strafe Start의 입력 순서 문제 | [애니메이션 소스·Strafe 출발 점검](Diagnostics/Animation_Source_Review_2026-10-23.md) |
 | 원본 보관·Manny 카탈로그·추가 수입 중복 검사 | [라이브러리 제작](Authoring/Player_Animation_Library.md) |
 | 새 이동 클립·Chooser·프로필·직업/탈것 콘텐츠 연결 | [이동 콘텐츠 확장](Authoring/DataDrivenLocomotionExtensionGuide.md) |
 | Manny 공용 모션·Quinn·비표준 골격·추가 망토 뼈 | [스켈레톤 제작 기준](Authoring/HumanoidSkeletonRetargetingStandards.md) |
