@@ -1,4 +1,5 @@
 #include "Animation/Project_JCharacterAnimInstance.h"
+#include "Animation/AnimMontage.h"
 #include "Animation/Project_JCharacterAnimInstanceProxy.h"
 #include "Animation/Project_JLocomotionProfile.h"
 #include "Animation/Project_JCombatAnimProfile.h"
@@ -323,8 +324,14 @@ void UProject_JCharacterAnimInstance::FillMontageThreadSafeData(FProject_JAnimTh
 {
  check(IsInGameThread());
  Data.bIsLocallyControlled=IsLocallyControlledCharacter();
+ Data.Montage.bFullBodyMontageActive=false;
  Data.Montage.FullBodyMontageWeight=Data.LocomotionMode==EProject_JAnimationLocomotionMode::OnFoot
   ? FMath::Clamp(GetSlotMontageGlobalWeight(TEXT("DefaultSlot")),0.f,1.f):0.f;
+ if (Data.LocomotionMode==EProject_JAnimationLocomotionMode::OnFoot)
+  for (const auto* Instance:MontageInstances)
+   if (Instance && Instance->Montage && Instance->Montage->IsValidSlot(TEXT("DefaultSlot")) &&
+       (Instance->IsPlaying() || Instance->GetWeight()>ZERO_ANIMWEIGHT_THRESH))
+   { Data.Montage.bFullBodyMontageActive=true; break; }
 }
 FProject_JAnimPlaybackSnapshot UProject_JCharacterAnimInstance::GetPlaybackSnapshot() const
 {

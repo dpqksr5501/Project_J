@@ -3,7 +3,7 @@
 이 폴더는 제품 실행 경로가 아니라 검증과 당시 기록의 생성 근거를 보존한다. 파일 수·장부 생성 성공을 전체 소스/에셋 정밀 검토 완료로 해석하지 않는다.
 
 - 재검증: `Run-ContinuationBuild.ps1`은 direct UBT를 사용한다. `Run-ContinuationTests.ps1`과 에셋/입력/레벨/notify 검증기는 고유 run 이름과 해당 read/verify 스크립트를 함께 사용한다. `Run-AssetArchitectureValidation.ps1`의 Reload는 `Verify-AssetArchitecture.py`를 호출하고 Cook는 명시한 에셋 경계를 검증한다.
-- 비교·분석: Analyze/Compare/Export/Summarize와 Game/패키지/버전 capture는 기존 측정 근거를 재사용하기 위해 보존한다. CPU/GPU 문제 해결 완료를 뜻하지 않으며, 보류한 성능 실험을 자동으로 재개하지 않는다. 과거 `Run-BalancedCPU.ps1`의 RA13 binary 복원을 최신본에 적용하지 않는다.
+- 비교·분석: 재사용하는 Analyze/Compare/Export/Summarize와 Game/패키지/버전 capture는 기존 측정 근거를 분석하기 위해 보존한다. 아래에 퇴역을 명시한 고정 세션 생성기는 제외한다. CPU/GPU 문제 해결 완료를 뜻하지 않으며, 보류한 성능 실험을 자동으로 재개하지 않는다. 과거 `Run-BalancedCPU.ps1`의 RA13 binary 복원을 최신본에 적용하지 않는다.
 - 근거 재사용: `Publish-ContinuationEvidence.py`는 제한된 근거의 사본·지문을 게시하고, `Verify-HistoricalComparison.py`는 보존한 과거 비교 입력을 확인한다. `Capture-CA14To16Verification.py`는 실행 이름을 인자로 받는 통합 체크포인트 검증기다. 서로 다른 보존·재검증 역할이 있어 유지한다. 기존 결과를 현재 상태의 합격 근거로 자동 승격하거나 과거 해시를 덮어쓰지 않는다.
 
 ## 2026-10-19 일회성 생성기 정리
@@ -25,3 +25,9 @@
 동일 정리에서 `Scripts/Editor`의 완료된 Foley 이행·누락 복구·6클립 EarlyTransition 감사/복구 래퍼 4개도 퇴역했다. native API·실제 애니메이션·영구 회귀 테스트는 유지했고, 해당 [애니메이션 진단 기록](../../Docs/Animation/Diagnostics/)에 복구 위치와 재사용 제한을 남겼다.
 
 정리 후 기존 Python 회귀 16개·자산 검증 래퍼 모의 11조건·provenance 비교 6조건이 통과했다. 퇴역 파일의 실행 코드/시작 설정/CI 참조와 신규 문서 링크 오류는 0개다. Source·Config·Content의 Git 내용 변경은 없으며, C++ 빌드·에디터 실행은 필요하지 않아 수행하지 않았다. 이 결과는 과거 native 검증을 새로 실행했다는 뜻이 아니다.
+
+## 2026-10-25 완료된 고정 작업 정리
+
+`Analyze-ContinuationCPUCallTrees.py`는 과거 CA 캡처와 `R15_CPUCallTreeAnalysis1` 출력에 고정된 일회 분석기다. `DemandCallerSummary.json`의 완료 결과를 보존하고 실행 위치에서는 퇴역했다. `Scripts/Editor/Bake-PrototypeMapBounds.py`도 `Lvl_ThirdPerson`의 bounds를 기존 지도 DA에 덮어쓰던 완료된 최초 제작 작업이므로 퇴역했다. 실제 지도 데이터·native 지도 소비자·UI 생성기와 그 보존 검증기는 유지한다. 실행 코드·설정·CI의 호출이 없고, 현재 연결은 당시 결과/해시를 기록한 역사적 문서뿐인 것을 함께 확인했다.
+
+두 원본은 Git `b328b948`의 기존 경로 또는 로컬 `Saved/StorageCleanup_20261025/RetiredScripts.zip`에서 복구할 수 있다. ZIP의 원문 SHA-256 목록은 같은 폴더의 `Plan.json`이다. 과거 고정 입력/출력을 검토하지 않고 현재 에셋이나 기록에 재실행하지 않는다. 최근 무기·액션 복귀 세션의 임시 스크립트 42개도 이 ZIP에 보관했으며 공용 MCP 콘솔 helper와 영구 회귀/제작/분석 도구는 유지한다. 압축한 성공·실패 원자료의 원래 경로를 요구하면 인접 `.gz`를 먼저 해제한다. 상세 크기와 검증은 [용량 정리 기록](../../Docs/Maintenance/Storage_Cleanup_2026-10-16.md)을 따른다.

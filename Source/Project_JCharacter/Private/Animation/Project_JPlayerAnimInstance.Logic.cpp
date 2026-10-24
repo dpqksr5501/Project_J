@@ -141,6 +141,8 @@ void UProject_JPlayerAnimInstance::UpdateNativeConsoleVariables()
 
 bool UProject_JPlayerAnimInstance::EvaluateIsMoving()
 {
+	const auto& Frame=GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
+	if (IsActionControllingLocomotion() && !Frame.Input.bHasMoveInput) return false;
 	const auto& Trajectory=PlayerTrajectory;
 	FVector Future; UPoseSearchTrajectoryLibrary::GetTransformTrajectoryVelocity(Trajectory,.9f,1.f,Future,true);
 	// Preserve the authored reachable return: the role switch in IsMoving was disconnected.
@@ -339,7 +341,28 @@ void UProject_JPlayerAnimInstance::UpdateNativeStates()
  Update(PlayerGait,PlayerGaitLastFrame,PlayerGaitRecent,PlayerGaitTime,PlayerGaitLastStateTime,PlayerCharacterProperties.Gait==EProject_JLocomotionGaitIntent::Sprint && PlayerTrajectoryIsCircling?EProject_JLocomotionGaitIntent::Run:PlayerCharacterProperties.Gait,.1);
  Update(PlayerStance,PlayerStanceLastFrame,PlayerStanceRecent,PlayerStanceTime,PlayerStanceLastStateTime,PlayerCharacterProperties.Stance,.1);
  Update(PlayerMovementDirection,PlayerMovementDirectionLastFrame,PlayerMovementDirectionRecent,PlayerMovementDirectionTime,PlayerMovementDirectionLastStateTime,PlayerCharacterProperties.MovementDirection,.1);
+ const auto& Frame=GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
+ const bool bHadGroundRecovery=bGroundRecoveryEligible;
+ if (IsActionControllingLocomotion()) bGroundRecoveryEligible=false;
+ else if (Frame.Air.bIsFalling || (PlayerMovementMode==EProject_JPlayerMovementMode::OnGround &&
+          Frame.Input.bHasMoveInput && PlayerMovementState==EProject_JPlayerMovementState::Moving))
+  bGroundRecoveryEligible=true;
+ // Taking over an already playing start/stop/landing cancels that transition too.
+ // Keep source clocks, input, physical movement and state-history clocks intact.
+ if (bHadGroundRecovery && !bGroundRecoveryEligible &&
+     (PlayerStateMachineState==EProject_JPlayerPlaybackState::IdleTransition ||
+      PlayerStateMachineState==EProject_JPlayerPlaybackState::LocomotionTransition))
+ {
+  const bool bMoving=PlayerMovementState==EProject_JPlayerMovementState::Moving;
+  SelectNativeStateAnimation(bMoving?TEXT("Locomotion Loop"):TEXT("Idle Loop"),
+   uint8(bMoving?EProject_JPlayerPlaybackState::LocomotionLoop:EProject_JPlayerPlaybackState::IdleLoop),false);
+ }
+}
 
+bool UProject_JPlayerAnimInstance::IsActionControllingLocomotion() const
+{
+ const auto& Frame=GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
+ return Frame.Montage.bFullBodyMontageActive || Frame.Movement.bHasGameplayRootMotion;
 }
 
 FTransform UProject_JPlayerAnimInstance::ReadOffsetRootTransform()
@@ -376,6 +399,19 @@ void UProject_JPlayerAnimInstance::SelectNativeStateAnimation(FName Name,uint8 S
 	if (!PlayerHasLocomotionSource && GetWorld() && !GetWorld()->IsGameWorld()) return;
 #endif
  // Preserve selection at state entry, including per-node pose history.
+ // Updating the source below a full-body action must not leave a partially
+ // played start/pivot to reveal at blend-out. Keep its existing moving/idle loop.
+ if (State==uint8(EProject_JPlayerPlaybackState::LocomotionTransition) && IsActionControllingLocomotion())
+ {
+  const bool bMoving=PlayerMovementState==EProject_JPlayerMovementState::Moving;
+  Name=bMoving?TEXT("Locomotion Loop"):TEXT("Idle Loop");
+  State=uint8(bMoving?EProject_JPlayerPlaybackState::LocomotionLoop:EProject_JPlayerPlaybackState::IdleLoop);
+ }
+ // Action-owned flight/stopping cannot mint a delayed ground recovery after
+ // weight is zero. Independent movement/falling and new stationary TIP remain valid.
+ else if (State==uint8(EProject_JPlayerPlaybackState::IdleTransition) && !bGroundRecoveryEligible &&
+          !(PlayerMovementModeRecent==EProject_JPlayerMovementMode::OnGround && EvaluateTurnInPlace()))
+ { Name=TEXT("Idle Loop"); State=uint8(EProject_JPlayerPlaybackState::IdleLoop); }
  PlayerStateName=Name;PlayerStateMachineState=static_cast<EProject_JPlayerPlaybackState>(State);
  PlayerNotifyTransitionReTransition=PlayerNotifyTransitionToLoop=false;
  PlayerNoValidAnim=false;

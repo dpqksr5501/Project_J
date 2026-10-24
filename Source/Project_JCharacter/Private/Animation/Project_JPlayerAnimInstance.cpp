@@ -16,6 +16,7 @@
 #include "BlendStack/AnimNode_BlendStack.h"
 #include "BoneControllers/AnimNode_Steering.h"
 #include "Animation/AnimRootMotionProvider.h"
+#include "DefaultMovementSet/LayeredMoves/AnimRootMotionLayeredMove.h"
 #include "Animation/BuiltInAttributeTypes.h"
 #include "HAL/IConsoleManager.h"
 #include "UObject/UnrealType.h"
@@ -67,6 +68,7 @@ void UProject_JPlayerAnimInstance::BindLocomotionSource(UMoverComponent* Source)
  PendingBasedMovementDelta=FTransform::Identity;
  MoverPredictor=nullptr;MoverTrajectory.Samples.Reset();PredictorYaw=0.f;
  bNeedsLocomotionHistorySeed=true;PlayerHasLocomotionSource=false;
+ bGroundRecoveryEligible=true;
  ActiveAirEpisode=0;bAirEntryPending=bAirLoop=false;AirSelectedAsset=nullptr;
  CommittedAirQuery={};AirEntryStartTime=0.f;LastAirReselection=-1.;LastAirBlendTime=.15f;
  AirReselectionCount=AirTransitionEntryCount=AirLoopEntryCount=0;
@@ -115,6 +117,8 @@ void UProject_JPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	Data.Movement.Velocity = Mover->GetVelocity();
 	Data.Movement.GroundSpeed = Data.Movement.Velocity.Size2D();
 	Data.Air.bIsInAir = Mover->IsAirborne();
+	Data.Air.bIsFalling = Mover->IsFalling();
+	Data.Movement.bHasGameplayRootMotion = Mover->HasFeaturesWithTag(Mover_AnimRootMotion_Montage,false);
 	const auto* Input = Mover->GetLastInputCmd().InputCollection.FindDataByType<FCharacterDefaultInputs>();
 	const auto* Intent = Mover->GetLastInputCmd().InputCollection.FindDataByType<FProject_JMoverInputs>();
 	const auto* PhysicalLife=Mover->GetSyncState().SyncStateCollection.FindDataByType<FProject_JMoverLifecycle>();

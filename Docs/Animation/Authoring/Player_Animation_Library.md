@@ -248,3 +248,24 @@ Run 500/Sprint 750 튜닝 이후 속도 관련 에셋 값의 갱신 누락 여�
 ### 뒤대각선 Strafe 출발의 계열 선택 — 2026-10-23
 
 뒤대각선이 입력 순서에 따라 전방 Reface와 후진 Start 사이에서 바뀌던 선택은 유효한 Locomotion Profile의 `StrafeDirectionPolicy`로 보완했다. 기존 후진 모션·회전 오프셋 Curve Chooser·Pose Match·Steering/Warping을 사용하며 시퀀스 추가 수입이나 생산 에셋 저장은 없다. 방향 구간과 각도 hysteresis의 제작 기준은 [아키텍처](../Architecture/Player_Locomotion_Architecture.md), 실제 사용자 재현·소스 수명 정리·최종 검증과 한계는 [소스·출발 점검 기록](../Diagnostics/Animation_Source_Review_2026-10-23.md)을 따른다. 뒤대각선 입력 순서·정지/감속 재출발 검사는 `Validate-PlayerLocomotionStrafeStarts.py`에 유지한다.
+
+
+### 전신 액션 뒤 Start·Stop·Land 복귀 — 2026-10-24
+
+달리기 뒤 짧은 공격을 쓰고 입력을 놓으면 공격이 완전히 끝난 뒤에도 Run Stop이 약 1.38초 더 평가됐다. 출발 직후 공격하거나 공격 중 이동을 시작한 경우도 OTM/Strafe에서 가려진 Start가 약 0.26~0.97초 남는 것을 확인했다. 강제 Flying을 사용하는 스킬은 실제 Falling 없이 Land를 선택했고, 카메라 방향이 바뀐 경우 TIP 예외가 그 Land 후보를 다시 여는 경계도 재현했다.
+
+GT snapshot은 실제 DefaultSlot montage instance 수명, Mover montage root-motion 소유권과 실제 Falling을 별도로 전달한다. native 상태 계산은 전신 액션이 덮어쓴 지상 전환의 재생 권한을 회수하고 현재 입력에 맞는 기존 Locomotion/Idle Loop를 선택한다. 액션 중 새로 요청된 지상 전환도 같은 계약을 사용한다. 새 독립 이동과 액션 이후 실제 Falling은 정상 Stop·착지 권한을 복구하며, TIP 예외는 기존 최근 지상 모드 이력이 확인된 뒤 허용한다. 입력·물리 속도·상태 이력 시간·montage clock을 강제로 초기화하지 않는다.
+
+GASP State Controller·Chooser·BlendStack·Pose History·slot/보정 순서, 원본 모션/커브와 Run/Sprint Stop 후보 필터를 유지했다. 캐릭터/스킬별 그래프·키/클립 이름 예외·복귀 대기 timer를 추가하지 않았다. instance 수명은 첫 blend-in과 blend-out을 포함하고 UpperBody 장착을 제외하므로, 기존 slot weight나 GAS 공격 태그만으로 소유권을 판정하지 않는다. AnimInstance source 교체·재초기화에서는 이 복귀 이력을 해제한다.
+
+최종 direct Editor UBT는 523 actions/336.92초로 성공했다. 같은 바이너리의 native 53개가 실패·경고·미실행 0개로 통과했고, 평지 생산 BP_GreatSword에서 액션 복귀 22조건·9,057표본을 통과했다. OTM/Strafe 진입의 일반 출발/정지, 이동/출발/정지 중 공격, 공격 중 새 이동, 입력 유지, 정지 root motion, UpperBody, 취소와 실제 점프를 검사했다. 강제 Flying의 두 GAS 조건은 필요한 Strafe 전투 모드에서 정지/이동 진입으로 구분했다. 정상 Start/Stop/실제 Land와 발 보정을 유지하면서, 액션에 가려진 Start/Stop/가짜 Land가 사라지고 필요한 TIP는 남는 것을 실제 선택·재생/속도/물리 모드로 판정했다. 제작/검수 계약은 [아키텍처](../Architecture/Player_Locomotion_Architecture.md), 재실행은 [액션 복귀 PIE 검사](../../../Scripts/Validation/Validate-PlayerLocomotionActionRecovery.py)를 따른다.
+
+초기 검수의 Python 비공개 API, 전신 슬롯 아래의 정상적인 0 가중치, GAS 전투 준비 및 장착 이후 모드 고정 판정 오류는 스크립트를 보완하고 실패 자료를 보존했다. 테스트 접근 범위/지역 변수 충돌로 실패한 두 빌드도 정상 종료까지 기다린 뒤 수정했다. 중간 에디터 충돌은 PIE 종료 요청과 에디터 종료를 한 콘솔 호출에서 실행해 생긴 `TearDownPlaySession` world 검사/`GIsPlayInEditorWorld` assertion이었다. 이후 MCP StopPIE 완료와 PIE world 0을 확인한 뒤 콘솔 호출 밖에서 에디터를 종료하도록 절차를 분리했다. 엔진/캐시/에셋을 삭제해 처리하지 않았다.
+
+같은 최종 바이너리의 2-player listen-server PIE도 652프레임으로 통과했다. authority 2개·autonomous 1개·simulated 1개 표현에서 실제 스킬/공격 뒤 다시 움직였다가 멈출 때 정상 Stop을 각각 32/33/32/33프레임 확인했다. 기존 Mover의 simulated-proxy input container 동기화 경로를 재사용하며 복제 필드나 별도 원격 전환 writer를 추가하지 않았다. [기존 네트워크 검사](../../../Scripts/Validation/Validate-PlayerLocomotionNetwork.py)를 38초의 공격 후 재이동/정지 구간까지 확장했다.
+
+최종 자료는 로컬 `Saved/AttackStop_20261024`의 `BuildGroundTIP.log`, `AutomationGroundTIP` 및 `Saved/Validation/PlayerLocomotion/ActionRecovery_20261024_232959_185812.json`, `Network_20261024_233443_098870.json`에 있다. PIE 종료 완료와 dirty content/map 0을 확인했고, 검증 설정을 원래 PIE_Client/1명으로 복원한 뒤 에디터를 정상 종료했다. 최종 종료에서는 새 크래시가 발생하지 않았다. 생산 Content/Config는 변경하지 않았다. 현재 기본 공격·R 취소·T 강제 Flying과 공통 이동 계약의 집중 검사이며, 모든 스킬/지형의 외형 전수 승인이나 Cook/Shipping/새 군중 성능 검증을 뜻하지 않는다.
+
+2026-10-25 정리에서 위 큰 ActionRecovery/Network JSON과 일부 에디터 로그는 원문 SHA-256을 확인한 인접 `.gz`로 보관했다. 원래 이름을 입력으로 요구하는 분석에는 먼저 해제한다. native 결과 index·빌드 로그·영구 PIE 검사기는 유지하고, 완료된 세션 준비 스크립트는 `Saved/StorageCleanup_20261025/RetiredScripts.zip`에 보관했다.
+
+마감 중 검사기의 정규식 캡처를 재확인했다. Length는 캡처 대상이 아니므로 기존 Weight 인덱스가 맞으며 임시 수정은 원복했다. 그 임시 수정의 0표본 실패와 이후 에디터 종료로 미완료인 추가 PIE 재실행은 10월 25일 자료로 구분해 남겼다. 위 최종 22조건·네트워크 통과 결과를 새 실행으로 대체하지 않는다.

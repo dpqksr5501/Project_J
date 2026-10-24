@@ -1,6 +1,10 @@
-"""Run in the documented flat-floor PIE fixture. No assets or levels are saved."""
+"""Two-player listen-server PIE: movement, attacks and post-action Stop recovery.
+
+Runs 38 game seconds; observes authority/autonomous/simulated source meshes.
+No assets or levels are saved.
+"""
 import sys
-import unreal,json,traceback,time
+import unreal,json,traceback,time,re
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).parent))
 from PlayerLocomotionRegression import output_file,check_network
@@ -28,7 +32,16 @@ def finish(error=None):
   for a in actions.values():inputs.inject_input_vector_for_action(a,unreal.Vector(),[],[])
  unreal.unregister_slate_post_tick_callback(handle)
  if error is None:
-  try:report['checks']=check_network(report)
+  try:
+   report['checks']=check_network(report)
+   assert len({a['role'] for a in report['actors']})==3,'Expected all three network roles'
+   stop_checks=[]
+   for actor in report['actors']:
+    rows=[a for sample in report['samples'] if 33.1<sample['t']<37. for a in sample['actors'] if a['path']==actor['path']]
+    stops=[a for a in rows if any('_Stop_' in asset and float(weight)>.25 for asset,weight in re.findall(r'Index=\d+ Asset=(\S+) Time=[0-9.]+ Length=[0-9.]+ Weight=([0-9.]+)',a['played']))]
+    assert stops,'A real post-action movement did not restore Stop: '+actor['path']
+    stop_checks.append({'path':actor['path'],'role':actor['role'],'stop_frames':len(stops)})
+   report['post_action_stops']=stop_checks
   except Exception:error=traceback.format_exc()
  report['completed']=error is None
  if error:report['error']=error
@@ -37,10 +50,10 @@ def finish(error=None):
 def tick(dt):
  try:
   t=unreal.GameplayStatics.get_time_seconds(worlds[0])-start
-  if t>=32:finish();return
+  if t>=38:finish();return
   for inputs,w,p,pc in controls:
    client=p.get_local_role()==unreal.NetRole.ROLE_AUTONOMOUS_PROXY
-   move=(1<=t<8) if client else (9<=t<14)
+   move=((1<=t<8) if client else (9<=t<14)) or 28<=t<33
    jump=(2<=t<2.15 or 6<=t<6.15) if client else (10<=t<10.15)
    sprint=(3<=t<4 or 6<=t<7) if client else (11<=t<12)
    toggle=(4.5<=t<4.65) if client else (14.5<=t<14.65)
@@ -61,7 +74,7 @@ def tick(dt):
    for p in pawns:
     loc=p.get_actor_location();v=p.get_velocity();anim=p.get_source_mesh().get_anim_instance();mont=p.get_current_montage()
     frame['actors'].append({'path':p.get_path_name(),'pos':[loc.x,loc.y,loc.z],'v':[v.x,v.y,v.z],'yaw':p.get_actor_rotation().yaw,
-       'physical':p.inspect_physical_lifecycle(),'mode':str(p.get_mover().get_movement_mode_name()),'combat':p.is_combat_mode_active(),
+       'approved_input':str(anim.get_editor_property('PlayerCharacterProperties').get_editor_property('InputAcceleration')),'physical':p.inspect_physical_lifecycle(),'mode':str(p.get_mover().get_movement_mode_name()),'combat':p.is_combat_mode_active(),
        'montage':mont.get_path_name() if mont else None,'montage_time':anim.montage_get_position(mont) if mont else None,
        'played':anim.inspect_foundation_playback(),'foot':bool(anim.get_editor_property('PlayerFootPlacementEnable')),'root_offset':bool(anim.get_editor_property('PlayerOffsetRootBoneEnabled')),'walking_class':p.get_mover().get_editor_property('MovementModes')['Walking'].get_class().get_path_name()})
    report['samples'].append(frame)

@@ -28,6 +28,8 @@ struct PROJECT_JCHARACTER_API FProject_JAnimMovementThreadSafeData
  float RelativeVelocityDirection = 0.f;
  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation|Snapshot")
  bool bHasTrajectory = false;
+ UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation|Snapshot")
+ bool bHasGameplayRootMotion = false;
 };
 
 USTRUCT(BlueprintType)
@@ -61,6 +63,9 @@ struct PROJECT_JCHARACTER_API FProject_JAnimAirThreadSafeData
  GENERATED_BODY()
  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation|Snapshot")
  bool bIsInAir = false;
+ // Flying used by an authored action is not a physical falling/landing episode.
+ UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation|Snapshot")
+ bool bIsFalling = false;
  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation|Snapshot")
  bool bIsJumping = false;
  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation|Snapshot")
@@ -101,6 +106,9 @@ struct PROJECT_JCHARACTER_API FProject_JAnimMontageThreadSafeData
  GENERATED_BODY()
  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation|Snapshot")
  float FullBodyMontageWeight = 0.f;
+ // Includes the first blend-in frame and blend-out; excludes UpperBody equip.
+ UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation|Snapshot")
+ bool bFullBodyMontageActive = false;
 };
 
 USTRUCT(BlueprintType)

@@ -264,6 +264,10 @@ public:
 protected:
 	void PublishPlayerLocomotionSourceFrame(const FProject_JAnimThreadSafeData& Data);
 private:
+ // A ground recovery belongs to uninterrupted locomotion or a physical fall,
+ // never to displacement/history hidden by a full-body action.
+ bool bGroundRecoveryEligible=true;
+ bool IsActionControllingLocomotion() const;
  void UpdateNativeConsoleVariables();
  bool HasBlendStackTag(FName Tag) const;
  FTransform ReadOffsetRootTransform();

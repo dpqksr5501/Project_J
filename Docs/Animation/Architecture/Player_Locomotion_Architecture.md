@@ -73,6 +73,10 @@ Pivot의 속도 상한은 GT에서 게시한 실제 Mover gait 튜닝에 기존 
 
 ## 정지 모션과 발 접지
 
+전신 액션은 뒤에서 갱신 중인 지상 전환 동작의 수명도 끊는다. GT snapshot은 `DefaultSlot` 몽타주의 실제 instance 수명(첫 blend-in·blend-out 포함), Mover의 gameplay root motion과 실제 Falling을 별도로 게시한다. 이동 입력 없는 액션의 예측 변위로 Start를 열지 않으며, 액션 전부터 진행 중이거나 액션 중 새로 요청된 지상 전환은 현재 이동 상태의 기존 Locomotion Loop 또는 Idle Loop로 이어 간다. 액션이 가린 Stop·강제 Flying 종료의 착지를 뒤늦게 재생하지 않는다. 액션 전부터 Stop이 재생 중이던 경우도 기존 Idle Loop 선택으로 복귀한다. 새 독립 이동이나 액션 종료 후 실제 Falling이 관측되면 기존 Stop·착지 선택을 다시 허용한다. 정지 중 새 facing의 TIP는 최근 이동 모드까지 OnGround일 때 복귀 예외로 허용한다. 강제 Flying 이력이 남은 프레임에서 TIP가 Land 후보를 다시 열지 않게 하며, UpperBody 장착은 전신 액션 소유권과 구분한다.
+
+이 복귀 이력은 AnimInstance의 해당 이동 source에 속하며 owner 교체·재초기화에서 해제한다. 입력·물리 속도·기존 상태 이력 시간·몽타주 clock을 초기화하거나 스킬별 대기 시간을 추가하지 않는다. 실제 에셋과 포즈 연결은 유지하고, [액션 복귀 PIE 검사](../../../Scripts/Validation/Validate-PlayerLocomotionActionRecovery.py)로 정상 Start/Stop·출발 중 공격·공격 중 새 이동·입력 유지·기존 Stop 중 공격·취소·UpperBody·물리 점프와 강제 Flying/TIP를 구분한다.
+
 2026-10-22부터 `Stand Stops`는 포즈 검색 전에 native `PlayerGaitRecent`로 Run/Sprint 후보를 분리한다. 기존 속도 200 이상 조건만으로는 Run 500에서도 Sprint Stop이 검색됐다. Sprint 입력 해제와 정지가 같은 프레임에 일어나면 현재 gait가 먼저 Run으로 바뀌므로, 기존 최근 gait의 유지 계약을 사용한다. 낮은 속도의 Walk Stop, 좌우 발·방향 후보, Pose Match, 재생 시작 시각과 blend 출력은 유지한다. 이 필터는 정지 직전 안정된 gait에 대한 기준이며, Run으로 낮춘 직후 남은 모든 overspeed 조건의 외형을 보증하지 않는다.
 
 발 IK·발 잠금·경사 보정은 Stop/Idle 전환에서 계속 평가한다. 특정 클립 이름이나 상태 진입으로 IK를 끄거나 강제로 초기화하지 않는다. 접촉 커브가 낮은 발은 기존 Control Rig의 잠금 해제와 blend-out을 따르며, 접촉한 발은 경사면 접지를 유지한다. 현재 제작 경로는 `ConfigureStandingStopGaitFilter`이며, 후보/타이밍을 바꾸지 않고 Enum 필터만 추가한다. 에디터 변경 완료 알림까지 전달해 `Modify`로 중단된 종속 검색 인덱스의 재구성을 허용한다.

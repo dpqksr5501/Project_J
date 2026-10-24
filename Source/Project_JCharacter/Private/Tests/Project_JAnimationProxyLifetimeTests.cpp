@@ -116,6 +116,59 @@ bool FProjectJPlayerLocomotionSnapshotBoundaryTest::RunTest(const FString&)
     TestTrue(TEXT("Strafe velocity reversal retains full visual evaluation without a facing turn"),Anim->NeedsFullRateVisualUpdate());
     Anim->ThreadSafeData.Movement.Acceleration=FVector(4000,0,0);
     TestFalse(TEXT("Steady straight movement can use the authored visual budget"),Anim->NeedsFullRateVisualUpdate());
+    // Action recovery consumes the same immutable snapshot and source lifetime.
+    {
+        auto* RecoveryMesh=NewObject<USkeletalMeshComponent>();auto* RecoveryAnim=NewObject<UProject_JPlayerAnimInstance>(RecoveryMesh);
+        auto& RecoveryProxy=RecoveryAnim->GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>();
+        FProject_JAnimThreadSafeData Frame;
+        auto Tick=[&](bool bMoving)
+        {
+         FTransformTrajectory Trajectory;
+         for (float Time:{0.f,1.f,1.5f})
+         {auto& Sample=Trajectory.Samples.AddDefaulted_GetRef();Sample.TimeInSeconds=Time;Sample.Position=FVector(bMoving?500.*Time:0.,0,0);Sample.Facing=FQuat::Identity;}
+         RecoveryAnim->PlayerTrajectory=Trajectory;
+         RecoveryProxy.QueueGameThreadData(Frame);RecoveryProxy.ConsumeQueuedGameThreadData();RecoveryAnim->UpdateNativeStates();
+        };
+        auto SelectRecovery=[&]()
+        {
+         RecoveryAnim->SelectNativeStateAnimation(TEXT("Idle Transition"),uint8(EProject_JPlayerPlaybackState::IdleTransition),false);
+         return RecoveryAnim->PlayerStateMachineState;
+        };
+        using State=EProject_JPlayerPlaybackState;
+        Frame.Input.bHasMoveInput=true;Tick(true);
+        RecoveryAnim->PlayerStateMachineState=State::LocomotionTransition;
+        Frame.Montage.bFullBodyMontageActive=true;Tick(true);
+        TestEqual(TEXT("A full-body action retires a start already in flight"),RecoveryAnim->PlayerStateMachineState,State::LocomotionLoop);
+        RecoveryAnim->SelectNativeStateAnimation(TEXT("Locomotion Transition"),uint8(State::LocomotionTransition),false);
+        TestEqual(TEXT("Movement beginning under a full-body action keeps the existing locomotion loop"),RecoveryAnim->PlayerStateMachineState,State::LocomotionLoop);
+        Frame.Montage.bFullBodyMontageActive=false;Tick(true);
+        TestEqual(TEXT("Independent movement retains its stop transition"),SelectRecovery(),State::IdleTransition);
+        Frame.Montage.bFullBodyMontageActive=true;Frame.Montage.FullBodyMontageWeight=0.f;
+        Frame.Input.bHasMoveInput=false;Tick(true);
+        TestFalse(TEXT("First blend-in frame cannot turn root-motion prediction into locomotion"),RecoveryAnim->EvaluateIsMoving());
+        TestEqual(TEXT("An action also retires a stop that began before it"),RecoveryAnim->PlayerStateMachineState,State::IdleLoop);
+        TestEqual(TEXT("An input release under the action selects the existing idle fallback"),SelectRecovery(),State::IdleLoop);
+        Frame.Montage.bFullBodyMontageActive=false;Frame.Movement.bHasGameplayRootMotion=true;Tick(true);
+        TestEqual(TEXT("Movement-owned root motion covers montage teardown order"),SelectRecovery(),State::IdleLoop);
+        Frame.Movement.bHasGameplayRootMotion=false;Tick(false);
+        TestEqual(TEXT("A completed/cancelled action cannot replay its hidden stop or forced-flight landing"),SelectRecovery(),State::IdleLoop);
+        RecoveryAnim->PlayerFutureFacingDelta=70.;RecoveryAnim->PlayerSpeed2D=0.;
+        RecoveryAnim->PlayerMovementModeRecent=EProject_JPlayerMovementMode::InAir;
+        TestEqual(TEXT("A facing request cannot reopen landing rows from action-owned flight history"),SelectRecovery(),State::IdleLoop);
+        RecoveryAnim->PlayerMovementModeRecent=EProject_JPlayerMovementMode::OnGround;
+        TestEqual(TEXT("A new stationary facing request can still select turn-in-place"),SelectRecovery(),State::IdleTransition);
+        RecoveryAnim->PlayerFutureFacingDelta=0.;
+        Frame.Input.bHasMoveInput=true;Tick(true);
+        Frame.Input.bHasMoveInput=false;Tick(false);
+        TestEqual(TEXT("A fresh independent movement episode restores normal stopping"),SelectRecovery(),State::IdleTransition);
+        Frame.Montage.bFullBodyMontageActive=true;Tick(false);
+        Frame.Montage.bFullBodyMontageActive=false;Frame.Air.bIsFalling=true;
+        RecoveryAnim->PlayerCharacterProperties.MovementMode=EProject_JPlayerMovementMode::InAir;Tick(false);
+        Frame.Air.bIsFalling=false;RecoveryAnim->PlayerCharacterProperties.MovementMode=EProject_JPlayerMovementMode::OnGround;Tick(false);
+        TestEqual(TEXT("A real fall after an interrupted aerial action restores landing"),SelectRecovery(),State::IdleTransition);
+        RecoveryAnim->NativeUninitializeAnimation();
+        TestEqual(TEXT("A retained instance does not inherit the retired action's recovery suppression"),SelectRecovery(),State::IdleTransition);
+    }
     return true;
 }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJPlaybackObservationLifetimeTest, "ProjectJ.PlayerLocomotion.PlaybackObservationLifetime",
