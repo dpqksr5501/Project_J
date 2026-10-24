@@ -13,6 +13,8 @@
 #include "Rendering/SkeletalMeshRenderData.h"
 #include "Rendering/SkeletalMeshLODRenderData.h"
 #include "Rendering/SkinWeightVertexBuffer.h"
+#include "SkeletalRenderPublic.h"
+#include "Materials/MaterialInterface.h"
 
 namespace
 {
@@ -20,6 +22,47 @@ TArray<TSharedPtr<FJsonValue>> VectorJSON(const FVector& V)
 {
 	return {MakeShared<FJsonValueNumber>(V.X), MakeShared<FJsonValueNumber>(V.Y), MakeShared<FJsonValueNumber>(V.Z)};
 }
+}
+
+FString UProject_JPlayerLocomotionLibrary::InspectSkinnedMeshRendering(USkeletalMeshComponent* Mesh)
+{
+	check(IsInGameThread());
+	if (!IsValid(Mesh) || !Mesh->GetSkeletalMeshAsset()) return TEXT("{}");
+	const auto* Asset = Mesh->GetSkeletalMeshAsset();
+	const auto Result = MakeShared<FJsonObject>();
+	Result->SetStringField(TEXT("component"), Mesh->GetPathName());
+	Result->SetStringField(TEXT("mesh"), Asset->GetPathName());
+	Result->SetBoolField(TEXT("nanite_enabled"), Asset->GetNaniteSettings().bEnabled);
+	Result->SetBoolField(TEXT("valid_nanite_data"), Mesh->HasValidNaniteData());
+	Result->SetBoolField(TEXT("should_nanite_skin"), Mesh->ShouldNaniteSkin());
+	const auto* Object = Mesh->GetMeshObject();
+	Result->SetBoolField(TEXT("has_render_object"), Object != nullptr);
+	Result->SetBoolField(TEXT("render_object_nanite"), Object && Object->IsNaniteMesh());
+	Result->SetBoolField(TEXT("recently_rendered"), Mesh->WasRecentlyRendered(.5f));
+	Result->SetNumberField(TEXT("predicted_lod"), Mesh->GetPredictedLODLevel());
+	TArray<TSharedPtr<FJsonValue>> LODs;
+	if (const auto* Data = Mesh->GetSkeletalMeshRenderData())
+		for (const auto& LOD : Data->LODRenderData)
+		{
+			auto Entry = MakeShared<FJsonObject>();
+			Entry->SetNumberField(TEXT("vertices"), LOD.GetNumVertices());
+			Entry->SetNumberField(TEXT("triangles"), LOD.MultiSizeIndexContainer.GetIndexBuffer()->Num() / 3);
+			TArray<TSharedPtr<FJsonValue>> Sections;
+			for (const auto& Section : LOD.RenderSections)
+			{
+				auto Item = MakeShared<FJsonObject>();
+				Item->SetNumberField(TEXT("material_index"), Section.MaterialIndex);
+				Item->SetNumberField(TEXT("triangles"), Section.NumTriangles);
+				const auto* Material = Mesh->GetMaterial(Section.MaterialIndex);
+				Item->SetStringField(TEXT("material"), GetPathNameSafe(Material));
+				Item->SetNumberField(TEXT("blend_mode"), Material ? Material->GetBlendMode() : BLEND_Opaque);
+				Sections.Add(MakeShared<FJsonValueObject>(Item));
+			}
+			Entry->SetArrayField(TEXT("sections"), Sections);
+			LODs.Add(MakeShared<FJsonValueObject>(Entry));
+		}
+	Result->SetArrayField(TEXT("lods"), LODs);
+	FString Text; FJsonSerializer::Serialize(Result, TJsonWriterFactory<>::Create(&Text)); return Text;
 }
 
 FString UProject_JPlayerLocomotionLibrary::InspectSkinnedMeshSurface(USkeletalMeshComponent* Mesh, int32 LODIndex)

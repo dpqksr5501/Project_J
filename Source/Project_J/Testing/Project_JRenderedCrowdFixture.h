@@ -20,7 +20,8 @@ private:
 	void Finish(bool bSuccess, const TCHAR* Reason);
 	UPROPERTY() TArray<TObjectPtr<AProject_JPlayerCharacter>> Players;
 	FTSTicker::FDelegateHandle Handle;
-	FString Output, Rows = TEXT("phase,elapsed_s,frame_delta_ms,gpu_ms,actors,rendered_actors,montages,capture_requested,body_lod0,body_lod1,body_lod2,local_body_lod,gt_ms,render_ms,rhi_ms,prediction30\n");
+	FString Output, Rows = TEXT("phase,elapsed_s,frame_delta_ms,gpu_ms,actors,rendered_actors,montages,capture_requested,body_lod0,body_lod1,body_lod2,local_body_lod,gt_ms,render_ms,rhi_ms,prediction30,nanite_candidates,nanite_parts,cloth_parts,cloth_tick_parts,modular_parts,phase_game_s\n");
+	// Wall time bounds the run; world/game time controls the prescribed animation workload.
 	double Started = 0, PhaseAt = 0;
 	int32 Phase = 0, Samples = 0, VisibleSamples = 0, CrowdCount = 200;
 	bool bSimulateMovement = false;
@@ -33,4 +34,6 @@ private:
 	bool bShot = false, bFinished = false;
 	bool bWithLocalPlayer = false;
 	int32 LocalQualitySamples = 0;
+	// Optional assertion for profiling the same saved assets through both render paths.
+	int32 ExpectedNaniteMode = -1;
 };

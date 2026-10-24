@@ -4,6 +4,8 @@
 
 ## 공통 데이터와 실행 책임
 
+2026-10-24 대검 의상7개는 별도의 Nanite 시험을 적용했다. 몸체 LOD0–2와 망토 Cloth는 유지하며 기존 체인을 전역 교체하지 않는다. 적용 범위·성능과 투명 재질 제한은 [스켈레탈 Nanite 비교](../../Performance/Reports/ProjectJ_Character_Nanite_2026-10-24.md)를 따른다.
+
 현재 기본 체인은 **LOD0–2**다. 2026-10-16 사용자 검토로 현재 GreatSword_Woman의 LOD1/2를 채택했다. LOD3–4는 추가하지 않으며, 이후 원거리 geometry가 실제 GPU 병목으로 남고 전환·외형·접촉 비교에서 이득이 확인될 때만 검토한다. 이 결정은 모든 새 캐릭터·의상·헤어의 자동 생성이나 품질 승인을 뜻하지 않는다.
 
 - 공통 설정: `/Game/DataAssetSets/Editor/LOD/DA_MeshLOD_Default`. Editor 전용 `Project_JMeshLODSettings`가 **native USkeletalMeshLODSettings를 소유**하고 정적 장비용 native `FStaticMeshReductionOptions`도 함께 저장한다. native class의 비공개 export 제한 때문에 상속하지 않고 구성한다.

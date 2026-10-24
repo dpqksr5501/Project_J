@@ -38,6 +38,8 @@ UProject_JPlayerAnimInstance
 
 ### 대검의 실제 2차 물리 소유권
 
+2026-10-24의 렌더링 시험에서는 망토를 제외한 의상7개만 스켈레탈 Nanite로 저장했다. 몸체는 눈 장식의 투명 재질 때문에 fallback하여 원본으로 복원했고, Manny source·몸체 LOD0–2·LeaderPose·망토 Cloth는 유지한다. 실제 Nanite 렌더 객체와 비용 비교는 [스켈레탈 Nanite 보고서](../../Performance/Reports/ProjectJ_Character_Nanite_2026-10-24.md)를 따른다. 포즈 평가 소유권과 렌더 경로를 같은 기능으로 취급하지 않는다.
+
 현재 `ABP_Greatsword_Woman_RunTIme`의 retarget/손 보정 뒤에는 머리카락 4개와 치마 2개 dynamic bone을 계산하는 **RigidBody 두 개**만 남긴다. `GreatSword_Woman_Physics`, `sho_Physics`는 유지한다. 망토는 `cloak` 컴포넌트의 독립 Chaos Cloth가 표면을 계산한다. 표시 몸체의 망토 RigidBody는 포즈 입출력을 재연결하고 제거하여 본 물리와 vertex cloth가 같은 망토를 이중 계산하지 않는다. 의상은 최종 본 포즈를 공유하며 현재 몸체/의상에 Post Process ABP가 있다는 가정으로 설명하지 않는다.
 
 2026-10-21에는 이전 실험의 embedded Chaos Cloth 세 개가 RigidBody와 함께 실행되어 별도 보관 후 제거했다. 당시 원본은 `Saved/Validation/SecondaryPhysics_20261021/Backup/cloak.uasset`와 Git 이력에 남긴다. **2026-10-24의 표면 Cloth는 이 옛 데이터를 복원한 것이 아니라, 망토 RigidBody를 제거한 뒤 엔진 factory로 새로 만든 단일 소유 경로다.** 골격·skin weights·머티리얼·LOD 수를 유지한다. 로컬 백업을 실행·테스트·패키징 의존성으로 사용하지 않는다.

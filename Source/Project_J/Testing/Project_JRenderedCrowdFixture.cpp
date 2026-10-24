@@ -27,6 +27,9 @@
 #include "HAL/FileManager.h"
 #include "UnrealClient.h"
 #include "ProfilingDebugging/MiscTrace.h"
+#include "Components/Project_JModularMeshComponent.h"
+#include "Engine/SkeletalMesh.h"
+#include "SkeletalRenderPublic.h"
 
 void UProject_JRenderedCrowdFixture::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -38,9 +41,14 @@ void UProject_JRenderedCrowdFixture::Initialize(FSubsystemCollectionBase& Collec
 	bSimulateMovement = FParse::Param(FCommandLine::Get(), TEXT("ProjectJRenderedCrowdMovement"));
 	FParse::Value(FCommandLine::Get(), TEXT("ProjectJRenderedCrowdCount="), CrowdCount);
 	CrowdCount = FMath::Clamp(CrowdCount, 1, 200);
+	FParse::Value(FCommandLine::Get(), TEXT("ProjectJRenderedCrowdNanite="), ExpectedNaniteMode);
 	FParse::Value(FCommandLine::Get(), TEXT("ProjectJRenderedCrowdOutput="), Output);
 	if (Output.IsEmpty()) { Output = FPaths::ProjectSavedDir() / TEXT("Validation/RenderedCrowd"); }
 	IFileManager::Get().MakeDirectory(*Output, true);
+	if (ExpectedNaniteMode < -1 || ExpectedNaniteMode > 1)
+	{
+		Finish(false, TEXT("Nanite expectation must be -1, 0 or 1")); return;
+	}
 	Handle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this, &ThisClass::Tick));
 #endif
 }
@@ -93,26 +101,30 @@ bool UProject_JRenderedCrowdFixture::Tick(float Delta)
 {
 	if (bFinished) { return false; }
 	const double Now = FPlatformTime::Seconds();
-	if (Now - Started > 180) { Finish(false, TEXT("Bounded rendered fixture timeout")); return false; }
+	if (Now - Started > (ExpectedNaniteMode >= 0 ? 600 : 180)) { Finish(false, TEXT("Bounded rendered fixture timeout")); return false; }
 	auto* World = GetWorld();
 	if (!World || !World->HasBegunPlay() || !World->GetFirstPlayerController()) { return true; }
 	if (Phase == 0)
 	{
 		if (Now - Started < 2) { return true; }
 		if (!Setup()) { Finish(false, TEXT("Real RHI/authored 200 body setup failed")); return false; }
-		Phase = 1; PhaseAt = FPlatformTime::Seconds();
+		// Mover and montages advance on world time. Wall-time phases would finish
+		// too early when the engine clamps game delta under a heavy crowd load.
+		Phase = 1; PhaseAt = World->GetTimeSeconds();
 		TRACE_BOOKMARK(TEXT("ProjectJ.RenderedCrowd Warmup Actors=200"));
 		return true;
 	}
 	int32 Visible = 0, Montages = 0, Prediction30=0;
 	int32 BodyLODs[3]={}, LocalLOD=INDEX_NONE;
+	int32 NaniteCandidates=0, NaniteParts=0, ClothParts=0, ClothTickParts=0, ModularParts=0;
+	const double PhaseAge = World->GetTimeSeconds() - PhaseAt;
 	for (int32 Index=0;Index<Players.Num();++Index)
 	{
 		auto* Player=Players[Index].Get();
 		if (!IsValid(Player)) { Finish(false, TEXT("Authored actor disappeared")); return false; }
 		if (bSimulateMovement)
 		{
-			const double Age=Now-PhaseAt;
+			const double Age=PhaseAge;
 			const float Direction=Phase==3 || Phase==4 ? (FMath::Fmod(Age,2.)<1.?1.f:-1.f):0.f;
 			const FVector Local=FRotator(0,Player->GetControlRotation().Yaw,0).UnrotateVector(FVector(Direction,0,0));
 			Player->GetLocomotionAnimStateComponent()->SetMoveInput(FVector2D(Local.Y,Local.X));
@@ -127,6 +139,21 @@ bool UProject_JRenderedCrowdFixture::Tick(float Delta)
 		TInlineComponentArray<USkeletalMeshComponent*> Meshes(Player);
 		bool bVisible = false;
 		for (auto* Mesh : Meshes)
+		{
+			if (ExpectedNaniteMode >= 0)
+			{
+				ModularParts += Mesh->IsA<UProject_JModularMeshComponent>();
+				if (const auto* Asset = Mesh->GetSkeletalMeshAsset())
+				{
+					NaniteCandidates += Asset->GetNaniteSettings().bEnabled;
+					NaniteParts += Mesh->GetMeshObject() && Mesh->GetMeshObject()->IsNaniteMesh();
+					if (Asset->HasActiveClothingAssets())
+					{
+						++ClothParts;
+						ClothTickParts += Mesh->IsComponentTickEnabled() && !Mesh->bDisableClothSimulation && !Mesh->IsClothingSimulationSuspended();
+					}
+				}
+			}
 			if (Cast<UProject_JRetargetAnimInstance>(Mesh->GetAnimInstance()))
 			{
 				bVisible |= Mesh->WasRecentlyRendered(.2f);
@@ -134,6 +161,7 @@ bool UProject_JRenderedCrowdFixture::Tick(float Delta)
 				if(LOD>=0 && LOD<3) ++BodyLODs[LOD];
 				if(bWithLocalPlayer && Player==Players[0]) LocalLOD=LOD;
 			}
+		}
 		Visible += bVisible;
 		Montages += Player->GetMesh()->GetAnimInstance()->IsAnyMontagePlaying();
 		if(const auto* Anim=Cast<UProject_JPlayerAnimInstance>(Player->GetMesh()->GetAnimInstance()))
@@ -144,10 +172,17 @@ bool UProject_JRenderedCrowdFixture::Tick(float Delta)
 			{ Finish(false,TEXT("An active montage lost source IK/retarget quality"));return false; }
 		}
 	}
-	const bool bCapture = Phase > 1 && !bShot && Now - PhaseAt > 1;
-	Rows += FString::Printf(TEXT("%d,%.5f,%.6f,%.6f,%d,%d,%d,%d,%d,%d,%d,%d,%.6f,%.6f,%.6f,%d\n"), Phase, Now - Started, Delta * 1000,
+	const bool bCapture = Phase > 1 && !bShot && PhaseAge > 1;
+	Rows += FString::Printf(TEXT("%d,%.5f,%.6f,%.6f,%d,%d,%d,%d,%d,%d,%d,%d,%.6f,%.6f,%.6f,%d,%d,%d,%d,%d,%d,%.6f\n"), Phase, Now - Started, Delta * 1000,
 		FPlatformTime::ToMilliseconds(RHIGetGPUFrameCycles()), Players.Num(), Visible, Montages, bCapture,BodyLODs[0],BodyLODs[1],BodyLODs[2],LocalLOD,
-		FPlatformTime::ToMilliseconds(GGameThreadTime),FPlatformTime::ToMilliseconds(GRenderThreadTime),FPlatformTime::ToMilliseconds(GRHIThreadTime),Prediction30);
+		FPlatformTime::ToMilliseconds(GGameThreadTime),FPlatformTime::ToMilliseconds(GRenderThreadTime),FPlatformTime::ToMilliseconds(GRHIThreadTime),Prediction30,
+		NaniteCandidates,NaniteParts,ClothParts,ClothTickParts,ModularParts,PhaseAge);
+	if (ExpectedNaniteMode >= 0 && Phase > 1 && PhaseAge > 2)
+	{
+		if (NaniteCandidates == 0 || NaniteParts != (ExpectedNaniteMode ? NaniteCandidates : 0) ||
+			ModularParts != 8 * CrowdCount || ClothParts != CrowdCount || ClothTickParts != ClothParts)
+		{ Finish(false, TEXT("Actual Nanite path or authored modular/cloth workload did not match")); return false; }
+	}
 	if (bSimulateMovement && Phase==4) bJumpRequested=true;
 	if (Phase > 1) { ++Samples; VisibleSamples += Visible == CrowdCount; }
 	if (Phase > 1 && bWithLocalPlayer)
@@ -168,12 +203,12 @@ bool UProject_JRenderedCrowdFixture::Tick(float Delta)
 	{
 		bShot = true; FScreenshotRequest::RequestScreenshot(Output / FString::Printf(TEXT("phase%d.png"), Phase), false, false);
 	}
-	if (Now - PhaseAt >= 8)
+	if (PhaseAge >= 8)
 	{
 		if (Phase > 1 && (!Samples || VisibleSamples < Samples / 2))
 		{ Finish(false, TEXT("All 200 retarget bodies were not observed rendered for half the measurement")); return false; }
 		if (Phase == (bSimulateMovement?6:3)) { Finish(true, TEXT("Actual authored retarget bodies; real viewport; no remote connections")); return false; }
-		++Phase; PhaseAt = Now; Samples = VisibleSamples = 0; bShot = false;
+		++Phase; PhaseAt = World->GetTimeSeconds(); Samples = VisibleSamples = 0; bShot = false;
 		TRACE_BOOKMARK(TEXT("ProjectJ.RenderedCrowd Phase=%d Actors=200"), Phase);
 		if (Phase == (bSimulateMovement?5:3)) for (AProject_JPlayerCharacter* Player : Players)
 		{

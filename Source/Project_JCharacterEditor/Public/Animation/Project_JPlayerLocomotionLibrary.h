@@ -66,6 +66,9 @@ public:
  /** Read final secondary-bone poses and completed cloth particle samples. No CVar, asset or simulation reset. */
  UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Diagnostics")
  static FString InspectSecondaryPhysics(USkeletalMeshComponent* Mesh);
+ /** Read actual Nanite render-object selection and existing render LODs without changing resources or pose. Intended for before/after profiling; no save. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Diagnostics")
+ static FString InspectSkinnedMeshRendering(USkeletalMeshComponent* Mesh);
  /** Read completed cloth simulation topology when active, otherwise LOD bone skinning, in world space. Supports LeaderPose followers; diagnostic only, no simulation/asset mutation. */
  UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Diagnostics")
  static FString InspectSkinnedMeshSurface(USkeletalMeshComponent* Mesh, int32 LODIndex = 0);

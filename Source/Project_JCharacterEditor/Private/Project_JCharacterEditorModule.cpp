@@ -462,10 +462,11 @@ public:
 	virtual void StartupModule() override
 	{
 #if WITH_DEV_AUTOMATION_TESTS
-		// UE 5.8.3's three Core formatting tests compare localized FText output
+		// UE 5.8.3/5.8.4's three Core formatting tests compare localized FText output
 		// with English literals. Run their source-language contract in isolation;
 		// never skip assertions, suppress errors, or change the user's settings.
-		if (FEngineVersion::Current().GetMajor()==5 && FEngineVersion::Current().GetMinor()==8 && FEngineVersion::Current().GetPatch()==3)
+		if (FEngineVersion::Current().GetMajor()==5 && FEngineVersion::Current().GetMinor()==8 &&
+			(FEngineVersion::Current().GetPatch()==3 || FEngineVersion::Current().GetPatch()==4))
 		{
 			auto& Tests=FAutomationTestFramework::Get();
 			TestCultureStartHandle=Tests.OnTestStartEvent.AddRaw(this,&FProject_JCharacterEditorModule::BeginEngineFormatTest);
