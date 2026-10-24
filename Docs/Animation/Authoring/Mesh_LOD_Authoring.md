@@ -2,6 +2,8 @@
 
 기존 LOD를 보존하면서 **LOD가 없는 에셋만 공통 설정으로 생성·검사**하는 Editor 제작 경로다. 런타임에서 메시를 축소하거나 임포트 즉시 모든 의상에 같은 축소를 강제하지 않는다. 기존 body/의상/무기 표시·리타깃·장착 구조를 그대로 사용한다.
 
+무기 텍스처의 2K/1K 해상도·압축·스트리밍 기준은 [무기 메시·텍스처 제작 규격](../../Combat/Authoring/Weapon_Asset_Standards.md)에서 관리한다. 이 문서는 지오메트리 LOD를 담당한다.
+
 ## 공통 데이터와 실행 책임
 
 2026-10-24 대검 의상7개는 별도의 Nanite 시험을 적용했다. 몸체 LOD0–2와 망토 Cloth는 유지하며 기존 체인을 전역 교체하지 않는다. 적용 범위·성능과 투명 재질 제한은 [스켈레탈 Nanite 비교](../../Performance/Reports/ProjectJ_Character_Nanite_2026-10-24.md)를 따른다.
@@ -65,7 +67,7 @@ Preview는 transient 복제본만 생성하고 원본을 바꾸지 않는다. Ap
 
 검사는 LOD0 정점/법선/UV/색/인덱스·가중치·section bone map·required/active bone 배열·reference skeleton·재질/소켓·물리 참조·원본 제작 설정을 보호하고, 실제 LOD 수·삼각형 감소·정확한 required-bone 배열을 확인한다. 엔진이 새 LOD를 반영해 다시 계산하는 **자동 UV streaming density**는 authored material/slot과 구분한다. 수동 density override는 보존한다. 수치 검사가 시각 품질을 대신하지 않는다.
 
-공용 표시 몸체와 LeaderPose 의상은 기존 로컬 품질 경로를 사용한다. 공용 `Project_JWeaponPresentationActor`의 정적 무기는 실제 로컬 PlayerController의 빙의/소유자 변경 시 LOD0을 유지하고 해제 시 자동LOD로 반환한다. PlayerState의 늦은 도착에 의존하지 않으며 추가 actor tick·RPC·복제 상태는 없다. authored/다른 시스템의 명시 forced LOD는 우선한다. 독자적인 장비 액터·Groom·LODSync·컴포넌트 override는 해당 표시 경로의 로컬 품질 계약도 별도 확인한다.
+공용 표시 몸체와 LeaderPose 의상은 기존 로컬 품질 경로를 사용한다. 2026-10-24 무기 예산 조정 후 공용 `Project_JWeaponPresentationActor`의 정적 무기는 **로컬·원격 모두 엔진의 화면 크기 기반 LOD**를 사용한다. 로컬 소유만으로 LOD0에 고정하던 대여 상태와 Controller 변경 delegate·등록/해제 경로를 제거했다. authored/다른 시스템의 명시 forced LOD는 유지하며 추가 actor tick·RPC·복제 상태는 없다. 이 변경은 몸체·LeaderPose 의상이나 canonical 게임플레이 pose/socket 정책을 바꾸지 않는다. 독자적인 장비 액터·Groom·LODSync·컴포넌트 override는 해당 표시 경로의 품질 계약도 별도 확인한다.
 
 근접 로컬 품질, 원격 LOD 전환, 장비/망토 관통·손발 접촉, 뼈/소켓, 머티리얼/WPO, morph 극단값, 화면 복귀·재장착·avatar 교체를 실제 연결에서 검수한다. 서버 CMC·GAS·SSR 판정은 canonical pose/socket 권위를 유지하며 시각 LOD에 맞춰 판정 정확도를 낮추지 않는다.
 

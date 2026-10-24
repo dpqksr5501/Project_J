@@ -30,6 +30,8 @@
 #include "Components/Project_JModularMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
 #include "SkeletalRenderPublic.h"
+#include "Components/Project_JWeaponPresentationComponent.h"
+#include "Equipment/Project_JWeaponPresentationActor.h"
 
 void UProject_JRenderedCrowdFixture::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -42,12 +44,18 @@ void UProject_JRenderedCrowdFixture::Initialize(FSubsystemCollectionBase& Collec
 	FParse::Value(FCommandLine::Get(), TEXT("ProjectJRenderedCrowdCount="), CrowdCount);
 	CrowdCount = FMath::Clamp(CrowdCount, 1, 200);
 	FParse::Value(FCommandLine::Get(), TEXT("ProjectJRenderedCrowdNanite="), ExpectedNaniteMode);
+	FParse::Value(FCommandLine::Get(), TEXT("ProjectJRenderedCrowdWeaponVisibility="), WeaponVisibility);
+	FParse::Value(FCommandLine::Get(), TEXT("ProjectJRenderedCrowdWeaponMesh="), ExpectedWeaponMesh);
 	FParse::Value(FCommandLine::Get(), TEXT("ProjectJRenderedCrowdOutput="), Output);
 	if (Output.IsEmpty()) { Output = FPaths::ProjectSavedDir() / TEXT("Validation/RenderedCrowd"); }
 	IFileManager::Get().MakeDirectory(*Output, true);
 	if (ExpectedNaniteMode < -1 || ExpectedNaniteMode > 1)
 	{
 		Finish(false, TEXT("Nanite expectation must be -1, 0 or 1")); return;
+	}
+	if (WeaponVisibility < -1 || WeaponVisibility > 1)
+	{
+		Finish(false, TEXT("Weapon visibility must be -1, 0 or 1")); return;
 	}
 	Handle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this, &ThisClass::Tick));
 #endif
@@ -117,11 +125,26 @@ bool UProject_JRenderedCrowdFixture::Tick(float Delta)
 	int32 Visible = 0, Montages = 0, Prediction30=0;
 	int32 BodyLODs[3]={}, LocalLOD=INDEX_NONE;
 	int32 NaniteCandidates=0, NaniteParts=0, ClothParts=0, ClothTickParts=0, ModularParts=0;
+	int32 WeaponMeshes=0, VisibleWeapons=0, RenderedWeapons=0, AutoLODWeapons=0, MatchingWeapons=0;
 	const double PhaseAge = World->GetTimeSeconds() - PhaseAt;
 	for (int32 Index=0;Index<Players.Num();++Index)
 	{
 		auto* Player=Players[Index].Get();
 		if (!IsValid(Player)) { Finish(false, TEXT("Authored actor disappeared")); return false; }
+		if (WeaponVisibility >= 0)
+		{
+			const auto* Presentation=Player->FindComponentByClass<UProject_JWeaponPresentationComponent>();
+			auto* Weapon=Presentation ? Cast<AProject_JWeaponPresentationActor>(Presentation->GetSpawnedWeapon()) : nullptr;
+			auto* Mesh=Weapon ? Weapon->GetWeaponMesh() : nullptr;
+			if (Mesh && Mesh->GetStaticMesh())
+			{
+				const bool bShow=WeaponVisibility!=0;
+				if (Mesh->IsVisible()!=bShow) Mesh->SetVisibility(bShow);
+				++WeaponMeshes; VisibleWeapons+=Mesh->IsVisible(); RenderedWeapons+=Mesh->WasRecentlyRendered(.2f);
+				AutoLODWeapons+=Mesh->GetForcedLodModel()==0;
+				MatchingWeapons+=ExpectedWeaponMesh.IsEmpty() || Mesh->GetStaticMesh()->GetPathName()==ExpectedWeaponMesh;
+			}
+		}
 		if (bSimulateMovement)
 		{
 			const double Age=PhaseAge;
@@ -173,10 +196,14 @@ bool UProject_JRenderedCrowdFixture::Tick(float Delta)
 		}
 	}
 	const bool bCapture = Phase > 1 && !bShot && PhaseAge > 1;
-	Rows += FString::Printf(TEXT("%d,%.5f,%.6f,%.6f,%d,%d,%d,%d,%d,%d,%d,%d,%.6f,%.6f,%.6f,%d,%d,%d,%d,%d,%d,%.6f\n"), Phase, Now - Started, Delta * 1000,
+	Rows += FString::Printf(TEXT("%d,%.5f,%.6f,%.6f,%d,%d,%d,%d,%d,%d,%d,%d,%.6f,%.6f,%.6f,%d,%d,%d,%d,%d,%d,%.6f,%d,%d,%d,%d,%d\n"), Phase, Now - Started, Delta * 1000,
 		FPlatformTime::ToMilliseconds(RHIGetGPUFrameCycles()), Players.Num(), Visible, Montages, bCapture,BodyLODs[0],BodyLODs[1],BodyLODs[2],LocalLOD,
 		FPlatformTime::ToMilliseconds(GGameThreadTime),FPlatformTime::ToMilliseconds(GRenderThreadTime),FPlatformTime::ToMilliseconds(GRHIThreadTime),Prediction30,
-		NaniteCandidates,NaniteParts,ClothParts,ClothTickParts,ModularParts,PhaseAge);
+		NaniteCandidates,NaniteParts,ClothParts,ClothTickParts,ModularParts,PhaseAge,
+		WeaponMeshes,VisibleWeapons,RenderedWeapons,AutoLODWeapons,MatchingWeapons);
+	if (WeaponVisibility >= 0 && Phase > 1 && PhaseAge > 2 &&
+		(WeaponMeshes!=CrowdCount || VisibleWeapons!=(WeaponVisibility ? CrowdCount : 0) || MatchingWeapons!=CrowdCount))
+	{ Finish(false,TEXT("Weapon comparison lost the equipped mesh or requested visibility"));return false; }
 	if (ExpectedNaniteMode >= 0 && Phase > 1 && PhaseAge > 2)
 	{
 		if (NaniteCandidates == 0 || NaniteParts != (ExpectedNaniteMode ? NaniteCandidates : 0) ||

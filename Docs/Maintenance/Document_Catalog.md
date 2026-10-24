@@ -4,7 +4,7 @@
 
 목록은 파일 위치와 문서 종류를 안내한다. 구현 완료·현재 성능을 판정하는 표가 아니며, 각 문서의 날짜·범위·후속 기록을 함께 읽는다. 통합 문서 안내는 이전 링크를 이어주는 진입점이고 상세 본문은 통합 가이드에 있다.
 
-문서 폴더 파일 3471개, Markdown 270개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
+문서 폴더 파일 3500개, Markdown 273개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
 
 ## 주제별 목록
 
@@ -142,6 +142,7 @@
 | [Combat VFX Architecture](../Combat/Architecture/CombatVFXArchitecture.md) | 구조·계약 | Combat/Architecture/CombatVFXArchitecture.md |
 | [Scalable Combat Foundation](../Combat/Architecture/ScalableCombatFoundation.md) | 구조·계약 | Combat/Architecture/ScalableCombatFoundation.md |
 | [Greatsword Combat Authoring Guide](../Combat/Authoring/GreatswordCombatAuthoringGuide.md) | 제작 가이드 | Combat/Authoring/GreatswordCombatAuthoringGuide.md |
+| [무기 메시·텍스처 제작 규격](../Combat/Authoring/Weapon_Asset_Standards.md) | 제작 가이드 | Combat/Authoring/Weapon_Asset_Standards.md |
 | [전투](../Combat/README.md) | 목차·문서 관리 | Combat/README.md |
 | [Combat Draw/Sheathe 중 stale one-shot 차단 (2026-08-12)](../Combat/Reports/CombatIntro_StaleOneShot_Resolution_2026-08-12.md) | 시점별 보고·검증 | Combat/Reports/CombatIntro_StaleOneShot_Resolution_2026-08-12.md |
 | [Combat Strafe implementation status - 2026-08-04](../Combat/Reports/CombatStrafe_Implementation_2026-08-04.md) | 시점별 보고·검증 | Combat/Reports/CombatStrafe_Implementation_2026-08-04.md |
@@ -228,10 +229,12 @@
 | [Project_J Scalability Profiling & Validation Plan](../Performance/Planning/ProjectJ_Scalability_Profiling_Validation_Plan_2026-09-03.md) | 계획·제안 | Performance/Planning/ProjectJ_Scalability_Profiling_Validation_Plan_2026-09-03.md |
 | [성능 설계·수집·결과](../Performance/README.md) | 목차·문서 관리 | Performance/README.md |
 | [200명 Mover 측정 원자료](../Performance/Reports/Data/Mover200_20261022/README.md) | 목차·문서 관리 | Performance/Reports/Data/Mover200_20261022/README.md |
+| [대검 스켈레탈 Nanite 적용과 비용 비교 — 2026-10-24](../Performance/Reports/ProjectJ_Character_Nanite_2026-10-24.md) | 시점별 보고·검증 | Performance/Reports/ProjectJ_Character_Nanite_2026-10-24.md |
 | [Mover 구조 결함 수정과 200명 재검증 — 2026-10-22](../Performance/Reports/ProjectJ_Mover_200_2026-10-22.md) | 시점별 보고·검증 | Performance/Reports/ProjectJ_Mover_200_2026-10-22.md |
 | [Project_J Profiling Baseline Results](../Performance/Reports/ProjectJ_Profiling_Baseline_Results_2026-09-03.md) | 시점별 결과 | Performance/Reports/ProjectJ_Profiling_Baseline_Results_2026-09-03.md |
 | [Project_J Profiling Consolidated Summary](../Performance/Reports/ProjectJ_Profiling_Consolidated_Summary_2026-09-06.md) | 시점별 보고·검증 | Performance/Reports/ProjectJ_Profiling_Consolidated_Summary_2026-09-06.md |
 | [Project_J 시스템 현대화 및 단계적 리팩토링 — 2026-09-08](../Performance/Reports/ProjectJ_Systems_Modernization_Refactor_2026-09-08.md) | 시점별 보고·검증 | Performance/Reports/ProjectJ_Systems_Modernization_Refactor_2026-09-08.md |
+| [기본 대검 200명 렌더 부하 측정 — 2026-10-24](../Performance/Reports/ProjectJ_Weapon200_2026-10-24.md) | 시점별 보고·검증 | Performance/Reports/ProjectJ_Weapon200_2026-10-24.md |
 
 ### 벤치마크
 
@@ -404,7 +407,7 @@
 | [Handoffs/MotionMatchingCrowd_2026-10-05/Screenshots](../Handoffs/MotionMatchingCrowd_2026-10-05/Screenshots) | 15 | 문서 이동·보존 기록 |
 | [Handoffs/WholeProjectAudit_2026-10-14](../Handoffs/WholeProjectAudit_2026-10-14) | 1 | 문서 이동·보존 기록 |
 | [Maintenance]() | 4 | 문서 이동·보존 기록 |
-| [Performance/Reports](../Performance/Reports) | 1 | 문서 이동·보존 기록 |
+| [Performance/Reports](../Performance/Reports) | 2 | 문서 이동·보존 기록 |
 | [Performance/Reports/Data/Mover200_20261022](../Performance/Reports/Data/Mover200_20261022) | 8 | 문서 이동·보존 기록 |
 | [Performance/Reports/Data/Mover200_20261022/Mover200_A2](../Performance/Reports/Data/Mover200_20261022/Mover200_A2) | 6 | 문서 이동·보존 기록 |
 | [Performance/Reports/Data/Mover200_20261022/Mover200_B1](../Performance/Reports/Data/Mover200_20261022/Mover200_B1) | 6 | 문서 이동·보존 기록 |
@@ -427,6 +430,11 @@
 | [Performance/Reports/Data/Mover200_20261022/Validation/MoverAuditNetwork02/Server](../Performance/Reports/Data/Mover200_20261022/Validation/MoverAuditNetwork02/Server) | 2 | 문서 이동·보존 기록 |
 | [Performance/Reports/Data/Mover200_20261022/Validation/MoverAuditNetwork03](../Performance/Reports/Data/Mover200_20261022/Validation/MoverAuditNetwork03) | 4 | 문서 이동·보존 기록 |
 | [Performance/Reports/Data/Mover200_20261022/Validation/MoverAuditNetwork03/Server](../Performance/Reports/Data/Mover200_20261022/Validation/MoverAuditNetwork03/Server) | 2 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/Weapon200_20261024](../Performance/Reports/Data/Weapon200_20261024) | 5 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/Weapon200_20261024/Weapon200_Hidden_A_20261024](../Performance/Reports/Data/Weapon200_20261024/Weapon200_Hidden_A_20261024) | 5 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/Weapon200_20261024/Weapon200_Hidden_B_20261024](../Performance/Reports/Data/Weapon200_20261024/Weapon200_Hidden_B_20261024) | 5 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/Weapon200_20261024/Weapon200_Shown_A_20261024](../Performance/Reports/Data/Weapon200_20261024/Weapon200_Shown_A_20261024) | 5 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/Weapon200_20261024/Weapon200_Shown_B_20261024](../Performance/Reports/Data/Weapon200_20261024/Weapon200_Shown_B_20261024) | 5 | 문서 이동·보존 기록 |
 | [Reference](../Reference) | 2 | 참고 TXT 원문 |
 | [Review/Architecture](../Review/Architecture) | 12 | 문서 이동·보존 기록 |
 | [Review/Audits](../Review/Audits) | 1 | 문서 이동·보존 기록 |

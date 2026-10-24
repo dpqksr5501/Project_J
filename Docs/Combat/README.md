@@ -14,6 +14,7 @@
 
 ## 제작
 
+- [무기 메시·텍스처 제작 규격](Authoring/Weapon_Asset_Standards.md): BaseColor/Normal 최대 2K, ORM 최대 1K, 원본 보존·스트리밍·예외·검수 기준.
 - [대검 공격·콤보 작성](Authoring/GreatswordCombatAuthoringGuide.md).
 - 손 접촉 구간과 왼팔 ABP는 [양손 파지 가이드](../Animation/Authoring/Secondary_Hand_Contact.md).
 - 직업·전직 데이터 연결은 [게임플레이 제작](../Gameplay/README.md).

@@ -39,3 +39,4 @@ Docs/Archive/Requests/2026-10-15/** -text
 # Shared measurements and diagnostic evidence, indexed by SHA-256 manifests.
 /Archives/Validation/**/*.zip filter=lfs -diff merge=lfs -text
 Docs/Performance/Reports/Data/Mover200_20261022/** -text whitespace=cr-at-eol
+Docs/Performance/Reports/Data/Weapon200_20261024/** -text

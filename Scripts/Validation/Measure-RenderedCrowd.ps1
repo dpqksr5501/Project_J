@@ -1,6 +1,7 @@
 param([Parameter(Mandatory=$true)][ValidatePattern('^[A-Za-z0-9_-]+$')][string]$RunName, [switch]$Trace, [string]$Executable, [switch]$DisableEditorPython, [switch]$LocalPlayer,
  [ValidateRange(1,200)][int]$Count=200,[switch]$Movement,[string]$ConsoleCommands='',
- [ValidateRange(-1,1)][int]$NaniteMode=-1)
+ [ValidateRange(-1,1)][int]$NaniteMode=-1,
+ [ValidateRange(-1,1)][int]$WeaponVisibility=-1,[string]$ExpectedWeaponMesh='')
 $ErrorActionPreference='Stop'
 . "$PSScriptRoot/Source-Provenance.ps1"
 if(@(Get-Process UnrealEditor*,Project_J,UnrealBuildTool,dotnet,LiveCoding*,MSBuild,ShaderCompileWorker -ErrorAction SilentlyContinue).Count){throw 'Wait for engine/build completion.'}
@@ -21,6 +22,13 @@ $arguments=@('/Engine/Maps/Entry?game=/Script/Engine.GameModeBase','-game','-una
  "-ExecCmds=t.MaxFPS 0,r.VSync 0,$ConsoleCommands", '-statnamedevents', "-UserDir=$out/User/", '-SaveToUserDir',"-ProjectJRenderedCrowdCount=$Count")
 if ($Movement) { $arguments += '-ProjectJRenderedCrowdMovement' }
 if ($NaniteMode -ge 0) { $arguments += "-ProjectJRenderedCrowdNanite=$NaniteMode" }
+if ($WeaponVisibility -ge 0) {
+ $arguments += "-ProjectJRenderedCrowdWeaponVisibility=$WeaponVisibility"
+ if ($ExpectedWeaponMesh) {
+  if($ExpectedWeaponMesh -notmatch '^/Game/[A-Za-z0-9_/.]+$'){throw 'ExpectedWeaponMesh must be a project asset path.'}
+  $arguments += "-ProjectJRenderedCrowdWeaponMesh=$ExpectedWeaponMesh"
+ }
+}
 if (!$Executable) { $arguments = @("$root/Project_J.uproject") + $arguments }
 if ($DisableEditorPython -and !$Executable) { $arguments += '-DisablePython' }
 if ($LocalPlayer) { $arguments += '-ProjectJRenderedCrowdLocalPlayer' }
@@ -34,9 +42,13 @@ if ($NaniteMode -ge 0) {
   $files += @(Get-ChildItem -LiteralPath "$root/$relativeFolder" -Filter '*.uasset' -File | Sort-Object Name | ForEach-Object { "$relativeFolder/$($_.Name)" })
  }
 }
+if ($WeaponVisibility -ge 0) {
+ $files += @('Content/Character_BPs/GreatSword/BP_Greatsword_Basic.uasset','Content/DataAssetSets/Presentation/Greatsword/DA_Greatsword_Presentation.uasset','Content/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_Equip.uasset')
+ $files += @(Get-ChildItem -LiteralPath "$root/Content/Weapons/Greatsword/Basic" -Filter '*.uasset' -File | Sort-Object Name | ForEach-Object { "Content/Weapons/Greatsword/Basic/$($_.Name)" })
+}
 $hashes=@($files|ForEach-Object{[ordered]@{path=$_;sha256=(Get-FileHash -LiteralPath "$root/$_").Hash}})
 [ordered]@{head=(& git -C $root -c core.fsmonitor=false rev-parse HEAD);cpu=(Get-CimInstance Win32_Processor).Name;gpu=(Get-CimInstance Win32_VideoController).Name;
- actors=$Count;movement=[bool]$Movement;consoleCommands=$ConsoleCommands;naniteMode=$NaniteMode;editorPythonDisabled=[bool]($DisableEditorPython -and !$Executable);sourceProvenance=(Get-ProjectJSourceProvenance -ProjectRoot $root -RuntimePaths @($exe));localPlayer=[bool]$LocalPlayer;connections=0;nullRHI=$false;offscreenViewport=$true;resolution='1280x720';fpsCap=0;vsync=0;trace=[bool]$Trace;packaged=[bool]$Executable;executable=$exe;executableSHA256=(Get-FileHash -LiteralPath $exe).Hash;arguments=$arguments;artifacts=$hashes}|
+ actors=$Count;movement=[bool]$Movement;consoleCommands=$ConsoleCommands;naniteMode=$NaniteMode;weaponVisibility=$WeaponVisibility;expectedWeaponMesh=$ExpectedWeaponMesh;editorPythonDisabled=[bool]($DisableEditorPython -and !$Executable);sourceProvenance=(Get-ProjectJSourceProvenance -ProjectRoot $root -RuntimePaths @($exe));localPlayer=[bool]$LocalPlayer;connections=0;nullRHI=$false;offscreenViewport=$true;resolution='1280x720';fpsCap=0;vsync=0;trace=[bool]$Trace;packaged=[bool]$Executable;executable=$exe;executableSHA256=(Get-FileHash -LiteralPath $exe).Hash;arguments=$arguments;artifacts=$hashes}|
  ConvertTo-Json -Depth 8|Set-Content "$out/manifest.json" -Encoding utf8
 $quoted=($arguments|ForEach-Object{'"'+$_+'"'}) -join ' '
 $p=Start-Process $exe -WorkingDirectory (Split-Path -Parent $exe) -ArgumentList $quoted -WindowStyle Hidden -PassThru
@@ -57,6 +69,10 @@ if($result -notmatch 'success=1' -or !(Test-Path "$out/phase2.png") -or !(Test-P
 if($Executable -and $result -notmatch 'cooked=1'){throw 'Packaged run did not require cooked data.'}
 if($LocalPlayer -and ($result -notmatch 'local_player=1' -or $result -notmatch 'local_quality_samples=[1-9][0-9]*')){throw 'No verified local full-quality frames.'}
 $rows=@(Import-Csv "$out/frames.csv")
+if ($WeaponVisibility -ge 0) {
+ $weaponRows=@($rows|Where-Object {[int]$_.phase -gt 1 -and [double]$_.phase_game_s -gt 2})
+ if(!$weaponRows.Count -or @($weaponRows|Where-Object {[int]$_.weapon_meshes -ne $Count -or [int]$_.weapon_mesh_matches -ne $Count -or [int]$_.weapon_visible -ne $(if($WeaponVisibility){$Count}else{0})}).Count){throw 'Equipped weapon comparison did not exercise every participant.'}
+}
 if ($NaniteMode -ge 0) {
  $measured=@($rows|Where-Object { [int]$_.phase -gt 1 })
  if(!$measured.Count -or @($measured|Where-Object { [int]$_.nanite_candidates -le 0 -or [int]$_.modular_parts -ne 8*$Count -or [int]$_.cloth_parts -ne $Count -or [int]$_.cloth_tick_parts -ne $Count }).Count){throw 'Nanite comparison lost the authored modular/cloth workload.'}

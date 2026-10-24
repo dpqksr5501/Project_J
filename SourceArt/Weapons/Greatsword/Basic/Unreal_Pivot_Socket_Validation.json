@@ -1,0 +1,87 @@
+{
+  "status": "ok",
+  "engine": "5.8.4-58902052+++UE5+Release-5.8",
+  "reference_asset": "/Game/Anim_Assets/Great_Sword/Weapon/SM_Sword.SM_Sword",
+  "imported_validation_object": "/Game/__CodexGothicValidation/SM_GothicGreatsword_PivotValidation.SM_GothicGreatsword_PivotValidation",
+  "saved_to_project": false,
+  "geometry_bounds_error_cm": 1.7642974853515625e-05,
+  "sockets": [
+    {
+      "name": "WeaponGrip_R",
+      "location_cm": [
+        0.0,
+        -2.0,
+        0.0
+      ],
+      "rotation": {
+        "pitch": 0.0,
+        "yaw": -0.0,
+        "roll": 0.0
+      },
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "max_location_error_cm": 0.0
+    },
+    {
+      "name": "WeaponGrip_L",
+      "location_cm": [
+        0.0,
+        6.0,
+        0.0
+      ],
+      "rotation": {
+        "pitch": 0.0,
+        "yaw": -0.0,
+        "roll": 0.0
+      },
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "max_location_error_cm": 0.0
+    },
+    {
+      "name": "WeaponGroundProbe_Tip",
+      "location_cm": [
+        18.5,
+        -145.0,
+        0.0
+      ],
+      "rotation": {
+        "pitch": 0.0,
+        "yaw": -0.0,
+        "roll": 0.0
+      },
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "max_location_error_cm": 0.0
+    },
+    {
+      "name": "WeaponGroundProbe_Base",
+      "location_cm": [
+        0.0,
+        -191.3000030517578,
+        0.0
+      ],
+      "rotation": {
+        "pitch": 0.0,
+        "yaw": -0.0,
+        "roll": 0.0
+      },
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "max_location_error_cm": 3.0517578011313162e-06
+    }
+  ],
+  "message": "Imported the new FBX using the original SM_Sword import settings, verified centimeter geometry bounds and all four original socket transforms. No original asset or skeletal socket was changed."
+}

@@ -1,0 +1,6 @@
+{
+  "source_and_binaries_unchanged": true,
+  "assets_unchanged": true,
+  "protected_artifact_count": 40,
+  "method": "Exact parsed provenance equality plus current asset SHA-256; all four run manifests also match."
+}

@@ -20,7 +20,7 @@ private:
 	void Finish(bool bSuccess, const TCHAR* Reason);
 	UPROPERTY() TArray<TObjectPtr<AProject_JPlayerCharacter>> Players;
 	FTSTicker::FDelegateHandle Handle;
-	FString Output, Rows = TEXT("phase,elapsed_s,frame_delta_ms,gpu_ms,actors,rendered_actors,montages,capture_requested,body_lod0,body_lod1,body_lod2,local_body_lod,gt_ms,render_ms,rhi_ms,prediction30,nanite_candidates,nanite_parts,cloth_parts,cloth_tick_parts,modular_parts,phase_game_s\n");
+	FString Output, Rows = TEXT("phase,elapsed_s,frame_delta_ms,gpu_ms,actors,rendered_actors,montages,capture_requested,body_lod0,body_lod1,body_lod2,local_body_lod,gt_ms,render_ms,rhi_ms,prediction30,nanite_candidates,nanite_parts,cloth_parts,cloth_tick_parts,modular_parts,phase_game_s,weapon_meshes,weapon_visible,weapon_rendered,weapon_auto_lod,weapon_mesh_matches\n");
 	// Wall time bounds the run; world/game time controls the prescribed animation workload.
 	double Started = 0, PhaseAt = 0;
 	int32 Phase = 0, Samples = 0, VisibleSamples = 0, CrowdCount = 200;
@@ -36,4 +36,7 @@ private:
 	int32 LocalQualitySamples = 0;
 	// Optional assertion for profiling the same saved assets through both render paths.
 	int32 ExpectedNaniteMode = -1;
+	// Optional visual-only comparison: equipment, abilities and weapon motion keep running.
+	int32 WeaponVisibility = -1;
+	FString ExpectedWeaponMesh;
 };

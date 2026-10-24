@@ -6,6 +6,18 @@ This guide is the current authoring contract for Greatsword attacks, combo branc
 
 ## Ownership
 
+신규 무기의 공통 해상도·압축·스트리밍과 예외 판단은 [무기 메시·텍스처 제작 규격](Weapon_Asset_Standards.md)을 따른다. BaseColor/Normal 최대 2K, ORM 최대 1K가 기본이다.
+
+200명 후속 실측은 [기본 대검 200명 부하 보고서](../../Performance/Reports/ProjectJ_Weapon200_2026-10-24.md)를 따른다. 실제 새 대검을 장착한 표시/숨김 각 2회에서 GPU 추가 비용과 전체 CPU 병목을 구분했으며, 아래 초기 제작 검증과는 별도 실행이다.
+
+2026-10-24 후속 MMORPG 무기 예산: 공용 무기 Actor의 로컬 LOD0 고정을 제거해 로컬·원격 모두 기존 화면 크기 기반 LOD0–2를 선택한다. 고정 대여용 상태·Controller delegate와 등록/해제를 함께 제거했으며 명시적 컴포넌트 forced LOD는 유지한다. 몸체·의상·게임플레이 pose/socket·장비/GAS/복제 권위는 변경하지 않았다. 기본 대검은 원본 2K 세 맵을 보존하면서 BaseColor/Normal 최대 2K, ORM 최대 1K로 설정했고 Weapon/WeaponNormalMap/WeaponSpecular 그룹과 mipmap·스트리밍을 사용한다. ORM 최대 texel 면적은 이전의 25%이며, 이 비율을 전체 VRAM/FPS 개선율로 해석하지 않는다. 같은 텍스처를 로컬/원격별로 복제하거나 강제 상주시킬 필요가 없다. 기존 단일 재질·그림자·무충돌·무틱·비복제 표현과 원격 생성 예산 큐를 유지했다.
+
+후속 검증: direct Editor UBT 성공(523개 작업, 350.99초), `LocalWeaponLifecycle`/`PrimaryGripAttachment`/`WeaponAttackLifetime`/`PlayerMasterAssembly` 4개 성공. 실제 빌드 크기 2048/2048/1024와 streaming 허용을 확인했고, 전용 서버+두 클라이언트의 로컬·원격 네 무기 모두 `ForcedLodModel=0`, 그립/손/등 부착과 장비 해제→클라이언트 표현 제거→재장착 복원을 확인했다. 현재 테스트 장면의 ORM 2K/1K 화면 및 300/1800cm 카메라 외형을 관찰했다. 최종 설정은 새 Python commandlet에서 다시 로드해 확인했고 종료 코드 0이었다. 미저장 content/map 패키지 0개로 에디터를 정상 종료했으며 PIE 클라이언트 수도 원래 1로 복원했다. 전환 프레임별 렌더 LOD index와 GPU 시간은 계측하지 않았으며, 200명 장면·다양한 무기 스킨·최소 사양·Cook/Shipping의 예산 검증은 별도다. 아래 문단은 후속 조정 전 최초 수입 시점의 기록이다.
+
+2026-10-24 기본 무기 외형: `DA_Greatsword_Equip`의 `Greatsword.Starter` ID와 전투/능력 설정은 유지하고, 기존 `DA_Greatsword_Presentation.WeaponActorClass`를 같은 캐릭터 BP 폴더의 `BP_Greatsword_Basic`으로 연결했다. 이 BP는 native `Project_JWeaponPresentationActor`를 직접 상속하며 `/Game/Weapons/Greatsword/Basic/SM_Greatsword_Basic`과 2K BaseColor/DirectX Normal/ORM 재질 하나를 사용한다. 기존 `BP_Greatsword_Weapon`, `BP_GreatSword_Weapon1`, `SM_Sword`는 기존 제작/테스트 자산으로 보존했다. 손/등 부착·독립 무기 궤적·그립/접지 설정은 기존 프로필이 계속 소유한다. [수입 원본·LOD·소켓 재수입 기준](../../../SourceArt/Weapons/Greatsword/Basic/README.md)을 따른다.
+
+이번 검증은 LOD 3단계(14,980/7,490/3,744삼각형, 화면 크기 1/0.35/0.18), 소켓 4개 좌표, 기본 장비 참조와 BP 생성·무충돌 설정, 전용 서버+클라이언트 PIE의 장비 해제/재장착 반영, 두 클라이언트의 로컬 LOD0/원격 자동 LOD 및 손/등 재부착을 포함한다. 기존 `PrimaryGripAttachment`, `WeaponPresentationIdentity`, `WeaponAttackLifetime`, `PlayerMasterAssembly` 회귀 4개가 성공했다. `WeaponPresentationIdentity`의 합성 fixture는 소켓 `None` 납도 경고 5개를 냈으며 생산 PIE의 새 무기 오류와 구분한다. 초기 수입 탄젠트 경고는 원본 FBX 노멀·탄젠트를 직접 사용해 해소했다. 에디터를 미저장 패키지 0개로 정상 종료한 뒤 새 Python commandlet에서 BP의 저장된 native 메시 override·장비 참조·LOD/소켓/재질/텍스처 설정을 재확인했고 종료 코드 0으로 끝났다. 검증용 PIE 클라이언트 수는 원래 1로 복원했다. 전체 공격/의상 간섭·모든 거리 LOD 전환의 시각 품질, 대규모 군중 성능, Cook/Shipping 검증은 수행하지 않았다. C++ 변경은 없다.
+
 2026-10-13 deep audit: the ten attack definitions that incorrectly referenced the infinite `BP_GE_CombatMode` were corrected to the existing working LMB1 instant `GE_TestDamege` (Health -10). The shared combat toggle effect was preserved. `HitSpec.BaseDamage` is a legacy serialized placeholder; the server currently applies the selected DamageEffect's magnitude. Damage effects with no modifier, execution or on-application additional effect fail native data validation. [Evidence and limits](../../Review/Audits/Project_J_Deep_Structure_Audit_2026-10-13.md).
 
 ```text
