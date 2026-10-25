@@ -130,7 +130,7 @@ void UProject_JWeaponPresentationComponent::LogAttachmentTrace(const TCHAR* Cont
 	const USkeletalMeshComponent* Body = Profile && Profile->bPreferVisualFollowerSockets
 		? Project_J::Animation::FindVisualFollower(*Character) : Project_J::Movement::FindPoseSource(Character);
 	if (!Body) { Body = Project_J::Movement::FindPoseSource(Character); }
-	const UProject_JRetargetAnimInstance* Anim = Body ? Cast<UProject_JRetargetAnimInstance>(Body->GetAnimInstance()) : nullptr;
+	const UProject_JRetargetAnimInstance* Anim = Project_J::Animation::FindBodyContactController(Body);
 	const AProject_JPlayerCharacter* Player = Cast<AProject_JPlayerCharacter>(Character);
 	const UProject_JCharacterAnimProfile* CharacterProfile = Player ? Player->GetCharacterAnimProfile() : nullptr;
 	const UProject_JHandGripProfile* BodyProfile = Anim ? Anim->GetResolvedHandGripProfile()
@@ -208,8 +208,10 @@ void UProject_JWeaponPresentationComponent::SampleGripTrace()
 	const USceneComponent* Root = SpawnedWeapon->GetRootComponent();
 	const USkeletalMeshComponent* Source = Project_J::Movement::FindPoseSource(Character);
 	const USkeletalMeshComponent* Visible = Project_J::Animation::FindVisualFollower(*Character);
+	if (!Visible) { Visible = Source; }
 	const UProject_JRetargetAnimInstance* FollowerAnim = Visible
 		? Cast<UProject_JRetargetAnimInstance>(Visible->GetAnimInstance()) : nullptr;
+	if (!FollowerAnim && Visible) { FollowerAnim = Cast<UProject_JRetargetAnimInstance>(Visible->GetPostProcessInstance()); }
 	if (!Root || !Source || !Visible || !FollowerAnim) { return; }
 	const UProject_JWeaponPresentationProfile* Profile = GetCurrentPresentationProfile();
 	const FProject_JHandGripCalibration Calibration = FollowerAnim->GetHandGripCalibration();

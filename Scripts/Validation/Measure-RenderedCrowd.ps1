@@ -1,4 +1,4 @@
-param([Parameter(Mandatory=$true)][ValidatePattern('^[A-Za-z0-9_-]+$')][string]$RunName, [switch]$Trace, [string]$Executable, [switch]$DisableEditorPython, [switch]$LocalPlayer,
+﻿param([Parameter(Mandatory=$true)][ValidatePattern('^[A-Za-z0-9_-]+$')][string]$RunName, [switch]$Trace, [string]$Executable, [switch]$DisableEditorPython, [switch]$LocalPlayer,
  [ValidateRange(1,200)][int]$Count=200,[switch]$Movement,[string]$ConsoleCommands='',
  [ValidateRange(-1,1)][int]$NaniteMode=-1,
  [ValidateRange(-1,1)][int]$WeaponVisibility=-1,[string]$ExpectedWeaponMesh='')
@@ -35,6 +35,10 @@ if ($LocalPlayer) { $arguments += '-ProjectJRenderedCrowdLocalPlayer' }
 if($Trace){$arguments+=@('-trace=cpu,frame,gpu,bookmark,region,counters,task',"-tracefile=$out/Render.utrace")}
 $files=@('Project_J.uproject','Content/Character_BPs/GreatSword/BP_GreatSword.uasset',
  'Content/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme.uasset','Content/Animation_Logic/ABPs/ABP_Player_Master.uasset')
+# Current compatible body route and its contact/physics assets are part of the measured workload.
+if (Test-Path -LiteralPath "$root/Content/GreatSword") {
+ $files += @(Get-ChildItem -LiteralPath "$root/Content/GreatSword" -Recurse -Filter '*.uasset' -File | Sort-Object FullName | ForEach-Object { $_.FullName.Substring($root.Length+1).Replace('\','/') })
+}
 if (!$Executable) { $files += @('Binaries/Win64/UnrealEditor-Project_J.dll','Binaries/Win64/UnrealEditor-Project_JCharacter.dll') }
 if ($NaniteMode -ge 0) {
  $files += 'Content/Characters/GreatSword/GreatSword_Woman.uasset'
@@ -74,8 +78,9 @@ if ($WeaponVisibility -ge 0) {
  if(!$weaponRows.Count -or @($weaponRows|Where-Object {[int]$_.weapon_meshes -ne $Count -or [int]$_.weapon_mesh_matches -ne $Count -or [int]$_.weapon_visible -ne $(if($WeaponVisibility){$Count}else{0})}).Count){throw 'Equipped weapon comparison did not exercise every participant.'}
 }
 if ($NaniteMode -ge 0) {
+ $expectedModularParts=@(Import-Csv "$out/pose_routes.csv"|Where-Object {[int]$_.modular -eq 1}).Count
  $measured=@($rows|Where-Object { [int]$_.phase -gt 1 })
- if(!$measured.Count -or @($measured|Where-Object { [int]$_.nanite_candidates -le 0 -or [int]$_.modular_parts -ne 8*$Count -or [int]$_.cloth_parts -ne $Count -or [int]$_.cloth_tick_parts -ne $Count }).Count){throw 'Nanite comparison lost the authored modular/cloth workload.'}
+ if(!$expectedModularParts -or !$measured.Count -or @($measured|Where-Object { [int]$_.nanite_candidates -le 0 -or [int]$_.modular_parts -ne $expectedModularParts -or [int]$_.cloth_parts -ne $Count -or [int]$_.cloth_tick_parts -ne $Count }).Count){throw 'Nanite comparison lost the authored modular/cloth workload.'}
  if(@($measured|Where-Object { [int]$_.nanite_parts -ne $(if($NaniteMode){[int]$_.nanite_candidates}else{0}) }).Count){throw 'Saved Nanite settings did not select the expected actual render path.'}
 }
 $attackPhase=if($Movement){5}else{3}
@@ -86,6 +91,6 @@ if($Movement){
  $work=@(Import-Csv "$out/workload.csv")
  if($work.Count -ne $Count -or @($work|Where-Object {[double]$_.travel_cm -le 100 -or [int]$_.reversals -lt 1 -or [int]$_.landings -lt 1}).Count){throw 'Moving/pivot/jump workload was not exercised for every participant.'}
 }
-[ordered]@{success=$true;exitCode=$p.ExitCode;frames=$rows.Count;scope='Real offscreen viewport/RHI and actual constructed retarget bodies; simplified camera/light scene; no remote clients. GPU counters may be delayed. Captures affect frame timing.'}|
+[ordered]@{success=$true;exitCode=$p.ExitCode;frames=$rows.Count;scope='Real offscreen viewport/RHI and actual constructed bodies (pose route recorded in pose_routes.csv); simplified camera/light scene; no remote clients. GPU counters may be delayed. Captures affect frame timing.'}|
  ConvertTo-Json|Set-Content "$out/verification.json" -Encoding utf8
 Write-Output "Completed rendered crowd: $out"

@@ -14,6 +14,14 @@ enum class EProject_JMissingPalmPolicy : uint8
 	DisableContactIK UMETA(DisplayName = "Disable Contact IK")
 };
 
+/** Calibrated wrist relative to an independent bone in the incoming pose. */
+struct FProject_JInputPoseContact
+{
+	FName Bone = NAME_None;
+	FTransform Wrist = FTransform::Identity;
+	bool IsValid() const { return !Bone.IsNone() && !Wrist.ContainsNaN(); }
+};
+
 USTRUCT(BlueprintType)
 struct PROJECT_JCHARACTER_API FProject_JArmBendStability
 {

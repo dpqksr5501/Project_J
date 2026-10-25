@@ -20,6 +20,7 @@
 #include "Engine/World.h"
 #include "Engine/SkeletalMesh.h"
 #include "Engine/StaticMeshSocket.h"
+#include "Engine/SkeletalMeshSocket.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "GameFramework/Character.h"
 #include "HAL/IConsoleManager.h"
@@ -95,6 +96,8 @@ void UProject_JWeaponPresentationComponent::TickComponent(float DeltaTime, ELeve
 		ActivePrimaryGripIKAlpha = 0.0f;
 		ActiveSecondaryGripIKAlpha = 0.0f;
 		LastMotionEvaluationFrame = MAX_uint64;
+		AnimationGripTargetsFrame = MAX_uint64;
+		AnimationGripTargets = {};
 		ActiveMotionReturnMesh.Reset();
 		ActiveMotionReturnSocket = NAME_None;
 		GroundContactStateCount = 0;
@@ -383,7 +386,7 @@ FProject_JResolvedWeaponAttachment UProject_JWeaponPresentationComponent::Resolv
 	USkeletalMeshComponent* Body = Profile->bPreferVisualFollowerSockets
 		? Project_J::Animation::FindVisualFollower(*Character) : Project_J::Movement::FindPoseSource(Character);
 	if (!Body) { Body = Project_J::Movement::FindPoseSource(Character); }
-	const UProject_JRetargetAnimInstance* Anim = Body ? Cast<UProject_JRetargetAnimInstance>(Body->GetAnimInstance()) : nullptr;
+	const UProject_JRetargetAnimInstance* Anim = Project_J::Animation::FindBodyContactController(Body);
 	const FProject_JHandGripCalibration Calibration = Anim ? Anim->GetHandGripCalibration()
 		: Project_J::Animation::ResolveHandGripCalibration(Character, nullptr);
 	// Contact mounting requires a real Palm; wrist-origin compatibility is for old IK graphs only.
@@ -479,6 +482,8 @@ void UProject_JWeaponPresentationComponent::DestroyWeaponPresentation()
 		PreviousWeapon->Destroy();
 	}
 	GripTargets = FProject_JWeaponGripTargets();
+	AnimationGripTargets = {};
+	AnimationGripTargetsFrame = MAX_uint64;
 }
 
 bool UProject_JWeaponPresentationComponent::ShouldBudgetPresentation() const
@@ -719,7 +724,7 @@ void UProject_JWeaponPresentationComponent::EndIndependentMotion()
 				ContactRecoveryWeaponInSourceSocket = WeaponRoot->GetComponentTransform().GetRelativeTransform(SourceSocketWorld);
 				ContactRecoveryGripInSourceSocket = ExitGrip.PrimaryGripWorldTransform.GetRelativeTransform(SourceSocketWorld);
 			}
-			const UProject_JRetargetAnimInstance* Anim = Cast<UProject_JRetargetAnimInstance>(ReturnMesh->GetAnimInstance());
+			const UProject_JRetargetAnimInstance* Anim = Project_J::Animation::FindBodyContactController(ReturnMesh);
 			ContactRecoveryPrimaryAlpha = ExitGrip.bHasPrimaryGrip
 				? FMath::Clamp(Anim ? Anim->RightGripAlpha : ExitGrip.PrimaryIKAlpha, 0.0f, 1.0f) : 0.0f;
 			ContactRecoverySecondaryAlpha = ExitGrip.bHasSecondaryGrip
@@ -762,6 +767,7 @@ void UProject_JWeaponPresentationComponent::UpdateContactRecovery(double NowSeco
 		RefreshAttachmentCalibration();
 		return;
 	}
+	if (AnimationGripTargetsFrame == GFrameCounter) return;
 	// Use absolute cosmetic time: animation pull and late tick cannot advance twice;
 	// skipped/URO updates still complete at the finite deadline.
 	FTransform Relative;
@@ -912,6 +918,10 @@ void UProject_JWeaponPresentationComponent::EndTwoHandGripNotify(int32 NotifyIns
 void UProject_JWeaponPresentationComponent::UpdateIndependentMotion(float DeltaTime)
 {
 	if (!FMath::IsFinite(DeltaTime) || DeltaTime < 0.f) return;
+	// Source notifies can dispatch after a direct post process has consumed its
+	// goals. Keep the committed motion for that pose; the new intent is evaluated
+	// at the next animation pull. The same contract also serves retarget followers.
+	if (AnimationGripTargetsFrame == GFrameCounter) return;
 	if (bAutoAttackMotionActive && ActiveMotionDurationSeconds > UE_KINDA_SMALL_NUMBER)
 	{
 		ActiveMotionNormalizedTime = FMath::Clamp(ActiveMotionNormalizedTime +
@@ -1028,6 +1038,8 @@ void UProject_JWeaponPresentationComponent::UpdateGripTargets()
 	GripTargets.bHasPrimaryHandSpaceGrip = false;
 	GripTargets.bPrimaryIKSuppressedByAttachment = false;
 	GripTargets.bContactRecovery = false;
+	GripTargets.SourcePoseBone = NAME_None;
+	GripTargets.PrimaryGripInSourcePose = GripTargets.SecondaryGripInSourcePose = FTransform::Identity;
 	GripTargets.PrimaryHandBoneName = NAME_None;
 	GripTargets.SecondaryGripInPrimaryHandSpace = FTransform::Identity;
 	bool bHandDrivenAttachment = false;
@@ -1104,6 +1116,34 @@ void UProject_JWeaponPresentationComponent::UpdateGripTargets()
 		GripTargets.bPrimaryIKSuppressedByAttachment = false;
 		GripTargets.bContactRecovery = true;
 		GripTargets.DriveMode = EProject_JWeaponGripDriveMode::ContactRecovery;
+	}
+	if (bIndependentMotionActive || bContactRecoveryActive)
+	{
+		const APawn* Character = Cast<APawn>(GetOwner());
+		const USkeletalMeshComponent* Source = Project_J::Movement::FindPoseSource(Character);
+		const USkeletalMeshSocket* Socket = Source ? Source->GetSocketByName(PresentationProfile->DrawnSocketName) : nullptr;
+		const FName Bone = Socket ? Socket->BoneName : NAME_None;
+		const auto* ContactController=Project_J::Animation::FindBodyContactController(Source);
+		const auto Calibration = ContactController ? ContactController->GetHandGripCalibration()
+			: Project_J::Animation::ResolveHandGripCalibration(Character, nullptr);
+		auto InArm = [Source, Bone](const FProject_JGripArmBones& Arm)
+		{
+			return !Arm.Shoulder.IsNone() && (Bone == Arm.Shoulder || Source->BoneIsChildOf(Bone, Arm.Shoulder));
+		};
+		// Never derive a direct body's source trajectory from either solved arm.
+		// The independent marker is authored upstream of contact/secondary work.
+		if (Source && !Calibration.PrimaryArm.Shoulder.IsNone() &&
+			Source->GetBoneIndex(Calibration.PrimaryArm.Shoulder) != INDEX_NONE &&
+			Source->GetBoneIndex(Bone) != INDEX_NONE && !InArm(Calibration.PrimaryArm) && !InArm(Calibration.SecondaryArm))
+		{
+			const FTransform Anchor = Source->GetBoneTransform(Bone, RTS_World);
+			if (Project_J::Animation::IsPositiveUniformContactScale(Anchor.GetScale3D()))
+			{
+				GripTargets.SourcePoseBone = Bone;
+				GripTargets.PrimaryGripInSourcePose = GripTargets.PrimaryGripWorldTransform.GetRelativeTransform(Anchor);
+				GripTargets.SecondaryGripInSourcePose = GripTargets.SecondaryGripWorldTransform.GetRelativeTransform(Anchor);
+			}
+		}
 	}
 }
 
@@ -1368,6 +1408,7 @@ FProject_JWeaponGripTargets UProject_JWeaponPresentationComponent::GetWeaponGrip
 {
 	check(IsInGameThread());
 	if (bAttachmentRefreshRequested && !bIndependentMotionActive && !bContactRecoveryActive) { RefreshPresentation(); }
+	if (AnimationGripTargetsFrame == GFrameCounter) return AnimationGripTargets;
 	// Turning diagnostics on in Idle must wake the existing late sample tick.
 	if (Project_J::WeaponPresentation::IsGripTraceEnabled() && !IsComponentTickEnabled()) { UpdateTickState(); }
 	RefreshAttackMotion();
@@ -1381,7 +1422,9 @@ FProject_JWeaponGripTargets UProject_JWeaponPresentationComponent::GetWeaponGrip
 		if (bContactRecoveryActive && GetWorld()) { UpdateContactRecovery(GetWorld()->GetTimeSeconds()); }
 		UpdateGripTargets();
 	}
-	return GripTargets;
+	AnimationGripTargets = GripTargets;
+	AnimationGripTargetsFrame = GFrameCounter;
+	return AnimationGripTargets;
 }
 
 void UProject_JWeaponPresentationComponent::RegisterRetargetAnimInstance(UProject_JRetargetAnimInstance* InAnimInstance)

@@ -1,12 +1,23 @@
-# 검증 자료의 Git 공유 보관소
+# 검증 자료의 공유·로컬 압축 보관소
 
-요약·표·작은 CSV는 `Docs`에 바로 읽을 수 있게 유지하고, 실행별 상세 원자료는 주제별 ZIP 하나와 원본 경로/크기/SHA-256 명세로 보관한다. ZIP은 Git LFS로 추적한다. 새 PC에서는 일반 clone 후 `git lfs pull`로 실제 파일을 받는다. LFS pointer만 받은 상태는 자료 수신 완료가 아니다.
+요약·표·작은 CSV는 `Docs`에 바로 읽을 수 있게 유지하고, 실행별 상세 원자료는 주제별 ZIP 하나와 원본 경로/크기/SHA-256 명세로 보관한다. 공유 ZIP은 Git LFS로 추적하며 로컬 보관은 아래에 별도로 표시한다. 새 PC에서 공유본은 일반 clone 후 `git lfs pull`로 실제 파일을 받는다. LFS pointer만 받은 상태는 자료 수신 완료가 아니다.
 
 새 ZIP은 Git에서 제외된 `Saved` 임시 경로에서 완성·검증한 뒤 최종 보관 경로로 이동한다. LFS 대상 경로에 큰 ZIP을 직접 계속 쓰면 앱의 Git 검사와 겹쳐 중간 사본·임시 파일이 늘 수 있다. 같은 자료의 새 사본을 추가하기 전에 기존 보관 명세의 해시와 목적을 확인한다.
 
 | 보관본 | 내용 | 복원·정리 기록 |
 | --- | --- | --- |
+| [리깅·직접 ABP 200명 명세](Rigging_2026-10-25/ArchiveManifest.json) | **로컬 ZIP**: 실패/최종 리깅·200명2회+trace. Git으로는 작은 수치·timer CSV·대표 화면·복원 명세 공유 | [성능 결과](../../Docs/Performance/Reports/ProjectJ_DirectRig_200_2026-10-25.md) · [안전 정리·물리 회수 한계](../../Docs/Maintenance/Storage_Cleanup_2026-10-25.md) |
 | [Mover 200명](Mover200_2026-10-22/Evidence.zip) | 최종 ABBA·큰 편차·미채택 30Hz 후보·중간 실패 로그, 회귀/네트워크/월드 검사, 최종 100 NPC 기준 trace | [명세](Mover200_2026-10-22/ArchiveManifest.json) · [공간 정리 결과](Mover200_2026-10-22/CleanupResult.json) · [성능 보고서](../../Docs/Performance/Reports/ProjectJ_Mover_200_2026-10-22.md) |
+
+## 2026-10-25 로컬 보관 범위
+
+리깅·직접 ABP의 큰 원문은 `Saved/Maintenance/RigCleanup_20261025/Evidence.zip` 한 개에 보존한다. ZIP793,891,789bytes, 원래745경로/676payload의 모든 SHA-256을 검증했다. 이 ZIP은 Git LFS로 추가하지 않아 **새 clone에 자동 제공되지 않는다**. 공유하는 [수치·타이머 CSV/JSON·대표 화면](../../Docs/Performance/Reports/Data/DirectRig200_20261025)은 원문 ZIP 없이 읽을 수 있다. 명세의 로컬 ZIP 위치와 SHA가 일치해야 전체 trace/중간 상태 복원이 가능하다.
+
+```powershell
+python Archives/Validation/verify_archive.py Archives/Validation/Rigging_2026-10-25/ArchiveManifest.json
+```
+
+아래 Mover ZIP은 기존과 같이 Git LFS 공유 보관본이다.
 
 ## 검증과 복원
 

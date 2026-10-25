@@ -1,0 +1,1470 @@
+{
+  "method": "Equal weight per run; game-time 2–7s; exclude screenshot frame and next two; attack requires 200 active montages. CPU/GPU execute concurrently. Historical retarget rigs have different bones, LOD and physics; no causal speedup claim.",
+  "aggregate": {
+    "idle": {
+      "frame_delta_ms": {
+        "mean_of_run_means": 1861.0029755,
+        "run_means": [
+          1898.6532288333333,
+          1823.3527221666666
+        ]
+      },
+      "gt_ms": {
+        "mean_of_run_means": 1813.19487,
+        "run_means": [
+          1852.19120275,
+          1774.19853725
+        ]
+      },
+      "render_ms": {
+        "mean_of_run_means": 12.410929208333334,
+        "run_means": [
+          12.916825083333334,
+          11.905033333333334
+        ]
+      },
+      "rhi_ms": {
+        "mean_of_run_means": 31.923853458333333,
+        "run_means": [
+          34.41014908333333,
+          29.437557833333333
+        ]
+      },
+      "gpu_ms": {
+        "mean_of_run_means": 6.600141666666667,
+        "run_means": [
+          6.66585,
+          6.534433333333333
+        ]
+      }
+    },
+    "move_pivot": {
+      "frame_delta_ms": {
+        "mean_of_run_means": 1834.3896076666665,
+        "run_means": [
+          1832.9013263333334,
+          1835.8778889999999
+        ]
+      },
+      "gt_ms": {
+        "mean_of_run_means": 1790.0633342083333,
+        "run_means": [
+          1785.9460856666667,
+          1794.18058275
+        ]
+      },
+      "render_ms": {
+        "mean_of_run_means": 10.7401,
+        "run_means": [
+          10.618833333333333,
+          10.861366666666667
+        ]
+      },
+      "rhi_ms": {
+        "mean_of_run_means": 4.803866666666667,
+        "run_means": [
+          4.889375,
+          4.718358333333334
+        ]
+      },
+      "gpu_ms": {
+        "mean_of_run_means": 6.630983333333333,
+        "run_means": [
+          6.69085,
+          6.571116666666667
+        ]
+      }
+    },
+    "jump_land": {
+      "frame_delta_ms": {
+        "mean_of_run_means": 1813.6624603750001,
+        "run_means": [
+          1815.67907725,
+          1811.6458435
+        ]
+      },
+      "gt_ms": {
+        "mean_of_run_means": 1772.882609,
+        "run_means": [
+          1775.6209411666666,
+          1770.1442768333334
+        ]
+      },
+      "render_ms": {
+        "mean_of_run_means": 10.616837499999999,
+        "run_means": [
+          10.715341666666667,
+          10.518333333333333
+        ]
+      },
+      "rhi_ms": {
+        "mean_of_run_means": 5.163520833333333,
+        "run_means": [
+          5.1182,
+          5.208841666666666
+        ]
+      },
+      "gpu_ms": {
+        "mean_of_run_means": 6.733108333333334,
+        "run_means": [
+          6.819466666666667,
+          6.64675
+        ]
+      }
+    },
+    "attack": {
+      "frame_delta_ms": {
+        "mean_of_run_means": 2122.05859375,
+        "run_means": [
+          2122.6081543333335,
+          2121.5090331666665
+        ]
+      },
+      "gt_ms": {
+        "mean_of_run_means": 2008.4022623333335,
+        "run_means": [
+          2011.2138875,
+          2005.5906371666667
+        ]
+      },
+      "render_ms": {
+        "mean_of_run_means": 13.8037415,
+        "run_means": [
+          13.765249833333332,
+          13.842233166666666
+        ]
+      },
+      "rhi_ms": {
+        "mean_of_run_means": 8.64589175,
+        "run_means": [
+          8.904516833333334,
+          8.387266666666667
+        ]
+      },
+      "gpu_ms": {
+        "mean_of_run_means": 10.110358333333334,
+        "run_means": [
+          10.197,
+          10.023716666666667
+        ]
+      }
+    },
+    "return": {
+      "frame_delta_ms": {
+        "mean_of_run_means": 1858.2600859583333,
+        "run_means": [
+          1863.0534565,
+          1853.4667154166666
+        ]
+      },
+      "gt_ms": {
+        "mean_of_run_means": 1815.43021125,
+        "run_means": [
+          1820.9251910833334,
+          1809.9352314166667
+        ]
+      },
+      "render_ms": {
+        "mean_of_run_means": 10.561504166666666,
+        "run_means": [
+          10.696208333333333,
+          10.4268
+        ]
+      },
+      "rhi_ms": {
+        "mean_of_run_means": 8.222191708333334,
+        "run_means": [
+          7.755766666666667,
+          8.68861675
+        ]
+      },
+      "gpu_ms": {
+        "mean_of_run_means": 6.266970833333334,
+        "run_means": [
+          6.330691666666667,
+          6.20325
+        ]
+      }
+    }
+  },
+  "runs": [
+    {
+      "run": "RigDirect200_A_20261025",
+      "actors": 200,
+      "weapon_visible": 1,
+      "phases": {
+        "idle": {
+          "frame_delta_ms": {
+            "n": 12,
+            "mean": 1898.6532288333333,
+            "median": 1866.8410645,
+            "p95": 2121.187744
+          },
+          "gt_ms": {
+            "n": 12,
+            "mean": 1852.19120275,
+            "median": 1825.119995,
+            "p95": 2077.756104
+          },
+          "render_ms": {
+            "n": 12,
+            "mean": 12.916825083333334,
+            "median": 12.88825,
+            "p95": 17.200001
+          },
+          "rhi_ms": {
+            "n": 12,
+            "mean": 34.41014908333333,
+            "median": 5.77835,
+            "p95": 141.272293
+          },
+          "gpu_ms": {
+            "n": 12,
+            "mean": 6.66585,
+            "median": 6.62645,
+            "p95": 6.8927
+          },
+          "rendered_bodies": [
+            200
+          ],
+          "rendered_weapons": [
+            200
+          ],
+          "body_lods": {
+            "body_lod0": [
+              200
+            ],
+            "body_lod1": [
+              0
+            ],
+            "body_lod2": [
+              0
+            ]
+          }
+        },
+        "move_pivot": {
+          "frame_delta_ms": {
+            "n": 12,
+            "mean": 1832.9013263333334,
+            "median": 1825.885315,
+            "p95": 1883.090332
+          },
+          "gt_ms": {
+            "n": 12,
+            "mean": 1785.9460856666667,
+            "median": 1777.7892455,
+            "p95": 1851.718506
+          },
+          "render_ms": {
+            "n": 12,
+            "mean": 10.618833333333333,
+            "median": 10.68835,
+            "p95": 10.9195
+          },
+          "rhi_ms": {
+            "n": 12,
+            "mean": 4.889375,
+            "median": 4.8538,
+            "p95": 6.0107
+          },
+          "gpu_ms": {
+            "n": 12,
+            "mean": 6.69085,
+            "median": 6.72445,
+            "p95": 6.8838
+          },
+          "rendered_bodies": [
+            200
+          ],
+          "rendered_weapons": [
+            200
+          ],
+          "body_lods": {
+            "body_lod0": [
+              200
+            ],
+            "body_lod1": [
+              0
+            ],
+            "body_lod2": [
+              0
+            ]
+          }
+        },
+        "jump_land": {
+          "frame_delta_ms": {
+            "n": 12,
+            "mean": 1815.67907725,
+            "median": 1813.576294,
+            "p95": 1831.349609
+          },
+          "gt_ms": {
+            "n": 12,
+            "mean": 1775.6209411666666,
+            "median": 1781.3107909999999,
+            "p95": 1800.680054
+          },
+          "render_ms": {
+            "n": 12,
+            "mean": 10.715341666666667,
+            "median": 10.74475,
+            "p95": 11.2648
+          },
+          "rhi_ms": {
+            "n": 12,
+            "mean": 5.1182,
+            "median": 5.17005,
+            "p95": 6.1401
+          },
+          "gpu_ms": {
+            "n": 12,
+            "mean": 6.819466666666667,
+            "median": 6.8123000000000005,
+            "p95": 7.0807
+          },
+          "rendered_bodies": [
+            200
+          ],
+          "rendered_weapons": [
+            200
+          ],
+          "body_lods": {
+            "body_lod0": [
+              200
+            ],
+            "body_lod1": [
+              0
+            ],
+            "body_lod2": [
+              0
+            ]
+          }
+        },
+        "attack": {
+          "frame_delta_ms": {
+            "n": 6,
+            "mean": 2122.6081543333335,
+            "median": 2057.308777,
+            "p95": 2419.982422
+          },
+          "gt_ms": {
+            "n": 6,
+            "mean": 2011.2138875,
+            "median": 1974.5805055,
+            "p95": 2161.003906
+          },
+          "render_ms": {
+            "n": 6,
+            "mean": 13.765249833333332,
+            "median": 13.16525,
+            "p95": 17.5567
+          },
+          "rhi_ms": {
+            "n": 6,
+            "mean": 8.904516833333334,
+            "median": 7.36695,
+            "p95": 16.169001
+          },
+          "gpu_ms": {
+            "n": 6,
+            "mean": 10.197,
+            "median": 7.4829,
+            "p95": 22.1598
+          },
+          "rendered_bodies": [
+            200
+          ],
+          "rendered_weapons": [
+            200
+          ],
+          "body_lods": {
+            "body_lod0": [
+              200
+            ],
+            "body_lod1": [
+              0
+            ],
+            "body_lod2": [
+              0
+            ]
+          }
+        },
+        "return": {
+          "frame_delta_ms": {
+            "n": 12,
+            "mean": 1863.0534565,
+            "median": 1851.5169675,
+            "p95": 1986.93103
+          },
+          "gt_ms": {
+            "n": 12,
+            "mean": 1820.9251910833334,
+            "median": 1813.9956055,
+            "p95": 1948.967773
+          },
+          "render_ms": {
+            "n": 12,
+            "mean": 10.696208333333333,
+            "median": 10.58785,
+            "p95": 12.5454
+          },
+          "rhi_ms": {
+            "n": 12,
+            "mean": 7.755766666666667,
+            "median": 5.88245,
+            "p95": 26.4751
+          },
+          "gpu_ms": {
+            "n": 12,
+            "mean": 6.330691666666667,
+            "median": 6.33375,
+            "p95": 6.5618
+          },
+          "rendered_bodies": [
+            200
+          ],
+          "rendered_weapons": [
+            200
+          ],
+          "body_lods": {
+            "body_lod0": [
+              200
+            ],
+            "body_lod1": [
+              0
+            ],
+            "body_lod2": [
+              0
+            ]
+          }
+        }
+      },
+      "frames_sha256": "ad1a8604dcb790c8223a2fa496920e656e6aeadfe2bb8e56584a18f3cd1f292e",
+      "peak_process_memory": {
+        "exitCode": 0,
+        "nativeHandleCapturedBeforeWait": true,
+        "hasExited": true,
+        "sampledPeakWorkingSetBytes": 9417498624,
+        "sampledPeakPrivateBytes": 24260857856,
+        "memoryScope": "Entire editor game process including startup, sampled every 500ms; not incremental crowd memory."
+      },
+      "observed_workload": {
+        "direct_bodies": [
+          200
+        ],
+        "retarget_bodies": [
+          0
+        ],
+        "modular_parts": [
+          2000
+        ],
+        "cloth_parts": [
+          200
+        ],
+        "cloth_tick_parts": [
+          200
+        ],
+        "body_lod0": [
+          200
+        ],
+        "nanite_candidates": [
+          1400
+        ],
+        "nanite_parts": [
+          1400
+        ]
+      },
+      "pose_routes_sha256": "8914ea16332b3493eb23f2aa4fc08877e947aec1f843a7b8dda76f155527433f",
+      "manifest_sha256": "4d9f37769de375461bdf4de5e478e1a46d7f1917696e63b1320e86ed00e39f22",
+      "provenance_canonical_sha256": "d5f6aa84ad17f98e42151a675b9faf40efb11df9ee4b74e722e5330a03fe8be3",
+      "conditions": {
+        "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+        "gpu": [
+          "Parsec Virtual Display Adapter",
+          "AMD Radeon RX 9070 XT",
+          "AMD Radeon(TM) Graphics"
+        ],
+        "head": "958563d5ec6c8670c69f900193ccacc7497c65b9",
+        "actors": 200,
+        "movement": true,
+        "consoleCommands": "r.ScreenPercentage 100,r.DynamicRes.OperationMode 0,sg.ViewDistanceQuality 3,sg.AntiAliasingQuality 3,sg.ShadowQuality 3,sg.GlobalIlluminationQuality 3,sg.ReflectionQuality 3,sg.PostProcessQuality 3,sg.TextureQuality 3,sg.EffectsQuality 3,sg.FoliageQuality 3,sg.ShadingQuality 3,r.SkinnedMesh.RenderNanite 1",
+        "naniteMode": 1,
+        "localPlayer": true,
+        "connections": 0,
+        "resolution": "1280x720",
+        "trace": false,
+        "executableSHA256": "02A0D0E50381CA631BE0221486247AE8BFE37CD4AD59F52B64CBF391D612B8BB"
+      },
+      "asset_hashes": [
+        {
+          "path": "Project_J.uproject",
+          "sha256": "4FDFB1ED047A4979799ECA3C965716BBEE9BAEEB804FFE6121E18273E1678E9F"
+        },
+        {
+          "path": "Content/Character_BPs/GreatSword/BP_GreatSword.uasset",
+          "sha256": "B2CDC92DD01E1407D9884A4264A9ADF2B2DD8F4451C41EDF7576A8593FE41626"
+        },
+        {
+          "path": "Content/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme.uasset",
+          "sha256": "37E903EEC95738F47C41E8851FFA9C646FA17534BCF7ADB16F4E152E0A421292"
+        },
+        {
+          "path": "Content/Animation_Logic/ABPs/ABP_Player_Master.uasset",
+          "sha256": "FEEF56637CA9EA320F910EEF53781246F10795AF61C391457FE44F3C0A69CE65"
+        },
+        {
+          "path": "Content/GreatSword/Animation/ABP_GreatSword_Body.uasset",
+          "sha256": "202301BF1A0E376166C609D7525B2096B27EDE04495F3A2C4923280F2E92C983"
+        },
+        {
+          "path": "Content/GreatSword/Animation/ABP_GreatSword_Retarget.uasset",
+          "sha256": "8A00B97150624BC1A2400419E60D5AE439B0496D6D883BEC1D1F6B3C89FE2A3C"
+        },
+        {
+          "path": "Content/GreatSword/Animation/ABP_GreatSword_Secondary.uasset",
+          "sha256": "A6E83E4599E73A6FC2C2AEC3C05AD583EF33E1F2EED09EDEEFBCC6E2C2BBCE0F"
+        },
+        {
+          "path": "Content/GreatSword/Animation/IK_GreatSword_Contact.uasset",
+          "sha256": "4FD7A339FC4597FC0BA3E66142F202AF74F05D7937AECE0FA3418A336A1F985D"
+        },
+        {
+          "path": "Content/GreatSword/Animation/IK_GreatSword_UE5.uasset",
+          "sha256": "EE924B1A54B4818F3C7911BCD32BF9A28F46CFBB0DC360A35DFC50CA23EAA66F"
+        },
+        {
+          "path": "Content/GreatSword/Animation/RTG_GreatSword_UE5.uasset",
+          "sha256": "F385C284E0D3D48F167BA95F27B17E70B30AE2A6327D247B21F0E4A7E4600A95"
+        },
+        {
+          "path": "Content/GreatSword/Materials/MT_Cloak_pdw_00_sho_0001_dm.uasset",
+          "sha256": "6A0F3F7FE22362C5275C6A1DA709F564B6A0B049E01C0EEA30E4C7B34779F833"
+        },
+        {
+          "path": "Content/GreatSword/Materials/MT_Cloak1_pdw_00_cloak_0001_dm_hair.uasset",
+          "sha256": "38C638F49868F1A35C66C8B74C4E71E59B8FFCD77161224BCF9BEEEC5F3DC72F"
+        },
+        {
+          "path": "Content/GreatSword/Materials/MT_Lower_pdw_00_lb_0001_dm_dec.uasset",
+          "sha256": "7CF86E72B98FED721E01E5C670E85A294224144679187FFACB9D6D63952D0EB7"
+        },
+        {
+          "path": "Content/GreatSword/Materials/MT_Sho_Hair_pdw_00_lb_0001_dm_hair.uasset",
+          "sha256": "FA23DF32212AA88FD417364FF9BFFCA2E7A3C5AAE0FEE83D5223BCDA65860F35"
+        },
+        {
+          "path": "Content/GreatSword/Materials/MT_Sho_pdw_00_sho_0001_dm.uasset",
+          "sha256": "7E75E36C73DB550A40D09EF1A97050BC26EA897726B920A7959D4E0B9B2A0C09"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_body.uasset",
+          "sha256": "9F96A30C1FB9411624F8D2804D49C0322886324164D9240F4B11D1782BE6FD89"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_cloak_damage.uasset",
+          "sha256": "57B35951F18044C8A02060381DEBC815629148498B9E74BCB8ADB7E8AA9F93BB"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_cloak.uasset",
+          "sha256": "CABAB80A2AFD0CA4E587FBF65641D8E543BA795632445740A5203F6663860DF2"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_Complete_Skeleton.uasset",
+          "sha256": "69D5788B151EF62D238880E6817C42DF226ED7C13DCFE08F44AA61A8275E7C9B"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_Complete.uasset",
+          "sha256": "D8DE1C6CDE76BC9EE0E63FAA8495CCDE49A1DDA69B962057FBB43E55E44FCA4B"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_foot.uasset",
+          "sha256": "D0E3C546BC743E4FAD752AAE6E88696F68DA02CD2DB62F58700BFBD589C11694"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_hand.uasset",
+          "sha256": "0167D9691C325481DD3C823E3E6AB532CF6D7BD7AD57420FE39D1B14793C1BAB"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_head.uasset",
+          "sha256": "0F769F41B2608F68348A39C895B217126AE20354A9DE49A4845FC7B85EBDE4D6"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_hel.uasset",
+          "sha256": "F459ACE0BF501DE67BC86567F580502D387271E384A0C3185A8ED65DFB08E7E4"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_inner.uasset",
+          "sha256": "002EE70851DBFDF4A3EBB2FCB04DAEF02B1F215C8D23783E99BB63520D979438"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_lower_damage.uasset",
+          "sha256": "F0C04BF21A53C2DB67C673EF1D53CD9836EBC7E0B3D540FAFD963CF37624DA50"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_lower.uasset",
+          "sha256": "9A1EFFD1F6CEECA36667A7EE4C4A14755713E2A8FDCC4293485EF0E37012111E"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_sho_damage.uasset",
+          "sha256": "EF47F9F7CBDA29F0923716080BE586C8EDF1680209583B7A88EB42FF5DD9834F"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_sho.uasset",
+          "sha256": "46E77FE7C172137ACF54AB4A12D3FF144E96868F74649EAD599092C4AC41114C"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_upper_damage.uasset",
+          "sha256": "9EBA16F38CAFDFE9F1160DD792C1DAC71C7990BD0096FAC3C96A3161A4C2DA28"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_upper.uasset",
+          "sha256": "7C72C9ECBAD9BA73F8F29C853BCDA40B77FB8A18925CF32F47C61CD11DD137B1"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_weapon_aiguillette_in.uasset",
+          "sha256": "DD4C4B10854AF9F4F39E01261480D7448A8E6CCAB0C1EAB0A7745CD7FB454497"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_weapon_aiguillette.uasset",
+          "sha256": "3656656FEB0F6A1EBA4C915B06CB69773C1E6DCE00EB171F4763EE73817DC551"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_weapon_longblade_in.uasset",
+          "sha256": "F6D896B316FA2812C0DA37BF45343AA3FC28AA5B6475939BE77CE3FC12282DCB"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_weapon_longblade.uasset",
+          "sha256": "968751C7349629B79859384A8FF8EAF5D637C02BAEB0CEEECF16B102C82E89FA"
+        },
+        {
+          "path": "Content/GreatSword/Physics/PA_GreatSword_ClothCollision.uasset",
+          "sha256": "BF1FF86A0C8427C64789CD2A968F39C92D5A28BDFD1A2D029048F25B5A863EED"
+        },
+        {
+          "path": "Content/GreatSword/Physics/PA_GreatSword_Hair.uasset",
+          "sha256": "0DFF8629FD358BA7B40E2BCA90DF3596925EF55472B6195F2486C935AF5DAB61"
+        },
+        {
+          "path": "Content/GreatSword/Physics/PA_GreatSword_Skirt.uasset",
+          "sha256": "7B42D1A3239B95E9D2579EB597F3408697FE0C6D10A3553A7D007F0C7C7A9EBB"
+        },
+        {
+          "path": "Content/GreatSword/Profiles/DA_GreatSword_UE5_AnimProfile.uasset",
+          "sha256": "0BA850D98CC000D204F9B87E3F3568ACDF6E1ED1FB12B9A6CA48A1B7B4DB3598"
+        },
+        {
+          "path": "Content/GreatSword/Profiles/DA_HGP_GreatSword_UE5.uasset",
+          "sha256": "5B8FAD9E431EEF7F4929EAD40B66CC9BFD75FED3831A7DC66F6CC9BC8760FE3C"
+        },
+        {
+          "path": "Content/GreatSword/Profiles/DA_RTB_GreatSword_UE5.uasset",
+          "sha256": "F99580C58A3C5EFC6E6AB6FA3ED21E91AC6DF7D77A3E2D2B4A03E0B00E1965C7"
+        },
+        {
+          "path": "Content/GreatSword/Profiles/DA_RTF_GreatSword_UE5.uasset",
+          "sha256": "B8CE5DC9D1BA49C77FD71D052D6FA2B2F2D8D69C85C1037247C262111734C049"
+        },
+        {
+          "path": "Content/GreatSword/Rigs/CR_GreatSword_Body.uasset",
+          "sha256": "7D147BA7DB77231847D29126353FAFC43B6E4EA0A05DAAC7BA2662B4A10F671E"
+        },
+        {
+          "path": "Content/GreatSword/Rigs/IK_GreatSword.uasset",
+          "sha256": "78E49024C49C748D5D817CC560BE6B53E77A51A40E2439E77F5E7FEC53657495"
+        },
+        {
+          "path": "Content/GreatSword/Rigs/IK_Quinn_Source.uasset",
+          "sha256": "77CDCE2339C159352A1BE52FE249C7AE528735AE9E59CFF05B85F7BD30AEFF4D"
+        },
+        {
+          "path": "Content/GreatSword/Rigs/RTG_Quinn_to_GreatSword.uasset",
+          "sha256": "BDC54C6BDF4F888D427C66ECE4AE183244B7CB3B723E0CDC8269BE0AEB61BFE2"
+        },
+        {
+          "path": "Binaries/Win64/UnrealEditor-Project_J.dll",
+          "sha256": "C3817EFBEEFE819D37EA2E51A29604191F99547C7C7F879C5760963F1A54C9C8"
+        },
+        {
+          "path": "Binaries/Win64/UnrealEditor-Project_JCharacter.dll",
+          "sha256": "73BAB942AB0F529286AF44F6175A2B0B2DDD25A432652B91B8343C801F4A4FDA"
+        },
+        {
+          "path": "Content/Characters/GreatSword/GreatSword_Woman.uasset",
+          "sha256": "224D58E3FA685F289C3F838F7CBFDED27310F41FB3D9A424E169415FD3DEB405"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/cloak_Physics.uasset",
+          "sha256": "6F71106644DA8925672F8B5B0F574703BAA591BCF479B5AB4E722E94A976AD9F"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/cloak.uasset",
+          "sha256": "313AE9DB831A9059FE5105ABF0A684FEE249C06C301B9035B930BD6CF7D76C6A"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/foot.uasset",
+          "sha256": "CB612E76B3A02B3B97320E12954849B39ADC3C4C93AED4288AB65F0130230BC1"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/hand.uasset",
+          "sha256": "4C8EB41B1C34D5EDF12CB0444E16A9187CD2AA299E88A64F6E7ED1FA42720775"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/hel.uasset",
+          "sha256": "581691E98FC540F36B99965FE861833E644091CBD42DA33E30520AC115F0D8A2"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/inner.uasset",
+          "sha256": "1B5F4F1E0410705A0861D2AF97382A4D4246C6F798A5E63A08874E77350230E2"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/lower.uasset",
+          "sha256": "47FBD371992E5B1FA1942058067526F272C98EE3F9C778D1D2424CB2FC099C2D"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/sho_Physics.uasset",
+          "sha256": "B77E9B5816B2CC8F213CA66A365B6811E104EBF3022D1780CB470F224AF03E83"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/sho.uasset",
+          "sha256": "FA85CB6ED5C473D1B5DD1B1DB3FEC9105B0D8CDC233C27483AB26D5091C35DD5"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/upper.uasset",
+          "sha256": "A659275FD34B720090CA8BC8C2F01C8DAD19440E0F38B5771F84952E2D78A596"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/MTs/MT_Cloak.uasset",
+          "sha256": "03508D28EF478E8CE1CC616C70F005403384B02CF82C78E9FF66BA6A891C354C"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/MTs/MT_Cloak1.uasset",
+          "sha256": "4163858BA428964667FFD1CE3B625E911DEE9DC719F41EE33DC283D3B29FBCFB"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/MTs/MT_Cloak2.uasset",
+          "sha256": "6E402A1C7715F1192B924A4444084183E9207BBFB1A90263B34B4C41E2F1A232"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/MTs/MT_Foot.uasset",
+          "sha256": "616926D7B9352CE3D606968F14AA69D7072D431E9147E9EB89EB6202D16382E1"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/MTs/MT_Hand.uasset",
+          "sha256": "E840575F6BAADA4B12A794C59F7B676584BF1DE7718374226521CF125A8987A9"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/MTs/MT_Hel_Hair.uasset",
+          "sha256": "A28D0589F197FB1DDE831329B60D480BBD340DA75F7269843DAC580808B31ED8"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/MTs/MT_Hel.uasset",
+          "sha256": "6C58437693B203874110511BF7EBC7B49B532D1EA946B607B1E309C1364DEBBA"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/MTs/MT_Inner_Down.uasset",
+          "sha256": "7D87F099926003017E1A94C67F65DA1E3D5703D8F6A394CE28A0577476361F27"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/MTs/MT_Inner_Up.uasset",
+          "sha256": "B979834F0368204DB144C908A5C54BFE45778765A9E9E5EAD6956C0D2010383D"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/MTs/MT_Lower_Side.uasset",
+          "sha256": "5A51111816A4CB36CA2D4EFEB1A0C0B3342EAEC7AC8909665D461A55318A09AB"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/MTs/MT_Lower.uasset",
+          "sha256": "73FC801E256739D007E773F6B51F72C4B93746D515E07F62C287C38591EDD774"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/MTs/MT_Sho_Hair.uasset",
+          "sha256": "6EE57DD58A4C50855E713DD88B06ACBE11AEF26E470805EFF4CD74A68C9006DF"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/MTs/MT_Sho.uasset",
+          "sha256": "BC6B70643BB459E22D9AC88ACB32BF309BD2C0865260EE7E41126DF10183F581"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/MTs/MT_Upper_Side.uasset",
+          "sha256": "AA3DA421611924331B0FEE2BE752B1E35E97CD6A2E2C65A6F7E8C8CA9E9ECF8D"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/MTs/MT_Upper.uasset",
+          "sha256": "0783ADE2C438F942AE951185E1956810D3E83FB890F1DA479120666F2513FF74"
+        },
+        {
+          "path": "Content/Character_BPs/GreatSword/BP_Greatsword_Basic.uasset",
+          "sha256": "594A34E27C99A9416E847F8CB187506FC3EEFC8936DBD1447AF2134E4BD75FF6"
+        },
+        {
+          "path": "Content/DataAssetSets/Presentation/Greatsword/DA_Greatsword_Presentation.uasset",
+          "sha256": "27FBEFBF495E8961037571D53D35C9F605C15AA70134CDD9FA2F504953059038"
+        },
+        {
+          "path": "Content/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_Equip.uasset",
+          "sha256": "2C41BF8EACCC58BC563D329F7835DFCA8BB7E04DC0E9B9067FB86AE8E1BC8118"
+        },
+        {
+          "path": "Content/Weapons/Greatsword/Basic/M_Greatsword_Basic.uasset",
+          "sha256": "026BB1E4446B6A62AB70D93BC473A121A36474583230F9C64AE6BC46783996C8"
+        },
+        {
+          "path": "Content/Weapons/Greatsword/Basic/SM_Greatsword_Basic.uasset",
+          "sha256": "4A3400BD19359292CA5BFEE5545AC8D65AD8121F9684676F6248B305AE0F608F"
+        },
+        {
+          "path": "Content/Weapons/Greatsword/Basic/T_Greatsword_Basic_BaseColor.uasset",
+          "sha256": "CF83AB3DEA34F919DEC10F860B304A0F2C14642E359EDF7955FF00C22C0A5A6A"
+        },
+        {
+          "path": "Content/Weapons/Greatsword/Basic/T_Greatsword_Basic_Normal.uasset",
+          "sha256": "9CE6C322EEBF0421A77B21F13EAE7595B3827CECCBD1F3C8212D2055549D05C5"
+        },
+        {
+          "path": "Content/Weapons/Greatsword/Basic/T_Greatsword_Basic_ORM.uasset",
+          "sha256": "128C646F3160F0B42ECFDA9EB1A87F94233E0C045B6872E08A2AD90C8F0AFFFA"
+        }
+      ],
+      "source_file_count": 1135
+    },
+    {
+      "run": "RigDirect200_B_20261025",
+      "actors": 200,
+      "weapon_visible": 1,
+      "phases": {
+        "idle": {
+          "frame_delta_ms": {
+            "n": 12,
+            "mean": 1823.3527221666666,
+            "median": 1816.2427975,
+            "p95": 1857.795044
+          },
+          "gt_ms": {
+            "n": 12,
+            "mean": 1774.19853725,
+            "median": 1780.7244265,
+            "p95": 1807.332764
+          },
+          "render_ms": {
+            "n": 12,
+            "mean": 11.905033333333334,
+            "median": 12.081900000000001,
+            "p95": 14.1019
+          },
+          "rhi_ms": {
+            "n": 12,
+            "mean": 29.437557833333333,
+            "median": 5.636699999999999,
+            "p95": 154.000595
+          },
+          "gpu_ms": {
+            "n": 12,
+            "mean": 6.534433333333333,
+            "median": 6.55845,
+            "p95": 6.6148
+          },
+          "rendered_bodies": [
+            200
+          ],
+          "rendered_weapons": [
+            200
+          ],
+          "body_lods": {
+            "body_lod0": [
+              200
+            ],
+            "body_lod1": [
+              0
+            ],
+            "body_lod2": [
+              0
+            ]
+          }
+        },
+        "move_pivot": {
+          "frame_delta_ms": {
+            "n": 12,
+            "mean": 1835.8778889999999,
+            "median": 1824.0236209999998,
+            "p95": 1940.358276
+          },
+          "gt_ms": {
+            "n": 12,
+            "mean": 1794.18058275,
+            "median": 1786.5890505,
+            "p95": 1902.225952
+          },
+          "render_ms": {
+            "n": 12,
+            "mean": 10.861366666666667,
+            "median": 10.56635,
+            "p95": 12.4432
+          },
+          "rhi_ms": {
+            "n": 12,
+            "mean": 4.718358333333334,
+            "median": 4.867900000000001,
+            "p95": 5.4297
+          },
+          "gpu_ms": {
+            "n": 12,
+            "mean": 6.571116666666667,
+            "median": 6.614850000000001,
+            "p95": 6.7147
+          },
+          "rendered_bodies": [
+            200
+          ],
+          "rendered_weapons": [
+            200
+          ],
+          "body_lods": {
+            "body_lod0": [
+              200
+            ],
+            "body_lod1": [
+              0
+            ],
+            "body_lod2": [
+              0
+            ]
+          }
+        },
+        "jump_land": {
+          "frame_delta_ms": {
+            "n": 12,
+            "mean": 1811.6458435,
+            "median": 1808.090271,
+            "p95": 1853.488525
+          },
+          "gt_ms": {
+            "n": 12,
+            "mean": 1770.1442768333334,
+            "median": 1770.0646969999998,
+            "p95": 1827.620483
+          },
+          "render_ms": {
+            "n": 12,
+            "mean": 10.518333333333333,
+            "median": 10.5077,
+            "p95": 10.9019
+          },
+          "rhi_ms": {
+            "n": 12,
+            "mean": 5.208841666666666,
+            "median": 5.29965,
+            "p95": 5.8068
+          },
+          "gpu_ms": {
+            "n": 12,
+            "mean": 6.64675,
+            "median": 6.6837,
+            "p95": 7.1545
+          },
+          "rendered_bodies": [
+            200
+          ],
+          "rendered_weapons": [
+            200
+          ],
+          "body_lods": {
+            "body_lod0": [
+              200
+            ],
+            "body_lod1": [
+              0
+            ],
+            "body_lod2": [
+              0
+            ]
+          }
+        },
+        "attack": {
+          "frame_delta_ms": {
+            "n": 6,
+            "mean": 2121.5090331666665,
+            "median": 2064.5579835,
+            "p95": 2451.929199
+          },
+          "gt_ms": {
+            "n": 6,
+            "mean": 2005.5906371666667,
+            "median": 1967.1298219999999,
+            "p95": 2169.166748
+          },
+          "render_ms": {
+            "n": 6,
+            "mean": 13.842233166666666,
+            "median": 13.670300000000001,
+            "p95": 17.646299
+          },
+          "rhi_ms": {
+            "n": 6,
+            "mean": 8.387266666666667,
+            "median": 7.16655,
+            "p95": 15.3277
+          },
+          "gpu_ms": {
+            "n": 6,
+            "mean": 10.023716666666667,
+            "median": 7.08645,
+            "p95": 22.1747
+          },
+          "rendered_bodies": [
+            200
+          ],
+          "rendered_weapons": [
+            200
+          ],
+          "body_lods": {
+            "body_lod0": [
+              200
+            ],
+            "body_lod1": [
+              0
+            ],
+            "body_lod2": [
+              0
+            ]
+          }
+        },
+        "return": {
+          "frame_delta_ms": {
+            "n": 12,
+            "mean": 1853.4667154166666,
+            "median": 1843.2915039999998,
+            "p95": 1915.342163
+          },
+          "gt_ms": {
+            "n": 12,
+            "mean": 1809.9352314166667,
+            "median": 1808.8540039999998,
+            "p95": 1857.672241
+          },
+          "render_ms": {
+            "n": 12,
+            "mean": 10.4268,
+            "median": 10.5655,
+            "p95": 11.0134
+          },
+          "rhi_ms": {
+            "n": 12,
+            "mean": 8.68861675,
+            "median": 6.27585,
+            "p95": 35.301701
+          },
+          "gpu_ms": {
+            "n": 12,
+            "mean": 6.20325,
+            "median": 6.275600000000001,
+            "p95": 6.5534
+          },
+          "rendered_bodies": [
+            200
+          ],
+          "rendered_weapons": [
+            200
+          ],
+          "body_lods": {
+            "body_lod0": [
+              200
+            ],
+            "body_lod1": [
+              0
+            ],
+            "body_lod2": [
+              0
+            ]
+          }
+        }
+      },
+      "frames_sha256": "2664c7db7655a75c84c4def184d91f991717b5be1688eb2b324680582f4cf0db",
+      "peak_process_memory": {
+        "exitCode": 0,
+        "nativeHandleCapturedBeforeWait": true,
+        "hasExited": true,
+        "sampledPeakWorkingSetBytes": 9280221184,
+        "sampledPeakPrivateBytes": 24293023744,
+        "memoryScope": "Entire editor game process including startup, sampled every 500ms; not incremental crowd memory."
+      },
+      "observed_workload": {
+        "direct_bodies": [
+          200
+        ],
+        "retarget_bodies": [
+          0
+        ],
+        "modular_parts": [
+          2000
+        ],
+        "cloth_parts": [
+          200
+        ],
+        "cloth_tick_parts": [
+          200
+        ],
+        "body_lod0": [
+          200
+        ],
+        "nanite_candidates": [
+          1400
+        ],
+        "nanite_parts": [
+          1400
+        ]
+      },
+      "pose_routes_sha256": "8914ea16332b3493eb23f2aa4fc08877e947aec1f843a7b8dda76f155527433f",
+      "manifest_sha256": "07d349fe932fed6ea9557535d9b7f8c1388629f85462de01a8d30f3b35d161e5",
+      "provenance_canonical_sha256": "d5f6aa84ad17f98e42151a675b9faf40efb11df9ee4b74e722e5330a03fe8be3",
+      "conditions": {
+        "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+        "gpu": [
+          "Parsec Virtual Display Adapter",
+          "AMD Radeon RX 9070 XT",
+          "AMD Radeon(TM) Graphics"
+        ],
+        "head": "958563d5ec6c8670c69f900193ccacc7497c65b9",
+        "actors": 200,
+        "movement": true,
+        "consoleCommands": "r.ScreenPercentage 100,r.DynamicRes.OperationMode 0,sg.ViewDistanceQuality 3,sg.AntiAliasingQuality 3,sg.ShadowQuality 3,sg.GlobalIlluminationQuality 3,sg.ReflectionQuality 3,sg.PostProcessQuality 3,sg.TextureQuality 3,sg.EffectsQuality 3,sg.FoliageQuality 3,sg.ShadingQuality 3,r.SkinnedMesh.RenderNanite 1",
+        "naniteMode": 1,
+        "localPlayer": true,
+        "connections": 0,
+        "resolution": "1280x720",
+        "trace": false,
+        "executableSHA256": "02A0D0E50381CA631BE0221486247AE8BFE37CD4AD59F52B64CBF391D612B8BB"
+      },
+      "asset_hashes": [
+        {
+          "path": "Project_J.uproject",
+          "sha256": "4FDFB1ED047A4979799ECA3C965716BBEE9BAEEB804FFE6121E18273E1678E9F"
+        },
+        {
+          "path": "Content/Character_BPs/GreatSword/BP_GreatSword.uasset",
+          "sha256": "B2CDC92DD01E1407D9884A4264A9ADF2B2DD8F4451C41EDF7576A8593FE41626"
+        },
+        {
+          "path": "Content/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme.uasset",
+          "sha256": "37E903EEC95738F47C41E8851FFA9C646FA17534BCF7ADB16F4E152E0A421292"
+        },
+        {
+          "path": "Content/Animation_Logic/ABPs/ABP_Player_Master.uasset",
+          "sha256": "FEEF56637CA9EA320F910EEF53781246F10795AF61C391457FE44F3C0A69CE65"
+        },
+        {
+          "path": "Content/GreatSword/Animation/ABP_GreatSword_Body.uasset",
+          "sha256": "202301BF1A0E376166C609D7525B2096B27EDE04495F3A2C4923280F2E92C983"
+        },
+        {
+          "path": "Content/GreatSword/Animation/ABP_GreatSword_Retarget.uasset",
+          "sha256": "8A00B97150624BC1A2400419E60D5AE439B0496D6D883BEC1D1F6B3C89FE2A3C"
+        },
+        {
+          "path": "Content/GreatSword/Animation/ABP_GreatSword_Secondary.uasset",
+          "sha256": "A6E83E4599E73A6FC2C2AEC3C05AD583EF33E1F2EED09EDEEFBCC6E2C2BBCE0F"
+        },
+        {
+          "path": "Content/GreatSword/Animation/IK_GreatSword_Contact.uasset",
+          "sha256": "4FD7A339FC4597FC0BA3E66142F202AF74F05D7937AECE0FA3418A336A1F985D"
+        },
+        {
+          "path": "Content/GreatSword/Animation/IK_GreatSword_UE5.uasset",
+          "sha256": "EE924B1A54B4818F3C7911BCD32BF9A28F46CFBB0DC360A35DFC50CA23EAA66F"
+        },
+        {
+          "path": "Content/GreatSword/Animation/RTG_GreatSword_UE5.uasset",
+          "sha256": "F385C284E0D3D48F167BA95F27B17E70B30AE2A6327D247B21F0E4A7E4600A95"
+        },
+        {
+          "path": "Content/GreatSword/Materials/MT_Cloak_pdw_00_sho_0001_dm.uasset",
+          "sha256": "6A0F3F7FE22362C5275C6A1DA709F564B6A0B049E01C0EEA30E4C7B34779F833"
+        },
+        {
+          "path": "Content/GreatSword/Materials/MT_Cloak1_pdw_00_cloak_0001_dm_hair.uasset",
+          "sha256": "38C638F49868F1A35C66C8B74C4E71E59B8FFCD77161224BCF9BEEEC5F3DC72F"
+        },
+        {
+          "path": "Content/GreatSword/Materials/MT_Lower_pdw_00_lb_0001_dm_dec.uasset",
+          "sha256": "7CF86E72B98FED721E01E5C670E85A294224144679187FFACB9D6D63952D0EB7"
+        },
+        {
+          "path": "Content/GreatSword/Materials/MT_Sho_Hair_pdw_00_lb_0001_dm_hair.uasset",
+          "sha256": "FA23DF32212AA88FD417364FF9BFFCA2E7A3C5AAE0FEE83D5223BCDA65860F35"
+        },
+        {
+          "path": "Content/GreatSword/Materials/MT_Sho_pdw_00_sho_0001_dm.uasset",
+          "sha256": "7E75E36C73DB550A40D09EF1A97050BC26EA897726B920A7959D4E0B9B2A0C09"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_body.uasset",
+          "sha256": "9F96A30C1FB9411624F8D2804D49C0322886324164D9240F4B11D1782BE6FD89"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_cloak_damage.uasset",
+          "sha256": "57B35951F18044C8A02060381DEBC815629148498B9E74BCB8ADB7E8AA9F93BB"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_cloak.uasset",
+          "sha256": "CABAB80A2AFD0CA4E587FBF65641D8E543BA795632445740A5203F6663860DF2"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_Complete_Skeleton.uasset",
+          "sha256": "69D5788B151EF62D238880E6817C42DF226ED7C13DCFE08F44AA61A8275E7C9B"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_Complete.uasset",
+          "sha256": "D8DE1C6CDE76BC9EE0E63FAA8495CCDE49A1DDA69B962057FBB43E55E44FCA4B"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_foot.uasset",
+          "sha256": "D0E3C546BC743E4FAD752AAE6E88696F68DA02CD2DB62F58700BFBD589C11694"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_hand.uasset",
+          "sha256": "0167D9691C325481DD3C823E3E6AB532CF6D7BD7AD57420FE39D1B14793C1BAB"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_head.uasset",
+          "sha256": "0F769F41B2608F68348A39C895B217126AE20354A9DE49A4845FC7B85EBDE4D6"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_hel.uasset",
+          "sha256": "F459ACE0BF501DE67BC86567F580502D387271E384A0C3185A8ED65DFB08E7E4"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_inner.uasset",
+          "sha256": "002EE70851DBFDF4A3EBB2FCB04DAEF02B1F215C8D23783E99BB63520D979438"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_lower_damage.uasset",
+          "sha256": "F0C04BF21A53C2DB67C673EF1D53CD9836EBC7E0B3D540FAFD963CF37624DA50"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_lower.uasset",
+          "sha256": "9A1EFFD1F6CEECA36667A7EE4C4A14755713E2A8FDCC4293485EF0E37012111E"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_sho_damage.uasset",
+          "sha256": "EF47F9F7CBDA29F0923716080BE586C8EDF1680209583B7A88EB42FF5DD9834F"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_sho.uasset",
+          "sha256": "46E77FE7C172137ACF54AB4A12D3FF144E96868F74649EAD599092C4AC41114C"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_upper_damage.uasset",
+          "sha256": "9EBA16F38CAFDFE9F1160DD792C1DAC71C7990BD0096FAC3C96A3161A4C2DA28"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_upper.uasset",
+          "sha256": "7C72C9ECBAD9BA73F8F29C853BCDA40B77FB8A18925CF32F47C61CD11DD137B1"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_weapon_aiguillette_in.uasset",
+          "sha256": "DD4C4B10854AF9F4F39E01261480D7448A8E6CCAB0C1EAB0A7745CD7FB454497"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_weapon_aiguillette.uasset",
+          "sha256": "3656656FEB0F6A1EBA4C915B06CB69773C1E6DCE00EB171F4763EE73817DC551"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_weapon_longblade_in.uasset",
+          "sha256": "F6D896B316FA2812C0DA37BF45343AA3FC28AA5B6475939BE77CE3FC12282DCB"
+        },
+        {
+          "path": "Content/GreatSword/Meshes/SK_GreatSword_weapon_longblade.uasset",
+          "sha256": "968751C7349629B79859384A8FF8EAF5D637C02BAEB0CEEECF16B102C82E89FA"
+        },
+        {
+          "path": "Content/GreatSword/Physics/PA_GreatSword_ClothCollision.uasset",
+          "sha256": "BF1FF86A0C8427C64789CD2A968F39C92D5A28BDFD1A2D029048F25B5A863EED"
+        },
+        {
+          "path": "Content/GreatSword/Physics/PA_GreatSword_Hair.uasset",
+          "sha256": "0DFF8629FD358BA7B40E2BCA90DF3596925EF55472B6195F2486C935AF5DAB61"
+        },
+        {
+          "path": "Content/GreatSword/Physics/PA_GreatSword_Skirt.uasset",
+          "sha256": "7B42D1A3239B95E9D2579EB597F3408697FE0C6D10A3553A7D007F0C7C7A9EBB"
+        },
+        {
+          "path": "Content/GreatSword/Profiles/DA_GreatSword_UE5_AnimProfile.uasset",
+          "sha256": "0BA850D98CC000D204F9B87E3F3568ACDF6E1ED1FB12B9A6CA48A1B7B4DB3598"
+        },
+        {
+          "path": "Content/GreatSword/Profiles/DA_HGP_GreatSword_UE5.uasset",
+          "sha256": "5B8FAD9E431EEF7F4929EAD40B66CC9BFD75FED3831A7DC66F6CC9BC8760FE3C"
+        },
+        {
+          "path": "Content/GreatSword/Profiles/DA_RTB_GreatSword_UE5.uasset",
+          "sha256": "F99580C58A3C5EFC6E6AB6FA3ED21E91AC6DF7D77A3E2D2B4A03E0B00E1965C7"
+        },
+        {
+          "path": "Content/GreatSword/Profiles/DA_RTF_GreatSword_UE5.uasset",
+          "sha256": "B8CE5DC9D1BA49C77FD71D052D6FA2B2F2D8D69C85C1037247C262111734C049"
+        },
+        {
+          "path": "Content/GreatSword/Rigs/CR_GreatSword_Body.uasset",
+          "sha256": "7D147BA7DB77231847D29126353FAFC43B6E4EA0A05DAAC7BA2662B4A10F671E"
+        },
+        {
+          "path": "Content/GreatSword/Rigs/IK_GreatSword.uasset",
+          "sha256": "78E49024C49C748D5D817CC560BE6B53E77A51A40E2439E77F5E7FEC53657495"
+        },
+        {
+          "path": "Content/GreatSword/Rigs/IK_Quinn_Source.uasset",
+          "sha256": "77CDCE2339C159352A1BE52FE249C7AE528735AE9E59CFF05B85F7BD30AEFF4D"
+        },
+        {
+          "path": "Content/GreatSword/Rigs/RTG_Quinn_to_GreatSword.uasset",
+          "sha256": "BDC54C6BDF4F888D427C66ECE4AE183244B7CB3B723E0CDC8269BE0AEB61BFE2"
+        },
+        {
+          "path": "Binaries/Win64/UnrealEditor-Project_J.dll",
+          "sha256": "C3817EFBEEFE819D37EA2E51A29604191F99547C7C7F879C5760963F1A54C9C8"
+        },
+        {
+          "path": "Binaries/Win64/UnrealEditor-Project_JCharacter.dll",
+          "sha256": "73BAB942AB0F529286AF44F6175A2B0B2DDD25A432652B91B8343C801F4A4FDA"
+        },
+        {
+          "path": "Content/Characters/GreatSword/GreatSword_Woman.uasset",
+          "sha256": "224D58E3FA685F289C3F838F7CBFDED27310F41FB3D9A424E169415FD3DEB405"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/cloak_Physics.uasset",
+          "sha256": "6F71106644DA8925672F8B5B0F574703BAA591BCF479B5AB4E722E94A976AD9F"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/cloak.uasset",
+          "sha256": "313AE9DB831A9059FE5105ABF0A684FEE249C06C301B9035B930BD6CF7D76C6A"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/foot.uasset",
+          "sha256": "CB612E76B3A02B3B97320E12954849B39ADC3C4C93AED4288AB65F0130230BC1"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/hand.uasset",
+          "sha256": "4C8EB41B1C34D5EDF12CB0444E16A9187CD2AA299E88A64F6E7ED1FA42720775"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/hel.uasset",
+          "sha256": "581691E98FC540F36B99965FE861833E644091CBD42DA33E30520AC115F0D8A2"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/inner.uasset",
+          "sha256": "1B5F4F1E0410705A0861D2AF97382A4D4246C6F798A5E63A08874E77350230E2"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/lower.uasset",
+          "sha256": "47FBD371992E5B1FA1942058067526F272C98EE3F9C778D1D2424CB2FC099C2D"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/sho_Physics.uasset",
+          "sha256": "B77E9B5816B2CC8F213CA66A365B6811E104EBF3022D1780CB470F224AF03E83"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/sho.uasset",
+          "sha256": "FA85CB6ED5C473D1B5DD1B1DB3FEC9105B0D8CDC233C27483AB26D5091C35DD5"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/upper.uasset",
+          "sha256": "A659275FD34B720090CA8BC8C2F01C8DAD19440E0F38B5771F84952E2D78A596"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/MTs/MT_Cloak.uasset",
+          "sha256": "03508D28EF478E8CE1CC616C70F005403384B02CF82C78E9FF66BA6A891C354C"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/MTs/MT_Cloak1.uasset",
+          "sha256": "4163858BA428964667FFD1CE3B625E911DEE9DC719F41EE33DC283D3B29FBCFB"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/MTs/MT_Cloak2.uasset",
+          "sha256": "6E402A1C7715F1192B924A4444084183E9207BBFB1A90263B34B4C41E2F1A232"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/MTs/MT_Foot.uasset",
+          "sha256": "616926D7B9352CE3D606968F14AA69D7072D431E9147E9EB89EB6202D16382E1"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/MTs/MT_Hand.uasset",
+          "sha256": "E840575F6BAADA4B12A794C59F7B676584BF1DE7718374226521CF125A8987A9"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/MTs/MT_Hel_Hair.uasset",
+          "sha256": "A28D0589F197FB1DDE831329B60D480BBD340DA75F7269843DAC580808B31ED8"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/MTs/MT_Hel.uasset",
+          "sha256": "6C58437693B203874110511BF7EBC7B49B532D1EA946B607B1E309C1364DEBBA"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/MTs/MT_Inner_Down.uasset",
+          "sha256": "7D87F099926003017E1A94C67F65DA1E3D5703D8F6A394CE28A0577476361F27"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/MTs/MT_Inner_Up.uasset",
+          "sha256": "B979834F0368204DB144C908A5C54BFE45778765A9E9E5EAD6956C0D2010383D"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/MTs/MT_Lower_Side.uasset",
+          "sha256": "5A51111816A4CB36CA2D4EFEB1A0C0B3342EAEC7AC8909665D461A55318A09AB"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/MTs/MT_Lower.uasset",
+          "sha256": "73FC801E256739D007E773F6B51F72C4B93746D515E07F62C287C38591EDD774"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/MTs/MT_Sho_Hair.uasset",
+          "sha256": "6EE57DD58A4C50855E713DD88B06ACBE11AEF26E470805EFF4CD74A68C9006DF"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/MTs/MT_Sho.uasset",
+          "sha256": "BC6B70643BB459E22D9AC88ACB32BF309BD2C0865260EE7E41126DF10183F581"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/MTs/MT_Upper_Side.uasset",
+          "sha256": "AA3DA421611924331B0FEE2BE752B1E35E97CD6A2E2C65A6F7E8C8CA9E9ECF8D"
+        },
+        {
+          "path": "Content/Characters/GreatSword/Clothes/MTs/MT_Upper.uasset",
+          "sha256": "0783ADE2C438F942AE951185E1956810D3E83FB890F1DA479120666F2513FF74"
+        },
+        {
+          "path": "Content/Character_BPs/GreatSword/BP_Greatsword_Basic.uasset",
+          "sha256": "594A34E27C99A9416E847F8CB187506FC3EEFC8936DBD1447AF2134E4BD75FF6"
+        },
+        {
+          "path": "Content/DataAssetSets/Presentation/Greatsword/DA_Greatsword_Presentation.uasset",
+          "sha256": "27FBEFBF495E8961037571D53D35C9F605C15AA70134CDD9FA2F504953059038"
+        },
+        {
+          "path": "Content/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_Equip.uasset",
+          "sha256": "2C41BF8EACCC58BC563D329F7835DFCA8BB7E04DC0E9B9067FB86AE8E1BC8118"
+        },
+        {
+          "path": "Content/Weapons/Greatsword/Basic/M_Greatsword_Basic.uasset",
+          "sha256": "026BB1E4446B6A62AB70D93BC473A121A36474583230F9C64AE6BC46783996C8"
+        },
+        {
+          "path": "Content/Weapons/Greatsword/Basic/SM_Greatsword_Basic.uasset",
+          "sha256": "4A3400BD19359292CA5BFEE5545AC8D65AD8121F9684676F6248B305AE0F608F"
+        },
+        {
+          "path": "Content/Weapons/Greatsword/Basic/T_Greatsword_Basic_BaseColor.uasset",
+          "sha256": "CF83AB3DEA34F919DEC10F860B304A0F2C14642E359EDF7955FF00C22C0A5A6A"
+        },
+        {
+          "path": "Content/Weapons/Greatsword/Basic/T_Greatsword_Basic_Normal.uasset",
+          "sha256": "9CE6C322EEBF0421A77B21F13EAE7595B3827CECCBD1F3C8212D2055549D05C5"
+        },
+        {
+          "path": "Content/Weapons/Greatsword/Basic/T_Greatsword_Basic_ORM.uasset",
+          "sha256": "128C646F3160F0B42ECFDA9EB1A87F94233E0C045B6872E08A2AD90C8F0AFFFA"
+        }
+      ],
+      "source_file_count": 1135
+    }
+  ]
+}

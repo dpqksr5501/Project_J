@@ -3,6 +3,7 @@
 #include "Animation/AnimBlueprint.h"
 #include "Animation/AnimSequence.h"
 #include "Animation/Skeleton.h"
+#include "Animation/BlendProfile.h"
 #include "Animation/Project_JPlayerAnimInstance.h"
 #include "Project_JPlayerCharacter.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -40,6 +41,8 @@ bool FProjectJMannyFoundation::RunTest(const FString&)
  if(!TestNotNull(TEXT("Manny foot solver"),ExpectedRig))return false;
  const auto CheckRig=[&](const FAnimNode_ControlRig& Node)
  {
+  const auto* InitialFromMesh=FindFProperty<FBoolProperty>(FAnimNode_ControlRig::StaticStruct(),TEXT("bSetRefPoseFromSkeleton"));
+  TestTrue(TEXT("Shared foot solver initializes from the actual body mesh"),InitialFromMesh && InitialFromMesh->GetPropertyValue_InContainer(&Node));
   TestEqual(TEXT("Authored foot rig uses Manny"),Node.GetControlRigAssetReference().GetRigClass(),ExpectedRig);
   const auto* Default=DefaultRigProperty->ContainerPtrToValuePtr<FControlRigAssetStrongReference>(&Node);
   TestEqual(TEXT("Initialization cannot revert to the UEFN foot hierarchy"),Default->GetRigClass(),ExpectedRig);
@@ -55,7 +58,30 @@ bool FProjectJMannyFoundation::RunTest(const FString&)
  {
   auto* Class=LoadClass<AProject_JMoverPawn>(nullptr,Path);if(!TestNotNull(TEXT("Production avatar"),Class))continue;
   const auto* Pawn=Class->GetDefaultObject<AProject_JMoverPawn>();const auto* Mesh=Pawn->GetMesh()->GetSkeletalMeshAsset();
-  TestTrue(TEXT("Avatar evaluates on the canonical Manny skeleton"),Mesh && Mesh->GetSkeleton()==Manny);
+  const auto* Body=Mesh ? Mesh->GetSkeleton() : nullptr;
+  const bool Compatible=Body && (Body==Manny || Body->GetCompatibleSkeletons().ContainsByPredicate(
+   [Manny](const TSoftObjectPtr<USkeleton>& Entry){return Entry.Get()==Manny;}));
+  TestTrue(TEXT("Avatar uses Manny or an explicitly compatible body skeleton"),Compatible);
+  if(Compatible && Body!=Manny)
+  {
+   const auto& A=Manny->GetReferenceSkeleton();const auto& B=Mesh->GetRefSkeleton();
+   TestEqual(TEXT("Compatible body retains the canonical root"),B.GetBoneName(0),A.GetBoneName(0));
+   for(int32 Index=1;Index<B.GetNum();++Index)
+   {
+    const int32 Other=A.FindBoneIndex(B.GetBoneName(Index));if(Other==INDEX_NONE)continue;
+    TestEqual(TEXT("Compatible shared bone keeps its parent"),B.GetBoneName(B.GetParentIndex(Index)),A.GetBoneName(A.GetParentIndex(Other)));
+   }
+   for(const UBlendProfile* Profile:Manny->BlendProfiles)if(Profile)
+   {
+    const UBlendProfile* Copy=nullptr;
+    for(const UBlendProfile* Candidate:Body->BlendProfiles)
+     if(Candidate && Candidate->GetFName()==Profile->GetFName()){Copy=Candidate;break;}
+    if(TestNotNull(TEXT("Compatible body has each exact blend profile name"),Copy))
+     TestEqual(TEXT("Compatible body preserves blend profile mode"),Copy->GetMode(),Profile->GetMode());
+   }
+   for(const auto& Group:Manny->GetSlotGroups())for(FName Slot:Group.SlotNames)
+    TestEqual(TEXT("Compatible body preserves each montage slot group"),Body->GetSlotGroupName(Slot),Group.GroupName);
+  }
   TestEqual(TEXT("One shared master class"),Pawn->GetMesh()->GetAnimClass(),BP->GeneratedClass.Get());
  }
  for(const auto& Compatible:Manny->GetCompatibleSkeletons())

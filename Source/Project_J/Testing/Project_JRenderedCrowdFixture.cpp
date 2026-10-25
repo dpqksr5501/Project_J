@@ -9,6 +9,7 @@
 #include "Engine/StaticMesh.h"
 #include "Testing/Project_JAuthoredAnimationFixture.h"
 #include "Animation/Project_JRetargetAnimInstance.h"
+#include "Animation/Project_JHandContact.h"
 #include "Animation/Project_JCharacterAnimInstance.h"
 #include "Animation/Project_JPlayerAnimInstance.h"
 #include "Components/Project_JAnimationUpdateCoordinatorComponent.h"
@@ -95,6 +96,21 @@ bool UProject_JRenderedCrowdFixture::Setup()
 		}
 		CastChecked<UProject_JAbilitySystemComponent>(Player->GetAbilitySystemComponent())->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_CombatMode);
 		Players.Add(Player);
+		// Record the actual pose writers and Leader Pose consumers in both routes.
+		// An AnimInstance class name alone cannot identify a direct body post process.
+		TInlineComponentArray<USkeletalMeshComponent*> PoseMeshes(Player);
+		for (const auto* Mesh : PoseMeshes)
+		{
+			const auto* Asset=Mesh->GetSkeletalMeshAsset();
+			const auto* Main=Mesh->GetAnimInstance();
+			const auto* Post=Mesh->GetPostProcessInstance();
+			const bool bModular=Mesh->IsA<UProject_JModularMeshComponent>();
+			ExpectedModularParts+=bModular;
+			PoseRoutes+=FString::Printf(TEXT("%d,%s,%s,%s,%s,%s,%d,%d\n"),I,*Mesh->GetName(),
+				*GetPathNameSafe(Asset),*GetPathNameSafe(Main?Main->GetClass():nullptr),
+				*GetPathNameSafe(Post?Post->GetClass():nullptr),*GetNameSafe(Mesh->LeaderPoseComponent.Get()),
+				Asset?Asset->GetRefSkeleton().GetNum():0,bModular);
+		}
 		PreviousPositions.Add(Player->GetActorLocation());TravelDistances.Add(0.);Reversals.Add(0);Landings.Add(0);WasInAir.Add(false);LastDirection.Add(0.f);
 	}
 	World->SpawnActor<ADirectionalLight>(FVector(0, 0, 500), FRotator(-40, -45, 0));
@@ -125,6 +141,7 @@ bool UProject_JRenderedCrowdFixture::Tick(float Delta)
 	int32 Visible = 0, Montages = 0, Prediction30=0;
 	int32 BodyLODs[3]={}, LocalLOD=INDEX_NONE;
 	int32 NaniteCandidates=0, NaniteParts=0, ClothParts=0, ClothTickParts=0, ModularParts=0;
+	int32 RetargetBodies=0, DirectBodies=0;
 	int32 WeaponMeshes=0, VisibleWeapons=0, RenderedWeapons=0, AutoLODWeapons=0, MatchingWeapons=0;
 	const double PhaseAge = World->GetTimeSeconds() - PhaseAt;
 	for (int32 Index=0;Index<Players.Num();++Index)
@@ -160,10 +177,24 @@ bool UProject_JRenderedCrowdFixture::Tick(float Delta)
 			const bool bInAir=Project_J::Movement::IsInAir(Player);if(WasInAir[Index] && !bInAir) ++Landings[Index];WasInAir[Index]=bInAir;
 		}
 		TInlineComponentArray<USkeletalMeshComponent*> Meshes(Player);
+		const USkeletalMeshComponent* Body=nullptr;
+		for (const auto* Mesh:Meshes)
+		{
+			if (!Project_J::Animation::FindBodyContactController(Mesh)) continue;
+			if (Body) { Finish(false,TEXT("Ambiguous body contact pose producers"));return false; }
+			Body=Mesh;
+		}
+		if (!Body) { Finish(false,TEXT("No body contact pose producer"));return false; }
+		RetargetBodies+=Cast<UProject_JRetargetAnimInstance>(Body->GetAnimInstance())!=nullptr;
+		DirectBodies+=Cast<UProject_JPlayerAnimInstance>(Body->GetAnimInstance())!=nullptr &&
+			Project_J::Animation::FindBodyContactController(Body)==Body->GetPostProcessInstance();
+		const int32 BodyLOD=Body->GetPredictedLODLevel();
+		if(BodyLOD>=0 && BodyLOD<3) ++BodyLODs[BodyLOD];
+		if(bWithLocalPlayer && Player==Players[0]) LocalLOD=BodyLOD;
 		bool bVisible = false;
 		for (auto* Mesh : Meshes)
 		{
-			if (ExpectedNaniteMode >= 0)
+			// Workload counters are useful even when no render-path override is requested.
 			{
 				ModularParts += Mesh->IsA<UProject_JModularMeshComponent>();
 				if (const auto* Asset = Mesh->GetSkeletalMeshAsset())
@@ -177,12 +208,9 @@ bool UProject_JRenderedCrowdFixture::Tick(float Delta)
 					}
 				}
 			}
-			if (Cast<UProject_JRetargetAnimInstance>(Mesh->GetAnimInstance()))
+			if (Mesh==Body || Mesh->LeaderPoseComponent.Get()==Body)
 			{
-				bVisible |= Mesh->WasRecentlyRendered(.2f);
-				const int32 LOD=Mesh->GetPredictedLODLevel();
-				if(LOD>=0 && LOD<3) ++BodyLODs[LOD];
-				if(bWithLocalPlayer && Player==Players[0]) LocalLOD=LOD;
+				bVisible |= Mesh->IsVisible() && !Mesh->bHiddenInGame && Mesh->WasRecentlyRendered(.2f);
 			}
 		}
 		Visible += bVisible;
@@ -196,18 +224,18 @@ bool UProject_JRenderedCrowdFixture::Tick(float Delta)
 		}
 	}
 	const bool bCapture = Phase > 1 && !bShot && PhaseAge > 1;
-	Rows += FString::Printf(TEXT("%d,%.5f,%.6f,%.6f,%d,%d,%d,%d,%d,%d,%d,%d,%.6f,%.6f,%.6f,%d,%d,%d,%d,%d,%d,%.6f,%d,%d,%d,%d,%d\n"), Phase, Now - Started, Delta * 1000,
+	Rows += FString::Printf(TEXT("%d,%.5f,%.6f,%.6f,%d,%d,%d,%d,%d,%d,%d,%d,%.6f,%.6f,%.6f,%d,%d,%d,%d,%d,%d,%.6f,%d,%d,%d,%d,%d,%d,%d\n"), Phase, Now - Started, Delta * 1000,
 		FPlatformTime::ToMilliseconds(RHIGetGPUFrameCycles()), Players.Num(), Visible, Montages, bCapture,BodyLODs[0],BodyLODs[1],BodyLODs[2],LocalLOD,
 		FPlatformTime::ToMilliseconds(GGameThreadTime),FPlatformTime::ToMilliseconds(GRenderThreadTime),FPlatformTime::ToMilliseconds(GRHIThreadTime),Prediction30,
 		NaniteCandidates,NaniteParts,ClothParts,ClothTickParts,ModularParts,PhaseAge,
-		WeaponMeshes,VisibleWeapons,RenderedWeapons,AutoLODWeapons,MatchingWeapons);
+		WeaponMeshes,VisibleWeapons,RenderedWeapons,AutoLODWeapons,MatchingWeapons,DirectBodies,RetargetBodies);
 	if (WeaponVisibility >= 0 && Phase > 1 && PhaseAge > 2 &&
 		(WeaponMeshes!=CrowdCount || VisibleWeapons!=(WeaponVisibility ? CrowdCount : 0) || MatchingWeapons!=CrowdCount))
 	{ Finish(false,TEXT("Weapon comparison lost the equipped mesh or requested visibility"));return false; }
 	if (ExpectedNaniteMode >= 0 && Phase > 1 && PhaseAge > 2)
 	{
 		if (NaniteCandidates == 0 || NaniteParts != (ExpectedNaniteMode ? NaniteCandidates : 0) ||
-			ModularParts != 8 * CrowdCount || ClothParts != CrowdCount || ClothTickParts != ClothParts)
+			ExpectedModularParts <= 0 || ModularParts != ExpectedModularParts || ClothParts != CrowdCount || ClothTickParts != ClothParts)
 		{ Finish(false, TEXT("Actual Nanite path or authored modular/cloth workload did not match")); return false; }
 	}
 	if (bSimulateMovement && Phase==4) bJumpRequested=true;
@@ -233,8 +261,8 @@ bool UProject_JRenderedCrowdFixture::Tick(float Delta)
 	if (PhaseAge >= 8)
 	{
 		if (Phase > 1 && (!Samples || VisibleSamples < Samples / 2))
-		{ Finish(false, TEXT("All 200 retarget bodies were not observed rendered for half the measurement")); return false; }
-		if (Phase == (bSimulateMovement?6:3)) { Finish(true, TEXT("Actual authored retarget bodies; real viewport; no remote connections")); return false; }
+		{ Finish(false, TEXT("All authored bodies were not observed rendered for half the measurement")); return false; }
+		if (Phase == (bSimulateMovement?6:3)) { Finish(true, TEXT("Actual authored bodies; real viewport; no remote connections")); return false; }
 		++Phase; PhaseAt = World->GetTimeSeconds(); Samples = VisibleSamples = 0; bShot = false;
 		TRACE_BOOKMARK(TEXT("ProjectJ.RenderedCrowd Phase=%d Actors=200"), Phase);
 		if (Phase == (bSimulateMovement?5:3)) for (AProject_JPlayerCharacter* Player : Players)
@@ -248,6 +276,7 @@ bool UProject_JRenderedCrowdFixture::Tick(float Delta)
 void UProject_JRenderedCrowdFixture::Finish(bool bSuccess, const TCHAR* Reason)
 {
 	bFinished = true;
+	FFileHelper::SaveStringToFile(PoseRoutes,*(Output/TEXT("pose_routes.csv")));
 	if (bSimulateMovement)
 	{
 		FString Work=TEXT("actor,travel_cm,reversals,landings\n");

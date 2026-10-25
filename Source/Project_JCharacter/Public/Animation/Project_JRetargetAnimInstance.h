@@ -15,9 +15,9 @@ class UProject_JWeaponPresentationComponent;
 class UProject_JRetargetBodyProfile;
 
 /**
- * Lightweight native AnimInstance optimized for large-scale MMORPG runtime retargeting.
- *
- * Sits on visual mesh components driven by 'Retarget Pose From Mesh'.
+ * Shared contact/secondary-animation controller for direct UE5 post processes
+ * and for visual meshes requiring Retarget Pose From Mesh. The graph owns
+ * whether retargeting exists; this controller does not retarget poses itself.
  * Computes deterministic weapon hand-grip IK targets in Component Space with
  * smooth combat-state blending and zero network replication overhead.
  */
@@ -53,6 +53,9 @@ public:
 
 	uint64 GetGripTargetSnapshotFrame() const { return GripTargetSnapshotFrame; }
 	uint64 GetGripPoseEvaluationFrame() const { return GripPoseEvaluationFrame; }
+	/** Immutable GT snapshot consumed by the body graph's worker update. */
+	const FProject_JInputPoseContact& GetInputPoseContact(bool bPrimary) const
+	{ return bPrimary ? SnapshotRightInputPoseContact : SnapshotLeftInputPoseContact; }
 
 	/**
 	 * Explicitly registers or clears the weapon visual component to track.
@@ -163,6 +166,14 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Quality")
 	bool bEnableFollowerRetarget = true;
 
+	/** Cosmetic body physics in either pose route; inherited quality, never gameplay pose ownership. */
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Quality")
+	bool bEnableSecondaryMotion = true;
+
+	/** Derived after contact-alpha interpolation; gates body contact controls without a second blend clock. */
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Quality")
+	bool bHasActiveHandContact = false;
+
 	/** Whether Hand IK is enabled under the current quality tier. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Quality")
 	bool bTierAllowsHandIK = true;
@@ -184,6 +195,7 @@ public:
 	int32 RetargetLODThreshold = -1;
 
 protected:
+	friend class FProjectJSecondaryHandContactTest;
 	virtual FAnimInstanceProxy* CreateAnimInstanceProxy() override;
 	virtual void DestroyAnimInstanceProxy(FAnimInstanceProxy* Proxy) override;
 	/** Weak reference to the currently tracked weapon visual component. */
@@ -208,6 +220,8 @@ protected:
 	uint64 GripTargetSnapshotFrame = MAX_uint64;
 	uint64 GripPoseEvaluationFrame = MAX_uint64;
 	bool bHasValidLeftSnapshot = false;
+	FProject_JInputPoseContact SnapshotRightInputPoseContact;
+	FProject_JInputPoseContact SnapshotLeftInputPoseContact;
 	float TargetRightAlphaSnapshot = 1.0f;
 	float TargetLeftAlphaSnapshot = 0.0f;
 	FVector SnapshotRightElbowTarget = FVector::ZeroVector;

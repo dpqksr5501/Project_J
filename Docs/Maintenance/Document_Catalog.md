@@ -4,7 +4,7 @@
 
 목록은 파일 위치와 문서 종류를 안내한다. 구현 완료·현재 성능을 판정하는 표가 아니며, 각 문서의 날짜·범위·후속 기록을 함께 읽는다. 통합 문서 안내는 이전 링크를 이어주는 진입점이고 상세 본문은 통합 가이드에 있다.
 
-문서 폴더 파일 3500개, Markdown 273개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
+문서 폴더 파일 3523개, Markdown 276개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
 
 ## 주제별 목록
 
@@ -75,6 +75,7 @@
 | [보이는 메시 기준의 애니메이션·장비 파이프라인](../Animation/Architecture/Visual_Presentation_Mesh_Ownership.md) | 구조·계약 | Animation/Architecture/Visual_Presentation_Mesh_Ownership.md |
 | [무기 접촉 복귀와 몸체 프로필](../Animation/Architecture/Weapon_Contact_Recovery.md) | 통합 문서 안내 | Animation/Architecture/Weapon_Contact_Recovery.md |
 | [무기 궤적과 손 파지의 소유권](../Animation/Architecture/Weapon_Grip_Drive_Policy.md) | 통합 문서 안내 | Animation/Architecture/Weapon_Grip_Drive_Policy.md |
+| [캐릭터 리깅과 UE5 후처리 제작·문제 해결 가이드](../Animation/Authoring/Character_Rigging_And_UE5_Postprocess_Playbook.md) | 제작 가이드 | Animation/Authoring/Character_Rigging_And_UE5_Postprocess_Playbook.md |
 | [데이터 기반 이동 콘텐츠 확장](../Animation/Authoring/DataDrivenLocomotionExtensionGuide.md) | 제작 가이드 | Animation/Authoring/DataDrivenLocomotionExtensionGuide.md |
 | [손바닥 접촉 기준과 Guided Hand IK](../Animation/Authoring/Guided_Hand_Contact.md) | 통합 문서 안내 | Animation/Authoring/Guided_Hand_Contact.md |
 | [인간형 스켈레톤과 추가 뼈 제작 기준](../Animation/Authoring/HumanoidSkeletonRetargetingStandards.md) | 제작 가이드 | Animation/Authoring/HumanoidSkeletonRetargetingStandards.md |
@@ -230,6 +231,7 @@
 | [성능 설계·수집·결과](../Performance/README.md) | 목차·문서 관리 | Performance/README.md |
 | [200명 Mover 측정 원자료](../Performance/Reports/Data/Mover200_20261022/README.md) | 목차·문서 관리 | Performance/Reports/Data/Mover200_20261022/README.md |
 | [대검 스켈레탈 Nanite 적용과 비용 비교 — 2026-10-24](../Performance/Reports/ProjectJ_Character_Nanite_2026-10-24.md) | 시점별 보고·검증 | Performance/Reports/ProjectJ_Character_Nanite_2026-10-24.md |
+| [UE5 호환 직접 ABP · 200명 비용 비교 — 2026-10-25](../Performance/Reports/ProjectJ_DirectRig_200_2026-10-25.md) | 시점별 보고·검증 | Performance/Reports/ProjectJ_DirectRig_200_2026-10-25.md |
 | [Mover 구조 결함 수정과 200명 재검증 — 2026-10-22](../Performance/Reports/ProjectJ_Mover_200_2026-10-22.md) | 시점별 보고·검증 | Performance/Reports/ProjectJ_Mover_200_2026-10-22.md |
 | [Project_J Profiling Baseline Results](../Performance/Reports/ProjectJ_Profiling_Baseline_Results_2026-09-03.md) | 시점별 결과 | Performance/Reports/ProjectJ_Profiling_Baseline_Results_2026-09-03.md |
 | [Project_J Profiling Consolidated Summary](../Performance/Reports/ProjectJ_Profiling_Consolidated_Summary_2026-09-06.md) | 시점별 보고·검증 | Performance/Reports/ProjectJ_Profiling_Consolidated_Summary_2026-09-06.md |
@@ -341,6 +343,7 @@
 | [문서 관리와 보존 규칙](README.md) | 목차·문서 관리 | Maintenance/README.md |
 | [로컬 검증 산출물 정리와 최적화 근거 보존 — 2026-10-16](Storage_Cleanup_2026-10-16.md) | 목차·문서 관리 | Maintenance/Storage_Cleanup_2026-10-16.md |
 | [저장 공간 정리와 현재 문서 갱신 — 2026-10-21](Storage_Cleanup_2026-10-21.md) | 목차·문서 관리 | Maintenance/Storage_Cleanup_2026-10-21.md |
+| [리깅·200명 측정 자료 안전 정리 — 2026-10-25](Storage_Cleanup_2026-10-25.md) | 목차·문서 관리 | Maintenance/Storage_Cleanup_2026-10-25.md |
 
 ### 보관 자료
 
@@ -408,6 +411,9 @@
 | [Handoffs/WholeProjectAudit_2026-10-14](../Handoffs/WholeProjectAudit_2026-10-14) | 1 | 문서 이동·보존 기록 |
 | [Maintenance]() | 4 | 문서 이동·보존 기록 |
 | [Performance/Reports](../Performance/Reports) | 2 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/DirectRig200_20261025](../Performance/Reports/Data/DirectRig200_20261025) | 8 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/DirectRig200_20261025/RigDirect200_A_20261025](../Performance/Reports/Data/DirectRig200_20261025/RigDirect200_A_20261025) | 6 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/DirectRig200_20261025/RigDirect200_B_20261025](../Performance/Reports/Data/DirectRig200_20261025/RigDirect200_B_20261025) | 6 | 문서 이동·보존 기록 |
 | [Performance/Reports/Data/Mover200_20261022](../Performance/Reports/Data/Mover200_20261022) | 8 | 문서 이동·보존 기록 |
 | [Performance/Reports/Data/Mover200_20261022/Mover200_A2](../Performance/Reports/Data/Mover200_20261022/Mover200_A2) | 6 | 문서 이동·보존 기록 |
 | [Performance/Reports/Data/Mover200_20261022/Mover200_B1](../Performance/Reports/Data/Mover200_20261022/Mover200_B1) | 6 | 문서 이동·보존 기록 |

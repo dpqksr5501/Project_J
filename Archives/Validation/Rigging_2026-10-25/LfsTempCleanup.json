@@ -1,0 +1,185 @@
+{
+  "scope": "Only .git/lfs/tmp files older than two minutes, exclusively readable and unchanged; normal LFS objects/index/refs untouched",
+  "time": "2026-10-25T20:06:42.4031244+09:00",
+  "beforeFreeBytes": 118119505920,
+  "afterFreeBytes": 118119636992,
+  "removedFiles": 29,
+  "removedLogicalBytes": 169152238.0,
+  "skipped": [],
+  "removed": [
+    {
+      "bytes": 74208,
+      "lastWriteUtc": "2026-10-25T09:16:15.7123073Z",
+      "path": "1107065405",
+      "sha256": "77cdce2339c159352a1be52fe249c7ae528735ae9e59cff05b85f7bd30aeff4d"
+    },
+    {
+      "bytes": 26969088,
+      "lastWriteUtc": "2026-10-25T09:24:53.0990789Z",
+      "path": "1466180353",
+      "sha256": "7fe37a5e35b727be904a4f18ddeafb30bd6f17081f843daf7fc339346599b525"
+    },
+    {
+      "bytes": 4490240,
+      "lastWriteUtc": "2026-10-25T09:24:19.7384133Z",
+      "path": "1479835432",
+      "sha256": "acfb72206e36bee8d36d5de45b279432d26a40ff8251ff766894545050f5b330"
+    },
+    {
+      "bytes": 754688,
+      "lastWriteUtc": "2026-10-25T09:25:19.2697577Z",
+      "path": "1609792453",
+      "sha256": "a25dc0bb191447bbf6173eeb3235cad14b189a03d99d6013c70ed4071eb1663c"
+    },
+    {
+      "bytes": 263168,
+      "lastWriteUtc": "2026-10-25T09:25:18.2769309Z",
+      "path": "1854838604",
+      "sha256": "9e20b4a530ef3251b02a289ffa7d4f8867df5b3d0aafdd2a2e6d5f83ca85c7e7"
+    },
+    {
+      "bytes": 1118252,
+      "lastWriteUtc": "2026-10-25T09:21:42.8307330Z",
+      "path": "1944474370",
+      "sha256": "9f173b47763af9b9d507413649cc87f927f20758ca49a63452399918c8139f2a"
+    },
+    {
+      "bytes": 0,
+      "lastWriteUtc": "2026-10-25T09:25:10.8923164Z",
+      "path": "2061995063",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 190266,
+      "lastWriteUtc": "2026-10-25T09:20:58.4252592Z",
+      "path": "2153082003",
+      "sha256": "37e903eec95738f47c41e8851ffa9c646fa17534bcf7adb16f4e152e0a421292"
+    },
+    {
+      "bytes": 3769344,
+      "lastWriteUtc": "2026-10-25T09:20:57.4213170Z",
+      "path": "2565447310",
+      "sha256": "2cfcf03c4231b33fcd01b75f8816a621bd8315c448b042f60fb6978a42b613c1"
+    },
+    {
+      "bytes": 361472,
+      "lastWriteUtc": "2026-10-25T09:19:01.7890946Z",
+      "path": "2611175901",
+      "sha256": "4dc311c9acce53f9c2cf01a891a79c7ea101fbb7eb51fa520e89cc48b2a02e99"
+    },
+    {
+      "bytes": 12485632,
+      "lastWriteUtc": "2026-10-25T10:07:34.2307571Z",
+      "path": "2728222403",
+      "sha256": "70afc8aeda4737c8130e15de7900f95910b00a28ad2d52ebea9c57cd9ecc23c8"
+    },
+    {
+      "bytes": 0,
+      "lastWriteUtc": "2026-10-25T09:17:34.0093568Z",
+      "path": "3069738166",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 263168,
+      "lastWriteUtc": "2026-10-25T09:21:03.9667562Z",
+      "path": "3200451023",
+      "sha256": "7303d8700a8d52baa411f95f6eb251eac02f1b7f3d238b5d337d20174d41f582"
+    },
+    {
+      "bytes": 21857280,
+      "lastWriteUtc": "2026-10-25T10:07:20.7196406Z",
+      "path": "3268238994",
+      "sha256": "07eeeb07bf2bf634b13a41742f9c87d5ff504901ee3d32bde51d700ac73d09fd"
+    },
+    {
+      "bytes": 754688,
+      "lastWriteUtc": "2026-10-25T09:18:54.5652769Z",
+      "path": "332964715",
+      "sha256": "16ba47650cabc5275d073b2eb0e8626d1cd31837900c4018c53c6a1da5531ec0"
+    },
+    {
+      "bytes": 1180672,
+      "lastWriteUtc": "2026-10-25T09:19:22.4540636Z",
+      "path": "3381234057",
+      "sha256": "7cb1992ddf1c09390142e003804e537d0769878fafd8e06e2e0004173c5b45f2"
+    },
+    {
+      "bytes": 263168,
+      "lastWriteUtc": "2026-10-25T10:11:08.1784250Z",
+      "path": "3462807279",
+      "sha256": "a9bd68f4c6961001081045a78be62c33b96259c62685983282fa12742bce4bd4"
+    },
+    {
+      "bytes": 21529600,
+      "lastWriteUtc": "2026-10-25T10:09:14.8963731Z",
+      "path": "3512667088",
+      "sha256": "28a80fcaf05c3d5d20d21c37a82dad46de47dca2fbf31b6ea224c2bac00476c6"
+    },
+    {
+      "bytes": 1118252,
+      "lastWriteUtc": "2026-10-25T09:16:08.9590081Z",
+      "path": "3656137441",
+      "sha256": "9f173b47763af9b9d507413649cc87f927f20758ca49a63452399918c8139f2a"
+    },
+    {
+      "bytes": 33792,
+      "lastWriteUtc": "2026-10-25T09:24:59.6900130Z",
+      "path": "3832317183",
+      "sha256": "e1511f33a1ef38f0671976505e697d478b33b07196005959fb432f3bc5ca527d"
+    },
+    {
+      "bytes": 4984188,
+      "lastWriteUtc": "2026-10-25T09:25:25.8218062Z",
+      "path": "3894077299",
+      "sha256": "8706fb6e436d7ba20c5134601b6a24f242b826d10bf2fc02caeb179c39437626"
+    },
+    {
+      "bytes": 164864,
+      "lastWriteUtc": "2026-10-25T09:25:03.3505312Z",
+      "path": "4018519750",
+      "sha256": "1d64590af800495099f9907a425c071e781c76008234c95a34c97c2b78f8f6bc"
+    },
+    {
+      "bytes": 13632512,
+      "lastWriteUtc": "2026-10-25T09:19:07.1526310Z",
+      "path": "4131247544",
+      "sha256": "ce197fbb2d9ddb6a9ab555e0893433a57b01ae71e6a7a6ce6cd0bedd4102c06b"
+    },
+    {
+      "bytes": 1049600,
+      "lastWriteUtc": "2026-10-25T09:25:26.8222317Z",
+      "path": "575616277",
+      "sha256": "a830c9e813631df113c3245cb75b732b6e6c37fb7c60744fe75c65897f2b7cb5"
+    },
+    {
+      "bytes": 13009920,
+      "lastWriteUtc": "2026-10-25T09:28:13.1317549Z",
+      "path": "850195113",
+      "sha256": "f9f7e1b5cba72e8586d4f7e0366004a88e545f096625c2bb781a06b59a77d682"
+    },
+    {
+      "bytes": 427008,
+      "lastWriteUtc": "2026-10-25T09:59:35.2467503Z",
+      "path": "850939655",
+      "sha256": "ad9e1251fc20fab31ac83d2d4a8e9638304c95950ccf36a053516e6685ba8b31"
+    },
+    {
+      "bytes": 20153344,
+      "lastWriteUtc": "2026-10-25T09:22:09.8754276Z",
+      "path": "908569326",
+      "sha256": "7c5b6090866fa4187b45f12da301c74a798ef8280edbb0ef46372ecabdf0d9cc"
+    },
+    {
+      "bytes": 14779392,
+      "lastWriteUtc": "2026-10-25T10:14:16.7294488Z",
+      "path": "925876584",
+      "sha256": "79c55ca588ab1e4f89153f7b756c4dcdcbb0c52f5d5b16c41de74603ee1ca64a"
+    },
+    {
+      "bytes": 3474432,
+      "lastWriteUtc": "2026-10-25T10:11:27.2092824Z",
+      "path": "955816887",
+      "sha256": "5b2d6a4efd09a068dcdba96d46e4f8df0668f32402b04aaecb4b028e92a361b9"
+    }
+  ]
+}

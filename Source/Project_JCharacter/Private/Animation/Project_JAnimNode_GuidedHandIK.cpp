@@ -12,6 +12,7 @@ void FProject_JAnimNode_GuidedHandIK::Initialize_AnyThread(const FAnimationIniti
 	bProfileArmValid = false;
 	Chain = {};
 	CachedArmNames = {};
+	InputPoseContact = {};
 	ResetDynamics(ETeleportType::ResetPhysics);
 }
 
@@ -25,6 +26,12 @@ void FProject_JAnimNode_GuidedHandIK::ResetDynamics(ETeleportType)
 void FProject_JAnimNode_GuidedHandIK::UpdateInternal(const FAnimationUpdateContext& Context)
 {
 	FAnimNode_SkeletalControlBase::UpdateInternal(Context);
+	InputPoseContact = {};
+	if (ArmDefinitionSource != EProject_JGuidedArmDefinitionSource::NodeSettings && !bUseBoneSpaceEffector)
+	{
+		if (const auto* Body = Cast<UProject_JRetargetAnimInstance>(Context.AnimInstanceProxy->GetAnimInstanceObject()))
+			InputPoseContact = Body->GetInputPoseContact(ArmDefinitionSource == EProject_JGuidedArmDefinitionSource::PrimaryBodyProfile);
+	}
 	const FGraphTraversalCounter& Counter = Context.AnimInstanceProxy->GetUpdateCounter();
 	if (!LastActiveUpdate.WasSynchronizedCounter(Counter) || !LastActiveUpdate.WasSynchronizedLastFrame(Counter))
 	{
@@ -112,14 +119,14 @@ void FProject_JAnimNode_GuidedHandIK::InitializeBoneReferences(const FBoneContai
 	CachedArmSource = ArmDefinitionSource;
 	Project_J::Animation::ResolveGuidedArmChain(RequiredBones, CachedArmNames.Hand,
 		CachedArmNames.Elbow, CachedArmNames.Shoulder, Chain);
-	CachedEffectorSpaceBoneName = EffectorSpaceBoneName;
-	bCachedUseBoneSpaceEffector = bUseBoneSpaceEffector;
+	CachedEffectorSpaceBoneName = TargetSpaceBone();
+	bCachedUseBoneSpaceEffector = UsesBoneSpaceEffector();
 	EffectorSpaceIndex = FCompactPoseBoneIndex(INDEX_NONE);
 	bEffectorSpaceValid = false;
-	if (bUseBoneSpaceEffector && Chain.IsValid() && !EffectorSpaceBoneName.IsNone())
+	if (UsesBoneSpaceEffector() && Chain.IsValid() && !TargetSpaceBone().IsNone())
 	{
 		FBoneReference Reference;
-		Reference.BoneName = EffectorSpaceBoneName;
+		Reference.BoneName = TargetSpaceBone();
 		Reference.Initialize(RequiredBones);
 		if (Reference.IsValidToEvaluate(RequiredBones))
 		{
@@ -138,20 +145,21 @@ bool FProject_JAnimNode_GuidedHandIK::IsValidToEvaluate(const USkeleton*, const 
 	const FProject_JGripArmBones Requested = GetRequestedArm();
 	if (Requested.Hand != CachedArmNames.Hand || Requested.Elbow != CachedArmNames.Elbow ||
 		Requested.Shoulder != CachedArmNames.Shoulder || CachedArmSource != ArmDefinitionSource ||
-		bCachedUseBoneSpaceEffector != bUseBoneSpaceEffector || CachedEffectorSpaceBoneName != EffectorSpaceBoneName)
+		bCachedUseBoneSpaceEffector != UsesBoneSpaceEffector() || CachedEffectorSpaceBoneName != TargetSpaceBone())
 	{
 		InitializeBoneReferences(RequiredBones);
 	}
-	return Chain.IsValid() && (!bUseBoneSpaceEffector || bEffectorSpaceValid);
+	return Chain.IsValid() && (!UsesBoneSpaceEffector() || bEffectorSpaceValid);
 }
 
 bool FProject_JAnimNode_GuidedHandIK::ResolveComponentSpaceEffector(FComponentSpacePoseContext& Output, FTransform& OutTarget) const
 {
 	OutTarget = FTransform::Identity;
-	if (bUseBoneSpaceEffector)
+	if (UsesBoneSpaceEffector())
 	{
 		if (!bEffectorSpaceValid) { return false; }
-		OutTarget = EffectorBoneSpaceTransform * Output.Pose.GetComponentSpaceTransform(EffectorSpaceIndex);
+		OutTarget = (InputPoseContact.IsValid() ? InputPoseContact.Wrist : EffectorBoneSpaceTransform) *
+			Output.Pose.GetComponentSpaceTransform(EffectorSpaceIndex);
 	}
 	else { OutTarget = EffectorTransform; }
 	return !OutTarget.ContainsNaN();

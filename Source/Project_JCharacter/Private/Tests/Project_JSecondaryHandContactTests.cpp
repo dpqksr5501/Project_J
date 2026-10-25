@@ -2,6 +2,7 @@
 #include "Misc/AutomationTest.h"
 #include "Misc/MemStack.h"
 #include "Animation/Project_JAnimNode_GuidedHandIK.h"
+#include "Animation/Project_JAnimNode_HandContactGoals.h"
 #include "Animation/Project_JHandContact.h"
 #include "Animation/Project_JRetargetAnimInstance.h"
 #include "Animation/AnimInstanceProxy.h"
@@ -19,10 +20,10 @@ bool FProjectJSecondaryHandContactTest::RunTest(const FString&)
 	// Arbitrary names, asymmetric segment lengths, no dedicated IK bones.
 	USkeleton* Skeleton = NewObject<USkeleton>();
 	const FName Names[] = { TEXT("root"), TEXT("driver_anchor"), TEXT("driver_hinge"), TEXT("driver_contact"),
-		TEXT("support_anchor"), TEXT("support_hinge"), TEXT("support_contact"), TEXT("support_finger") };
-	const int32 Parents[] = { INDEX_NONE, 0, 1, 2, 0, 4, 5, 6 };
+		TEXT("support_anchor"), TEXT("support_hinge"), TEXT("support_contact"), TEXT("support_finger"), TEXT("goal_driver"), TEXT("goal_support") };
+	const int32 Parents[] = { INDEX_NONE, 0, 1, 2, 0, 4, 5, 6, 0, 0 };
 	const FVector Locations[] = { FVector::ZeroVector, FVector(0,6,0), FVector(22,9,0), FVector(26,-9,0),
-		FVector(0,-6,0), FVector(24,-8,0), FVector(27,8,0), FVector(3,0,0) };
+		FVector(0,-6,0), FVector(24,-8,0), FVector(27,8,0), FVector(3,0,0), FVector::ZeroVector, FVector::ZeroVector };
 	{
 		FReferenceSkeletonModifier Modifier(Skeleton);
 		for (int32 I = 0; I < UE_ARRAY_COUNT(Names); ++I)
@@ -37,11 +38,15 @@ bool FProjectJSecondaryHandContactTest::RunTest(const FString&)
 	Palm->SocketName = TEXT("SupportPalm"); Palm->BoneName = Names[6];
 	Palm->RelativeLocation = FVector(6, 2, -1); Palm->RelativeRotation = FRotator(12,-8,21);
 	MeshAsset->GetMeshOnlySocketList().Add(Palm);
+	auto* DriverPalm=NewObject<USkeletalMeshSocket>(MeshAsset);
+	DriverPalm->SocketName=TEXT("DriverPalm");DriverPalm->BoneName=Names[3];MeshAsset->GetMeshOnlySocketList().Add(DriverPalm);
 	USkeletalMeshComponent* Mesh = NewObject<USkeletalMeshComponent>();
 	Mesh->SetSkeletalMeshAsset(MeshAsset);
 	UProject_JRetargetAnimInstance* Instance = NewObject<UProject_JRetargetAnimInstance>(Mesh);
 	UProject_JHandGripProfile* Profile = NewObject<UProject_JHandGripProfile>();
 	Profile->Calibration.SecondaryPalmSocketName = Palm->SocketName;
+	Profile->Calibration.PrimaryPalmSocketName=DriverPalm->SocketName;
+	Profile->Calibration.PrimaryArm.Shoulder=Names[1];Profile->Calibration.PrimaryArm.Elbow=Names[2];Profile->Calibration.PrimaryArm.Hand=Names[3];
 	Profile->Calibration.SecondaryArm.Shoulder = Names[4];
 	Profile->Calibration.SecondaryArm.Elbow = Names[5];
 	Profile->Calibration.SecondaryArm.Hand = Names[6];
@@ -116,6 +121,42 @@ bool FProjectJSecondaryHandContactTest::RunTest(const FString&)
 	TestFalse(TEXT("LOD removal of only the driver bypasses bone-space contact"), Secondary.IsValidToEvaluate(Skeleton, LODBones));
 	Secondary.bUseBoneSpaceEffector = false;
 	TestTrue(TEXT("Component-space contact does not require the removed driver"), Secondary.IsValidToEvaluate(Skeleton, LODBones));
+	// A direct body's independent weapon uses the CURRENT input marker, while
+	// the retarget path continues using its component-space presentation target.
+	Secondary.bUseBoneSpaceEffector = false;
+	Instance->SnapshotLeftInputPoseContact = {Names[3], WristInDriver};
+	FAnimationUpdateContext Update(&Proxy, 1.f / 60.f);
+	Secondary.UpdateInternal(Update);
+	TestTrue(TEXT("Direct source contact selects the immutable input-pose snapshot"), Secondary.IsValidToEvaluate(Skeleton, Bones));
+	Corrections.Reset(); Secondary.EvaluateSkeletalControl_AnyThread(Output, Corrections);
+	TestTrue(TEXT("Direct source contact resolves against the current input marker"),
+		Corrections.Num() == 3 && Corrections.Last().Transform.Equals(WristInDriver * NewDriver, 0.001));
+	Instance->SnapshotLeftInputPoseContact = {Names[7], WristInDriver};
+	Secondary.UpdateInternal(Update);
+	TestFalse(TEXT("Direct contact cannot depend on its own solved subtree"), Secondary.IsValidToEvaluate(Skeleton, Bones));
+	FProject_JAnimNode_HandContactGoals Goals;
+	Goals.PrimaryGoalBone.BoneName=Names[8];Goals.SecondaryGoalBone.BoneName=Names[9];
+	const FTransform DesiredDriver(FRotator(6,-9,18),FVector(42,3,8));
+	Instance->SnapshotRightInputPoseContact={Names[0],DesiredDriver};Instance->SnapshotLeftInputPoseContact={};
+	Instance->bRightContactTargetValid=Instance->bLeftContactTargetValid=true;
+	Instance->RightGripAlpha=.5f;Instance->LeftGripAlpha=1.f;
+	Instance->bUsePrimaryHandSpaceGrip=true;Instance->PrimaryHandBoneName=Names[3];Instance->LeftGripInPrimaryHandSpace=WristInDriver;
+	Goals.PreUpdate(Instance);Goals.UpdateInternal(Update);Goals.InitializeBoneReferences(Bones);
+	TestTrue(TEXT("Independent body-goal markers resolve on arbitrary bone names"),Goals.IsValidToEvaluate(Skeleton,Bones));
+	FTransform BlendedDriver;BlendedDriver.Blend(NewDriver,DesiredDriver,.5f);
+	Corrections.Reset();Goals.EvaluateSkeletalControl_AnyThread(Output,Corrections);
+	TestTrue(TEXT("Body-goal publication applies contact alpha once before solving"),Corrections.Num()==2 && Corrections[0].Transform.Equals(BlendedDriver,.001));
+	TestTrue(TEXT("A hand-mounted weapon's support goal follows the published primary wrist"),Corrections.Num()==2 && Corrections[1].Transform.Equals(WristInDriver*BlendedDriver,.001));
+	TestTrue(TEXT("Publishing goals cannot alter the animated body"),Output.Pose.GetComponentSpaceTransform(Driver).Equals(NewDriver,.001));
+	Goals.PrimaryGoalBone.BoneName=Names[0];Goals.InitializeBoneReferences(Bones);
+	TestFalse(TEXT("Publishing a goal into an ancestor of the body is rejected"),Goals.IsValidToEvaluate(Skeleton,Bones));
+	Instance->NativeUninitializeAnimation();
+	Secondary.UpdateInternal(Update);
+	TestTrue(TEXT("Uninitialization releases the direct contact frame"), !Instance->GetInputPoseContact(false).IsValid());
+	TestTrue(TEXT("A cleared frame restores the component-space path"), Secondary.IsValidToEvaluate(Skeleton, Bones));
+	Corrections.Reset(); Secondary.EvaluateSkeletalControl_AnyThread(Output, Corrections);
+	TestTrue(TEXT("No direct source marker survives ownership teardown"),
+		Corrections.Num() == 3 && Corrections.Last().Transform.Equals(Secondary.EffectorTransform, 0.001));
 	return true;
 }
 #endif

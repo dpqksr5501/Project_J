@@ -5,11 +5,14 @@
 class USkeletalMeshComponent;
 class APawn;
 class UProject_JHandGripProfile;
+class UProject_JRetargetAnimInstance;
 struct FProject_JHandGripCalibration;
 struct FProject_JGripArmBones;
 
 namespace Project_J::Animation
 {
+	/** Runtime contact owner in either pose route: body main instance, otherwise body post process. */
+	PROJECT_JCHARACTER_API const UProject_JRetargetAnimInstance* FindBodyContactController(const USkeletalMeshComponent* Mesh);
 	/** One precedence rule for visual animation and normal weapon mounting. Game thread only. */
 	PROJECT_JCHARACTER_API FProject_JHandGripCalibration ResolveHandGripCalibration(
 		const APawn* Character, const UProject_JHandGripProfile* VisualOverride);

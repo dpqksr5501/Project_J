@@ -40,6 +40,10 @@ bool FProjectJVisualAssetAdmissions::RunTest(const FString&)
         Part->SetupAttachment(Source); Part->SetSkeletalMeshAsset(Asset);
         Character->AddInstanceComponent(Part); Part->RegisterComponent();
         Part->AnimScriptInstance=NewObject<UAnimInstance>(Part);
+        // This fixture installs an instance directly rather than initializing a
+        // running animation graph. Author the producer's enabled tick before
+        // the coordinator captures it; the lifetime test covers authored-off.
+        Part->SetComponentTickEnabled(true);
         Part->VisibilityBasedAnimTickOption=EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
         Part->SetLastRenderTime(0);
         return Part;
@@ -53,6 +57,7 @@ bool FProjectJVisualAssetAdmissions::RunTest(const FString&)
     TestEqual(TEXT("Released part receives its original visibility policy"),Part->VisibilityBasedAnimTickOption,EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered);
     Part->SetSkeletalMeshAsset(Manny);
     Part->AnimScriptInstance=NewObject<UProject_JRetargetAnimInstance>(Part);
+    Part->SetComponentTickEnabled(true);
     Source->SetVisibility(false,false);
     Coordinator->RefreshVisualBudget(.5f);
     TestTrue(TEXT("Different mesh and animation class can acquire the existing coordinator"),Part->IsUsingExternalTickRateControl());
@@ -60,6 +65,30 @@ bool FProjectJVisualAssetAdmissions::RunTest(const FString&)
     auto* Local=World->SpawnActor<APlayerController>(); Local->SetAsLocalPlayerController(); Local->Possess(Character);
     Coordinator->RefreshVisualBudget(1.f/60);
     TestTrue(TEXT("Local retains its original parent LOD policy"),Part->bSyncAttachParentLOD);
+    TestTrue(TEXT("Pose producer fixture has an authored enabled tick"),Part->IsComponentTickEnabled());
+    Part->SetHiddenInGame(true);
+    auto* Surface = NewObject<USkeletalMeshComponent>(Character);
+    Surface->SetupAttachment(Part); Surface->SetSkeletalMeshAsset(Manny);
+    Character->AddInstanceComponent(Surface); Surface->RegisterComponent();
+    Surface->SetLeaderPoseComponent(Part);
+    Surface->SetLastRenderTime(World->GetTimeSeconds());
+    Coordinator->RefreshVisualBudget(1.f / 60.f);
+    TestTrue(TEXT("A visible LeaderPose consumer keeps its hidden producer evaluating"), Part->IsComponentTickEnabled());
+    Surface->SetHiddenInGame(true);
+    Coordinator->RefreshVisualBudget(1.f / 60.f);
+    TestFalse(TEXT("Hiding the last shared-pose surface suppresses its producer again"), Part->IsComponentTickEnabled());
+    Surface->SetHiddenInGame(false);
+    Coordinator->RefreshVisualBudget(1.f / 60.f);
+    TestTrue(TEXT("Showing a surface wakes the existing producer without a new lease"), Part->IsComponentTickEnabled());
+    Surface->UnregisterComponent();
+    Coordinator->RefreshVisualBudget(1.f / 60.f);
+    TestFalse(TEXT("An unregistered consumer cannot keep a hidden producer awake"), Part->IsComponentTickEnabled());
+    Surface->RegisterComponent(); Surface->SetLeaderPoseComponent(nullptr);
+    Coordinator->RefreshVisualBudget(1.f / 60.f);
+    TestFalse(TEXT("Rebinding a surface removes its old producer's demand"), Part->IsComponentTickEnabled());
+    Surface->DestroyComponent();
+    Part->SetHiddenInGame(false);
+    Coordinator->RefreshVisualBudget(1.f / 60.f);
     TestEqual(TEXT("Local never overwrites forced render or streaming LOD policy"),Part->GetForcedLOD(),0);
     Local->UnPossess(); Coordinator->RefreshVisualBudget(1.f/60);
     TestEqual(TEXT("Remote body regains engine screen-size LOD after local ownership ends"),Part->GetForcedLOD(),0);

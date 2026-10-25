@@ -412,6 +412,30 @@ bool FProjectJStableGripTargetsTest::RunTest(const FString&)
 	TestEqual(TEXT("End Motion: Primary IK Alpha restored to drawn (1.0)"), Targets.PrimaryIKAlpha, 1.0f);
 	TestEqual(TEXT("End Motion: Secondary IK Alpha restored to drawn (0.85)"), Targets.SecondaryIKAlpha, 0.85f);
 
+	// A late notify can change motion intent after a direct post-process pull.
+	// Both the actual transform and every animation consumer keep that published
+	// pose until the next frame; no second motion clock or pose evaluation.
+	Profile->MotionPresentation.bSupportsIndependentMotion=true;
+	const bool ContactHandoff=Profile->MotionPresentation.bUseContactHandoff;
+	Profile->MotionPresentation.bUseContactHandoff=false;
+	TArray<FProject_JWeaponMotionKey> Keys;Keys.SetNum(2);
+	Keys[0].NormalizedTime=0.f;Keys[1].NormalizedTime=1.f;Keys[1].RelativeTransform=FTransform(FVector(8,0,0));
+	Presentation->AnimationGripTargetsFrame=MAX_uint64;
+	const uint64 MotionToken=Presentation->BeginNotifyIndependentMotion(Keys,.7f,.3f,1.f,0.f,0.f);
+	TestTrue(TEXT("Frame publication fixture starts a real motion lease"),MotionToken!=0);
+	Presentation->SetIndependentMotionPosition(.25f);
+	const auto Published=Presentation->GetWeaponGripTargetsForAnimation(1.f/60.f);
+	const FTransform PublishedRoot=MeshComp->GetComponentTransform();
+	Presentation->SetIndependentMotionPosition(.75f);
+	Presentation->TickComponent(1.f/60.f,LEVELTICK_All,nullptr);
+	TestTrue(TEXT("A late motion notify cannot move a weapon after its pose targets were consumed"),MeshComp->GetComponentTransform().Equals(PublishedRoot,.00001));
+	TestTrue(TEXT("Every consumer receives the same immutable target packet"),Presentation->GetWeaponGripTargetsForAnimation(1.f/60.f).PrimaryGripWorldTransform.Equals(Published.PrimaryGripWorldTransform,.00001));
+	Presentation->AnimationGripTargetsFrame=GFrameCounter-1;Presentation->LastMotionEvaluationFrame=GFrameCounter-1;
+	Presentation->GetWeaponGripTargetsForAnimation(1.f/60.f);
+	TestFalse(TEXT("The following frame consumes the latest notify intent"),MeshComp->GetComponentTransform().Equals(PublishedRoot,.00001));
+	Presentation->EndNotifyIndependentMotion(MotionToken);
+	Profile->MotionPresentation.bUseContactHandoff=ContactHandoff;
+
 	// A profile socket edit invalidates both positive and negative lookups.
 	UStaticMeshSocket* Replacement = NewObject<UStaticMeshSocket>(StaticMesh);
 	Replacement->SocketName = TEXT("WeaponGrip_R_Alternate");

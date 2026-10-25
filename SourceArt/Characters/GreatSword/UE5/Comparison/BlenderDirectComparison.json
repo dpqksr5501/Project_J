@@ -1,0 +1,330 @@
+{
+  "source": "Actual Unreal SkeletalMeshExporterFBX files imported together in Blender; cm; no scale/pose fitting",
+  "rigs": {
+    "GreatSword": {
+      "bone_count": 317,
+      "root_representation": "FBX armature object named root (not an omitted UE bone)",
+      "pelvis_height_cm": 110.16654968261719,
+      "head_joint_height_cm": 165.6302490234375,
+      "ankle_height_cm": 15.951172828674316,
+      "ball_height_cm": 2.2789885997772217,
+      "foot_pitch_deg": 61.953479275429565,
+      "shoulder_width_cm": 27.002132755444904,
+      "limb_lengths_cm": {
+        "upper_arm": 25.987912080093047,
+        "forearm": 24.645515067936138,
+        "thigh": 44.72495117683262,
+        "shin": 46.70711183042531,
+        "ankle_to_ball": 15.491399247684788
+      }
+    },
+    "Manny": {
+      "bone_count": 88,
+      "root_representation": "FBX armature object named root (not an omitted UE bone)",
+      "pelvis_height_cm": 95.89678192138672,
+      "head_joint_height_cm": 162.57510375976562,
+      "ankle_height_cm": 8.237628936767578,
+      "ball_height_cm": 0.7508242726325989,
+      "foot_pitch_deg": 26.496546993435206,
+      "shoulder_width_cm": 38.019767040545375,
+      "limb_lengths_cm": {
+        "upper_arm": 27.771170958519694,
+        "forearm": 27.251073133703866,
+        "thigh": 43.341328555112156,
+        "shin": 42.21790388827963,
+        "ankle_to_ball": 16.781143436768392
+      }
+    },
+    "Quinn": {
+      "bone_count": 88,
+      "root_representation": "FBX armature object named root (not an omitted UE bone)",
+      "pelvis_height_cm": 98.69322204589844,
+      "head_joint_height_cm": 162.5031280517578,
+      "ankle_height_cm": 8.128623962402344,
+      "ball_height_cm": 1.1650261878967285,
+      "foot_pitch_deg": 27.43123003993847,
+      "shoulder_width_cm": 32.110640942230454,
+      "limb_lengths_cm": {
+        "upper_arm": 27.090361443752506,
+        "forearm": 26.095161591683883,
+        "thigh": 45.752052037021215,
+        "shin": 41.705422647925666,
+        "ankle_to_ball": 15.115791339128592
+      }
+    }
+  },
+  "differences": {
+    "Manny": {
+      "common_exported_core_bones": 88,
+      "missing_core": [],
+      "parent_mismatches": [],
+      "largest_position": [
+        {
+          "bone": "center_of_mass",
+          "position_cm": 110.17853718816937,
+          "rotation_deg": 0.0
+        },
+        {
+          "bone": "spine_01",
+          "position_cm": 16.272326374258782,
+          "rotation_deg": 2.819731327605282
+        },
+        {
+          "bone": "thumb_03_l",
+          "position_cm": 15.606608431072074,
+          "rotation_deg": 4.458643329799481
+        },
+        {
+          "bone": "thumb_03_r",
+          "position_cm": 15.6057281365161,
+          "rotation_deg": 4.459696886478955
+        },
+        {
+          "bone": "spine_02",
+          "position_cm": 14.907619357439723,
+          "rotation_deg": 0.5395908141248253
+        },
+        {
+          "bone": "pelvis",
+          "position_cm": 14.284825183222987,
+          "rotation_deg": 0.0
+        },
+        {
+          "bone": "middle_02_l",
+          "position_cm": 14.264377709728485,
+          "rotation_deg": 10.537878813778718
+        },
+        {
+          "bone": "middle_02_r",
+          "position_cm": 14.26368179226922,
+          "rotation_deg": 10.537953092085942
+        },
+        {
+          "bone": "middle_03_l",
+          "position_cm": 14.13811661904172,
+          "rotation_deg": 15.798271946469098
+        },
+        {
+          "bone": "middle_03_r",
+          "position_cm": 14.13728454817806,
+          "rotation_deg": 15.800160493774607
+        },
+        {
+          "bone": "ring_02_l",
+          "position_cm": 14.072534720067033,
+          "rotation_deg": 9.629905055142133
+        },
+        {
+          "bone": "ring_02_r",
+          "position_cm": 14.07203523670964,
+          "rotation_deg": 9.629660875879306
+        }
+      ],
+      "largest_rotation": [
+        {
+          "bone": "index_03_l",
+          "position_cm": 13.880630660088334,
+          "rotation_deg": 18.868887648233173
+        },
+        {
+          "bone": "index_03_r",
+          "position_cm": 13.879586741610364,
+          "rotation_deg": 18.858051553114947
+        },
+        {
+          "bone": "middle_03_r",
+          "position_cm": 14.13728454817806,
+          "rotation_deg": 15.800160493774607
+        },
+        {
+          "bone": "middle_03_l",
+          "position_cm": 14.13811661904172,
+          "rotation_deg": 15.798271946469098
+        },
+        {
+          "bone": "pinky_01_r",
+          "position_cm": 12.753161040846157,
+          "rotation_deg": 12.239367728488103
+        },
+        {
+          "bone": "pinky_01_l",
+          "position_cm": 12.753404010972606,
+          "rotation_deg": 12.239175629417698
+        },
+        {
+          "bone": "pinky_02_l",
+          "position_cm": 13.281676898154059,
+          "rotation_deg": 12.201443956895254
+        },
+        {
+          "bone": "pinky_02_r",
+          "position_cm": 13.281248720954384,
+          "rotation_deg": 12.201186971027733
+        },
+        {
+          "bone": "pinky_03_l",
+          "position_cm": 13.353860879373647,
+          "rotation_deg": 12.141269990307443
+        },
+        {
+          "bone": "pinky_03_r",
+          "position_cm": 13.353325456774694,
+          "rotation_deg": 12.139978230780663
+        },
+        {
+          "bone": "index_metacarpal_l",
+          "position_cm": 11.875248502339689,
+          "rotation_deg": 11.040049689483688
+        },
+        {
+          "bone": "index_metacarpal_r",
+          "position_cm": 11.874820564821706,
+          "rotation_deg": 11.03990796305841
+        }
+      ],
+      "limb_direction_degrees": {
+        "upper_arm": 1.944104704547644,
+        "forearm": 2.4596518654118493,
+        "thigh": 1.4643339678342597,
+        "shin": 2.6075194845271015,
+        "ankle_to_ball": 35.555031252837864
+      }
+    },
+    "Quinn": {
+      "common_exported_core_bones": 88,
+      "missing_core": [],
+      "parent_mismatches": [],
+      "largest_position": [
+        {
+          "bone": "center_of_mass",
+          "position_cm": 110.17853718816937,
+          "rotation_deg": 0.0
+        },
+        {
+          "bone": "spine_02",
+          "position_cm": 15.14504068505185,
+          "rotation_deg": 0.0
+        },
+        {
+          "bone": "spine_01",
+          "position_cm": 14.69101241298175,
+          "rotation_deg": 0.0
+        },
+        {
+          "bone": "thumb_03_l",
+          "position_cm": 14.622827368528508,
+          "rotation_deg": 0.0
+        },
+        {
+          "bone": "thumb_03_r",
+          "position_cm": 14.622052066755671,
+          "rotation_deg": 0.0
+        },
+        {
+          "bone": "index_03_l",
+          "position_cm": 13.679662995286536,
+          "rotation_deg": 0.0
+        },
+        {
+          "bone": "index_03_r",
+          "position_cm": 13.678519520986573,
+          "rotation_deg": 0.0
+        },
+        {
+          "bone": "middle_03_l",
+          "position_cm": 13.343723270291218,
+          "rotation_deg": 0.0
+        },
+        {
+          "bone": "middle_03_r",
+          "position_cm": 13.342740380285937,
+          "rotation_deg": 0.0
+        },
+        {
+          "bone": "spine_03",
+          "position_cm": 13.020070057686386,
+          "rotation_deg": 0.0
+        },
+        {
+          "bone": "index_02_l",
+          "position_cm": 12.8988305441516,
+          "rotation_deg": 0.0
+        },
+        {
+          "bone": "index_02_r",
+          "position_cm": 12.89789438288374,
+          "rotation_deg": 0.0
+        }
+      ],
+      "largest_rotation": [
+        {
+          "bone": "ik_hand_l",
+          "position_cm": 10.777827839281764,
+          "rotation_deg": 16.61673692980631
+        },
+        {
+          "bone": "ik_hand_gun",
+          "position_cm": 10.777664395491893,
+          "rotation_deg": 16.616453476955755
+        },
+        {
+          "bone": "ik_hand_r",
+          "position_cm": 10.777676783549516,
+          "rotation_deg": 16.616263939206288
+        },
+        {
+          "bone": "ik_foot_l",
+          "position_cm": 7.926054719030233,
+          "rotation_deg": 3.5411245952412163
+        },
+        {
+          "bone": "ik_foot_r",
+          "position_cm": 7.925958401132374,
+          "rotation_deg": 3.5318278540071826
+        },
+        {
+          "bone": "upperarm_twist_01_r",
+          "position_cm": 9.363622118904544,
+          "rotation_deg": 0.07912936237050427
+        },
+        {
+          "bone": "pelvis",
+          "position_cm": 11.498097257145742,
+          "rotation_deg": 0.0
+        },
+        {
+          "bone": "spine_01",
+          "position_cm": 14.69101241298175,
+          "rotation_deg": 0.0
+        },
+        {
+          "bone": "spine_02",
+          "position_cm": 15.14504068505185,
+          "rotation_deg": 0.0
+        },
+        {
+          "bone": "spine_03",
+          "position_cm": 13.020070057686386,
+          "rotation_deg": 0.0
+        },
+        {
+          "bone": "spine_04",
+          "position_cm": 9.63299727127329,
+          "rotation_deg": 0.0
+        },
+        {
+          "bone": "spine_05",
+          "position_cm": 2.7093229295426853,
+          "rotation_deg": 0.0
+        }
+      ],
+      "limb_direction_degrees": {
+        "upper_arm": 0.0,
+        "forearm": 0.0,
+        "thigh": 0.0,
+        "shin": 0.0,
+        "ankle_to_ball": 34.73828747717149
+      }
+    }
+  }
+}

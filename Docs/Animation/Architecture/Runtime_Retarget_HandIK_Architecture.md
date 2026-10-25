@@ -1,11 +1,11 @@
 # MMORPG 런타임 리타깃과 무기 손 접촉 구조
 
-> **현재 기준 — 2026-10-21:** source/master는 Manny `SK_Mannequin` / `ABP_Player_Master`다. UE5 호환 몸체는 직접 재생하고 비표준 Bip01 몸체는 Family/Body RTG와 실제 관절별 손 보정을 사용한다. 현재 제작은 [플레이어 로코모션](Player_Locomotion_Architecture.md)과 [스켈레톤·추가 뼈](../Authoring/HumanoidSkeletonRetargetingStandards.md)를 따른다. 아래 구형 마스터·그래프·성능 설명은 당시 설계/최적화 이력이며 새 이동 구조의 현재 측정값이 아니다.
+> **현재 제작 기준 — 2026-10-25:** 공용 라이브러리는 Manny 기준이며 실제 몸체의 공통 `ABP_Player_Master` 직접 재생과 비호환 몸체의 Family/Body RTG 두 경로를 사용한다. 현재 UE5 대검은 직접 재생 + 필요한 몸체 FBIK/손·2차 물리 구성이다. [리깅·후처리 가이드](../Authoring/Character_Rigging_And_UE5_Postprocess_Playbook.md)와 [실행 구조](../../Architecture/Runtime/Player_Character_Master.md)가 현재 기준이다. 아래는 이전 설계/최적화 이력으로, 모든 몸체에 follower·동일 물리·전용 보정을 설치하라는 지침이 아니다.
 
 
 > **2026-10-13 후속:** [골격·몸체 프로필 기반 리타깃](Runtime_Retarget_Profiles_2026-10-13.md)을 실제 Greatsword 외형에 연결했다. 공통 Master와 실시간 리타깃은 유지하며 골격 연결/체형 접촉의 공유·수명·GC 경계를 정리했다. 이 문서의 과거 그래프·정책 설명과 최신 구현 범위를 구분한다.
 
-> **2026-10-02 정정:** 아래 본문은 이전 설계와 최적화 기록을 포함한다. 현재 플레이어는 이동 Motion Matching → 전투 상체 합성/몽타주 → 임포트 몸체 런타임 리타깃 → Guided Hand IK → 의상 물리를 사용한다. 현재 노드·복귀·부착은 [Guided 손 접촉](../Authoring/Weapon_Hand_Contact_System.md#body), [무기 정책](../Authoring/Weapon_Hand_Contact_System.md#drive), [Palm 정상 부착](../Authoring/Weapon_Hand_Contact_System.md#mount)을 우선한다. 오프라인 리타깃도 가능하며 추가 의상 뼈만으로 런타임 리타깃이 필수인 것은 아니다. 군중 성능 우위와 임의 궤적의 완전 파지를 보장하지 않는다.
+> **2026-10-02 정정:** 아래 본문은 이전 설계와 최적화 기록을 포함한다. 당시 플레이어는 이동 Motion Matching → 전투 상체 합성/몽타주 → 임포트 몸체 런타임 리타깃 → Guided Hand IK → 의상 물리를 사용했다. 현재 노드·복귀·부착은 [Guided 손 접촉](../Authoring/Weapon_Hand_Contact_System.md#body), [무기 정책](../Authoring/Weapon_Hand_Contact_System.md#drive), [Palm 정상 부착](../Authoring/Weapon_Hand_Contact_System.md#mount)을 우선한다. 오프라인 리타깃도 가능하며 추가 의상 뼈만으로 런타임 리타깃이 필수인 것은 아니다. 군중 성능 우위와 임의 궤적의 완전 파지를 보장하지 않는다.
 
 > **문서 버전:** 1.1.0  
 > **최종 수정일:** 2026-09-22  

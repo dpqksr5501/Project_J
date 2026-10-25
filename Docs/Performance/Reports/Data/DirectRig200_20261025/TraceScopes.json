@@ -1,0 +1,145 @@
+{
+  "scope": "Separate instrumented process: entire trace incl startup, warmup and all phases. CPU scope elapsed sums across worker threads; includes waits, nested scopes are not additive; not untraced frame time or a CPU utilization percentage.",
+  "trace_bytes": 907223845,
+  "trace_sha256": "9ed1c66958b2c1b2eb64149238a8c5b80b2cc7246a7dbef26bdffe469a1663b7",
+  "all_timers_sha256": "1089d6561450bdf97c52d16c8ee79ca2a77f37d63a5275e95abae5b7b3da37ee",
+  "source_binary_provenance_matches_untraced_runs": true,
+  "timers": [
+    {
+      "name": "FEngineLoop::Tick",
+      "count": 121,
+      "inclusive_seconds": 236.32423,
+      "exclusive_seconds": 0.000797
+    },
+    {
+      "name": "IK Retarget",
+      "count": 0,
+      "inclusive_seconds": 0,
+      "exclusive_seconds": 0
+    },
+    {
+      "name": "IK Retarget Processor Run",
+      "count": 0,
+      "inclusive_seconds": 0,
+      "exclusive_seconds": 0
+    },
+    {
+      "name": "ProjectJ_RetargetProfile_PreUpdate",
+      "count": 3243,
+      "inclusive_seconds": 0.001429,
+      "exclusive_seconds": 0.001429
+    },
+    {
+      "name": "ProjectJ_RetargetBody_Snapshot",
+      "count": 3243,
+      "inclusive_seconds": 0.02106,
+      "exclusive_seconds": 0.018657
+    },
+    {
+      "name": "ProjectJ_RetargetBody_ContactMath",
+      "count": 3043,
+      "inclusive_seconds": 0.001884,
+      "exclusive_seconds": 0.001884
+    },
+    {
+      "name": "ControlRig_Evaluate",
+      "count": 547,
+      "inclusive_seconds": 0.187851,
+      "exclusive_seconds": 0.041106
+    },
+    {
+      "name": "RigidBody_Eval",
+      "count": 6674,
+      "inclusive_seconds": 0.368096,
+      "exclusive_seconds": 0.000815
+    },
+    {
+      "name": "ProjectJFootClearance",
+      "count": 1426,
+      "inclusive_seconds": 0.003841,
+      "exclusive_seconds": 0.003412
+    },
+    {
+      "name": "FParallelClothTask",
+      "count": 23800,
+      "inclusive_seconds": 3188.989852,
+      "exclusive_seconds": 0.031933
+    },
+    {
+      "name": "PhysicsParallelFor",
+      "count": 18936102,
+      "inclusive_seconds": 3206.384103,
+      "exclusive_seconds": 3013.868181
+    },
+    {
+      "name": "WaitForTasks",
+      "count": 52653,
+      "inclusive_seconds": 705.73501,
+      "exclusive_seconds": 705.73501
+    }
+  ],
+  "logs": {
+    "RigDirectSmoke_Final_20261025": {
+      "error_lines": 0,
+      "warning_lines": 24,
+      "ensure_or_fatal_lines": 0,
+      "warning_frames": [
+        0,
+        2
+      ],
+      "warning_categories": [
+        "LogEditorDataStorageUI",
+        "LogPoseSearch"
+      ]
+    },
+    "RigDirect200_A_20261025": {
+      "error_lines": 0,
+      "warning_lines": 241,
+      "ensure_or_fatal_lines": 0,
+      "warning_frames": [
+        0,
+        2
+      ],
+      "warning_categories": [
+        "LogEditorDataStorageUI",
+        "LogEngine",
+        "LogPoseSearch"
+      ]
+    },
+    "RigDirect200_B_20261025": {
+      "error_lines": 0,
+      "warning_lines": 241,
+      "ensure_or_fatal_lines": 0,
+      "warning_frames": [
+        0,
+        2
+      ],
+      "warning_categories": [
+        "LogEditorDataStorageUI",
+        "LogEngine",
+        "LogPoseSearch"
+      ]
+    },
+    "RigDirect200_Trace_20261025": {
+      "error_lines": 0,
+      "warning_lines": 241,
+      "ensure_or_fatal_lines": 0,
+      "warning_frames": [
+        0,
+        1,
+        2
+      ],
+      "warning_categories": [
+        "LogEditorDataStorageUI",
+        "LogEngine",
+        "LogPoseSearch"
+      ]
+    }
+  },
+  "verification": {
+    "success": true,
+    "exitCode": 0,
+    "frames": 120,
+    "scope": "Real offscreen viewport/RHI and actual constructed bodies (pose route recorded in pose_routes.csv); simplified camera/light scene; no remote clients. GPU counters may be delayed. Captures affect frame timing."
+  }
+}

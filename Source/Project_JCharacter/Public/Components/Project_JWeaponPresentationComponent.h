@@ -87,6 +87,14 @@ struct PROJECT_JCHARACTER_API FProject_JWeaponGripTargets
 	/** Recovery owns its alpha envelope and frozen target; montage curves cannot reopen the attachment loop. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Weapon Motion")
 	bool bContactRecovery = false;
+
+	/** Pre-contact pose anchor for a direct body's same-frame graph solve. */
+	UPROPERTY(Transient)
+	FName SourcePoseBone = NAME_None;
+	UPROPERTY(Transient)
+	FTransform PrimaryGripInSourcePose = FTransform::Identity;
+	UPROPERTY(Transient)
+	FTransform SecondaryGripInSourcePose = FTransform::Identity;
 };
 
 /**
@@ -344,6 +352,9 @@ private:
 	float ContactRecoveryAlpha = 0.0f;
 	bool bContactRecoveryActive = false;
 	uint64 LastMotionEvaluationFrame = MAX_uint64;
+	/** Immutable pose publication: late notifies may update intent, never the transform already consumed by animation. */
+	uint64 AnimationGripTargetsFrame = MAX_uint64;
+	FProject_JWeaponGripTargets AnimationGripTargets;
 	int32 GroundContactStateCount = 0;
 	uint64 NextGroundContactNotifyToken = 0;
 	TSet<uint64> GroundContactNotifyTokens;

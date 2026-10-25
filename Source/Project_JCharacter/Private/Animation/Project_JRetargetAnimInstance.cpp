@@ -32,17 +32,27 @@ void UProject_JRetargetAnimInstance::BeginDestroy()
 void UProject_JRetargetAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
+	SnapshotRightInputPoseContact = SnapshotLeftInputPoseContact = {};
 	// A reinitialized/rebound visual instance must not remain registered with
 	// its previous presentation owner, including dedicated-server early exits.
 	if (CachedPresentationComp.IsValid()) CachedPresentationComp->UnregisterRetargetAnimInstance(this);
 	CachedPresentationComp.Reset(); CachedWeaponComponent.Reset();
+	RightWristTarget = LeftWristTarget = FTransform::Identity;
+	bRightContactTargetValid = bLeftContactTargetValid = false;
+	bHasValidRightSnapshot = bHasValidLeftSnapshot = bHasPrimaryHandSpaceGripSnapshot = false;
+	bUsePrimaryHandSpaceGrip = false;
+	RightGripAlpha = LeftGripAlpha = GripIKAlpha = 0.f;
+	bHasActiveHandContact = false;
+	bEnableSecondaryMotion = true;
 
 	// Dedicated server: completely disable tick on follower visual mesh to avoid any wasted evaluation
 	if (const UWorld* World = GetWorld())
 	{
 		if (World->GetNetMode() == NM_DedicatedServer)
 		{
-			if (USkeletalMeshComponent* OwningComp = GetOwningComponent())
+			bEnableSecondaryMotion = false;
+			if (USkeletalMeshComponent* OwningComp = GetOwningComponent();
+				OwningComp && OwningComp != Project_J::Movement::FindPoseSource(TryGetPawnOwner()))
 			{
 				OwningComp->SetComponentTickEnabled(false);
 			}
@@ -50,18 +60,16 @@ void UProject_JRetargetAnimInstance::NativeInitializeAnimation()
 		}
 	}
 
-	if (USkeletalMeshComponent* OwningComp = GetOwningComponent(); OwningComp && !OwningComp->IsUsingExternalTickRateControl())
+	if (USkeletalMeshComponent* OwningComp = GetOwningComponent();
+		OwningComp && OwningComp != Project_J::Movement::FindPoseSource(TryGetPawnOwner()) &&
+		!OwningComp->IsUsingExternalTickRateControl())
 	{
 		// This is a standalone default. A coordinator/allocator already owns the
 		// active visibility contract and its saved authored value across reinit.
+		// A source post-process preserves the gameplay mesh's policy even when
+		// modular avatars hide that mesh and render only its pose followers.
 		OwningComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
 	}
-
-	// Clear transient snapshots
-	RightWristTarget = LeftWristTarget = FTransform::Identity;
-	bRightContactTargetValid = bLeftContactTargetValid = false;
-	bHasValidRightSnapshot = false;
-	bHasValidLeftSnapshot = false;
 
 	if (APawn* OwnerPawn = TryGetPawnOwner())
 	{
@@ -88,9 +96,12 @@ void UProject_JRetargetAnimInstance::NativeUninitializeAnimation()
 	// event subscription now, rather than waiting for BeginDestroy/reinitialize.
 	if (CachedPresentationComp.IsValid()) CachedPresentationComp->UnregisterRetargetAnimInstance(this);
 	CachedPresentationComp.Reset();CachedWeaponComponent.Reset();
+	SnapshotRightInputPoseContact = SnapshotLeftInputPoseContact = {};
 	bHasValidRightSnapshot = bHasValidLeftSnapshot = bHasPrimaryHandSpaceGripSnapshot = false;
+	bEnableSecondaryMotion = false;
 	bRightContactTargetValid = bLeftContactTargetValid = bUsePrimaryHandSpaceGrip = false;
 	RightGripAlpha = LeftGripAlpha = GripIKAlpha = 0.f;
+	bHasActiveHandContact = false;
 	GripTargetSnapshotFrame = GripPoseEvaluationFrame = MAX_uint64;
 	Super::NativeUninitializeAnimation();
 }
@@ -162,8 +173,10 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_RetargetBody_Snapshot);
 	Super::NativeUpdateAnimation(DeltaSeconds);
 	GripTargetSnapshotFrame = MAX_uint64;
+	SnapshotRightInputPoseContact = SnapshotLeftInputPoseContact = {};
 
 	// Per-frame snapshot initialization to eliminate stale transforms
+	bEnableSecondaryMotion = true;
 	bHasValidRightSnapshot = false;
 	bPrimaryIKSuppressedSnapshot = false;
 	bContactRecoverySnapshot = false;
@@ -181,6 +194,7 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	{
 		if (World->GetNetMode() == NM_DedicatedServer)
 		{
+			bEnableSecondaryMotion = false;
 			return;
 		}
 	}
@@ -216,7 +230,9 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	RetargetLODThreshold = Policy.RetargetLODThreshold;
 
 	// Early out if tier forbids Follower Retarget / Hand IK or if character is off-screen/hidden
-	if (!bEnableFollowerRetarget || !bTierAllowsHandIK || CurrentQualityTier == EProject_JAnimBudgetTier::Hidden)
+	const bool bDirectBody = GetOwningComponent() == Project_J::Movement::FindPoseSource(OwnerPawn);
+	bEnableSecondaryMotion = CurrentQualityTier != EProject_JAnimBudgetTier::Hidden && (bDirectBody || bEnableFollowerRetarget);
+	if ((!bDirectBody && !bEnableFollowerRetarget) || !bTierAllowsHandIK || CurrentQualityTier == EProject_JAnimBudgetTier::Hidden)
 	{
 		return;
 	}
@@ -283,6 +299,12 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		// contact or missing equipment. Legacy component tracking must not resurrect it.
 		bResolvedFromPresentation = true;
 		bContactRecoverySnapshot = GripTargets.bContactRecovery;
+		if (bDirectBody && !GripTargets.SourcePoseBone.IsNone())
+		{
+			if (GripTargets.bHasPrimaryGrip) SnapshotRightInputPoseContact = {GripTargets.SourcePoseBone, GripTargets.PrimaryGripInSourcePose};
+			if (GripTargets.bHasSecondaryGrip && !GripTargets.bHasPrimaryHandSpaceGrip)
+				SnapshotLeftInputPoseContact = {GripTargets.SourcePoseBone, GripTargets.SecondaryGripInSourcePose};
+		}
 		if (GripTargets.bHasPrimaryGrip)
 		{
 			SnapshotRightGripWorldTransform = GripTargets.PrimaryGripWorldTransform;
@@ -407,6 +429,15 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			FTransform Wrist;
 			if (!Project_J::Animation::MakeWristContactTarget(InOutGripWorld, Contact.PalmInHand, BodyOffset, Wrist, WristScale)) { return false; }
 			InOutGripWorld = Wrist;
+			auto& PoseContact = bPrimary ? SnapshotRightInputPoseContact : SnapshotLeftInputPoseContact;
+			if (PoseContact.IsValid())
+			{
+				const FVector AnchorScale = OwningComp->GetBoneTransform(PoseContact.Bone, RTS_World).GetScale3D();
+				if (!Project_J::Animation::IsPositiveUniformContactScale(AnchorScale) ||
+					!Project_J::Animation::MakeWristContactTarget(PoseContact.Wrist, Contact.PalmInHand, BodyOffset, Wrist, WristScale / AnchorScale))
+				{ PoseContact = {}; return false; }
+				PoseContact.Wrist = Wrist;
+			}
 			if (InOutHandSpace)
 			{
 				const FVector PrimaryScale = PrimaryHand.IsNone() ? OwningComp->GetComponentScale()
@@ -430,6 +461,8 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		}
 		SnapshotRightElbowTarget = Calibration.PrimaryElbowTarget;
 		SnapshotLeftElbowTarget = Calibration.SecondaryElbowTarget;
+		if (!bHasValidRightSnapshot) SnapshotRightInputPoseContact = {};
+		if (!bHasValidLeftSnapshot) SnapshotLeftInputPoseContact = {};
 	}
 }
 
@@ -480,6 +513,7 @@ void UProject_JRetargetAnimInstance::NativeThreadSafeUpdateAnimation(float Delta
 		? (bContactRecoverySnapshot ? TargetLeftAlphaSnapshot
 			: FMath::FInterpTo(LeftGripAlpha, TargetLeftAlphaSnapshot, DeltaSeconds, GripInterpSpeed)) : 0.0f;
 	GripIKAlpha = RightGripAlpha;
+	bHasActiveHandContact = RightGripAlpha > UE_SMALL_NUMBER || LeftGripAlpha > UE_SMALL_NUMBER;
 }
 
 void UProject_JRetargetAnimInstance::NativePostEvaluateAnimation()

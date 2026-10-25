@@ -4,8 +4,16 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Animation/Project_JHandGripProfile.h"
+#include "Animation/Project_JRetargetAnimInstance.h"
 #include "Animation/Project_JCharacterAnimProfile.h"
 #include "Project_JPlayerCharacter.h"
+
+const UProject_JRetargetAnimInstance* Project_J::Animation::FindBodyContactController(const USkeletalMeshComponent* Mesh)
+{
+	if (!Mesh) return nullptr;
+	if (const auto* Main=Cast<UProject_JRetargetAnimInstance>(Mesh->GetAnimInstance())) return Main;
+	return Cast<UProject_JRetargetAnimInstance>(Mesh->GetPostProcessInstance());
+}
 
 namespace
 {

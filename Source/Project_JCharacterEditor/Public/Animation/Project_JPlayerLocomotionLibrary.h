@@ -18,18 +18,49 @@ class UMirrorDataTable;
 class UPoseSearchDatabase;
 class UBlendSpace;
 class UPhysicsAsset;
+class UIKRigDefinition;
 
 UCLASS()
 class PROJECT_JCHARACTEREDITOR_API UProject_JPlayerLocomotionLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 public:
+ /** Bake bounded sole skin samples into the explicitly selected footwear/body mesh. Standard geometry/weights stay unchanged. Re-run after mesh/bind changes. Refuses PIE; never saves. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
+ static FString AuthorFootSupport(USkeletalMesh* Mesh,FName LeftFoot,FName RightFoot,float SoleBand=3.5f,float Clearance=.15f,float MaxLift=10.f);
+ /** Install optional mesh-driven sole clearance before existing body-contact stages; never adds a common-master writer or a second pose producer. Refuses duplicate/ambiguous input and PIE; never saves. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
+ static bool InstallFootClearance(UAnimBlueprint* Blueprint);
+ /** Install current-input wrist goal publication, standard full-body contact IK and final arm refinement in a direct post process. Preserves input feet, blends contact alpha once, refuses retarget graphs/duplicate stages and PIE. Never saves. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
+ static bool InstallDirectBodyContactIK(UAnimBlueprint* Blueprint, UIKRigDefinition* Rig);
+ /** Bind existing body RigidBody nodes to the shared cosmetic-quality snapshot. Works for direct post processes and retarget followers; refuses conflicting alpha writers and PIE. Never saves. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
+ static bool BindBodySecondaryMotion(UAnimBlueprint* Blueprint);
+ /** Publish four final-pose limb markers before direct-body contact. Preserve authored ik_hand_gun by default; explicitly derive it from hand_r only for a wrist-reference contract. Keeps marker writers out of the common master. Refuses PIE/conflicting writers/retarget graphs; never saves. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
+ static bool InstallBodyPoseMarkers(UAnimBlueprint* Blueprint, bool RebuildWeaponReferenceFromHand=false);
+ /** Insert the standard IK Rig solve between a visual retargeter and its hand refinement. Uses existing wrist targets/alphas and pins both feet to the incoming pose. Refuses PIE, duplicate solves and mismatched goals; never saves. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
+ static bool InstallHandContactBodyIK(UAnimBlueprint* Blueprint, UIKRigDefinition* Rig);
+ /** Copy the existing named blend/slot contract to a separately validated compatible body. Shared parents must match; refuses conflicting authored profiles and PIE. Never saves or changes the source skeleton. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
+ static bool PrepareCompatibleBody(USkeletalMesh* Source, USkeletalMesh* Target);
+ /** Replace a copied visual retarget graph's sole retarget node with the post-process input pose. Keeps hand contact and secondary physics nodes; refuses PIE or ambiguous graphs. Never saves. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
+ static bool UseCompatibleBodyInput(UAnimBlueprint* Blueprint, USkeletalMesh* Target);
+ /** Rebase an explicitly supplied physics copy through verified mesh coordinates and bone names. PreserveBoneLocalFrames is for preserved legacy axes reposed with their skinned geometry, and requires an identity mesh basis. Preserves body order, collision pairs, masses, limits and solver settings; preflights every body/constraint. Refuses PIE/unsupported geometry; never saves. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
+ static bool RebaseCompatiblePhysics(UPhysicsAsset* Physics, USkeletalMesh* Previous, USkeletalMesh* Target, const TMap<FName,FName>& BoneMap, FTransform SourceToTarget, bool PreserveBoneLocalFrames=false);
  /** Create standard embedded Chaos clothing for each LOD0 section, with a pinned upper band and a smooth max-distance transition. Refuses PIE/existing clothing; never saves. */
  UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
  static FString CreateSurfaceClothing(USkeletalMesh* Mesh, UPhysicsAsset* Collisions, float PinnedTopDepth=8.f, float TransitionDepth=25.f, float MaxDistance=70.f);
  /** Rebuild embedded cloth caches and section bindings after authoring. Refuses PIE or a non section-per-asset layout; never saves. */
  UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
  static bool RefreshSurfaceClothing(USkeletalMesh* Mesh);
+ /** Copy matching per-section cloth configuration objects, preserving shared config identity. Leaves target geometry, masks and collision asset intact; refuses PIE/mismatched classes. Never saves or refreshes. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
+ static bool CopySurfaceClothingConfiguration(USkeletalMesh* Previous, USkeletalMesh* Target);
  /** Paint a smooth 0..1 bending weight only within the lowest HemDepth cm of each embedded cloth section. Preserves fixed vertices and max-distance masks; refreshes bindings but never saves. Refuses PIE/unsupported targets or conflicting artist masks. */
  UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
  static FString PaintSurfaceClothingHemBending(USkeletalMesh* Mesh, float HemDepth=12.f);
@@ -72,6 +103,9 @@ public:
  /** Read completed cloth simulation topology when active, otherwise LOD bone skinning, in world space. Supports LeaderPose followers; diagnostic only, no simulation/asset mutation. */
  UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Diagnostics")
  static FString InspectSkinnedMeshSurface(USkeletalMeshComponent* Mesh, int32 LODIndex = 0);
+ /** Read completed sole-plane solve diagnostics for authoring; no asset/pose mutation. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Diagnostics")
+ static FString InspectFootClearance(USkeletalMeshComponent* Mesh);
  /** Explicitly retire embedded vertex-cloth data using the editor unbind lifecycle. Keeps skinning, skeleton and physics assets; no save. Refuses PIE or externally owned cloth. */
  UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
  static int32 RetireEmbeddedClothingData(USkeletalMesh* Mesh);

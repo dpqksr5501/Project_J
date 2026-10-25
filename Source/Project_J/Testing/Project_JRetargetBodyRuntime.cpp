@@ -179,7 +179,7 @@ class FRetargetBodyRuntime : public IAutomationLatentCommand
 		auto* Controller = World->SpawnActor<AAIController>(); auto* State = World->SpawnActor<AProject_JPlayerState>();
 		if (!Controller || !State) return false;
 		Controller->SetPlayerState(State); State->SetOwner(Controller);
-		Player = ProjectJAuthoredAnimationFixture::Spawn(World, Controller, State, FVector(0,0,1000));
+		Player = ProjectJAuthoredAnimationFixture::SpawnRetargetFallback(World, Controller, State, FVector(0,0,1000));
 		if (!Test->TestNotNull(TEXT("Production authored player"), Player)) return false;
 		TInlineComponentArray<USkeletalMeshComponent*> Visuals(Player);
 		int32 Bodies = 0;
@@ -191,6 +191,9 @@ class FRetargetBodyRuntime : public IAutomationLatentCommand
 		Test->TestEqual(TEXT("One visual body performs retargeting"), Bodies, 1);
 		Anim = Mesh ? Cast<UProject_JRetargetAnimInstance>(Mesh->GetAnimInstance()) : nullptr;
 		if (!Test->TestNotNull(TEXT("Production visual instance"), Anim)) return false;
+		Test->TestEqual(TEXT("Fallback equipment and recovery resolve the same body controller"),
+			Project_J::Animation::FindBodyContactController(Mesh),static_cast<const UProject_JRetargetAnimInstance*>(Anim));
+		Test->TestNull(TEXT("Retarget body has no second post-process writer"),Mesh->GetPostProcessInstance());
 		Body.Reset(const_cast<UProject_JRetargetBodyProfile*>(Anim->GetRetargetBodyProfile()));
 		if (!Test->TestNotNull(TEXT("Saved body binding"), Body.Get()) || !Test->TestNotNull(TEXT("Saved skeleton family"), Body->Family.Get()) ||
 			!Test->TestNotNull(TEXT("Saved hand calibration"), Body->HandGrip.Get())) return false;
@@ -230,7 +233,7 @@ class FRetargetBodyRuntime : public IAutomationLatentCommand
 			}
 		}
 		Test->TestEqual(TEXT("Composed source is retargeted once"), Retargets, 1);
-		Test->TestEqual(TEXT("Three existing secondary physics nodes remain"), PhysicsNodes, 3);
+		Test->TestEqual(TEXT("Hair and skirt retain one solver each; cape has its separate surface-cloth contract"), PhysicsNodes, 2);
 		if (Retargets != 1) return false;
 		AuthoredAsset.Reset(Node->IKRetargeterAsset.Get()); bAuthoredCustomSets = Node->bUseCustomOverrideSets; AuthoredSets = Node->OverrideSetsToApply;
 		Test->TestEqual(TEXT("Body bridge reuses the authored retargeter"), AuthoredAsset.Get(), Body->Family->Retargeter.Get());

@@ -1,0 +1,52 @@
+{
+  "bone_count": 317,
+  "source_count": 318,
+  "max_position_cm": 0.0005361923061429024,
+  "max_rotation_deg": 206.75284511989912,
+  "largest": [
+    {
+      "bone": "Bip_Weapon_R_03",
+      "cm": 0.0005361923061429024,
+      "deg": 0.0
+    },
+    {
+      "bone": "ball_r",
+      "cm": 0.0002452635459030488,
+      "deg": 0.0
+    },
+    {
+      "bone": "Bip01_R_Toe0",
+      "cm": 0.0002437985900238459,
+      "deg": 0.0
+    },
+    {
+      "bone": "B_Add_b_03",
+      "cm": 0.00022568053371809448,
+      "deg": 0.0
+    },
+    {
+      "bone": "Bip01_R_Foot",
+      "cm": 0.00020743657251764012,
+      "deg": 206.75284511989912
+    },
+    {
+      "bone": "foot_r",
+      "cm": 0.0002066116839281869,
+      "deg": 0.0
+    },
+    {
+      "bone": "B_Add_b_02",
+      "cm": 0.00020073428523136703,
+      "deg": 0.0
+    },
+    {
+      "bone": "B_Add_b_01",
+      "cm": 0.00018877934313443943,
+      "deg": 0.0
+    }
+  ],
+  "armature": "UE5_ROUNDTRIP__root",
+  "max_rotation_deg_note": "Raw quaternion rotation_difference angle, not normalized to shortest arc; legacy Bip01_R_Foot is the FBX Blender leaf-axis display exception.",
+  "core_max_rotation_shortest_deg": 0.07912936237050427,
+  "legacy_leaf_orientation_exception": "Bip01_R_Foot"
+}

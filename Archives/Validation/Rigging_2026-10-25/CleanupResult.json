@@ -1,0 +1,17 @@
+{
+  "scope": "Archive-backed rigging temporary files plus isolated generated benchmark caches; production assets and authoring sources excluded",
+  "removedFiles": 455,
+  "removedLogicalBytes": 1352253214.0,
+  "archiveBytes": 793891789,
+  "volumeFreeBeforeDelete": 118114394112,
+  "volumeFreeAfterDelete": 118114447360,
+  "skipped": [],
+  "archive_backed_deleted_bytes": 1352081194,
+  "regenerable_cache_deleted_bytes": 172020,
+  "lfs_temp_deleted_bytes": 169152238.0,
+  "lfs_temp_deleted_files": 29,
+  "logical_net_reduction_bytes_including_local_zip": 727513663,
+  "pre_archive_volume_free_bytes": 118913404928,
+  "physical_reclaim_claimed": false,
+  "physical_note": "Immediate delete-scope free-space increases were small; logical deletion is not measured physical disk reclamation. C volume activity/allocation/open handles were not isolated. Local archive is one retained copy; not Git LFS."
+}

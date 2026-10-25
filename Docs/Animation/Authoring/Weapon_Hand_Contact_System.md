@@ -1,5 +1,21 @@
 # 무기 파지와 손 접촉 통합 가이드
 
+## 현재 제작 입구 (2026-10-25)
+
+UE5 호환 몸체는 공통 master를 직접 재생하고, 비호환 몸체만 명시적 retarget follower를 사용한다. 리깅/임포트 결함은 [리깅·후처리 원인 분리](Character_Rigging_And_UE5_Postprocess_Playbook.md#후처리-추가-전-원인과-통과-조건)에서 먼저 수정한다. Palm/Body Offset은 의도한 접촉 프레임을 작성하는 값이며 잘못된 bind·관절·scale·weight나 평가 시점 오류를 숨기는 값이 아니다.
+
+| 경로 | 접촉 목표와 graph 연결 | 적용 범위 |
+| --- | --- | --- |
+| 현재 UE5 GreatSword 직접 몸체 | InputPose → 선택적 sole 보정 → 필요한 marker → HandContactGoals → 몸체 FBIK → 두 팔 Guided → 헤어/치마 RigidBody 2개 | 실제 `ABP_GreatSword_Body` 구성. 아래 예전 핀 표를 그대로 이식하지 않음 |
+| 기존 Bip01 retarget follower | retarget 출력 → 오른팔/왼팔 Guided → 해당 몸체의 물리 | 아래 legacy 예시의 component/primary-hand-space 목표 계약 |
+| 새 몸체/무기 | 검증한 재생 경로에 필요한 접촉 단계만 선택 | 추가 처리가 없으면 동일 graph/solver를 강제로 설치하지 않음 |
+
+직접 몸체의 사지 목표는 `HandContactGoals`가 접촉 가중치를 한 번 적용한다. 현재 대검의 두 Guided 노드는 `bHasActiveHandContact`로 bool 활성화하며 `ik_hand_r/l` 기준의 항등 Effector를 소비한다. 아래의 예전 `Alpha=Right/Left Grip Alpha`·component-space 목표 연결까지 직렬로 더하면 이중 가중치/목표가 생길 수 있다. 독립 gun·authored 손발 목표 보존 여부도 몸체 제작 계약에서 선택한다.
+
+공통 Guided 팔 노드 자체는 고정 길이 두 팔 solve다. 현재 직접 대검이 앞단에서 사용하는 일반 몸체 FBIK와 구분한다. FBIK/교정 feature가 존재해도 모든 grip·손가락·몸통 변형이 자동 완성되는 것은 아니다. 동일한 완료 포즈의 실제 무기 접촉, 도달 범위와 복귀까지 검수한다. 현재 설정·검증·남은 1.63cm Q 복귀 잔차는 [플레이어 마스터](../../Architecture/Runtime/Player_Character_Master.md)를 따른다.
+
+이하 2026-10-03 이후의 기록은 당시 소켓·리타깃 follower·편집·수명 계약의 근거다. 날짜가 붙은 과거 통과 수/기본값을 새 몸체의 승인이나 현재 직접 몸체의 설치 recipe로 사용하지 않는다.
+
 갱신일: 2026-10-03. 몸체 손바닥 기준, Idle 부착, 무기 구동, 공격 구간 양손 파지와 복귀를 한 문서에서 읽는다. 원문 다섯 개의 설정·수식·예외·진단·검증 이력을 아래 상세 절에 보존했다.
 
 2026-10-14 추가 숫자 계약: Weapon Motion 키 시간은 finite한 0–1 범위의 엄격한 오름차순이며, 상대 변환은 finite하고 quaternion이 정규화되어야 한다. IK alpha는 0–1, duration/entry/exit blend는 finite·nonnegative다. 빈 키와 duration0의 source socket 계약은 유지한다. runtime Begin/Refresh, notify validator, Persona preview가 같은 판정을 사용한다. 잘못된 refresh는 기존 tuple을 보존하며 NaN 위치는 마지막 finite montage 시간을 덮지 않는다. 편집 drag 합계가 overflow하면 전체 키를 보존한다. 공유 Motion/Ground notify는 mesh/instance별 weak token을 유지하고 dead mesh 정리는 GC 경계에서 수행한다. matching End와 current token 계약을 유지하며 Motion은 map entry 반환 후 component cleanup을 호출한다. 부모 animation asset의 Editor validator 연결과 실행 판정은 [계속 작업 기록](../../Review/Audits/Project_J_Continuation_Audit_2026-10-14.md)을 확인한다.
@@ -14,9 +30,9 @@
 | 무기 PresentationProfile | WeaponGrip, Idle 부착 모드, 보조 접촉 기능과 상태별 기본 가중치 |
 | 공격 정의·Weapon Motion | 무기를 손 또는 소스 포즈에서 구동하는 정책과 선택적 모션 키 |
 | Two-Hand Grip IK | 그 공격 안에서 양손으로 잡을 구간과 가중치. 무기 궤적과 독립 |
-| 런타임 ABP | 리타깃 → 오른팔 Guided → 왼팔 Guided → 의상 물리 |
+| 런타임 ABP | 검증한 직접/리타깃 입력 → 필요한 몸체 접촉 → 해당 2차 물리. 실제 연결은 위 현재 제작 입구를 따름 |
 
-### 현재 대검의 확인된 설정
+### 기존 Bip01 follower의 확인된 연결 예시
 
 1. 몸체 DA의 PalmGrip_R/L과 Primary/Secondary Arm을 실제 몸체에 맞춘다.
 2. Idle 무기 부착은 Primary Grip to Body Palm을 사용한다. 기존 Socket 모드는 호환·특수 부착용이다.
@@ -57,12 +73,12 @@
 <a id="body-손바닥-접촉-기준과-guided-hand-ik"></a>
 원제: **손바닥 접촉 기준과 Guided Hand IK**
 
-갱신일: 2026-10-03. 현재 구현과 에디터 설정의 기준 문서다. 초기 FABRIK 비교와 이후 개선 이력은 [측정 기록](../Diagnostics/Weapon_Grip_Trace_2026-10-02.md)을 함께 읽는다.
+갱신일: 2026-10-03. 이 절은 당시 Guided follower의 구현/설정 기록이며 현재 직접 몸체의 연결은 문서 상단을 우선한다. 초기 FABRIK 비교와 이후 개선 이력은 [측정 기록](../Diagnostics/Weapon_Grip_Trace_2026-10-02.md)을 함께 읽는다.
 
 <a id="body-1-적용-범위와-현재-그래프"></a>
 ### 1. 적용 범위와 현재 그래프
 
-공용 마네킹의 Motion Matching, 전투 상체 레이어, 공격 몽타주, 루트 모션과 서버 타격 판정의 소유권을 유지한다. 임포트된 몸체는 런타임 리타깃으로 기본 포즈를 받고, 몸체에 맞춘 손 접촉 보정을 외형 물리 전에 수행한다.
+공용 마네킹의 Motion Matching, 전투 상체 레이어, 공격 몽타주, 루트 모션과 서버 타격 판정의 소유권을 유지한다. 이 절의 기존 비호환 follower는 런타임 리타깃으로 기본 포즈를 받고 손 접촉을 외형 물리 전에 수행한다. UE5 직접 몸체에는 이 retarget 노드를 추가하지 않는다.
 
 ```text
 공용 소스 ABP: 이동 모션 매칭 → 전투 레이어·몽타주·AO
@@ -74,7 +90,7 @@
   → Component To Local → 출력
 ```
 
-왼팔 연결은 에디터에서 추가한다. 기존 왼팔 Two Bone IK를 새 Guided 왼팔 노드와 동시에 직렬 적용하지 않는다. [보조 손 접촉 설정](Weapon_Hand_Contact_System.md#secondary)의 파지 표와 핀 연결을 따른다. 상체 Reach, 추가 손가락 파지, 관절 제한과 자동 비틀림 분배는 구현되지 않았다.
+다음 핀 recipe는 이 절의 legacy follower를 제작할 때 적용한다. 왼팔 연결은 기존 graph를 확인한 뒤 필요한 경우에만 추가한다. 기존 왼팔 Two Bone IK를 새 Guided 왼팔 노드와 동시에 직렬 적용하지 않는다. [보조 손 접촉 설정](Weapon_Hand_Contact_System.md#secondary)의 파지 표와 핀 연결을 따른다. 이 Guided 노드 자체는 상체 Reach·손가락 파지·전신 제약/자동 비틀림 분배를 구현하지 않는다. 현재 직접 대검의 앞단 몸체 FBIK를 미구현이라고 해석하지 않는다.
 
 <a id="body-2-소켓의-역할과-idle-조정"></a>
 ### 2. 소켓의 역할과 Idle 조정
@@ -89,7 +105,7 @@
 
 Idle에서는 무기가 보이는 손을 따르므로 오른손 IK를 억제한다. 공격에서는 독립 무기 목표에 손을 맞춘다. 공격 복귀는 몽타주의 남은 가중치에 맞춰 접촉을 해제하고 선택한 정상 부착으로 돌아간다. 붙인 무기를 같은 오른손이 다시 추적하는 순환을 막는다.
 
-**Idle에서 검이 손바닥 위에 뜬다면** 먼저 무기 DA의 Drawn Attachment Mode를 확인한다. `Primary Grip to Body Palm`에서는 Palm 또는 몸체 Hand Offset을 조정하며 Idle·공격에 같은 기준이 적용된다. 기존 Socket 모드에서는 `WeaponSocket_Visual_R`에 메시를 프리뷰로 붙여 해당 소켓을 조정한다. 프리뷰는 무기 원점을 소켓에 붙이며 무기 액터의 추가 메시 상대 변환까지 자동 재현한다고 보장하지 않는다.
+**Idle에서 검이 손바닥 위에 뜬다면** 먼저 실제 bind/손 역할·장비 transform과 무기 DA의 Drawn Attachment Mode를 확인한다. 원본 관절/skin 결함이 있으면 그 단계에서 수정하고 이후 의도한 접촉 anchor를 조정한다. `Primary Grip to Body Palm`에서는 Palm 또는 몸체 Hand Offset을 조정하며 Idle·공격에 같은 기준이 적용된다. 기존 Socket 모드에서는 `WeaponSocket_Visual_R`에 메시를 프리뷰로 붙여 해당 소켓을 조정한다. 프리뷰는 무기 원점을 소켓에 붙이며 무기 액터의 추가 메시 상대 변환까지 자동 재현한다고 보장하지 않는다.
 
 공격 중에만 접촉이 어긋나면 Palm 접촉 축과 위치, 몸체 프로필의 Hand Offset, 무기의 Grip을 확인한다. Palm에 검을 프리뷰로 붙이면 검의 원점이 맞춰지므로 실제 WeaponGrip 정렬과 같다고 해석하지 않는다. 손목이 맞아도 손가락이 열려 있으면 손가락 포즈를 별도로 작성해야 한다.
 
@@ -506,7 +522,7 @@ PIE에서 `ProjectJ.Presentation.GripTraceHz 60`, `ProjectJ.Presentation.GripTra
 Primary/Secondary는 역할이며 반드시 R/L 이름일 필요는 없다. 현재 대검의 Primary는 오른손, Secondary는 왼손이다.
 
 <a id="secondary-현재-대검과-다른-파지-방식"></a>
-### 현재 대검과 다른 파지 방식
+### 기존 follower의 대검과 다른 파지 방식
 
 무기 DA의 Weapon Motion / Motion Presentation에서 설정한다. 새 `Enable Secondary Grip Contact` 기본값은 true로 기존 에셋을 유지한다.
 
@@ -521,7 +537,7 @@ Primary/Secondary는 역할이며 반드시 R/L 이름일 필요는 없다. 현�
 Drawn 기본값은 발도 Idle와 일반 이동에서 적용된다. 공격 기본값은 소스 주도 자동 몽타주 공격의 기본 접촉이다. 기존 Attack Definition의 `Override Grip IK`가 켜져 있으면 그 공격의 `Secondary Grip IKAlpha`를 사용한다. Weapon Motion 스테이트가 남아 있으면 그 구간의 Secondary Alpha가 독립 모션 설정을 덮어쓴다. 노티파이를 모든 공격에 추가할 필요는 없다.
 
 <a id="secondary-현재-대검-기존-two-hand-grip-ik-스테이트로-구간-지정"></a>
-#### 현재 대검: 기존 Two-Hand Grip IK 스테이트로 구간 지정
+#### 기존 대검 예시: Two-Hand Grip IK 스테이트로 구간 지정
 
 1. 무기 DA의 `Enable Secondary Grip Contact = true`, Drawn/Attack/Sheathed Secondary Alpha는 모두 0으로 설정한다.
 2. **소스에서 재생되는 공격 몽타주**의 원하는 파지 구간에 기존 **Two-Hand Grip IK** 노티파이 스테이트를 배치한다. `Secondary IKAlpha = 1`, `Override Primary IK = false`로 둔다. 공격별 Grip Override나 남아 있는 Weapon Motion의 기본 Secondary 값도 구간 밖에서 0을 사용해야 한다.
@@ -535,9 +551,9 @@ Drawn 기본값은 발도 Idle와 일반 이동에서 적용된다. 공격 기�
 소스 애니메이션의 `LeftHandIK` 커브가 존재하면 일반 접촉 구간의 커브 값이 Alpha보다 우선한다. 손을 놓는 특정 구간을 작성하는 데 활용하되 0 커브 때문에 DA의 1이 적용되지 않는 상황을 구분한다. 복귀는 기존 몽타주 가중치 기반 정책을 따른다. `Enable Secondary Grip Contact = false`는 목표 자체를 비활성화하므로 기존 커브, Two Hand 상태, Motion Alpha 또는 복귀에 남은 Alpha가 보조 접촉을 다시 켤 수 없다. 장비 교체와 누락 Grip에서도 유효성과 Alpha를 초기화한다.
 
 <a id="secondary-에디터에서-왼팔-연결"></a>
-### 에디터에서 왼팔 연결
+### 기존 follower의 에디터 왼팔 연결
 
-`ABP_Greatsword_Woman_RunTIme`의 AnimGraph에서 오른팔 노드 다음, RigidBody 이전에 **Project J Guided Hand IK**를 하나 추가한다.
+**기존 Bip01 follower 예시**인 `ABP_Greatsword_Woman_RunTIme`의 AnimGraph에서 오른팔 노드 다음, RigidBody 이전에 **Project J Guided Hand IK**를 하나 추가한다.
 
 ```text
 Retarget Pose From Mesh → Local To Component
@@ -575,7 +591,7 @@ Contact / Target Space의 세 설정을 핀으로 노출한다. 입력 연결은
 Primary/Secondary Body Profile을 선택하면 각 팔의 뼈 역할과 굽힘 안정화는 몸체 DA에서 읽는다. 노드 상세의 Forearm/Upper Arm이 None이어도 DA의 해당 Arm이 올바르게 설정되어 있으면 된다. 오른팔은 무기 접촉 목표를 풀고 왼팔은 상태에 따라 독립 컴포넌트 목표 또는 같은 평가의 Primary 손 기준 목표를 사용한다.
 
 <a id="secondary-목표-공간과-평가-순서"></a>
-### 목표 공간과 평가 순서
+### 기존 follower의 목표 공간과 평가 순서
 
 1. **소스 주도 공격:** 검이 몸체 손과 독립적으로 움직인다. `Use Primary Hand Space Grip = false`; 두 팔은 각 Grip에서 역산한 컴포넌트 공간 손목 목표를 사용한다.
 2. **손 주도 상태 및 부착 복귀:** 검이 보이는 Primary 손에 붙어 있다. 보조 목표는 Primary 손 기준 값으로 전달하고, 왼팔 노드가 **이번 평가에서 오른팔 노드가 Alpha까지 반영한 입력 포즈**를 읽어 컴포넌트 공간으로 합성한다. 이전 최종 손 위치의 월드 조회를 목표로 사용하지 않는다.
@@ -587,12 +603,12 @@ Primary/Secondary Body Profile을 선택하면 각 팔의 뼈 역할과 굽힘 �
 ### 제한과 MMORPG 검증
 
 - 추가 본 변환 RPC, 복제 상태, 상시 컴포넌트 틱 또는 게임 스레드 포즈 쓰기를 추가하지 않는다. 기존 클라이언트 외형/전용 서버/품질 등급 경계를 유지한다.
-- 손을 무기에 맞추는 두 팔 보정이며, 쇄골·몸통 Reach를 포함한 양손 동시 전신 제약 솔버는 아니다. 길이가 다른 몸체에서 도달 범위 밖 목표는 뼈를 늘리지 않고 제한한다. 접촉을 유지하려면 그 조합의 리타깃/공격 궤적 또는 별도 Reach 정책을 검토한다.
+- 이 절의 Guided 두 팔 노드만으로는 쇄골·몸통 Reach를 포함한 전신 제약을 풀지 않는다. 앞단 몸체 FBIK 유무는 실제 몸체 graph에서 확인한다. 길이가 다른 몸체에서 도달 범위 밖 목표는 뼈를 늘리지 않고 제한한다. 접촉을 유지하려면 그 조합의 리타깃/공격 궤적 또는 별도 Reach 정책을 검토한다.
 - 손가락 파지, 관절 제한, 비틀림 분배와 의상 관통은 별도 검수 항목이다. RigidBody가 팔·손을 다시 움직이지 않도록 영향 본을 확인한다.
 - Idle 오른손만, 공격 양손, 항상 양손, 한손 장비로 교체, 연계·취소·피격·납도, 원격/URO/LOD와 몸체 교체를 확인한다.
 - 기존 GripTrace의 `[WeaponContact] role=Secondary`와 GuidedIK의 Secondary Hand 노드 기록을 함께 본다. Guided 진단의 목표는 공간 변환 후 컴포넌트 공간 값이다.
 
-개별 ABP·DA는 사용자 에디터에서 연결/저장한다. 코드에서 에셋을 자동 변경하지 않는다.
+개별 ABP·DA는 해당 자산의 제작 단계에서 연결·컴파일·저장한다. 검증된 editor 도구도 사용할 수 있으며, 런타임에서 공유 자산을 임의로 재작성하지 않는다.
 
 <a id="secondary-검증-결과"></a>
 ### 검증 결과

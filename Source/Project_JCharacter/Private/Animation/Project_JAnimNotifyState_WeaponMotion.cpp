@@ -2,6 +2,9 @@
 
 #include "Components/Project_JWeaponPresentationComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Animation/AnimInstance.h"
+#include "Animation/AnimMontage.h"
+#include "Animation/ActiveMontageInstanceScope.h"
 #include "GameFramework/Actor.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "ProfilingDebugging/CountersTrace.h"
@@ -48,6 +51,18 @@ void UProject_JAnimNotifyState_WeaponMotion::NotifyBegin(USkeletalMeshComponent*
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_WeaponMotionNotify_Begin);
 	TRACE_COUNTER_INCREMENT(WeaponMotionNotifyBegins);
 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
+	// Blend-out can enter a later notify interval after contact recovery has
+	// already begun. A stopped execution must not reacquire weapon authority
+	// after this frame's pose solve. Resolve the exact execution, not its asset
+	// or another active instance of the same montage. Plain sequence/editor
+	// events retain their existing context-free behavior.
+	if (const auto* Context = EventReference.GetContextData<UE::Anim::FAnimNotifyMontageInstanceContext>())
+	{
+		UAnimInstance* Source = MeshComp ? MeshComp->GetAnimInstance() : nullptr;
+		const FAnimMontageInstance* Instance = Source ? Source->GetMontageInstanceForID(Context->MontageInstanceID) : nullptr;
+		if (!Instance || !Instance->IsActive()) { return; }
+	}
+
 	if (AActor* Owner = MeshComp ? MeshComp->GetOwner() : nullptr)
 	{
 		if (UProject_JWeaponPresentationComponent* Presentation = Owner->FindComponentByClass<UProject_JWeaponPresentationComponent>())

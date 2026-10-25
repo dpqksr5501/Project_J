@@ -14,6 +14,43 @@
 #include "Dom/JsonObject.h"
 #include "Serialization/JsonSerializer.h"
 
+bool UProject_JPlayerLocomotionLibrary::CopySurfaceClothingConfiguration(USkeletalMesh* Previous, USkeletalMesh* Target)
+{
+	if ((GEditor && GEditor->PlayWorld) || !Previous || !Target || Previous == Target) return false;
+	const auto& From = Previous->GetMeshClothingAssets();
+	const auto& To = Target->GetMeshClothingAssets();
+	if (From.IsEmpty() || From.Num() != To.Num()) return false;
+	for (int32 Index = 0; Index < From.Num(); ++Index)
+	{
+		const auto* A = Cast<UClothingAssetCommon>(From[Index]);
+		const auto* B = Cast<UClothingAssetCommon>(To[Index]);
+		if (!A || !B || B->GetOuter() != Target || A->ClothConfigs.IsEmpty() || A->ClothConfigs.Num() != B->ClothConfigs.Num()) return false;
+		for (const auto& Pair : A->ClothConfigs)
+		{
+			const auto* Existing = B->ClothConfigs.Find(Pair.Key);
+			if (!Pair.Value || !Existing || !*Existing || Pair.Value->GetClass() != (*Existing)->GetClass()) return false;
+		}
+	}
+	const FScopedTransaction Transaction(NSLOCTEXT("ProjectJ", "CopyClothConfiguration", "Copy surface cloth configuration"));
+	Target->Modify();
+	TMap<const UClothConfigBase*, UClothConfigBase*> Copies;
+	for (int32 Index = 0; Index < From.Num(); ++Index)
+	{
+		const auto* A = CastChecked<UClothingAssetCommon>(From[Index]);
+		auto* B = CastChecked<UClothingAssetCommon>(To[Index]); B->Modify();
+		for (const auto& Pair : A->ClothConfigs)
+		{
+			auto*& Copy = Copies.FindOrAdd(Pair.Value.Get());
+			if (!Copy) Copy = DuplicateObject<UClothConfigBase>(Pair.Value.Get(), B,
+				MakeUniqueObjectName(B, Pair.Value->GetClass(), Pair.Value->GetFName()));
+			if (!Copy) return false;
+			B->ClothConfigs[Pair.Key] = Copy;
+		}
+	}
+	Target->MarkPackageDirty();
+	return true;
+}
+
 FString UProject_JPlayerLocomotionLibrary::CreateSurfaceClothing(USkeletalMesh* Mesh, UPhysicsAsset* Collisions,
 	float PinnedTopDepth, float TransitionDepth, float MaxDistance)
 {

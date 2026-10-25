@@ -105,6 +105,9 @@ private:
 	FProject_JGripArmBones CachedArmNames;
 	EProject_JGuidedArmDefinitionSource CachedArmSource = EProject_JGuidedArmDefinitionSource::NodeSettings;
 	FName CachedEffectorSpaceBoneName = NAME_None;
+	FProject_JInputPoseContact InputPoseContact;
+	bool UsesBoneSpaceEffector() const { return InputPoseContact.IsValid() || bUseBoneSpaceEffector; }
+	FName TargetSpaceBone() const { return InputPoseContact.IsValid() ? InputPoseContact.Bone : EffectorSpaceBoneName; }
 	bool bCachedUseBoneSpaceEffector = false;
 	bool bEffectorSpaceValid = false;
 	FCompactPoseBoneIndex EffectorSpaceIndex = FCompactPoseBoneIndex(INDEX_NONE);

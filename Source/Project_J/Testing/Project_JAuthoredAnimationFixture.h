@@ -9,6 +9,12 @@
 #include "Game/Project_JPlayerState.h"
 #include "Components/Project_JEquipmentManagerComponent.h"
 #include "Equipment/Project_JEquipmentItemDefinition.h"
+#include "Animation/Project_JRetargetBodyProfile.h"
+#include "Animation/AnimInstance.h"
+#include "Components/Project_JModularMeshComponent.h"
+#include "Components/Project_JWeaponPresentationComponent.h"
+#include "Engine/SkeletalMesh.h"
+#include "Retargeter/IKRetargeter.h"
 
 namespace ProjectJAuthoredAnimationFixture
 {
@@ -38,6 +44,35 @@ inline AProject_JPlayerCharacter* Spawn(UWorld* World, AController* Controller, 
 	State->GetEquipmentManagerComponent()->EquipItem(Item);
 	// Static standalone diagnostics prescribe a frame. Real socket fixtures use Mover simulation.
 	if (!bSimulate && World->GetNetMode()==NM_Standalone && !ProjectJ::Tests::PublishMoverFrame(Player,MOVE_None)) { Player->Destroy(); return nullptr; }
+	return Player;
+}
+
+// Exercise the explicitly authored incompatible-body bridge independently of
+// which compatible avatar is currently selected by BP_GreatSword. All changes
+// belong to this transient test actor; no Blueprint or mesh asset is modified.
+inline AProject_JPlayerCharacter* SpawnRetargetFallback(UWorld* World, AController* Controller,
+	AProject_JPlayerState* State, const FVector& Location)
+{
+	auto* Family=LoadObject<UProject_JRetargetFamilyProfile>(nullptr,TEXT("/Game/DataAssetSets/Presentation/Retarget/DA_RetargetFamily_Mannequin_Bip01.DA_RetargetFamily_Mannequin_Bip01"));
+	UClass* BodyClass=LoadClass<UAnimInstance>(nullptr,TEXT("/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme.ABP_Greatsword_Woman_RunTIme_C"));
+	if (!Family || !Family->Retargeter || !BodyClass) return nullptr;
+	auto* SourceAsset=const_cast<USkeletalMesh*>(Family->Retargeter->GetPreviewMesh(ERetargetSourceOrTarget::Source));
+	auto* TargetAsset=const_cast<USkeletalMesh*>(Family->Retargeter->GetPreviewMesh(ERetargetSourceOrTarget::Target));
+	if (!SourceAsset || !TargetAsset || !Family->Matches(SourceAsset->GetSkeleton(),TargetAsset->GetSkeleton())) return nullptr;
+	auto* Player=Spawn(World,Controller,State,Location);if (!Player) return nullptr;
+	TInlineComponentArray<UProject_JModularMeshComponent*> Parts(Player);
+	for (auto* Part:Parts) Part->DestroyComponent();
+	auto* Source=Player->GetMesh();Source->SetSkeletalMeshAsset(SourceAsset);
+	Source->SetHiddenInGame(true);Source->SetVisibility(false);
+	auto* Visual=NewObject<USkeletalMeshComponent>(Player,NAME_None,RF_Transient);
+	Visual->SetupAttachment(Source);Visual->ComponentTags.Add(TEXT("VisualFollower"));
+	Visual->SetSkeletalMeshAsset(TargetAsset);
+	// This follower graph owns contact and body physics. A mesh-level direct
+	// post process must never create a second writer on the same component.
+	Visual->SetDisablePostProcessBlueprint(true);
+	Visual->SetAnimInstanceClass(BodyClass);Player->AddInstanceComponent(Visual);
+	Visual->RegisterComponent();Visual->AddTickPrerequisiteComponent(Source);
+	if (auto* Presentation=Player->FindComponentByClass<UProject_JWeaponPresentationComponent>()) Presentation->RefreshAttachmentCalibration();
 	return Player;
 }
 }

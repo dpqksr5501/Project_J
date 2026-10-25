@@ -16,6 +16,8 @@
 #include "HAL/IConsoleManager.h"
 #include "Animation/Project_JAnimNotifyState_WeaponMotion.h"
 #include "Animation/AnimNotifyQueue.h"
+#include "Animation/AnimMontage.h"
+#include "Animation/ActiveMontageInstanceScope.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJPrimaryGripAttachmentTest,
 	"ProjectJ.Presentation.PrimaryGripAttachment", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -139,6 +141,8 @@ bool FProjectJPrimaryGripAttachmentTest::RunTest(const FString&)
 		Presentation->SetComponentTickEnabled(false);
 	}
 	const TArray<FProject_JWeaponMotionKey> NoKeys;
+	// Continue with the next logical pose after the preceding diagnostic pull.
+	Presentation->AnimationGripTargetsFrame=MAX_uint64;Presentation->LastMotionEvaluationFrame=MAX_uint64;
 	TestTrue(TEXT("Palm-mounted weapon can enter source-authored attack motion"), Presentation->BeginIndependentMotion(NoKeys, 1, 0, 1, 0, 0));
 	TestEqual(TEXT("Attack ownership belongs to source skeleton"), Root->GetAttachParent(), static_cast<USceneComponent*>(Character->GetMesh()));
 	TestFalse(TEXT("Independent motion can solve primary hand without attachment feedback"), Presentation->GetWeaponGripTargets().bPrimaryIKSuppressedByAttachment);
@@ -209,6 +213,44 @@ bool FProjectJPrimaryGripAttachmentTest::RunTest(const FString&)
 	TestTrue(TEXT("Late/rejected engine NotifyEnd preserves the current execution"), Presentation->IsNotifyIndependentMotionCurrent(CurrentExecution));
 	MotionNotify->NotifyEnd(Character->GetMesh(), nullptr, EventB);
 	TestFalse(TEXT("Engine notify End releases only its own motion"), Presentation->bIndependentMotionActive);
+	// A montage may begin another notify interval while its outgoing pose still
+	// contributes. Replaying the same asset must not validate that old execution.
+	UAnimInstance* PreviousSource = Character->GetMesh()->GetAnimInstance();
+	auto* NotifySource = NewObject<UAnimInstance>(Character->GetMesh());
+	Character->GetMesh()->AnimScriptInstance = NotifySource;
+	auto* NotifyMontage = NewObject<UAnimMontage>(NotifySource);
+	auto* Outgoing = new FAnimMontageInstance(NotifySource);Outgoing->Initialize(NotifyMontage);
+	NotifySource->MontageInstances.Add(Outgoing);Outgoing->SetDesiredWeight(1.0f);Outgoing->SetWeight(1.0f);
+	FAnimNotifyEventReference ActiveEvent;ActiveEvent.SetNotifyInstanceID(103);
+	ActiveEvent.AddContextData<UE::Anim::FAnimNotifyMontageInstanceContext>(Outgoing->GetInstanceID());
+	MotionNotify->NotifyBegin(Character->GetMesh(),NotifyMontage,1,ActiveEvent);
+	TestTrue(TEXT("Active montage execution can acquire weapon motion"),Presentation->ActiveNotifyMotionToken!=0);
+	MotionNotify->NotifyEnd(Character->GetMesh(),NotifyMontage,ActiveEvent);
+	Outgoing->SetDesiredWeight(0.0f);Outgoing->SetWeight(0.0f);
+	TestTrue(TEXT("Stopped fixture still has outgoing pose weight"),Outgoing->IsStopped() && Outgoing->GetWeight()>0.99f);
+	FAnimNotifyEventReference LateEvent;LateEvent.SetNotifyInstanceID(104);
+	LateEvent.AddContextData<UE::Anim::FAnimNotifyMontageInstanceContext>(Outgoing->GetInstanceID());
+	const FTransform BeforeLateBegin=Root->GetComponentTransform();
+	MotionNotify->NotifyBegin(Character->GetMesh(),NotifyMontage,1,LateEvent);
+	TestFalse(TEXT("Blend-out cannot restart a motion after contact handoff"),Presentation->bIndependentMotionActive);
+	TestTrue(TEXT("Rejected late begin preserves weapon pose"),Root->GetComponentTransform().Equals(BeforeLateBegin));
+	auto* Replay = new FAnimMontageInstance(NotifySource);Replay->Initialize(NotifyMontage);
+	NotifySource->MontageInstances.Add(Replay);Replay->SetDesiredWeight(1.0f);Replay->SetWeight(1.0f);
+	FAnimNotifyEventReference ReplayEvent;ReplayEvent.SetNotifyInstanceID(105);
+	ReplayEvent.AddContextData<UE::Anim::FAnimNotifyMontageInstanceContext>(Replay->GetInstanceID());
+	MotionNotify->NotifyBegin(Character->GetMesh(),NotifyMontage,1,ReplayEvent);
+	const uint64 ReplayToken=Presentation->ActiveNotifyMotionToken;
+	TestTrue(TEXT("New execution of the same montage can acquire motion"),ReplayToken!=0);
+	MotionNotify->NotifyBegin(Character->GetMesh(),NotifyMontage,1,LateEvent);
+	MotionNotify->NotifyEnd(Character->GetMesh(),NotifyMontage,LateEvent);
+	TestTrue(TEXT("Old execution cannot reacquire or release the replay"),Presentation->IsNotifyIndependentMotionCurrent(ReplayToken));
+	FAnimNotifyEventReference MissingEvent;MissingEvent.SetNotifyInstanceID(106);
+	MissingEvent.AddContextData<UE::Anim::FAnimNotifyMontageInstanceContext>(INDEX_NONE);
+	MotionNotify->NotifyBegin(Character->GetMesh(),NotifyMontage,1,MissingEvent);
+	TestTrue(TEXT("Missing montage execution cannot replace the current lease"),Presentation->IsNotifyIndependentMotionCurrent(ReplayToken));
+	MotionNotify->NotifyEnd(Character->GetMesh(),NotifyMontage,ReplayEvent);
+	NotifySource->MontageInstances.Remove(Outgoing);NotifySource->MontageInstances.Remove(Replay);delete Outgoing;delete Replay;
+	Character->GetMesh()->AnimScriptInstance=PreviousSource;
 	Profile->MotionPresentation.bSupportsIndependentMotion = false;
 	Profile->MotionPresentation.DefaultDrawnPrimaryIKAlpha = 0;
 	Presentation->RefreshAttachmentCalibration();

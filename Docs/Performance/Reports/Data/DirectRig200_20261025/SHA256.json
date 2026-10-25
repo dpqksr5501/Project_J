@@ -1,0 +1,78 @@
+{
+  "Direct_Attack.png": {
+    "bytes": 1553823,
+    "sha256": "8722c95e28190d4cd2b3ea6c33a86195d5f0be44439ba8c78d2dd82f8d5e8b72"
+  },
+  "Direct_Idle.png": {
+    "bytes": 1371350,
+    "sha256": "2971fc0896039281a4cb0d8b0ad9736fd84096c6e6c871de1ebc56b09cfad9e1"
+  },
+  "HistoricalRetargetScopes.json": {
+    "bytes": 4662,
+    "sha256": "477744d8fd9da333358014f67b41ce2e1d045e765e711f04f9b4856429ecfc89"
+  },
+  "RigDirect200_A_20261025/frames.csv": {
+    "bytes": 17897,
+    "sha256": "ad1a8604dcb790c8223a2fa496920e656e6aeadfe2bb8e56584a18f3cd1f292e"
+  },
+  "RigDirect200_A_20261025/pose_routes.csv": {
+    "bytes": 250855,
+    "sha256": "8914ea16332b3493eb23f2aa4fc08877e947aec1f843a7b8dda76f155527433f"
+  },
+  "RigDirect200_A_20261025/process.json": {
+    "bytes": 294,
+    "sha256": "98ec0eade64881d9bcc2107f0542db0a4b6f5cd27a9e7e3ce6c6451caef75619"
+  },
+  "RigDirect200_A_20261025/result.txt": {
+    "bytes": 139,
+    "sha256": "d217e4bea6c3514182a9d8a7d32c792ba531a0a61eb9ce6a13ff8d63bef62a14"
+  },
+  "RigDirect200_A_20261025/verification.json": {
+    "bytes": 285,
+    "sha256": "6ed2d8861244d99607a0491a3f947ce61343d1caefcf0b2a07f34201809e552c"
+  },
+  "RigDirect200_A_20261025/workload.csv": {
+    "bytes": 3325,
+    "sha256": "e46d7ffd540ff61a9c9ff3bc9345be674a89bee3aafce3234c825d0d1ebb985c"
+  },
+  "RigDirect200_B_20261025/frames.csv": {
+    "bytes": 17889,
+    "sha256": "2664c7db7655a75c84c4def184d91f991717b5be1688eb2b324680582f4cf0db"
+  },
+  "RigDirect200_B_20261025/pose_routes.csv": {
+    "bytes": 250855,
+    "sha256": "8914ea16332b3493eb23f2aa4fc08877e947aec1f843a7b8dda76f155527433f"
+  },
+  "RigDirect200_B_20261025/process.json": {
+    "bytes": 294,
+    "sha256": "f2c3ed02291df2339fbe3dee45b5a87a02deadc346a9208a66c7e8cbbfb0bc5e"
+  },
+  "RigDirect200_B_20261025/result.txt": {
+    "bytes": 139,
+    "sha256": "d217e4bea6c3514182a9d8a7d32c792ba531a0a61eb9ce6a13ff8d63bef62a14"
+  },
+  "RigDirect200_B_20261025/verification.json": {
+    "bytes": 285,
+    "sha256": "6ed2d8861244d99607a0491a3f947ce61343d1caefcf0b2a07f34201809e552c"
+  },
+  "RigDirect200_B_20261025/workload.csv": {
+    "bytes": 3325,
+    "sha256": "e46d7ffd540ff61a9c9ff3bc9345be674a89bee3aafce3234c825d0d1ebb985c"
+  },
+  "Summary.json": {
+    "bytes": 52712,
+    "sha256": "3b5cf61a335dd4d713becb07bb3dceb1bf53fc30c82fb0174589f0e98bc00d6c"
+  },
+  "TraceAllTimers.csv": {
+    "bytes": 1319173,
+    "sha256": "1089d6561450bdf97c52d16c8ee79ca2a77f37d63a5275e95abae5b7b3da37ee"
+  },
+  "TraceScopes.json": {
+    "bytes": 3927,
+    "sha256": "37948254eefd7ee41b8188aa60ef3c0a8e1b28f87bb5156a5e9e544d77eb5160"
+  },
+  "TraceThreads.csv": {
+    "bytes": 2146,
+    "sha256": "76a3354b80b4307cc50f12f8ea835bb857470d291ded3fff2c85eeea78938b98"
+  }
+}

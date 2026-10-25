@@ -10,6 +10,7 @@ struct FProject_JRetargetAnimInstanceProxy : FAnimInstanceProxy
 	explicit FProject_JRetargetAnimInstanceProxy(UAnimInstance* Instance) : FAnimInstanceProxy(Instance) {}
 	virtual void Initialize(UAnimInstance* Instance) override;
 	virtual void PreUpdate(UAnimInstance* Instance, float DeltaSeconds) override;
+	virtual void PreEvaluateAnimation(UAnimInstance* Instance) override;
 	virtual void AddReferencedObjects(UAnimInstance* Instance, FReferenceCollector& Collector) override;
 private:
 	struct FNodeDefaults
@@ -22,4 +23,5 @@ private:
 	};
 	TWeakObjectPtr<UClass> CachedClass;
 	TArray<FNodeDefaults> Nodes;
+	TArray<int32> FootContactNodes;
 };

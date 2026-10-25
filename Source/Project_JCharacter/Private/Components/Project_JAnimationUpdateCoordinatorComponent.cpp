@@ -309,7 +309,18 @@ void UProject_JAnimationUpdateCoordinatorComponent::RefreshVisualBudget(float De
 		{ Entry.Restore(this, VisualSource.Get()); Visuals.RemoveAtSwap(Index); continue; }
 		const bool bRenderBody=Mesh==RenderBody && Mesh->GetNumLODs()>1;
 		Entry.RefreshRenderLOD(bRenderBody && bHiddenSource && !bLocal);
-		const bool bDisable = bHidden || Mesh->bHiddenInGame || !Mesh->GetVisibleFlag();
+		// A hidden modular pose producer is still required by its visible
+		// LeaderPose consumers. Group visibility owns their shared evaluation;
+		// suppress the producer only when none of those consumers can render.
+		const bool bVisiblePoseConsumer = Mesh->GetFollowerPoseComponents().ContainsByPredicate(
+			[Mesh](const TWeakObjectPtr<USkinnedMeshComponent>& Entry)
+			{
+				const auto* Consumer = Entry.Get();
+				return IsValid(Consumer) && Consumer->IsRegistered() && Consumer->GetOwner() == Mesh->GetOwner() &&
+					Consumer->LeaderPoseComponent.Get() == Mesh && Consumer->GetSkinnedAsset() &&
+					!Consumer->bHiddenInGame && Consumer->GetVisibleFlag();
+			});
+		const bool bDisable = bHidden || ((Mesh->bHiddenInGame || !Mesh->GetVisibleFlag()) && !bVisiblePoseConsumer);
 		if (bDisable && !Entry.bDisabledTick) { Entry.bSavedTick = Mesh->IsComponentTickEnabled(); Mesh->SetComponentTickEnabled(false); Entry.bDisabledTick = true; }
 		else if (!bDisable && Entry.bDisabledTick) { Mesh->SetComponentTickEnabled(Entry.bSavedTick); Entry.bDisabledTick = false; }
 		Mesh->EnableExternalUpdate(bEvaluateVisuals);

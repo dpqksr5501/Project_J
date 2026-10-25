@@ -2,6 +2,8 @@
 #include "Misc/AutomationTest.h"
 #include "Project_JPlayerCharacter.h"
 #include "Animation/Project_JPlayerAnimInstance.h"
+#include "Animation/Project_JHandContact.h"
+#include "Animation/Project_JRetargetAnimInstance.h"
 #include "Engine/SkeletalMesh.h"
 #include "Animation/AnimBlueprint.h"
 #include "Components/Project_JModularMeshComponent.h"
@@ -68,14 +70,22 @@ bool FProjectJPlayerMasterAssembly::RunTest(const FString&)
 	if (TestNotNull(TEXT("Inherited avatar constructs"), Avatar))
 	{
 		TArray<UProject_JModularMeshComponent*> Parts; Avatar->GetComponents(Parts);
-		TestEqual(TEXT("All eight authored clothing parts retained"), Parts.Num(), 8);
+		auto* Body = Parts.IsEmpty() ? nullptr : Parts[0]->LeaderPoseComponent.Get();
+		TestNotNull(TEXT("Authored modular parts have a pose owner"), Body);
+		const bool bDirectBody = Body == Avatar->GetMesh();
+		if(bDirectBody)TestEqual(TEXT("Direct equipment and recovery resolve the body's actual post-process controller"),
+			Project_J::Animation::FindBodyContactController(Avatar->GetMesh()),static_cast<const UProject_JRetargetAnimInstance*>(Cast<UProject_JRetargetAnimInstance>(Avatar->GetMesh()->GetPostProcessInstance())));
+		const int32 BodyParts = Body && Body->bHiddenInGame ? 2 : (bDirectBody ? 1 : 0);
+		TestEqual(TEXT("Eight clothing parts plus explicitly separated body pieces"), Parts.Num(), 8 + BodyParts);
+		TestTrue(TEXT("Pose owner is the source or its one visual body"),
+			Body && (bDirectBody || Body->GetAttachParent() == Avatar->GetMesh()));
 		for (const auto* Part : Parts)
 		{
 			TestTrue(TEXT("Clothing uses native authored binding"), Part->bFollowAttachParentPose);
 			TestNotNull(TEXT("Clothing retains its mesh"), Part->GetSkeletalMeshAsset());
 			TestEqual(TEXT("Clothing follows visual body, not hidden Manny source"),
 				static_cast<USceneComponent*>(Part->LeaderPoseComponent.Get()), Part->GetAttachParent());
-			TestTrue(TEXT("Visual body and simulation source stay separate"), Part->LeaderPoseComponent.Get() != Avatar->GetMesh());
+			TestEqual(TEXT("Parts follow the actual presented body in either skeleton route"), Part->LeaderPoseComponent.Get(), Body);
 			TestEqual(TEXT("Only independent cloth retains its component tick"), Part->IsComponentTickEnabled(),
 				Part->GetSkeletalMeshAsset()->HasActiveClothingAssets());
 			TestNull(TEXT("Shared-pose clothing has no duplicate animation instance"), Part->GetAnimInstance());

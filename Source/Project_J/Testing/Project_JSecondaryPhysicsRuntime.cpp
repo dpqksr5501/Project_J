@@ -3,6 +3,7 @@
 #include "Testing/Project_JAuthoredAnimationFixture.h"
 #include "BoneControllers/AnimNode_RigidBody.h"
 #include "PhysicsEngine/PhysicsAsset.h"
+#include "PhysicsEngine/SkeletalBodySetup.h"
 #include "Physics/ImmediatePhysics/ImmediatePhysicsActorHandle.h"
 #include "Animation/Project_JRetargetAnimInstance.h"
 #include "Animation/AnimClassInterface.h"
@@ -45,6 +46,7 @@ class FSecondaryPhysicsEquivalence : public IAutomationLatentCommand
 	double Deadline = 0, MaxPosition = 0, MaxAngle = 0, MaxScale = 0, MaxBasePosition = 0;
 	FString Audit;
 	int32 ActualActors = 0, DynamicActors = 0;
+	int32 ExpectedActors = 0, ExpectedDynamicActors = 0;
 	double DynamicMotion = 0;
 	int32 MeshLODCount = 1;
 
@@ -64,6 +66,7 @@ class FSecondaryPhysicsEquivalence : public IAutomationLatentCommand
 		Result->SetupAttachment(Player->GetMesh());
 		Result->SetRelativeTransform(Authored->GetRelativeTransform());
 		Result->SetSkeletalMeshAsset(Authored->GetSkeletalMeshAsset());
+		Result->SetDisablePostProcessBlueprint(true);
 		Result->RegisterComponent(); Player->AddInstanceComponent(Result);
 		Result->AddTickPrerequisiteComponent(Player->GetMesh());
 		Result->SetAnimInstanceClass(Authored->GetAnimClass());
@@ -82,7 +85,7 @@ class FSecondaryPhysicsEquivalence : public IAutomationLatentCommand
 		auto* State = World->SpawnActor<AProject_JPlayerState>();
 		if (!Controller || !State) return false;
 		Controller->SetPlayerState(State); State->SetOwner(Controller);
-		Player = ProjectJAuthoredAnimationFixture::Spawn(World, Controller, State, FVector(0,0,1000));
+		Player = ProjectJAuthoredAnimationFixture::SpawnRetargetFallback(World, Controller, State, FVector(0,0,1000));
 		if (!Player) return false;
 		Player->FindComponentByClass<UProject_JAnimationUpdateCoordinatorComponent>()->bAllowVisualBudget = false;
 		TInlineComponentArray<USkeletalMeshComponent*> Visuals(Player);
@@ -114,20 +117,28 @@ class FSecondaryPhysicsEquivalence : public IAutomationLatentCommand
 				Copy->UpdateBodySetupIndexMap(); Copy->UpdateBoundsBodiesArray();
 				Audit += FString::Printf(TEXT("PhysicsCopy Source=%s OriginalBodies=%d CopiedBodies=%d\n"), *Node->OverridePhysicsAsset->GetPathName(), Node->OverridePhysicsAsset->SkeletalBodySetups.Num(), Copy->SkeletalBodySetups.Num());
 				Copies.Emplace(Copy); Node->OverridePhysicsAsset = Copy;
+				ExpectedActors+=Copy->SkeletalBodySetups.Num();
+				for (const USkeletalBodySetup* Setup:Copy->SkeletalBodySetups)
+					ExpectedDynamicActors+=Setup && (Setup->PhysicsType==PhysType_Simulated || (Node->bUseDefaultAsSimulated && Setup->PhysicsType==PhysType_Default));
 			}
 		}
-		Test->TestEqual(TEXT("All three authored physics nodes participate"), Copies.Num(), 3);
+		Test->TestEqual(TEXT("Hair and skirt participate without a duplicate cape solver"), Copies.Num(), 2);
 		// Reproduce InitAnim's immediate zero-delta evaluation only after both
 		// complete data sets are installed. There is no mid-history PA swap.
 		Reference->TickAnimation(0.f,false); Reference->RefreshBoneTransforms();
 		Candidate->TickAnimation(0.f,false); Candidate->RefreshBoneTransforms();
 		Deadline = FPlatformTime::Seconds()+60;
-		return Copies.Num()==3 && RetargetA && RetargetB;
+		return Copies.Num()==2 && RetargetA && RetargetB;
 	}
 	void AdvanceInput()
 	{
 		const bool bAir = Frame>=360 && Frame<420;
-		if (Frame>=240 && Frame<360) Player->AddActorWorldRotation(FRotator(0,.5,0));
+		if (Frame>=240 && Frame<360)
+		{
+			auto Rotation=Player->GetActorRotation();Rotation.Yaw+=.5;Rotation.Roll=8.*FMath::Sin((Frame-240)*.07);
+			Player->SetActorRotation(Rotation);
+		}
+		if(Frame==360){auto Rotation=Player->GetActorRotation();Rotation.Roll=0.;Player->SetActorRotation(Rotation);}
 		const FVector Velocity = Player->GetActorForwardVector()*(Frame<120 ? 0 : Frame<240 ? 200 : 600) + FVector(0,0,bAir ? 300-(Frame-360)*10 : 0);
   Player->AddActorWorldOffset(Velocity/60.f);
 		if (Frame==440) Player->SetActorLocation(Player->GetActorLocation()+FVector(1200,0,0),false,nullptr,ETeleportType::TeleportPhysics);
@@ -177,11 +188,18 @@ class FSecondaryPhysicsEquivalence : public IAutomationLatentCommand
 						for (int32 I=0; I<Node->GetSimulation()->NumActors(); ++I)
 						{
 							const auto* Actor=Node->GetSimulation()->GetActorHandle(I);
-							if (Actor && Actor->IsSimulated()) { ++DynamicActors; DynamicMotion+=Actor->GetLinearVelocity().SizeSquared(); }
+							if (Actor && Actor->IsSimulated()) { ++DynamicActors; DynamicMotion+=Actor->GetLinearVelocity().SizeSquared()+Actor->GetAngularVelocity().SizeSquared(); }
 						}
 						Audit+=FString::Printf(TEXT("ActualPhysics Asset=%s Actors=%d\n"),*Node->GetPhysicsAsset()->GetPathName(),Node->GetSimulation()->NumActors());
 					}
 				}
+		// Motion belongs to the exercised timeline. The first initialization
+		// sample can legitimately have zero velocity before gravity/input advances.
+		if(Frame>0)for(auto* Property:IAnimClassInterface::GetFromClass(Candidate->GetAnimClass())->GetAnimNodeProperties())
+			if(Property->Struct==FAnimNode_RigidBody::StaticStruct())
+				if(auto* Simulation=Property->ContainerPtrToValuePtr<FAnimNode_RigidBody>(Candidate->GetAnimInstance())->GetSimulation())
+					for(int32 I=0;I<Simulation->NumActors();++I)
+						if(const auto* Actor=Simulation->GetActorHandle(I);Actor && Actor->IsSimulated())DynamicMotion+=Actor->GetLinearVelocity().SizeSquared()+Actor->GetAngularVelocity().SizeSquared();
 		++Samples;
 	}
 public:
@@ -207,7 +225,7 @@ public:
 					if(auto* Simulation=Property->ContainerPtrToValuePtr<FAnimNode_RigidBody>(Candidate->GetAnimInstance())->GetSimulation())
 						for(int32 I=0;I<Simulation->NumActors();++I)
 						{ const auto* Actor=Simulation->GetActorHandle(I); EnabledDynamics+=Actor && Actor->IsSimulated() && Actor->GetEnabled(); }
-				Test->TestEqual(TEXT("Lower mesh LOD does not silently disable secondary dynamics"),EnabledDynamics,30);
+				Test->TestEqual(TEXT("Lower mesh LOD does not silently disable secondary dynamics"),EnabledDynamics,ExpectedDynamicActors);
 				Audit+=FString::Printf(TEXT("ActualMeshLOD Frame=%d LOD=%d EnabledDynamics=%d\n"),Frame,Candidate->GetPredictedLODLevel(),EnabledDynamics);
 			}
 		}
@@ -215,8 +233,8 @@ public:
 		Compare();
 		if (++Frame<900) return false;
 		Test->TestEqual(TEXT("Nine hundred paired pose samples"),Samples,900);
-		Test->TestEqual(TEXT("All authored simulation actors participate"),ActualActors,91);
-		Test->TestEqual(TEXT("All authored dynamic actors participate"),DynamicActors,30);
+		Test->TestEqual(TEXT("All authored simulation actors participate"),ActualActors,ExpectedActors);
+		Test->TestEqual(TEXT("All authored dynamic actors participate"),DynamicActors,ExpectedDynamicActors);
 		Test->TestTrue(TEXT("Dynamic physics actually produces motion"),DynamicMotion>UE_DOUBLE_SMALL_NUMBER);
 		Test->TestTrue(TEXT("Physics preserves positions within 0.05cm"),MaxPosition<.05);
 		Test->TestTrue(TEXT("Physics preserves rotations within 0.05degrees"),MaxAngle<.05);

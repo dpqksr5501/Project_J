@@ -103,6 +103,10 @@ bool FProjectJPresentationMeshResolverTest::RunTest(const FString&)
 	// The animation reader must pull the latest authored weapon pose before
 	// sampling grip targets, even if the late cosmetic component tick has not run.
 	UProject_JWeaponPresentationComponent* Presentation = NewObject<UProject_JWeaponPresentationComponent>(Character);
+	// This synchronous fixture advances several logical animation frames without
+	// changing the engine-global frame counter used by the real pose pipeline.
+	const auto NextPoseFrame=[Presentation]()
+	{ Presentation->AnimationGripTargetsFrame=MAX_uint64;Presentation->LastMotionEvaluationFrame=MAX_uint64; };
 	Character->AddInstanceComponent(Presentation);
 	Presentation->RegisterComponent();
 	// The component is installed after the visual's original initialization.
@@ -153,6 +157,7 @@ bool FProjectJPresentationMeshResolverTest::RunTest(const FString&)
 	EndKey.NormalizedTime = 1.0f;
 	EndKey.RelativeTransform = FTransform(FVector(100.0f, 0.0f, 0.0f));
 	Timeline.Add(EndKey);
+	NextPoseFrame();
 	TestTrue(TEXT("Independent motion begins"), Presentation->BeginIndependentMotion(Timeline, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f));
 	Presentation->SetIndependentMotionPosition(0.5f);
 	const FProject_JWeaponGripTargets MidGrip = Presentation->GetWeaponGripTargetsForAnimation(1.0f / 60.0f);
@@ -161,8 +166,18 @@ bool FProjectJPresentationMeshResolverTest::RunTest(const FString&)
 	TestEqual(TEXT("Authored weapon motion owns the grip"), MidGrip.DriveMode, EProject_JWeaponGripDriveMode::AuthoredWeaponMotion);
 	Presentation->SetIndependentMotionPosition(0.75f);
 	Presentation->GetWeaponGripTargetsForAnimation(1.0f / 60.0f);
-	TestTrue(TEXT("A later montage position invalidates the same-frame cache"),
+	TestTrue(TEXT("A late notify preserves the transform already consumed by the current pose"),
+		FMath::IsNearlyEqual(WeaponRoot->GetRelativeLocation().X, 50.0f, 0.1f));
+	NextPoseFrame();Presentation->GetWeaponGripTargetsForAnimation(1.0f / 60.0f);
+	TestTrue(TEXT("The next animation frame consumes the latest montage position"),
 		FMath::IsNearlyEqual(WeaponRoot->GetRelativeLocation().X, 75.0f, 0.1f));
+	// Initialization clears stale contact alpha. Exercise the completed pose
+	// which the handoff reads, rather than assuming BeginMotion evaluates it.
+	auto* EvaluatedFollower=CastChecked<UProject_JRetargetAnimInstance>(Follower->GetAnimInstance());
+	EvaluatedFollower->NativeUpdateAnimation(1.f);
+	EvaluatedFollower->NativeThreadSafeUpdateAnimation(1.f);
+	TestTrue(TEXT("The outgoing follower actually evaluated full primary contact"),
+		FMath::IsNearlyEqual(EvaluatedFollower->RightGripAlpha,1.f));
 	const FTransform WorldBeforeHandoff = WeaponRoot->GetComponentTransform();
 	Presentation->EndIndependentMotion();
 	TestTrue(TEXT("Contact handoff preserves weapon world pose"),
@@ -177,7 +192,7 @@ bool FProjectJPresentationMeshResolverTest::RunTest(const FString&)
 	const double RecoveryStartTime = Presentation->ContactRecoveryStartSeconds;
 	const float SocketDistanceBeforeRecovery = FVector::Distance(WeaponRoot->GetComponentLocation(),
 		Follower->GetSocketLocation(FollowerBone));
-	Presentation->UpdateContactRecovery(RecoveryStartTime + Profile->MotionPresentation.ContactRecoverySeconds * 0.5);
+	NextPoseFrame();Presentation->UpdateContactRecovery(RecoveryStartTime + Profile->MotionPresentation.ContactRecoverySeconds * 0.5);
 	const FProject_JWeaponGripTargets RecoveryMid = Presentation->GetWeaponGripTargets();
 	TestTrue(TEXT("Moving the attached weapon does not move its independent recovery target"),
 		RecoveryMid.PrimaryGripWorldTransform.Equals(RecoveryStart.PrimaryGripWorldTransform, 0.1f));
@@ -194,6 +209,7 @@ bool FProjectJPresentationMeshResolverTest::RunTest(const FString&)
 	// the component targets: a second FInterpTo would lag the attachment clock.
 	UProject_JRetargetAnimInstance* RecoveryAnim = Cast<UProject_JRetargetAnimInstance>(Follower->GetAnimInstance());
 	Presentation->ContactRecoveryStartSeconds = World->GetTimeSeconds() - Profile->MotionPresentation.ContactRecoverySeconds * 0.5;
+	NextPoseFrame();
 	RecoveryAnim->NativeUpdateAnimation(1.0f / 60.0f);
 	RecoveryAnim->NativeThreadSafeUpdateAnimation(1.0f / 60.0f);
 	TestTrue(TEXT("Actual follower recovery alpha uses the same clock without a second interpolation"),
@@ -204,13 +220,14 @@ bool FProjectJPresentationMeshResolverTest::RunTest(const FString&)
 		Presentation->GetWeaponGripTargets().PrimaryGripWorldTransform.GetLocation().Equals(
 			RecoveryStart.PrimaryGripWorldTransform.GetLocation() + FVector(25.0f, 0.0f, 0.0f), 0.1f));
 	Follower->SetRelativeLocation(FVector::ZeroVector);
-	Presentation->UpdateContactRecovery(RecoveryStartTime + 1.0);
+	NextPoseFrame();Presentation->UpdateContactRecovery(RecoveryStartTime + 1.0);
 	TestFalse(TEXT("A skipped/URO update still completes recovery"), Presentation->bContactRecoveryActive);
 	TestTrue(TEXT("Recovery ends at the authored idle attachment with no residual offset"),
 		WeaponRoot->GetRelativeTransform().Equals(FTransform::Identity, 0.1f));
 	TestTrue(TEXT("Only completed hand ownership suppresses primary IK"),
 		Presentation->GetWeaponGripTargets().bPrimaryIKSuppressedByAttachment);
 	const TArray<FProject_JWeaponMotionKey> NoMotionKeys;
+	NextPoseFrame();
 	TestTrue(TEXT("Keyless Weapon Motion follows the authored source socket"),
 		Presentation->BeginIndependentMotion(NoMotionKeys, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f));
 	Presentation->SetIndependentMotionPosition(0.5f);
@@ -226,7 +243,7 @@ bool FProjectJPresentationMeshResolverTest::RunTest(const FString&)
 	Presentation->ActiveMotionNormalizedTime = 0.0f;
 	Presentation->ActiveMotionDurationSeconds = 0.08f;
 	Presentation->ActiveEntryBlendSeconds = 0.08f;
-	Presentation->UpdateIndependentMotion(0.04f);
+	NextPoseFrame();Presentation->UpdateIndependentMotion(0.04f);
 	TestTrue(TEXT("Notify-free entry advances to the midpoint"),
 		FMath::IsNearlyEqual(WeaponRoot->GetComponentLocation().X, 50.0f, 0.1f));
 	Presentation->EndIndependentMotion();
@@ -240,6 +257,7 @@ bool FProjectJPresentationMeshResolverTest::RunTest(const FString&)
 	Presentation->AttachWeaponToDrawnSocket();
 	TestFalse(TEXT("Explicit attachment cancels pending recovery"), Presentation->bContactRecoveryActive);
 	Profile->MotionPresentation.ContactRecoverySeconds = 0.0f;
+	NextPoseFrame();
 	Presentation->BeginIndependentMotion(Timeline, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f);
 	Presentation->SetIndependentMotionPosition(0.5f);
 	Presentation->GetWeaponGripTargetsForAnimation(0.0f);
@@ -264,6 +282,7 @@ bool FProjectJPresentationMeshResolverTest::RunTest(const FString&)
 	TestTrue(TEXT("Outgoing fixture starts at full pose weight"), FMath::IsNearlyEqual(SourceInstance->GetWeight(), 1.0f));
 	TestFalse(TEXT("An outgoing montage is already inactive while its pose still contributes"), SourceInstance->IsActive());
 	Profile->MotionPresentation.ContactRecoverySeconds = 0.12f;
+	NextPoseFrame();
 	FollowerAnim->RightGripAlpha = 1.0f;
 	Presentation->BeginIndependentMotion(NoMotionKeys, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f);
 	Presentation->AutoAttackSourceAnim = SourceAnim;
@@ -278,6 +297,7 @@ bool FProjectJPresentationMeshResolverTest::RunTest(const FString&)
 	TestTrue(TEXT("Full source weight retains full contact"),
 		FMath::IsNearlyEqual(Presentation->GetWeaponGripTargets().PrimaryIKAlpha, 1.0f));
 	SourceInstance->SetWeight(0.5f);
+	NextPoseFrame();
 	Presentation->UpdateContactRecovery(World->GetTimeSeconds() + 10.0);
 	TestTrue(TEXT("Half source pose weight releases exactly half of contact"),
 		FMath::IsNearlyEqual(Presentation->GetWeaponGripTargets().PrimaryIKAlpha, 0.5f));
@@ -300,7 +320,7 @@ bool FProjectJPresentationMeshResolverTest::RunTest(const FString&)
 	Character->GetMesh()->SetRelativeLocation(PreviousSourceLocation);
 	SourceInstance->SetWeight(1.0f);
 	TestTrue(TEXT("Outgoing fixture has finished its actual pose blend"), FMath::IsNearlyZero(SourceInstance->GetWeight()));
-	Presentation->UpdateContactRecovery(World->GetTimeSeconds());
+	NextPoseFrame();Presentation->UpdateContactRecovery(World->GetTimeSeconds());
 	TestFalse(TEXT("Recovery completes when the outgoing source pose reaches zero contribution"), Presentation->bContactRecoveryActive);
 	TestTrue(TEXT("Montage recovery finishes at identity attachment"), WeaponRoot->GetRelativeTransform().Equals(FTransform::Identity, 0.1f));
 	TestEqual(TEXT("Completed recovery releases the outgoing instance"), Presentation->ContactRecoverySourceInstanceID, INDEX_NONE);

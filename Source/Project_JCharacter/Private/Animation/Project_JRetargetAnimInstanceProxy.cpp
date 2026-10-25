@@ -1,6 +1,7 @@
 #include "Animation/Project_JRetargetAnimInstanceProxy.h"
 #include "Animation/Project_JRetargetAnimInstance.h"
 #include "Animation/Project_JRetargetBodyProfile.h"
+#include "Animation/Project_JAnimNode_FootClearance.h"
 #include "Animation/AnimClassInterface.h"
 #include "AnimNodes/AnimNode_RetargetPoseFromMesh.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -21,7 +22,7 @@ void FProject_JRetargetAnimInstanceProxy::Initialize(UAnimInstance* Instance)
 				auto* Node = Interface->GetAnimNodeProperties()[Entry.Index]->ContainerPtrToValuePtr<FAnimNode_RetargetPoseFromMesh>(Instance);
 				Node->IKRetargeterAsset = Entry.Asset; Node->bUseCustomOverrideSets = Entry.bOverrideSets; Node->OverrideSetsToApply = Entry.Sets;
 			}
-	CachedClass.Reset(); Nodes.Reset();
+	CachedClass.Reset(); Nodes.Reset(); FootContactNodes.Reset();
 	FAnimInstanceProxy::Initialize(Instance);
 }
 
@@ -39,12 +40,13 @@ void FProject_JRetargetAnimInstanceProxy::PreUpdate(UAnimInstance* Instance, flo
 		const auto* Interface = IAnimClassInterface::GetFromClass(Instance->GetClass());
 		if (CachedClass.Get() != Instance->GetClass())
 		{
-			Nodes.Reset(); CachedClass = Instance->GetClass();
+			Nodes.Reset(); FootContactNodes.Reset(); CachedClass = Instance->GetClass();
 			if (Interface)
 			{
 				const auto& Properties = Interface->GetAnimNodeProperties();
 				for (int32 Index = 0; Index < Properties.Num(); ++Index)
 				{
+					if (Properties[Index]->Struct == FProject_JAnimNode_FootClearance::StaticStruct()) FootContactNodes.Add(Index);
 					if (Properties[Index]->Struct != FAnimNode_RetargetPoseFromMesh::StaticStruct()) continue;
 					const auto* Node = Properties[Index]->ContainerPtrToValuePtr<FAnimNode_RetargetPoseFromMesh>(Instance);
 					Nodes.Add({Index, Node->IKRetargeterAsset.Get(), Node->bUseCustomOverrideSets, Node->OverrideSetsToApply});
@@ -79,4 +81,20 @@ void FProject_JRetargetAnimInstanceProxy::PreUpdate(UAnimInstance* Instance, flo
 	}
 	// Engine PreUpdate invokes the node's GT source capture and bound-curve lookup.
 	FAnimInstanceProxy::PreUpdate(Instance, DeltaSeconds);
+}
+
+void FProject_JRetargetAnimInstanceProxy::PreEvaluateAnimation(UAnimInstance* Instance)
+{
+	FAnimInstanceProxy::PreEvaluateAnimation(Instance);
+	// Mover may tick animation early to extract motion. Contact admission, traces,
+	// and component-space planes must instead observe the completed movement frame.
+	// Publish values here before the worker starts; no world/UObject query in solve.
+	if (CachedClass.Get() != Instance->GetClass()) return;
+	if (const auto* Interface = IAnimClassInterface::GetFromClass(Instance->GetClass()))
+	{
+		const auto& Properties = Interface->GetAnimNodeProperties();
+		for (int32 Index : FootContactNodes)
+			if (Properties.IsValidIndex(Index) && Properties[Index]->Struct == FProject_JAnimNode_FootClearance::StaticStruct())
+				Properties[Index]->ContainerPtrToValuePtr<FProject_JAnimNode_FootClearance>(Instance)->PrepareContact(Instance);
+	}
 }

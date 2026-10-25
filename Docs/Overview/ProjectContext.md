@@ -1,5 +1,15 @@
 # Project J 프로젝트 맥락
 
+2026-10-25 직접 ABP200명 비용은 [실측 보고서](../Performance/Reports/ProjectJ_DirectRig_200_2026-10-25.md)를 따른다. 리타깃 실행0회를 확인했지만 전체 frame 개선은 미확정이고 공격 GPU 증가·Cloth/병렬 작업 대기가 남았다. 과거 NullRHI worker CPU와 실RHI frame을 구분한다.
+
+2026-10-25 리깅/후처리 후속 점검은 [제작 가이드](../Animation/Authoring/Character_Rigging_And_UE5_Postprocess_Playbook.md)의 공식 자료·진단 단계·Root/FK/IK/무기 기준 계약을 따른다. 근본 skin/bind 결함과 원본 clip/phase, 지형 잔차를 구분한다. 대검의 기본 동작을 유지하면서 독립 무기 기준 보존을 제작 선택으로 분리했고 접촉 반복은 검증한 32회로 줄였다. 새 자산에 legacy 318본이나 보정 상한을 일괄 복제하지 않는다. 종료된 montage의 늦은 Weapon Motion Begin은 실행 ID로 새 소유권 취득을 거부해 복귀 전환의 재시작 문제를 수정했다. 최종 회귀 68개와 실제 입력·표면 검수, 남은 도달 잔차는 런타임 기록을 따른다.
+
+리깅 문서의 현재 제작 규칙은 후처리 전 원인 단계 승인, 선택적 보정, authored IK 목표 보존과 의도한 mesh bind/공유 Skeleton 차이의 구분을 적용한다. 모듈러·손 접촉 문서의 이전 Bip01 recipe와 현재 UE5 직접 몸체 연결을 구분하며, 과거 구현/계획은 신규 제작 명령으로 복사하지 않는다.
+
+새 캐릭터·장비·의상·기타 리그의 Blender 제작과 실제 UE 기준 비교, 후처리의 책임·실패 사례·예외 검수는 [리깅·UE5 후처리 제작 가이드](../Animation/Authoring/Character_Rigging_And_UE5_Postprocess_Playbook.md)를 진입점으로 사용한다. 기존 에셋 일괄 교체를 뜻하지 않으며, 미래 자산의 실제 pose·부착·물리 계약에 맞춰 직접 재생/명시적 리타깃 여부를 검증한다.
+
+2026-10-25 `codex/greatsword-ue5-rig-test`의 제작 기준은 두 경로다. 검증된 UE5 호환 몸체는 실제 메시에서 공통 `ABP_Player_Master`를 직접 재생하고, 호환되지 않는 몸체는 canonical source와 기존 실시간 리타깃 follower를 사용한다. 대검 318본 리그는 첫 경로로 연결했으며, 몸체 Post Process의 손·헤어·치마 최종 포즈를 Body·Head·의상 8개가 공유한다. 이동·전투·장비와 시각 예산은 기존 소유권을 유지한다. 신발의 선택적 지지 표면 데이터와 몸체 후처리 보완도 검수했으며, 새 에셋의 리깅 결함은 DCC에서 먼저 해결하는 제작 원칙을 유지한다. 망토 표면 Cloth, 두 경로의 배타적 연결과 검증 범위는 [플레이어 마스터](../Architecture/Runtime/Player_Character_Master.md)를 따른다. UE에서 실제 FBX를 익스포트해 Blender로 가져온 [직접 비교와 수정 제작 원본](../../SourceArt/Characters/GreatSword/UE5/README.md)을 보존했다. 기존 Nanite 성능 결과를 새 리그의 성능 승인으로 재사용하지 않는다.
+
 2026-10-24 전신 액션이 가린 Start·Stop·강제 Flying 뒤 Land를 늦게 재생하던 복귀를 보완했다. 기존 GASP State Controller/Chooser/BlendStack을 유지하고, montage·Mover의 표현 소유권과 실제 Falling을 구분해 기존 루프로 복귀한다. 정상 새 출발·정지·실제 낙하 착지와 최근 지상 이력의 TIP는 유지한다. 현재 계약은 [로코모션 아키텍처](../Animation/Architecture/Player_Locomotion_Architecture.md), 재현·실패 구분과 최종 검증은 [애니메이션 라이브러리 기록](../Animation/Authoring/Player_Animation_Library.md)을 따른다.
 
 2026-10-23 애니메이션 소스 수명·취소 경계 재점검과 뒤대각선 Strafe 출발 보완을 마쳤다. 기존 전역 샘플 스타일 대신 유효한 Locomotion Profile의 방향 구간·각도 hysteresis가 앞/옆/뒤 계열을 소유한다. 뒤대각선은 키 순서와 관계없이 기존 후진 모션·회전 커브를 사용하며 몸을 강제 고정하거나 입력 대기 timer를 추가하지 않는다. Editor/Game direct UBT, 관련 회귀 134개·BP/ABP 38개, 실제 Strafe Start/재출발 36회·Pivot 36조건과 지상/공중/루프/몽타주를 확인했다. 확인한 수명 문제·정리·유지 이유·실패 및 남은 검수 범위는 [애니메이션 소스·Strafe 출발 점검](../Animation/Diagnostics/Animation_Source_Review_2026-10-23.md)을 따른다. 아래 100개 등은 각 이전 시점의 결과다.
@@ -22,7 +32,7 @@
 
 퇴역 후 direct Editor UBT와 새 프로세스 native 87개·Python 19개를 다시 통과했다. 남은 BP/ABP 38개의 컴파일·파일 해시 동일과 새 PIE의 지상 2,372표본을 확인했으며 삭제된 궤적 클래스 경고는 재현되지 않았다. 공유 입력·Quinn·제작 kit는 유지했고, 미저장 패키지 0개 확인 후 에디터를 정상 종료했다.
 
-공통 Skeleton은 Manny `SK_Mannequin`이다. UEFN 원본에서 변환한 575개 시퀀스·BlendSpace 11개를 라이브러리로 관리한다. 현재 Run/Sprint·점프/착지는 Neutral, Idle/Walk 기본 동작은 Relaxed로 선택하며 원본 뱅크는 Content 밖에 압축 보관하고 최소 변환 kit만 유지한다. [추가 수입·중복 검사](../Animation/Authoring/Player_Animation_Library.md)는 원본 ID·실제 모션·재생 계약·recipe로 기존 Manny 결과를 재사용한다. UE5 호환 몸체는 직접 재생하고, 현재 Bip01 대검 몸체는 Family RTG와 몸체별 손 보정을 사용한다. 추가 망토 뼈의 처리는 [스켈레톤·추가 뼈 기준](../Animation/Authoring/HumanoidSkeletonRetargetingStandards.md)을 따른다. Quinn Simple은 같은 Skeleton의 직접 재생을 확인했지만, 체형별 접지·무기 접촉의 실제 플레이 검수는 별개다.
+공통 Skeleton은 Manny `SK_Mannequin`이다. UEFN 원본에서 변환한 575개 시퀀스·BlendSpace 11개를 라이브러리로 관리한다. 현재 Run/Sprint·점프/착지는 Neutral, Idle/Walk 기본 동작은 Relaxed로 선택하며 원본 뱅크는 Content 밖에 압축 보관하고 최소 변환 kit만 유지한다. [추가 수입·중복 검사](../Animation/Authoring/Player_Animation_Library.md)는 원본 ID·실제 모션·재생 계약·recipe로 기존 Manny 결과를 재사용한다. UE5 호환 몸체는 직접 재생하고, 보존한 Bip01 대검 몸체의 제작·회귀 경로는 Family RTG와 몸체별 손 보정을 사용한다. 현재 시험 브랜치의 새 대검은 위의 직접 재생 경로다. 추가 망토 뼈의 처리는 [스켈레톤·추가 뼈 기준](../Animation/Authoring/HumanoidSkeletonRetargetingStandards.md)을 따른다. Quinn Simple은 같은 Skeleton의 직접 재생을 확인했지만, 체형별 접지·무기 접촉의 실제 플레이 검수는 별개다.
 
 2026-10-21 마지막 IK 수정 기준 direct UBT와 집중 native 회귀 61개, 실제 지상·Sprint 회전·공중/착지·전신 몽타주 검증이 통과했다. 이전 빌드·성능·네트워크 수치를 이 결과에 합산하지 않는다. 팔 기준 포즈, 손가락 마디, Bip01 limb 시작점 누락의 원인·수정·실패 자료는 [전환·검증 기록](../Animation/Architecture/Player_Locomotion_Migration_2026-10-19.md)에 남겼다. 전체 클립 외형·새 군중 성능·Cook/Shipping 완료를 뜻하지 않는다.
 
@@ -153,7 +163,7 @@ Enhanced Input / NavMover → GAS 정책 검증 → Mover / Network Prediction
     + Project_J 값 타입 Chooser·실제 재생 시각 유지 (공중 재선택)
   → Warping / Root Offset / Lean / Aim / 공통 DefaultSlot / 발 접지
   → 전투·탈것 Linked Anim Layer / Pose History
-  → 리타깃 몸체 / 손 접촉 / 의상 물리 / 장비 Leader Pose
+  → 호환 몸체 직접 재생 또는 비호환 몸체 리타깃 / 손 접촉 / 의상 물리 / 장비 Leader Pose
 ```
 
 - 지상 물리는 원본 SmoothWalking 엔진 solver에 native `Project_JGroundMovementLibrary` 계산을 연결한다. 모드 BP는 native 호출 adapter이며 튜닝은 Mover의 `GroundMovementSettings`다. 승인된 native 입력을 직접 소비하고 별도 BP 입력 투영을 만들지 않는다. native AnimInstance가 프레임 계산과 Chooser/재생 요청을 소유하고 포즈 그래프가 소비한다. worker에서 Pawn의 물리 상태를 다시 조회하지 않는다.

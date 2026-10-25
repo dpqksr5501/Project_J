@@ -1,0 +1,125 @@
+{
+  "scope": "Historical instrumented NullRHI 200 actors, 120 measurement ticks, ABA on, 2026-10-13. Inclusive CPU sum across threads, not wall time; processor scope nests inside IK Retarget.",
+  "scenarios": {
+    "Near": {
+      "source": "Saved/Validation/AuthoredAnimation_20261005/RuntimeRetargetProfileScopeTrace_20261013/Count200/TraceExport/Timers-ProjectJ.AuthoredCPU_200_Near_ABA1_R0.csv",
+      "sha256": "831b9cf770ac83c7a356d8e5649686f1cbd09f71f510b62e610b511eca82e5a2",
+      "timers": [
+        {
+          "timer": "IK Retarget",
+          "count": 12000,
+          "inclusive_cpu_ms_per_world_tick": 8.383033333333334,
+          "total_inclusive_seconds": 1.005964
+        },
+        {
+          "timer": "IK Retarget Processor Run",
+          "count": 12000,
+          "inclusive_cpu_ms_per_world_tick": 6.74055,
+          "total_inclusive_seconds": 0.808866
+        },
+        {
+          "timer": "ProjectJ_RetargetProfile_PreUpdate",
+          "count": 12000,
+          "inclusive_cpu_ms_per_world_tick": 0.07442499999999999,
+          "total_inclusive_seconds": 0.008931
+        },
+        {
+          "timer": "RigidBody_Eval",
+          "count": 36000,
+          "inclusive_cpu_ms_per_world_tick": 13.305258333333333,
+          "total_inclusive_seconds": 1.596631
+        }
+      ]
+    },
+    "Far": {
+      "source": "Saved/Validation/AuthoredAnimation_20261005/RuntimeRetargetProfileScopeTrace_20261013/Count200/TraceExport/Timers-ProjectJ.AuthoredCPU_200_Far_ABA1_R0.csv",
+      "sha256": "d20bc620a7664c7f95d8ed65b977f321e12c5feb5c788f21fb790653f9271ced",
+      "timers": [
+        {
+          "timer": "IK Retarget",
+          "count": 6000,
+          "inclusive_cpu_ms_per_world_tick": 5.100108333333334,
+          "total_inclusive_seconds": 0.612013
+        },
+        {
+          "timer": "IK Retarget Processor Run",
+          "count": 6000,
+          "inclusive_cpu_ms_per_world_tick": 4.106833333333333,
+          "total_inclusive_seconds": 0.49282
+        },
+        {
+          "timer": "ProjectJ_RetargetProfile_PreUpdate",
+          "count": 6000,
+          "inclusive_cpu_ms_per_world_tick": 0.04314166666666667,
+          "total_inclusive_seconds": 0.005177
+        },
+        {
+          "timer": "RigidBody_Eval",
+          "count": 18000,
+          "inclusive_cpu_ms_per_world_tick": 11.377808333333332,
+          "total_inclusive_seconds": 1.365337
+        }
+      ]
+    },
+    "Hidden": {
+      "source": "Saved/Validation/AuthoredAnimation_20261005/RuntimeRetargetProfileScopeTrace_20261013/Count200/TraceExport/Timers-ProjectJ.AuthoredCPU_200_Hidden_ABA1_R0.csv",
+      "sha256": "1c8908d4224eb21e0732f6d61b0983795a766892f75d02120f7558a8f1b1bfcb",
+      "timers": [
+        {
+          "timer": "IK Retarget",
+          "count": 0,
+          "inclusive_cpu_ms_per_world_tick": 0,
+          "total_inclusive_seconds": 0
+        },
+        {
+          "timer": "IK Retarget Processor Run",
+          "count": 0,
+          "inclusive_cpu_ms_per_world_tick": 0,
+          "total_inclusive_seconds": 0
+        },
+        {
+          "timer": "ProjectJ_RetargetProfile_PreUpdate",
+          "count": 0,
+          "inclusive_cpu_ms_per_world_tick": 0,
+          "total_inclusive_seconds": 0
+        },
+        {
+          "timer": "RigidBody_Eval",
+          "count": 0,
+          "inclusive_cpu_ms_per_world_tick": 0,
+          "total_inclusive_seconds": 0
+        }
+      ]
+    },
+    "AttackBurst": {
+      "source": "Saved/Validation/AuthoredAnimation_20261005/RuntimeRetargetProfileScopeTrace_20261013/Count200/TraceExport/Timers-ProjectJ.AuthoredCPU_200_AttackBurst_ABA1_R0.csv",
+      "sha256": "3bb36cb802e2cd213d9437df283a75d48718b1ec5dff6bf2513cf902c42f0493",
+      "timers": [
+        {
+          "timer": "IK Retarget",
+          "count": 24000,
+          "inclusive_cpu_ms_per_world_tick": 19.965758333333333,
+          "total_inclusive_seconds": 2.395891
+        },
+        {
+          "timer": "IK Retarget Processor Run",
+          "count": 24000,
+          "inclusive_cpu_ms_per_world_tick": 16.23705,
+          "total_inclusive_seconds": 1.948446
+        },
+        {
+          "timer": "ProjectJ_RetargetProfile_PreUpdate",
+          "count": 24000,
+          "inclusive_cpu_ms_per_world_tick": 0.13051666666666667,
+          "total_inclusive_seconds": 0.015662
+        },
+        {
+          "timer": "RigidBody_Eval",
+          "count": 72000,
+          "inclusive_cpu_ms_per_world_tick": 31.96065,
+          "total_inclusive_seconds": 3.835278
+        }
+      ]
+    }
+  }
+}

@@ -67,7 +67,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAuthoredRetargetSourceTest, "ProjectJ.
  EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJAuthoredRetargetSourceTest::RunTest(const FString&)
 {
- const UClass* AvatarClass=LoadClass<AProject_JPlayerCharacter>(nullptr,TEXT("/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C"));
+ // The canonical source belongs to the shared master. Compatible children can
+ // replace that source mesh and do not consume this incompatible-body bridge.
+ const UClass* AvatarClass=LoadClass<AProject_JPlayerCharacter>(nullptr,TEXT("/Game/Character_BPs/BP_Player_Master.BP_Player_Master_C"));
  const auto* Avatar=AvatarClass?AvatarClass->GetDefaultObject<AProject_JPlayerCharacter>():nullptr;
  const auto* Source=Avatar && Avatar->GetMesh()?Avatar->GetMesh()->GetSkeletalMeshAsset():nullptr;
  auto* Body=LoadObject<UProject_JRetargetBodyProfile>(nullptr,TEXT("/Game/DataAssetSets/Presentation/Retarget/DA_RetargetBody_Greatsword.DA_RetargetBody_Greatsword"));

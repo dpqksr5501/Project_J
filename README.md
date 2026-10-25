@@ -8,59 +8,52 @@
 
 ## 현재 기준과 읽는 순서
 
-| 확인할 내용 | 문서 |
+| 목적 | 시작점 |
 | --- | --- |
-| 프로젝트 구조와 작업 시작 | [문서 시작점](Docs/README.md) → [프로젝트 맥락](Docs/Overview/ProjectContext.md) |
-| 변경 후 정리와 테스트·기존 자산 보존 | [공통 작업 규칙](AGENTS.md) → [변경 마감 기준](Docs/Maintenance/Change_Completion_Policy.md) |
-| 이전 main 통합 기록 | [2026-10-15 통합 기록](Docs/Review/Audits/Project_J_Main_Integration_2026-10-15.md). 리타깃·구조 정리·R19/R20과 문서 결정은 `6d6713f4`까지 반영했습니다. |
-| 현재 이동·리타깃·손 접촉 | [애니메이션](Docs/Animation/README.md). native 상태 계산·포즈 재생·몸체별 보정을 구분합니다. |
-| 플레이어 이동·포즈 재생·공용 모션 | [플레이어 로코모션 아키텍처](Docs/Animation/Architecture/Player_Locomotion_Architecture.md) |
-| 이전 Mirror Data 결정 | [도입 보류](Docs/Animation/Planning/Mirror_Data_Adoption_Decision_2026-10-15.md). 특정 동작 연결이 어색해졌을 때만 해당 구간을 다시 검토합니다. |
-| 감사 단계별 변경·검증·남은 경계 | [검토 목차](Docs/Review/README.md). 전체 함수·에셋 정밀 감사 완료와 명시 범위의 구조 정리 마감을 구분합니다. |
-| 200명 최적화와 현재 LOD 결정 | [계획·단계별 결과](Docs/Performance/Planning/ProjectJ_200_Player_Optimization_Plan_2026-10-15.md). `7b2ee72e`에 반영했으며 현재 몸체 LOD0–2 채택·LOD3–4 추가 보류입니다. |
-| CPU·렌더 차이와 측정 조건 | [성능](Docs/Performance/README.md). 확인된 GPU 감소와 미확정인 전체 CPU·프레임 효과를 구분합니다. |
+| 구조·작업 기준 | [문서 목차](Docs/README.md) · [프로젝트 맥락](Docs/Overview/ProjectContext.md) · [작업 규칙](AGENTS.md) · [변경 마감](Docs/Maintenance/Change_Completion_Policy.md) |
+| 이동·애니메이션 | [로코모션 구조](Docs/Animation/Architecture/Player_Locomotion_Architecture.md) · [애니메이션 목차](Docs/Animation/README.md) |
+| 새 캐릭터·장비 제작 | [리깅·UE5 후처리 가이드](Docs/Animation/Authoring/Character_Rigging_And_UE5_Postprocess_Playbook.md) · [모듈러 장비](Docs/Gameplay/Authoring/ModularCharacterEquipmentGuide.md) · [LOD 제작](Docs/Animation/Authoring/Mesh_LOD_Authoring.md) |
+| 성능·검증 근거 | [성능 목차](Docs/Performance/README.md) · [벤치마크](Docs/Benchmarks/SystemsModernization.md) · [검토 기록](Docs/Review/README.md) · [압축 원자료](Archives/Validation/README.md) |
+| 직업·MMORPG 확장 | [직업 제작 도구](Docs/Gameplay/Authoring/Content_Authoring_System.md#tool) · [확장 기반](Docs/Architecture/Extensions/MMO_Foundation_2026-09-12.md) · [콘텐츠 목록](Docs/Architecture/Extensions/MMO_Content_Catalog.md) |
 
-[아티스트·디자이너 협업](#아티스트디자이너를-위한-협업-안내) · [MMORPG 확장 기반](Docs/Architecture/Extensions/MMO_Foundation_2026-09-12.md) · [콘텐츠 확장 목록](Docs/Architecture/Extensions/MMO_Content_Catalog.md) · [멀티스레드 구조](#멀티스레드-구조) · [검증 현황](#검증-현황) · [측정 결과](Docs/Benchmarks/SystemsModernization.md) · [검증 데이터](Docs/Benchmarks/Data) · [직업 제작 도구](Docs/Gameplay/Authoring/Content_Authoring_System.md#tool)
+캐릭터는 실제 골격·기준 포즈·스킨·IK 계약을 검증한 뒤 두 경로로 연결합니다. 머리카락·치마·망토의 추가 본과 물리는 몸체별로 구성합니다.
 
-누적된 감사 안내는 검토 목차로 모았습니다. 아래 측정·구현·검증 내용은 각각 명시한 시점의 기록이며, 통합 전 안내의 고유 수치와 문장은 [원문 보관소](Docs/Archive/README.md)에도 유지합니다.
+```mermaid
+flowchart LR
+    S["캐릭터 / 장비 리깅 검수"] --> C{"공용 애니메이션과 호환?"}
+    C -->|호환| D["공용 ABP 직접 재생"]
+    C -->|비호환| R["공용 포즈 → 실시간 리타깃"]
+    D --> B["몸체별 접촉 / 필요한 후처리 / 물리"]
+    R --> B
+    B --> P["호환 파츠 Leader Pose / 독립 Cloth"]
+```
+
+현재 GreatSword는 **직접 ABP 경로·몸체 LOD0**입니다. 기존 몸체의 LOD0–2·Nanite 성능 수치는 이전 리타깃 에셋의 결과로 구분합니다. 기본 대검은 Basic을 유지합니다.
 
 ## 측정으로 확인한 변화
 
-기존 최적화 기반을 이어받아 Mover 전환과 추가 최적화를 진행했습니다. 단계별 관계는 다음과 같습니다.
+측정 시점·지표·부하가 다른 결과는 독립 비교입니다. CPU worker 누적 시간, Game Thread, GPU, 전체 프레임을 더하거나 개선율을 합산하지 않습니다.
 
-| 단계 | 구조 변화 | 성능 수치의 의미 |
-| --- | --- | --- |
-| **① 이전 최적화** | ABA·시각 예산·몸체 LOD0–2와 이펙트 풀·관심 영역·PSO 기반 구축 | 아래 표의 기존 LOD·시스템별 독립 비교 |
-| **② Mover 전환** | Mover 입력·시뮬레이션과 Manny/native 로코모션으로 재구성, 기존 최적화 기반 계승 | 전환 자체의 동일 조건 성능 증감은 **미측정** |
-| **③ 이번 추가 최적화** | 누락된 품질 정책 소비 복구·회전 좌표계 수정, NPC 이동·상태 수명 등 결함 수정 | 기존 기반 위에서 정책 복구의 **추가 효과** 측정 |
+### 현재 직접 ABP · 200명 — 2026-10-25
 
-과거 GPU 시간과 이번 평균 프레임 시간은 각각의 독립 비교입니다. 단계 사이에 측정하지 않은 값을 채우거나 개선율을 합산하지 않습니다. [단계별 구조·측정 범위](Docs/Performance/Reports/ProjectJ_Mover_200_2026-10-22.md#이전-최적화--mover-전환--이번-최적화)
+| 기록 | 정지 Frame (ms) | 이동 Frame (ms) | 동시 공격 Frame (ms) | 리타깃 실행 |
+| --- | ---: | ---: | ---: | --- |
+| 이전 리타깃 · 10/24 | 1,866.74 | 1,873.12 | 2,130.99 | 사용 |
+| 현재 직접 ABP · 10/25 | 1,861.00 | 1,834.39 | 2,122.06 | **0회** (별도 trace) |
 
-**동시 공격은 기존 품질을 유지합니다.** 이번 저빈도 시각 갱신·IK 생략 대상에서 보호하고 기존 매 프레임 평가·제작 LOD·물리 계약을 유지합니다. 공격 수치는 회귀 관찰용이며 개선율의 채택 근거로 삼지 않습니다.
+**전체 프레임 개선은 확인하지 못했습니다.** 현재 GPU는 정지6.60ms·이동6.63ms·공격10.11ms이며, 공격은 이전6.64ms보다 증가했습니다. 골격·몸체 LOD·파츠·물리가 함께 바뀐 기록 비교입니다. CPU 측 Cloth·병렬 작업/대기가 크게 남아 있으며, 실제 원격200명 클라이언트나 동시 접속 성능과 구분합니다.
 
-측정 요약과 작은 CSV는 문서에서 바로 읽을 수 있으며, 상세 로그·캡처·대표 trace는 [검증 자료 압축 보관소](Archives/Validation/README.md)에 Git LFS로 함께 보관합니다. 실패·미채택 후보도 포함하고 원본 경로별 해시·복원 방법·정리 범위를 제공합니다.
+비계측2회·108표본과 trace1회, 직접 producer200개·표시 파츠2,000개·활성망토200개·Nanite1,400개를 검증했습니다. 과거 리타깃의 worker 누적 CPU(근거리8.383ms/틱·공격19.966ms/틱)와 현재 frame을 직접 빼서 개선율을 만들지 않습니다. [현재 수치·p95·조건·미해결 항목](Docs/Performance/Reports/ProjectJ_DirectRig_200_2026-10-25.md)
 
-**현재 Mover 구조의 200명 재검증 — 2026-10-22:** 지속 속성·입력 승인·착지·애니메이션 이력과 품질 정책의 소비 경로를 수정했습니다. 평균 프레임 결과는 아래 표에 정리했습니다. 반복별 편차·p95/p99·표본 수·품질 보호와 해시는 [현재 → 결과 보고서](Docs/Performance/Reports/ProjectJ_Mover_200_2026-10-22.md)에 구분했습니다.
-
-**200명 표시·몸체 LOD 최적화 — 2026-10-15 측정 / 10월 16일 채택:** 기존 예산의 거리 관측·중복 조회를 정리하고 원격 몸체의 화면 크기 LOD를 적용했습니다. 현재 GreatSword_Woman의 LOD0–2를 채택했으며 로컬LOD0·200명 전원 표시·원본 물리와 서버 판정을 유지합니다. [측정 조건·해시·한계](Docs/Performance/Reports/ProjectJ_200_Player_Optimization_2026-10-15.json) · [다른 캐릭터·의상·장비의 공통 LOD 제작과 예외 검수](Docs/Animation/Authoring/Mesh_LOD_Authoring.md)
-
-**실시간 리타깃 프로필 — 2026-10-13:** 공통 Master의 최종 포즈와 기존 리타깃·손 IK·의상 물리를 유지하면서, 골격 쌍의 Family와 몸체별 접촉 Body를 분리했습니다. MCP로 실제 Greatsword 외형 ABP에도 연결하고, 프로필 해제·재초기화·source 불일치의 복구를 검증했습니다. 200명 CPU 비교에서는 일부 구간의 증가가 관찰되어 전체 성능 개선으로 보고하지 않습니다. [적용 구조·검증·측정 한계](Docs/Animation/Architecture/Runtime_Retarget_Profiles_2026-10-13.md)
-
-**플레이어 로코모션:** Mover 입력 승인과 이동 시뮬레이션, C++ 상태·전환·Chooser·노드 핀 계산, `ABP_Player_Master`의 포즈 연결을 분리했습니다. OTM/Strafe·공중 방향 재선택·재생 시각 연속성을 유지하며, Manny 공용 모션과 몸체별 리타깃/손 보정으로 캐릭터를 확장합니다. [현재 구조와 외부 기반·프로젝트 구현의 경계](Docs/Animation/Architecture/Player_Locomotion_Architecture.md)
-
-**이전 구조의 200명 시각 예산 비교 — 2026-10-12:** 같은 바이너리의 기능 off/on, 실제 BP·장비·follower 구성, NullRHI, 조건별 120틱 준비 + 120틱 측정, 2회 반복에서 ABA on 평균 World tick은 근거리 **13.61→11.40ms**, 원거리 **13.78→10.69ms**였습니다. 리타깃 몸체와 의상 물리의 평가 횟수를 줄이고 사이 프레임을 보간하며, 로컬·전투·단발·급회전은 매 프레임 평가를 보호합니다. 동시 공격 ABA on은 **19.76→19.58ms**로 거의 같았습니다. 전체 렌더 FPS·GPU 개선이나 200명 동시 접속 결과로 해석하지 않습니다. [조건·원자료 위치·복구 설정](Docs/Animation/Planning/Crowd_Visual_Presentation_Budget_2026-10-12.md)
-
-**구조 검증 이력 — 2026-09-19:** 직업·전직 기반, 내부 갱신·수명 정리와 에디터 제작 도구를 통합해 Editor/Game Win64 Development 빌드 및 자동화 **81개 통과, 테스트 오류·경고 0개**를 확인했습니다. GAS는 필요한 작업에 따라 갱신하고, 서버 피격 기록은 정해진 주기로 수집하며, 탈것 체력은 GAS로 일원화했습니다. [변경 범위](Docs/Architecture/Runtime/Reports/Internal_Polish_2026-09-19.md) · [검증 기록](Docs/Architecture/Runtime/Reports/Internal_Polish_Validation_2026-09-19.json)
-
-아래 표의 **이번 Mover**는 10월 22일 동일 바이너리 A/B/B/A의 실제 RHI 결과이며, **기존 LOD**는 10월 15일 교대 비교입니다. 나머지는 앞선 시스템별 독립 실험입니다. Mover A/B 모두 기존 LOD·예산 기반과 정확성 수정이 적용되어 있고, 정책 복구 off/on을 비교합니다. 수치를 합산하거나 전체 게임 개선율·실제 동시 접속 처리량으로 해석하지 않습니다. 최근 빌드·자동화·실제 소켓 연결 결과는 [검증 현황](#검증-현황)을 따릅니다.
+### 보존된 비교 결과
 
 | 영역 | 비교 조건 | Before → After | 결과 |
 |---|---|---|---|
-| **이번 Mover · 유휴** | 같은 바이너리, 실제 Mover 몸체 200명, 정책 복구 OFF / ON | 평균 프레임 **18.19 → 16.12 ms** | **11.4% 감소** |
-| **이번 Mover · 이동·반전** | 같은 200명, 실제 이동·방향 반전, 정책 복구 OFF / ON | 평균 프레임 **21.05 → 19.42 ms** | **7.7% 감소** |
-| **이번 Mover · 점프·착지** | 같은 200명, 점프·착지 phase, 정책 복구 OFF / ON | 평균 프레임 **21.06 → 19.50 ms** | **7.4% 감소** |
-| **이번 Mover · 동시 공격** | 같은 200명 전원 montage 재생 행, 양쪽 모두 기존 공격 품질 유지 | 평균 프레임 **30.10 → 30.08 ms** | **차이 미확정 · 품질 유지** |
-| **이번 Mover · 공격 복귀** | 같은 200명, 공격 종료·복귀 phase, 정책 복구 OFF / ON | 평균 프레임 **18.31 → 18.33 ms** | **차이 미확정** |
+| **Mover · 10/22 · 유휴** | 같은 바이너리, 실제 Mover 몸체 200명, 정책 복구 OFF / ON | 평균 프레임 **18.19 → 16.12 ms** | **11.4% 감소** |
+| **Mover · 10/22 · 이동·반전** | 같은 200명, 실제 이동·방향 반전, 정책 복구 OFF / ON | 평균 프레임 **21.05 → 19.42 ms** | **7.7% 감소** |
+| **Mover · 10/22 · 점프·착지** | 같은 200명, 점프·착지 phase, 정책 복구 OFF / ON | 평균 프레임 **21.06 → 19.50 ms** | **7.4% 감소** |
+| **Mover · 10/22 · 동시 공격** | 같은 200명 전원 montage 재생 행, 양쪽 모두 기존 공격 품질 유지 | 평균 프레임 **30.10 → 30.08 ms** | **차이 미확정 · 품질 유지** |
+| **Mover · 10/22 · 공격 복귀** | 같은 200명, 공격 종료·복귀 phase, 정책 복구 OFF / ON | 평균 프레임 **18.31 → 18.33 ms** | **차이 미확정** |
 | **기존 LOD · 유휴** | 같은 바이너리, 200개 authored 몸체, LOD 적용 전 / 후 | GPU 시간 **10.526 → 6.188 ms** | **41.2% 감소** |
 | **기존 LOD · 공격** | 같은 바이너리, 200개 authored 몸체의 동시 montage 공격 구간, 제작 LOD 적용 전 / 후 | GPU 시간 **11.922 → 7.421 ms** | **37.8% 감소** |
 | **Mass 이동·간격 계산** | 2,048 moving agents, 직렬 / 병렬 | CPU 구간 p95 **0.6342 → 0.2409 ms** | **62.0% 감소** |
@@ -69,7 +62,15 @@
 | **Trail PSO coverage** | 같은 packaged binary, 보완 OFF / ON | Full PSO miss **1 → 0** | 누락된 render target 구성 보완 |
 | **조명 PSO coverage** | 같은 main packaged binary, 기본 LightFunction 사전 요청 OFF / ON | Full PSO miss **1 → 0** | PSO 39개 추가 요청 비용까지 기록 |
 
-**측정 범위:** UE 5.8 / Windows 11 / Ryzen 7 9800X3D / Radeon RX 9070 XT. 실제 렌더 실험은 D3D12를 사용했습니다. 이번 Mover는 UE 5.8.3, 1280×720 offscreen, scalability 3, 실제 소켓 0개 조건입니다. 지표·시점·workload가 다른 결과를 누적 개선율이나 전체 게임 FPS·200명/2,048명 동시 접속 성능으로 해석하지 않습니다. 몸체 LOD의 전체 frame/CPU 이득과 Mover 동시 공격·복귀 개선은 미확정이며 원본 물리와 기존 공격 품질을 유지했습니다. Mover의 반복 편차·표본·원자료는 [현재 보고서](Docs/Performance/Reports/ProjectJ_Mover_200_2026-10-22.md), A–E의 조건·실패 기록은 [벤치마크](Docs/Benchmarks/SystemsModernization.md)와 [CSV/JSON](Docs/Benchmarks/Data)에 공개합니다.
+| 측정 묶음 | 실행 조건·해석 | 상세 근거 |
+| --- | --- | --- |
+| Mover · 2026-10-22 | 동일 바이너리 ABBA, 200명, D3D12 offscreen 1280×720, scalability 3. 정책 복구 OFF/ON. 동시 공격·복귀 개선은 미확정 | [반복 편차·p95/p99·품질 보호](Docs/Performance/Reports/ProjectJ_Mover_200_2026-10-22.md) |
+| 기존 몸체 LOD · 2026-10-15 | 교대 비교. 로컬 LOD0·원격 LOD0–2, 물리·공격 품질 유지. 전체 frame/CPU 이득은 미확정 | [수치·에셋 지문](Docs/Performance/Reports/ProjectJ_200_Player_Optimization_2026-10-15.json) |
+| 이전 시각 예산 · 2026-10-12 | 200명, NullRHI, 준비/측정 각120틱×2회. ABA on 평균 World tick: 근거리13.61→11.40ms, 원거리13.78→10.69ms, 공격19.76→19.58ms | [조건·복구 설정](Docs/Animation/Planning/Crowd_Visual_Presentation_Budget_2026-10-12.md) |
+| 리타깃 프로필 · 2026-10-13 | Family/Body 분리·복구 검증. 일부 CPU 구간 증가가 있어 전체 성능 개선으로 판정하지 않음 | [원자료·CPU 범위](Docs/Animation/Architecture/Runtime_Retarget_Profiles_2026-10-13.md) |
+| A–E 시스템별 실험 | Windows 11 / Ryzen 7 9800X3D / RX 9070 XT. 각기 다른 부하·지표이며 실제 동시 접속 처리량과 구분 | [벤치마크·조건](Docs/Benchmarks/SystemsModernization.md) · [CSV/JSON](Docs/Benchmarks/Data) |
+
+Mover 전환 자체의 동일 조건 성능 증감은 미측정입니다. 기존 예산·LOD 기반을 계승한 뒤 정책 소비를 복구한 결과가 위 Mover 비교이며, [개발 단계별 관계](Docs/Performance/Reports/ProjectJ_Mover_200_2026-10-22.md#이전-최적화--mover-전환--이번-최적화)에 근거를 남겼습니다.
 
 ## 아티스트·디자이너를 위한 협업 안내
 
@@ -90,22 +91,28 @@ Project J는 **캐릭터·애니메이션·무기·의상·이펙트를 실제 �
 
 ### 콘텐츠를 게임 안에 연결하는 흐름
 
-1. **의도와 기준 공유:** 콘셉트, 레퍼런스, 사용할 캐릭터·무기, 원하는 동작과 효과를 정합니다. 제작 초기에 skeleton·크기·축·소켓 기준을 맞춥니다.
-2. **에셋과 데이터 연결:** 아티스트가 메시·애니메이션·Niagara를 제작하고, 디자이너와 프로그래머가 장비·전투·표현 프로필에 연결합니다. 기존 작성 가이드를 기준으로 변경 범위를 나눕니다.
-3. **플레이 피드백:** 이동·공격·장착·해제에서 동작을 확인하고, 전환 속도·공격 타이밍·Trail 길이·잔상·클리핑을 조정합니다.
-4. **다인원·네트워크 확인:** 로컬과 원격 캐릭터에서 표현을 비교하고, 공격 취소·무기 교체·캐릭터 파괴 때 정리되는지와 동시 표시 비용을 확인합니다.
+```mermaid
+flowchart LR
+    A["콘셉트 / 골격·크기·축·소켓 합의"] --> B["에셋 제작 / 프로필 연결"]
+    B --> C["이동·공격·장착 품질 확인"]
+    C --> D["원격·다인원 / 취소·교체·파괴 검증"]
+```
 
-**역할의 경계:** Data Asset은 콘텐츠 선택과 튜닝, Blueprint/AnimBP는 에셋 조합과 시각 표현, C++는 서버 권한·상태 전이·입력·복제·작업 수명을 담당합니다. 이펙트의 모양을 바꿀 때 피해 판정까지 복제해서 수정할 필요가 없도록 전투 정의와 표현 정의를 분리했습니다.
+| 담당 | 소유하는 내용 |
+| --- | --- |
+| Data Asset | 콘텐츠 선택·튜닝 |
+| Blueprint / AnimBP | 에셋 조합·시각 표현·포즈 연결 |
+| C++ | 서버 권한·상태 전이·입력·복제·작업 수명 |
 
 ### 바로 활용할 수 있는 기반
 
-- **직업·전직 제작 도구:** 에디터 Tools 메뉴에서 기존 직업을 참고해 새 루트·전투 스타일·콤보를 검증하고 연결해 생성합니다. 공격·애니메이션은 공유하고, 저장·게임 등록은 명시적으로 진행합니다. [사용법](Docs/Gameplay/Authoring/Content_Authoring_System.md#tool)
-- **입력 조합과 콤보:** 좌·우클릭, 동시 입력, Shift/Ctrl/Alt 같은 modifier를 입력 태그로 해석하고, 콤보 그래프에서 공격 정의를 선택합니다. 조합별 실제 동작은 데이터로 구성합니다.
-- **무기별 액션과 외형:** 장착한 장비의 메시·표현 프로필과 전투 스타일을 연결해 무기 외형, 대기·공격 애니메이션 구성을 바꿀 수 있습니다.
-- **같은 공격의 다른 연출:** 기본 전투 스타일의 VFX를 전직 또는 스킨별 cue로 덮어쓸 수 있습니다. 동일한 공격 정의에 서로 다른 Trail·방출 효과를 붙이는 방식입니다.
-- **데이터 기반 이동 확장:** 이동 문맥과 콘텐츠 프로필을 나누고, 상태 선택·Pose Match·Chooser·Linked Anim Layer를 통해 애니메이션을 구성합니다. 실제 품질은 사용할 애니메이션과 리타게팅·프로필 튜닝을 함께 확인합니다.
-
-작성 가이드: [콘텐츠 확장](Docs/Gameplay/Authoring/Content_Authoring_System.md#expansion) · [장비·직업 데이터 빠른 참조](Docs/Gameplay/Authoring/Content_Authoring_System.md#data) · [공격·콤보 작성](Docs/Combat/Authoring/GreatswordCombatAuthoringGuide.md) · [전투 VFX 연결](Docs/Combat/Architecture/CombatVFXArchitecture.md#authoring) · [이동 프로필 확장](Docs/Animation/Authoring/DataDrivenLocomotionExtensionGuide.md)
+| 기능 | 작성 가이드 |
+| --- | --- |
+| 직업·전직 생성, 전투 스타일·콤보 검증 | [직업 도구](Docs/Gameplay/Authoring/Content_Authoring_System.md#tool) |
+| 입력 태그·modifier·콤보 그래프 | [공격·콤보](Docs/Combat/Authoring/GreatswordCombatAuthoringGuide.md) |
+| 무기별 메시·액션·표현 프로필 | [장비·직업 데이터](Docs/Gameplay/Authoring/Content_Authoring_System.md#data) |
+| 같은 공격의 전직·스킨별 Trail/VFX | [전투 VFX](Docs/Combat/Architecture/CombatVFXArchitecture.md#authoring) |
+| Pose Match·Chooser·Linked Anim Layer | [이동 프로필 확장](Docs/Animation/Authoring/DataDrivenLocomotionExtensionGuide.md) |
 
 ## 멀티스레드 구조
 
@@ -128,9 +135,7 @@ flowchart TD
     E --> R["GT: 포즈 결과 반영 · 전투 경계 보호"]
 ```
 
-이 흐름은 NPC 판단·행동의 책임 경계를 나타냅니다. Mass는 별도의 **GT snapshot/grid → 직렬 또는 병렬 chunk 계산 → join → GT 적용** 경로를 사용합니다. 모든 비동기 서비스가 하나의 공통 작업 큐를 공유하는 구조는 아닙니다.
-
-2026-10-12의 시각 애니메이션 예산은 기존 **AnimInstanceProxy 스냅샷과 엔진 병렬 업데이트·평가**를 활용합니다. GT 관리자는 평가 주기·보호 요구만 결정하고, worker proxy의 완료를 기다리지 않습니다. 리타깃 몸체의 실제 평가에는 원본 포즈 의존 순서를 유지합니다. NPC scoring의 `UE::Tasks`나 Mass 청크 작업에 애니메이션을 새로 제출하지 않으며, 캐릭터별 평가 시점 분산을 새 병렬 실행기로 표현하지 않습니다. [스레드별 책임](Docs/Animation/Planning/Crowd_Visual_Presentation_Budget_2026-10-12.md#기존-병렬-아키텍처와의-관계)
+NPC 판단의 값 작업과 엔진 비동기 서비스는 실행 주체를 구분합니다. Mass는 GT snapshot/grid → chunk 계산 → join → GT 적용을 사용합니다. 애니메이션은 기존 Proxy와 엔진 병렬 평가를 이용하고 원본 포즈 의존 순서를 유지합니다. [스레드별 책임](Docs/Animation/Planning/Crowd_Visual_Presentation_Budget_2026-10-12.md#기존-병렬-아키텍처와의-관계)
 
 ### 장비 권한과 시각 표현의 처리 순서
 
@@ -161,72 +166,28 @@ A–E의 현재 구현은 `main`에 통합되어 있습니다. **E의 운영 에
 
 ## 설계에서 중요하게 다룬 경계
 
-### 작업량에 맞춘 병렬 실행
-
-Mass의 간격 계산을 포함한 CPU 구간은 스냅샷 생성과 join 비용까지 측정합니다. 기본 `ProjectJ.Mass.Parallel=-1`은 **실제 이동 중인 agent가 1,024개 이상이고 간격 계산이 켜진 경우** 병렬 chunk를 선택합니다. 작은 단순 이동 작업에서는 직렬이 더 저렴했던 결과도 판단에 반영했습니다.
-
-이 Mass 경로는 **선택적으로 등록한 NPC의 Character·ASC·장비를 유지하는 프로토타입**입니다. 전투·몽타주·root motion 등을 보호하고, 과밀하거나 막힌 경로는 Character 이동으로 복귀합니다. Actor 메모리 절감이나 원거리 ISM 표현까지 구현된 상태는 아닙니다.
-
-→ [Mass 인계와 실행 선택](Source/Project_JCharacter/Private/Mass/Project_JMassRepresentationSubsystem.cpp) · [값 계산 Processor](Source/Project_JCharacter/Private/Mass/Project_JMassMovementProcessor.cpp)
-
-### 과부하와 늦은 완료를 함께 제어
-
-요청을 무제한으로 쌓는 대신 대기열·실행 중 작업·프레임별 적용에 상한을 둡니다. 배치 후보 예산에 도달하면 미처리 NPC부터 다음 tick에 재개하고, Navigation 입장이 거절되면 분산 재시도로 넘깁니다. 취소는 결과 적용 권한을 제거하며 실제 작업 완료와는 구분합니다.
-
-완료 시점에 weak owner, world epoch, revision을 확인해 이전 장비·이전 월드의 결과가 현재 상태에 적용되는 것을 막습니다. 공유 참조의 수명 안전성과 Worker가 읽는 데이터의 안전성을 별도 계약으로 다룹니다.
-
-→ [Scoring 수명](Source/Project_JCore/Private/System/Project_JTargetScoringSubsystem.cpp) · [Navigation 압력 제어](Source/Project_JCharacter/Private/System/Project_JNPCPathSubsystem.cpp) · [표현 FIFO](Source/Project_JCharacter/Private/System/Project_JPresentationBudgetSubsystem.cpp)
-
-### 실행 방식보다 실제 측정 결과를 우선
-
-| 관측 | 반영한 판단 |
-|---|---|
-| 병렬 Net Tick에서 실제 worker overlap 확인, CPU 개선은 일관되지 않음 | 기본 Net Tick 병렬화를 활성화하지 않음 |
-| Niagara 생성 p95 감소, 종료 비용은 큰 차이 없음 | 풀의 생성 비용·반환 수명을 구분해서 관리 |
-| 거리 컬링 이후 simulation 감소, 보이는 ribbon 렌더 비용은 거의 동일 | GPU 렌더링 전체 개선으로 확대 해석하지 않음 |
-| 신규 application cache와 재사용 비교에서 preload 이득 불명확 | driver cold 또는 hitch 제거로 주장하지 않음 |
-
-### Editor와 packaged 실행의 차이를 회귀로 포착
-
-- **Cooked 애니메이션 초기화:** authored AnimBP가 설치되기 전 native Motion Matching 노드가 folded NodeData 없이 실행되는 crash를 수정했습니다. 임시 구간은 엔진 reference pose를 사용하고, AnimBP 연결 후 generated graph를 사용합니다. native-only MM fallback은 cooked에서 지원하지 않습니다.
-- **UE 5.8 Trail PSO:** 기존 Distortion collector의 shader/state를 재사용하면서 rough-refraction의 누락된 RT 구성을 보완했습니다. validation 옵션에 의존하지 않는 검색과 **monolithic 게임에 한정한 등록**으로 적용 범위를 제한합니다. 엔진 소스와 화질 설정은 변경하지 않았습니다.
-
-→ [Animation Proxy](Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceProxy.cpp) · [PSO 보완](Source/Project_J/Rendering/Project_JDistortionPSOPrecache.cpp)
+| 경계 | 적용한 판단·제한 | 근거 |
+| --- | --- | --- |
+| 작업 크기와 병렬화 | Mass auto는 이동 agent≥1,024·간격 계산 활성 시 선택. snapshot/join까지 측정 | [Processor](Source/Project_JCharacter/Private/Mass/Project_JMassMovementProcessor.cpp) |
+| Mass와 Character | 선택 등록 NPC의 Character·ASC·장비 유지. 전투·root motion 보호, 막히면 Character 복귀. ISM·Actor 메모리 절감은 후속 | [인계](Source/Project_JCharacter/Private/Mass/Project_JMassRepresentationSubsystem.cpp) |
+| 과부하·늦은 완료 | 큐/동시 작업/적용량 제한, weak owner·world epoch·revision 검증. 취소와 실제 작업 완료 구분 | [Scoring](Source/Project_JCore/Private/System/Project_JTargetScoringSubsystem.cpp) · [Navigation](Source/Project_JCharacter/Private/System/Project_JNPCPathSubsystem.cpp) |
+| 장비 권한과 표현 | GAS·장착 상태는 GT 순서 유지. 원격 비전투의 시각 생성만 FIFO 분산, 기존 표현 해제는 즉시 | [표현 예산](Source/Project_JCharacter/Private/System/Project_JPresentationBudgetSubsystem.cpp) |
+| 측정에 따른 채택 | Net Tick worker overlap만으로 기본 병렬화하지 않음. Niagara 생성/종료, 컬링의 simulation/render 효과를 구분 | [벤치마크](Docs/Benchmarks/SystemsModernization.md) |
+| cooked 초기화 | authored AnimBP 준비 전 reference pose 사용, 이후 generated graph. native-only MM fallback은 cooked 미지원 | [Proxy](Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceProxy.cpp) |
+| Trail PSO | UE5.8 rough-refraction RT 구성 보완은 monolithic 게임 한정. 엔진 소스·화질 유지 | [PSO 보완](Source/Project_J/Rendering/Project_JDistortionPSOPrecache.cpp) |
 
 ## 검증 현황
 
-### 현재 로코모션 검증 — 2026-10-21
+| 시점·대상 | 확인 결과 | 근거·범위 |
+| --- | --- | --- |
+| 현재 직접 리깅 · 2026-10-25 | direct UBT Editor 성공, 집중 native 회귀68개 통과. 실제 입력/손 접촉·발 접지 표본 검수 | [리깅 가이드와 사례](Docs/Animation/Authoring/Character_Rigging_And_UE5_Postprocess_Playbook.md). 모든 체형·클립·Cook/Shipping 품질 인증과 구분 |
+| 로코모션 · 2026-10-21 | 집중61개, 변환448시퀀스·2,240키 표본, 실제 이동/급회전/공중/몽타주 검증 | [이관 기록](Docs/Animation/Architecture/Player_Locomotion_Migration_2026-10-19.md) |
+| 모션 원본 보관 · 2026-10-21 | 미참조2,192패키지 퇴역, 원본 없는 로드·native62개 통과 | [원본 압축·복원](Docs/Maintenance/Animation_Source_Archive_2026-10-21.md) · [추가 수입 기준](Docs/Animation/Authoring/Player_Animation_Library.md) |
+| 런타임 수명 · 2026-10-08 | 전체 자동화244개 통과(19개 경고 포함 성공), 장착/공격/해제300 actor-cycle, 실제 clients2+NPC100 정상 종료 | [감사·재현 결함5개](Docs/Review/Audits/Project_J_Runtime_Ownership_Audit_2026-10-08.md) · [결과 JSON](Docs/Review/Audits/Project_J_Runtime_Ownership_Validation_2026-10-08.json) |
+| 구조 통합 · 2026-09-19 | Editor/Game 빌드, 자동화81개 통과·테스트 오류/경고0 | [변경·검증 기록](Docs/Architecture/Runtime/Reports/Internal_Polish_2026-09-19.md) |
+| packaged·RHI · 2026-09-10 | native56개·RHI24개(중복 있음), 서버1+clients4+NPC512, packaged 스킬 신규/재사용 cache 각3회 | [조건·경고·당시 커밋](Docs/Benchmarks/SystemsModernization.md) |
 
-Manny 공용 라이브러리·Chooser/PSD/BlendSpace 연결과 비표준 Bip01 몸체의 실제 IK를 점검했습니다. direct UBT Editor 빌드와 집중 native 회귀 **61개 통과**, 변환 시퀀스 **448개·2,240개 키프레임 표본**, 실제 OTM/Strafe 이동·Sprint 급회전·공중/착지·전신 몽타주 검증을 확인했습니다. 골격 호환·선택·실제 포즈·화면 품질의 근거를 구분하고, 재임포트 대신 원인이 확인된 리타깃 기준·Goal/시작 본·실행 연결을 수정했습니다. [조건·실패·복구·최종 결과](Docs/Animation/Architecture/Player_Locomotion_Migration_2026-10-19.md)
-
-이후 원본 모션 뱅크는 별도 압축 보관하고 참조 없는 2,192개 패키지를 퇴역했습니다. Manny 기준 native 회귀 **62개**와 원본 없는 로드를 확인했으며, 추가 수입의 ID·실제 모션·가산 기준·변환 recipe를 비교하는 사전 검사를 마련했습니다. [보관·검증 범위](Docs/Maintenance/Animation_Source_Archive_2026-10-21.md) · [수입 제작 기준](Docs/Animation/Authoring/Player_Animation_Library.md)
-
-이 결과는 모든 애니메이션 프레임의 외형 승인이나 현재 Mover 구조의 200명 CPU/GPU·새 네트워크 부하·Cook/Shipping 검증을 의미하지 않습니다. 10월 12–15일의 CMC/MM·성능 실험은 [이전 구현 기록](Docs/Animation/Planning/README.md)으로 보존하며 현재 수치와 합산하지 않습니다.
-
-### 이전 기능·수명 검증 — 2026-10-08
-
-8개 모듈의 소스 위험 패턴과 핵심 런타임 경계를 검토하고 **실제 엔진에서 재현한 결함 5개**를 수정했습니다. 영속 ASC의 Avatar 교체, Destroy와 GC 사이의 탈것 참조, 네이티브 애니메이션 프록시의 GC 추적, 겹치는 무기 노티파이, 화면 밖 몽타주의 종료 처리를 다룹니다. 모든 파일의 모든 실행 경로를 전수 실행한 범위는 아닙니다. [런타임 감사와 재현 근거](Docs/Review/Audits/Project_J_Runtime_Ownership_Audit_2026-10-08.md) · [검증 요약](Docs/Review/Audits/Project_J_Runtime_Ownership_Validation_2026-10-08.json)
-
-| 검증 | 결과 | 실행 조건 |
-|---|---|---|
-| 직접 UBT Editor / Game 빌드 | 모두 성공 | UE 5.8, Win64 Development |
-| ProjectJ 전체 자동화 | **244개 통과 / 실패0 / 미실행0** | NullRHI, 225개 성공·19개 경고 포함 성공, `a.Budget.BudgetMs 0.1` |
-| 장비 장착·공격·해제 반복 | **100캐릭터 × 3회 = 300 actor-cycle 완료 / failures=0** | 위 자동화와 같은 실행, 네트워크 클라이언트 수와 구분 |
-| 실제 소켓 연결·복제·애니메이션 | 전용 서버1 + clients2, NPC100, 모두 정상 종료 | Iris AOI·FastArray·애니메이션 관측, `PktLag=80`·`PktLoss=2` 설정 |
-
-이 결과는 커밋 `8a897335`에 반영된 소스·콘텐츠의 기능 검증입니다. 로그의 경고와 기존 에셋 참조 누락도 감사 보고서에 남겼습니다. 이번 실행의 packaged/cook·RHI 품질이나 MMO 대규모 처리량을 입증하는 수치로 사용하지 않습니다.
-
-### 보존된 packaged·RHI·부하 검증 — 2026-09-10
-
-| 검증 | 결과 | 해석 범위 |
-|---|---|---|
-| main 직접 UBT Editor / Game 빌드 | 모두 성공 | Win64 Development |
-| main 다인원·수명 회귀 | **56개 통과 / 오류0 / 경고10** | NullRHI, 기존 경고 포함 |
-| main 실제 RHI 전투·애니메이션·장비 회귀 | **24개 통과 / 오류0 / 경고0** | 56개 집합과 중복 있음 |
-| 별도 socket 다중 접속 | 서버1 + clients4, NPC512 검증·정상 종료 | AOI 재입장, owner-only inventory, 공개 장비, 삭제·접속 종료 |
-| packaged 스킬 통합 | 신규/재사용 application cache 각각3회 성공 | 장착 → GAS → 몽타주 → hit window → Trail → 해제/정리 |
-
-수치는 **2026-09-10의 보존된 실행 결과**입니다. main 회귀는 코드 `f2c31fb`, 전투 에셋 `89f94b4` 기준이며, 이후 변경된 소스·콘텐츠 전체의 packaged/RHI 재검증 결과를 의미하지 않습니다. [검증 근거와 재현 조건](Docs/Benchmarks/SystemsModernization.md)을 함께 확인할 수 있습니다.
+각 행은 해당 시점의 검증입니다. 테스트 수를 더하거나 과거 packaged·네트워크 결과를 현재 변경본 전체의 검증으로 간주하지 않습니다.
 
 ## 게임플레이와 콘텐츠 확장 기반
 
@@ -275,9 +236,11 @@ $projectFile = (Resolve-Path './Project_J.uproject').Path
 
 ## 실행 경계 실험과 다음 작업
 
-- **콘텐츠·런타임 후속:** 최근 수명 회귀를 유지하면서 packaged/RHI·더 많은 접속 조건으로 검증을 확장합니다. 실제 콘텐츠의 전환·접촉 타이밍, 지형 연결과 군중 표현 비용, 남아 있는 에셋 의존성을 점검합니다. [최근 감사의 잔여 항목과 검증 범위](Docs/Review/Audits/Project_J_Runtime_Ownership_Audit_2026-10-08.md)
-- **E 후속:** 기본 LightFunction PSO 누락을 해결했습니다. 승인 후 운영 ABP의 snapshot getter 5개 변환과 Trail 거리 컬링·고정 bounds를 저장했습니다. VFX instance 예산과 driver cold 검증은 남아 있습니다.
-- **F 구현·실험:** Tasks/TaskGraph/ThreadPool, Tick 의존성, 전용 consumer 경합, Chaos snapshot, RDG readback, Audio·PCG의 8개 fixture를 기본 비활성 Editor 플러그인으로 구현했습니다. [실측·구조·적용 판단](Docs/Benchmarks/ExecutionExperiments_2026-09-12/README.md)에서 병렬화의 이득과 순서/수명 비용을 함께 공개합니다.
-- **MMORPG 확장 기반:** Core-only 모듈, 205개 확장 계약, 통신 요청 수명·상한, 소유 단위 조정과 저장 계약을 추가했습니다. 신규 테스트 8개와 기존 회귀 16개를 검증했으며, Handover 정리 경고는 후속 3개 검사에서 오류·경고 0으로 해결했습니다. 실제 콘텐츠·운영 DB 연결, 전투 서버 tick과 더 많은 접속·패킷 조건, 운영 Mass 표현 전환 검증은 후속 범위입니다.
+| 후속 범위 | 내용·근거 |
+| --- | --- |
+| 콘텐츠·런타임 | 실제 전환·접촉·지형·군중 비용과 packaged/RHI·추가 접속 조건 검증. [잔여 항목](Docs/Review/Audits/Project_J_Runtime_Ownership_Audit_2026-10-08.md) |
+| VFX·PSO | LightFunction PSO·snapshot getter·Trail 거리 컬링/bounds 반영. VFX instance 예산·driver cold 검증 후속 |
+| F 실행 실험 | Tasks/TaskGraph/ThreadPool·Tick·Chaos·RDG·Audio/PCG 등8개 fixture, 기본 비활성 Editor 플러그인. [측정·채택 판단](Docs/Benchmarks/ExecutionExperiments_2026-09-12/README.md) |
+| MMORPG 확장 | Core-only205개 계약·요청 수명/상한·저장 계약 기반. 운영 DB·서버 tick·더 많은 접속/패킷 조건·운영 Mass는 후속. [확장 기반](Docs/Architecture/Extensions/MMO_Foundation_2026-09-12.md) |
 
-[벤치마크와 데이터](Docs/Benchmarks/SystemsModernization.md) · [설계·검증 이력](Docs/Performance/Reports/ProjectJ_Systems_Modernization_Refactor_2026-09-08.md) · [초기 프로파일링 기준선](Docs/Performance/Reports/ProjectJ_Profiling_Consolidated_Summary_2026-09-06.md) · [전체 문서](Docs/README.md)
+[벤치마크·데이터](Docs/Benchmarks/SystemsModernization.md) · [설계·검증 이력](Docs/Performance/Reports/ProjectJ_Systems_Modernization_Refactor_2026-09-08.md) · [전체 문서](Docs/README.md)
