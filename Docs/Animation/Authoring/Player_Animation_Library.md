@@ -268,4 +268,27 @@ GASP State Controller·Chooser·BlendStack·Pose History·slot/보정 순서, �
 
 2026-10-25 정리에서 위 큰 ActionRecovery/Network JSON과 일부 에디터 로그는 원문 SHA-256을 확인한 인접 `.gz`로 보관했다. 원래 이름을 입력으로 요구하는 분석에는 먼저 해제한다. native 결과 index·빌드 로그·영구 PIE 검사기는 유지하고, 완료된 세션 준비 스크립트는 `Saved/StorageCleanup_20261025/RetiredScripts.zip`에 보관했다.
 
+### 액션 복귀의 Idle Break와 잔여 예측 보강 — 2026-10-26
+
+후속 재현에서는 액션 이전에 시작한 Idle Break가 액션에 가려진 채 진행하고 종료 뒤 다시 드러났다. 이전 회수 대상에 Start/Stop 전환만 포함되고 Idle Break가 빠져 있었기 때문이다. 수정 전 22조건·7,831표본에서 액션 중 Idle Break가 4조건·101표본 관측됐다. 사용자가 본 특정 스킬은 식별되지 않았으므로 모든 증상의 단일 원인으로 단정하지 않는다.
+
+| 확인한 경계 | 공통 처리 |
+| --- | --- |
+| 진행 중이거나 새로 요청된 지상 단발, 이동 없이 반복한 공격 | Idle/Locomotion Transition와 Idle Break를 같은 소유권으로 회수·제한 |
+| 종료 뒤 남은 root-motion 예측 | 승인 입력 없이 새 Start/Pivot episode 생성 금지 |
+| TIP와 최근 Moving/강제 Flying 이력의 혼합 | 복귀 예외에 최근 OnGround·Idle 모두 요구 |
+| 숨은 Idle Loop 시계로 즉시 새 Idle Break 진입 | 기존 3초 경계에 가려지지 않은 source 시간도 적용 |
+| 가려진 source의 늦은 전환 노티파이 | 대기 요청 회수·새 요청 차단, 기존 blend-out 노티파이 거부 유지 |
+| 정상 이동·실제 낙하·UpperBody | 새 승인 이동 후 Stop, 실제 Falling 후 Land, UpperBody 장착을 보존 |
+
+공통 C++ 상태/선택 경계만 수정했다. Master BP/ABP, Chooser/PSD·모션·커브·Foot IK·Root Offset, GAS 입력/몽타주 시간·Mover 물리는 유지했다. 서버/예측 권위나 복제 필드를 추가하지 않았으며 호환 몸체 직접 ABP와 리타깃 fallback은 같은 source 계약을 사용한다. source 교체·재초기화는 복귀 권한과 가려짐 이력을 함께 해제한다. 기존 notify 어댑터와 공개 호환 setter는 호출/제작 경계가 달라 보존했다.
+
+최종 Editor direct UBT **535 actions·347.61초 성공**, 실제 RHI 집중 native 회귀 **59개 통과·실패/경고/미실행 0개**다. 원래 상태 시간 경계, 잔여 slot weight, 연속 공격, 전환 요청, 새 입력·물리 낙하·source 해제를 검사했다. 실제 생산 BP_Greatsword의 OTM/Strafe 22조건 **7,895표본**에서 정상 Start/Stop/Land·발 보정을 유지하고, 갱신 완료된 액션 소유 프레임의 잔여 Idle Break **0개**를 확인했다. 정상 대기 뒤 새 Idle Break와 두 번째 공격 회수는 수정된 검사기로 별도 2조건 **718표본**을 재실행해 통과했다.
+
+관측 오류도 구분한다. 수정 전 실행의 실패는 착지 블렌드 중 노드 가중치 0.25를 `>0.25`로 거부한 검사 경계였다. 공중의 별도 플레이어와 지상 handoff를 구분하고, 지상에서는 평가된 플레이어를 검사하도록 수정했다. 수정 후 22조건 원문에는 입력 주입 직후 아직 이전 traversal을 가리키는 표본 때문에 Idle Break 오류가 남아 있다. 원문은 보존하고, `InspectFoundationPlayback`의 `ActionOwns`가 게시된 평가 결과로 같은 전체 기록을 재분석한 `AfterAnalysis.json`을 최종 판정으로 사용한다. 마지막 2조건은 최종 검사기로 직접 통과했다. 입력 주입과 완료된 애니메이션 평가를 같은 시점으로 간주하지 않는다.
+
+원자료는 로컬 `Saved/Validation/ActionRecovery_20261026`의 `BuildFinal.log`, `Automation/index.json`, `AfterAnalysis.json`, `AfterUser/Saved/Validation/PlayerLocomotion/ActionRecovery_20261026_022821_507282.json`, `FocusedUser/Saved/Validation/PlayerLocomotion/ActionRecovery_20261026_023416_516093.json`이다. 두 PIE 실행의 dirty content/map은 모두 0이며 에디터는 정상 종료했다. 이번 검증은 실제 기본 공격·R 취소·T 강제 Flying·물리 점프와 공통 복귀 계약의 집중 검사다. 새 다중 접속·전 스킬/지형 외형·Cook/Shipping·200명 성능 검증은 수행하지 않았다. 기존 네트워크 근거는 위 10월 24일 기록과 구분한다.
+
+마감 정리에서 위 큰 원문·초기 실패·일회성 드라이버 등 65개 payload를 로컬 `Saved/Maintenance/ActionRecovery_20261026/Evidence.zip`에 보존했다. ZIP과 모든 해제 payload의 SHA-256을 검증한 뒤 종료된 격리 캐시·중간 체크포인트·보관된 원문 105개, 903,358,873bytes를 정리했다. ZIP 추가 후 논리 순감소는 902,157,118bytes이며 즉시 관측한 실제 C: 여유 증가는 0bytes다. 최종 빌드 로그·native index·작은 분석/종료 receipt와 영구 검사기는 유지한다. 원래 경로의 큰 JSON은 [명세와 기존 복원기](../../../Archives/Validation/README.md#검증과-복원)로 빈 폴더에 복원한다. [공유 결과](../../../Archives/Validation/ActionRecovery_2026-10-26/Summary.json) · [정리 수치](../../../Archives/Validation/ActionRecovery_2026-10-26/CleanupResult.json)는 ZIP 없이 읽을 수 있고, 로컬 ZIP은 새 clone에 자동 제공되지 않는다.
+
 마감 중 검사기의 정규식 캡처를 재확인했다. Length는 캡처 대상이 아니므로 기존 Weight 인덱스가 맞으며 임시 수정은 원복했다. 그 임시 수정의 0표본 실패와 이후 에디터 종료로 미완료인 추가 PIE 재실행은 10월 25일 자료로 구분해 남겼다. 위 최종 22조건·네트워크 통과 결과를 새 실행으로 대체하지 않는다.

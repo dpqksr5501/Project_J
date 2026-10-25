@@ -236,7 +236,7 @@ production 변경은 AnimInstance, LocomotionAnimStateComponent, MovingTurnPolic
 
 - [최종 빌드](../../../../Saved/Validation/Naturalness_20261006/FootDiagnosticBuild.log)
 - [최종 28개 자동화](../../../../Saved/Validation/Naturalness_20261006/FinalOutput/Automation/index.json), [활성 graph](../../../../Saved/Validation/Naturalness_20261006/FinalOutput/ActiveGraph.txt), [실제 playback](../../../../Saved/Validation/Naturalness_20261006/FinalOutput/Playback.txt)
-- [수명 보완 전 local 실패](../../../../Saved/Validation/Naturalness_20261006/FinalLocal/Automation/index.json), [해당 재생](../../../../Saved/Validation/Naturalness_20261006/FinalLocal/Playback.txt)
+- 수명 보완 전 local 실패의 당시 경로: `Saved/Validation/Naturalness_20261006/FinalLocal/Automation/index.json` (현재 로컬 원문 없음). [해당 재생](../../../../Saved/Validation/Naturalness_20261006/FinalLocal/Playback.txt)
 - [최종 nonlocal 재생](../../../../Saved/Validation/Naturalness_20261006/FinalNonLocal/Playback.txt)
 - [network verification](../../../../Saved/Validation/GroupD_20260910/NaturalnessNetwork_20261006/verification.json), [client1 animation observations](../../../../Saved/Validation/GroupD_20260910/NaturalnessNetwork_20261006/Client1/animation-observations.csv), [client2](../../../../Saved/Validation/GroupD_20260910/NaturalnessNetwork_20261006/Client2/animation-observations.csv)
 - [CPU comparison 원자료](../../../../Saved/Validation/Naturalness_20261006/cpu-comparison.csv), [세션 파일 지문/보존 확인](../../../../Saved/Validation/Naturalness_20261006/session-files.json), [세션 변경 patch](../../../../Saved/Validation/Naturalness_20261006/session.patch)

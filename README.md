@@ -184,6 +184,7 @@ A–E의 현재 구현은 `main`에 통합되어 있습니다. **E의 운영 에
 | 시점·대상 | 확인 결과 | 근거·범위 |
 | --- | --- | --- |
 | 현재 Cloth 예산 · 2026-10-26 | direct UBT Editor/Game 성공, RHI 회귀73개·NullRHI 정책/기능 필터 확인, 200명 교대4회·최종 스모크2회 | [품질 경계·수치·편차·미검증](Docs/Performance/Reports/ProjectJ_Cloth_Budget_200_2026-10-25.md). Cook/Shipping·원격 접속 성능과 구분 |
+| 액션 후 이동 복귀 · 2026-10-26 | Editor 빌드·RHI 회귀59개 통과. 실제22조건 7,895표본 재분석·연속 공격2조건 718표본 통과 | [Start/Stop/Land·Idle Break와 관측 경계](Docs/Animation/Authoring/Player_Animation_Library.md#액션-복귀의-idle-break와-잔여-예측-보강--2026-10-26) · [공유 요약·보관 명세](Archives/Validation/ActionRecovery_2026-10-26/Summary.json) |
 | 직접 전환 · 2026-10-25 | direct UBT Editor 성공, 집중 native 회귀68개 통과. 실제 입력/손 접촉·발 접지 표본 검수 | [리깅 가이드와 사례](Docs/Animation/Authoring/Character_Rigging_And_UE5_Postprocess_Playbook.md). 모든 체형·클립 품질 인증과 구분 |
 | 로코모션 · 2026-10-21 | 집중61개, 변환448시퀀스·2,240키 표본, 실제 이동/급회전/공중/몽타주 검증 | [이관 기록](Docs/Animation/Architecture/Player_Locomotion_Migration_2026-10-19.md) |
 | 모션 원본 보관 · 2026-10-21 | 미참조2,192패키지 퇴역, 원본 없는 로드·native62개 통과 | [원본 압축·복원](Docs/Maintenance/Animation_Source_Archive_2026-10-21.md) · [추가 수입 기준](Docs/Animation/Authoring/Player_Animation_Library.md) |

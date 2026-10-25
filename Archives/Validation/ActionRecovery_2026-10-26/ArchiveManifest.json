@@ -1,0 +1,803 @@
+{
+  "schema": 1,
+  "archive": "../../../Saved/Maintenance/ActionRecovery_20261026/Evidence.zip",
+  "availability": "Local archive; not distributed through Git",
+  "scope": "Completed action-recovery PIE trials, including startup and observation failures. No production asset, SourceArt, permanent validation tool, current binary or build cache retired.",
+  "archiveSha256": "e353eabbe879a82d65fa9138ecdafc2132c1a69f8e916501f0c56822ab21303e",
+  "archiveBytes": 1201755,
+  "files": [
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/After.log",
+      "bytes": 364700,
+      "sha256": "b80b41507007f4bf267ff825039a26b92e46901d74d76551fa7b15aeb660a6ba",
+      "member": "Saved/Validation/ActionRecovery_20261026/After.log",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/AfterAnalysis.json",
+      "bytes": 13238,
+      "sha256": "8a647c48e1a95612e23ca122f56c0f053e3eb279e0032a34116e244df62ae541",
+      "member": "Saved/Validation/ActionRecovery_20261026/AfterAnalysis.json",
+      "cleanup": false
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/AfterProcess.json",
+      "bytes": 40,
+      "sha256": "6a781cde07d7b93d68c8a40938f417215889eeb4b96178c2327e26add9642616",
+      "member": "Saved/Validation/ActionRecovery_20261026/AfterProcess.json",
+      "cleanup": false
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/AfterUser/Saved/Autosaves/PackageRestoreData.json",
+      "bytes": 96,
+      "sha256": "fdc2d5bebf9cdef10fe7088228558cb57ff12b0ea92ea114809e20fd2add5bb6",
+      "member": "Saved/Validation/ActionRecovery_20261026/AfterUser/Saved/Autosaves/PackageRestoreData.json",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/AfterUser/Saved/Config/CrashReportClient/UECC-Windows-2A88358A4AFDB85D5A7497A3CF68A4BF/CrashReportClient.ini",
+      "bytes": 239,
+      "sha256": "ce69d7e7bbd1a64729bd4d5724f3c1efc47c6c3d555da9d2c6ad741eddc3d893",
+      "member": "Saved/Validation/ActionRecovery_20261026/AfterUser/Saved/Config/CrashReportClient/UECC-Windows-2A88358A4AFDB85D5A7497A3CF68A4BF/CrashReportClient.ini",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/AfterUser/Saved/Config/WindowsEditor/Editor.ini",
+      "bytes": 95,
+      "sha256": "0f6e5f6ee35d1d08016aa73927d665b380165b85189cb086957465d6a40923c6",
+      "member": "Saved/Validation/ActionRecovery_20261026/AfterUser/Saved/Config/WindowsEditor/Editor.ini",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/AfterUser/Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini",
+      "bytes": 102457,
+      "sha256": "1d4d7911563167669c06519efc257c9d357b18cf55afd8bd3c826acbe7d504c4",
+      "member": "Saved/Validation/ActionRecovery_20261026/AfterUser/Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/AfterUser/Saved/Config/WindowsEditor/GameUserSettings.ini",
+      "bytes": 1073,
+      "sha256": "045ce214dd68c8857399541704f1f0bebbd2ec4a69b99c6cd4418c65399537dd",
+      "member": "Saved/Validation/ActionRecovery_20261026/AfterUser/Saved/Config/WindowsEditor/GameUserSettings.ini",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/AfterUser/Saved/Logs/AutoSDKInfo.json",
+      "bytes": 13199,
+      "sha256": "28abed91566b002ec555d01c6684b0b38e95f534bc092bf2a168606ccf59160e",
+      "member": "Saved/Validation/ActionRecovery_20261026/AfterUser/Saved/Logs/AutoSDKInfo.json",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/AfterUser/Saved/Logs/AutoSDKInfo.txt",
+      "bytes": 4329,
+      "sha256": "be2f575c7a7c7c311f7626b02cb5c8c311f64d0397b68ea3ba719e850f15d5d4",
+      "member": "Saved/Validation/ActionRecovery_20261026/AfterUser/Saved/Logs/AutoSDKInfo.txt",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/AfterUser/Saved/Validation/PlayerLocomotion/ActionRecovery_20261026_022821_507282.json",
+      "bytes": 20905126,
+      "sha256": "b8dc867b34cbb9d43ceab871108b3d46b0267ecb1b3c89f39f33b869b64ecb39",
+      "member": "Saved/Validation/ActionRecovery_20261026/AfterUser/Saved/Validation/PlayerLocomotion/ActionRecovery_20261026_022821_507282.json",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/Automation/index.html",
+      "bytes": 23356,
+      "sha256": "175cb8553a1df1d901f371e50f9846d2e3f7d86030c04aa9bbbb838ed708f6c6",
+      "member": "Saved/Validation/ActionRecovery_20261026/Automation/index.html",
+      "cleanup": false
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/Automation/index.json",
+      "bytes": 24483,
+      "sha256": "49b72152780444124253631c52f09c85a2c13b279339c0f8dcb08b7d58d38350",
+      "member": "Saved/Validation/ActionRecovery_20261026/Automation/index.json",
+      "cleanup": false
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/Automation.log",
+      "bytes": 419099,
+      "sha256": "737ad57eb3059cd25c532c3ae22d183d6f12b5c0c6cdac14fff2da219389c4cf",
+      "member": "Saved/Validation/ActionRecovery_20261026/Automation.log",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/Before.log",
+      "bytes": 350359,
+      "sha256": "1bdeb362875b72bcdf760c0b72212eec0628e4aeed121fd483b07b20cebe348b",
+      "member": "Saved/Validation/ActionRecovery_20261026/Before.log",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/Before2.log",
+      "bytes": 372921,
+      "sha256": "f4685a4fb20a0267bfd04556be502375fbb86edecad90d885c2c2f6a2f1c2d6d",
+      "member": "Saved/Validation/ActionRecovery_20261026/Before2.log",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/Before2_Error.json",
+      "bytes": 397,
+      "sha256": "8ad9564794b5e2fde857db49718662739bed0b14a039914cb99767c450c46a08",
+      "member": "Saved/Validation/ActionRecovery_20261026/Before2_Error.json",
+      "cleanup": false
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/Before2_Started.json",
+      "bytes": 326,
+      "sha256": "012b3c55c6be64b86833fd032b4b6aaf634fe729b4219fd2a435fcdb15b8c267",
+      "member": "Saved/Validation/ActionRecovery_20261026/Before2_Started.json",
+      "cleanup": false
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/Before2Process.json",
+      "bytes": 23,
+      "sha256": "ea61d7736f0b7ecb9b35158f03de77013db6b100cf1d36c957e78e6c8817c5b6",
+      "member": "Saved/Validation/ActionRecovery_20261026/Before2Process.json",
+      "cleanup": false
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/Before3.log",
+      "bytes": 372376,
+      "sha256": "4aceaf5a73d624d3a7cf10f911641bff4241f51ff8123ce4f6b30ad17c177a63",
+      "member": "Saved/Validation/ActionRecovery_20261026/Before3.log",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/Before3Process.json",
+      "bytes": 23,
+      "sha256": "ea61d7736f0b7ecb9b35158f03de77013db6b100cf1d36c957e78e6c8817c5b6",
+      "member": "Saved/Validation/ActionRecovery_20261026/Before3Process.json",
+      "cleanup": false
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeProcess.json",
+      "bytes": 45,
+      "sha256": "f5aaa07687d4939810a4947e8c6df97cc5d684f6345f71108aec7ba61a206d5d",
+      "member": "Saved/Validation/ActionRecovery_20261026/BeforeProcess.json",
+      "cleanup": false
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser/Saved/Autosaves/PackageRestoreData.json",
+      "bytes": 96,
+      "sha256": "fdc2d5bebf9cdef10fe7088228558cb57ff12b0ea92ea114809e20fd2add5bb6",
+      "member": "Saved/Validation/ActionRecovery_20261026/BeforeUser/Saved/Autosaves/PackageRestoreData.json",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser/Saved/Config/CrashReportClient/UECC-Windows-1DE11FF14EC93ECB6CF4B5944968B690/CrashReportClient.ini",
+      "bytes": 239,
+      "sha256": "ce69d7e7bbd1a64729bd4d5724f3c1efc47c6c3d555da9d2c6ad741eddc3d893",
+      "member": "Saved/Validation/ActionRecovery_20261026/BeforeUser/Saved/Config/CrashReportClient/UECC-Windows-1DE11FF14EC93ECB6CF4B5944968B690/CrashReportClient.ini",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser/Saved/Config/WindowsEditor/Editor.ini",
+      "bytes": 95,
+      "sha256": "0f6e5f6ee35d1d08016aa73927d665b380165b85189cb086957465d6a40923c6",
+      "member": "Saved/Validation/ActionRecovery_20261026/BeforeUser/Saved/Config/WindowsEditor/Editor.ini",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser/Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini",
+      "bytes": 102533,
+      "sha256": "bac9e6486c22b7cf9439b6f2b146d38015097d890d573962aec850dc00e8caac",
+      "member": "Saved/Validation/ActionRecovery_20261026/BeforeUser/Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser/Saved/Config/WindowsEditor/GameUserSettings.ini",
+      "bytes": 1071,
+      "sha256": "7599f4216a1571f92dcaf1f9c6f9fcaa17c1a27b6ea59733f4b31079229a3258",
+      "member": "Saved/Validation/ActionRecovery_20261026/BeforeUser/Saved/Config/WindowsEditor/GameUserSettings.ini",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser/Saved/Logs/AutoSDKInfo.json",
+      "bytes": 13199,
+      "sha256": "cb7d55c19d49ae19059a0f015a74b6032cccad35c98504f2304db86581eec46d",
+      "member": "Saved/Validation/ActionRecovery_20261026/BeforeUser/Saved/Logs/AutoSDKInfo.json",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser/Saved/Logs/AutoSDKInfo.txt",
+      "bytes": 4329,
+      "sha256": "adfa5742d2c783a8f4adc7c16f1d94c28d6c9503c757c6bdbba2c529ba7b954b",
+      "member": "Saved/Validation/ActionRecovery_20261026/BeforeUser/Saved/Logs/AutoSDKInfo.txt",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser2/Saved/Autosaves/PackageRestoreData.json",
+      "bytes": 96,
+      "sha256": "fdc2d5bebf9cdef10fe7088228558cb57ff12b0ea92ea114809e20fd2add5bb6",
+      "member": "Saved/Validation/ActionRecovery_20261026/BeforeUser2/Saved/Autosaves/PackageRestoreData.json",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser2/Saved/Config/CrashReportClient/UECC-Windows-C5DBB6634DA9E768D882A3AE0AB93C60/CrashReportClient.ini",
+      "bytes": 239,
+      "sha256": "ce69d7e7bbd1a64729bd4d5724f3c1efc47c6c3d555da9d2c6ad741eddc3d893",
+      "member": "Saved/Validation/ActionRecovery_20261026/BeforeUser2/Saved/Config/CrashReportClient/UECC-Windows-C5DBB6634DA9E768D882A3AE0AB93C60/CrashReportClient.ini",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser2/Saved/Config/WindowsEditor/Editor.ini",
+      "bytes": 95,
+      "sha256": "0f6e5f6ee35d1d08016aa73927d665b380165b85189cb086957465d6a40923c6",
+      "member": "Saved/Validation/ActionRecovery_20261026/BeforeUser2/Saved/Config/WindowsEditor/Editor.ini",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser2/Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini",
+      "bytes": 102628,
+      "sha256": "9c56a4bf1a6b98c39afe97e82dcd13c26277cceecfc4dd40440398ff1b2833f9",
+      "member": "Saved/Validation/ActionRecovery_20261026/BeforeUser2/Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser2/Saved/Config/WindowsEditor/GameUserSettings.ini",
+      "bytes": 1071,
+      "sha256": "7599f4216a1571f92dcaf1f9c6f9fcaa17c1a27b6ea59733f4b31079229a3258",
+      "member": "Saved/Validation/ActionRecovery_20261026/BeforeUser2/Saved/Config/WindowsEditor/GameUserSettings.ini",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser2/Saved/Logs/AutoSDKInfo.json",
+      "bytes": 13199,
+      "sha256": "be6d98581e55265de3825318ab29a5c9b6b66bc768d8bacfb0a1fdaab1216185",
+      "member": "Saved/Validation/ActionRecovery_20261026/BeforeUser2/Saved/Logs/AutoSDKInfo.json",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser2/Saved/Logs/AutoSDKInfo.txt",
+      "bytes": 4329,
+      "sha256": "10b31dd77078560879a2ebb75964a01393b656d815526c23c69ecbdc0965102c",
+      "member": "Saved/Validation/ActionRecovery_20261026/BeforeUser2/Saved/Logs/AutoSDKInfo.txt",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser3/Saved/Autosaves/PackageRestoreData.json",
+      "bytes": 96,
+      "sha256": "fdc2d5bebf9cdef10fe7088228558cb57ff12b0ea92ea114809e20fd2add5bb6",
+      "member": "Saved/Validation/ActionRecovery_20261026/BeforeUser3/Saved/Autosaves/PackageRestoreData.json",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser3/Saved/Config/CrashReportClient/UECC-Windows-6DCB7E204E476098A3E59CB4837EF27B/CrashReportClient.ini",
+      "bytes": 239,
+      "sha256": "ce69d7e7bbd1a64729bd4d5724f3c1efc47c6c3d555da9d2c6ad741eddc3d893",
+      "member": "Saved/Validation/ActionRecovery_20261026/BeforeUser3/Saved/Config/CrashReportClient/UECC-Windows-6DCB7E204E476098A3E59CB4837EF27B/CrashReportClient.ini",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser3/Saved/Config/WindowsEditor/Editor.ini",
+      "bytes": 95,
+      "sha256": "0f6e5f6ee35d1d08016aa73927d665b380165b85189cb086957465d6a40923c6",
+      "member": "Saved/Validation/ActionRecovery_20261026/BeforeUser3/Saved/Config/WindowsEditor/Editor.ini",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser3/Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini",
+      "bytes": 102628,
+      "sha256": "5ade84cf3fe02642dd7b9036efe1370418509d4caba5118e28db33bc1fd56b6b",
+      "member": "Saved/Validation/ActionRecovery_20261026/BeforeUser3/Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser3/Saved/Config/WindowsEditor/GameUserSettings.ini",
+      "bytes": 1071,
+      "sha256": "7599f4216a1571f92dcaf1f9c6f9fcaa17c1a27b6ea59733f4b31079229a3258",
+      "member": "Saved/Validation/ActionRecovery_20261026/BeforeUser3/Saved/Config/WindowsEditor/GameUserSettings.ini",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser3/Saved/Logs/AutoSDKInfo.json",
+      "bytes": 13199,
+      "sha256": "b9659d06b414ff8871a0b43f2c05f3b3f4dee17ab04d6516936b67633eff1fe7",
+      "member": "Saved/Validation/ActionRecovery_20261026/BeforeUser3/Saved/Logs/AutoSDKInfo.json",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser3/Saved/Logs/AutoSDKInfo.txt",
+      "bytes": 4329,
+      "sha256": "057aca06328048d9b16952afc4e03f972ce8e214798f010e132f5107044a7d4b",
+      "member": "Saved/Validation/ActionRecovery_20261026/BeforeUser3/Saved/Logs/AutoSDKInfo.txt",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser3/Saved/Validation/PlayerLocomotion/ActionRecovery_20261026_015115_463433.json",
+      "bytes": 8693861,
+      "sha256": "bb6fa09ee22d5426a7248e76a62688ba7db0f6ec6aeffed0f1cf9e174a8b6d49",
+      "member": "Saved/Validation/ActionRecovery_20261026/BeforeUser3/Saved/Validation/PlayerLocomotion/ActionRecovery_20261026_015115_463433.json",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/Bootstrap.py",
+      "bytes": 2875,
+      "sha256": "462eabb01171fac117550c69c8328c79d67e65aee39274a7ec20800e42fc1345",
+      "member": "Saved/Validation/ActionRecovery_20261026/Bootstrap.py",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BootstrapFocused.py",
+      "bytes": 2957,
+      "sha256": "61c6c0348e1a5e9186441d614def330cc00ff8f4dde2a2e9f89ee8dc81e63a29",
+      "member": "Saved/Validation/ActionRecovery_20261026/BootstrapFocused.py",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/Build.json",
+      "bytes": 186629,
+      "sha256": "f10772a8dfa80aa870238b114292c78f6e9e1cecebd3347eac8001b590ace1be",
+      "member": "Saved/Validation/ActionRecovery_20261026/Build.json",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/Build.log",
+      "bytes": 76414,
+      "sha256": "7644b03dea986c2ed26d8bf6471ffb524d9a183abc15da325454839c9cf4dde3",
+      "member": "Saved/Validation/ActionRecovery_20261026/Build.log",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BuildFinal.json",
+      "bytes": 171033,
+      "sha256": "3ed3018af06e40bb20ab1b8c8ab54b4d5471e6026344539bb4a83b0fc84d6a12",
+      "member": "Saved/Validation/ActionRecovery_20261026/BuildFinal.json",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BuildFinal.log",
+      "bytes": 71778,
+      "sha256": "a1bf96601e5aeb553487660ba73cef22b30386587aca586dc8cd28f1620b6cfa",
+      "member": "Saved/Validation/ActionRecovery_20261026/BuildFinal.log",
+      "cleanup": false
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/Completed.json",
+      "bytes": 231,
+      "sha256": "fd302c6f796945425528d8e9af6f39d49afc3fa8681e66070595ecdae3287054",
+      "member": "Saved/Validation/ActionRecovery_20261026/Completed.json",
+      "cleanup": false
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/Error.json",
+      "bytes": 397,
+      "sha256": "8ad9564794b5e2fde857db49718662739bed0b14a039914cb99767c450c46a08",
+      "member": "Saved/Validation/ActionRecovery_20261026/Error.json",
+      "cleanup": false
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/Focused/Completed.json",
+      "bytes": 233,
+      "sha256": "becb1e4e0f3f4db221570682bd6e02181d1e564df733260b7b0e11efc149833c",
+      "member": "Saved/Validation/ActionRecovery_20261026/Focused/Completed.json",
+      "cleanup": false
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/Focused/Started.json",
+      "bytes": 326,
+      "sha256": "d9802dce693b8386e0efdd7ecd2f949d49e28c47ac26a9d74dbc5ee77e95e245",
+      "member": "Saved/Validation/ActionRecovery_20261026/Focused/Started.json",
+      "cleanup": false
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/Focused.log",
+      "bytes": 363066,
+      "sha256": "b9bb731df486fb0f9c4d4246ea8f4a70cd82cd903f8fa4d9c9c5e4b332ed565d",
+      "member": "Saved/Validation/ActionRecovery_20261026/Focused.log",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/FocusedProcess.json",
+      "bytes": 40,
+      "sha256": "fb6d7a7b8761baed702978984dd206c8387c894d2d4283219474a73dc843bf6f",
+      "member": "Saved/Validation/ActionRecovery_20261026/FocusedProcess.json",
+      "cleanup": false
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/FocusedUser/Saved/Autosaves/PackageRestoreData.json",
+      "bytes": 96,
+      "sha256": "fdc2d5bebf9cdef10fe7088228558cb57ff12b0ea92ea114809e20fd2add5bb6",
+      "member": "Saved/Validation/ActionRecovery_20261026/FocusedUser/Saved/Autosaves/PackageRestoreData.json",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/FocusedUser/Saved/Config/CrashReportClient/UECC-Windows-506F75764163FC41AEFD1F8AEB4C5DE4/CrashReportClient.ini",
+      "bytes": 239,
+      "sha256": "ce69d7e7bbd1a64729bd4d5724f3c1efc47c6c3d555da9d2c6ad741eddc3d893",
+      "member": "Saved/Validation/ActionRecovery_20261026/FocusedUser/Saved/Config/CrashReportClient/UECC-Windows-506F75764163FC41AEFD1F8AEB4C5DE4/CrashReportClient.ini",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/FocusedUser/Saved/Config/WindowsEditor/Editor.ini",
+      "bytes": 95,
+      "sha256": "0f6e5f6ee35d1d08016aa73927d665b380165b85189cb086957465d6a40923c6",
+      "member": "Saved/Validation/ActionRecovery_20261026/FocusedUser/Saved/Config/WindowsEditor/Editor.ini",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/FocusedUser/Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini",
+      "bytes": 102466,
+      "sha256": "1c2aff85f3431d6887264af2a53286474734d25fd439c1ffc8f47fe205330fc5",
+      "member": "Saved/Validation/ActionRecovery_20261026/FocusedUser/Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/FocusedUser/Saved/Config/WindowsEditor/GameUserSettings.ini",
+      "bytes": 1073,
+      "sha256": "045ce214dd68c8857399541704f1f0bebbd2ec4a69b99c6cd4418c65399537dd",
+      "member": "Saved/Validation/ActionRecovery_20261026/FocusedUser/Saved/Config/WindowsEditor/GameUserSettings.ini",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/FocusedUser/Saved/Logs/AutoSDKInfo.json",
+      "bytes": 13199,
+      "sha256": "dd9709e929108fe671b190713b8db1c380b7b97d2d2eb108f261f1e55b790d05",
+      "member": "Saved/Validation/ActionRecovery_20261026/FocusedUser/Saved/Logs/AutoSDKInfo.json",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/FocusedUser/Saved/Logs/AutoSDKInfo.txt",
+      "bytes": 4329,
+      "sha256": "ef861dfd6da207d48be3c0ab6f1124c2ec48a13e6bf9cab619f2e59f929ce84f",
+      "member": "Saved/Validation/ActionRecovery_20261026/FocusedUser/Saved/Logs/AutoSDKInfo.txt",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/FocusedUser/Saved/Validation/PlayerLocomotion/ActionRecovery_20261026_023416_516093.json",
+      "bytes": 1905812,
+      "sha256": "927889179c950d78a0e9c3d2b9c93d432da8eb8fca97f09048c2223b8cf1a78f",
+      "member": "Saved/Validation/ActionRecovery_20261026/FocusedUser/Saved/Validation/PlayerLocomotion/ActionRecovery_20261026_023416_516093.json",
+      "cleanup": true
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/Started.json",
+      "bytes": 324,
+      "sha256": "9acc9ca59d372c4a5ec89a71eec0d2627410a6821af768b253e57e862290aa95",
+      "member": "Saved/Validation/ActionRecovery_20261026/Started.json",
+      "cleanup": false
+    }
+  ],
+  "retired": [
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/AfterUser/Intermediate/CachedAssetRegistry/CachedAssetRegistry_0.ref",
+      "bytes": 58,
+      "sha256": "ec94341cfd1bf390a39180e793d6b38b069fc80d4204851498b30b02a85951a8",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/AfterUser/Intermediate/CachedAssetRegistry/CachedAssetRegistry_0_58C6158940A236F46260489528B58989.bin",
+      "bytes": 165859249,
+      "sha256": "7c0a92e6f9af720a668426f05605851dd7c884197ebd3c2af87d9d1f70fa6141",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/AfterUser/Intermediate/CachedAssetRegistryDiscovery.bin",
+      "bytes": 511303,
+      "sha256": "f185ac03427a340076fb83ee499b97073d6b5043cbbccfc0f77e547eb6f7bc74",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/AfterUser/Intermediate/PipInstall/extra_urls.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/AfterUser/Intermediate/PipInstall/Lib/site-packages/plugin_site_package.pth",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/AfterUser/Intermediate/PipInstall/merged_requirements.in",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/AfterUser/Intermediate/PipInstall/pyreqs_plugins.list",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/AfterUser/Intermediate/ShaderAutogen/PCD3D_SM5/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/AfterUser/Intermediate/ShaderAutogen/PCD3D_SM6/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/AfterUser/Saved/ShaderDebugInfo/PCD3D_SM6/WorldGridMaterial_67bacdd81a65e5e9/Default/DDCKey-Editor.txt",
+      "bytes": 3203460,
+      "sha256": "76bd9ccdc7adacbed0f40b773b54439131297c1f49e9f801567d5ea2364ce90a",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/AfterUser/Saved/Validation/PlayerLocomotion/ActionRecovery_20261026_022821_507282.progress.json",
+      "bytes": 58,
+      "sha256": "a0cbccad16d9a091ac88d780df0a01acfb4da4476db1c8283a5b8bfaa6e59ec1",
+      "reason": "Intermediate checkpoint duplicated by final full report"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser/Intermediate/CachedAssetRegistry/CachedAssetRegistry_0.ref",
+      "bytes": 58,
+      "sha256": "80b1086abafdec0a9d0083072e1f63c7063e365cbbdaf8b741d394f48c0587b7",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser/Intermediate/CachedAssetRegistry/CachedAssetRegistry_0_F91F7C9D49B11B0A101CCEA5E767940D.bin",
+      "bytes": 165859249,
+      "sha256": "8c07290bb4700184d29b334a4fb60122f6d11c4802935403c99541a3661f9e43",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser/Intermediate/CachedAssetRegistryDiscovery.bin",
+      "bytes": 510744,
+      "sha256": "a389ce2730116104117a672e6020388beb92f9aa3a894c7674156856a1a9c176",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser/Intermediate/PipInstall/extra_urls.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser/Intermediate/PipInstall/Lib/site-packages/plugin_site_package.pth",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser/Intermediate/PipInstall/merged_requirements.in",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser/Intermediate/PipInstall/pyreqs_plugins.list",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser/Intermediate/ShaderAutogen/PCD3D_SM5/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser/Intermediate/ShaderAutogen/PCD3D_SM6/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser/Saved/ShaderDebugInfo/PCD3D_SM6/WorldGridMaterial_67bacdd81a65e5e9/Default/DDCKey-Editor.txt",
+      "bytes": 3203460,
+      "sha256": "76bd9ccdc7adacbed0f40b773b54439131297c1f49e9f801567d5ea2364ce90a",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser2/Intermediate/CachedAssetRegistry/CachedAssetRegistry_0.ref",
+      "bytes": 58,
+      "sha256": "9e3d6a533a5557d147a3d7e6b9f9194ea56e2e4344050149ef9a5775ca5f1623",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser2/Intermediate/CachedAssetRegistry/CachedAssetRegistry_0_ECF9317248450D3F7A0CDEBB03009245.bin",
+      "bytes": 165859249,
+      "sha256": "fab8ad044bcc104677cf29a1223fedb5a5c94406ef6d5fda6cfc2fc17abc62a0",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser2/Intermediate/CachedAssetRegistryDiscovery.bin",
+      "bytes": 511631,
+      "sha256": "c6e4f40ed404bcffc59d925cc8a5b19f31f51e594e69cc115eccfbcd5f7410d3",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser2/Intermediate/PipInstall/extra_urls.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser2/Intermediate/PipInstall/Lib/site-packages/plugin_site_package.pth",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser2/Intermediate/PipInstall/merged_requirements.in",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser2/Intermediate/PipInstall/pyreqs_plugins.list",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser2/Intermediate/ShaderAutogen/PCD3D_SM5/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser2/Intermediate/ShaderAutogen/PCD3D_SM6/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser2/Saved/ShaderDebugInfo/PCD3D_SM6/WorldGridMaterial_67bacdd81a65e5e9/Default/DDCKey-Editor.txt",
+      "bytes": 3203460,
+      "sha256": "76bd9ccdc7adacbed0f40b773b54439131297c1f49e9f801567d5ea2364ce90a",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser2/Saved/Validation/PlayerLocomotion/ActionRecovery_20261026_014531_572580.progress.json",
+      "bytes": 57,
+      "sha256": "04a785d4c7e00352cea8ae41973c58833b49b00a77e1edfba8d2f8c70c59ae4e",
+      "reason": "Intermediate checkpoint duplicated by final full report"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser3/Intermediate/CachedAssetRegistry/CachedAssetRegistry_0.ref",
+      "bytes": 58,
+      "sha256": "bacf7a628f3169f640a6749f46e89fa12653f3feef3a08d515cd76416779eb62",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser3/Intermediate/CachedAssetRegistry/CachedAssetRegistry_0_EC1D9F8A4D87F0E2A35BB78278CAE95E.bin",
+      "bytes": 165859249,
+      "sha256": "76353e45c5b69897fd94274fb6a2931ce11a1b3df1e019443382f3630022110e",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser3/Intermediate/CachedAssetRegistryDiscovery.bin",
+      "bytes": 510526,
+      "sha256": "06251c5849eb00f738d5ab45853a367beef93f6c17578712be946a6c0b0f00e8",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser3/Intermediate/PipInstall/extra_urls.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser3/Intermediate/PipInstall/Lib/site-packages/plugin_site_package.pth",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser3/Intermediate/PipInstall/merged_requirements.in",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser3/Intermediate/PipInstall/pyreqs_plugins.list",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser3/Intermediate/ShaderAutogen/PCD3D_SM5/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser3/Intermediate/ShaderAutogen/PCD3D_SM6/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser3/Saved/ShaderDebugInfo/PCD3D_SM6/WorldGridMaterial_67bacdd81a65e5e9/Default/DDCKey-Editor.txt",
+      "bytes": 3203460,
+      "sha256": "76bd9ccdc7adacbed0f40b773b54439131297c1f49e9f801567d5ea2364ce90a",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/BeforeUser3/Saved/Validation/PlayerLocomotion/ActionRecovery_20261026_015115_463433.progress.json",
+      "bytes": 58,
+      "sha256": "44189239439deed70fed2fccef756f308270b640a0841386dd3910f713be4515",
+      "reason": "Intermediate checkpoint duplicated by final full report"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/Focused/Live.json",
+      "bytes": 1475805,
+      "sha256": "b6a782953f832257d7cc3c9913e16a7c5a9386b34cc10b41ca279f3bb1b29c13",
+      "reason": "Intermediate checkpoint duplicated by final full report"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/FocusedUser/Intermediate/CachedAssetRegistry/CachedAssetRegistry_0.ref",
+      "bytes": 58,
+      "sha256": "d4ab9cf946ad23af3bf18a73ec80fba8425d4f93909cb9a6316b7328232a67b1",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/FocusedUser/Intermediate/CachedAssetRegistry/CachedAssetRegistry_0_0CD056AA4737551B8DD183BF1C86F2EA.bin",
+      "bytes": 165859249,
+      "sha256": "9b7924a62fb5fe04fdc0d41e12adf88337436219987a7df3b1dbbd676a6626da",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/FocusedUser/Intermediate/CachedAssetRegistryDiscovery.bin",
+      "bytes": 512904,
+      "sha256": "14a3824bb79a69018d6a4c8e14cb6edc7bac2498e8139415d518823771316568",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/FocusedUser/Intermediate/PipInstall/extra_urls.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/FocusedUser/Intermediate/PipInstall/Lib/site-packages/plugin_site_package.pth",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/FocusedUser/Intermediate/PipInstall/merged_requirements.in",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/FocusedUser/Intermediate/PipInstall/pyreqs_plugins.list",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/FocusedUser/Intermediate/ShaderAutogen/PCD3D_SM5/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/FocusedUser/Intermediate/ShaderAutogen/PCD3D_SM6/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/FocusedUser/Saved/ShaderDebugInfo/PCD3D_SM6/WorldGridMaterial_67bacdd81a65e5e9/Default/DDCKey-Editor.txt",
+      "bytes": 3203460,
+      "sha256": "76bd9ccdc7adacbed0f40b773b54439131297c1f49e9f801567d5ea2364ce90a",
+      "reason": "Isolated run regeneration cache"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/FocusedUser/Saved/Validation/PlayerLocomotion/ActionRecovery_20261026_023416_516093.progress.json",
+      "bytes": 55,
+      "sha256": "99a8cf7c08c5f539ebc5ea7ae1d4cfb8a1e53490d6ba8fc4a4050b2ec574e9c5",
+      "reason": "Intermediate checkpoint duplicated by final full report"
+    },
+    {
+      "path": "Saved/Validation/ActionRecovery_20261026/Live.json",
+      "bytes": 19044788,
+      "sha256": "122932d2cdfbe4a6e1f233eb05c7feff1351ff9c0dd281a22329f2b3048e7d6c",
+      "reason": "Intermediate checkpoint duplicated by final full report"
+    }
+  ]
+}

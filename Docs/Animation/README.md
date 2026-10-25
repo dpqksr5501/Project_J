@@ -24,6 +24,8 @@ UEFN 원본에서 변환한 Manny 시퀀스 575개·BlendSpace 11개를 관리�
 
 ## 검증을 읽을 때
 
+2026-10-26 액션 복귀 보강은 Editor 빌드·실제 RHI 회귀59개, 실제22조건 7,895표본의 완료된 snapshot 재분석과 별도 연속 공격2조건 718표본으로 확인했다. Start/Stop/Land뿐 아니라 Idle Break와 늦은 지상 전환 요청을 같은 수명으로 관리한다. [현재 계약](Architecture/Player_Locomotion_Architecture.md#정지-모션과-발-접지) · [원인과 관측 시점·검증 범위](Authoring/Player_Animation_Library.md#액션-복귀의-idle-break와-잔여-예측-보강--2026-10-26)를 따른다.
+
 캐릭터 마스터 승격 후에는 의상 등록·활성화 수명, 부모/자식 조립과 기존 handover·실제 GAS 소유권·몸체 검사를 포함한 76개 회귀가 경고·실패 없이 통과했다. 실제 PIE 조건·의도적으로 유지한 ABP 경계는 [마스터 제작 계약](../Architecture/Runtime/Player_Character_Master.md)을 따른다. 아래 수치는 각 이전 단계의 검증이다.
 
 2026-10-21 후속 최종 점검에서는 Editor/Game Development direct UBT와 native 67개·엔진 문자열 검사 3개, 총 70개 회귀가 경고·실패·미실행 없이 통과했다. 현재 생산 BP/ABP 7개의 연결을 재확인하고 새 네트워크 PIE에서 루프 회전·OTM/Strafe 공중·착지를 검사했다. 초기화 검사 언어 상태는 실행 경계에서 복원하며 Voice는 Iris 연결 전에 로드한다. 아래 61/62개는 이전 단계 결과다. 범위와 호환 처리의 적용 버전·비용은 위 최종 점검 문서를 따른다.

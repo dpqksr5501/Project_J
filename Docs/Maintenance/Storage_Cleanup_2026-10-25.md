@@ -44,3 +44,9 @@ python Archives/Validation/verify_archive.py Archives/Validation/Rigging_2026-10
 원래 ZIP·trace member·임시 복원본의 SHA를 모두 다시 확인한 뒤 중복 907,223,845bytes trace를 제거했다. 후속 시험의 격리 UserDir·중복/미채택 캡처·일회성 드라이버를 포함해 276개 파일·논리 1,105,016,978bytes를 정리했다. 대표 이미지와 interval/측정 CSV·manifest는 [후속 보고서](../Performance/Reports/ProjectJ_Cloth_Budget_200_2026-10-25.md)에 보존한다. 원본 ZIP과 SourceArt·에셋·현재 바이너리/빌드 캐시는 유지했다.
 
 즉시 관측 C 여유 공간은 108,812,017,664→108,811,784,192bytes로 233,472bytes 감소했다. 논리 삭제 합계를 물리 확보량으로 주장하지 않는다. [정확한 경로·해시·보존 증명](../Performance/Reports/Data/ClothBudget200_20261025/Cleanup.json)을 따른다. 이전 10월 25일 정리 수치와 별도 작업이다.
+
+## 10월 26일 액션 복귀 작업 마감
+
+종료된 `Saved/Validation/ActionRecovery_20261026`만 정리했다. 초기 실패·최종/집중 PIE·빌드·회귀·일회성 드라이버 **65개 payload**는 로컬 ZIP **1,201,755bytes**에 보관하고 전체 및 각 해제 SHA-256을 검증했다. 격리 AssetRegistry/셰이더 재생성 캐시, 최종 원문과 중복되는 Live 체크포인트, 보관된 임시 파일 **105개·903,358,873bytes**를 원본 해시 재검사 후 삭제했다. ZIP 추가 후 논리 순감소는 **902,157,118bytes(860.36MiB)**다. C: 여유는 **106,090,065,920→106,090,065,920bytes**, 즉시 관측 증가 **0bytes**로 구분한다.
+
+제작 원본·Content·Source·Config·현재 빌드/캐시·영구 검사기는 보존했다. 최종 빌드 로그·native index·작은 분석/종료 receipt는 직접 조회할 수 있다. 새 PC에서는 [공유 결과](../../Archives/Validation/ActionRecovery_2026-10-26/Summary.json)를 읽을 수 있지만 전체 원문은 로컬 ZIP을 별도로 받아야 한다. [경로·해시·퇴역 이유 명세](../../Archives/Validation/ActionRecovery_2026-10-26/ArchiveManifest.json) · [정리 수치](../../Archives/Validation/ActionRecovery_2026-10-26/CleanupResult.json) · [기존 검증·복원기](../../Archives/Validation/verify_archive.py)를 사용한다. 에디터·빌드 프로세스가 없는 것을 확인했고 강제 종료하지 않았다.

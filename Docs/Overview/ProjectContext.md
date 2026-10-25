@@ -1,5 +1,7 @@
 # Project J 프로젝트 맥락
 
+2026-10-26 액션 복귀 후속 보강은 가려진 Idle Break·지상 전환 요청·잔여 root-motion 예측을 공통 source 소유권으로 처리한다. 정상 새 이동의 Stop·실제 Falling의 Land·정지 TIP와 GASP 그래프는 유지한다. Editor 빌드·RHI 회귀59개, 실제22조건 7,895표본 재분석·연속 공격2조건 718표본을 확인했다. [현재 계약](../Animation/Architecture/Player_Locomotion_Architecture.md#정지-모션과-발-접지) · [원인·관측 오류·검증 경계](../Animation/Authoring/Player_Animation_Library.md#액션-복귀의-idle-break와-잔여-예측-보강--2026-10-26) · [보관·정리 명세](../../Archives/Validation/ActionRecovery_2026-10-26/ArchiveManifest.json)를 따른다.
+
 2026-10-26 [Cloth 후속 진단과 최적화](../Performance/Reports/ProjectJ_Cloth_Budget_200_2026-10-25.md)는 동일 바이너리 ON/OFF/OFF/ON에서 200명 이동 1,827.665→63.092ms, 전원 공격 2,123.513→79.754ms를 확인했다. 로컬 authored 품질·LOD0, 활성 Cloth 200개를 유지하고 원격 199개에만 인스턴스 예산을 적용했다. 피부 body만 LOD0–2이며 혼합 head/헤어·텍스처는 보존한다. GPU 증가·초기 일괄 생성 지연·60FPS 미달과 실제 원격/출하 빌드 검증 범위를 구분한다.
 
 2026-10-25 전환 직후 직접 ABP200명 비용은 [기준 실측](../Performance/Reports/ProjectJ_DirectRig_200_2026-10-25.md)을 따른다. 리타깃 실행0회였지만 전체 frame은 비슷했고 Cloth/병렬 작업 대기가 남았다. 과거 NullRHI worker CPU와 실RHI frame을 구분하며 이후 Cloth 최적화를 순수 리타깃 제거 효과로 돌리지 않는다.

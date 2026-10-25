@@ -1,0 +1,11 @@
+{
+  "deletedFiles": 105,
+  "deletedBytes": 903358873,
+  "archiveBytes": 1201755,
+  "logicalNetReductionBytes": 902157118,
+  "freeBytesBefore": 106090065920,
+  "freeBytesAfter": 106090065920,
+  "freeBytesDelta": 0,
+  "archiveSha256": "e353eabbe879a82d65fa9138ecdafc2132c1a69f8e916501f0c56822ab21303e",
+  "scope": "Only completed ActionRecovery_20261026 run files; 65 archived payloads verified before removal; caches and duplicate checkpoints retired"
+}

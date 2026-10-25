@@ -135,6 +135,31 @@ bool FProjectJPlayerLocomotionSnapshotBoundaryTest::RunTest(const FString&)
          return RecoveryAnim->PlayerStateMachineState;
         };
         using State=EProject_JPlayerPlaybackState;
+        using Rule=EProject_JPlayerTransitionRule;
+        Frame.DeltaTime=1.f/60.f;
+        RecoveryAnim->PlayerStateMachineState=State::IdleBreak;
+        RecoveryAnim->SetNativeTransitionToLoop(true);RecoveryAnim->SetNativeReTransition(true);
+        Frame.Montage.FullBodyMontageWeight=.2f;Tick(false);
+        TestEqual(TEXT("Remaining slot weight retires an idle break even without an active montage instance"),RecoveryAnim->PlayerStateMachineState,State::IdleLoop);
+        TestFalse(TEXT("Covered source notify requests do not survive takeover"),RecoveryAnim->EvaluateNativeTransition(Rule::NotifyLoop,10.f)||RecoveryAnim->EvaluateNativeTransition(Rule::NotifyRedirect,10.f));
+        RecoveryAnim->RequestLocomotionTransition(true,false,EProject_JLocomotionGaitIntent::Run);
+        TestFalse(TEXT("Covered source cannot enqueue another ground request"),RecoveryAnim->EvaluateNativeTransition(Rule::NotifyLoop,10.f));
+        RecoveryAnim->SelectNativeStateAnimation(TEXT("Idle Break"),uint8(State::IdleBreak),false);
+        TestEqual(TEXT("Idle-break admission shares the ground one-shot ownership contract"),RecoveryAnim->PlayerStateMachineState,State::IdleLoop);
+        TestFalse(TEXT("A hidden state clock cannot mature an idle break"),RecoveryAnim->EvaluateNativeTransition(Rule::IdleBreakElapsed,20.f));
+        Frame.Montage.FullBodyMontageWeight=0.f;Frame.DeltaTime=3.f;Tick(true);
+        TestFalse(TEXT("Residual future displacement after release cannot mint a start"),RecoveryAnim->EvaluateIsMoving());
+        RecoveryAnim->SelectNativeStateAnimation(TEXT("Locomotion Transition"),uint8(State::LocomotionTransition),false);
+        TestEqual(TEXT("Post-action residual prediction cannot enter a fresh start or pivot"),RecoveryAnim->PlayerStateMachineState,State::IdleLoop);
+        TestFalse(TEXT("The original idle-break threshold remains strict after release"),RecoveryAnim->EvaluateNativeTransition(Rule::IdleBreakElapsed,20.f));
+        Frame.DeltaTime=.001f;Tick(false);
+        TestTrue(TEXT("Continuous uncovered idle can use the original idle break again"),RecoveryAnim->EvaluateNativeTransition(Rule::IdleBreakElapsed,20.f));
+        RecoveryAnim->SelectNativeStateAnimation(TEXT("Idle Break"),uint8(State::IdleBreak),false);
+        Frame.Montage.bFullBodyMontageActive=true;Tick(false);
+        TestEqual(TEXT("A second action retires a break even without an intervening movement episode"),RecoveryAnim->PlayerStateMachineState,State::IdleLoop);
+        Frame.Montage.bFullBodyMontageActive=false;Tick(false);
+        TestFalse(TEXT("A consecutive action owns its own presentation interval"),RecoveryAnim->EvaluateNativeTransition(Rule::IdleBreakElapsed,20.f));
+        Frame.DeltaTime=1.f/60.f;
         Frame.Input.bHasMoveInput=true;Tick(true);
         RecoveryAnim->PlayerStateMachineState=State::LocomotionTransition;
         Frame.Montage.bFullBodyMontageActive=true;Tick(true);
@@ -156,6 +181,9 @@ bool FProjectJPlayerLocomotionSnapshotBoundaryTest::RunTest(const FString&)
         RecoveryAnim->PlayerMovementModeRecent=EProject_JPlayerMovementMode::InAir;
         TestEqual(TEXT("A facing request cannot reopen landing rows from action-owned flight history"),SelectRecovery(),State::IdleLoop);
         RecoveryAnim->PlayerMovementModeRecent=EProject_JPlayerMovementMode::OnGround;
+        RecoveryAnim->PlayerMovementStateRecent=EProject_JPlayerMovementState::Moving;
+        TestEqual(TEXT("A facing request cannot reopen stop rows from recent movement"),SelectRecovery(),State::IdleLoop);
+        RecoveryAnim->PlayerMovementStateRecent=EProject_JPlayerMovementState::Idle;
         TestEqual(TEXT("A new stationary facing request can still select turn-in-place"),SelectRecovery(),State::IdleTransition);
         RecoveryAnim->PlayerFutureFacingDelta=0.;
         Frame.Input.bHasMoveInput=true;Tick(true);
@@ -168,6 +196,7 @@ bool FProjectJPlayerLocomotionSnapshotBoundaryTest::RunTest(const FString&)
         TestEqual(TEXT("A real fall after an interrupted aerial action restores landing"),SelectRecovery(),State::IdleTransition);
         RecoveryAnim->NativeUninitializeAnimation();
         TestEqual(TEXT("A retained instance does not inherit the retired action's recovery suppression"),SelectRecovery(),State::IdleTransition);
+        TestTrue(TEXT("A new source lifetime retains the original idle state-clock contract"),RecoveryAnim->EvaluateNativeTransition(Rule::IdleBreakElapsed,3.001f));
     }
     return true;
 }

@@ -42,7 +42,7 @@ case_filter=globals().get('PLAYER_ACTION_RECOVERY_FILTER')
 if case_filter:cases=[c for c in cases if c[1] in case_filter]
 assert cases,'No requested action recovery cases'
 report={'cases':cases,'samples':[],'events':[]};output=output_file('ActionRecovery')
-start=unreal.GameplayStatics.get_time_seconds(world);fired=set();cancelled=set();busy=False;finished=False
+start=unreal.GameplayStatics.get_time_seconds(world);fired=set();repeated=set();cancelled=set();busy=False;finished=False
 
 def validate():
     checks=[]
@@ -57,6 +57,8 @@ def validate():
             assert not any('_Start_' in s['asset'] for s in resumed),'Action replayed its hidden start: '+str(case)
         if name=='StationaryRootMotion':
             assert not any('MOVING:' in s['moving_state'] for s in rows if s['action_active'] and not s['approved_input']),'Root motion created a locomotion episode'
+            assert any(s['state']=='Idle Break' for s in rows if 8.<s['u']<10.),'Fresh uncovered idle break was not exercised'
+            assert any(e.get('repeat') and e['case']==case for e in report['events']),'Consecutive action not exercised'
         if name=='NormalStop':
             assert any('_Start_' in s['asset'] for s in rows if 1.7<s['u']<5.),'Independent start was suppressed'
         if name!='NormalStop':
@@ -69,7 +71,10 @@ def validate():
         else:
             visible=[s for s in rows if s['u']>5.25 and s['weight']<.01 and not s['montage']]
             assert visible,'No post-action frames: '+str(case)
-            assert all(s['base_weight']>.25 for s in visible),'No visible base pose: '+str(case)
+            # Air uses its own player. At ground handoff several live nodes may
+            # each have 0.25 weight; require an evaluated player, not a dominant node.
+            ground=[s for s in visible if 'Walking' in s['physical_mode'] and s['state'] not in ['In Air Loop','In Air Transition']]
+            assert ground and all(s['base_weight']>1.e-5 for s in ground),'No evaluated ground base pose: '+str(case)
             assert not any('_Start_' in s['asset'] for s in visible if not s['approved_input'] and 'Walking' in s['physical_mode']),'Uncommanded post-action start: '+str(case)
             assert not any('_Stop_' in s['asset'] for s in visible),'Action replayed its hidden stop: '+str(case)
             if name!='JumpAfterAction':
@@ -81,6 +86,14 @@ def validate():
                 assert any('Flying' in s['physical_mode'] for s in rows),'GAS forced-flight contract was not exercised'
                 assert not any('Falling' in s['physical_mode'] for s in rows if s['u']>5.),'This case must isolate authored Land from a real fall'
         assert any(s['u']>11. and s['speed']<2. and s['state'] in ['Idle Loop','Idle Break'] for s in rows),'Failed to settle after action: '+str(case)
+        if name not in ['NormalStop','UpperBodyStop']:
+            # Injection happens after this frame's traversal. Only a completed
+            # action-owning snapshot can prove a covered source survived it.
+            assert not any(s['state']=='Idle Break' for s in rows if 'ActionOwns=1' in s['playback']),'Covered idle break survived action takeover: '+str(case)
+            released=[s for s in rows if s['u']>5.25 and s['weight']<.01 and not s['montage']]
+            if released:
+                first=released[0]['u']
+                assert not any(s['state']=='Idle Break' for s in released if s['u']<first+2.9),'Hidden idle clock matured a post-action break: '+str(case)
         checks.append({'case':case,'mode':mode,'name':name,'frames':len(rows),
                        'assets':sorted({s['asset'] for s in rows if s['u']>5.})})
     return checks
@@ -130,6 +143,11 @@ def tick(dt):
                 duration=pawn.play_anim_montage(montage,1.,'')
                 assert duration>0.,'Montage start failed'
                 report['events'].append({'case':case,'u':u,'montage':montage.get_path_name(),'duration':duration})
+        if name=='StationaryRootMotion' and u>=10. and case not in repeated:
+            repeated.add(case)
+            duration=pawn.play_anim_montage(montages['LMB1'],1.,'')
+            assert duration>0.,'Consecutive montage start failed'
+            report['events'].append({'case':case,'u':u,'repeat':True,'duration':duration})
         if name=='CancelRootMotion' and u>=5.9 and case not in cancelled:
             cancelled.add(case);pawn.stop_anim_montage();report['events'].append({'case':case,'u':u,'cancel':True})
         if report['samples'] and t-report['samples'][-1]['t']<.025:return
@@ -148,6 +166,13 @@ def tick(dt):
             'weight':anim.blueprint_get_slot_montage_local_weight('DefaultSlot'),'invalid':anim.get_editor_property('PlayerNoValidAnim'),
             'foot':anim.get_editor_property('PlayerFootPlacementEnable'),
             'approved_input':approved.length2d()>1.e-4,
+            'facing_delta':anim.get_editor_property('PlayerFutureFacingDelta'),
+            'recent_movement':str(anim.get_editor_property('PlayerMovementStateRecent')),
+            'recent_mode':str(anim.get_editor_property('PlayerMovementModeRecent')),
+            'predicted_velocity':str(anim.get_editor_property('PlayerTrajectoryFutureVelocity')),
+            'snapshot_slot_weight':anim.get_thread_safe_full_body_montage_weight(),
+            'selection_tags':[str(t) for t in anim.get_editor_property('PlayerBlendStackInputs').get_editor_property('Tags')],
+            'playback':played,
             'action_active':full_body or anim.blueprint_get_slot_montage_local_weight('DefaultSlot')>1.e-5})
     except Exception:finish(traceback.format_exc())
     finally:busy=False

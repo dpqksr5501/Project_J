@@ -6,6 +6,7 @@
 
 | 보관본 | 내용 | 복원·정리 기록 |
 | --- | --- | --- |
+| [액션 복귀 2026-10-26 명세](ActionRecovery_2026-10-26/ArchiveManifest.json) | **로컬 ZIP**: 실패/최종 PIE·빌드/회귀·임시 드라이버 65개. [작은 공유 결과](ActionRecovery_2026-10-26/Summary.json)는 Git에서 바로 조회 | [원인·검증](../../Docs/Animation/Authoring/Player_Animation_Library.md#액션-복귀의-idle-break와-잔여-예측-보강--2026-10-26) · [정리 수치](ActionRecovery_2026-10-26/CleanupResult.json) |
 | [리깅·직접 ABP 200명 명세](Rigging_2026-10-25/ArchiveManifest.json) | **로컬 ZIP**: 실패/최종 리깅·200명2회+trace. Git으로는 작은 수치·timer CSV·대표 화면·복원 명세 공유 | [성능 결과](../../Docs/Performance/Reports/ProjectJ_DirectRig_200_2026-10-25.md) · [안전 정리·물리 회수 한계](../../Docs/Maintenance/Storage_Cleanup_2026-10-25.md) |
 | [Mover 200명](Mover200_2026-10-22/Evidence.zip) | 최종 ABBA·큰 편차·미채택 30Hz 후보·중간 실패 로그, 회귀/네트워크/월드 검사, 최종 100 NPC 기준 trace | [명세](Mover200_2026-10-22/ArchiveManifest.json) · [공간 정리 결과](Mover200_2026-10-22/CleanupResult.json) · [성능 보고서](../../Docs/Performance/Reports/ProjectJ_Mover_200_2026-10-22.md) |
 
@@ -20,6 +21,8 @@ python Archives/Validation/verify_archive.py Archives/Validation/Rigging_2026-10
 아래 Mover ZIP은 기존과 같이 Git LFS 공유 보관본이다.
 
 ## 검증과 복원
+
+액션 복귀 원문은 `Saved/Maintenance/ActionRecovery_20261026/Evidence.zip`에 로컬 보존하며 새 clone에 자동 제공되지 않는다. `ActionRecovery_2026-10-26/ArchiveManifest.json`도 아래 동일 검증기와 복원 옵션을 사용한다. 공유 요약에는 native59개 결과·실제 PIE 조건·관측 오류를 구분한 판정과 지문을 남겼다.
 
 프로젝트 루트에서 Python 표준 라이브러리만으로 전체 ZIP 지문과 모든 해제 payload를 확인한다.
 

@@ -267,6 +267,9 @@ private:
  // A ground recovery belongs to uninterrupted locomotion or a physical fall,
  // never to displacement/history hidden by a full-body action.
  bool bGroundRecoveryEligible=true;
+ // A covered base-state clock cannot mature a fresh idle break. This is
+ // continuous presentation ownership, not a skill cooldown or movement clock.
+ double GroundPresentationSeconds=TNumericLimits<double>::Max();
  bool IsActionControllingLocomotion() const;
  void UpdateNativeConsoleVariables();
  bool HasBlendStackTag(FName Tag) const;

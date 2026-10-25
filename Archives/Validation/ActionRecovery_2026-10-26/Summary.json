@@ -1,0 +1,668 @@
+{
+  "scope": "Native and production PIE ground action recovery; no new multiplayer, Cook/Shipping or 200-avatar benchmark",
+  "final_editor_build": {
+    "actions": 535,
+    "seconds": 347.61,
+    "result": "Succeeded"
+  },
+  "native": {
+    "succeeded": 59,
+    "succeededWithWarnings": 0,
+    "failed": 0,
+    "notRun": 0
+  },
+  "native_tests": [
+    {
+      "name": "ProjectJ.Mover.CommandAdmission",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.Mover.CommandNumericAdmission",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.Mover.ControllerlessIdleInput",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.Mover.FlightSolverReplicationOrder",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.Mover.JumpIdentityAfterPredictionRejection",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.Mover.LandingBrakingRollback",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.Mover.PresentationQualityAdmission",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.Mover.RepossessPreservesAttributes",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.Mover.StrafeSprintCommandAdmission",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.AirAnimationNotifies",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.AirChooserCoverage",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.AirLiveDirectionAndSprint",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.AnimationSourceFingerprint",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.AnimationUsesMoverViewRotation",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.AvatarPoseRoutes",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.BackwardFacingCandidates",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.BodyPoseMarkerAuthoring",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.CompatibleBodyContract",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.CompatibleBodyPoseSourcePolicy",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.CompatibleBodyServerSource",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.CompatibleClothConfiguration",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.CompatiblePhysicsFrames",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.ConfirmedLandingWithoutSampling",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.DirectNativeQueriesAndWrist",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.GroundCandidateIntegrity",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.GroundedLandingPhase",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.GroundLoopRootMotion",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.GroundSpeedAndCadence",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.MannyConvertedLibrary",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.MannyFoundation",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.MannyPlaybackBindings",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.MannySearchSpace",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.ModularAuthoredPoseLifecycle",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.ModularClothTickLifecycle",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.ModularExtraBones",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.MontageAuthoringIdempotence",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.NativeCallbackOwnership",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.NativeDecisionBoundaries",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.NativeStateAndPinContract",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.NativeTransitionBoundaries",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.NeutralSelection",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.NonCosmeticWeaponCallbacks",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.PlaybackObservationLifetime",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.PlayerMasterAssembly",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.PlayerMasterHierarchy",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.ProductionGraph",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.ReferenceQueryParity",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.RejectStaleFallOffEvent",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.RemoteLandingEventBeforeInterpolatedGround",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.SnapshotPublicationAndReinitialize",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.SourceBindingLifetime",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.SourceValidityLifetime",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.StandingStopFamily",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.StrafeDirectionPolicy",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.StrafeInputFamily",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.TransitionSearchAvailability",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.PlayerLocomotion.TypedRotationOffsetChooser",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.Retarget.AuthoredMoverSourceFamily",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "name": "ProjectJ.RuntimeOwnership.AnimationProxyPinsQueuedAssets",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    }
+  ],
+  "before": {
+    "samples": 7831,
+    "cases": 22,
+    "action_active_idle_break_samples": 101,
+    "nonzero_slot_idle_break_samples": 98
+  },
+  "after": {
+    "samples": 7895,
+    "completed_after_reanalysis": true,
+    "checks": [
+      {
+        "case": 0,
+        "mode": "OTM",
+        "name": "NormalStop",
+        "frames": 358,
+        "assets": [
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Break_v06.M_Relaxed_Stand_Idle_Break_v06",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Loop.M_Relaxed_Stand_Idle_Loop",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Run/BS_Neutral_Run_Loop_F.BS_Neutral_Run_Loop_F",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Stop_F_Lfoot.M_Neutral_Run_Stop_F_Lfoot"
+        ]
+      },
+      {
+        "case": 1,
+        "mode": "OTM",
+        "name": "MoveRelease",
+        "frames": 360,
+        "assets": [
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Break_v04.M_Relaxed_Stand_Idle_Break_v04",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Loop.M_Relaxed_Stand_Idle_Loop",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Run/BS_Neutral_Run_Loop_F.BS_Neutral_Run_Loop_F"
+        ]
+      },
+      {
+        "case": 2,
+        "mode": "OTM",
+        "name": "StartThenAction",
+        "frames": 360,
+        "assets": [
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Loop.M_Relaxed_Stand_Idle_Loop",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Run/BS_Neutral_Run_Loop_F.BS_Neutral_Run_Loop_F",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Reface_Start_F_R_180.M_Neutral_Run_Reface_Start_F_R_180",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Stop_F_Lfoot.M_Neutral_Run_Stop_F_Lfoot"
+        ]
+      },
+      {
+        "case": 3,
+        "mode": "OTM",
+        "name": "MoveDuringAction",
+        "frames": 359,
+        "assets": [
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Loop.M_Relaxed_Stand_Idle_Loop",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Run/BS_Neutral_Run_Loop_F.BS_Neutral_Run_Loop_F",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Stop_F_Lfoot.M_Neutral_Run_Stop_F_Lfoot"
+        ]
+      },
+      {
+        "case": 4,
+        "mode": "OTM",
+        "name": "StopThenAction",
+        "frames": 361,
+        "assets": [
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Break_v08.M_Relaxed_Stand_Idle_Break_v08",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Loop.M_Relaxed_Stand_Idle_Loop"
+        ]
+      },
+      {
+        "case": 5,
+        "mode": "OTM",
+        "name": "HoldThrough",
+        "frames": 359,
+        "assets": [
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Loop.M_Relaxed_Stand_Idle_Loop",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Run/BS_Neutral_Run_Loop_F.BS_Neutral_Run_Loop_F",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Stop_F_Lfoot.M_Neutral_Run_Stop_F_Lfoot"
+        ]
+      },
+      {
+        "case": 6,
+        "mode": "OTM",
+        "name": "StationaryRootMotion",
+        "frames": 359,
+        "assets": [
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Break_v02.M_Relaxed_Stand_Idle_Break_v02",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Break_v07.M_Relaxed_Stand_Idle_Break_v07",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Loop.M_Relaxed_Stand_Idle_Loop"
+        ]
+      },
+      {
+        "case": 7,
+        "mode": "OTM",
+        "name": "UpperBodyStop",
+        "frames": 360,
+        "assets": [
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Break_v04.M_Relaxed_Stand_Idle_Break_v04",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Loop.M_Relaxed_Stand_Idle_Loop",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Run/BS_Neutral_Run_Loop_F.BS_Neutral_Run_Loop_F",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Stop_F_Lfoot.M_Neutral_Run_Stop_F_Lfoot"
+        ]
+      },
+      {
+        "case": 8,
+        "mode": "OTM",
+        "name": "CancelRootMotion",
+        "frames": 359,
+        "assets": [
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Break_v06.M_Relaxed_Stand_Idle_Break_v06",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Loop.M_Relaxed_Stand_Idle_Loop",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Run/BS_Neutral_Run_Loop_F.BS_Neutral_Run_Loop_F"
+        ]
+      },
+      {
+        "case": 9,
+        "mode": "Strafe",
+        "name": "ActionFlightLand",
+        "frames": 359,
+        "assets": [
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Loop.M_Relaxed_Stand_Idle_Loop",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Turn_090_R.M_Relaxed_Stand_Turn_090_R",
+          "/Game/Characters/Mannequins/Animations/ProjectJump/Jump/M_Neutral_Jump_B_Off_Run_Rfoot.M_Neutral_Jump_B_Off_Run_Rfoot",
+          "/Game/Characters/Mannequins/Animations/ProjectJump/Jump/M_Neutral_Jump_Loop_Fall.M_Neutral_Jump_Loop_Fall"
+        ]
+      },
+      {
+        "case": 10,
+        "mode": "OTM",
+        "name": "JumpAfterAction",
+        "frames": 359,
+        "assets": [
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Loop.M_Relaxed_Stand_Idle_Loop",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_F_Land_Stand_Light_Rfoot.M_Neutral_Jump_F_Land_Stand_Light_Rfoot",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Run/BS_Neutral_Run_Loop_F.BS_Neutral_Run_Loop_F",
+          "/Game/Characters/Mannequins/Animations/ProjectJump/Jump/M_Neutral_Jump_F_Start_Stand_Lfoot.M_Neutral_Jump_F_Start_Stand_Lfoot"
+        ]
+      },
+      {
+        "case": 11,
+        "mode": "Strafe",
+        "name": "NormalStop",
+        "frames": 359,
+        "assets": [
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Break_v05.M_Relaxed_Stand_Idle_Break_v05",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Loop.M_Relaxed_Stand_Idle_Loop",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Run/BS_Neutral_Run_Loop_F.BS_Neutral_Run_Loop_F",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Stop_F_Rfoot.M_Neutral_Run_Stop_F_Rfoot"
+        ]
+      },
+      {
+        "case": 12,
+        "mode": "Strafe",
+        "name": "MoveRelease",
+        "frames": 359,
+        "assets": [
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Break_v03.M_Relaxed_Stand_Idle_Break_v03",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Loop.M_Relaxed_Stand_Idle_Loop",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Run/BS_Neutral_Run_Loop_F.BS_Neutral_Run_Loop_F"
+        ]
+      },
+      {
+        "case": 13,
+        "mode": "Strafe",
+        "name": "StartThenAction",
+        "frames": 358,
+        "assets": [
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Loop.M_Relaxed_Stand_Idle_Loop",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Run/BS_Neutral_Run_Loop_F.BS_Neutral_Run_Loop_F",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Stop_F_Lfoot.M_Neutral_Run_Stop_F_Lfoot"
+        ]
+      },
+      {
+        "case": 14,
+        "mode": "Strafe",
+        "name": "MoveDuringAction",
+        "frames": 359,
+        "assets": [
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Break_v04.M_Relaxed_Stand_Idle_Break_v04",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Loop.M_Relaxed_Stand_Idle_Loop",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Run/BS_Neutral_Run_Loop_F.BS_Neutral_Run_Loop_F",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Stop_F_Lfoot.M_Neutral_Run_Stop_F_Lfoot"
+        ]
+      },
+      {
+        "case": 15,
+        "mode": "Strafe",
+        "name": "StopThenAction",
+        "frames": 357,
+        "assets": [
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Break_v02.M_Relaxed_Stand_Idle_Break_v02",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Loop.M_Relaxed_Stand_Idle_Loop",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Stop_F_Lfoot.M_Neutral_Run_Stop_F_Lfoot"
+        ]
+      },
+      {
+        "case": 16,
+        "mode": "Strafe",
+        "name": "HoldThrough",
+        "frames": 359,
+        "assets": [
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Loop.M_Relaxed_Stand_Idle_Loop",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Run/BS_Neutral_Run_Loop_F.BS_Neutral_Run_Loop_F",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Stop_F_Lfoot.M_Neutral_Run_Stop_F_Lfoot"
+        ]
+      },
+      {
+        "case": 17,
+        "mode": "Strafe",
+        "name": "StationaryRootMotion",
+        "frames": 359,
+        "assets": [
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Break_v02.M_Relaxed_Stand_Idle_Break_v02",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Break_v07.M_Relaxed_Stand_Idle_Break_v07",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Loop.M_Relaxed_Stand_Idle_Loop"
+        ]
+      },
+      {
+        "case": 18,
+        "mode": "Strafe",
+        "name": "UpperBodyStop",
+        "frames": 359,
+        "assets": [
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Break_v01.M_Relaxed_Stand_Idle_Break_v01",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Loop.M_Relaxed_Stand_Idle_Loop",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Run/BS_Neutral_Run_Loop_F.BS_Neutral_Run_Loop_F",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Run/M_Neutral_Run_Stop_F_Lfoot.M_Neutral_Run_Stop_F_Lfoot"
+        ]
+      },
+      {
+        "case": 19,
+        "mode": "Strafe",
+        "name": "CancelRootMotion",
+        "frames": 358,
+        "assets": [
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Break_v04.M_Relaxed_Stand_Idle_Break_v04",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Loop.M_Relaxed_Stand_Idle_Loop",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Run/BS_Neutral_Run_Loop_F.BS_Neutral_Run_Loop_F"
+        ]
+      },
+      {
+        "case": 20,
+        "mode": "Strafe",
+        "name": "ActionFlightLandMoving",
+        "frames": 357,
+        "assets": [
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Break_v08.M_Relaxed_Stand_Idle_Break_v08",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Loop.M_Relaxed_Stand_Idle_Loop",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Run/BS_Neutral_Run_Loop_F.BS_Neutral_Run_Loop_F",
+          "/Game/Characters/Mannequins/Animations/ProjectJump/Jump/M_Neutral_Jump_Loop_Fall.M_Neutral_Jump_Loop_Fall"
+        ]
+      },
+      {
+        "case": 21,
+        "mode": "Strafe",
+        "name": "JumpAfterAction",
+        "frames": 358,
+        "assets": [
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Loop.M_Relaxed_Stand_Idle_Loop",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Jump/M_Neutral_Jump_F_Land_Stand_Light_Rfoot.M_Neutral_Jump_F_Land_Stand_Light_Rfoot",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Run/BS_Neutral_Run_Loop_F.BS_Neutral_Run_Loop_F",
+          "/Game/Characters/Mannequins/Animations/ProjectJump/Jump/M_Neutral_Jump_F_Start_Stand_Lfoot.M_Neutral_Jump_F_Start_Stand_Lfoot"
+        ]
+      }
+    ],
+    "action_active_idle_break_samples": 5,
+    "nonzero_slot_idle_break_samples": 0,
+    "published_action_owns_idle_break_samples": 0,
+    "original_raw_success": false,
+    "observation_correction": "Use completed ActionOwns snapshot; injection callback initially observes the previous traversal. Preserve original raw failure and AfterAnalysis.json."
+  },
+  "focused": {
+    "samples": 718,
+    "cases": 2,
+    "completed": true,
+    "checks": [
+      {
+        "case": 0,
+        "mode": "OTM",
+        "name": "StationaryRootMotion",
+        "frames": 359,
+        "assets": [
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Break_v02.M_Relaxed_Stand_Idle_Break_v02",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Break_v03.M_Relaxed_Stand_Idle_Break_v03",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Loop.M_Relaxed_Stand_Idle_Loop"
+        ]
+      },
+      {
+        "case": 1,
+        "mode": "Strafe",
+        "name": "StationaryRootMotion",
+        "frames": 359,
+        "assets": [
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Break_v05.M_Relaxed_Stand_Idle_Break_v05",
+          "/Game/Characters/Mannequins/Animations/Locomotion/Idle/M_Relaxed_Stand_Idle_Loop.M_Relaxed_Stand_Idle_Loop"
+        ]
+      }
+    ]
+  },
+  "final_script_sha256": "dc3a05efd105f119768e51ce5c23881845b9c85d0d49df276aa12932d80e5eef",
+  "evidence_manifest": "ArchiveManifest.json"
+}

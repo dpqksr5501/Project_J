@@ -69,6 +69,7 @@ void UProject_JPlayerAnimInstance::BindLocomotionSource(UMoverComponent* Source)
  MoverPredictor=nullptr;MoverTrajectory.Samples.Reset();PredictorYaw=0.f;
  bNeedsLocomotionHistorySeed=true;PlayerHasLocomotionSource=false;
  bGroundRecoveryEligible=true;
+ GroundPresentationSeconds=TNumericLimits<double>::Max();
  ActiveAirEpisode=0;bAirEntryPending=bAirLoop=false;AirSelectedAsset=nullptr;
  CommittedAirQuery={};AirEntryStartTime=0.f;LastAirReselection=-1.;LastAirBlendTime=.15f;
  AirReselectionCount=AirTransitionEntryCount=AirLoopEntryCount=0;
@@ -200,6 +201,7 @@ FString UProject_JPlayerAnimInstance::InspectFoundationPlayback() const
 	}
 	const auto& Proxy = GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>();
 	const auto& Air=Proxy.GetThreadSafeData().PlayerLocomotionAir;
+	Result+=FString::Printf(TEXT("RecoveryEligible=%d ActionOwns=%d GroundPresentation=%.3f; "),bGroundRecoveryEligible,IsActionControllingLocomotion(),GroundPresentationSeconds==TNumericLimits<double>::Max()?-1.:GroundPresentationSeconds);
 	Result+=FString::Printf(TEXT("AirEpisode=%llu FallOff=%d Jumping=%d LiveAngle=%.2f Gait=%d AirEntries=%d/%d QueryMode=%d QueryDir=%d AirAsset=%s; "),Air.Episode,Air.Query.bFallOff,Proxy.GetThreadSafeData().Air.bIsJumping,Air.LiveDirectionDegrees,int32(Air.Query.Gait),AirTransitionEntryCount,AirLoopEntryCount,int32(CommittedAirQuery.RotationMode),int32(CommittedAirQuery.Direction),*GetNameSafe(AirSelectedAsset));
 	const auto* Interface = Proxy.GetAnimClassInterface();
 	if (!Interface) return TEXT("No generated animation class");

@@ -29,6 +29,12 @@ bool Curve(UAnimSequence* Animation,FName Name,float Time,float& Value)
 	Value=0.f;
 	return UAnimationWarpingLibrary::GetCurveValueFromAnimation(Animation,Name,Time,Value);
 }
+bool IsGroundOneShot(EProject_JPlayerPlaybackState State)
+{
+ return State==EProject_JPlayerPlaybackState::IdleTransition ||
+        State==EProject_JPlayerPlaybackState::LocomotionTransition ||
+        State==EProject_JPlayerPlaybackState::IdleBreak;
+}
 }
 
 void UProject_JPlayerAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeconds)
@@ -108,7 +114,7 @@ bool UProject_JPlayerAnimInstance::EvaluateNativeTransition(EProject_JPlayerTran
     (HasBlendStackTag(TEXT("Spin_R")) && PlayerFutureFacingDelta< -45.));
  case RuleType::EarlyFacingRedirect:
   return FMath::Abs((PlayerTrajectoryFutureFacing-PlayerFutureFacingOnTransitionStart).GetNormalized().Yaw)>60. && StateElapsedTime<.5f && StateElapsedTime>0.f && !PlayerBlendStackInputs.Loop && !PlayerTrajectoryIsCircling;
- case RuleType::IdleBreakElapsed:return StateElapsedTime>3.f;
+ case RuleType::IdleBreakElapsed:return FMath::Min(double(StateElapsedTime),GroundPresentationSeconds)>3.;
  case RuleType::NotifyRedirect:return PlayerNotifyTransitionReTransition;
  case RuleType::NotifyLoop:return PlayerNotifyTransitionToLoop;
  case RuleType::Circling:return PlayerTrajectoryCirclingTime>.25;
@@ -142,7 +148,9 @@ void UProject_JPlayerAnimInstance::UpdateNativeConsoleVariables()
 bool UProject_JPlayerAnimInstance::EvaluateIsMoving()
 {
 	const auto& Frame=GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
-	if (IsActionControllingLocomotion() && !Frame.Input.bHasMoveInput) return false;
+	// Prediction can still contain the action's displacement after its montage
+	// and Mover feature retire. It cannot create a new input-free movement episode.
+	if ((IsActionControllingLocomotion() || !bGroundRecoveryEligible) && !Frame.Input.bHasMoveInput) return false;
 	const auto& Trajectory=PlayerTrajectory;
 	FVector Future; UPoseSearchTrajectoryLibrary::GetTransformTrajectoryVelocity(Trajectory,.9f,1.f,Future,true);
 	// Preserve the authored reachable return: the role switch in IsMoving was disconnected.
@@ -342,16 +350,21 @@ void UProject_JPlayerAnimInstance::UpdateNativeStates()
  Update(PlayerStance,PlayerStanceLastFrame,PlayerStanceRecent,PlayerStanceTime,PlayerStanceLastStateTime,PlayerCharacterProperties.Stance,.1);
  Update(PlayerMovementDirection,PlayerMovementDirectionLastFrame,PlayerMovementDirectionRecent,PlayerMovementDirectionTime,PlayerMovementDirectionLastStateTime,PlayerCharacterProperties.MovementDirection,.1);
  const auto& Frame=GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
- const bool bHadGroundRecovery=bGroundRecoveryEligible;
- if (IsActionControllingLocomotion()) bGroundRecoveryEligible=false;
- else if (Frame.Air.bIsFalling || (PlayerMovementMode==EProject_JPlayerMovementMode::OnGround &&
-          Frame.Input.bHasMoveInput && PlayerMovementState==EProject_JPlayerMovementState::Moving))
+ const bool bActionOwns=IsActionControllingLocomotion();
+ if (bActionOwns)
+ {
+  bGroundRecoveryEligible=false;GroundPresentationSeconds=0.;
+  // Retire requests from the covered source as well as its selected one-shot.
+  PlayerNotifyTransitionReTransition=PlayerNotifyTransitionToLoop=false;
+ }
+ else if (GroundPresentationSeconds<TNumericLimits<double>::Max())
+  GroundPresentationSeconds+=FMath::Max(0.f,Frame.DeltaTime);
+ if (!bActionOwns && (Frame.Air.bIsFalling || (PlayerMovementMode==EProject_JPlayerMovementMode::OnGround &&
+          Frame.Input.bHasMoveInput && PlayerMovementState==EProject_JPlayerMovementState::Moving)))
   bGroundRecoveryEligible=true;
- // Taking over an already playing start/stop/landing cancels that transition too.
+ // Taking over a ground one-shot retires its covered presentation too.
  // Keep source clocks, input, physical movement and state-history clocks intact.
- if (bHadGroundRecovery && !bGroundRecoveryEligible &&
-     (PlayerStateMachineState==EProject_JPlayerPlaybackState::IdleTransition ||
-      PlayerStateMachineState==EProject_JPlayerPlaybackState::LocomotionTransition))
+ if (bActionOwns && IsGroundOneShot(PlayerStateMachineState))
  {
   const bool bMoving=PlayerMovementState==EProject_JPlayerMovementState::Moving;
   SelectNativeStateAnimation(bMoving?TEXT("Locomotion Loop"):TEXT("Idle Loop"),
@@ -362,7 +375,7 @@ void UProject_JPlayerAnimInstance::UpdateNativeStates()
 bool UProject_JPlayerAnimInstance::IsActionControllingLocomotion() const
 {
  const auto& Frame=GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
- return Frame.Montage.bFullBodyMontageActive || Frame.Movement.bHasGameplayRootMotion;
+ return Frame.Montage.bFullBodyMontageActive || Frame.Montage.FullBodyMontageWeight>ZERO_ANIMWEIGHT_THRESH || Frame.Movement.bHasGameplayRootMotion;
 }
 
 FTransform UProject_JPlayerAnimInstance::ReadOffsetRootTransform()
@@ -401,7 +414,9 @@ void UProject_JPlayerAnimInstance::SelectNativeStateAnimation(FName Name,uint8 S
  // Preserve selection at state entry, including per-node pose history.
  // Updating the source below a full-body action must not leave a partially
  // played start/pivot to reveal at blend-out. Keep its existing moving/idle loop.
- if (State==uint8(EProject_JPlayerPlaybackState::LocomotionTransition) && IsActionControllingLocomotion())
+ const bool bActionOwns=IsActionControllingLocomotion();
+ if ((bActionOwns && IsGroundOneShot(static_cast<EProject_JPlayerPlaybackState>(State))) ||
+     (State==uint8(EProject_JPlayerPlaybackState::LocomotionTransition) && !bGroundRecoveryEligible))
  {
   const bool bMoving=PlayerMovementState==EProject_JPlayerMovementState::Moving;
   Name=bMoving?TEXT("Locomotion Loop"):TEXT("Idle Loop");
@@ -410,7 +425,8 @@ void UProject_JPlayerAnimInstance::SelectNativeStateAnimation(FName Name,uint8 S
  // Action-owned flight/stopping cannot mint a delayed ground recovery after
  // weight is zero. Independent movement/falling and new stationary TIP remain valid.
  else if (State==uint8(EProject_JPlayerPlaybackState::IdleTransition) && !bGroundRecoveryEligible &&
-          !(PlayerMovementModeRecent==EProject_JPlayerMovementMode::OnGround && EvaluateTurnInPlace()))
+          !(PlayerMovementModeRecent==EProject_JPlayerMovementMode::OnGround &&
+            PlayerMovementStateRecent==EProject_JPlayerMovementState::Idle && EvaluateTurnInPlace()))
  { Name=TEXT("Idle Loop"); State=uint8(EProject_JPlayerPlaybackState::IdleLoop); }
  PlayerStateName=Name;PlayerStateMachineState=static_cast<EProject_JPlayerPlaybackState>(State);
  PlayerNotifyTransitionReTransition=PlayerNotifyTransitionToLoop=false;
@@ -499,6 +515,7 @@ void UProject_JPlayerAnimInstance::RequestLocomotionTransition(bool bToLoop, boo
  EProject_JLocomotionGaitIntent ExcludedGait)
 {
  check(IsInGameThread());
+ if (IsActionControllingLocomotion()) return;
  if (bRequireGaitChange && PlayerGait == ExcludedGait) return;
  if(bToLoop)PlayerNotifyTransitionToLoop=true;else PlayerNotifyTransitionReTransition=true;
 }

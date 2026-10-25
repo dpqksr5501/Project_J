@@ -4,7 +4,7 @@ Project J의 이동 애니메이션은 **Mover 이동 시뮬레이션, C++ 상�
 
 캐릭터 제작 부모는 `BP_Player_Master`이며 기존 `BP_GreatSword`가 이를 상속한다. 기존 테스트 BP의 로컬 상태·능력 기본값과 중복 프로필 지정을 제거하고, 대검 의상 8개의 연결은 native modular component 등록 수명으로 옮겼다. 직업/몸체 프로필·입력·리타기터·공통 ABP의 포즈 순서는 유지한다. [캐릭터/ABP 마스터 계약](../../Architecture/Runtime/Player_Character_Master.md)의 상속·제작·저장 기준을 따른다.
 
-이 문서는 2026-10-23 현재 구현의 시작점이다. 시점별 원인·실패·복구·실행 결과는 [전환·검증 기록](Player_Locomotion_Migration_2026-10-19.md)과 [Mover 수정·200명 재검증](../../Performance/Reports/ProjectJ_Mover_200_2026-10-22.md), 실제 제작 절차는 [이동 콘텐츠 확장](../Authoring/DataDrivenLocomotionExtensionGuide.md), 골격과 추가 뼈는 [스켈레톤 제작 기준](../Authoring/HumanoidSkeletonRetargetingStandards.md)을 따른다.
+이 문서는 2026-10-26 현재 구현의 시작점이다. 시점별 원인·실패·복구·실행 결과는 [전환·검증 기록](Player_Locomotion_Migration_2026-10-19.md)과 [Mover 수정·200명 재검증](../../Performance/Reports/ProjectJ_Mover_200_2026-10-22.md), 실제 제작 절차는 [이동 콘텐츠 확장](../Authoring/DataDrivenLocomotionExtensionGuide.md), 골격과 추가 뼈는 [스켈레톤 제작 기준](../Authoring/HumanoidSkeletonRetargetingStandards.md)을 따른다.
 
 ## 입력에서 표시 포즈까지
 
@@ -73,9 +73,15 @@ Pivot의 속도 상한은 GT에서 게시한 실제 Mover gait 튜닝에 기존 
 
 ## 정지 모션과 발 접지
 
-전신 액션은 뒤에서 갱신 중인 지상 전환 동작의 수명도 끊는다. GT snapshot은 `DefaultSlot` 몽타주의 실제 instance 수명(첫 blend-in·blend-out 포함), Mover의 gameplay root motion과 실제 Falling을 별도로 게시한다. 이동 입력 없는 액션의 예측 변위로 Start를 열지 않으며, 액션 전부터 진행 중이거나 액션 중 새로 요청된 지상 전환은 현재 이동 상태의 기존 Locomotion Loop 또는 Idle Loop로 이어 간다. 액션이 가린 Stop·강제 Flying 종료의 착지를 뒤늦게 재생하지 않는다. 액션 전부터 Stop이 재생 중이던 경우도 기존 Idle Loop 선택으로 복귀한다. 새 독립 이동이나 액션 종료 후 실제 Falling이 관측되면 기존 Stop·착지 선택을 다시 허용한다. 정지 중 새 facing의 TIP는 최근 이동 모드까지 OnGround일 때 복귀 예외로 허용한다. 강제 Flying 이력이 남은 프레임에서 TIP가 Land 후보를 다시 열지 않게 하며, UpperBody 장착은 전신 액션 소유권과 구분한다.
+전신 액션은 뒤에서 갱신 중인 지상 전환 동작의 수명도 끊는다. GT snapshot은 `DefaultSlot` 몽타주의 실제 instance 수명(첫 blend-in·blend-out 포함), Mover의 gameplay root motion과 실제 Falling을 별도로 게시한다. 이동 입력 없는 액션의 예측 변위로 Start를 열지 않으며, 액션 전부터 진행 중이거나 액션 중 새로 요청된 지상 전환은 현재 이동 상태의 기존 Locomotion Loop 또는 Idle Loop로 이어 간다. 액션이 가린 Stop·강제 Flying 종료의 착지를 뒤늦게 재생하지 않는다. 액션 전부터 Stop이 재생 중이던 경우도 기존 Idle Loop 선택으로 복귀한다. 새 독립 이동이나 액션 종료 후 실제 Falling이 관측되면 기존 Stop·착지 선택을 다시 허용한다. 정지 중 새 facing의 TIP는 최근 이동 모드 OnGround·최근 이동 상태 Idle이 함께 확인될 때 복귀 예외로 허용한다. 강제 Flying 이력이 남은 프레임에서 TIP가 Land 후보를 다시 열지 않게 하며, UpperBody 장착은 전신 액션 소유권과 구분한다.
 
 이 복귀 이력은 AnimInstance의 해당 이동 source에 속하며 owner 교체·재초기화에서 해제한다. 입력·물리 속도·기존 상태 이력 시간·몽타주 clock을 초기화하거나 스킬별 대기 시간을 추가하지 않는다. 실제 에셋과 포즈 연결은 유지하고, [액션 복귀 PIE 검사](../../../Scripts/Validation/Validate-PlayerLocomotionActionRecovery.py)로 정상 Start/Stop·출발 중 공격·공격 중 새 이동·입력 유지·기존 Stop 중 공격·취소·UpperBody·물리 점프와 강제 Flying/TIP를 구분한다.
+
+2026-10-26에는 같은 소유권을 Idle Break와 전환 노티파이까지 보강했다. `IdleTransition`(Stop/Land/TIP), `LocomotionTransition`(Start/Pivot 등), `IdleBreak`는 공통 지상 단발 분류를 사용한다. 액션이 덮는 동안 기존 단발 선택과 대기 중인 지상 전환 요청을 회수하고 새 요청도 받지 않는다. 이전 복귀 권한의 변경 여부에 의존하지 않으므로, 이동 없이 대기하다 다시 공격해도 동일하게 처리한다. 실제 montage instance·잔여 slot weight·Mover root motion 중 하나라도 소유하면 이 계약을 유지한다.
+
+액션 종료 후에도 승인 입력이 없는 잔여 예측 변위는 새 이동 episode를 만들지 않는다. 새 승인 이동 또는 실제 Falling은 기존 복귀 권한을 회복한다. 복귀 억제 중 TIP 예외는 최근 모드 OnGround와 최근 이동 Idle을 함께 요구해, 남아 있는 Moving 이력의 Stop 행을 다시 열지 않는다. 실제 공중 episode와 공중 플레이어의 시계는 별도로 유지한다.
+
+Idle Break의 기존 `StateElapsedTime > 3초` 조건에는 source가 액션에 가려지지 않고 이어진 시간도 함께 적용한다. `GroundPresentationSeconds`는 액션 소유 중 0이고 해제 후 snapshot delta로 누적되며, 두 시계 중 짧은 값이 기존 3초 경계를 넘어야 한다. 따라서 공격 중 진행한 대기 시간이 즉시 새 Idle Break로 드러나지 않고, 정상 대기 후에는 다시 재생된다. 원래 상태·입력·물리·몽타주 시계를 되감거나 별도 timer/스킬별 지연을 추가하지 않는다. 초기·source 재바인딩 시에는 기존 상태 시계만 제한하도록 이력을 해제한다. 새 지상 단발 상태를 추가할 때에도 이 소유권 분류와 실제 재생 검사를 함께 확장한다. [원인·검증 범위](../Authoring/Player_Animation_Library.md#액션-복귀의-idle-break와-잔여-예측-보강--2026-10-26)를 따른다.
 
 2026-10-22부터 `Stand Stops`는 포즈 검색 전에 native `PlayerGaitRecent`로 Run/Sprint 후보를 분리한다. 기존 속도 200 이상 조건만으로는 Run 500에서도 Sprint Stop이 검색됐다. Sprint 입력 해제와 정지가 같은 프레임에 일어나면 현재 gait가 먼저 Run으로 바뀌므로, 기존 최근 gait의 유지 계약을 사용한다. 낮은 속도의 Walk Stop, 좌우 발·방향 후보, Pose Match, 재생 시작 시각과 blend 출력은 유지한다. 이 필터는 정지 직전 안정된 gait에 대한 기준이며, Run으로 낮춘 직후 남은 모든 overspeed 조건의 외형을 보증하지 않는다.
 
