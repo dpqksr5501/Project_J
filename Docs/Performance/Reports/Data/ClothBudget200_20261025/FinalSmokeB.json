@@ -1,0 +1,262 @@
+{
+  "run": "ClothBudget_On_FinalB_20261026",
+  "actors": 200,
+  "weapon_visible": 1,
+  "phases": {
+    "idle": {
+      "frame_delta_ms": {
+        "n": 90,
+        "mean": 55.46692537777778,
+        "median": 54.955599,
+        "p95": 59.215401
+      },
+      "gt_ms": {
+        "n": 90,
+        "mean": 42.80727651111111,
+        "median": 42.608551,
+        "p95": 45.3568
+      },
+      "render_ms": {
+        "n": 90,
+        "mean": 8.365655555555556,
+        "median": 8.280349999999999,
+        "p95": 9.1471
+      },
+      "rhi_ms": {
+        "n": 90,
+        "mean": 5.0764233333333335,
+        "median": 5.01215,
+        "p95": 5.8756
+      },
+      "gpu_ms": {
+        "n": 90,
+        "mean": 9.166606666666667,
+        "median": 9.1172,
+        "p95": 10.146
+      },
+      "rendered_bodies": [
+        200
+      ],
+      "rendered_weapons": [
+        200
+      ],
+      "body_lods": {
+        "body_lod0": [
+          200
+        ],
+        "body_lod1": [
+          0
+        ],
+        "body_lod2": [
+          0
+        ]
+      }
+    },
+    "move_pivot": {
+      "frame_delta_ms": {
+        "n": 80,
+        "mean": 62.50714275,
+        "median": 61.258402000000004,
+        "p95": 67.505898
+      },
+      "gt_ms": {
+        "n": 80,
+        "mean": 49.9988711625,
+        "median": 49.137451,
+        "p95": 53.837799
+      },
+      "render_ms": {
+        "n": 80,
+        "mean": 9.4492425,
+        "median": 9.37455,
+        "p95": 10.017
+      },
+      "rhi_ms": {
+        "n": 80,
+        "mean": 5.3730475,
+        "median": 5.1690000000000005,
+        "p95": 6.4166
+      },
+      "gpu_ms": {
+        "n": 80,
+        "mean": 9.33419875,
+        "median": 9.19705,
+        "p95": 10.0651
+      },
+      "rendered_bodies": [
+        200
+      ],
+      "rendered_weapons": [
+        200
+      ],
+      "body_lods": {
+        "body_lod0": [
+          200
+        ],
+        "body_lod1": [
+          0
+        ],
+        "body_lod2": [
+          0
+        ]
+      }
+    },
+    "jump_land": {
+      "frame_delta_ms": {
+        "n": 82,
+        "mean": 60.490104914634145,
+        "median": 60.169450999999995,
+        "p95": 62.312504
+      },
+      "gt_ms": {
+        "n": 82,
+        "mean": 48.46871215853658,
+        "median": 48.1768985,
+        "p95": 49.731098
+      },
+      "render_ms": {
+        "n": 82,
+        "mean": 9.210965853658537,
+        "median": 9.18705,
+        "p95": 9.5441
+      },
+      "rhi_ms": {
+        "n": 82,
+        "mean": 5.191926829268293,
+        "median": 5.1322,
+        "p95": 5.8335
+      },
+      "gpu_ms": {
+        "n": 82,
+        "mean": 8.879001219512196,
+        "median": 8.86945,
+        "p95": 9.4119
+      },
+      "rendered_bodies": [
+        200
+      ],
+      "rendered_weapons": [
+        200
+      ],
+      "body_lods": {
+        "body_lod0": [
+          200
+        ],
+        "body_lod1": [
+          0
+        ],
+        "body_lod2": [
+          0
+        ]
+      }
+    },
+    "attack": {
+      "frame_delta_ms": {
+        "n": 32,
+        "mean": 80.1054660625,
+        "median": 78.5667495,
+        "p95": 87.125702
+      },
+      "gt_ms": {
+        "n": 32,
+        "mean": 68.24478796875,
+        "median": 67.2639005,
+        "p95": 75.681396
+      },
+      "render_ms": {
+        "n": 32,
+        "mean": 9.980078125,
+        "median": 9.6664,
+        "p95": 12.2572
+      },
+      "rhi_ms": {
+        "n": 32,
+        "mean": 6.795303125,
+        "median": 6.5457,
+        "p95": 10.4247
+      },
+      "gpu_ms": {
+        "n": 32,
+        "mean": 8.76329684375,
+        "median": 7.5761,
+        "p95": 23.710699
+      },
+      "rendered_bodies": [
+        200
+      ],
+      "rendered_weapons": [
+        200
+      ],
+      "body_lods": {
+        "body_lod0": [
+          200
+        ],
+        "body_lod1": [
+          0
+        ],
+        "body_lod2": [
+          0
+        ]
+      }
+    },
+    "return": {
+      "frame_delta_ms": {
+        "n": 88,
+        "mean": 57.11182959090909,
+        "median": 56.0816515,
+        "p95": 62.992706
+      },
+      "gt_ms": {
+        "n": 88,
+        "mean": 44.149046511363636,
+        "median": 43.5565985,
+        "p95": 49.319302
+      },
+      "render_ms": {
+        "n": 88,
+        "mean": 8.489443181818181,
+        "median": 8.41385,
+        "p95": 9.0938
+      },
+      "rhi_ms": {
+        "n": 88,
+        "mean": 5.0018056818181815,
+        "median": 4.9677,
+        "p95": 5.4363
+      },
+      "gpu_ms": {
+        "n": 88,
+        "mean": 6.567786363636364,
+        "median": 6.5469,
+        "p95": 6.7581
+      },
+      "rendered_bodies": [
+        200
+      ],
+      "rendered_weapons": [
+        200
+      ],
+      "body_lods": {
+        "body_lod0": [
+          200
+        ],
+        "body_lod1": [
+          0
+        ],
+        "body_lod2": [
+          0
+        ]
+      }
+    }
+  },
+  "frames_sha256": "0954470ca46c842298be7cf2bc30368b38f1667849c8e6ac3576dcabf853459c",
+  "peak_process_memory": {
+    "exitCode": 0,
+    "nativeHandleCapturedBeforeWait": true,
+    "hasExited": true,
+    "sampledPeakWorkingSetBytes": 9679409152,
+    "sampledPeakPrivateBytes": 24270594048,
+    "memoryScope": "Entire editor game process including startup, sampled every 500ms; not incremental crowd memory."
+  },
+  "scope": "Second final-build smoke, kept separate from paired A/B means."
+}

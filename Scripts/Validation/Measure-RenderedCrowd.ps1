@@ -1,8 +1,10 @@
 ﻿param([Parameter(Mandatory=$true)][ValidatePattern('^[A-Za-z0-9_-]+$')][string]$RunName, [switch]$Trace, [string]$Executable, [switch]$DisableEditorPython, [switch]$LocalPlayer,
- [ValidateRange(1,200)][int]$Count=200,[switch]$Movement,[string]$ConsoleCommands='',
+ [ValidateRange(1,200)][int]$Count=200,[switch]$Movement,[switch]$CloseView,[string]$ConsoleCommands='',
  [ValidateRange(-1,1)][int]$NaniteMode=-1,
  [ValidateRange(-1,1)][int]$WeaponVisibility=-1,[string]$ExpectedWeaponMesh='')
 $ErrorActionPreference='Stop'
+if($CloseView -and $Count -ne 1){throw 'Close-view quality review requires Count=1.'}
+if($CloseView -and !$Movement){throw 'Close-view quality review requires Movement for the floor and live Mover workload.'}
 . "$PSScriptRoot/Source-Provenance.ps1"
 if(@(Get-Process UnrealEditor*,Project_J,UnrealBuildTool,dotnet,LiveCoding*,MSBuild,ShaderCompileWorker -ErrorAction SilentlyContinue).Count){throw 'Wait for engine/build completion.'}
 $root=(Resolve-Path (Join-Path $PSScriptRoot '../..')).Path.Replace('\','/')
@@ -32,6 +34,7 @@ if ($WeaponVisibility -ge 0) {
 if (!$Executable) { $arguments = @("$root/Project_J.uproject") + $arguments }
 if ($DisableEditorPython -and !$Executable) { $arguments += '-DisablePython' }
 if ($LocalPlayer) { $arguments += '-ProjectJRenderedCrowdLocalPlayer' }
+if ($CloseView) { $arguments += '-ProjectJRenderedCrowdCloseView' }
 if($Trace){$arguments+=@('-trace=cpu,frame,gpu,bookmark,region,counters,task',"-tracefile=$out/Render.utrace")}
 $files=@('Project_J.uproject','Content/Character_BPs/GreatSword/BP_GreatSword.uasset',
  'Content/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme.uasset','Content/Animation_Logic/ABPs/ABP_Player_Master.uasset')
@@ -52,6 +55,7 @@ if ($WeaponVisibility -ge 0) {
 }
 $hashes=@($files|ForEach-Object{[ordered]@{path=$_;sha256=(Get-FileHash -LiteralPath "$root/$_").Hash}})
 [ordered]@{head=(& git -C $root -c core.fsmonitor=false rev-parse HEAD);cpu=(Get-CimInstance Win32_Processor).Name;gpu=(Get-CimInstance Win32_VideoController).Name;
+ closeView=[bool]$CloseView;
  actors=$Count;movement=[bool]$Movement;consoleCommands=$ConsoleCommands;naniteMode=$NaniteMode;weaponVisibility=$WeaponVisibility;expectedWeaponMesh=$ExpectedWeaponMesh;editorPythonDisabled=[bool]($DisableEditorPython -and !$Executable);sourceProvenance=(Get-ProjectJSourceProvenance -ProjectRoot $root -RuntimePaths @($exe));localPlayer=[bool]$LocalPlayer;connections=0;nullRHI=$false;offscreenViewport=$true;resolution='1280x720';fpsCap=0;vsync=0;trace=[bool]$Trace;packaged=[bool]$Executable;executable=$exe;executableSHA256=(Get-FileHash -LiteralPath $exe).Hash;arguments=$arguments;artifacts=$hashes}|
  ConvertTo-Json -Depth 8|Set-Content "$out/manifest.json" -Encoding utf8
 $quoted=($arguments|ForEach-Object{'"'+$_+'"'}) -join ' '

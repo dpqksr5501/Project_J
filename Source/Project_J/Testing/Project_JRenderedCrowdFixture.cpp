@@ -30,7 +30,12 @@
 #include "ProfilingDebugging/MiscTrace.h"
 #include "Components/Project_JModularMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
+#include "ClothingSimulationInstance.h"
+#include "ClothingSimulationInteractor.h"
 #include "SkeletalRenderPublic.h"
+#if !WITH_EDITORONLY_DATA
+#include "Rendering/SkeletalMeshRenderData.h"
+#endif
 #include "Components/Project_JWeaponPresentationComponent.h"
 #include "Equipment/Project_JWeaponPresentationActor.h"
 
@@ -42,6 +47,7 @@ void UProject_JRenderedCrowdFixture::Initialize(FSubsystemCollectionBase& Collec
 	Started = FPlatformTime::Seconds();
 	bWithLocalPlayer = FParse::Param(FCommandLine::Get(), TEXT("ProjectJRenderedCrowdLocalPlayer"));
 	bSimulateMovement = FParse::Param(FCommandLine::Get(), TEXT("ProjectJRenderedCrowdMovement"));
+	bCloseView = FParse::Param(FCommandLine::Get(), TEXT("ProjectJRenderedCrowdCloseView"));
 	FParse::Value(FCommandLine::Get(), TEXT("ProjectJRenderedCrowdCount="), CrowdCount);
 	CrowdCount = FMath::Clamp(CrowdCount, 1, 200);
 	FParse::Value(FCommandLine::Get(), TEXT("ProjectJRenderedCrowdNanite="), ExpectedNaniteMode);
@@ -50,6 +56,7 @@ void UProject_JRenderedCrowdFixture::Initialize(FSubsystemCollectionBase& Collec
 	FParse::Value(FCommandLine::Get(), TEXT("ProjectJRenderedCrowdOutput="), Output);
 	if (Output.IsEmpty()) { Output = FPaths::ProjectSavedDir() / TEXT("Validation/RenderedCrowd"); }
 	IFileManager::Get().MakeDirectory(*Output, true);
+	if(bCloseView && CrowdCount!=1){Finish(false,TEXT("Close-view quality review requires exactly one actor"));return;}
 	if (ExpectedNaniteMode < -1 || ExpectedNaniteMode > 1)
 	{
 		Finish(false, TEXT("Nanite expectation must be -1, 0 or 1")); return;
@@ -114,11 +121,13 @@ bool UProject_JRenderedCrowdFixture::Setup()
 		PreviousPositions.Add(Player->GetActorLocation());TravelDistances.Add(0.);Reversals.Add(0);Landings.Add(0);WasInAir.Add(false);LastDirection.Add(0.f);
 	}
 	World->SpawnActor<ADirectionalLight>(FVector(0, 0, 500), FRotator(-40, -45, 0));
-	const FVector Center(1710, 900, 100), Position(1710, -3000, 3200);
+	const FVector Center=bCloseView?Players[0]->GetActorLocation():FVector(1710,900,100);
+	const FVector Position=bCloseView?Center+FVector(450,-450,220):FVector(1710,-3000,3200);
 	auto* Camera = World->SpawnActor<ACameraActor>(Position, (Center - Position).Rotation());
 	if (!Camera) { return false; }
 	Camera->GetCameraComponent()->SetFieldOfView(65);
 	World->GetFirstPlayerController()->SetViewTarget(Camera);
+	if(bCloseView) ReviewCamera=Camera;
 	return true;
 }
 bool UProject_JRenderedCrowdFixture::Tick(float Delta)
@@ -138,16 +147,25 @@ bool UProject_JRenderedCrowdFixture::Tick(float Delta)
 		TRACE_BOOKMARK(TEXT("ProjectJ.RenderedCrowd Warmup Actors=200"));
 		return true;
 	}
+	if(bCloseView && IsValid(ReviewCamera) && Players.Num()==1 && IsValid(Players[0]))
+		ReviewCamera->SetActorLocation(Players[0]->GetActorLocation()+FVector(450,-450,220));
 	int32 Visible = 0, Montages = 0, Prediction30=0;
 	int32 BodyLODs[3]={}, LocalLOD=INDEX_NONE;
 	int32 NaniteCandidates=0, NaniteParts=0, ClothParts=0, ClothTickParts=0, ModularParts=0;
 	int32 RetargetBodies=0, DirectBodies=0;
+	int32 ManagedCloths=0,ReducedCloths=0,LocalReducedCloths=0,RenderLODs[3]={},LocalRenderMax=INDEX_NONE;
+	int32 ClothSimulations=0,ClothSubsteps1=0,ClothSubsteps3=0,RemoteMaxIterations=0,LocalClothSubsteps=0,LocalClothIterations=0;
 	int32 WeaponMeshes=0, VisibleWeapons=0, RenderedWeapons=0, AutoLODWeapons=0, MatchingWeapons=0;
 	const double PhaseAge = World->GetTimeSeconds() - PhaseAt;
 	for (int32 Index=0;Index<Players.Num();++Index)
 	{
 		auto* Player=Players[Index].Get();
 		if (!IsValid(Player)) { Finish(false, TEXT("Authored actor disappeared")); return false; }
+		if(const auto* Coordinator=Player->FindComponentByClass<UProject_JAnimationUpdateCoordinatorComponent>())
+		{
+			ManagedCloths+=Coordinator->GetManagedClothCount();ReducedCloths+=Coordinator->GetReducedClothCount();
+			if(bWithLocalPlayer && Index==0) LocalReducedCloths=Coordinator->GetReducedClothCount();
+		}
 		if (WeaponVisibility >= 0)
 		{
 			const auto* Presentation=Player->FindComponentByClass<UProject_JWeaponPresentationComponent>();
@@ -194,17 +212,38 @@ bool UProject_JRenderedCrowdFixture::Tick(float Delta)
 		bool bVisible = false;
 		for (auto* Mesh : Meshes)
 		{
+			if(Mesh->GetNumLODs()>1 && Mesh->GetVisibleFlag() && !Mesh->bHiddenInGame)
+			{
+				const int32 LOD=Mesh->GetPredictedLODLevel();
+				if(LOD>=0 && LOD<3) ++RenderLODs[LOD];
+				if(bWithLocalPlayer && Index==0) LocalRenderMax=FMath::Max(LocalRenderMax,LOD);
+			}
 			// Workload counters are useful even when no render-path override is requested.
 			{
 				ModularParts += Mesh->IsA<UProject_JModularMeshComponent>();
 				if (const auto* Asset = Mesh->GetSkeletalMeshAsset())
 				{
+#if WITH_EDITORONLY_DATA
 					NaniteCandidates += Asset->GetNaniteSettings().bEnabled;
+#else
+					// Cooked assets have render data, not editor authoring settings.
+					const auto* RenderData=Asset->GetResourceForRendering();
+					NaniteCandidates += RenderData && RenderData->HasValidNaniteData();
+#endif
 					NaniteParts += Mesh->GetMeshObject() && Mesh->GetMeshObject()->IsNaniteMesh();
 					if (Asset->HasActiveClothingAssets())
 					{
 						++ClothParts;
 						ClothTickParts += Mesh->IsComponentTickEnabled() && !Mesh->bDisableClothSimulation && !Mesh->IsClothingSimulationSuspended();
+						for(const auto& Simulation:Mesh->GetClothingSimulationInstances())
+							if(const auto* Interactor=Simulation.GetClothingSimulationInteractor();Interactor && Interactor->GetNumCloths()>0)
+							{
+								++ClothSimulations;
+								const int32 Substeps=Interactor->GetNumSubsteps(),Iterations=Interactor->GetNumIterations();
+								ClothSubsteps1+=Substeps==1;ClothSubsteps3+=Substeps==3;
+								if(bWithLocalPlayer && Index==0){LocalClothSubsteps=Substeps;LocalClothIterations=Iterations;}
+								else RemoteMaxIterations=FMath::Max(RemoteMaxIterations,Iterations);
+							}
 					}
 				}
 			}
@@ -229,6 +268,9 @@ bool UProject_JRenderedCrowdFixture::Tick(float Delta)
 		FPlatformTime::ToMilliseconds(GGameThreadTime),FPlatformTime::ToMilliseconds(GRenderThreadTime),FPlatformTime::ToMilliseconds(GRHIThreadTime),Prediction30,
 		NaniteCandidates,NaniteParts,ClothParts,ClothTickParts,ModularParts,PhaseAge,
 		WeaponMeshes,VisibleWeapons,RenderedWeapons,AutoLODWeapons,MatchingWeapons,DirectBodies,RetargetBodies);
+	Rows.RemoveFromEnd(TEXT("\n"));
+	Rows+=FString::Printf(TEXT(",%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n"),ManagedCloths,ReducedCloths,LocalReducedCloths,
+		RenderLODs[0],RenderLODs[1],RenderLODs[2],LocalRenderMax,ClothSimulations,ClothSubsteps1,ClothSubsteps3,RemoteMaxIterations,LocalClothSubsteps,LocalClothIterations);
 	if (WeaponVisibility >= 0 && Phase > 1 && PhaseAge > 2 &&
 		(WeaponMeshes!=CrowdCount || VisibleWeapons!=(WeaponVisibility ? CrowdCount : 0) || MatchingWeapons!=CrowdCount))
 	{ Finish(false,TEXT("Weapon comparison lost the equipped mesh or requested visibility"));return false; }
@@ -245,7 +287,7 @@ bool UProject_JRenderedCrowdFixture::Tick(float Delta)
 		const auto* Local = Players[0].Get();
 		const auto* Anim = Cast<UProject_JCharacterAnimInstance>(Local->GetMesh()->GetAnimInstance());
 		const auto* Coordinator = Local->FindComponentByClass<UProject_JAnimationUpdateCoordinatorComponent>();
-		if (LocalLOD!=0 || !Local->IsPlayerControlled() || !Local->IsLocallyControlled() || !Anim ||
+		if (LocalLOD!=0 || LocalRenderMax>0 || LocalReducedCloths!=0 || !Local->IsPlayerControlled() || !Local->IsLocallyControlled() || !Anim ||
 			Anim->GetCurrentOptimizationPolicy().Tier != EProject_JAnimBudgetTier::Local ||
 			!Anim->GetCurrentOptimizationPolicy().bEnableHandIK || !Anim->GetCurrentOptimizationPolicy().bEnableFootIK ||
 			!Coordinator || Coordinator->GetVisualEvaluationInterval() != 0.f)

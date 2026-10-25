@@ -21,6 +21,12 @@ public:
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ModularMesh")
 	bool bFollowAttachParentPose = false;
+	/** The character coordinator may tune this cosmetic cloth instance. Disable when another system owns its interactor. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ModularMesh|Cloth")
+	bool bAllowClothQualityBudget = true;
+	/** Distant cloth keeps body collisions, using discrete detection. Local/full-quality cloth retains authored CCD. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ModularMesh|Cloth")
+	bool bAllowDiscreteRemoteClothCollision = true;
 
 	/**
 	 * Attaches this modular part to the main character mesh and forces it to use the main mesh's leader pose.

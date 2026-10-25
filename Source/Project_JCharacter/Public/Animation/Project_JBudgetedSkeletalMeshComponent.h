@@ -29,6 +29,8 @@ public:
 	bool HasAnimationUpdateRequirement() const { return bUpdateOverride; }
 	/** GT observation shared by animation consumers; never writes gameplay/AI significance. */
 	float GetAnimationDistanceTier() const;
+	/** Independent cosmetic cloth grant; unknown observation preserves authored quality. */
+	bool HasFullClothQualityGrant() const { return ObservedFullClothQuality.Get(true); }
 	/** Requested tick state is distinct from the allocator's current scheduled tick. */
 	bool GetRequestedTickEnabled() const { return bRequestedTick; }
 	bool CanUseBudget() const;
@@ -61,6 +63,7 @@ private:
 	TWeakObjectPtr<UAnimInstance> BoundAnimation;
 	TWeakObjectPtr<UProject_JCharacterAnimationBudgetSubsystem> Service;
 	TOptional<float> ObservedDistanceTier;
+	TOptional<bool> ObservedFullClothQuality;
 	bool bManaged = false, bCombatCritical = false, bEnding = false;
 	bool bSavedURO = false, bRequestedTick = true;
 };

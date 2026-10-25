@@ -38,3 +38,9 @@ python Archives/Validation/verify_archive.py Archives/Validation/Rigging_2026-10
 ```
 
 복원은 기록된 SHA-256의 로컬 ZIP이 필요하며 기존 파일 덮어쓰기를 거부한다. 재생성 캐시10개는 payload에 넣지 않아 원문 복원 대상이 아니고, 실행 인자·구성·결과·수치·전체 trace는 보존했다. 모든 에디터·측정·분석 프로그램은 정상 종료 후 정리했다.
+
+## 10월 26일 Cloth 후속 작업
+
+원래 ZIP·trace member·임시 복원본의 SHA를 모두 다시 확인한 뒤 중복 907,223,845bytes trace를 제거했다. 후속 시험의 격리 UserDir·중복/미채택 캡처·일회성 드라이버를 포함해 276개 파일·논리 1,105,016,978bytes를 정리했다. 대표 이미지와 interval/측정 CSV·manifest는 [후속 보고서](../Performance/Reports/ProjectJ_Cloth_Budget_200_2026-10-25.md)에 보존한다. 원본 ZIP과 SourceArt·에셋·현재 바이너리/빌드 캐시는 유지했다.
+
+즉시 관측 C 여유 공간은 108,812,017,664→108,811,784,192bytes로 233,472bytes 감소했다. 논리 삭제 합계를 물리 확보량으로 주장하지 않는다. [정확한 경로·해시·보존 증명](../Performance/Reports/Data/ClothBudget200_20261025/Cleanup.json)을 따른다. 이전 10월 25일 정리 수치와 별도 작업이다.

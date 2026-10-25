@@ -297,7 +297,20 @@ UE 기준 asset / export / Blender 비교 파일:
 
 MMORPG의 새 SKM에는 geometry LOD/Nanite뿐 아니라 bone LOD, pose update, 손/발 보정, RigidBody, surface Cloth, material/draw 비용이 있다. 기존 quality coordinator와 gameplay pose 권위를 공유하고 별도 timer/예산 관리자를 추가하지 않는다. 전용 서버의 cosmetic solve와 숨은 producer의 필수 pose는 구분한다. 새 메시·새 Cloth의 군중/원격 비용을 이전 200명 결과로 승인하지 않는다. 이번 작업의 검증으로 Cook/Shipping·래그돌·모든 경사/장비 조합까지 통과했다고 확대하지 않는다.
 
-군중 비용 검수 예시는 [직접 ABP 200명 비용 보고서](../../Performance/Reports/ProjectJ_DirectRig_200_2026-10-25.md)를 따른다. main과 PostProcess의 실제 pose 소유자·Leader Pose 파츠·Cloth를 함께 집계한다. 새 메시가 몸체/머리를 분리하면 파츠 수가 달라질 수 있으므로 기존 개수에 맞추려고 에셋을 제거하지 않는다. 리타깃 엔진 scope의 소멸과 전체 frame/GT/GPU 비용을 별도로 검증하고, 본 수·LOD·물리·실행 역할이 다른 과거 결과를 순수 연산 절감률로 바꾸지 않는다.
+군중 비용 검수 예시는 [직접 ABP 200명 비용 보고서](../../Performance/Reports/ProjectJ_DirectRig_200_2026-10-25.md)와 [Cloth 병목의 분리 측정](../../Performance/Reports/ProjectJ_Cloth_Budget_200_2026-10-25.md)을 따른다. main과 PostProcess의 실제 pose 소유자·Leader Pose 파츠·Cloth를 함께 집계한다. 새 메시가 몸체/머리를 분리하면 파츠 수가 달라질 수 있으므로 기존 개수에 맞추려고 에셋을 제거하지 않는다. 리타깃 엔진 scope의 소멸과 전체 frame/GT/GPU 비용을 별도로 검증하고, 본 수·LOD·물리·실행 역할이 다른 과거 결과를 순수 연산 절감률로 바꾸지 않는다.
+
+| 제작·성능 문제 | 먼저 확인할 것 | 피할 처방 |
+| --- | --- | --- |
+| 직접 ABP 전환 뒤 전체 frame이 비슷함 | 실제 리타깃 scope 소멸, GT 대기 구간, Cloth task, 같은 부하의 기능별 진단 | 본 이름/클래스 이름만 보고 리타깃이 남았다고 판단하거나 worker CPU를 frame에서 뺌 |
+| 망토가 군중 비용을 지배함 | simulation 정점·충돌체·CCD·substep/iteration, 실제 solver 값, 원격/로컬 품질 차이 | 전체 Cloth OFF나 전역 병렬화 변경을 검수 없이 생산 해법으로 적용 |
+| 모듈러 몸체가 먼 거리에서도 LOD0임 | 표시 파츠의 하위 LOD 존재, attach-parent·Leader Pose LOD 동기화와 숨은 producer의 별도 역할 | producer의 필수 본을 먼저 제거하거나 모든 캐릭터에 강제 LOD 적용 |
+| head에 피부와 헤어 카드가 섞임 | 재질별 형상·투명도·카드 구조, 얼굴/헤어의 극단 포즈와 silhouette | head 전체를 일반 피부용 자동 reducer에 넣어 카드·속눈썹까지 축소 |
+| 원격 물리만 품질 예산을 적용함 | 로컬 원본 복구, 장비·시뮬레이션 교체, 외부 interactor writer와 opt-out, 종료 경로 | 공유 Cloth asset 설정을 런타임에 수정해 로컬·다른 인스턴스까지 변경 |
+| Editor 검사만 되고 Game에서 빌드가 실패함 | preview mesh·Nanite 제작 설정 등 editor-only API와 실제 런타임/cooked 데이터의 경계 | 에디터 preview mesh를 생산 fallback의 런타임 mesh source로 사용하거나 제작 설정이 Cook에도 있다고 가정 |
+
+원격 표현의 solver 예산은 skin/bind·축·관통 같은 근본 리깅 결함의 해결책이 아니다. 검수한 의상의 비용을 줄이는 단계로만 사용하며, 로컬은 authored 설정을 유지한다. 렌더 LOD를 추가해도 Cloth simulation 정점 수가 자동으로 줄지는 않는다. Cloth 자체의 저해상도 simulation mesh/LOD가 필요하면 대응 render LOD·collision·전환을 별도로 제작·검증한다. 예산 opt-out이 필요한 새 의상은 품질 이유와 군중 비용도 함께 확인한다.
+
+검증도 역할을 분리한다. 거리/quota 같은 값 정책은 NullRHI에서 검사할 수 있지만 실제 Cloth interactor·시뮬레이션은 real RHI가 필요하다. 해당 자동화는 `NonNullRHI` 기능 플래그로 등록하며, NullRHI에서 실행하지 않은 실물 검사를 통과 개수로 대신 승인하지 않는다. Editor·Game 빌드 성공, Cook/Shipping 실행, 원격 네트워크 부하와 시각 품질은 각각 별도 근거다.
 
 임시 비교 캡처·실패 로그·실험 스크립트·중간 백업의 상세 원문은 [해시 검증과 복원이 가능한 보관소](../../../Archives/Validation/README.md)에 모은다. 현재 제작 소스와 재임포트 FBX는 `SourceArt`에 유지하며, 로컬 Saved 경로의 자료를 정리했을 때는 보관 명세의 원래 경로로 찾는다.
 

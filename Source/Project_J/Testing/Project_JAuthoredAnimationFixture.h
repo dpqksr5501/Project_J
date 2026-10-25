@@ -47,6 +47,8 @@ inline AProject_JPlayerCharacter* Spawn(UWorld* World, AController* Controller, 
 	return Player;
 }
 
+#if WITH_EDITOR
+// Editor-only preview meshes are not a cooked runtime mesh source.
 // Exercise the explicitly authored incompatible-body bridge independently of
 // which compatible avatar is currently selected by BP_GreatSword. All changes
 // belong to this transient test actor; no Blueprint or mesh asset is modified.
@@ -75,4 +77,5 @@ inline AProject_JPlayerCharacter* SpawnRetargetFallback(UWorld* World, AControll
 	if (auto* Presentation=Player->FindComponentByClass<UProject_JWeaponPresentationComponent>()) Presentation->RefreshAttachmentCalibration();
 	return Player;
 }
+#endif
 }

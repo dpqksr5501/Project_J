@@ -1,0 +1,476 @@
+{
+  "succeeded": 73,
+  "succeededWithWarnings": 0,
+  "failed": 0,
+  "notRun": 0,
+  "report_sha256": "954938bcf27f7b7ffaa913690f4bc24402b74f368b20fa86c0650e474bdd1eaf",
+  "tests": [
+    {
+      "fullTestPath": "ProjectJ.Animation.Budget.AuthoredObserverProfile",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Animation.Budget.ObserverRuntime",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Animation.ClothPolicy.Allocation",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Animation.ClothRuntime.InteractorLifecycle",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Animation.VisualBudget.Lifecycle",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Animation.FootClearance",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Animation.HandContactConversion",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Animation.HandContactRig",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Animation.QualityTierPolicy",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Animation.RetargetQualitySourceLifetime",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Animation.SecondaryHandContact",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Animation.TwoHandIKTransitionAndCurve",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Combat.CanonicalBladeTrajectory",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Combat.CanonicalMeleeTrace",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Continuation.FollowerPolicyLifetime",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Continuation.VisualAssetAdmissions",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.AirAnimationNotifies",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.AirChooserCoverage",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.AirLiveDirectionAndSprint",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.AnimationSourceFingerprint",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.AnimationUsesMoverViewRotation",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.AvatarPoseRoutes",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.BackwardFacingCandidates",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.BodyPoseMarkerAuthoring",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.CompatibleBodyContract",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.CompatibleBodyPoseSourcePolicy",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.CompatibleBodyServerSource",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.CompatibleClothConfiguration",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.CompatiblePhysicsFrames",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.ConfirmedLandingWithoutSampling",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.DirectNativeQueriesAndWrist",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.GroundCandidateIntegrity",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.GroundedLandingPhase",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.GroundLoopRootMotion",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.GroundSpeedAndCadence",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.MannyConvertedLibrary",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.MannyFoundation",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.MannyPlaybackBindings",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.MannySearchSpace",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.ModularAuthoredPoseLifecycle",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.ModularClothTickLifecycle",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.ModularExtraBones",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.MontageAuthoringIdempotence",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.NativeCallbackOwnership",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.NativeDecisionBoundaries",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.NativeStateAndPinContract",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.NativeTransitionBoundaries",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.NeutralSelection",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.NonCosmeticWeaponCallbacks",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.PlaybackObservationLifetime",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.PlayerMasterAssembly",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.PlayerMasterHierarchy",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.ProductionGraph",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.ReferenceQueryParity",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.RejectStaleFallOffEvent",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.RemoteLandingEventBeforeInterpolatedGround",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.SnapshotPublicationAndReinitialize",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.SourceBindingLifetime",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.SourceValidityLifetime",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.StandingStopFamily",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.StrafeDirectionPolicy",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.StrafeInputFamily",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.TransitionSearchAvailability",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.PlayerLocomotion.TypedRotationOffsetChooser",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Presentation.PrimaryGripAttachment",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Presentation.StableGripTargetsAndAuthoredAlpha",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Presentation.VisualMeshOwnership",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Retarget.AuthoredMoverSourceFamily",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Retarget.BodyContracts",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Retarget.FamilyAuthoringValidation",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Retarget.MannyBip01LimbGeometry",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Retarget.ProductionRuntime",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Retarget.SecondaryPhysicsEquivalence",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    }
+  ],
+  "paired_checkpoint_editor_build": {
+    "target": "Project_JEditor Win64 Development",
+    "result": "Succeeded",
+    "seconds": 356.84,
+    "log_sha256": "1667816064eb285afd982dd385d240b69c68134d1a9a0e717e36c60b27a2c1ff"
+  },
+  "final_editor_build": {
+    "target": "Project_JEditor Win64 Development",
+    "result": "Succeeded",
+    "seconds": 355.33,
+    "log_sha256": "15e74971b7990ea05eeb001aef69ef41f10d7334246b6ed7b9bf425711dde186"
+  },
+  "game_build": {
+    "target": "Project_J Win64 Development",
+    "result": "Succeeded",
+    "seconds": 262.34,
+    "log_sha256": "394f27150a4049d9b7685be38649d61c2899bb983555a5a1b6b52e369df9f3e5"
+  },
+  "null_rhi": {
+    "succeeded": 1,
+    "succeededWithWarnings": 0,
+    "failed": 0,
+    "notRun": 0,
+    "scope": "Allocation ran; NonNullRHI interactor lifecycle excluded by engine feature filtering, not counted as executed."
+  },
+  "resolved_target_boundaries": [
+    "Editor preview-mesh helper is WITH_EDITOR only",
+    "Game/cooked Nanite eligibility uses render data instead of absent editor settings"
+  ]
+}

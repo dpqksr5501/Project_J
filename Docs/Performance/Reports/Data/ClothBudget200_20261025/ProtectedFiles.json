@@ -1,0 +1,32 @@
+{
+  "Content/GreatSword/Meshes/SK_GreatSword_body.uasset": {
+    "before": "9f96a30c1fb9411624f8d2804d49c0322886324164d9240f4b11d1782be6fd89",
+    "after": "a736d0a6dd7f8da0640f48667cc399d46dad6c618d9ce0ddee756c754e973142",
+    "unchanged": false
+  },
+  "Content/GreatSword/Meshes/SK_GreatSword_head.uasset": {
+    "before": "0f769f41b2608f68348a39c895b217126ae20354a9de49a4845fc7b85ebde4d6",
+    "after": "0f769f41b2608f68348a39c895b217126ae20354a9de49a4845fc7b85ebde4d6",
+    "unchanged": true
+  },
+  "Content/Character_BPs/BP_Player_Master.uasset": {
+    "before": "7cb1bd90e0c66da7233f5b6714e5c5ba87b79b38a8da2e784ed3a9720efc5bf9",
+    "after": "7cb1bd90e0c66da7233f5b6714e5c5ba87b79b38a8da2e784ed3a9720efc5bf9",
+    "unchanged": true
+  },
+  "Content/Animation_Logic/ABPs/ABP_Player_Master.uasset": {
+    "before": "feef56637ca9ea320f910eef53781246f10795af61c391457fe44f3c0a69ce65",
+    "after": "feef56637ca9ea320f910eef53781246f10795af61c391457fe44f3c0a69ce65",
+    "unchanged": true
+  },
+  "Content/Animation_Logic/Rigs/CR_ProjectJ_Manny_FootPlacement.uasset": {
+    "before": "fb549b3bce72d96cb7f7f76567cb91151f819c4bfc4aebd0ddd6777ab11fc8f7",
+    "after": "fb549b3bce72d96cb7f7f76567cb91151f819c4bfc4aebd0ddd6777ab11fc8f7",
+    "unchanged": true
+  },
+  "SourceArt/Characters/GreatSword/UE5/GreatSword_UE5_Rig.blend": {
+    "before": "70b8a801d78b7586c8a7116677889adbff3676b68a6c9f50a825434d3bc8692d",
+    "after": "70b8a801d78b7586c8a7116677889adbff3676b68a6c9f50a825434d3bc8692d",
+    "unchanged": true
+  }
+}

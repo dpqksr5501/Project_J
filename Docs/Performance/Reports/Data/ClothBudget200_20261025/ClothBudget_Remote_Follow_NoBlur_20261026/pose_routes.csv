@@ -1,0 +1,12 @@
+actor,component,asset,main_class,post_class,leader,bones,modular
+0,CharacterMesh0,/Game/GreatSword/Meshes/SK_GreatSword_Complete.SK_GreatSword_Complete,/Game/Animation_Logic/ABPs/ABP_Player_Master.ABP_Player_Master_C,/Game/GreatSword/Animation/ABP_GreatSword_Body.ABP_GreatSword_Body_C,None,318,0
+0,Lower,/Game/GreatSword/Meshes/SK_GreatSword_lower.SK_GreatSword_lower,None,None,CharacterMesh0,318,1
+0,Sho,/Game/GreatSword/Meshes/SK_GreatSword_sho.SK_GreatSword_sho,None,None,CharacterMesh0,318,1
+0,Hel,/Game/GreatSword/Meshes/SK_GreatSword_hel.SK_GreatSword_hel,None,None,CharacterMesh0,318,1
+0,Upper,/Game/GreatSword/Meshes/SK_GreatSword_upper.SK_GreatSword_upper,None,None,CharacterMesh0,318,1
+0,Head,/Game/GreatSword/Meshes/SK_GreatSword_head.SK_GreatSword_head,None,None,CharacterMesh0,318,1
+0,Cloak,/Game/GreatSword/Meshes/SK_GreatSword_cloak.SK_GreatSword_cloak,None,None,CharacterMesh0,318,1
+0,Foot,/Game/GreatSword/Meshes/SK_GreatSword_foot.SK_GreatSword_foot,None,None,CharacterMesh0,318,1
+0,Hand,/Game/GreatSword/Meshes/SK_GreatSword_hand.SK_GreatSword_hand,None,None,CharacterMesh0,318,1
+0,Inner,/Game/GreatSword/Meshes/SK_GreatSword_inner.SK_GreatSword_inner,None,None,CharacterMesh0,318,1
+0,Body,/Game/GreatSword/Meshes/SK_GreatSword_body.SK_GreatSword_body,None,None,CharacterMesh0,318,1

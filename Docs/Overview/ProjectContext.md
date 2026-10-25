@@ -1,6 +1,8 @@
 # Project J 프로젝트 맥락
 
-2026-10-25 직접 ABP200명 비용은 [실측 보고서](../Performance/Reports/ProjectJ_DirectRig_200_2026-10-25.md)를 따른다. 리타깃 실행0회를 확인했지만 전체 frame 개선은 미확정이고 공격 GPU 증가·Cloth/병렬 작업 대기가 남았다. 과거 NullRHI worker CPU와 실RHI frame을 구분한다.
+2026-10-26 [Cloth 후속 진단과 최적화](../Performance/Reports/ProjectJ_Cloth_Budget_200_2026-10-25.md)는 동일 바이너리 ON/OFF/OFF/ON에서 200명 이동 1,827.665→63.092ms, 전원 공격 2,123.513→79.754ms를 확인했다. 로컬 authored 품질·LOD0, 활성 Cloth 200개를 유지하고 원격 199개에만 인스턴스 예산을 적용했다. 피부 body만 LOD0–2이며 혼합 head/헤어·텍스처는 보존한다. GPU 증가·초기 일괄 생성 지연·60FPS 미달과 실제 원격/출하 빌드 검증 범위를 구분한다.
+
+2026-10-25 전환 직후 직접 ABP200명 비용은 [기준 실측](../Performance/Reports/ProjectJ_DirectRig_200_2026-10-25.md)을 따른다. 리타깃 실행0회였지만 전체 frame은 비슷했고 Cloth/병렬 작업 대기가 남았다. 과거 NullRHI worker CPU와 실RHI frame을 구분하며 이후 Cloth 최적화를 순수 리타깃 제거 효과로 돌리지 않는다.
 
 2026-10-25 리깅/후처리 후속 점검은 [제작 가이드](../Animation/Authoring/Character_Rigging_And_UE5_Postprocess_Playbook.md)의 공식 자료·진단 단계·Root/FK/IK/무기 기준 계약을 따른다. 근본 skin/bind 결함과 원본 clip/phase, 지형 잔차를 구분한다. 대검의 기본 동작을 유지하면서 독립 무기 기준 보존을 제작 선택으로 분리했고 접촉 반복은 검증한 32회로 줄였다. 새 자산에 legacy 318본이나 보정 상한을 일괄 복제하지 않는다. 종료된 montage의 늦은 Weapon Motion Begin은 실행 ID로 새 소유권 취득을 거부해 복귀 전환의 재시작 문제를 수정했다. 최종 회귀 68개와 실제 입력·표면 검수, 남은 도달 잔차는 런타임 기록을 따른다.
 

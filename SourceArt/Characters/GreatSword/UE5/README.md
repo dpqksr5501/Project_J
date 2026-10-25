@@ -14,6 +14,8 @@ Desktop 원본 패키지를 보존한 작업 사본이다. `GreatSword_UE5_Rig.b
 
 ## 메시 익스포트
 
+UE 파생 LOD는 제작 리그/FBX와 분리한다. 피부 `SK_GreatSword_body`의 LOD1/2는 기존 `Invoke-MeshLODAuthoring.ps1`의 명시 Surface 경로로 생성하며 LOD0·skin·기준 포즈 보존을 검사한다. 재임포트 후에도 하위 LOD·전환을 다시 확인한다. head에는 헤어 카드·속눈썹이 섞여 있어 이 일반 표면 축소를 복사하지 않는다. [원격 LOD/Cloth의 역할과 실측](../../../../Docs/Performance/Reports/ProjectJ_Cloth_Budget_200_2026-10-25.md)을 따른다.
+
 Blender Text Editor에서 옆의 `ExportMeshes.py`를 실행한다. 기본 출력은 현재 blend 옆 `FBX` 폴더다. Complete와 18개 파츠/변형 파일을 생성한다. `Armature`와 해당 스킨 메시만 선택하고 컨트롤·위젯은 제외한다. cm 단위, Forward -Y / Up Z, leaf bone 없음, 모든 318본, 애니메이션 없음, FACE smoothing 및 tangent를 사용한다. 애니메이션 제작은 blend 안의 기존 `Export_UE5_Animation.py`를 사용한다. 이 exporter도 `use_armature_deform_only=False`/모든 본 bake를 사용하므로 무가중 IK/무기 기준 본을 누락하지 않는다. FBX에 제어 리그를 넣는 대신 평가된 결과를 bake하며 새 Action은 root·손발·추가 가지의 왕복 검수가 필요하다.
 
 `GreatSword_Rig_UI.py`는 embedded UI의 검토 가능한 원본이다. 수정할 때 해당 Text block도 동기화해 blend를 저장한다. 열 때 자동 스크립트 실행을 허용하도록 보안 설정을 바꾸지 않고, 필요한 경우 Text Editor에서 실행한다. 기존 FK/IK 도구와 무기 선택을 함께 등록한다.

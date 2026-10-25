@@ -1,0 +1,6 @@
+success=1
+cooked=0
+actors=200
+local_player=1
+local_quality_samples=2124
+reason=Actual authored bodies; real viewport; no remote connections

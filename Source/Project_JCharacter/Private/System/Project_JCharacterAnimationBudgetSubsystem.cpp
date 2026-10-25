@@ -2,7 +2,9 @@
 #include "Animation/Project_JBudgetedSkeletalMeshComponent.h"
 #include "Animation/Project_JCharacterAnimInstance.h"
 #include "Animation/Project_JAnimationQualityPolicy.h"
+#include "Components/Project_JAnimationUpdateCoordinatorComponent.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/Pawn.h"
 #include "Engine/World.h"
 #include "HAL/IConsoleManager.h"
 #include "IAnimationBudgetAllocator.h"
@@ -16,6 +18,8 @@ namespace
 {
 TAutoConsoleVariable<int32> CVarCharacterABA(TEXT("ProjectJ.AnimationBudget.Enabled"), 1,
 	TEXT("Use ABA for eligible non-local, non-combat Character meshes. Requires a.Budget.Enabled=1. 0 restores normal mesh ticking."));
+TAutoConsoleVariable<int32> CVarFullRemoteCloths(TEXT("ProjectJ.ClothBudget.MaxFullRemoteParts"),4,
+	TEXT("Maximum nearby remote cloth components granted authored simulation quality. Local players do not consume this cosmetic quota."));
 FAutoConsoleCommandWithWorld StatusCommand(TEXT("ProjectJ.AnimationBudget.Status"), TEXT("Report current world's Character ABA ownership."),
 	FConsoleCommandWithWorldDelegate::CreateLambda([](UWorld* World)
 	{
@@ -58,7 +62,7 @@ void UProject_JCharacterAnimationBudgetSubsystem::RegisterMesh(UProject_JBudgete
 }
 void UProject_JCharacterAnimationBudgetSubsystem::UnregisterMesh(UProject_JBudgetedSkeletalMeshComponent* Mesh)
 {
-	if (Mesh) { Mesh->ObservedDistanceTier.Reset(); Mesh->LeaveBudget(); }
+	if (Mesh) { Mesh->ObservedDistanceTier.Reset(); Mesh->ObservedFullClothQuality.Reset(); Mesh->LeaveBudget(); }
 	Meshes.RemoveAllSwap([Mesh](const auto& Entry) { return !Entry.IsValid() || Entry.Get() == Mesh; });
 }
 int32 UProject_JCharacterAnimationBudgetSubsystem::GetManagedCount() const
@@ -92,10 +96,14 @@ void UProject_JCharacterAnimationBudgetSubsystem::Refresh()
 	}
 	TRACE_COUNTER_SET(AnimationObserverViews, Views.Num());
 	int32 Managed = 0, Protected = 0;
+	struct FClothCandidate { UProject_JBudgetedSkeletalMeshComponent* Mesh; double Score; int32 Parts; uint32 Id; };
+	TArray<FClothCandidate,TInlineAllocator<16>> ClothCandidates;
 	for (int32 Index = Meshes.Num() - 1; Index >= 0; --Index)
 	{
 		auto* Mesh = Meshes[Index].Get();
 		if (!Mesh) { Meshes.RemoveAtSwap(Index); continue; }
+		const bool bPreviouslyFull=Mesh->ObservedFullClothQuality.Get(false);
+		Mesh->ObservedFullClothQuality.Reset();
 		Mesh->ObservedDistanceTier.Reset();
 		if (!Views.IsEmpty() && IsValid(Mesh->GetOwner()))
 		{
@@ -110,6 +118,20 @@ void UProject_JCharacterAnimationBudgetSubsystem::Refresh()
 			const auto* Native = Cast<UProject_JCharacterAnimInstance>(Mesh->GetAnimInstance());
 			const auto Settings = Native ? Native->GetEffectiveAnimationBudgetSettings() : FProject_JAnimationBudgetSettings();
 			Mesh->ObservedDistanceTier = !bHasFiniteDistance ? 0.f : ProjectJ::Animation::ResolveAnimationDistanceTier(NearestSquared, Settings);
+			const auto* Coordinator=Mesh->GetOwner()->FindComponentByClass<UProject_JAnimationUpdateCoordinatorComponent>();
+			if(Coordinator && Coordinator->IsVisualBudgetEnabled() && Mesh->bAllowProjectBudget && Coordinator->GetManagedClothCount()>0)
+			{
+				const bool bValidSettings=FMath::IsFinite(Settings.NearDistance) && FMath::IsFinite(Settings.MidDistance) &&
+					FMath::IsFinite(Settings.FarDistance) && Settings.NearDistance>0 && Settings.MidDistance>Settings.NearDistance && Settings.FarDistance>Settings.MidDistance;
+				const bool bLocal=ProjectJ::Animation::IsLocalPlayerAvatar(Cast<APawn>(Mesh->GetOwner()));
+				if(bLocal || !bHasFiniteDistance || !bValidSettings) Mesh->ObservedFullClothQuality=true;
+				else
+				{
+					Mesh->ObservedFullClothQuality=false;
+					if(Mesh->ObservedDistanceTier.GetValue()==0.f)
+						ClothCandidates.Add({Mesh,NearestSquared*(bPreviouslyFull?.81:1.),Coordinator->GetManagedClothCount(),Mesh->GetUniqueID()});
+				}
+			}
 		}
 		Mesh->RefreshAnimationUpdateRequirements();
 		Mesh->RefreshMontageUpdateRequirement();
@@ -126,6 +148,13 @@ void UProject_JCharacterAnimationBudgetSubsystem::Refresh()
 			++Managed;
 		}
 	}
+	// Reuse the existing observer pass and source registry. A protected montage
+	// still retains its gameplay pose; it does not reserve unlimited cosmetic cloth.
+	ClothCandidates.Sort([](const FClothCandidate& A,const FClothCandidate& B)
+	{ return A.Score==B.Score?A.Id<B.Id:A.Score<B.Score; });
+	int32 Remaining=FMath::Clamp(CVarFullRemoteCloths.GetValueOnGameThread(),0,32);
+	for(const auto& Candidate:ClothCandidates) if(Candidate.Parts<=Remaining)
+	{ Candidate.Mesh->ObservedFullClothQuality=true;Remaining-=Candidate.Parts; }
 	// Counters describe the last processed world; PIE worlds are distinguished by CPU scope context.
 	TRACE_COUNTER_SET(CharacterABAManaged, Managed);
 	TRACE_COUNTER_SET(CharacterABAProtected, Protected);
@@ -149,7 +178,7 @@ void UProject_JCharacterAnimationBudgetSubsystem::OnWorldCleanup(UWorld* World, 
 {
 	if (World != GetWorld() || bEnding) { return; }
 	bEnding = true;
-	for (const auto& Entry : Meshes) { if (Entry.IsValid()) { Entry->ObservedDistanceTier.Reset(); Entry->LeaveBudget(); } }
+	for (const auto& Entry : Meshes) { if (Entry.IsValid()) { Entry->ObservedDistanceTier.Reset(); Entry->ObservedFullClothQuality.Reset(); Entry->LeaveBudget(); } }
 	RestoreAllocatorIfUnused();
 	Meshes.Reset();
 }

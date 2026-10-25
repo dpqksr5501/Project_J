@@ -1,0 +1,22 @@
+{
+  "scope": "Original full trace, all startup/warmup/phases. GameThread ID 2. Only literal FParallelClothTask events, excluding automatically exported pseudo frame tracks. Interval unions avoid double counting; overlap alone is not a wait-dependency ID. Paired Cloth-off mode establishes causality at feature level.",
+  "frame_scope_count": 121,
+  "frame_interval_seconds": 236.3242378000001,
+  "gt_wait_events": 184,
+  "gt_wait_seconds": 219.89308489999993,
+  "gt_wait_fraction_of_frame_scopes": 0.9304719945234489,
+  "cloth_task_events": 23800,
+  "cloth_task_union_wall_seconds": 226.1052468999999,
+  "gt_wait_overlapping_cloth_seconds": 219.6894094999999,
+  "gt_wait_overlap_fraction": 0.9990737525916622,
+  "source_trace": {
+    "path": "Saved/Validation/RigBottleneck_20261025/Baseline.utrace",
+    "bytes": 907223845,
+    "sha256": "9ed1c66958b2c1b2eb64149238a8c5b80b2cc7246a7dbef26bdffe469a1663b7",
+    "temporary": true
+  },
+  "interval_sources": {
+    "GameThreadEvents.csv": "740c9b140b71cac49799fee21aca3545e10620b8f7f829c1f6833b497b60c480",
+    "ClothTaskEvents.csv": "67eec5d7c62055fff87672a278ebc983ca0fb1b04536d1c60557a42d75121477"
+  }
+}

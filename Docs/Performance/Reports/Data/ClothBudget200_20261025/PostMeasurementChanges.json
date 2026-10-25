@@ -1,0 +1,12 @@
+{
+  "changed_paths": [
+    "Scripts/Validation/Measure-RenderedCrowd.ps1",
+    "Scripts/Validation/Summarize-WeaponCrowd.py",
+    "Source/Project_J/Testing/Project_JAuthoredAnimationFixture.h",
+    "Source/Project_J/Testing/Project_JClothBudgetTests.cpp",
+    "Source/Project_J/Testing/Project_JRenderedCrowdFixture.cpp",
+    "Source/Project_J/Testing/Project_JRenderedCrowdFixture.h"
+  ],
+  "production_character_runtime_and_config_unchanged": true,
+  "scope": "Diagnostic camera, caller/comparison guards, editor-only helper, NonNullRHI registration, and target-specific diagnostic Nanite query. Paired results retain original runtime hashes; later smoke and final build/regression records are separate."
+}

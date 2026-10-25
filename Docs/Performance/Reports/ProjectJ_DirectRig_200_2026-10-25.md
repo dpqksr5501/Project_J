@@ -1,5 +1,7 @@
 # UE5 호환 직접 ABP · 200명 비용 비교 — 2026-10-25
 
+이 문서는 **직접 전환 직후의 기준 측정**이다. 10월 26일 동일 바이너리 Cloth 예산 ON/OFF 비교와 현재 품질 정책은 [후속 분석·최적화](ProjectJ_Cloth_Budget_200_2026-10-25.md)를 따른다. 이후 개선을 이 문서의 리타깃 제거만의 효과로 소급하지 않는다.
+
 현재 GreatSword의 직접 재생 경로와 보존된 실시간 리타깃 측정을 비교한다. 골격·에셋·LOD·물리가 함께 바뀌었으므로 과거 대비 전체 프레임 차이를 리타깃 제거만의 효과로 계산하지 않는다.
 
 **결과:** 현재200명 직접 ABP에서 엔진 리타깃 실행은0회다. 하지만 전체 frame은1.8–2.1초 수준으로 이전과 비슷했고, 공격 GPU는6.642→10.110ms로 증가했다. 이 fixture에서는 망토 Cloth·중첩 병렬 작업/대기가 우선 분석 대상이며, 새 리깅만으로 군중 성능이 해결된 결과는 아니다.
@@ -54,7 +56,7 @@ UE5.8.4(CL58902052), Ryzen7 9800X3D/Radeon RX9070XT, D3D12, 1280×720 offscreen,
 | 포즈 | Manny source + 별도 리타깃 몸체 | 318본 Complete의 공용 ABP + 몸체PP |
 | 표시 파츠 | 몸체1 + 의상8 | 몸체·머리·의상10 |
 | 몸체 LOD | 로컬0 / 원격2 | 전체0 (새 제작LOD 미승인) |
-| 부차 물리 | 기존 RigidBody3 + 망토 Cloth | 헤어/치마 RigidBody2 + 망토 Cloth |
+| 부차 물리 | 헤어/치마 RigidBody2 + 망토 Cloth | 헤어/치마 RigidBody2 + 망토 Cloth |
 | 무기·의상 렌더 | Basic200 / Nanite7·활성망토1/명 | 동일 |
 
 전체 프로세스 peak 메모리는 시작·로딩·모든Avatar를 포함한500ms 간격 표본이며 인원당/증분 메모리나 VRAM이 아니다. 저표본·GPU 카운터 지연·클럭/열·스케줄링 편차가 있어 통계적 유의성이나 다른 하드웨어 성능을 주장하지 않는다.
@@ -76,7 +78,7 @@ UE5.8.4(CL58902052), Ryzen7 9800X3D/Radeon RX9070XT, D3D12, 1280×720 offscreen,
 | `FParallelClothTask` | 23,800 | 3,188.989852 |
 | `PhysicsParallelFor` | 18,936,102 | 3,206.384103 |
 
-이 표는 준비·초기화·전체 동작을 포함한 **trace 전체**이며 비계측 steady frame 수치와 분리한다. Cloth 작업과 PhysicsParallelFor는 서로 중첩된다. worker의 경과시간에는 대기·스케줄링도 포함되므로 합산하거나3189초를 wall time·순수 CPU 연산량으로 읽지 않는다. 그럼에도23,800개 Cloth task와 약1,894만 PhysicsParallelFor 호출이 있는 경로가 남아 있고, 공용/몸체 Control Rig나 RigidBody의 범위보다 크게 관찰된다. 다음 최적화에서는 실제 remote proxy 부하를 분리하고 망토의 substep/iteration·작업 분할·거리별 독립 Cloth 예산을 집중 검증할 근거다. 이 측정에서는 품질을 낮추거나 Cloth를 끄지 않았다.
+이 표는 준비·초기화·전체 동작을 포함한 **trace 전체**이며 비계측 steady frame 수치와 분리한다. Cloth 작업과 PhysicsParallelFor는 서로 중첩된다. worker의 경과시간에는 대기·스케줄링도 포함되므로 합산하거나3189초를 wall time·순수 CPU 연산량으로 읽지 않는다. 23,800개 Cloth task와 약1,894만 PhysicsParallelFor 이름의 타이머 scope 관측이 남아 있다. 이는 내부 작업별 scope를 포함하므로 동일 횟수의 병렬 함수 호출이라고 단정하지 않는다. 공용/몸체 Control Rig나 RigidBody의 범위보다 크게 관찰되어 망토의 substep/iteration·작업 분할·거리별 독립 Cloth 예산을 집중 검증할 근거다. 이 기준 측정에서는 품질을 낮추거나 Cloth를 끄지 않았다.
 
 [정확한 scope/횟수·해시·로그 상태](Data/DirectRig200_20261025/TraceScopes.json)를 보존한다. 최종1명 스모크와200명3회는 종료 코드0·오류/ensure/fatal0이었다. 경고는 스모크24줄,200명 각241줄로 전체 로그가 무경고인 것은 아니다. 측정 전 초기화의 EditorDataStorage·deferred scalability·PoseSearch 비동기 인덱스 준비 경고를 원문과 함께 유지한다.
 

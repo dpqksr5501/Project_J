@@ -17,6 +17,8 @@ UProject_JPlayerAnimInstance
 
 ## 책임과 데이터
 
+2026-10-26 원격 Cloth 비용은 기존 월드 animation-budget subsystem의 거리 관측과 animation-update coordinator에서 제어한다. 필수 source pose·직접 ABP/명시적 리타깃 경로와 별개의 cosmetic 인스턴스 예산이며, 공통 Master BP/ABP를 수정하지 않았다. 로컬 authored 품질·LOD0를 보존하고 지원하지 않는 의상/외부 interactor writer는 원본 유지/opt-out한다. 피부 body의 파생 LOD와 숨은 producer/표시 소비자의 역할, 실제 200명 결과·복구 수명·남은 한계는 [후속 보고서](../../Performance/Reports/ProjectJ_Cloth_Budget_200_2026-10-25.md)를 따른다. 아래 이전 리깅 검증을 새 성능·모든 원격 의상 품질 승인으로 재사용하지 않는다.
+
 | 위치 | 책임 |
 | --- | --- |
 | native Player/기존 컴포넌트 | Mover 입력, GAS 연결·권위, 장비·표현 수명, 입력 바인딩, 시각 예산 |

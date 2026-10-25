@@ -1,0 +1,1676 @@
+{
+  "scope": "Exact owned test paths only. Original evidence ZIP, production/source art, build caches/binaries, all raw CSV/manifests/logs retained.",
+  "removedFiles": 276,
+  "logicalBytes": 1105016978,
+  "driveFreeBefore": 108812017664,
+  "driveFreeAfter": 108811784192,
+  "observedDriveFreeDelta": -233472,
+  "archiveProof": {
+    "archive": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Maintenance\\RigCleanup_20261025\\Evidence.zip",
+    "archive_sha256": "b5542a02e29d348269b2647a27ce60347184f5b0a41033fe0e8b3b75a969aa34",
+    "member": "Saved/Validation/WholeProjectAudit_20261013/RigDirect200_Trace_20261025/Render.utrace",
+    "trace": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\RigBottleneck_20261025\\Baseline.utrace",
+    "trace_bytes": 907223845,
+    "trace_sha256": "9ed1c66958b2c1b2eb64149238a8c5b80b2cc7246a7dbef26bdffe469a1663b7",
+    "archive_and_member_and_temporary_copy_verified": true
+  },
+  "files": [
+    {
+      "path": "Saved/Validation/RigBottleneck_20261025/Baseline.utrace",
+      "bytes": 907223845,
+      "sha256": "9ed1c66958b2c1b2eb64149238a8c5b80b2cc7246a7dbef26bdffe469a1663b7",
+      "reason": "Verified original archive/member retained; interval CSV and derived proof retained in Docs."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothOff_A_20261025/phase2.png",
+      "bytes": 1556945,
+      "sha256": "0e2a88f09e47d681523be3ad81c5d55f88ecb0f1bd8ca08d1dfe64357410a0b8",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothOff_A_20261025/phase3.png",
+      "bytes": 1536695,
+      "sha256": "fb70ba772c6c0b4b379cc718280eec6279367a7702cb38b198358d183fb5c879",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothOff_A_20261025/phase4.png",
+      "bytes": 1529511,
+      "sha256": "8416fc42fc3dde857c26d856cf904a61204ed76a999d5e1f457ad6a41e0deec4",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothOff_A_20261025/phase5.png",
+      "bytes": 1574766,
+      "sha256": "8c883c8ca1a9a66c2b2d0e7a17b11f68cf445b184b29f41d45dc37217df6f352",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothOff_A_20261025/phase6.png",
+      "bytes": 1566938,
+      "sha256": "8e593cfdc808587eafbf82fcffcdc167fac4bbc95a36da2ff2f88bbb0b1d8703",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothOff_A_20261025/User/Intermediate/ShaderAutogen/PCD3D_SM5/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothOff_A_20261025/User/Intermediate/ShaderAutogen/PCD3D_SM6/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothOff_A_20261025/User/Saved/Config/CrashReportClient/UECC-Windows-19FBE92848B04A97473DA38621FCCE93/CrashReportClient.ini",
+      "bytes": 239,
+      "sha256": "ce69d7e7bbd1a64729bd4d5724f3c1efc47c6c3d555da9d2c6ad741eddc3d893",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothOff_A_20261025/User/Saved/Config/WindowsEditor/Editor.ini",
+      "bytes": 95,
+      "sha256": "0f6e5f6ee35d1d08016aa73927d665b380165b85189cb086957465d6a40923c6",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothOff_A_20261025/User/Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini",
+      "bytes": 53957,
+      "sha256": "f73dc9b9e8dea1c7804e16db2fc8c5223fcc9d551af971056e4eda11e871e94a",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothOff_A_20261025/User/Saved/Config/WindowsEditor/GameUserSettings.ini",
+      "bytes": 1378,
+      "sha256": "25034567f71ecec90a640fa803a6bb0292ec483021905251ec22f55c8b4aa91b",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothOff_A_20261025/User/Saved/Logs/AutoSDKInfo.json",
+      "bytes": 13199,
+      "sha256": "7bd8d1f8a7ead9a34c8e6214b5f6e02aeed37ca45bda84fa1ce8c4544b2e4035",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothOff_A_20261025/User/Saved/Logs/AutoSDKInfo.txt",
+      "bytes": 4329,
+      "sha256": "c6f10a148aa1f8eeb99b3126a95bd224bbd04f9095003ebc065b24b9a690840f",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothOff_A_20261025/User/Saved/ShaderDebugInfo/PCD3D_SM6/WorldGridMaterial_67bacdd81a65e5e9/Default/DDCKey-Editor.txt",
+      "bytes": 3203460,
+      "sha256": "76bd9ccdc7adacbed0f40b773b54439131297c1f49e9f801567d5ea2364ce90a",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothOff_B_20261025/phase2.png",
+      "bytes": 1569034,
+      "sha256": "25cb77e8e93c640641262823247703816be2cd14ce058f3b1b3322e6a6a97283",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothOff_B_20261025/phase3.png",
+      "bytes": 1538803,
+      "sha256": "d6ab281da899c2ae4830296bbe0ca69ad1ffe9ddd148997ca0d11fb0d54b77ff",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothOff_B_20261025/phase4.png",
+      "bytes": 1528599,
+      "sha256": "68ec13d7c81e0e56523a45c2d175171a5a15a3a3c76a7acb458d7f6b42a8012b",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothOff_B_20261025/phase5.png",
+      "bytes": 1558111,
+      "sha256": "b151c77451f35dc473cb70aa0b63d94a7093f825723cf6442b008ed9e4aaf5fa",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothOff_B_20261025/phase6.png",
+      "bytes": 1577371,
+      "sha256": "3db584f2f43037ef054a6ded022458159c603bcf82759e52ca5eeb7f0b8d6d99",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothOff_B_20261025/User/Intermediate/ShaderAutogen/PCD3D_SM5/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothOff_B_20261025/User/Intermediate/ShaderAutogen/PCD3D_SM6/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothOff_B_20261025/User/Saved/Config/CrashReportClient/UECC-Windows-A8A183B84E5E4A294A3215BBBDF7B18C/CrashReportClient.ini",
+      "bytes": 239,
+      "sha256": "ce69d7e7bbd1a64729bd4d5724f3c1efc47c6c3d555da9d2c6ad741eddc3d893",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothOff_B_20261025/User/Saved/Config/WindowsEditor/Editor.ini",
+      "bytes": 95,
+      "sha256": "0f6e5f6ee35d1d08016aa73927d665b380165b85189cb086957465d6a40923c6",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothOff_B_20261025/User/Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini",
+      "bytes": 53957,
+      "sha256": "a3889732d79aad3eeabb9064f576527f3790a2c61df39b026bab382bef8089b3",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothOff_B_20261025/User/Saved/Config/WindowsEditor/GameUserSettings.ini",
+      "bytes": 1378,
+      "sha256": "25034567f71ecec90a640fa803a6bb0292ec483021905251ec22f55c8b4aa91b",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothOff_B_20261025/User/Saved/Logs/AutoSDKInfo.json",
+      "bytes": 13199,
+      "sha256": "8ffa18aa61b4850d74ac7635c6a278bbe200605f1517a66d2aaa505a45873083",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothOff_B_20261025/User/Saved/Logs/AutoSDKInfo.txt",
+      "bytes": 4329,
+      "sha256": "3ac29c67524eb8b92280ec71563b3c54a4896146ed75ec45665662ae3e7e7991",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothOff_B_20261025/User/Saved/ShaderDebugInfo/PCD3D_SM6/WorldGridMaterial_67bacdd81a65e5e9/Default/DDCKey-Editor.txt",
+      "bytes": 3203460,
+      "sha256": "76bd9ccdc7adacbed0f40b773b54439131297c1f49e9f801567d5ea2364ce90a",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_InnerSerial_A_20261025/phase2.png",
+      "bytes": 1373543,
+      "sha256": "503e5926c77bff1069fdcae1a6fbb8620c34957d03d39a96e2111e8eae7181ce",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_InnerSerial_A_20261025/phase3.png",
+      "bytes": 1470427,
+      "sha256": "5db5fcd5211c2b7dedf3a93cf9a2371db6cb19cf523a10576afa944f05b853b3",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_InnerSerial_A_20261025/phase4.png",
+      "bytes": 1541565,
+      "sha256": "5bc634998ffadb1c1be0aa7ec7aee9ba27efc2c5aa0f603681704c4a6c0dc9d2",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_InnerSerial_A_20261025/phase5.png",
+      "bytes": 1554324,
+      "sha256": "07391e319ddf133a3e8ef34da3f6e08226b0df78528fbf7322aa2afe8c1caa5f",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_InnerSerial_A_20261025/phase6.png",
+      "bytes": 1570983,
+      "sha256": "b11b54bfd9640d4cb76078b8aa131ddbca9955e1af11f86271c26f0cf5db2247",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_InnerSerial_A_20261025/User/Intermediate/ShaderAutogen/PCD3D_SM5/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_InnerSerial_A_20261025/User/Intermediate/ShaderAutogen/PCD3D_SM6/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_InnerSerial_A_20261025/User/Saved/Config/CrashReportClient/UECC-Windows-C676FEB5483D99B6500F4E936784A60C/CrashReportClient.ini",
+      "bytes": 239,
+      "sha256": "ce69d7e7bbd1a64729bd4d5724f3c1efc47c6c3d555da9d2c6ad741eddc3d893",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_InnerSerial_A_20261025/User/Saved/Config/WindowsEditor/Editor.ini",
+      "bytes": 95,
+      "sha256": "0f6e5f6ee35d1d08016aa73927d665b380165b85189cb086957465d6a40923c6",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_InnerSerial_A_20261025/User/Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini",
+      "bytes": 53957,
+      "sha256": "fdbdb3e76a36d3c522d9655e61321cfe018513a47a45ed5dee6a5803d47e842b",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_InnerSerial_A_20261025/User/Saved/Config/WindowsEditor/GameUserSettings.ini",
+      "bytes": 1378,
+      "sha256": "25034567f71ecec90a640fa803a6bb0292ec483021905251ec22f55c8b4aa91b",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_InnerSerial_A_20261025/User/Saved/Logs/AutoSDKInfo.json",
+      "bytes": 13199,
+      "sha256": "a350bdee5ce6d8920e568697804e53c95eb7bec1cdad902bf3dcc2c559bf3c07",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_InnerSerial_A_20261025/User/Saved/Logs/AutoSDKInfo.txt",
+      "bytes": 4329,
+      "sha256": "6cb5132fc887d04f7dcf528969f9fe970df8d7b59dcc3c01dd7a356bf4377dfc",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_InnerSerial_A_20261025/User/Saved/ShaderDebugInfo/PCD3D_SM6/WorldGridMaterial_67bacdd81a65e5e9/Default/DDCKey-Editor.txt",
+      "bytes": 3203460,
+      "sha256": "76bd9ccdc7adacbed0f40b773b54439131297c1f49e9f801567d5ea2364ce90a",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_InnerSerial_B_20261025/phase2.png",
+      "bytes": 1374181,
+      "sha256": "705caff65db41580d15c5ddd75793d8dc8ea0dcf789b78cb1d90a9ed03455e0f",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_InnerSerial_B_20261025/phase3.png",
+      "bytes": 1470320,
+      "sha256": "c9f29e93a1a3f52c3a21ca58815a4164264913fd41886148af3c6bfb8f2e898f",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_InnerSerial_B_20261025/phase4.png",
+      "bytes": 1542500,
+      "sha256": "35a622e9dd5e2a4e41b08d4a7eb513e6683b018f6474e19498f88839fe42c887",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_InnerSerial_B_20261025/phase5.png",
+      "bytes": 1554412,
+      "sha256": "35bbaa51ad78e1340c189772e06c90050f0fcf3166a0b0fdea99ba24212bda6d",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_InnerSerial_B_20261025/phase6.png",
+      "bytes": 1571079,
+      "sha256": "7ca1cd4054fcaf83c6f8872553f1bf4ed2d6f84d31ae4342a1b818fcdec26e22",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_InnerSerial_B_20261025/User/Intermediate/ShaderAutogen/PCD3D_SM5/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_InnerSerial_B_20261025/User/Intermediate/ShaderAutogen/PCD3D_SM6/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_InnerSerial_B_20261025/User/Saved/Config/CrashReportClient/UECC-Windows-FC0D81C841EF381D71441D937B59AFEF/CrashReportClient.ini",
+      "bytes": 239,
+      "sha256": "ce69d7e7bbd1a64729bd4d5724f3c1efc47c6c3d555da9d2c6ad741eddc3d893",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_InnerSerial_B_20261025/User/Saved/Config/WindowsEditor/Editor.ini",
+      "bytes": 95,
+      "sha256": "0f6e5f6ee35d1d08016aa73927d665b380165b85189cb086957465d6a40923c6",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_InnerSerial_B_20261025/User/Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini",
+      "bytes": 53957,
+      "sha256": "93b074e25b417490889e56bad2a39e760c42d93289bc2de42c26448a4178b022",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_InnerSerial_B_20261025/User/Saved/Config/WindowsEditor/GameUserSettings.ini",
+      "bytes": 1378,
+      "sha256": "25034567f71ecec90a640fa803a6bb0292ec483021905251ec22f55c8b4aa91b",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_InnerSerial_B_20261025/User/Saved/Logs/AutoSDKInfo.json",
+      "bytes": 13199,
+      "sha256": "6c372172b0323abae1e46dbeb5dbe09e56ba94758f1b0e71008ba28026667b2b",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_InnerSerial_B_20261025/User/Saved/Logs/AutoSDKInfo.txt",
+      "bytes": 4329,
+      "sha256": "df779ecedc1c649fd0d944129a62280627080c4e2c79eb6a21b351b0fa10e86e",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_InnerSerial_B_20261025/User/Saved/ShaderDebugInfo/PCD3D_SM6/WorldGridMaterial_67bacdd81a65e5e9/Default/DDCKey-Editor.txt",
+      "bytes": 3203460,
+      "sha256": "76bd9ccdc7adacbed0f40b773b54439131297c1f49e9f801567d5ea2364ce90a",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_DefaultConfirm_20261025/phase2.png",
+      "bytes": 1372195,
+      "sha256": "b6c68d1766756211c5b7d62ea190f4371377b626b9823ab2b3ac18588040fd89",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_DefaultConfirm_20261025/phase3.png",
+      "bytes": 1469586,
+      "sha256": "b3b932a3f397108c6ac71d25f188976bed75dc315be5e693804132c18c9aa127",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_DefaultConfirm_20261025/phase4.png",
+      "bytes": 1541523,
+      "sha256": "48f37143c288574ba37b635bc5c871a5f427a8f21a8df3366e7967b14a3a655e",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_DefaultConfirm_20261025/phase5.png",
+      "bytes": 1588765,
+      "sha256": "4b641fb30953356622584bb539915e7122724e2f29cb4db539aedcf905013aa9",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_DefaultConfirm_20261025/phase6.png",
+      "bytes": 1594582,
+      "sha256": "0a6f04e197df91804ba5b92de3361e32952aa018048ff6e2a9eb686774035a24",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_DefaultConfirm_20261025/User/Intermediate/ShaderAutogen/PCD3D_SM5/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_DefaultConfirm_20261025/User/Intermediate/ShaderAutogen/PCD3D_SM6/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_DefaultConfirm_20261025/User/Saved/Config/CrashReportClient/UECC-Windows-D57B0F4C4C81291EC264209B6A86BDC5/CrashReportClient.ini",
+      "bytes": 239,
+      "sha256": "ce69d7e7bbd1a64729bd4d5724f3c1efc47c6c3d555da9d2c6ad741eddc3d893",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_DefaultConfirm_20261025/User/Saved/Config/WindowsEditor/Editor.ini",
+      "bytes": 95,
+      "sha256": "0f6e5f6ee35d1d08016aa73927d665b380165b85189cb086957465d6a40923c6",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_DefaultConfirm_20261025/User/Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini",
+      "bytes": 53957,
+      "sha256": "85e1ac3d3af11124738793b6fd86bf64b633ad2d92dc00badc938ffe8262faba",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_DefaultConfirm_20261025/User/Saved/Config/WindowsEditor/GameUserSettings.ini",
+      "bytes": 1378,
+      "sha256": "25034567f71ecec90a640fa803a6bb0292ec483021905251ec22f55c8b4aa91b",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_DefaultConfirm_20261025/User/Saved/Logs/AutoSDKInfo.json",
+      "bytes": 13199,
+      "sha256": "33dd52a3bbae952a791ea1a25a53a0e6da62c577dd72fb8602920a430438b76f",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_DefaultConfirm_20261025/User/Saved/Logs/AutoSDKInfo.txt",
+      "bytes": 4329,
+      "sha256": "9950c56512f4e03f04a17a88a4e883e777d0e676b3c2c26fe6d5418a2c26c090",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_DefaultConfirm_20261025/User/Saved/ShaderDebugInfo/PCD3D_SM6/WorldGridMaterial_67bacdd81a65e5e9/Default/DDCKey-Editor.txt",
+      "bytes": 3203460,
+      "sha256": "76bd9ccdc7adacbed0f40b773b54439131297c1f49e9f801567d5ea2364ce90a",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothNoCollision_A_20261025/phase2.png",
+      "bytes": 1373309,
+      "sha256": "d4208b14f4268a78a22c4ba348a120557fe2b3e3b3f8c59b41a4d1899e5f0d14",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothNoCollision_A_20261025/phase3.png",
+      "bytes": 1468951,
+      "sha256": "235465505c4c1472ee9618e818c12a489eee3ec186facbd2707e72c62591b37d",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothNoCollision_A_20261025/phase4.png",
+      "bytes": 1541414,
+      "sha256": "9b2439b5ea0297d52389c8eb662b6539d1f4c96c2356b93e0dac2200d26e172e",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothNoCollision_A_20261025/phase5.png",
+      "bytes": 1554473,
+      "sha256": "48950ef6b3b20bdaf3b602106c2fe698b847f147bd55fac315976e8ef4a449b1",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothNoCollision_A_20261025/phase6.png",
+      "bytes": 1570206,
+      "sha256": "875ed2ec51b6e651e89a7aba30b56e1ec317a43983d390ff5514b4dc4c723209",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothNoCollision_A_20261025/User/Intermediate/ShaderAutogen/PCD3D_SM5/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothNoCollision_A_20261025/User/Intermediate/ShaderAutogen/PCD3D_SM6/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothNoCollision_A_20261025/User/Saved/Config/CrashReportClient/UECC-Windows-82C9BB08471B9CCBED6856AB7324468C/CrashReportClient.ini",
+      "bytes": 239,
+      "sha256": "ce69d7e7bbd1a64729bd4d5724f3c1efc47c6c3d555da9d2c6ad741eddc3d893",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothNoCollision_A_20261025/User/Saved/Config/WindowsEditor/Editor.ini",
+      "bytes": 95,
+      "sha256": "0f6e5f6ee35d1d08016aa73927d665b380165b85189cb086957465d6a40923c6",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothNoCollision_A_20261025/User/Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini",
+      "bytes": 53957,
+      "sha256": "4d1026d6895895b529ecd17d54673c89a09b34bacf8cc808ed8eed3136100e37",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothNoCollision_A_20261025/User/Saved/Config/WindowsEditor/GameUserSettings.ini",
+      "bytes": 1378,
+      "sha256": "25034567f71ecec90a640fa803a6bb0292ec483021905251ec22f55c8b4aa91b",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothNoCollision_A_20261025/User/Saved/Logs/AutoSDKInfo.json",
+      "bytes": 13199,
+      "sha256": "dce9c8c94835e7121f86af00a61bf752d6066465127126679bec67b9f27c4da8",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothNoCollision_A_20261025/User/Saved/Logs/AutoSDKInfo.txt",
+      "bytes": 4329,
+      "sha256": "b2c0e6dacf56964ac7adcfb70711dfd5b9f5ecbd9e7d27b0e0b3a3705691ca19",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothNoCollision_A_20261025/User/Saved/ShaderDebugInfo/PCD3D_SM6/WorldGridMaterial_67bacdd81a65e5e9/Default/DDCKey-Editor.txt",
+      "bytes": 3203460,
+      "sha256": "76bd9ccdc7adacbed0f40b773b54439131297c1f49e9f801567d5ea2364ce90a",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothNoCollision_B_20261025/phase2.png",
+      "bytes": 1370749,
+      "sha256": "647e9227deecaafd8edd99ff4d89fccf46829592b636c44323a5ec70cda3779f",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothNoCollision_B_20261025/phase3.png",
+      "bytes": 1469338,
+      "sha256": "4c434cbb5b6ef719b8a6ff1f1f7598487f488d3ba63d707a5cfba1921636b60f",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothNoCollision_B_20261025/phase4.png",
+      "bytes": 1542034,
+      "sha256": "61c9a3da2bde354030ca0c92bfa190e095477069a18a2f00e3270f83b4ed10c8",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothNoCollision_B_20261025/phase5.png",
+      "bytes": 1588182,
+      "sha256": "92f51a4bfcb405ebf0c344c788aa560a9b2056cfb29c09dcc34a94a8b782098d",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothNoCollision_B_20261025/phase6.png",
+      "bytes": 1593425,
+      "sha256": "220cc2a11696995ac7c6525823b7d0be436901acd1f14fa0819eb610bc5da43f",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothNoCollision_B_20261025/User/Intermediate/ShaderAutogen/PCD3D_SM5/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothNoCollision_B_20261025/User/Intermediate/ShaderAutogen/PCD3D_SM6/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothNoCollision_B_20261025/User/Saved/Config/CrashReportClient/UECC-Windows-2773E9B9494371DD424DF48D4B7C0828/CrashReportClient.ini",
+      "bytes": 239,
+      "sha256": "ce69d7e7bbd1a64729bd4d5724f3c1efc47c6c3d555da9d2c6ad741eddc3d893",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothNoCollision_B_20261025/User/Saved/Config/WindowsEditor/Editor.ini",
+      "bytes": 95,
+      "sha256": "0f6e5f6ee35d1d08016aa73927d665b380165b85189cb086957465d6a40923c6",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothNoCollision_B_20261025/User/Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini",
+      "bytes": 53957,
+      "sha256": "36fe4dbf7d4ee3548296edec1bed5bbc019f1f4172a9d8cf74f44c312399424f",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothNoCollision_B_20261025/User/Saved/Config/WindowsEditor/GameUserSettings.ini",
+      "bytes": 1378,
+      "sha256": "25034567f71ecec90a640fa803a6bb0292ec483021905251ec22f55c8b4aa91b",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothNoCollision_B_20261025/User/Saved/Logs/AutoSDKInfo.json",
+      "bytes": 13199,
+      "sha256": "3bcfcc14ed0572fd31b1533a522e2a518c51f452ec8e30251c8aef99944798d4",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothNoCollision_B_20261025/User/Saved/Logs/AutoSDKInfo.txt",
+      "bytes": 4329,
+      "sha256": "1211de35c960352d53e907ae73a1f1b4dd938961dac20770bf6497161c641215",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/RigCause_ClothNoCollision_B_20261025/User/Saved/ShaderDebugInfo/PCD3D_SM6/WorldGridMaterial_67bacdd81a65e5e9/Default/DDCKey-Editor.txt",
+      "bytes": 3203460,
+      "sha256": "76bd9ccdc7adacbed0f40b773b54439131297c1f49e9f801567d5ea2364ce90a",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_A_20261025/phase2.png",
+      "bytes": 1454200,
+      "sha256": "fa8ee46288243ea15c674a842c6b14ae3c99831fe12750d0597287a369fd0cbb",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_A_20261025/phase3.png",
+      "bytes": 1452138,
+      "sha256": "40fd0f0c978203a8235c1765668c17c8b4d22afef2c02386e0023fd0717a364c",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_A_20261025/phase4.png",
+      "bytes": 1458022,
+      "sha256": "be1a7f7da2b34538bbd8f00108044152dfaabd9fab6f5f0df38933581fcd2ddb",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_A_20261025/phase5.png",
+      "bytes": 1459930,
+      "sha256": "cf1fbb47e8e07db36c08bb5eb0cbe45f1927d627b74abb60c366ee0a00481fa6",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_A_20261025/phase6.png",
+      "bytes": 1458215,
+      "sha256": "ee7d9d426dc5eea047b7805481537c05e7656c883be25d920b61669c3782c215",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_A_20261025/User/Intermediate/ShaderAutogen/PCD3D_SM5/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_A_20261025/User/Intermediate/ShaderAutogen/PCD3D_SM6/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_A_20261025/User/Saved/Config/CrashReportClient/UECC-Windows-59CE067A4E3E122574682E873AF32184/CrashReportClient.ini",
+      "bytes": 239,
+      "sha256": "ce69d7e7bbd1a64729bd4d5724f3c1efc47c6c3d555da9d2c6ad741eddc3d893",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_A_20261025/User/Saved/Config/WindowsEditor/Editor.ini",
+      "bytes": 95,
+      "sha256": "0f6e5f6ee35d1d08016aa73927d665b380165b85189cb086957465d6a40923c6",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_A_20261025/User/Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini",
+      "bytes": 53957,
+      "sha256": "f1b9aab49ed60150222a5ac10aa97bbee7737a7fd20fe4bf8e79bb2241c47881",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_A_20261025/User/Saved/Config/WindowsEditor/GameUserSettings.ini",
+      "bytes": 1378,
+      "sha256": "25034567f71ecec90a640fa803a6bb0292ec483021905251ec22f55c8b4aa91b",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_A_20261025/User/Saved/Logs/AutoSDKInfo.json",
+      "bytes": 13199,
+      "sha256": "95f044a5bce4e92d4556a6c219c61959dc7c45f32b83fefd3761bfe50558b9a2",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_A_20261025/User/Saved/Logs/AutoSDKInfo.txt",
+      "bytes": 4329,
+      "sha256": "b9331b09db9cf3b1feb3e0b585768030967189f90a5f478ee3684bf80b2c6488",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_A_20261025/User/Saved/ShaderDebugInfo/PCD3D_SM6/WorldGridMaterial_67bacdd81a65e5e9/Default/DDCKey-Editor.txt",
+      "bytes": 3203460,
+      "sha256": "76bd9ccdc7adacbed0f40b773b54439131297c1f49e9f801567d5ea2364ce90a",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_A_20261026/phase2.png",
+      "bytes": 1546926,
+      "sha256": "e86d47925913e2258f5a09178dccda04fa9712f1ff8170a8b5ae4485d46ae145",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_A_20261026/phase3.png",
+      "bytes": 1514122,
+      "sha256": "45e8b8d42c4cd871aef9958337f3b05018d34e9bb0c5b0021d85852457971c09",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_A_20261026/phase4.png",
+      "bytes": 1525845,
+      "sha256": "be6158c13ac63fa2441b99cad9ef6a8deb49dbf3eca272fdd15b1a44f875d234",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_A_20261026/phase5.png",
+      "bytes": 1562446,
+      "sha256": "02056a714a4b8c06fe86b1d01fc53e94391651d6ea371b1419ddd3182ae801d4",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_A_20261026/phase6.png",
+      "bytes": 1556051,
+      "sha256": "9661b965f1fe631b80fecb6f75fe8bde02f35133fd73d396c47198c7a469dfc9",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_A_20261026/User/Intermediate/ShaderAutogen/PCD3D_SM5/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_A_20261026/User/Intermediate/ShaderAutogen/PCD3D_SM6/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_A_20261026/User/Saved/Config/CrashReportClient/UECC-Windows-E7E77D994E54585FEA4221B7B9217D21/CrashReportClient.ini",
+      "bytes": 239,
+      "sha256": "ce69d7e7bbd1a64729bd4d5724f3c1efc47c6c3d555da9d2c6ad741eddc3d893",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_A_20261026/User/Saved/Config/WindowsEditor/Editor.ini",
+      "bytes": 95,
+      "sha256": "0f6e5f6ee35d1d08016aa73927d665b380165b85189cb086957465d6a40923c6",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_A_20261026/User/Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini",
+      "bytes": 53957,
+      "sha256": "fc191eb6c97e4b841f48df4d8e2da90ef3d5f83e7a7df31423ac82c96d47685d",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_A_20261026/User/Saved/Config/WindowsEditor/GameUserSettings.ini",
+      "bytes": 1378,
+      "sha256": "25034567f71ecec90a640fa803a6bb0292ec483021905251ec22f55c8b4aa91b",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_A_20261026/User/Saved/Logs/AutoSDKInfo.json",
+      "bytes": 13199,
+      "sha256": "c63ca6ed5679589c1f08418e178ffb738907f2524ed51e2e4e45c674884d398e",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_A_20261026/User/Saved/Logs/AutoSDKInfo.txt",
+      "bytes": 4329,
+      "sha256": "9ef74354af91ed0996415b3cbf09ef31a12329b7fa1642f833e68c03195e4d95",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_A_20261026/User/Saved/ShaderDebugInfo/PCD3D_SM6/WorldGridMaterial_67bacdd81a65e5e9/Default/DDCKey-Editor.txt",
+      "bytes": 3203460,
+      "sha256": "76bd9ccdc7adacbed0f40b773b54439131297c1f49e9f801567d5ea2364ce90a",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Off_A_20261026/phase2.png",
+      "bytes": 1371404,
+      "sha256": "f3e6805498249a8872c1effc10a81874a25700ea31c3088ad424a07a632f225b",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Off_A_20261026/phase3.png",
+      "bytes": 1469991,
+      "sha256": "b6dc91ae28dc8899ca13f8882a08b46225d6c43c3b4982d718310db974a56128",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Off_A_20261026/phase4.png",
+      "bytes": 1541759,
+      "sha256": "a523ab29f40306591e9808e2ff3a585b62a28fffeb726d8881724e5efea172bd",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Off_A_20261026/phase5.png",
+      "bytes": 1587530,
+      "sha256": "c4e1fac03a75d170f177a281c242d508157c1b47768e607104f74724d498128e",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Off_A_20261026/phase6.png",
+      "bytes": 1592967,
+      "sha256": "bf2b8fddd4cab705d43a86e4f8fe272d8ba078774f93c00f27c89b0d38baadc8",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Off_A_20261026/User/Intermediate/ShaderAutogen/PCD3D_SM5/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Off_A_20261026/User/Intermediate/ShaderAutogen/PCD3D_SM6/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Off_A_20261026/User/Saved/Config/CrashReportClient/UECC-Windows-61B86C2F4E7765B2E1D1FB8296328909/CrashReportClient.ini",
+      "bytes": 239,
+      "sha256": "ce69d7e7bbd1a64729bd4d5724f3c1efc47c6c3d555da9d2c6ad741eddc3d893",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Off_A_20261026/User/Saved/Config/WindowsEditor/Editor.ini",
+      "bytes": 95,
+      "sha256": "0f6e5f6ee35d1d08016aa73927d665b380165b85189cb086957465d6a40923c6",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Off_A_20261026/User/Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini",
+      "bytes": 53957,
+      "sha256": "2c245d2580cdc232cf9ff402734f2bb534d022e65354e7c52ef64018e8b92102",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Off_A_20261026/User/Saved/Config/WindowsEditor/GameUserSettings.ini",
+      "bytes": 1378,
+      "sha256": "25034567f71ecec90a640fa803a6bb0292ec483021905251ec22f55c8b4aa91b",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Off_A_20261026/User/Saved/Logs/AutoSDKInfo.json",
+      "bytes": 13199,
+      "sha256": "243d0f9e08bb15ad5bc9968fbeea630a4abf664a518d51d5bed24b3cec7a7889",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Off_A_20261026/User/Saved/Logs/AutoSDKInfo.txt",
+      "bytes": 4329,
+      "sha256": "172f6417520b3279ad7c71ac21a446cffcbdfea758fac056fa4d7dc94e65a3e0",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Off_A_20261026/User/Saved/ShaderDebugInfo/PCD3D_SM6/WorldGridMaterial_67bacdd81a65e5e9/Default/DDCKey-Editor.txt",
+      "bytes": 3203460,
+      "sha256": "76bd9ccdc7adacbed0f40b773b54439131297c1f49e9f801567d5ea2364ce90a",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Off_B_20261026/phase2.png",
+      "bytes": 1371597,
+      "sha256": "df128ee827b332f6c79987e99e1737881f66d39a9d53455e761d9da92d3eebfd",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Off_B_20261026/phase3.png",
+      "bytes": 1468948,
+      "sha256": "cbb69f05d7c0c4a0521c9e3b8b0a01818b2f59344c9c7e47951ec56e6781d1ad",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Off_B_20261026/phase4.png",
+      "bytes": 1541668,
+      "sha256": "9624de263d8526452750b89826770b3b8699ba2315d468c2d1a1c30c0c81df5c",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Off_B_20261026/phase5.png",
+      "bytes": 1553536,
+      "sha256": "4c239cac8b02af0d14ddfee371daebd66eb695339f9be1e52591f793aac61265",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Off_B_20261026/phase6.png",
+      "bytes": 1570189,
+      "sha256": "a57992e4a2455bf10aab0312689fe2f04109c9720b9e9a82d6b694f9a7a39697",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Off_B_20261026/User/Intermediate/ShaderAutogen/PCD3D_SM5/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Off_B_20261026/User/Intermediate/ShaderAutogen/PCD3D_SM6/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Off_B_20261026/User/Saved/Config/CrashReportClient/UECC-Windows-41D3426843A68F4120C2DC9846FED579/CrashReportClient.ini",
+      "bytes": 239,
+      "sha256": "ce69d7e7bbd1a64729bd4d5724f3c1efc47c6c3d555da9d2c6ad741eddc3d893",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Off_B_20261026/User/Saved/Config/WindowsEditor/Editor.ini",
+      "bytes": 95,
+      "sha256": "0f6e5f6ee35d1d08016aa73927d665b380165b85189cb086957465d6a40923c6",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Off_B_20261026/User/Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini",
+      "bytes": 53957,
+      "sha256": "af235ce697067097a1507d891d05c7e54c200306222d3cbf278a3b60a041bcf5",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Off_B_20261026/User/Saved/Config/WindowsEditor/GameUserSettings.ini",
+      "bytes": 1378,
+      "sha256": "25034567f71ecec90a640fa803a6bb0292ec483021905251ec22f55c8b4aa91b",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Off_B_20261026/User/Saved/Logs/AutoSDKInfo.json",
+      "bytes": 13199,
+      "sha256": "4f4a00af0e44388ba66212f921e89e9ff237ede7d445cd87e3fe8ca609adff63",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Off_B_20261026/User/Saved/Logs/AutoSDKInfo.txt",
+      "bytes": 4329,
+      "sha256": "ee2387f1e2127b4ce02f32fd9a65abcd76ced9bf5d6352f46409160821c5a835",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Off_B_20261026/User/Saved/ShaderDebugInfo/PCD3D_SM6/WorldGridMaterial_67bacdd81a65e5e9/Default/DDCKey-Editor.txt",
+      "bytes": 3203460,
+      "sha256": "76bd9ccdc7adacbed0f40b773b54439131297c1f49e9f801567d5ea2364ce90a",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_B_20261026/phase2.png",
+      "bytes": 1556757,
+      "sha256": "39ac6933abf9a3e21ac07d7058c16d48eaa34a0a6c31c90ebd7a4c66225a70a7",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_B_20261026/phase3.png",
+      "bytes": 1538613,
+      "sha256": "838c56f1414057b2d491f843e6cba8e5c3ace226ae78d5e2ae16170ec494822a",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_B_20261026/phase4.png",
+      "bytes": 1523240,
+      "sha256": "525c87813f2a8908833a27d02cd5c26440532fe8edf15b855849b4842e14057d",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_B_20261026/phase5.png",
+      "bytes": 1564711,
+      "sha256": "8157c06fa2ffce92f068f04a42103a81f44a2c39def549d34a09cff0e2845b75",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_B_20261026/phase6.png",
+      "bytes": 1563969,
+      "sha256": "2c376e058c4418ad8bf3472a4219a827ff4f7f1ba9efb4b6f77d6bce384056c6",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_B_20261026/User/Intermediate/ShaderAutogen/PCD3D_SM5/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_B_20261026/User/Intermediate/ShaderAutogen/PCD3D_SM6/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_B_20261026/User/Saved/Config/CrashReportClient/UECC-Windows-D3C7786546806AAD5B5FA8BD0B7EBF01/CrashReportClient.ini",
+      "bytes": 239,
+      "sha256": "ce69d7e7bbd1a64729bd4d5724f3c1efc47c6c3d555da9d2c6ad741eddc3d893",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_B_20261026/User/Saved/Config/WindowsEditor/Editor.ini",
+      "bytes": 95,
+      "sha256": "0f6e5f6ee35d1d08016aa73927d665b380165b85189cb086957465d6a40923c6",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_B_20261026/User/Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini",
+      "bytes": 53957,
+      "sha256": "8caba609b979f56bd29a1e1c716d9b190f851c5eca1b9572f479585de9a2549a",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_B_20261026/User/Saved/Config/WindowsEditor/GameUserSettings.ini",
+      "bytes": 1378,
+      "sha256": "25034567f71ecec90a640fa803a6bb0292ec483021905251ec22f55c8b4aa91b",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_B_20261026/User/Saved/Logs/AutoSDKInfo.json",
+      "bytes": 13199,
+      "sha256": "f3f443345e331d7dca628b76b5f7540d7f6fdcb1ee6c65a758d19a158f20fbbf",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_B_20261026/User/Saved/Logs/AutoSDKInfo.txt",
+      "bytes": 4329,
+      "sha256": "9136e7e770305e3409387a52ffe63e1c12fdf656c8c44528c6ee9c428b366733",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_B_20261026/User/Saved/ShaderDebugInfo/PCD3D_SM6/WorldGridMaterial_67bacdd81a65e5e9/Default/DDCKey-Editor.txt",
+      "bytes": 3203460,
+      "sha256": "76bd9ccdc7adacbed0f40b773b54439131297c1f49e9f801567d5ea2364ce90a",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_Final_20261026/phase2.png",
+      "bytes": 1556046,
+      "sha256": "b03146925c74c929182c6057a95e12517fcdf85f5f85ed5929e33381a3e24d4a",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_Final_20261026/phase3.png",
+      "bytes": 1529036,
+      "sha256": "5c488f223783389b740bdb89ca40d1665d09cc50190d4f5389b21c412fc92162",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_Final_20261026/phase4.png",
+      "bytes": 1529414,
+      "sha256": "9ff5b15ca99ff8bb95bb5683e5c8fee9e02b16242740ef128f1dabd3529b9cc9",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_Final_20261026/phase5.png",
+      "bytes": 1569318,
+      "sha256": "638f86ca5f6da98a430921deb8b026911f6c06a522ebb676651c1243fc82b2fc",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_Final_20261026/phase6.png",
+      "bytes": 1543401,
+      "sha256": "20620d9a523a9d0883f868dc97244b537fa5af1cb09783bff90dd675b8bd196f",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_Final_20261026/User/Intermediate/ShaderAutogen/PCD3D_SM5/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_Final_20261026/User/Intermediate/ShaderAutogen/PCD3D_SM6/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_Final_20261026/User/Saved/Config/CrashReportClient/UECC-Windows-27B8B9CF48774AE32709E292C6BA9D75/CrashReportClient.ini",
+      "bytes": 239,
+      "sha256": "ce69d7e7bbd1a64729bd4d5724f3c1efc47c6c3d555da9d2c6ad741eddc3d893",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_Final_20261026/User/Saved/Config/WindowsEditor/Editor.ini",
+      "bytes": 95,
+      "sha256": "0f6e5f6ee35d1d08016aa73927d665b380165b85189cb086957465d6a40923c6",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_Final_20261026/User/Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini",
+      "bytes": 53957,
+      "sha256": "0624dc8a6850ae76922f029bb89feea16528a3a21385429b2af1b6809d6c618b",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_Final_20261026/User/Saved/Config/WindowsEditor/GameUserSettings.ini",
+      "bytes": 1378,
+      "sha256": "25034567f71ecec90a640fa803a6bb0292ec483021905251ec22f55c8b4aa91b",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_Final_20261026/User/Saved/Logs/AutoSDKInfo.json",
+      "bytes": 13199,
+      "sha256": "777a4fd4c2eea540e46439b61b85b088c88ee210ccd368e6b2f0bdfa6b35db46",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_Final_20261026/User/Saved/Logs/AutoSDKInfo.txt",
+      "bytes": 4329,
+      "sha256": "69c34740461af44fd57e108129309b4a2e43c0dbf84902d6aa032d822ded2618",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_Final_20261026/User/Saved/ShaderDebugInfo/PCD3D_SM6/WorldGridMaterial_67bacdd81a65e5e9/Default/DDCKey-Editor.txt",
+      "bytes": 3203460,
+      "sha256": "76bd9ccdc7adacbed0f40b773b54439131297c1f49e9f801567d5ea2364ce90a",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_FinalB_20261026/phase2.png",
+      "bytes": 1545228,
+      "sha256": "c570c289f180a334fd6208951985ed4e59c43f95d52989817b3030bf4773de4e",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_FinalB_20261026/phase3.png",
+      "bytes": 1520477,
+      "sha256": "340e2b60cc011c096f2154a67ec56b354ae57d4e48c7e0713c0b87b091a18620",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_FinalB_20261026/phase4.png",
+      "bytes": 1528681,
+      "sha256": "e89f833fdf3e0ead77ac305be0b01862205b91e8ee9d15fff240db409a66b742",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_FinalB_20261026/phase5.png",
+      "bytes": 1557416,
+      "sha256": "ed07883b6d254bbd2001f68d161095397080ff56d7cc9e5bdfbfb4980256ab58",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_FinalB_20261026/phase6.png",
+      "bytes": 1547690,
+      "sha256": "78cb583f9db9c21ecbc7854201361c0efb96fdbb29954d30ac6c364b1cf4428e",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_FinalB_20261026/User/Intermediate/ShaderAutogen/PCD3D_SM5/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_FinalB_20261026/User/Intermediate/ShaderAutogen/PCD3D_SM6/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_FinalB_20261026/User/Saved/Config/CrashReportClient/UECC-Windows-A932A1FA410947B9783577B465E921E0/CrashReportClient.ini",
+      "bytes": 239,
+      "sha256": "ce69d7e7bbd1a64729bd4d5724f3c1efc47c6c3d555da9d2c6ad741eddc3d893",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_FinalB_20261026/User/Saved/Config/WindowsEditor/Editor.ini",
+      "bytes": 95,
+      "sha256": "0f6e5f6ee35d1d08016aa73927d665b380165b85189cb086957465d6a40923c6",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_FinalB_20261026/User/Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini",
+      "bytes": 53957,
+      "sha256": "2359b3170b6f374a4fab2a79deda1d1c3fdff150f506299dd362fa91a4e68f3e",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_FinalB_20261026/User/Saved/Config/WindowsEditor/GameUserSettings.ini",
+      "bytes": 1378,
+      "sha256": "25034567f71ecec90a640fa803a6bb0292ec483021905251ec22f55c8b4aa91b",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_FinalB_20261026/User/Saved/Logs/AutoSDKInfo.json",
+      "bytes": 13199,
+      "sha256": "730daed45bad922c6b9e7108de4ae229693fb379518e88847ff85417d6434cd4",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_FinalB_20261026/User/Saved/Logs/AutoSDKInfo.txt",
+      "bytes": 4329,
+      "sha256": "20e939ba736d195a5f96906724dd7484d8519cafd972d8f8005455a50cc2d85c",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_On_FinalB_20261026/User/Saved/ShaderDebugInfo/PCD3D_SM6/WorldGridMaterial_67bacdd81a65e5e9/Default/DDCKey-Editor.txt",
+      "bytes": 3203460,
+      "sha256": "76bd9ccdc7adacbed0f40b773b54439131297c1f49e9f801567d5ea2364ce90a",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_Close_20261026/phase2.png",
+      "bytes": 1487990,
+      "sha256": "a967a62821c96169a81d208871776cdfe0a094c0fe777c572925bd0c53cc44f6",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_Close_20261026/phase3.png",
+      "bytes": 1483180,
+      "sha256": "4f5c4e22c1f36968e88eac7b3a6acfa02cd043aab73d45588eb9bdf80c0a4abd",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_Close_20261026/phase4.png",
+      "bytes": 1491805,
+      "sha256": "e2e41d6070604ea84026dd71e3eca99d619ab1e52979324fdd05160ccbb5d468",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_Close_20261026/phase5.png",
+      "bytes": 1492673,
+      "sha256": "56225ad77b4ce0308e6fdb3817cf609d9f2450c31c4701fc8bd933e6e29fcc86",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_Close_20261026/phase6.png",
+      "bytes": 1483590,
+      "sha256": "ff0e46c798f5d05762f19eef285d6228766f6c8c7eb5c17234299145a221b29e",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_Close_20261026/User/Intermediate/ShaderAutogen/PCD3D_SM5/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_Close_20261026/User/Intermediate/ShaderAutogen/PCD3D_SM6/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_Close_20261026/User/Saved/Config/CrashReportClient/UECC-Windows-BF751E3C47370E9280921695CBE6FA81/CrashReportClient.ini",
+      "bytes": 239,
+      "sha256": "ce69d7e7bbd1a64729bd4d5724f3c1efc47c6c3d555da9d2c6ad741eddc3d893",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_Close_20261026/User/Saved/Config/WindowsEditor/Editor.ini",
+      "bytes": 95,
+      "sha256": "0f6e5f6ee35d1d08016aa73927d665b380165b85189cb086957465d6a40923c6",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_Close_20261026/User/Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini",
+      "bytes": 53957,
+      "sha256": "3aaf67286e87f86b0ed94cd843a42c5c5ee203587ee275735062d8fa829b2f57",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_Close_20261026/User/Saved/Config/WindowsEditor/GameUserSettings.ini",
+      "bytes": 1378,
+      "sha256": "25034567f71ecec90a640fa803a6bb0292ec483021905251ec22f55c8b4aa91b",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_Close_20261026/User/Saved/Logs/AutoSDKInfo.json",
+      "bytes": 13199,
+      "sha256": "9ed4e1168a63cc0bd86e5505ddb50a707a7afcc3019f3f90820f9ad7edc9fd01",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_Close_20261026/User/Saved/Logs/AutoSDKInfo.txt",
+      "bytes": 4329,
+      "sha256": "78bd3ce47518a615a1f87fce8e5108543ef3dadaddee81517163f942fff8e570",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_Close_20261026/User/Saved/ShaderDebugInfo/PCD3D_SM6/WorldGridMaterial_67bacdd81a65e5e9/Default/DDCKey-Editor.txt",
+      "bytes": 3203460,
+      "sha256": "76bd9ccdc7adacbed0f40b773b54439131297c1f49e9f801567d5ea2364ce90a",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Remote_Reduced_Close_20261026/phase2.png",
+      "bytes": 1486059,
+      "sha256": "966401e04301dee7de10286ed6bd470a6ee21325a5234850ac715e5a0d06fbd0",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Remote_Reduced_Close_20261026/phase3.png",
+      "bytes": 1476778,
+      "sha256": "ae4091aabf3d82cb2f642cdb6739a81c022c2c7d731849bd6b8468349a50e0fe",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Remote_Reduced_Close_20261026/phase4.png",
+      "bytes": 1489652,
+      "sha256": "dbf024cbb63dd43aeef39f73950c99807a19c454f4cec507787c8e9fc5165ae7",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Remote_Reduced_Close_20261026/phase5.png",
+      "bytes": 1488191,
+      "sha256": "79dea2f92c4f6731e09b3595307d2b834b9eb1d5f3567f366e8825a326a91c5f",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Remote_Reduced_Close_20261026/phase6.png",
+      "bytes": 1488723,
+      "sha256": "98d18e43b6ebb95ad35078416e5309a7f9685b8eed074bf98207132fcb6850c2",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Remote_Reduced_Close_20261026/User/Intermediate/ShaderAutogen/PCD3D_SM5/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Remote_Reduced_Close_20261026/User/Intermediate/ShaderAutogen/PCD3D_SM6/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Remote_Reduced_Close_20261026/User/Saved/Config/CrashReportClient/UECC-Windows-0BCA2CAD4E42F461D765F3A8FAFCB5A1/CrashReportClient.ini",
+      "bytes": 239,
+      "sha256": "ce69d7e7bbd1a64729bd4d5724f3c1efc47c6c3d555da9d2c6ad741eddc3d893",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Remote_Reduced_Close_20261026/User/Saved/Config/WindowsEditor/Editor.ini",
+      "bytes": 95,
+      "sha256": "0f6e5f6ee35d1d08016aa73927d665b380165b85189cb086957465d6a40923c6",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Remote_Reduced_Close_20261026/User/Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini",
+      "bytes": 53957,
+      "sha256": "6c561e17a070ae958eef001cec203845b4d62cfa2b82116b66afaaac995378eb",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Remote_Reduced_Close_20261026/User/Saved/Config/WindowsEditor/GameUserSettings.ini",
+      "bytes": 1378,
+      "sha256": "25034567f71ecec90a640fa803a6bb0292ec483021905251ec22f55c8b4aa91b",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Remote_Reduced_Close_20261026/User/Saved/Logs/AutoSDKInfo.json",
+      "bytes": 13199,
+      "sha256": "638a5b4f5d59296fe4e2dbf3fbb16077eb52c13e79a465094a707d6cfff59153",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Remote_Reduced_Close_20261026/User/Saved/Logs/AutoSDKInfo.txt",
+      "bytes": 4329,
+      "sha256": "2dcf3fabc1306a02a896158221a9c98156e9ee457b0f385408ddddbbb28a7146",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Remote_Reduced_Close_20261026/User/Saved/ShaderDebugInfo/PCD3D_SM6/WorldGridMaterial_67bacdd81a65e5e9/Default/DDCKey-Editor.txt",
+      "bytes": 3203460,
+      "sha256": "76bd9ccdc7adacbed0f40b773b54439131297c1f49e9f801567d5ea2364ce90a",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_NoBlur_20261026/phase2.png",
+      "bytes": 29264,
+      "sha256": "8b9d2ad28c28ba0ab2290872083d07dbc3407b5c7f3dd1429db86968fbad7a21",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_NoBlur_20261026/User/Intermediate/ShaderAutogen/PCD3D_SM5/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_NoBlur_20261026/User/Intermediate/ShaderAutogen/PCD3D_SM6/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_NoBlur_20261026/User/Saved/Config/CrashReportClient/UECC-Windows-74719A1648A0B62F973373A3C64A4F3D/CrashReportClient.ini",
+      "bytes": 239,
+      "sha256": "ce69d7e7bbd1a64729bd4d5724f3c1efc47c6c3d555da9d2c6ad741eddc3d893",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_NoBlur_20261026/User/Saved/Config/WindowsEditor/Editor.ini",
+      "bytes": 95,
+      "sha256": "0f6e5f6ee35d1d08016aa73927d665b380165b85189cb086957465d6a40923c6",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_NoBlur_20261026/User/Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini",
+      "bytes": 53957,
+      "sha256": "fc8c3ca022a50a666c4ebaaa1ac22d9c5ce7ac86d6407605258dec66a77a0791",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_NoBlur_20261026/User/Saved/Config/WindowsEditor/GameUserSettings.ini",
+      "bytes": 1378,
+      "sha256": "25034567f71ecec90a640fa803a6bb0292ec483021905251ec22f55c8b4aa91b",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_NoBlur_20261026/User/Saved/Logs/AutoSDKInfo.json",
+      "bytes": 13199,
+      "sha256": "399775e1e2f9adb11fc92f1425240a4b2a85c9329e7420e51262fe9624a0e15d",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_NoBlur_20261026/User/Saved/Logs/AutoSDKInfo.txt",
+      "bytes": 4329,
+      "sha256": "e3cb0e654ad20deb277835e8f4fb02dc7222a696a23c671338981667dfe6b24b",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_NoBlur_20261026/User/Saved/ShaderDebugInfo/PCD3D_SM6/WorldGridMaterial_67bacdd81a65e5e9/Default/DDCKey-Editor.txt",
+      "bytes": 3203460,
+      "sha256": "76bd9ccdc7adacbed0f40b773b54439131297c1f49e9f801567d5ea2364ce90a",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_Follow_NoBlur_20261026/phase2.png",
+      "bytes": 1491904,
+      "sha256": "63b488a5b7f6106e2d183a303a506c39dfdb28beec4d64225614291ca11691f0",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_Follow_NoBlur_20261026/phase3.png",
+      "bytes": 1340843,
+      "sha256": "097e8788e462119f357912263374b6a3dd92daf189b7d9708c93b2f2c6b00164",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_Follow_NoBlur_20261026/phase4.png",
+      "bytes": 1343939,
+      "sha256": "444e1ace85a95147d9930c0bdcacfc1d3e19ac5725676f748f3d175e1076b946",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_Follow_NoBlur_20261026/phase5.png",
+      "bytes": 1370189,
+      "sha256": "4f29cd643faac4b6846d0c9db7ddbf604b22a48b186de1ee5541421be23eed43",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_Follow_NoBlur_20261026/phase6.png",
+      "bytes": 1230077,
+      "sha256": "db6526ac7b1972f9145a624c13dff3e36061b01a268fbe84a3cf84d392426456",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_Follow_NoBlur_20261026/User/Intermediate/ShaderAutogen/PCD3D_SM5/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_Follow_NoBlur_20261026/User/Intermediate/ShaderAutogen/PCD3D_SM6/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_Follow_NoBlur_20261026/User/Saved/Config/CrashReportClient/UECC-Windows-95C3EEA6432C29FA168D1ABCD0AC9D35/CrashReportClient.ini",
+      "bytes": 239,
+      "sha256": "ce69d7e7bbd1a64729bd4d5724f3c1efc47c6c3d555da9d2c6ad741eddc3d893",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_Follow_NoBlur_20261026/User/Saved/Config/WindowsEditor/Editor.ini",
+      "bytes": 95,
+      "sha256": "0f6e5f6ee35d1d08016aa73927d665b380165b85189cb086957465d6a40923c6",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_Follow_NoBlur_20261026/User/Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini",
+      "bytes": 53957,
+      "sha256": "c4029fe6e23c0aa202919599357b9b4a74051cec7c32127f150d311c281ff8c6",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_Follow_NoBlur_20261026/User/Saved/Config/WindowsEditor/GameUserSettings.ini",
+      "bytes": 1378,
+      "sha256": "25034567f71ecec90a640fa803a6bb0292ec483021905251ec22f55c8b4aa91b",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_Follow_NoBlur_20261026/User/Saved/Logs/AutoSDKInfo.json",
+      "bytes": 13199,
+      "sha256": "7039f0031e8884282a6f2be9babdf4bd44df10a723bec9d042353831ec270d54",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_Follow_NoBlur_20261026/User/Saved/Logs/AutoSDKInfo.txt",
+      "bytes": 4329,
+      "sha256": "fcb402dc66525c144ebdeb1d8e8cc3eb3170ee0e14319f52b7145c74464e18a5",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Local_Follow_NoBlur_20261026/User/Saved/ShaderDebugInfo/PCD3D_SM6/WorldGridMaterial_67bacdd81a65e5e9/Default/DDCKey-Editor.txt",
+      "bytes": 3203460,
+      "sha256": "76bd9ccdc7adacbed0f40b773b54439131297c1f49e9f801567d5ea2364ce90a",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Remote_Follow_NoBlur_20261026/phase2.png",
+      "bytes": 1488881,
+      "sha256": "3217cd1c307bc1268bc825fb9c7179f44650644226496e1773782ee8a7b04290",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Remote_Follow_NoBlur_20261026/phase3.png",
+      "bytes": 1347811,
+      "sha256": "6ef9d1adffeb94a7491eb9d33ceeab90dd69ac6109b9ea28c75117fdd9cfdb3b",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Remote_Follow_NoBlur_20261026/phase4.png",
+      "bytes": 1335594,
+      "sha256": "28c8a7dd3076dcc79ad0b207dcda7ea9c0392dcafd4ae2fe8eabebba43db2ecb",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Remote_Follow_NoBlur_20261026/phase5.png",
+      "bytes": 1352052,
+      "sha256": "05901ff5f87f085e2a740dcb082818cd43f9234a89a883c09072f1d4507a661e",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Remote_Follow_NoBlur_20261026/phase6.png",
+      "bytes": 1229983,
+      "sha256": "d23a0f53bf935036aafb4e65a2625a59b21290089bb92b2280b8fb2db3814648",
+      "reason": "Selected crowd/quality captures retained and verified; remaining intermediate captures retired."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Remote_Follow_NoBlur_20261026/User/Intermediate/ShaderAutogen/PCD3D_SM5/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Remote_Follow_NoBlur_20261026/User/Intermediate/ShaderAutogen/PCD3D_SM6/AutogenShaderHeaders.ush",
+      "bytes": 17202,
+      "sha256": "f939af64f4598a85195ebc03f855d50ac332f15bddae8acefe9d0eb973a859ce",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Remote_Follow_NoBlur_20261026/User/Saved/Config/CrashReportClient/UECC-Windows-7232D448487077A9A396B9A4FAD204D2/CrashReportClient.ini",
+      "bytes": 239,
+      "sha256": "ce69d7e7bbd1a64729bd4d5724f3c1efc47c6c3d555da9d2c6ad741eddc3d893",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Remote_Follow_NoBlur_20261026/User/Saved/Config/WindowsEditor/Editor.ini",
+      "bytes": 95,
+      "sha256": "0f6e5f6ee35d1d08016aa73927d665b380165b85189cb086957465d6a40923c6",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Remote_Follow_NoBlur_20261026/User/Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini",
+      "bytes": 53957,
+      "sha256": "450106b675d1c78819b43bd1786a20958b11fbf264dc688834d800b706f2104d",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Remote_Follow_NoBlur_20261026/User/Saved/Config/WindowsEditor/GameUserSettings.ini",
+      "bytes": 1378,
+      "sha256": "25034567f71ecec90a640fa803a6bb0292ec483021905251ec22f55c8b4aa91b",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Remote_Follow_NoBlur_20261026/User/Saved/Logs/AutoSDKInfo.json",
+      "bytes": 13199,
+      "sha256": "a0c72861a13dcadc158679e7c7cdefc244cf43a87efddcc8622c76dd587f07ab",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Remote_Follow_NoBlur_20261026/User/Saved/Logs/AutoSDKInfo.txt",
+      "bytes": 4329,
+      "sha256": "167cad3392d107c3548bf3d7182f80fe4061becbc16f979a761625e0e6016cf8",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/WholeProjectAudit_20261013/ClothBudget_Remote_Follow_NoBlur_20261026/User/Saved/ShaderDebugInfo/PCD3D_SM6/WorldGridMaterial_67bacdd81a65e5e9/Default/DDCKey-Editor.txt",
+      "bytes": 3203460,
+      "sha256": "76bd9ccdc7adacbed0f40b773b54439131297c1f49e9f801567d5ea2364ce90a",
+      "reason": "Disposable UserDir of the finished isolated fixture; not the project user profile."
+    },
+    {
+      "path": "Saved/Validation/ClothBudget_20261025/MeasureFinal.ps1",
+      "bytes": 899,
+      "sha256": "4f8eb72438b0e03ca308e233b2ec522aa0ba628efb1865c8cd37bf44c6fbc04c",
+      "reason": "One-off authoring/analysis driver; permanent fixture, commandlet, manifests and results retained."
+    },
+    {
+      "path": "Saved/Validation/ClothBudget_20261025/Quality.ps1",
+      "bytes": 936,
+      "sha256": "d1ab8546149aa5d01143c9529ea57d09284ab7fab7ec98f4f34a5f787be7b805",
+      "reason": "One-off authoring/analysis driver; permanent fixture, commandlet, manifests and results retained."
+    },
+    {
+      "path": "Saved/Validation/ClothBudget_20261025/QualityFinal.ps1",
+      "bytes": 966,
+      "sha256": "f69e9dcfed8687600e4a94ff587d2e87d5b7dc17bdc6c645843708490486a602",
+      "reason": "One-off authoring/analysis driver; permanent fixture, commandlet, manifests and results retained."
+    },
+    {
+      "path": "Saved/Validation/ClothBudget_20261025/MeshMetadata.py",
+      "bytes": 1171,
+      "sha256": "7505c6ec2b305d31c6838a39713d785c889b28bdb50b9932c322d0d7ff32dfb5",
+      "reason": "One-off authoring/analysis driver; permanent fixture, commandlet, manifests and results retained."
+    },
+    {
+      "path": "Saved/Validation/ClothBudget_20261025/Collect.py",
+      "bytes": 1826,
+      "sha256": "884d70d00068f562c29bc9095d7690c954ca6826d00b4b8ad5a478171988abb9",
+      "reason": "One-off authoring/analysis driver; permanent fixture, commandlet, manifests and results retained."
+    },
+    {
+      "path": "Saved/Validation/ClothBudget_20261025/Compare.py",
+      "bytes": 4203,
+      "sha256": "24de1eadd4806437c5c5b5cd87f9bef402844a3c78d2e4fb8ec82e5cc7d43545",
+      "reason": "One-off authoring/analysis driver; permanent fixture, commandlet, manifests and results retained."
+    },
+    {
+      "path": "Saved/Validation/ClothBudget_20261025/FinishEvidence.py",
+      "bytes": 4160,
+      "sha256": "26a2273599e31fc82908ca6797084b0ee3ba2240fa375fd5f76d339b18439b87",
+      "reason": "One-off authoring/analysis driver; permanent fixture, commandlet, manifests and results retained."
+    },
+    {
+      "path": "Saved/Validation/ClothBudget_20261025/VerifyArchive.py",
+      "bytes": 1417,
+      "sha256": "72efedbd4fb3a34665e3829ae1cf73740f3d2b2d592bd124aa864682dad9c35e",
+      "reason": "One-off authoring/analysis driver; permanent fixture, commandlet, manifests and results retained."
+    },
+    {
+      "path": "Saved/Validation/ClothBudget_20261025/Native.ps1",
+      "bytes": 1868,
+      "sha256": "2b8e7fe88f3bdb730497deff434b16eaa8353dca7e9506dcf8a443ad5a60695d",
+      "reason": "One-off authoring/analysis driver; permanent fixture, commandlet, manifests and results retained."
+    },
+    {
+      "path": "Saved/Validation/ClothBudget_20261025/NativeNull.ps1",
+      "bytes": 1457,
+      "sha256": "53688ffe806a0ba484ee4768bb66a4e4a5754b0096a1e808368a0b70a32fd1da",
+      "reason": "One-off authoring/analysis driver; permanent fixture, commandlet, manifests and results retained."
+    },
+    {
+      "path": "Saved/Validation/RigBottleneck_20261025/Measure.ps1",
+      "bytes": 1414,
+      "sha256": "4755a9406674c518f0de34a4e1a994b8202a4a0bb90547dce73791e1b78d5052",
+      "reason": "Finished one-off diagnostic driver; public manifests and permanent measurement tools retained."
+    },
+    {
+      "path": "Saved/Validation/RigBottleneck_20261025/MeasureCollision.ps1",
+      "bytes": 958,
+      "sha256": "71fb5a91281c8d2a6c48a2c9ad452e4f2c9a7228586ed6a4c2841bd57489c2e5",
+      "reason": "Finished one-off diagnostic driver; public manifests and permanent measurement tools retained."
+    },
+    {
+      "path": "Saved/Validation/RigBottleneck_20261025/InspectMetadata.py",
+      "bytes": 2201,
+      "sha256": "97028d2a418d575d750365eb6cbf1a6408723e571861e00eb4b27632c308ff25",
+      "reason": "Finished one-off diagnostic driver; public manifests and permanent measurement tools retained."
+    }
+  ],
+  "physical_scope": "Logical removed bytes are not physically reclaimed space. Immediate OS free-space observation did not increase; no physical reclaim claim."
+}

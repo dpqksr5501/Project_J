@@ -64,7 +64,7 @@ void UProject_JBudgetedSkeletalMeshComponent::BeginPlay()
 
 void UProject_JBudgetedSkeletalMeshComponent::BindAnimationEvents()
 {
-	ObservedDistanceTier.Reset();
+	ObservedDistanceTier.Reset(); ObservedFullClothQuality.Reset();
 	LeaveBudget(); // Reinitialization cannot retain old external tick-rate state.
 	if (BoundAnimation.IsValid()) { BoundAnimation->OnMontageStarted.RemoveDynamic(this, &ThisClass::OnMontageStarted); }
 	BoundAnimation = GetAnimInstance();
@@ -223,7 +223,7 @@ void UProject_JBudgetedSkeletalMeshComponent::SetComponentTickEnabled(bool bEnab
 void UProject_JBudgetedSkeletalMeshComponent::DetachService()
 {
 	bEnding = true;
-	ObservedDistanceTier.Reset();
+	ObservedDistanceTier.Reset(); ObservedFullClothQuality.Reset();
 	LeaveBudget();
 	UpdateRequirements.Reset();
 	bMontageUpdateRequirement = false;

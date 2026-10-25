@@ -1,0 +1,21 @@
+{
+	"action": "Apply",
+	"errors": 0,
+	"review_required": 0,
+	"policy": "/Game/DataAssetSets/Editor/LOD/DA_MeshLOD_Default.DA_MeshLOD_Default",
+	"generated": 1,
+	"preserved_existing": 0,
+	"assets": [
+		{
+			"asset": "/Game/GreatSword/Meshes/SK_GreatSword_body.SK_GreatSword_body",
+			"lods_before": 1,
+			"reason": "Missing lower LODs; eligible for isolated preview/generation with this recipe.",
+			"lods_after": 3,
+			"status": "Generated",
+			"backup": "C:/Users/I/Documents/GitHub/Project_J/Saved/MeshLODAuthoring/C54AA69D414F4E4BA49FA2972B1218CD/0/original_SK_GreatSword_body.uasset",
+			"sha1_before": "64A10B3B561AE43948A03E02EE32EBB11E25B72B",
+			"sha1_after": "0B163FB965718F48A93091E8694BCD305932558C"
+		}
+	],
+	"scope": "Structural preservation/native reduction only; visual transition/contact/cloth/groom quality requires asset review. Per-asset commits; not a multi-asset transaction."
+}

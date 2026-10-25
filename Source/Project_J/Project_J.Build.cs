@@ -38,7 +38,8 @@ public class Project_J : ModuleRules
 			"NetCore",
 			"RHI",
 			"RenderCore",
-			"Niagara"
+			"Niagara",
+			"ClothingSystemRuntimeInterface"
 		});
 
 		if (Target.bBuildEditor)

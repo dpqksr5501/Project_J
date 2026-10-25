@@ -130,7 +130,7 @@ public:
 			World->GetSubsystem<UProject_JCharacterAnimationBudgetSubsystem>()->SetEnabledOverride(false);
 			auto* Controller = World->SpawnActor<AAIController>(); auto* State = World->SpawnActor<AProject_JPlayerState>();
 			State->SetOwner(Controller); Controller->SetPlayerState(State);
-			Player = ProjectJAuthoredAnimationFixture::Spawn(World, Controller, State, FVector(0,0,1000));
+			Player = ProjectJAuthoredAnimationFixture::SpawnRetargetFallback(World, Controller, State, FVector(0,0,1000));
 			if (!Player) { Test->AddError(TEXT("Production visual fixture failed")); Cleanup(); return true; }
 			Controller->UnPossess(); Player->SetPlayerState(State);
 			Source = CastChecked<UProject_JBudgetedSkeletalMeshComponent>(Player->GetMesh());

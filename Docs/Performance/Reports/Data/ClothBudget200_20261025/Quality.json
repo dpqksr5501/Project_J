@@ -1,0 +1,55 @@
+{
+  "runs": [
+    {
+      "run": "ClothBudget_Local_Follow_NoBlur_20261026",
+      "success": true,
+      "local": true,
+      "rows": 5406,
+      "frames_sha256": "a578fe86694e5bb18b9536a16b037f406d8d9b6e3b38221cf19ac2f550b4bce6",
+      "scope": "Movement/pivot/jump/attack/return, following close camera. Motion blur disabled only for surface inspection. Not a performance comparison or universal contact approval.",
+      "observed_values": {
+        "cloth_reduced_parts": [
+          0
+        ],
+        "remote_cloth_max_iterations": [
+          0
+        ],
+        "local_cloth_iterations": [
+          2,
+          3,
+          4
+        ],
+        "local_max_render_lod": [
+          0
+        ]
+      }
+    },
+    {
+      "run": "ClothBudget_Remote_Follow_NoBlur_20261026",
+      "success": true,
+      "local": false,
+      "rows": 8142,
+      "frames_sha256": "2be0fead5715ee6014a531b623ca2adb7d1ff456e32da68e98e1b4964fc9b905",
+      "scope": "Movement/pivot/jump/attack/return, following close camera. Motion blur disabled only for surface inspection. Not a performance comparison or universal contact approval.",
+      "observed_values": {
+        "cloth_reduced_parts": [
+          1
+        ],
+        "remote_cloth_max_iterations": [
+          1
+        ],
+        "local_cloth_iterations": [
+          0
+        ],
+        "local_max_render_lod": [
+          -1
+        ]
+      }
+    }
+  ],
+  "discarded_trial": {
+    "run": "ClothBudget_Local_NoBlur_20261026",
+    "success": false,
+    "reason": "Static close trial had no movement floor and lost body visibility. Not used as quality/performance approval; final following-camera movement runs replace it."
+  }
+}

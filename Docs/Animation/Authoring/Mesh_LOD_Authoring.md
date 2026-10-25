@@ -2,6 +2,8 @@
 
 기존 LOD를 보존하면서 **LOD가 없는 에셋만 공통 설정으로 생성·검사**하는 Editor 제작 경로다. 런타임에서 메시를 축소하거나 임포트 즉시 모든 의상에 같은 축소를 강제하지 않는다. 기존 body/의상/무기 표시·리타깃·장착 구조를 그대로 사용한다.
 
+2026-10-26 직접 재생 GreatSword에는 피부 `SK_GreatSword_body`에만 이 도구로 LOD1/2를 생성했다. head의 혼합 헤어 카드·속눈썹은 자동 생성에서 제외했다. 로컬 LOD0와 원격 표시 소비자의 독립 선택, Cloth simulation LOD와의 구분은 [후속 검증](../../Performance/Reports/ProjectJ_Cloth_Budget_200_2026-10-25.md)을 따른다. 아래 10월 16일 통합 `GreatSword_Woman`의 3LOD 기록은 이전 리타깃 몸체의 검증이며 새 분리 메시의 품질 승인으로 재사용하지 않는다.
+
 무기 텍스처의 2K/1K 해상도·압축·스트리밍 기준은 [무기 메시·텍스처 제작 규격](../../Combat/Authoring/Weapon_Asset_Standards.md)에서 관리한다. 이 문서는 지오메트리 LOD를 담당한다.
 
 ## 공통 데이터와 실행 책임

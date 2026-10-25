@@ -133,6 +133,7 @@ void UProject_JAnimationUpdateCoordinatorComponent::BeginPlay()
 	{
 		VisualSource = Character->GetMesh();
 		AddTickPrerequisiteActor(GetOwner());
+		DiscoverVisualMeshes();
 	}
 }
 
@@ -161,6 +162,15 @@ void UProject_JAnimationUpdateCoordinatorComponent::DiscoverVisualMeshes()
 	TInlineComponentArray<USkeletalMeshComponent*> Meshes(GetOwner());
 	for (auto* Mesh : Meshes)
 	{
+		DiscoverClothMesh(Mesh);
+		if(IsValid(Mesh) && Mesh->IsRegistered() && Mesh->GetOwner()==GetOwner() && Mesh->GetNumLODs()>1 &&
+			Mesh->LeaderPoseComponent.IsValid() && Mesh->LeaderPoseComponent->GetOwner()==GetOwner() &&
+			!Mesh->IsSimulatingPhysics() && !Project_J::Animation::UsesIndependentClothSimulation(*Mesh) &&
+			!Mesh->ComponentTags.Contains(TEXT("NoVisualBudget")) &&
+			!RenderParts.ContainsByPredicate([Mesh](const FVisualMesh& Entry){return Entry.Mesh.Get()==Mesh;}))
+		{
+			FVisualMesh Entry;Entry.Mesh=Mesh;RenderParts.Add(Entry);
+		}
 		if (!CanManageVisualMesh(Mesh)) continue;
 		if (Visuals.ContainsByPredicate([Mesh](const FVisualMesh& Entry) { return Entry.Mesh.Get() == Mesh; })) continue;
 		if (Mesh->IsUsingExternalTickRateControl()) continue; // A different allocator owns it.
@@ -191,6 +201,10 @@ void UProject_JAnimationUpdateCoordinatorComponent::FVisualMesh::RefreshRenderLO
 		{ Component->bSyncAttachParentLOD=false; bDisabledParentLODSync=true; }
 		else if (!bIndependent && bDisabledParentLODSync)
 		{ if (!Component->bSyncAttachParentLOD) Component->bSyncAttachParentLOD=true; bDisabledParentLODSync=false; }
+		if (bIndependent && Component->LeaderPoseComponent.IsValid() && !Component->bIgnoreLeaderPoseComponentLOD)
+		{ Component->bIgnoreLeaderPoseComponentLOD=true; bEnabledIndependentLeaderLOD=true; }
+		else if (!bIndependent && bEnabledIndependentLeaderLOD)
+		{ Component->bIgnoreLeaderPoseComponentLOD=false; bEnabledIndependentLeaderLOD=false; }
 		// Local keeps its authored parent/LOD contract. Never write forced render
 		// or streaming LODs: LODSync and asset/platform overrides own those values.
 	}
@@ -214,6 +228,9 @@ void UProject_JAnimationUpdateCoordinatorComponent::FVisualMesh::Restore(UActorC
 
 void UProject_JAnimationUpdateCoordinatorComponent::RestoreVisualBudget()
 {
+	RestoreClothBudget();
+	for(auto& Entry:RenderParts) Entry.RefreshRenderLOD(false);
+	RenderParts.Reset();
 	for (auto& Entry : Visuals) Entry.Restore(this, VisualSource.Get());
 	Visuals.Reset(); VisualSchedule = {}; AccumulatedVisualDelta = VisualInterval = 0;
 	bVisualHidden = bSawAuthoredPresentation = false; AuthoredReturnUntil = 0; DiscoveryElapsed = .5f;
@@ -253,6 +270,7 @@ void UProject_JAnimationUpdateCoordinatorComponent::RefreshVisualBudget(float De
 	DiscoveryElapsed += FMath::Max(0.f, DeltaTime);
 	if (DiscoveryElapsed >= .5f) { DiscoverVisualMeshes(); DiscoveryElapsed = 0; }
 	const bool bLocal = ProjectJ::Animation::IsLocalPlayerAvatar(Character);
+	RefreshClothBudget(Source, bLocal);
 	const bool bAuthored = Native->NeedsFullRateVisualUpdate();
 	if (bSawAuthoredPresentation && !bAuthored) AuthoredReturnUntil = Now + .2;
 	bSawAuthoredPresentation = bAuthored;
@@ -301,6 +319,15 @@ void UProject_JAnimationUpdateCoordinatorComponent::RefreshVisualBudget(float De
 	{ const auto* Mesh=Entry.Mesh.Get(); return Mesh && Mesh->GetNumLODs()>1; });
 	const auto* RenderBody=bHasRenderLODs ? Native->GetRuntimeRetargetFollowerMesh() : nullptr;
 	const bool bHiddenSource=Source->bHiddenInGame || !Source->GetVisibleFlag();
+	for(int32 Index=RenderParts.Num()-1;Index>=0;--Index)
+	{
+		auto& Entry=RenderParts[Index];auto* Mesh=Entry.Mesh.Get();
+		if(!Mesh || !Mesh->IsRegistered() || Mesh->GetNumLODs()<2 || Mesh->GetOwner()!=GetOwner() || !Mesh->LeaderPoseComponent.IsValid() ||
+			Mesh->LeaderPoseComponent->GetOwner()!=GetOwner() || Mesh->IsSimulatingPhysics() ||
+			Project_J::Animation::UsesIndependentClothSimulation(*Mesh) || Mesh->ComponentTags.Contains(TEXT("NoVisualBudget")))
+		{Entry.RefreshRenderLOD(false);RenderParts.RemoveAtSwap(Index);continue;}
+		Entry.RefreshRenderLOD(bHiddenSource && !bLocal);
+	}
 	for (int32 Index = Visuals.Num() - 1; Index >= 0; --Index)
 	{
 		auto& Entry = Visuals[Index]; auto* Mesh = Entry.Mesh.Get();

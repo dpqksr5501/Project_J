@@ -66,8 +66,9 @@ def compare(roots):
     runs = [summarize(root) for root in roots]
     provenance = {json.dumps(run['manifest']['sourceProvenance'], sort_keys=True) for run in runs}
     assets = {json.dumps(run['manifest']['artifacts'], sort_keys=True) for run in runs}
-    conditions = {json.dumps({k: run['manifest'][k] for k in
-                             ('actors','movement','consoleCommands','naniteMode','localPlayer','resolution','expectedWeaponMesh')},sort_keys=True)
+    conditions = {json.dumps({**{k: run['manifest'][k] for k in
+                             ('actors','movement','consoleCommands','naniteMode','localPlayer','resolution','expectedWeaponMesh')},
+                             'closeView': run['manifest'].get('closeView',False)},sort_keys=True)
                   for run in runs}
     if len(provenance) != 1 or len(assets) != 1 or len(conditions) != 1:
         raise ValueError('Comparison source/binary/assets or rendering conditions differ')

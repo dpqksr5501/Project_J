@@ -42,6 +42,9 @@ public class Project_JCharacter : ModuleRules
 		});
 		PrivateDependencyModuleNames.AddRange(new string[] {
 			"PhysicsCore",
+			"ChaosCloth",
+			"ClothingSystemRuntimeCommon",
+			"ClothingSystemRuntimeInterface",
 			"InputCore",
 			"EnhancedInput",
 			"MassCommon"

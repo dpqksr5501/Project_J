@@ -1,0 +1,61 @@
+{
+  "assets": [
+    {
+      "name": "body",
+      "lods": 3,
+      "materials": [
+        {
+          "slot": "M_pdw_00_nude_0001",
+          "material": "/Game/Characters/GreatSword/Ch_MT/MT_Body.MT_Body",
+          "blend": "<BlendMode.BLEND_OPAQUE: 0>",
+          "two_sided": false
+        }
+      ],
+      "vertices": [
+        4324,
+        2275,
+        1221
+      ]
+    },
+    {
+      "name": "head",
+      "lods": 1,
+      "materials": [
+        {
+          "slot": "M_phw_00_eyeline_0001_dec",
+          "material": "/Game/Characters/GreatSword/Ch_MT/MT_Eyeline.MT_Eyeline",
+          "blend": "<BlendMode.BLEND_MASKED: 1>",
+          "two_sided": true
+        },
+        {
+          "slot": "M_pdw_00_eye_0001_shadow",
+          "material": "/Game/Characters/GreatSword/Ch_MT/MT_Eye.MT_Eye",
+          "blend": "<BlendMode.BLEND_OPAQUE: 0>",
+          "two_sided": false
+        },
+        {
+          "slot": "M_phw_00_eyedeco_0001_shadow_hair",
+          "material": "/Game/Characters/GreatSword/Ch_MT/MT_Eyedeco.MT_Eyedeco",
+          "blend": "<BlendMode.BLEND_TRANSLUCENT: 2>",
+          "two_sided": false
+        },
+        {
+          "slot": "M_pdw_00_head_0003_shadow",
+          "material": "/Game/Characters/GreatSword/Ch_MT/MT_Head.MT_Head",
+          "blend": "<BlendMode.BLEND_OPAQUE: 0>",
+          "two_sided": false
+        },
+        {
+          "slot": "M_pdw_00_hair_0007_shadow_hair",
+          "material": "/Game/Characters/GreatSword/Ch_MT/MT_Hair.MT_Hair",
+          "blend": "<BlendMode.BLEND_MASKED: 1>",
+          "two_sided": true
+        }
+      ],
+      "vertices": [
+        25742
+      ]
+    }
+  ],
+  "completed": true
+}

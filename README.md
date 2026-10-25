@@ -28,22 +28,25 @@ flowchart LR
     B --> P["호환 파츠 Leader Pose / 독립 Cloth"]
 ```
 
-현재 GreatSword는 **직접 ABP 경로·몸체 LOD0**입니다. 기존 몸체의 LOD0–2·Nanite 성능 수치는 이전 리타깃 에셋의 결과로 구분합니다. 기본 대검은 Basic을 유지합니다.
+현재 GreatSword는 **직접 ABP 경로**입니다. 로컬은 원본 LOD0·Cloth 품질을 유지하고, 원격은 피부 body LOD0–2와 Cloth 인스턴스 예산을 사용합니다. 머리·헤어 카드는 전용 LOD 제작 전까지 원본을 보존합니다. 기본 대검은 Basic을 유지합니다.
 
 ## 측정으로 확인한 변화
 
 측정 시점·지표·부하가 다른 결과는 독립 비교입니다. CPU worker 누적 시간, Game Thread, GPU, 전체 프레임을 더하거나 개선율을 합산하지 않습니다.
 
-### 현재 직접 ABP · 200명 — 2026-10-25
+### 현재 직접 ABP · 200명 Cloth 예산 — 2026-10-26
 
-| 기록 | 정지 Frame (ms) | 이동 Frame (ms) | 동시 공격 Frame (ms) | 리타깃 실행 |
-| --- | ---: | ---: | ---: | --- |
-| 이전 리타깃 · 10/24 | 1,866.74 | 1,873.12 | 2,130.99 | 사용 |
-| 현재 직접 ABP · 10/25 | 1,861.00 | 1,834.39 | 2,122.06 | **0회** (별도 trace) |
+| 같은 바이너리·에셋 | 정지 Frame (ms) | 이동 Frame (ms) | 동시 공격 Frame (ms) |
+| --- | ---: | ---: | ---: |
+| 원격 Cloth 예산 OFF | 1,851.44 | 1,827.67 | 2,123.51 |
+| 원격 Cloth 예산 ON | **63.12** | **63.09** | **79.75** |
+| 평균 프레임 감소 | 96.59% | 96.55% | 96.24% |
 
-**전체 프레임 개선은 확인하지 못했습니다.** 현재 GPU는 정지6.60ms·이동6.63ms·공격10.11ms이며, 공격은 이전6.64ms보다 증가했습니다. 골격·몸체 LOD·파츠·물리가 함께 바뀐 기록 비교입니다. CPU 측 Cloth·병렬 작업/대기가 크게 남아 있으며, 실제 원격200명 클라이언트나 동시 접속 성능과 구분합니다.
+ON/OFF/OFF/ON 4회에서 **망토 200개를 계속 시뮬레이션하고 로컬 축소 0개**를 확인했습니다. 원격 199개에만 예산을 적용했습니다. Cloth 대기가 지배적이어서 리타깃 제거만으로 비슷했던 프레임이 크게 줄었습니다. **60FPS 달성 결과는 아닙니다.** GPU는 이동 6.40→9.97ms·공격 9.61→10.16ms로 증가했고 초기 200명 일괄 생성 지연도 남았습니다.
 
-비계측2회·108표본과 trace1회, 직접 producer200개·표시 파츠2,000개·활성망토200개·Nanite1,400개를 검증했습니다. 과거 리타깃의 worker 누적 CPU(근거리8.383ms/틱·공격19.966ms/틱)와 현재 frame을 직접 빼서 개선율을 만들지 않습니다. [현재 수치·p95·조건·미해결 항목](Docs/Performance/Reports/ProjectJ_DirectRig_200_2026-10-25.md)
+이후 검수 도구 수정 후 최종 빌드 스모크 2회의 이동은 61.78/62.51ms, 공격은 96.51/80.11ms였습니다. 공격의 실행 간 편차도 보존하며 위 교대 평균에 합치지 않습니다.
+
+직접 producer 200개·표시 파츠 2,000개·Nanite 1,400개, D3D12 1280×720 Epic의 실제 이동·점프·전원 공격 fixture입니다. 실제 원격 연결은 0개입니다. [원인·반복별 p95·품질 경계·남은 비용](Docs/Performance/Reports/ProjectJ_Cloth_Budget_200_2026-10-25.md) · [전환 직후 리타깃과 직접 ABP 비교](Docs/Performance/Reports/ProjectJ_DirectRig_200_2026-10-25.md). 과거 리타깃 worker CPU와 현재 frame을 빼서 순수 리깅 절감률로 해석하지 않습니다.
 
 ### 보존된 비교 결과
 
@@ -180,7 +183,8 @@ A–E의 현재 구현은 `main`에 통합되어 있습니다. **E의 운영 에
 
 | 시점·대상 | 확인 결과 | 근거·범위 |
 | --- | --- | --- |
-| 현재 직접 리깅 · 2026-10-25 | direct UBT Editor 성공, 집중 native 회귀68개 통과. 실제 입력/손 접촉·발 접지 표본 검수 | [리깅 가이드와 사례](Docs/Animation/Authoring/Character_Rigging_And_UE5_Postprocess_Playbook.md). 모든 체형·클립·Cook/Shipping 품질 인증과 구분 |
+| 현재 Cloth 예산 · 2026-10-26 | direct UBT Editor/Game 성공, RHI 회귀73개·NullRHI 정책/기능 필터 확인, 200명 교대4회·최종 스모크2회 | [품질 경계·수치·편차·미검증](Docs/Performance/Reports/ProjectJ_Cloth_Budget_200_2026-10-25.md). Cook/Shipping·원격 접속 성능과 구분 |
+| 직접 전환 · 2026-10-25 | direct UBT Editor 성공, 집중 native 회귀68개 통과. 실제 입력/손 접촉·발 접지 표본 검수 | [리깅 가이드와 사례](Docs/Animation/Authoring/Character_Rigging_And_UE5_Postprocess_Playbook.md). 모든 체형·클립 품질 인증과 구분 |
 | 로코모션 · 2026-10-21 | 집중61개, 변환448시퀀스·2,240키 표본, 실제 이동/급회전/공중/몽타주 검증 | [이관 기록](Docs/Animation/Architecture/Player_Locomotion_Migration_2026-10-19.md) |
 | 모션 원본 보관 · 2026-10-21 | 미참조2,192패키지 퇴역, 원본 없는 로드·native62개 통과 | [원본 압축·복원](Docs/Maintenance/Animation_Source_Archive_2026-10-21.md) · [추가 수입 기준](Docs/Animation/Authoring/Player_Animation_Library.md) |
 | 런타임 수명 · 2026-10-08 | 전체 자동화244개 통과(19개 경고 포함 성공), 장착/공격/해제300 actor-cycle, 실제 clients2+NPC100 정상 종료 | [감사·재현 결함5개](Docs/Review/Audits/Project_J_Runtime_Ownership_Audit_2026-10-08.md) · [결과 JSON](Docs/Review/Audits/Project_J_Runtime_Ownership_Validation_2026-10-08.json) |

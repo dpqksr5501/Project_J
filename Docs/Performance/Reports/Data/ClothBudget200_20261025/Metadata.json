@@ -1,0 +1,165 @@
+{
+  "assets": [
+    {
+      "asset": "/Game/GreatSword/Meshes/SK_GreatSword_Complete",
+      "lod_count": 1,
+      "vertices_by_lod": [
+        58673
+      ],
+      "clothing": []
+    },
+    {
+      "asset": "/Game/GreatSword/Meshes/SK_GreatSword_body",
+      "lod_count": 1,
+      "vertices_by_lod": [
+        4324
+      ],
+      "clothing": []
+    },
+    {
+      "asset": "/Game/GreatSword/Meshes/SK_GreatSword_head",
+      "lod_count": 1,
+      "vertices_by_lod": [
+        25742
+      ],
+      "clothing": []
+    },
+    {
+      "asset": "/Game/GreatSword/Meshes/SK_GreatSword_cloak",
+      "lod_count": 1,
+      "vertices_by_lod": [
+        2798
+      ],
+      "clothing": [
+        {
+          "name": "SurfaceCloth_Section0",
+          "configs": {
+            "ChaosClothConfig": {
+              "bUseCCD": true,
+              "bUseSelfCollisions": false,
+              "bUseSelfIntersections": false,
+              "CollisionThickness": 2.0
+            },
+            "ChaosClothSharedSimConfig": {
+              "IterationCount": 8,
+              "MaxIterationCount": 16,
+              "SubdivisionCount": 3
+            }
+          },
+          "physics_asset": "/Game/GreatSword/Physics/PA_GreatSword_ClothCollision.PA_GreatSword_ClothCollision"
+        },
+        {
+          "name": "SurfaceCloth_Section1",
+          "configs": {
+            "ChaosClothConfig": {
+              "bUseCCD": true,
+              "bUseSelfCollisions": false,
+              "bUseSelfIntersections": false,
+              "CollisionThickness": 2.0
+            },
+            "ChaosClothSharedSimConfig": {
+              "IterationCount": 8,
+              "MaxIterationCount": 16,
+              "SubdivisionCount": 3
+            }
+          },
+          "physics_asset": "/Game/GreatSword/Physics/PA_GreatSword_ClothCollision.PA_GreatSword_ClothCollision"
+        },
+        {
+          "name": "SurfaceCloth_Section2",
+          "configs": {
+            "ChaosClothConfig": {
+              "bUseCCD": true,
+              "bUseSelfCollisions": false,
+              "bUseSelfIntersections": false,
+              "CollisionThickness": 2.0
+            },
+            "ChaosClothSharedSimConfig": {
+              "IterationCount": 8,
+              "MaxIterationCount": 16,
+              "SubdivisionCount": 3
+            }
+          },
+          "physics_asset": "/Game/GreatSword/Physics/PA_GreatSword_ClothCollision.PA_GreatSword_ClothCollision"
+        }
+      ]
+    },
+    {
+      "asset": "/Game/Characters/GreatSword/GreatSword_Woman",
+      "lod_count": 3,
+      "vertices_by_lod": [
+        30070,
+        15788,
+        8303
+      ],
+      "clothing": []
+    },
+    {
+      "asset": "/Game/Characters/GreatSword/Clothes/cloak",
+      "lod_count": 1,
+      "vertices_by_lod": [
+        2800
+      ],
+      "clothing": [
+        {
+          "name": "SurfaceCloth_Section0",
+          "configs": {
+            "ChaosClothConfig": {
+              "bUseCCD": true,
+              "bUseSelfCollisions": false,
+              "bUseSelfIntersections": false,
+              "CollisionThickness": 2.0
+            },
+            "ChaosClothSharedSimConfig": {
+              "IterationCount": 8,
+              "MaxIterationCount": 16,
+              "SubdivisionCount": 3
+            }
+          },
+          "physics_asset": "/Game/Characters/GreatSword/Clothes/cloak_Physics.cloak_Physics"
+        },
+        {
+          "name": "SurfaceCloth_Section1",
+          "configs": {
+            "ChaosClothConfig": {
+              "bUseCCD": true,
+              "bUseSelfCollisions": false,
+              "bUseSelfIntersections": false,
+              "CollisionThickness": 2.0
+            },
+            "ChaosClothSharedSimConfig": {
+              "IterationCount": 8,
+              "MaxIterationCount": 16,
+              "SubdivisionCount": 3
+            }
+          },
+          "physics_asset": "/Game/Characters/GreatSword/Clothes/cloak_Physics.cloak_Physics"
+        },
+        {
+          "name": "SurfaceCloth_Section2",
+          "configs": {
+            "ChaosClothConfig": {
+              "bUseCCD": true,
+              "bUseSelfCollisions": false,
+              "bUseSelfIntersections": false,
+              "CollisionThickness": 2.0
+            },
+            "ChaosClothSharedSimConfig": {
+              "IterationCount": 8,
+              "MaxIterationCount": 16,
+              "SubdivisionCount": 3
+            }
+          },
+          "physics_asset": "/Game/Characters/GreatSword/Clothes/cloak_Physics.cloak_Physics"
+        }
+      ]
+    }
+  ],
+  "completed": true,
+  "source_template": {
+    "cast_shadow": true,
+    "cast_hidden_shadow": false,
+    "visible": false,
+    "hidden_in_game": true
+  }
+}

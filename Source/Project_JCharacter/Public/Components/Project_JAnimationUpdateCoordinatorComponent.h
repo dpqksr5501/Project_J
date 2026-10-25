@@ -35,25 +35,53 @@ public:
 	float GetVisualEvaluationInterval() const { return VisualInterval; }
 	void RefreshVisualBudget(float DeltaTime);
 	bool IsVisualBudgetEnabled() const;
+	int32 GetManagedClothCount() const;
+	int32 GetReducedClothCount() const;
 
 private:
 	friend class FProjectJUrgentAnimationWindowTest;
+	friend class FProjectJClothAllocationTest;
+	friend class FProjectJClothLifecycleTest;
 	void RestoreRemoteAnimationUpdateRateOptimization();
 	void RestoreVisualBudget();
 	void DiscoverVisualMeshes();
 	bool CanManageVisualMesh(const class USkeletalMeshComponent* Mesh) const;
 	void RefreshSourceRequirement();
+	void DiscoverClothMesh(class USkeletalMeshComponent* Mesh);
+	void RefreshClothBudget(class UProject_JBudgetedSkeletalMeshComponent* Source, bool bLocal);
+	void RestoreClothBudget();
+	struct FClothBinding
+	{
+		TWeakObjectPtr<class UClothingAssetCommon> Asset;
+		TWeakObjectPtr<class UClothingSimulationInteractor> Simulation;
+	};
+	struct FClothMesh
+	{
+		TWeakObjectPtr<class UProject_JModularMeshComponent> Mesh;
+		TWeakObjectPtr<class USkeletalMesh> Asset;
+		TArray<FClothBinding> Bindings;
+		bool bReduced = false, bAppliedDiscrete = false, bAddedCoordinatorPrerequisite = false;
+		bool IsCurrent() const;
+		bool Bind(class UProject_JModularMeshComponent* Component);
+		bool Apply(bool bReduce);
+		void Restore(UActorComponent* Coordinator = nullptr);
+	};
+	TArray<FClothMesh> ClothMeshes;
+	double ClothDowngradeSince = -1;
 	struct FVisualMesh
 	{
 		TWeakObjectPtr<class USkeletalMeshComponent> Mesh;
 		bool bSavedURO = false, bSavedTick = true, bDisabledTick = false;
 		bool bAddedSourcePrerequisite = false;
 		bool bDisabledParentLODSync = false;
+		bool bEnabledIndependentLeaderLOD = false;
 		EVisibilityBasedAnimTickOption SavedVisibility = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
 		void Restore(UActorComponent* Coordinator, USkeletalMeshComponent* Source);
 		void RefreshRenderLOD(bool bIndependent);
 	};
 	TArray<FVisualMesh> Visuals;
+	/** Leader-pose consumers own render LOD only, never another animation tick. */
+	TArray<FVisualMesh> RenderParts;
 	TWeakObjectPtr<class USkeletalMeshComponent> VisualSource;
 	FProjectJAnimationUpdateSchedule VisualSchedule;
 	float VisualInterval = 0, AccumulatedVisualDelta = 0, DiscoveryElapsed = .5f;
