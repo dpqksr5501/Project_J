@@ -6,11 +6,11 @@
 
 멀티스레딩의 설계 기준은 Game Thread의 상태 소유권, Worker의 값 계산, 완료 결과의 유효성 검증입니다. 취소·재입장·캐릭터 파괴·월드 종료까지 구현과 검증 범위에 포함합니다.
 
-## 프로젝트 영상
+## 게임플레이 영상
 
-[![Project J 프로젝트 영상 — 클릭하여 YouTube에서 시청](Docs/Media/ProjectJ_Video_Thumbnail.jpg)](https://youtu.be/lvEs-VPWUss)
+[![Project J 게임플레이 — 클릭하여 YouTube에서 시청](Docs/Media/ProjectJ_Video_Thumbnail.jpg)](https://youtu.be/lvEs-VPWUss)
 
-[▶ YouTube에서 프로젝트 영상 보기](https://youtu.be/lvEs-VPWUss)
+[▶ 전체 영상 보기 · YouTube](https://youtu.be/lvEs-VPWUss)
 
 ## 현재 기준과 읽는 순서
 
