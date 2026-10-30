@@ -8,7 +8,7 @@
 
 ## 프로젝트 영상
 
-[![Project J 프로젝트 영상 — 클릭하여 YouTube에서 시청](https://i.ytimg.com/vi/lvEs-VPWUss/hqdefault.jpg)](https://youtu.be/lvEs-VPWUss)
+[![Project J 프로젝트 영상 — 클릭하여 YouTube에서 시청](Docs/Media/ProjectJ_Video_Thumbnail.jpg)](https://youtu.be/lvEs-VPWUss)
 
 [▶ YouTube에서 프로젝트 영상 보기](https://youtu.be/lvEs-VPWUss)
 
