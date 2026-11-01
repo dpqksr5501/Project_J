@@ -50,6 +50,23 @@
 
 ---
 
+### 1.3. 장착 상태와 표현 생성
+
+장비 상태·GAS 변경은 서버 GT의 순서를 유지하고 소유자 인벤토리와 공개 장비 상태를 구분해 복제한다. 원격 비전투 캐릭터의 시각 오브젝트 생성은 프레임별 예산으로 분산하며 기존 표현 해제는 즉시 처리한다.
+
+```mermaid
+flowchart LR
+    I["장착 / 해제 요청"] --> A["서버 GT: 장비 상태 · Ability 수명 갱신"]
+    A --> R["소유자 인벤토리 / 공개 장비 상태 복제"]
+    R --> C{"표현 갱신의 긴급성"}
+    C -->|로컬 · 공격 · Draw| F["GT 즉시 처리"]
+    C -->|원격 비전투 생성| Q["World FIFO · 최신 revision 병합"]
+    Q --> B["프레임별 생성 예산"]
+    B --> V["Owner / revision 재검증 후 표현 적용"]
+```
+
+구현은 [표현 예산 Subsystem](../../../Source/Project_JCharacter/Private/System/Project_JPresentationBudgetSubsystem.cpp)을 따른다. 제작 원본·파생 메시·텍스처의 공개 조건은 [에셋 문서](../../../THIRD_PARTY_ASSETS.md)에서 별도로 확인한다.
+
 ## 2. 텍스처 임포트 파이프라인 (DDS to PNG Batch Conversion)
 
 ### 2.1. 이전 파일에서 관측한 임포트 문제

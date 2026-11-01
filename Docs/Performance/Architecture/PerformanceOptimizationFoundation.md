@@ -134,7 +134,26 @@ Before connecting a monster to a real pool, define all of the following:
 
 ## Gameplay async contract
 
-`FProject_JGameplayAsyncWorkContract`는 값 계산과 GT 상태 변경의 경계를 정의한다. 현재 타깃 점수 서비스는 `UE::Tasks`·`ParallelFor`, Mass 이동은 별도 청크 병렬 계산을 사용한다. 이 타입 자체가 모든 작업을 받는 공통 실행기는 아니다. [현재 멀티스레드 구조](../../../README.md#멀티스레드-구조)와 [기존 기반을 활용한 시각 예산](../../Animation/Planning/Crowd_Visual_Presentation_Budget_2026-10-12.md#기존-병렬-아키텍처와의-관계)을 함께 읽는다.
+`FProject_JGameplayAsyncWorkContract`는 값 계산과 GT 상태 변경의 경계를 정의한다. 현재 타깃 점수 서비스는 `UE::Tasks`·`ParallelFor`, Mass 이동은 별도 청크 병렬 계산을 사용한다. 이 타입 자체가 모든 작업을 받는 공통 실행기는 아니다. [시각 예산과 기존 병렬 구조의 관계](../../Animation/Planning/Crowd_Visual_Presentation_Budget_2026-10-12.md#기존-병렬-아키텍처와의-관계)를 함께 읽는다.
+
+```mermaid
+flowchart TD
+    S["GT: Actor / World / ASC 상태"] --> D["GT: 판단 주기 분산 · 요청 예산"]
+    D --> V["불변 값 스냅샷 · world epoch · revision"]
+    V --> Q["유한 대기열 · 동시 실행 상한"]
+    Q --> W["Worker: UE::Tasks / ParallelFor 타깃 점수 계산"]
+    W --> C["GT: 완료 수집"]
+    C --> G{"Owner 생존 · 세대 일치 · 취소 여부"}
+    G -->|유효| A["GT: 판단 / 행동 / GAS 결과 반영"]
+    G -->|만료| X["늦은 결과 폐기"]
+    A --> N["엔진 Async Navigation / Asset Loading"]
+    N --> C
+    A --> P["GT: 애니메이션 스냅샷 / Proxy"]
+    P --> E["엔진 Worker: Animation Update / Evaluate"]
+    E --> R["GT: 포즈 결과 반영 · 전투 경계 보호"]
+```
+
+GT가 Actor·World·GAS 상태를 소유하고 직접 제출하는 작업에는 값 스냅샷을 전달한다. Navigation·로딩·애니메이션의 비동기 실행은 각각의 엔진 서비스가 관리하며 위 대기열을 공용 실행기로 사용하지 않는다. Mass는 GT snapshot/grid → chunk 계산 → join → GT 적용을 사용한다. 애니메이션은 기존 Proxy와 엔진 병렬 평가, 원본 포즈의 의존 순서를 유지한다.
 
 - Worker input must be copied, plain data only.
 - A worker must never access `UObject`, `Actor`, `Component`, `UWorld`, or GAS state.

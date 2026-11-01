@@ -1,5 +1,7 @@
 # 참고 메모
 
+- [에셋 권리 검토 경로 — 2026-11-01](Asset_Review_Paths_2026-11-01.md): 현재 Spellblade·구 GreatSword·환경/모션/구매 에셋의 정확한 경로와 제한된 공개 관측. 권리 판정은 [루트 에셋 문서](../../THIRD_PARTY_ASSETS.md)를 따른다.
+
 - [참고 1](참고1.txt)
 - [참고 2](참고2.txt)
 

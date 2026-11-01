@@ -4,7 +4,7 @@
 
 **2026-10-25 전환 직후 비용:** [200명 직접 ABP와 이전 리타깃 비교](Reports/ProjectJ_DirectRig_200_2026-10-25.md). 당시 새 몸체·머리는 LOD0만 있었고 리타깃 제거 뒤에도 Cloth 대기가 남았다. 현재 피부 body LOD와 원격 Cloth 예산의 비교는 위 후속 보고서를 따른다. 아래 10월 22일 이전의 리타깃·LOD0–2 결과는 당시 에셋의 기록이며 worker CPU 합계와 전체 프레임을 구분한다.
 
-[README 결과 표](../../README.md#측정으로-확인한-변화)에서 **영역 / 비교 조건 / Before → After / 결과** 형식으로 이번 Mover 5개 구간과 기존 LOD·시스템별 결과를 함께 비교한다. 단계별 관계와 미측정 구간도 바로 위 표에 구분했다. 아래는 적용 결정과 상세 근거를 찾는 목차다.
+[README의 대표 결과](../../README.md#성능)는 프로젝트 소개를 위한 요약이다. Mover 5개 구간은 [해당 보고서](Reports/ProjectJ_Mover_200_2026-10-22.md), 기존 LOD의 GPU 수치는 [200개 캐릭터 비교 자료](Reports/ProjectJ_200_Player_Optimization_2026-10-15.json), Mass·Niagara·네트워크·PSO는 [시스템별 벤치마크](../Benchmarks/SystemsModernization.md)에서 조건·원자료와 함께 확인한다. 아래는 적용 결정과 상세 근거를 찾는 목차다.
 
 **발전 순서:** 기존 예산·LOD 최적화 → Mover·Manny/native 전환 → 이번 정책 소비 복구·추가 최적화다. 이번 비교도 기존 최적화가 적용된 기반에서 수행했다. 전환 자체의 동일 조건 성능 증감은 미측정이며, 과거 GPU 감소와 이번 frame 감소를 연결한 누적 수치를 만들지 않는다. [단계별 구조와 비교 범위](Reports/ProjectJ_Mover_200_2026-10-22.md#이전-최적화--mover-전환--이번-최적화)를 먼저 읽는다.
 
