@@ -13,6 +13,12 @@
 # Unreal Engine
 Binaries/
 Build/
+!/Docs/World/Build/
+/Docs/World/Build/*
+!/Docs/World/Build/01_AUDIT.md
+!/Docs/World/Build/02_ARCHITECTURE.md
+!/Docs/World/Build/03_ASSET_GAPS.md
+!/Docs/World/Build/ASSET_INVENTORY.csv
 DerivedDataCache/
 Intermediate/
 Saved/

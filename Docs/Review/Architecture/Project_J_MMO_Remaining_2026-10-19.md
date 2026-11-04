@@ -4,7 +4,7 @@
 
 이번 문서 갱신은 아래 기존 검증을 재사용하며 새로운 native 실행 결과로 세지 않는다. [공유 검증 요약](Project_J_MMO_Validation_2026-10-19.json)에117개 명단/상태, 빌드 종료 코드, 반복·복구·이관·패키지 결과, 입력/바이너리 지문과 정리량을 선별해 남겼다. `Saved/...` 링크는 이 PC의 ignore된 로컬 원자료이며 새 checkout에 포함되지 않는다.
 
-HEAD `45f55444c9ca764386b8867a1063d7ee6025a5f3`와 기존 미커밋 변경을 보존했다. 기준은 `Saved/MMOArchitectureFinish_20261019/Baseline.json`, 최종 입력/출력은 [VerifiedFinalResults.json](../../../Saved/MMOArchitectureFinish_20261019/VerifiedFinalResults.json)과 [RuntimeInputFingerprints.json](../../../Saved/MMOArchitectureFinish_20261019/RuntimeInputFingerprints.json)이다. 실제 소스 변경 목록은 [ChangedSourceFiles.json](../../../Saved/MMOArchitectureFinish_20261019/ChangedSourceFiles.json)이며 기존 repository/권위 컴포넌트/요청 UI와 focused 회귀를 확장했다. 별도 저장 서비스나 모듈 의존성은 추가하지 않았다. 이번 입력880개와 Editor DLL17개가 검증 중 변하지 않았고 원래 Content 14409개의 경로/크기/mtime 변경·누락은0이다. 추적 에셋14310개는 모두 존재하며 LFS pointer placeholder0이다. 앞 절편에서 승인 복구한41개는 이번에 다시 이동·복원하지 않았다.
+HEAD `45f55444c9ca764386b8867a1063d7ee6025a5f3`와 기존 미커밋 변경을 보존했다. 기준은 `Saved/MMOArchitectureFinish_20261019/Baseline.json`, 최종 입력/출력은 VerifiedFinalResults.json (로컬 `Saved/MMOArchitectureFinish_20261019/VerifiedFinalResults.json`)과 RuntimeInputFingerprints.json (로컬 `Saved/MMOArchitectureFinish_20261019/RuntimeInputFingerprints.json`)이다. 실제 소스 변경 목록은 ChangedSourceFiles.json (로컬 `Saved/MMOArchitectureFinish_20261019/ChangedSourceFiles.json`)이며 기존 repository/권위 컴포넌트/요청 UI와 focused 회귀를 확장했다. 별도 저장 서비스나 모듈 의존성은 추가하지 않았다. 이번 입력880개와 Editor DLL17개가 검증 중 변하지 않았고 원래 Content 14409개의 경로/크기/mtime 변경·누락은0이다. 추적 에셋14310개는 모두 존재하며 LFS pointer placeholder0이다. 앞 절편에서 승인 복구한41개는 이번에 다시 이동·복원하지 않았다.
 
 ## 원본 ZIP 전체 판정
 
@@ -99,7 +99,7 @@ Ownership은 누락된 각 character의 완전한 snapshot2 객체 배열(입력
 | 네트워크 | Editor-host dedicated mode+실제2clients+NPC100의 owner/public AOI/FastArray, LagLoss/ReorderLoss의 실제 SSR/cue/rate. 운영 dedicated binary/CCU 증거 아님 |
 | 자산/월드/배포형 | 관련 native asset94개 통과(장비/퀘스트/locomotion 각1·montage91), Python 도구17개 시험 통과·MainWorld20장소/의존3581 확인·Windows Cook/Stage, 실제 package MainWorld 진입과 저장/재실행·Editor↔package 교차 |
 
-경고가 포함된 기존3개 항목은 index의 실제 메시지를 유지했다. assert/skip을 약화하지 않았다. 첫 시도의 배열 부정 fixture 자체 사용 오류를 복사 후 검사로 고쳤고, 의도된 warning의 리터럴 괄호를 regex로 정확히 검사하도록 수정했다. CLI의 in-bag+slot 불일치는 정의 검사6보다 앞선 구조 검사4에서 거부하므로 wrapper의 기대 코드를4로 정정해 별도 `_Final2` 결과에서16개를 재실행했다. 첫 Blueprint audit은 검사는 끝났지만 NullRHI의 가상 Slate 창에서 Quit/입력이 처리되지 않아 idle로 남았다. 자동 승인 검토의 거부 뒤 사용자가 명시 승인한 PID31708 하나만 강제 종료했고(-1), `BlueprintConsumers2`의 유한 Python commandlet에서 같은 native audit·동일 결과·정상0 종료를 다시 확인했다. [해당 종료 근거](../../../Saved/MMOArchitectureFinish_20261019/OwnedInspectionTermination.json)와 앞 실패 로그를 보존했다. 빌드를 중단하거나 다른 프로세스를 종료하지 않았다. 모든 기능 assertion과 기대 발생 횟수는 유지했다. 물리 전원 차단·디스크 고장·다른 플랫폼/WAL·수동 시각 품질·실제 운영 서비스는 검증하지 않았다.
+경고가 포함된 기존3개 항목은 index의 실제 메시지를 유지했다. assert/skip을 약화하지 않았다. 첫 시도의 배열 부정 fixture 자체 사용 오류를 복사 후 검사로 고쳤고, 의도된 warning의 리터럴 괄호를 regex로 정확히 검사하도록 수정했다. CLI의 in-bag+slot 불일치는 정의 검사6보다 앞선 구조 검사4에서 거부하므로 wrapper의 기대 코드를4로 정정해 별도 `_Final2` 결과에서16개를 재실행했다. 첫 Blueprint audit은 검사는 끝났지만 NullRHI의 가상 Slate 창에서 Quit/입력이 처리되지 않아 idle로 남았다. 자동 승인 검토의 거부 뒤 사용자가 명시 승인한 PID31708 하나만 강제 종료했고(-1), `BlueprintConsumers2`의 유한 Python commandlet에서 같은 native audit·동일 결과·정상0 종료를 다시 확인했다. 해당 종료 근거 (로컬 `Saved/MMOArchitectureFinish_20261019/OwnedInspectionTermination.json`)와 앞 실패 로그를 보존했다. 빌드를 중단하거나 다른 프로세스를 종료하지 않았다. 모든 기능 assertion과 기대 발생 횟수는 유지했다. 물리 전원 차단·디스크 고장·다른 플랫폼/WAL·수동 시각 품질·실제 운영 서비스는 검증하지 않았다.
 
 ## 재검증과 원자료 범위
 
@@ -128,7 +128,7 @@ if ($actual.Count -ne $expected.Count -or @($actual | Sort-Object -Unique).Count
 
 필요한 외부 입력은 HTTPS API/업무 DTO와 UnknownOutcome 재조회 계약, token issuer/audience/서명 키 공급·회전과 계정–캐릭터/그룹 소유권 권위, 실제 서버 directory/목적지 예약·일회성 ticket/epoch 전환, Server target 지원 엔진이다. 외부 CI에는 고정 Windows/UE5.8·툴체인·LFS 접근이 있는 runner, 격리 checkout·로그/산출물 보존·저장소 gate 권한이 필요하다. 로컬 wrapper 검증을 외부 CI 연결 완료로 세지 않았다. 현재 `GatewayUrl=`이고 인증/운영 저장 서비스가 없으며 설치 배포본은 `Server targets are not currently supported from this engine distribution.`으로 종료한다. 새 서비스/엔진 설치·비용/계정/보안/배포 변경은 진행하지 않았다.
 
-Unreal/UBT/dotnet/LiveCoding/MSBuild/ShaderCompileWorker/게임 프로세스0을 확인했다. 이번 소유 임시 파일의 논리 크기 약5.63GB를 정리했고 실제 드라이브 여유 공간 전후는 [CleanupResult.json](../../../Saved/MMOArchitectureFinish_20261019/CleanupResult.json)에 별도로 기록했다. 주요 증가 원인은 격리 User 캐시·Cook·Stage/package·trace였다. DB/journal/로그/입력·출력 지문과 작은 재현 자산은 보관했고 현재 Binaries/Intermediate·공유 DDC·Git/LFS·다른 작업 파일은 유지했다. 임시 network Content2개는 hash 확인 후 Cook 전에 제거했다. 패키지 실행 파일/캐시 원형이 퇴역한 경로와 보관 매핑은 cleanup manifest를 따른다.
+Unreal/UBT/dotnet/LiveCoding/MSBuild/ShaderCompileWorker/게임 프로세스0을 확인했다. 이번 소유 임시 파일의 논리 크기 약5.63GB를 정리했고 실제 드라이브 여유 공간 전후는 CleanupResult.json (로컬 `Saved/MMOArchitectureFinish_20261019/CleanupResult.json`)에 별도로 기록했다. 주요 증가 원인은 격리 User 캐시·Cook·Stage/package·trace였다. DB/journal/로그/입력·출력 지문과 작은 재현 자산은 보관했고 현재 Binaries/Intermediate·공유 DDC·Git/LFS·다른 작업 파일은 유지했다. 임시 network Content2개는 hash 확인 후 Cook 전에 제거했다. 패키지 실행 파일/캐시 원형이 퇴역한 경로와 보관 매핑은 cleanup manifest를 따른다.
 
 | 이번 증가 원인 | 삭제한 논리 크기 |
 | --- | --- |
@@ -139,4 +139,4 @@ Unreal/UBT/dotnet/LiveCoding/MSBuild/ShaderCompileWorker/게임 프로세스0을
 | Cook 파생 출력 | 0.536GB |
 | Stage 패키지·디버그 심볼 복사본 | 3.291GB |
 
-삭제 직전부터 직후까지 드라이브 여유 공간의 관측 증가는 3.17GB였다. 이는 다른 프로세스의 디스크 활동에도 영향을 받는 관측값이며 논리 파일 크기와 구별한다. 보존 사본 114개/36.36MB는 별도 남겼다. [원인별 집계](../../../Saved/MMOArchitectureFinish_20261019/CleanupSizeByCause.json)와 [보존 매핑](../../../Saved/MMOArchitectureFinish_20261019/RetainedFiles.json)을 보관했다.
+삭제 직전부터 직후까지 드라이브 여유 공간의 관측 증가는 3.17GB였다. 이는 다른 프로세스의 디스크 활동에도 영향을 받는 관측값이며 논리 파일 크기와 구별한다. 보존 사본 114개/36.36MB는 별도 남겼다. 원인별 집계 (로컬 `Saved/MMOArchitectureFinish_20261019/CleanupSizeByCause.json`)와 보존 매핑 (로컬 `Saved/MMOArchitectureFinish_20261019/RetainedFiles.json`)을 보관했다.

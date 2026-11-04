@@ -347,7 +347,7 @@ ProjectJ.Architecture
 | ProjectJ.Combat.WeaponPresentationIdentity | 5개 | fixture의 None socket 관련 경고 |
 | ProjectJ.Presentation.StableGripTargetsAndAuthoredAlpha | 1개 | fixture의 None socket 관련 경고 |
 
-증거 파일: [UBT log](../../../Saved/Logs/ArchitectureAudit_20261003_UBT.log), [automation log](../../../Saved/Logs/ArchitectureAudit_20261003_Tests.log), [automation JSON](../../../Saved/Automation/ArchitectureAudit_20261003/index.json). Saved 산출물은 로컬 검증 기록으로, 저장소에 영구 보존된 문서와는 다르다.
+증거 파일: UBT log (로컬 `Saved/Logs/ArchitectureAudit_20261003_UBT.log`), automation log (로컬 `Saved/Logs/ArchitectureAudit_20261003_Tests.log`), automation JSON (로컬 `Saved/Automation/ArchitectureAudit_20261003/index.json`). Saved 산출물은 로컬 검증 기록으로, 저장소에 영구 보존된 문서와는 다르다.
 
 테스트 통과는 현재 선택된 회귀 계약의 통과다. A01~A07의 새로운 경계 사례에 대한 반증이나 실제 에셋 전체의 정상성 증명이 아니다. 이번 작업에서는 감사 대상 동작 코드를 수정하지 않았으므로 새 테스트 코드를 추가하지 않았다.
 

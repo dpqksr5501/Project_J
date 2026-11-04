@@ -1,6 +1,7 @@
 // Rebuild documentation navigation only; document bodies and evidence are read-only.
 import fs from 'node:fs';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 
 const root = path.resolve(import.meta.dirname, '..', '..');
 const docs = path.join(root, 'Docs');
@@ -17,12 +18,18 @@ const topics = new Map([
   ['Review', '검토·후속 결과'], ['Handoffs', '작업 인계'],
   ['Reference', '참고 원본'], ['Maintenance', '문서 관리'], ['Archive', '보관 자료']
 ]);
-function walk(folder) {
-  return fs.readdirSync(folder, { withFileTypes: true }).flatMap(entry => {
-    const full = path.join(folder, entry.name);
-    if (entry.isSymbolicLink()) throw new Error(`Unexpected symbolic link: ${full}`);
-    return entry.isDirectory() ? walk(full) : [full];
-  });
+function sharedDocumentFiles() {
+  const listed = execFileSync('git', [
+    '-c', 'core.fsmonitor=false', 'ls-files', '--cached', '--others', '--exclude-standard', '-z', '--', 'Docs',
+  ], { cwd: root, encoding: 'utf8' });
+  return [...new Set(listed.split('\0').filter(Boolean))]
+    .map(relative => path.join(root, relative))
+    .filter(file => {
+      if (!fs.existsSync(file)) return false;
+      const entry = fs.lstatSync(file);
+      if (entry.isSymbolicLink()) throw new Error(`Unexpected symbolic link: ${file}`);
+      return entry.isFile();
+    });
 }
 function kind(file, source) {
   const parts = file.split('/');
@@ -47,7 +54,7 @@ function kind(file, source) {
 }
 fs.mkdirSync(path.dirname(output), { recursive: true });
 if (!fs.existsSync(output)) fs.writeFileSync(output, '# 전체 문서 목록\n');
-const files = walk(docs).sort((a, b) => slash(a).localeCompare(slash(b), 'en'));
+const files = sharedDocumentFiles().sort((a, b) => slash(a).localeCompare(slash(b), 'en'));
 const records = files.filter(file => file.endsWith('.md')).map(file => {
   const source = fs.readFileSync(file, 'utf8');
   const rel = slash(path.relative(docs, file));
