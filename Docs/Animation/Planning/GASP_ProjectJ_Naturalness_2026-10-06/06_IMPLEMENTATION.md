@@ -225,7 +225,7 @@ headless engine startup의 ToolsetRegistry/EditorToolset Python `AgentSkill`/`Py
 
 200 Hidden의 bone finalizations와 MM result observations는 전후 모두 ABA off=24,000 / ABA on=480이었다. 기존 hidden 정책이 평가를 전부 0으로 만드는 구조는 아니다. 새 진단이 hidden을 강제 깨웠다는 증거는 없고 기존 정책의 처리량은 일치했다. 일반 update/본 finalize/캐시 결과 관측은 실제 pose search 횟수와 구분한다.
 
-원본 실행 경로: `Saved/Validation/AuthoredAnimation_20261005/NaturalnessBaseline_20261006`, `NaturalnessAfter_20261006`, `NaturalnessAfterRepeat_20261006`. 각각 manifest·Count별 cpu.json·Automation/index.json·Run.log가 있다. [최초 비교 CSV](../../../../Saved/Validation/Naturalness_20261006/cpu-comparison.csv), [추가 반복 원자료](../../../../Saved/Validation/Naturalness_20261006/cpu-repeat.json). 새로운 runtime 분기 비용과 활성 OW/긴 낙하 비용을 이 ground crowd fixture에서 따로 측정했다고 주장하지 않는다.
+원본 실행 경로: `Saved/Validation/AuthoredAnimation_20261005/NaturalnessBaseline_20261006`, `NaturalnessAfter_20261006`, `NaturalnessAfterRepeat_20261006`. 각각 manifest·Count별 cpu.json·Automation/index.json·Run.log가 있다. 최초 비교 CSV (로컬 `Saved/Validation/Naturalness_20261006/cpu-comparison.csv`), 추가 반복 원자료 (로컬 `Saved/Validation/Naturalness_20261006/cpu-repeat.json`). 새로운 runtime 분기 비용과 활성 OW/긴 낙하 비용을 이 ground crowd fixture에서 따로 측정했다고 주장하지 않는다.
 
 
 ## 변경 파일과 재현 방법
@@ -234,12 +234,12 @@ production 변경은 AnimInstance, LocomotionAnimStateComponent, MovingTurnPolic
 
 실행 결과의 local 파일 링크:
 
-- [최종 빌드](../../../../Saved/Validation/Naturalness_20261006/FootDiagnosticBuild.log)
-- [최종 28개 자동화](../../../../Saved/Validation/Naturalness_20261006/FinalOutput/Automation/index.json), [활성 graph](../../../../Saved/Validation/Naturalness_20261006/FinalOutput/ActiveGraph.txt), [실제 playback](../../../../Saved/Validation/Naturalness_20261006/FinalOutput/Playback.txt)
-- 수명 보완 전 local 실패의 당시 경로: `Saved/Validation/Naturalness_20261006/FinalLocal/Automation/index.json` (현재 로컬 원문 없음). [해당 재생](../../../../Saved/Validation/Naturalness_20261006/FinalLocal/Playback.txt)
-- [최종 nonlocal 재생](../../../../Saved/Validation/Naturalness_20261006/FinalNonLocal/Playback.txt)
-- [network verification](../../../../Saved/Validation/GroupD_20260910/NaturalnessNetwork_20261006/verification.json), [client1 animation observations](../../../../Saved/Validation/GroupD_20260910/NaturalnessNetwork_20261006/Client1/animation-observations.csv), [client2](../../../../Saved/Validation/GroupD_20260910/NaturalnessNetwork_20261006/Client2/animation-observations.csv)
-- [CPU comparison 원자료](../../../../Saved/Validation/Naturalness_20261006/cpu-comparison.csv), [세션 파일 지문/보존 확인](../../../../Saved/Validation/Naturalness_20261006/session-files.json), [세션 변경 patch](../../../../Saved/Validation/Naturalness_20261006/session.patch)
+- 최종 빌드 (로컬 `Saved/Validation/Naturalness_20261006/FootDiagnosticBuild.log`)
+- 최종 28개 자동화 (로컬 `Saved/Validation/Naturalness_20261006/FinalOutput/Automation/index.json`), 활성 graph (로컬 `Saved/Validation/Naturalness_20261006/FinalOutput/ActiveGraph.txt`), 실제 playback (로컬 `Saved/Validation/Naturalness_20261006/FinalOutput/Playback.txt`)
+- 수명 보완 전 local 실패의 당시 경로: `Saved/Validation/Naturalness_20261006/FinalLocal/Automation/index.json` (현재 로컬 원문 없음). 해당 재생 (로컬 `Saved/Validation/Naturalness_20261006/FinalLocal/Playback.txt`)
+- 최종 nonlocal 재생 (로컬 `Saved/Validation/Naturalness_20261006/FinalNonLocal/Playback.txt`)
+- network verification (로컬 `Saved/Validation/GroupD_20260910/NaturalnessNetwork_20261006/verification.json`), client1 animation observations (로컬 `Saved/Validation/GroupD_20260910/NaturalnessNetwork_20261006/Client1/animation-observations.csv`), client2 (로컬 `Saved/Validation/GroupD_20260910/NaturalnessNetwork_20261006/Client2/animation-observations.csv`)
+- CPU comparison 원자료 (로컬 `Saved/Validation/Naturalness_20261006/cpu-comparison.csv`), 세션 파일 지문/보존 확인 (로컬 `Saved/Validation/Naturalness_20261006/session-files.json`), 세션 변경 patch (로컬 `Saved/Validation/Naturalness_20261006/session.patch`)
 
 `Saved`는 git에 추가하지 않았다. 이 보고서의 수치·판정과 실행 경로는 보존하되, 다른 컴퓨터로 인계할 때 로그/원본 backup은 별도 전달해야 한다.
 
@@ -269,7 +269,7 @@ production 변경은 AnimInstance, LocomotionAnimStateComponent, MovingTurnPolic
 | OW asset | 아래 초기 Master backup을 사용하거나 두 핀을 표의 이전 연결로 복원·해당 Master만 compile/save. 이후 사용자 asset 변경이 있으면 전체 backup 덮어쓰기 대신 핀만 복원 |
 | 진단/테스트 | 이번 FlowTrace hunk, 새 test files, editor-only 의존성/friend와 기존 test 추가 hunk만 제거 |
 
-시작 시 수정된 파일은 exact copy, 시작 시 clean이었던 텍스트 파일은 clean HEAD의 재구성 원본으로 구분하여 [session-files.json](../../../../Saved/Validation/Naturalness_20261006/session-files.json)에 기록했다. [session.patch](../../../../Saved/Validation/Naturalness_20261006/session.patch)는 **HEAD 전체 diff가 아닌 이번 세션만의 텍스트 변경**이다. 먼저 `git apply --reverse --check`로 확인하고 실제 rollback을 결정한다. 다른 변경이 끼어들었다면 수동 hunk 검토가 필요하다. `git checkout/restore`로 기존 사용자 작업 전체를 지우면 안 된다.
+시작 시 수정된 파일은 exact copy, 시작 시 clean이었던 텍스트 파일은 clean HEAD의 재구성 원본으로 구분하여 session-files.json (로컬 `Saved/Validation/Naturalness_20261006/session-files.json`)에 기록했다. session.patch (로컬 `Saved/Validation/Naturalness_20261006/session.patch`)는 **HEAD 전체 diff가 아닌 이번 세션만의 텍스트 변경**이다. 먼저 `git apply --reverse --check`로 확인하고 실제 rollback을 결정한다. 다른 변경이 끼어들었다면 수동 hunk 검토가 필요하다. `git checkout/restore`로 기존 사용자 작업 전체를 지우면 안 된다.
 
 Master 원본: `Saved/Validation/Naturalness_20261006/Baseline/SourceSnapshot/Content/Animation_Logic/ABPs/ABP_Humanoid_Master.uasset`. 현재 에디터 정상 종료와 이후 수정 여부를 확인한 뒤 선택적으로 복원해야 한다. rollback 뒤에는 direct UBT와 관련 자동화 재검증이 필요하다. 이번 작업에서 rollback 자체는 실행하지 않았다.
 
