@@ -89,6 +89,13 @@ void UProject_JSkillInputExecutionComponent::RetireInput()
 	BoundPlayerCharacter = nullptr;
 }
 
+void UProject_JSkillInputExecutionComponent::ReleaseLifeInputs()
+{
+	// Clear local commands before release callbacks can publish a replacement binding.
+	ClearCommandInputHistory();
+	ReleaseAllDispatchedInputs();
+}
+
 void UProject_JSkillInputExecutionComponent::HandleInputTagPressed(FGameplayTag InputTag)
 {
 	HandleInputTagPressedFromSource(InputTag, this, 0);
@@ -96,7 +103,7 @@ void UProject_JSkillInputExecutionComponent::HandleInputTagPressed(FGameplayTag 
 
 void UProject_JSkillInputExecutionComponent::HandleInputTagPressedFromSource(FGameplayTag InputTag, const UObject* Source, uint64 Receipt)
 {
-	if (bEnding || IsBeingDestroyed() || !InputTag.IsValid() || !BoundPlayerCharacter || !IsValid(Source))
+	if (bEnding || IsBeingDestroyed() || !InputTag.IsValid() || !BoundPlayerCharacter || !BoundPlayerCharacter->IsPlayerLifeActive() || !IsValid(Source))
 	{
 		return;
 	}
@@ -141,7 +148,7 @@ void UProject_JSkillInputExecutionComponent::ReceiveAuthorityCombatInput(const F
 	static const FGameplayTag InputRoot = FGameplayTag::RequestGameplayTag(FName(TEXT("InputTag")));
 	const uint32 SequenceDelta = InputSequence - LastServerInputSequence;
 	if (bEnding || IsBeingDestroyed() || !InputTag.MatchesTag(InputRoot) || InputTag.MatchesTagExact(InputRoot) ||
-		!IsValid(BoundPlayerCharacter) || BoundPlayerCharacter->IsActorBeingDestroyed() || !BoundPlayerCharacter->HasAuthority() || SequenceDelta == 0 || SequenceDelta >= 0x80000000u)
+		!IsValid(BoundPlayerCharacter) || BoundPlayerCharacter->IsActorBeingDestroyed() || !BoundPlayerCharacter->HasAuthority() || !BoundPlayerCharacter->IsPlayerLifeActive() || SequenceDelta == 0 || SequenceDelta >= 0x80000000u)
 	{
 		return;
 	}
@@ -224,7 +231,7 @@ FGameplayTag UProject_JSkillInputExecutionComponent::ResolveDispatchInputTag(
 
 void UProject_JSkillInputExecutionComponent::DispatchInputTag(const FGameplayTag InputTag, const bool bAllowAbilityActivation)
 {
-	if (bEnding || IsBeingDestroyed() || !InputTag.IsValid() || !IsValid(BoundPlayerCharacter) || BoundPlayerCharacter->IsActorBeingDestroyed())
+	if (bEnding || IsBeingDestroyed() || !InputTag.IsValid() || !IsValid(BoundPlayerCharacter) || BoundPlayerCharacter->IsActorBeingDestroyed() || !BoundPlayerCharacter->IsPlayerLifeActive())
 	{
 		return;
 	}

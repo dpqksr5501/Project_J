@@ -187,7 +187,7 @@ bool FProjectJRewindHistoryTest::RunTest(const FString&)
 {
 	FInternalTestWorld Scope;
 	auto* Character = Scope.World->SpawnActor<ACharacter>();
-	auto* Rewind = NewObject<UProject_JServerSideRewindComponent>(Character); Rewind->PoseHistory.SetNum(3);
+	auto* Rewind = NewObject<UProject_JServerSideRewindComponent>(Character); Rewind->RegisterComponent(); Rewind->PoseHistory.SetNum(3);
 	FProject_JPoseHistoryBuffer Record, A, B; float Alpha;
 	Record.Timestamp = 1; Rewind->AppendPoseHistoryRecord(Record);
 	TestTrue(TEXT("Single exact record is queryable"), Rewind->GetPosesForTime(1, A, B, Alpha));

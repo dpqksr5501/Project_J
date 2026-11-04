@@ -5,6 +5,7 @@
 #include "Project_JWorldEventRegistry.generated.h"
 
 class AProject_JWorldEncounter;
+class AProject_JPlayerState;
 class UActorComponent;
 struct FStreamableHandle;
 
@@ -43,6 +44,7 @@ class PROJECT_J_API UProject_JWorldEventRegistry : public UTickableWorldSubsyste
 {
     GENERATED_BODY()
 public:
+    void NotifyTrustedProfileReady(AProject_JPlayerState* Player);
     bool Register(FName Id, AActor* Owner);
     void Unregister(FName Id, AActor* Owner);
     static constexpr int32 MaxEvents = 2048;
@@ -71,6 +73,7 @@ protected:
     virtual bool DoesSupportWorldType(EWorldType::Type Type) const override;
 private:
     friend class AProject_JWorldEncounter;
+class AProject_JPlayerState;
 	friend class FProjectJWorldEventExecutionTest;
     friend class FProjectJWorldEventFairChurnTest;
     void Stop();

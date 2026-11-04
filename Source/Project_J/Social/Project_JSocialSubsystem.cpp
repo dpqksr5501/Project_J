@@ -614,3 +614,61 @@ void UProject_JSocialSubsystem::PublishPartyMemberSummary(AProject_JPlayerState*
         Recipient->ApplyPartyRoster(Rows);
     }
 }
+
+
+bool UProject_JSocialSubsystem::CapturePartyAuthority(AProject_JPlayerState* Requester, FProject_JPartyAuthorityFence& Out) const
+{
+    check(IsInGameThread());
+    Out = {};
+    FGuid Character;
+    if (ResolveAuthoritativeCharacter(Requester, Character) != EProject_JSocialOperationFailure::None
+        || !Requester->CanAcceptSessionCommand() || OnlinePlayers.FindRef(Character).Get() != Requester) return false;
+    const FName Party = CharacterParties.FindRef(Character);
+    const auto* Group = Parties.Find(Party);
+    if (!Group || Group->bDeleted || Group->LeaderCharacterId != Character || !Group->Members.Contains(Character)) return false;
+    Out.Requester = Requester; Out.Session = Requester->CaptureServerSession();
+    Out.CharacterId = Character; Out.PartyId = Party; Out.Revision = Group->Revision;
+    return true;
+}
+bool UProject_JSocialSubsystem::IsPartyAuthorityCurrent(const FProject_JPartyAuthorityFence& Fence) const
+{
+    check(IsInGameThread());
+    auto* Requester = Fence.Requester.Get();
+    FGuid Character;
+    if (ResolveAuthoritativeCharacter(Requester, Character) != EProject_JSocialOperationFailure::None
+        || Character != Fence.CharacterId || !Requester->IsServerSessionCurrent(Fence.Session)
+        || OnlinePlayers.FindRef(Character).Get() != Requester || Fence.PartyId.IsNone()
+        || CharacterParties.FindRef(Character) != Fence.PartyId) return false;
+    const auto* Group = Parties.Find(Fence.PartyId);
+    return Group && !Group->bDeleted && Group->Revision == Fence.Revision
+        && Group->LeaderCharacterId == Character && Group->Members.Contains(Character);
+}
+FProject_JSocialOperationResult UProject_JSocialSubsystem::TransferPartyLeadership(const FProject_JPartyAuthorityFence& Fence, FGuid NewLeader)
+{
+    if (!IsPartyAuthorityCurrent(Fence)) return FProject_JSocialOperationResult::Failed(EProject_JSocialOperationFailure::StaleAuthority, Fence.PartyId);
+    auto& Group = Parties.FindChecked(Fence.PartyId);
+    if (!NewLeader.IsValid() || !Group.Members.Contains(NewLeader) || CharacterParties.FindRef(NewLeader) != Fence.PartyId)
+        return FProject_JSocialOperationResult::Failed(EProject_JSocialOperationFailure::NotMember, Fence.PartyId);
+    if (NewLeader == Group.LeaderCharacterId) return FProject_JSocialOperationResult::Success(Fence.PartyId);
+    if (Group.Revision == MAX_int64) return FProject_JSocialOperationResult::Failed(EProject_JSocialOperationFailure::RevisionExhausted, Fence.PartyId);
+    // No extensible calls between the fence and mutation. Copy before publication callbacks.
+    Group.LeaderCharacterId = NewLeader; ++Group.Revision;
+    const auto Published = Group;
+    SynchronizeGroupMembers(Published); ReconcilePartyRoster(Fence.PartyId);
+    return FProject_JSocialOperationResult::Success(Fence.PartyId);
+}
+FProject_JSocialOperationResult UProject_JSocialSubsystem::RemovePartyMember(const FProject_JPartyAuthorityFence& Fence, FGuid Member)
+{
+    if (!IsPartyAuthorityCurrent(Fence)) return FProject_JSocialOperationResult::Failed(EProject_JSocialOperationFailure::StaleAuthority, Fence.PartyId);
+    auto& Group = Parties.FindChecked(Fence.PartyId);
+    if (!Member.IsValid() || Member == Group.LeaderCharacterId || !Group.Members.Contains(Member) || CharacterParties.FindRef(Member) != Fence.PartyId)
+        return FProject_JSocialOperationResult::Failed(EProject_JSocialOperationFailure::NotMember, Fence.PartyId);
+    if (Group.Revision == MAX_int64) return FProject_JSocialOperationResult::Failed(EProject_JSocialOperationFailure::RevisionExhausted, Fence.PartyId);
+    Group.Members.Remove(Member); CharacterParties.Remove(Member); ++Group.Revision;
+    const auto Published = Group;
+    SynchronizeOnlineMember(Member);
+    if (auto* Removed = ResolveOnlineMember(Member); Removed && CharacterParties.FindRef(Member).IsNone())
+    { Removed->StopPartySummaryObservation(); Removed->ApplyPartyRoster({}); }
+    SynchronizeGroupMembers(Published); ReconcilePartyRoster(Fence.PartyId);
+    return FProject_JSocialOperationResult::Success(Fence.PartyId);
+}

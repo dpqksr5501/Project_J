@@ -14,6 +14,7 @@
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
+#include "Combat/Project_JAuthoritativeDamage.h"
 #include "AbilitySystemGlobals.h"
 #include "Combat/Project_JServerSideRewindComponent.h"
 #include "Combat/Project_JAttackDefinition.h"
@@ -627,37 +628,45 @@ void UProject_JCombatHitValidationComponent::SubmitPredictedHit(AActor* HitActor
 bool UProject_JCombatHitValidationComponent::CanProcessAuthorityHit(AActor* HitActor, int32 TargetLimit) const
 {
 	check(IsInGameThread());
-	return GetOwner() && GetOwner()->HasAuthority() && IsValid(HitActor) && !HitActor->IsActorBeingDestroyed()
-		&& ActiveAttackNodeTag.IsValid() && bHitWindowOpen && bHasAuthoritativeTrace && HasValidAttackWeapon()
-		&& TargetLimit > 0 && ServerHitActors.Num() < TargetLimit && !ServerHitActors.Contains(HitActor);
+	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_Combat_CanAuthorityHit);
+	const uint64 Generation = MeleePoseGeneration, Space = SpatialRevision;
+	const auto CanAdmit = [&]() {
+		return GetOwner() && GetOwner()->HasAuthority() && IsValid(HitActor) && !HitActor->IsActorBeingDestroyed()
+			&& ActiveAttackNodeTag.IsValid() && bHitWindowOpen && bHasAuthoritativeTrace && HasValidAttackWeapon()
+			&& TargetLimit > 0 && ServerHitActors.Num() < TargetLimit && !ServerHitActors.Contains(HitActor);
+	};
+	return CanAdmit()
+		&& Project_J::Combat::ValidatePlayerMeleeTarget(GetOwner(), HitActor) == EProject_JCombatHitValidationFailure::None
+		&& MeleePoseGeneration == Generation && SpatialRevision == Space && CanAdmit();
 }
 
 bool UProject_JCombatHitValidationComponent::ProcessAuthorityHit(AActor* HitActor, int32 TargetLimit)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_Combat_AuthorityHit);
-	if (!CanProcessAuthorityHit(HitActor, TargetLimit))
-	{
-		return false;
-	}
-
+	TStrongObjectPtr<UProject_JCombatHitValidationComponent> KeepThis(this);
+	TStrongObjectPtr<AActor> Source(GetOwner()), Target(HitActor);
+	TStrongObjectPtr<UProject_JAttackDefinition> Definition(ActiveAttackDefinition.Get());
+	const uint64 Generation = MeleePoseGeneration, Space = SpatialRevision;
+	const auto IsCurrent = [&]() {
+		return IsValid(this) && !IsBeingDestroyed() && IsRegistered()
+			&& IsValid(Source.Get()) && !Source->IsActorBeingDestroyed() && GetOwner() == Source.Get()
+			&& IsValid(Target.Get()) && !Target->IsActorBeingDestroyed()
+			&& MeleePoseGeneration == Generation && SpatialRevision == Space && ActiveAttackDefinition == Definition.Get();
+	};
+	if (!IsCurrent() || !CanProcessAuthorityHit(HitActor, TargetLimit) || !IsCurrent()) return false;
 	FProject_JCombatHitRequest Request;
 	Request.Target = HitActor;
 	Request.AttackNodeTag = ActiveAttackNodeTag;
-	// Validate the server's recorded weapon sweep, not the request struct's zero
-	// default. Otherwise legitimate authority hits depend on distance to world origin.
+	// Authority validates the recorded sweep, never a zero/default world-origin trace.
 	Request.TraceStart = LastAuthoritativeTraceStart;
 	Request.TraceEnd = LastAuthoritativeTraceEnd;
-	if (HitValidationPolicy.ValidateActors(GetOwner(), Request) != EProject_JCombatHitValidationFailure::None)
-	{
-		return false;
-	}
-	if (IsTargetObstructed(HitActor))
-	{
-		return false;
-	}
-
-	ServerHitActors.Add(HitActor);
-	return ApplyConfirmedHit(HitActor);
+	if (HitValidationPolicy.ValidateActors(GetOwner(), Request) != EProject_JCombatHitValidationFailure::None
+		|| !IsCurrent() || IsTargetObstructed(HitActor) || !IsCurrent()) return false;
+	if (!CanProcessAuthorityHit(HitActor, TargetLimit) || !IsCurrent()) return false;
+	ServerHitActors.Add(HitActor); // Reserve before callbacks to reject reentrant duplicate hits.
+	const bool bApplied = ApplyConfirmedHit(HitActor, IsCurrent);
+	if (!bApplied && IsCurrent()) ServerHitActors.Remove(HitActor);
+	return bApplied;
 }
 
 void UProject_JCombatHitValidationComponent::ServerRequestSSRHit_Implementation(AActor* HitActor, double ClientTimestamp, FVector TraceStart, FVector TraceEnd, FGameplayTag AttackNodeTag, int32 RequestSequence, int32 PredictionKey)
@@ -857,9 +866,11 @@ void UProject_JCombatHitValidationComponent::ProcessServerHitRequest(const FProj
 		return;
 	}
 
-	ServerHitActors.Add(HitActor);
+	if (Project_J::Combat::ValidatePlayerMeleeTarget(GetOwner(), HitActor) != EProject_JCombatHitValidationFailure::None) return;
 	if (!IsCurrent()) return;
+	ServerHitActors.Add(HitActor);
 	const bool bSpecSubmitted = ApplyConfirmedHit(HitActor, IsCurrent);
+	if (!bSpecSubmitted && IsCurrent()) ServerHitActors.Remove(HitActor);
 	// Application delegates may retire/collect actors. Log only call-local values.
 	UE_LOG(LogProjectJCombatHitValidation, Verbose, TEXT("SSR decision=%s Reason=%s Sequence=%d PredictionKey=%d Query=%.17g SourceQuery=%.17g Selected=%.17g ActiveStart=%.17g ClientStart=%.17g NodeVisit=%d"),
 		bSpecSubmitted ? TEXT("Accepted") : TEXT("Rejected"), bSpecSubmitted ? TEXT("SpecSubmitted") : TEXT("SpecUnavailable"), RequestSequence, PredictionKey,
@@ -868,6 +879,8 @@ void UProject_JCombatHitValidationComponent::ProcessServerHitRequest(const FProj
 
 EProject_JCombatHitValidationFailure UProject_JCombatHitValidationComponent::ValidateActiveAttack(const FProject_JCombatHitRequest& Request, bool bCheckLiveTraceLOS)
 {
+	if (const auto Failure = Project_J::Combat::ValidatePlayerMeleeTarget(GetOwner(), Request.Target);
+		Failure != EProject_JCombatHitValidationFailure::None) return Failure;
 	if (!ActiveAttackNodeTag.IsValid() || !HasValidAttackWeapon())
 	{
 		return EProject_JCombatHitValidationFailure::NoActiveAttack;
@@ -954,40 +967,26 @@ bool UProject_JCombatHitValidationComponent::IsTargetObstructedFrom(const AActor
 	return BlockingHit.GetActor() != HitActor;
 }
 
-bool UProject_JCombatHitValidationComponent::ApplyConfirmedHit(AActor* HitActor)
-{
-	return ApplyConfirmedHit(HitActor, [] { return true; });
-}
-
 bool UProject_JCombatHitValidationComponent::ApplyConfirmedHit(AActor* HitActor, TFunctionRef<bool()> IsCurrent)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_Combat_ApplyEffect);
-	if (!IsCurrent()) return false;
-	TStrongObjectPtr<UAbilitySystemComponent> OwnerASC(ResolveOwnerAbilitySystemComponent());
-	if (!IsCurrent()) return false;
-	const TSubclassOf<UGameplayEffect> DamageEffect = ActiveAttackDefinition ? ActiveAttackDefinition->DamageEffect : nullptr;
-	if (!HitActor || !DamageEffect || !IsValid(OwnerASC.Get()))
+	TStrongObjectPtr<UProject_JCombatHitValidationComponent> KeepThis(this);
+	TStrongObjectPtr<AActor> Source(GetOwner());
+	TStrongObjectPtr<AActor> Target(HitActor);
+	TStrongObjectPtr<UProject_JAttackDefinition> Definition(ActiveAttackDefinition.Get());
+	const uint64 Generation = MeleePoseGeneration;
+	const uint64 Space = SpatialRevision;
+	const auto Eligible = [&]()
 	{
-		return false;
-	}
-
-	TStrongObjectPtr<UAbilitySystemComponent> TargetASC(UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(HitActor));
-	if (!IsCurrent() || !IsValid(TargetASC.Get()))
-	{
-		return false;
-	}
-
-	FGameplayEffectContextHandle EffectContext = OwnerASC->MakeEffectContext();
-	if (!IsCurrent()) return false;
-	EffectContext.AddInstigator(GetOwner(), GetOwner());
-	const FGameplayEffectSpecHandle SpecHandle = OwnerASC->MakeOutgoingSpec(DamageEffect, 1.0f, EffectContext);
-	if (SpecHandle.IsValid() && IsCurrent())
-	{
-		TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_Combat_ApplySpec);
-		OwnerASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC.Get());
-		return true;
-	}
-	return false;
+		return IsCurrent() && IsValid(this) && !IsBeingDestroyed() && IsRegistered()
+			&& IsValid(Source.Get()) && Source->HasAuthority() && GetOwner() == Source.Get()
+			&& IsValid(Target.Get()) && IsValid(Definition.Get()) && ActiveAttackDefinition == Definition.Get()
+			&& MeleePoseGeneration == Generation && SpatialRevision == Space && HasValidAttackWeapon()
+			&& Project_J::Combat::ValidatePlayerMeleeTarget(Source.Get(), Target.Get()) == EProject_JCombatHitValidationFailure::None
+			&& IsCurrent() && MeleePoseGeneration == Generation && SpatialRevision == Space;
+	};
+	if (!Eligible()) return false;
+	return Project_J::Combat::ApplyAuthoritativeDamage(Source.Get(), Target.Get(), Definition->DamageEffect, Eligible);
 }
 
 FProject_JCombatHitValidationResult UProject_JCombatHitValidationComponent::ValidateServerHitRequest(const FProject_JCombatHitRequest& Request) const

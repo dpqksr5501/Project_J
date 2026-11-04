@@ -10,6 +10,7 @@
 #include "Project_JSpellbladeCharacter.h"
 #include "Project_JNPCCharacter.h"
 #include "Project_JAbilitySystemComponent.h"
+#include "Project_JAttributeSet.h"
 #include "Project_JGameplayTags.h"
 #include "GameplayEffect.h"
 #include "Engine/Engine.h"
@@ -30,6 +31,10 @@ bool FProjectJWeaponAttackLifetimeTest::RunTest(const FString&)
  Player->SetActorLocation(FVector(10000, 0, 1000)); Target->SetActorLocation(FVector(10100, 0, 1000));
  auto* ASC = NewObject<UProject_JAbilitySystemComponent>(Player); ASC->RegisterComponent(); ASC->InitAbilityActorInfo(Player, Player);
  FindFProperty<FObjectPropertyBase>(AProject_JBaseCharacter::StaticClass(), TEXT("AbilitySystemComponent"))->SetObjectPropertyValue_InContainer(Player, ASC);
+ auto* Attributes = NewObject<UProject_JAttributeSet>(Player); ASC->AddAttributeSetSubobject(Attributes);
+ FindFProperty<FObjectPropertyBase>(AProject_JBaseCharacter::StaticClass(), TEXT("AttributeSet"))->SetObjectPropertyValue_InContainer(Player, Attributes);
+ ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetMaxHealthAttribute(), 100.f);
+ ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetHealthAttribute(), 100.f);
  auto* TargetASC = Target->GetAbilitySystemComponent(); TargetASC->InitAbilityActorInfo(Target, Target);
  auto* Equipment = NewObject<UProject_JEquipmentManagerComponent>(Player); Equipment->RegisterComponent();
  auto* Runtime = Player->FindComponentByClass<UProject_JEquipmentRuntimeComponent>(); Runtime->BindToEquipmentManager(Equipment);

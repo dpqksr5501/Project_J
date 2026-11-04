@@ -1,3 +1,4 @@
+#include "Game/Project_JPlayerState.h"
 #include "World/Project_JWorldEventRegistry.h"
 #include "World/Project_JWorldEncounter.h"
 #include "Engine/AssetManager.h"
@@ -423,4 +424,17 @@ void UProject_JWorldEventRegistry::Deinitialize()
     Stop();
     FWorldDelegates::OnWorldBeginTearDown.Remove(TearDownHandle);
     Super::Deinitialize();
+}
+
+void UProject_JWorldEventRegistry::NotifyTrustedProfileReady(AProject_JPlayerState* Player)
+{
+    if (!bAccepting || !IsValid(Player) || Player->GetWorld() != GetWorld() || !Player->CanAcceptSessionCommand()) return;
+    TArray<TWeakObjectPtr<AActor>> Snapshot;
+    Snapshot.Reserve(Owners.Num());
+    for (const auto& Entry : Owners) Snapshot.Add(Entry.Value.Owner);
+    for (const auto& Weak : Snapshot)
+    {
+        auto* Encounter = Cast<AProject_JWorldEncounter>(Weak.Get());
+        if (IsValid(Encounter) && IsCurrent(Encounter)) Encounter->TryClaimDevelopmentRewards(Player);
+    }
 }

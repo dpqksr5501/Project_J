@@ -1,5 +1,6 @@
 #include "Backend/Project_JSQLiteRepository.h"
 #include "Backend/Project_JQuestHistoryStorage.h"
+#include "Backend/Project_JWorldEventClaimStorage.h"
 #include "HAL/FileManager.h"
 #include "Misc/Paths.h"
 #include "Misc/ScopeExit.h"
@@ -325,7 +326,7 @@ FCommitResult FProject_JSQLiteRepository::CommitProfile(const FCommitRequest &Re
 		Stream.Sequence > MAX_uint32 || Intent.Num() > MaxIntentBytes)
 		return {};
 	// This port cannot be used as a receipt eviction API for arbitrary aggregates.
-	bool Lease = false, Core = false, Pages = false;
+	bool Lease = false, Core = false, Pages = false, EventClaim = false;
 	for (const auto &M : Request.Mutations)
 	{
 		if (M.Key.Id != Stream.Character || M.bDelete || M.SchemaVersion != 1)
@@ -342,9 +343,11 @@ FCommitResult FProject_JSQLiteRepository::CommitProfile(const FCommitRequest &Re
 		}
         else if (M.Key.Kind == TEXT("LocalProfile")) { if (Stream.Sequence < 0) return {}; Core = true; }
         else if (ProjectJ::LocalProfileHistory::PageIndex(M.Key) != INDEX_NONE) { if (Stream.Sequence < 0) return {}; Pages = true; }
+        else if (M.Key == ProjectJ::WorldEventClaims::Key(Stream.Character))
+        { if (Stream.Sequence <= 0) return {}; EventClaim = true; }
         else return {};
 	}
-	if (!Lease || (Pages && !Core) || (Stream.Sequence > 0 &&
+	if (!Lease || ((Pages || EventClaim) && !Core) || (Stream.Sequence > 0 &&
 				   (Intent.IsEmpty() || Request.IdempotencyKey.A != Stream.Session.A ||
 					Request.IdempotencyKey.B != Stream.Session.B || Request.IdempotencyKey.C != Stream.Session.C ||
 					Request.IdempotencyKey.D != uint32(Stream.Sequence))))
@@ -474,6 +477,8 @@ FCommitResult FProject_JSQLiteRepository::CommitInternal(const FCommitRequest &R
 			return {ECommitStatus::Unavailable, {}};
 		if ((ReadStatus == EProject_JRecordRead::Found ? Existing.Revision : 0) != M.ExpectedRevision)
 			return {ECommitStatus::Conflict, {}};
+        if (Stream && M.Key == ProjectJ::WorldEventClaims::Key(Stream->Character) &&
+            !ProjectJ::WorldEventClaims::IsAppend(Existing, M.Payload)) return {ECommitStatus::Invalid, {}};
         if (Stream && M.Key.Kind == TEXT("LocalProfile")) OldCore = Existing;
         if (Stream) if (const int32 Index = ProjectJ::LocalProfileHistory::PageIndex(M.Key); Index != INDEX_NONE) OldPages.Add(Index, Existing);
 		NewRecords += ReadStatus == EProject_JRecordRead::Missing;

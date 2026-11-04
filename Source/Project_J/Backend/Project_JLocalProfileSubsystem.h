@@ -8,8 +8,10 @@ struct FProject_JQuestProgressInput;
 #include "Project_JLocalProfileSubsystem.generated.h"
 
 class AProject_JPlayerState;
+class AProject_JWorldEncounter;
 struct FProject_JLocalProfileSnapshot;
 struct FProject_JLocalProfileBinding;
+struct FProject_JPendingTrustedProfileOpen;
 namespace ProjectJ::MMO
 {
 class FAggregateGate;
@@ -31,8 +33,8 @@ struct FProject_JProfileDurableResult
 };
 using FProject_JProfileDurableCompletion = TFunction<void(const FProject_JProfileDurableResult&)>;
 
-/** Standalone developer checkpoints, explicitly selected by a local launch flag.
- * Not account authentication, network persistence, or a durable economy service.
+/** Developer SQLite checkpoints: standalone local-name mode or explicitly opted-in
+ * trusted-session development mode. Not production authentication or an economy service.
  * Existing progression, quest, inventory/equipment and crafting-job components remain the live gameplay writers.
  */
 UCLASS()
@@ -43,10 +45,22 @@ class PROJECT_J_API UProject_JLocalProfileSubsystem : public UGameInstanceSubsys
 	virtual void Initialize(FSubsystemCollectionBase &Collection) override;
 	virtual void Deinitialize() override;
 	void OpenProfile(AProject_JPlayerState *Player, const FString &Profile, TFunction<void(bool)> OnReady);
+	/** Explicit nonshipping development adapter. Caller must have completed trusted ownership
+	 * verification and must wait for OnReady before spawning. Never accepts client-supplied IDs. */
+	void OpenTrustedDevelopmentProfile(AProject_JPlayerState* Player, TFunction<void(bool)> OnReady);
+	static bool IsTrustedDevelopmentEnabled();
+	/** Same native owner only: reject renewal while storage/publication is pending. */
+	bool CanRenewTrustedProfile(AProject_JPlayerState* Player) const;
+	bool RenewTrustedProfile(AProject_JPlayerState* Player, const ProjectJ::MMO::FServerSessionLease& Previous,
+		const ProjectJ::MMO::FServerSessionLease& Current);
+	/** Read-only, character/quest completion proof from a fully restored committed projection.
+	 * False means unavailable or not committed; never issues a second reward. */
+	bool QueryCommittedQuest(AProject_JPlayerState* Player, FName Quest, int64& OutRevision) const;
 	void PlayerBegunPlay(AProject_JPlayerState *Player);
 	void Detach(AProject_JPlayerState *Player);
 	void RequestCheckpoint(AProject_JPlayerState *Player);
 	bool IsReady(const AProject_JPlayerState *Player) const;
+	bool HasProfileBinding(const AProject_JPlayerState* Player) const { return Bindings.Contains(const_cast<AProject_JPlayerState*>(Player)) || PendingTrustedOpens.Contains(const_cast<AProject_JPlayerState*>(Player)); }
 	bool IsCheckpointPending(const AProject_JPlayerState *Player) const;
 	int64 GetCommittedRevision(const AProject_JPlayerState *Player) const;
 	/** HUD projection only; never a second gameplay state owner. */
@@ -63,6 +77,9 @@ class PROJECT_J_API UProject_JLocalProfileSubsystem : public UGameInstanceSubsys
 	 * Receivers retain native values or weak UObject references and copy results they need later.
 	 * World shutdown may retire a receiver: never mutate an ended/replacement world.
 	 * Existing bool Complete still means successful live installation/publication and remains owner-fenced. */
+    /** Server-only dev reward: reads frozen eligibility/XP from the actual encounter, never caller-provided XP. */
+    bool SubmitWorldEventReward(AProject_JPlayerState* Player, const AProject_JWorldEncounter* Encounter, FGuid Round,
+        FProject_JPersistentCompletion Complete = {}, FProject_JProfileDurableCompletion OnDurable = {});
 	bool SubmitEdit(AProject_JPlayerState *Player, const FProject_JPersistentEdit &Edit,
 					FProject_JPersistentCompletion Complete = {}, FProject_JProfileDurableCompletion OnDurable = {});
 #if WITH_DEV_AUTOMATION_TESTS
@@ -80,7 +97,15 @@ class PROJECT_J_API UProject_JLocalProfileSubsystem : public UGameInstanceSubsys
 	void FailCommandWritesForTest(AProject_JPlayerState *Player);
 #endif
   private:
+    void RetryPendingTrustedOpens();
+    TMap<TWeakObjectPtr<AProject_JPlayerState>, TSharedPtr<FProject_JPendingTrustedProfileOpen>> PendingTrustedOpens;
+    bool SubmitEditInternal(AProject_JPlayerState* Player, const FProject_JPersistentEdit& Edit,
+        FProject_JPersistentCompletion Complete, FProject_JProfileDurableCompletion OnDurable, bool bAuthorizedWorldEvent);
 	friend struct FProjectJQuestRewardProfileTestAccess;
+    friend struct FProjectJBusyReconnectTestAccess;
+	void OpenResolvedProfile(AProject_JPlayerState* Player, FGuid Account, FGuid Character,
+		const ProjectJ::MMO::FServerSessionLease& ExpectedSession, bool bTrustedDevelopment,
+		TFunction<void(bool)> OnReady);
 	friend class FProjectJLocalProfileLifecycleTest;
 	friend class FProjectJProfileUnknownShapeTest;
 	friend class FProjectJProfileProgressCapacityTest;
@@ -93,7 +118,7 @@ class PROJECT_J_API UProject_JLocalProfileSubsystem : public UGameInstanceSubsys
 	friend class FProjectJGatheringExecutionTest;
 	void CompleteEdit(const TSharedPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe> &Binding, bool Confirmed,
 					  bool FirstApplication, ProjectJ::MMO::ECommitStatus Status,
-					  TSharedPtr<const FProject_JLocalProfileSnapshot, ESPMode::ThreadSafe> Values, int64 ProjectionRevision);
+					  TSharedPtr<const FProject_JLocalProfileSnapshot, ESPMode::ThreadSafe> Values, int64 ProjectionRevision, bool bEventClaimCapacity = false);
 	bool ApplyConfirmedProjection(const TSharedPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe>& Binding,
 		TSharedPtr<const FProject_JLocalProfileSnapshot, ESPMode::ThreadSafe> Values, int64 ProjectionRevision);
 	void CompleteProgress(const TSharedPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe>& Binding,
@@ -101,6 +126,7 @@ class PROJECT_J_API UProject_JLocalProfileSubsystem : public UGameInstanceSubsys
 	bool QueueQuestProgress(const TSharedPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe>& Binding,
 		const TArray<FProject_JQuestProgressInput>& Inputs);
 	void CompleteOpen(const TSharedPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe> &Binding);
+	void ObserveProfileChanges(const TSharedPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe>& Binding);
 	void BindPersistentCommands(const TSharedPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe> &Binding);
 	bool IsCurrent(const TSharedPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe> &Binding) const;
 	TMap<TWeakObjectPtr<AProject_JPlayerState>, TSharedPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe>>

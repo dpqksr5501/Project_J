@@ -3,6 +3,13 @@
 #include "Backend/Project_JLocalProfileSubsystem.h"
 #include "Backend/Project_JQuestHistoryStorage.h"
 #include "Backend/Project_JSQLiteRepository.h"
+#include "Backend/Project_JWorldEventClaimStorage.h"
+#include "World/Project_JWorldEncounter.h"
+#include "World/Project_JWorldEventRegistry.h"
+#include "Project_JNPCCharacter.h"
+#include "Project_JAttributeSet.h"
+#include "GameplayEffect.h"
+#include "GameFramework/GameStateBase.h"
 #include "CharacterClass/Project_JCharacterDataSubsystem.h"
 #include "CharacterClass/Project_JProgressionComponent.h"
 #include "Components/Project_JInventoryComponent.h"
@@ -10,6 +17,10 @@
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "Game/Project_JPlayerState.h"
+#include "Game/Project_JGameMode.h"
+#include "GameFramework/PlayerController.h"
+#include "Engine/Player.h"
+#include "Misc/CommandLine.h"
 #include "Game/Project_JQuestComponent.h"
 #include "GameFramework/WorldSettings.h"
 #include "Inventory/Project_JConsumableDefinition.h"
@@ -22,9 +33,44 @@
 #include "UObject/StrongObjectPtr.h"
 #include <atomic>
 
-// Test-only access is limited to selecting an isolated database, never command/binding phase state.
+// Test-only access selects an isolated database and seeds a server event entitlement.
+// It never alters profile command/binding phase state.
 struct FProjectJQuestRewardProfileTestAccess
 {
+    static bool SeedWorldEvent(AProject_JWorldEncounter& Encounter, FGuid Round, FGuid Character, int64 XP)
+    {
+        Encounter.FrozenDevelopmentRewardXP.Add(Round, XP);
+        return Encounter.Contributions.Begin(Round) && Encounter.Contributions.Record(Round, Character, 1) &&
+            Encounter.Contributions.Close(Round, true);
+    }
+    // Start after asset/ground spawn admission, with an EMPTY ledger. Damage, defeat,
+    // eligibility and payout below must all pass through the production callbacks.
+    // This is not an async streaming/spawn-admission test.
+    static bool AttachActiveNPC(AProject_JWorldEncounter& Encounter, AProject_JNPCCharacter& NPC, int64 XP)
+    {
+        auto* Attributes = NPC.GetAttributeSet();
+        auto* Registry = Encounter.GetWorld()->GetSubsystem<UProject_JWorldEventRegistry>();
+        if (!Attributes || !Attributes->CanBeginHealthGEObservation() || !Registry) return false;
+        Encounter.EncounterId = FName(*FGuid::NewGuid().ToString());
+        Encounter.NPCClass = AProject_JNPCCharacter::StaticClass();
+        Encounter.Phase = EProject_JEncounterPhase::Active;
+        if (!Registry->Register(Encounter.EncounterId, &Encounter)) return false;
+        Encounter.bRegistered = true;
+        Encounter.NPC = &NPC;
+        Encounter.bTrackContributions = true;
+        Encounter.DevelopmentRewardExperience = XP;
+        Encounter.ContributionRound = FGuid::NewGuid();
+        if (!Encounter.Contributions.Begin(Encounter.ContributionRound)) return false;
+        Encounter.FrozenDevelopmentRewardXP.Add(Encounter.ContributionRound, XP);
+        Encounter.ContributionAttributes = Attributes;
+        Encounter.ContributionLossHandle = Attributes->OnConfirmedHealthGELoss.AddUObject(&Encounter, &AProject_JWorldEncounter::OnContributionLoss);
+        Encounter.ContributionFailureHandle = Attributes->OnHealthGEObservationFailed.AddUObject(&Encounter, &AProject_JWorldEncounter::OnContributionObservationFailed);
+        NPC.OnDestroyed.AddDynamic(&Encounter, &AProject_JWorldEncounter::OnNPCDestroyed);
+        Encounter.Phase = EProject_JEncounterPhase::Active;
+        ++Encounter.SpawnRevision;
+        return true;
+    }
+    static void PollEncounter(AProject_JWorldEncounter& Encounter) { Encounter.UpdateEncounter(); }
     static void SetDatabasePath(UProject_JLocalProfileSubsystem& Profiles, const FString& Path)
     {
         Profiles.DatabasePath = Path;
@@ -75,11 +121,21 @@ class FQuestRewardProfile : public IAutomationLatentCommand
     UProject_JConsumableDefinition* Mana;
     FString Database;
     int32 Step = 0;
+    bool bTrustedDevelopment = false;
+    bool bWorldEventIntegration = false;
+    TFuture<bool> IntegrationDisk;
+    FString OriginalCommandLine;
+    FProject_JAccountId TrustedAccount = FProject_JAccountId::NewId();
+    FProject_JCharacterId TrustedCharacter = FProject_JCharacterId::NewId();
+    TWeakObjectPtr<APlayerController> TrustedController;
     int32 RetirementMode = 0; // 0: original durable flow; 1: actual getter retirement; 2: item callback retirement.
     TSharedPtr<FRewardReply, ESPMode::ThreadSafe> OpenReply;
     double Started = FPlatformTime::Seconds();
     int64 RejectedRevision = 0, ExpectedHealth = 0;
     FGuid ExistingHealth;
+    TWeakObjectPtr<AProject_JWorldEncounter> RewardEncounter;
+    FGuid RewardRound;
+    TFuture<bool> SeedClaims;
     FProject_JPersistentEdit PaidIntent;
     FProject_JQuestSnapshot PristineLoadQuests;
     TArray<FProject_JItemInstanceData> PristineLoadItems;
@@ -108,7 +164,25 @@ class FQuestRewardProfile : public IAutomationLatentCommand
     }
     void Open(bool RetireDuringLoad = false)
     {
-        AProject_JPlayerState* State = RetirementMode ? World->SpawnActor<AProject_JQuestRewardQueryFixture>() : World->SpawnActor<AProject_JPlayerState>();
+        AProject_JPlayerState* State = nullptr;
+        if (bTrustedDevelopment)
+        {
+            auto* PC = World->SpawnActor<APlayerController>();
+            TrustedController = PC;
+            PC->SetAsLocalPlayerController();
+            if (!PC->GetPlayerState<AProject_JPlayerState>()) PC->InitPlayerState();
+            PC->SetPlayer(NewObject<UPlayer>(GI.Get()));
+            State = PC->GetPlayerState<AProject_JPlayerState>();
+            const auto RejectedUnverified = MakeShared<FRewardReply, ESPMode::ThreadSafe>();
+            Profiles->OpenTrustedDevelopmentProfile(State, [RejectedUnverified](bool OK) { RejectedUnverified->Done = true; RejectedUnverified->OK = OK; });
+            Check(RejectedUnverified->Done && !RejectedUnverified->OK && !Profiles->HasProfileBinding(State), TEXT("Development flag alone never authenticates a PlayerState"));
+            auto* Mode = CastChecked<AProject_JGameMode>(World->GetAuthGameMode());
+            ProjectJ::MMO::FServerSessionAttempt Attempt; ProjectJ::MMO::FServerSessionLease Lease;
+            if (!Check(Mode->BeginTrustedSession(PC, TrustedAccount, TrustedCharacter, Attempt)
+                && Mode->CompleteTrustedSession(Attempt, true, Lease), TEXT("Development fixture supplies verified native session before profile restore")))
+            { OpenReply = MakeShared<FRewardReply, ESPMode::ThreadSafe>(); OpenReply->Done = true; return; }
+        }
+        else State = RetirementMode ? World->SpawnActor<AProject_JQuestRewardQueryFixture>() : World->SpawnActor<AProject_JPlayerState>();
         Player = State;
         auto* Quests = State->FindComponentByClass<UProject_JQuestComponent>();
         Quests->Definitions.Add(SuccessQuest.Get()); Quests->Definitions.Add(FullQuest.Get()); Quests->Definitions.Add(ByteQuest.Get());
@@ -125,7 +199,16 @@ class FQuestRewardProfile : public IAutomationLatentCommand
                 PristineLoadQuests.States.Num(), PristineLoadQuests.HistoryCount, PristineLoadProgressionRevision, PristineLoadItems.Num()));
         }
         OpenReply = MakeShared<FRewardReply, ESPMode::ThreadSafe>(); const auto Out = OpenReply;
-        Profiles->OpenProfile(State, TEXT("QuestItemRewards"), [Out](bool OK) { Out->OK = OK; Out->Done = true; });
+        auto Ready = [Out](bool OK) { Out->OK = OK; Out->Done = true; };
+        if (bTrustedDevelopment)
+        {
+            const auto RejectedLocalName = MakeShared<FRewardReply, ESPMode::ThreadSafe>();
+            Profiles->OpenProfile(State, TEXT("QuestItemRewards"), [RejectedLocalName](bool OK) { RejectedLocalName->Done = true; RejectedLocalName->OK = OK; });
+            Check(RejectedLocalName->Done && !RejectedLocalName->OK && State->GetCharacterId().Value == TrustedCharacter.Value,
+                TEXT("Local-name path cannot replace an authenticated character identity"));
+            Profiles->OpenTrustedDevelopmentProfile(State, MoveTemp(Ready));
+        }
+        else Profiles->OpenProfile(State, TEXT("QuestItemRewards"), MoveTemp(Ready));
         if (RetireDuringLoad) ArmGetterRetirement(State);
     }
     bool Submit(UProject_JQuestDefinition* Definition, bool ReusePaid = false)
@@ -140,6 +223,14 @@ class FQuestRewardProfile : public IAutomationLatentCommand
             [Out](bool OK, bool First) { Out->Done = true; Out->OK = OK; Out->First = First; },
             [Out](const FProject_JProfileDurableResult& Result) { Out->Durable = Result.Outcome == EProject_JProfileDurableOutcome::Committed; }),
             TEXT("Real public profile port admits the prepared quest claim"));
+    }
+    bool SubmitEvent()
+    {
+        Reply = MakeShared<FRewardReply, ESPMode::ThreadSafe>(); const auto Out = Reply;
+        return Check(Profiles->SubmitWorldEventReward(Player.Get(), RewardEncounter.Get(), RewardRound,
+            [Out](bool OK, bool First) { Out->Done = true; Out->OK = OK; Out->First = First; },
+            [Out](const FProject_JProfileDurableResult& R) { Out->Durable = R.Outcome == EProject_JProfileDurableOutcome::Committed; }),
+            TEXT("Actual encounter-authorized profile consumer admits event reward"));
     }
     void ObserveFirst()
     {
@@ -191,10 +282,17 @@ class FQuestRewardProfile : public IAutomationLatentCommand
             Q->States.ContainsByPredicate([&](const auto& State) { return State.QuestId == Definition->QuestId && State.Count == 1 && !State.bClaimed; }) && SameItems(Owner, *PaidValues);
     }
 public:
-    FQuestRewardProfile(FAutomationTestBase* InTest, UGameInstance* InGI, UProject_JConsumableDefinition* InHealth, UProject_JConsumableDefinition* InMana, FString InDatabase, int32 InRetirementMode = 0)
+    FQuestRewardProfile(FAutomationTestBase* InTest, UGameInstance* InGI, UProject_JConsumableDefinition* InHealth, UProject_JConsumableDefinition* InMana, FString InDatabase, int32 InRetirementMode = 0, bool InTrustedDevelopment = false, bool InWorldEventIntegration = false)
         : Test(InTest), GI(InGI), World(InGI->GetWorld()), Profiles(InGI->GetSubsystem<UProject_JLocalProfileSubsystem>()),
           Health(InHealth), Mana(InMana), Database(MoveTemp(InDatabase)), RetirementMode(InRetirementMode)
     {
+        bTrustedDevelopment = InTrustedDevelopment;
+        bWorldEventIntegration = InWorldEventIntegration;
+        if (bTrustedDevelopment)
+        {
+            OriginalCommandLine = FCommandLine::Get();
+            FCommandLine::Set(*(OriginalCommandLine + TEXT(" -ProjectJDevelopmentServerProfiles")));
+        }
         auto Make = [&](const TCHAR* Id, int32 Count, bool WithMana)
         {
             auto* Definition = NewObject<UProject_JQuestDefinition>(InGI);
@@ -217,8 +315,11 @@ public:
             Profiles->SetCommandStageHookForTest(Player.Get(), {});
         Profiles->HoldCommandCompletionsForTest(false);
         if (Disk.IsValid()) Disk.Wait();
+        if (SeedClaims.IsValid()) SeedClaims.Wait();
+        if (IntegrationDisk.IsValid()) IntegrationDisk.Wait();
         if (World->HasBegunPlay()) World->EndPlay(EEndPlayReason::Quit);
         GI->Shutdown(); World->DestroyWorld(false); GEngine->DestroyWorldContext(World);
+        if (bTrustedDevelopment) FCommandLine::Set(*OriginalCommandLine);
     }
     bool Update() override
     {
@@ -230,11 +331,110 @@ public:
             if (!Check(OpenReply->OK && Profiles->IsReady(Player.Get()), TEXT("The actual profile opens with canonical reward definitions"))) return true;
             Player->GetProjectJAbilitySystemComponent()->InitAbilityActorInfo(Player.Get(), nullptr);
             Player->FindComponentByClass<UProject_JProgressionComponent>()->InitializeDefaults(nullptr, nullptr, 1);
-            Step = 2; return false;
+            Step = bWorldEventIntegration ? 25 : 2; return false;
         }
-        if (Step != 6 && Step != 7 && Step != 16 && !(RetirementMode && (Step == 8 || Step == 17)) && Profiles->IsCheckpointPending(Player.Get())) return false;
+        if (Step != 6 && Step != 7 && Step != 16 && Step != 19 && Step != 20 && !(RetirementMode && (Step == 8 || Step == 17)) && Profiles->IsCheckpointPending(Player.Get())) return false;
         auto* Owner = Player.Get();
         auto* Q = Owner ? Owner->FindComponentByClass<UProject_JQuestComponent>() : nullptr;
+        if (Step == 25)
+        {
+            if (!Check(Owner && World->GetGameState() && World->GetGameState()->PlayerArray.Contains(Owner),
+                TEXT("Verified current player is visible to the real bounded automatic reward sweep"))) return true;
+            FActorSpawnParameters Params; Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+            auto* Target = World->SpawnActor<AProject_JNPCCharacter>(Params);
+            auto* Other = World->SpawnActor<AProject_JNPCCharacter>(Params);
+            auto* Avatar = World->SpawnActor<AActor>();
+            RewardEncounter = World->SpawnActor<AProject_JWorldEncounter>();
+            if (!Check(Target && Other && Avatar && RewardEncounter.IsValid(), TEXT("Native event damage actors spawned"))) return true;
+            auto* SourceASC = Owner->GetProjectJAbilitySystemComponent();
+            SourceASC->InitAbilityActorInfo(Owner, Avatar);
+            Target->GetAbilitySystemComponent()->InitAbilityActorInfo(Target, Target);
+            Other->GetAbilitySystemComponent()->InitAbilityActorInfo(Other, Other);
+            for (auto* NPC : {Target, Other}) { NPC->GetAttributeSet()->InitMaxHealth(100); NPC->GetAttributeSet()->InitHealth(100); }
+            if (!Check(FProjectJQuestRewardProfileTestAccess::AttachActiveNPC(*RewardEncounter.Get(), *Target, 25),
+                TEXT("Active encounter starts empty native observation, not a seeded completed entitlement"))) return true;
+            RewardRound = RewardEncounter->GetContributionRound();
+            auto Apply = [](UAbilitySystemComponent* Source, AActor* Instigator, AActor* Causer, UAbilitySystemComponent* Destination, float Amount)
+            {
+                TStrongObjectPtr<UGameplayEffect> Effect(NewObject<UGameplayEffect>());
+                Effect->DurationPolicy = EGameplayEffectDurationType::Instant;
+                auto& Mod = Effect->Modifiers.AddDefaulted_GetRef(); Mod.Attribute = UProject_JAttributeSet::GetHealthAttribute();
+                Mod.ModifierOp = EGameplayModOp::Additive; Mod.ModifierMagnitude = FScalableFloat(Amount);
+                auto Context = Source->MakeEffectContext(); Context.AddInstigator(Instigator, Causer);
+                FGameplayEffectSpec Spec(Effect.Get(), Context, 1); Source->ApplyGameplayEffectSpecToTarget(Spec, Destination);
+            };
+            // Damage elsewhere and non-player damage to the event must not become this character's contribution.
+            Apply(SourceASC, Owner, Avatar, Other->GetAbilitySystemComponent(), -10);
+            Apply(Other->GetAbilitySystemComponent(), Other, Other, Target->GetAbilitySystemComponent(), -10);
+            Check(RewardEncounter->GetContributionDamage(RewardRound, TrustedCharacter.Value) == 0,
+                TEXT("Different target and non-session source produce no player event credit"));
+            // A distinct character with a genuinely revoked session cannot contribute.
+            auto* RevokedPC = World->SpawnActor<APlayerController>();
+            if (!Check(RevokedPC != nullptr, TEXT("Revoked-session source controller spawned"))) return true;
+            RevokedPC->SetAsLocalPlayerController();
+            if (!RevokedPC->GetPlayerState<AProject_JPlayerState>()) RevokedPC->InitPlayerState();
+            RevokedPC->SetPlayer(NewObject<UPlayer>(GI.Get()));
+            auto* RevokedSource = RevokedPC->GetPlayerState<AProject_JPlayerState>();
+            const auto OtherAccount = FProject_JAccountId::NewId(); const auto OtherCharacter = FProject_JCharacterId::NewId();
+            if (!Check(RevokedSource != nullptr, TEXT("Revoked-session PlayerState exists"))) return true;
+            ProjectJ::MMO::FServerSessionAttempt OtherAttempt; ProjectJ::MMO::FServerSessionLease RevokedLease;
+            auto* Mode = CastChecked<AProject_JGameMode>(World->GetAuthGameMode());
+            if (!Check(Mode->BeginTrustedSession(RevokedPC, OtherAccount, OtherCharacter, OtherAttempt) &&
+                Mode->CompleteTrustedSession(OtherAttempt, true, RevokedLease) && Mode->RevokeTrustedSession(RevokedSource, RevokedLease) &&
+                RevokedSource->GetCharacterId().Value == OtherCharacter.Value && !RevokedSource->CanAcceptSessionCommand(),
+                TEXT("Revoked source retains character identity but has no current server session"))) return true;
+            RevokedSource->GetProjectJAbilitySystemComponent()->InitAbilityActorInfo(RevokedSource, Avatar);
+            Apply(RevokedSource->GetProjectJAbilitySystemComponent(), RevokedSource, Avatar, Target->GetAbilitySystemComponent(), -5);
+            Check(RewardEncounter->GetContributionDamage(RewardRound, OtherCharacter.Value) == 0,
+                TEXT("Real GE from a revoked distinct session cannot earn event contribution"));
+            RevokedPC->Destroy();
+            if (IsValid(RevokedSource)) RevokedSource->Destroy();
+            Apply(SourceASC, Owner, Avatar, Target->GetAbilitySystemComponent(), -20);
+            Check(RewardEncounter->GetContributionDamage(RewardRound, TrustedCharacter.Value) == 20,
+                TEXT("Actual server GE records effective nonlethal player damage"));
+            FProjectJQuestRewardProfileTestAccess::PollEncounter(*RewardEncounter.Get());
+            Check(RewardEncounter->Phase == EProject_JEncounterPhase::Active &&
+                !RewardEncounter->IsContributionEligible(RewardRound, TrustedCharacter.Value) && !Profiles->IsCheckpointPending(Owner),
+                TEXT("Live target cannot close the round or start a reward write"));
+            Apply(SourceASC, Owner, Avatar, Target->GetAbilitySystemComponent(), -1000);
+            if (!Check(Target->GetAttributeSet()->GetHealth() == 0 &&
+                RewardEncounter->GetContributionDamage(RewardRound, TrustedCharacter.Value) == 85,
+                TEXT("Killing GE counts only remaining 65 Health, not 1000 attempted damage"))) return true;
+            // No explicit SubmitWorldEventReward call: production defeat polling invokes the automatic sweep.
+            FProjectJQuestRewardProfileTestAccess::PollEncounter(*RewardEncounter.Get());
+            if (!Check(RewardEncounter->Phase == EProject_JEncounterPhase::Cooldown &&
+                RewardEncounter->IsContributionEligible(RewardRound, TrustedCharacter.Value),
+                TEXT("Real death query closes eligible round after GE observation completes"))) return true;
+            if (!Check(Profiles->IsCheckpointPending(Owner) || Owner->FindComponentByClass<UProject_JProgressionComponent>()->GetExperience() == 25,
+                TEXT("Defeat automatically admits the reward transaction without explicit claim ingress"))) return true;
+            Other->Destroy();
+            Step = 26; return false;
+        }
+        if (Step == 26)
+        {
+            if (Owner->FindComponentByClass<UProject_JProgressionComponent>()->GetExperience() != 25) return false;
+            RejectedRevision = Profiles->GetCommittedRevision(Owner);
+            FProjectJQuestRewardProfileTestAccess::PollEncounter(*RewardEncounter.Get());
+            World->GetSubsystem<UProject_JWorldEventRegistry>()->NotifyTrustedProfileReady(Owner);
+            if (!Check(!Profiles->IsCheckpointPending(Owner) && Profiles->GetCommittedRevision(Owner) == RejectedRevision,
+                TEXT("Automatic repeated poll and ready notification do not pay a confirmed round twice"))) return true;
+            const FString File = Database; const FGuid Character = TrustedCharacter.Value, Round = RewardRound;
+            IntegrationDisk = Async(EAsyncExecution::ThreadPool, [File, Character, Round]
+            {
+                FProject_JSQLiteRepository DB(File); ProjectJ::MMO::FRecord Core, Marker;
+                FProject_JLocalProfileSnapshot Snapshot; TArray<ProjectJ::WorldEventClaims::FClaim> Claims;
+                return DB.Read({TEXT("LocalProfile"), Character}, Core) && FProject_JLocalProfileSnapshot::Decode(Core.Payload, Snapshot) &&
+                    Snapshot.Progression.Experience == 25 && DB.Read(ProjectJ::WorldEventClaims::Key(Character), Marker) &&
+                    ProjectJ::WorldEventClaims::Decode(Marker, Claims) && Claims.Num() == 1 && Claims[0].Round == Round && Claims[0].Experience == 25;
+            });
+            Step = 27; return false;
+        }
+        if (Step == 27)
+        {
+            if (!IntegrationDisk.IsReady()) return false;
+            Check(IntegrationDisk.Get(), TEXT("Automatic GE-derived reward persisted XP and matching single round marker atomically"));
+            return true;
+        }
         if (Step == 2)
         {
             // InitializeDefaults above queues a real checkpoint; the existing pending
@@ -270,6 +470,16 @@ public:
             Check(Reply->Durable && !Reply->Done && !Probe->Observed && CountItem(Owner, Health->ItemId) == 3 && CountItem(Owner, Mana->ItemId) == 0 &&
                 Owner->FindComponentByClass<UProject_JProgressionComponent>()->GetExperience() == 0 && !Q->HasCompleted(SuccessQuest->QuestId),
                 TEXT("No live partial reward is published before durable confirmation"));
+
+            if (bTrustedDevelopment)
+            {
+                auto* Mode = CastChecked<AProject_JGameMode>(World->GetAuthGameMode());
+                const auto OldLease = Owner->CaptureServerSession();
+                ProjectJ::MMO::FServerSessionAttempt Attempt; ProjectJ::MMO::FServerSessionLease Rejected;
+                Check(Mode->BeginTrustedSession(TrustedController.Get(), TrustedAccount, TrustedCharacter, Attempt)
+                    && !Mode->CompleteTrustedSession(Attempt, true, Rejected) && Owner->IsServerSessionCurrent(OldLease),
+                    TEXT("Epoch renewal cannot retire a profile with unpublished committed work; old session remains current"));
+            }
             Disk = Async(EAsyncExecution::ThreadPool, [File = Database, Character = Owner->GetCharacterId().Value]
             {
                 FProject_JSQLiteRepository Repository(File); ProjectJ::MMO::FRecord Core;
@@ -289,6 +499,16 @@ public:
             for (const auto& Item : PaidValues->Items) { if (Item.Definition == Health->ItemId) HealthTotal += Item.Count; if (Item.Definition == Mana->ItemId) ManaTotal += Item.Count; }
             Check(HealthTotal == ExpectedHealth && ManaTotal == 2 && PaidValues->Items.ContainsByPredicate([&](const auto& Item) { return Item.Instance == ExistingHealth && Item.Count == Health->MaxStackCount; }),
                 TEXT("Actual saved bundle fills the old stack and owns every remainder instance"));
+            if (bTrustedDevelopment)
+            {
+                // SQLite committed, but the original gameplay acknowledgement has not run.
+                Unobserve(); Profiles->Detach(Owner);
+                if (TrustedController.IsValid()) TrustedController->Destroy();
+                if (IsValid(Owner)) Owner->Destroy();
+                Player.Reset();
+                Profiles->HoldCommandCompletionsForTest(false);
+                Open(); Step = 16; return false;
+            }
             if (RetirementMode == 1) ArmGetterRetirement(Owner);
             if (RetirementMode == 2)
             {
@@ -368,8 +588,103 @@ public:
                 !Q->HasCompleted(ByteQuest->QuestId) && SameItems(Owner, *PaidValues) && Owner->FindComponentByClass<UProject_JProgressionComponent>()->GetExperience() == 17,
                 TEXT("Real detach/reopen restores the exact paid instance identities and only successful completion"))) return true;
             const int64 Revision = Profiles->GetCommittedRevision(Owner);
+            int64 ProofRevision = 0;
+            Check(Profiles->QueryCommittedQuest(Owner, SuccessQuest->QuestId, ProofRevision) && ProofRevision == Revision,
+                TEXT("Character/quest lookup after reconnect reports committed result without replaying an old session command"));
+
+            if (bTrustedDevelopment)
+            {
+                auto* Mode = CastChecked<AProject_JGameMode>(World->GetAuthGameMode());
+                const auto OldLease = Owner->CaptureServerSession();
+                FProject_JPersistentEdit Stale; Stale.Kind = EProject_JPersistentEdit::Claim;
+                Stale.Quest = SuccessQuest->QuestId; Stale.Request = Profiles->NewRequestId(Owner);
+                ProjectJ::MMO::FServerSessionAttempt Attempt; ProjectJ::MMO::FServerSessionLease Renewed;
+                Check(Mode->BeginTrustedSession(TrustedController.Get(), TrustedAccount, TrustedCharacter, Attempt)
+                    && Mode->CompleteTrustedSession(Attempt, true, Renewed) && !(Renewed == OldLease)
+                    && Profiles->IsReady(Owner) && SameItems(Owner, *PaidValues)
+                    && Profiles->GetCommittedRevision(Owner) == Revision,
+                    TEXT("Idle same-controller epoch renewal preserves the exact committed projection and writer"));
+                Check(!Owner->IsServerSessionCurrent(OldLease) && !Profiles->SubmitEdit(Owner, Stale),
+                    TEXT("Prior runtime lease and prior issued requests cannot cross the renewal boundary"));
+            }
             Check(Q->Claim(SuccessQuest->QuestId) && !Profiles->IsCheckpointPending(Owner) && Profiles->GetCommittedRevision(Owner) == Revision && SameItems(Owner, *PaidValues),
                 TEXT("Reopened completed quest cannot pay or allocate again through its public Claim"));
+            if (bTrustedDevelopment) { Step = 18; return false; }
+            return true;
+        }
+        if (Step == 18)
+        {
+            RewardEncounter = World->SpawnActor<AProject_JWorldEncounter>(); RewardRound = FGuid::NewGuid();
+            if (!Check(RewardEncounter.IsValid(), TEXT("Native reward encounter spawned"))) return true;
+            if (!Check(FProjectJQuestRewardProfileTestAccess::SeedWorldEvent(*RewardEncounter.Get(), RewardRound, TrustedCharacter.Value, 1),
+                TEXT("Persistence fixture seeds server-confirmed completed entitlement"))) return true;
+            FProject_JPersistentEdit Forged; Forged.Kind = EProject_JPersistentEdit::WorldEventExperience;
+            Forged.Request = Profiles->NewRequestId(Owner); Forged.Instance = RewardRound; Forged.Amount = 999;
+            Check(!Profiles->SubmitEdit(Owner, Forged), TEXT("Ordinary edit ingress cannot manufacture event XP"));
+            Check(!Profiles->SubmitWorldEventReward(Owner, RewardEncounter.Get(), FGuid::NewGuid()), TEXT("Unknown round cannot pay"));
+            Profiles->HoldCommandCompletionsForTest(true); Profiles->LoseNextCommitAcknowledgementForTest(Owner);
+            if (!SubmitEvent()) return true; Step = 19; return false;
+        }
+        if (Step == 19)
+        {
+            if (!Reply->Durable || Profiles->GetHeldCompletionCountForTest() == 0) return false;
+            Check(!Reply->Done && Owner->FindComponentByClass<UProject_JProgressionComponent>()->GetExperience() == 17,
+                TEXT("Event commit is durable while old projection acknowledgement is held"));
+            Profiles->Detach(Owner); if (TrustedController.IsValid()) TrustedController->Destroy();
+            if (IsValid(Owner)) Owner->Destroy(); Player.Reset(); Profiles->HoldCommandCompletionsForTest(false);
+            Open(); Step = 20; return false;
+        }
+        if (Step == 20)
+        {
+            if (!OpenReply->Done || Profiles->IsCheckpointPending(Owner)) return false;
+            if (!Check(OpenReply->OK && Profiles->IsReady(Owner) &&
+                Owner->FindComponentByClass<UProject_JProgressionComponent>()->GetExperience() == 18,
+                TEXT("New trusted epoch restores exactly one event XP after commit-response loss"))) return true;
+            if (!SubmitEvent()) return true; Step = 21; return false;
+        }
+        if (Step == 21)
+        {
+            if (!Reply->Done) return false;
+            if (!Check(Reply->OK && !Reply->First && Reply->Durable &&
+                Owner->FindComponentByClass<UProject_JProgressionComponent>()->GetExperience() == 18,
+                TEXT("Fresh request after reconnect consults persisted marker, not expired receipt; no second XP"))) return true;
+            const FString File = Database; const FGuid Character = TrustedCharacter.Value;
+            SeedClaims = Async(EAsyncExecution::ThreadPool, [File, Character]
+            {
+                FProject_JSQLiteRepository DB(File); ProjectJ::MMO::FRecord Marker;
+                TArray<ProjectJ::WorldEventClaims::FClaim> Claims;
+                if (!DB.Read(ProjectJ::WorldEventClaims::Key(Character), Marker) || !ProjectJ::WorldEventClaims::Decode(Marker, Claims)) return false;
+                while (Claims.Num() < ProjectJ::WorldEventClaims::MaxClaims) Claims.Add({FGuid::NewGuid(), 1});
+                TArray<uint8> Bytes; if (!ProjectJ::WorldEventClaims::Encode(Claims, Bytes)) return false;
+                return DB.Commit({FGuid::NewGuid(), TEXT("TestOnly.SeedEventCapacity"),
+                    {{ProjectJ::WorldEventClaims::Key(Character), Marker.Revision, 1, Bytes, false}}}).Status == ProjectJ::MMO::ECommitStatus::Committed;
+            });
+            Step = 22; return false;
+        }
+        if (Step == 22)
+        {
+            if (!SeedClaims.IsReady()) return false;
+            if (!Check(SeedClaims.Get(), TEXT("Test-only ledger capacity fixture stored"))) return true;
+            RewardRound = FGuid::NewGuid();
+            if (!Check(FProjectJQuestRewardProfileTestAccess::SeedWorldEvent(*RewardEncounter.Get(), RewardRound, TrustedCharacter.Value, 1), TEXT("Second completed entitlement seeded"))) return true;
+            if (!SubmitEvent()) return true; Step = 23; return false;
+        }
+        if (Step == 23)
+        {
+            if (!Reply->Done) return false;
+            Check(!Reply->OK && !Reply->Durable && Profiles->IsReady(Owner), TEXT("Full event ledger refuses only new rewards, not the whole profile"));
+            FProject_JPersistentEdit Ordinary; Ordinary.Kind = EProject_JPersistentEdit::Experience;
+            Ordinary.Request = Profiles->NewRequestId(Owner); Ordinary.Amount = 1;
+            Reply = MakeShared<FRewardReply, ESPMode::ThreadSafe>(); const auto Out = Reply;
+            if (!Check(Profiles->SubmitEdit(Owner, Ordinary, [Out](bool OK, bool First) { Out->Done = true; Out->OK = OK; }),
+                TEXT("Ordinary progression remains admissible after event capacity rejection"))) return true;
+            Step = 24; return false;
+        }
+        if (Step == 24)
+        {
+            if (!Reply->Done) return false;
+            Check(Reply->OK && Profiles->IsReady(Owner) && Owner->FindComponentByClass<UProject_JProgressionComponent>()->GetExperience() == 19,
+                TEXT("Ordinary progression commits after event ledger is full"));
             return true;
         }
         if (Step == 17)
@@ -408,6 +723,52 @@ bool FProjectJQuestRewardPersistenceTest::RunTest(const FString&)
     FProjectJQuestRewardProfileTestAccess::SetDatabasePath(*GI->GetSubsystem<UProject_JLocalProfileSubsystem>(), Database);
     World->InitializeActorsForPlay(FURL()); World->GetWorldSettings()->NotifyBeginPlay(); World->GetWorldSettings()->NotifyMatchStarted();
     ADD_LATENT_AUTOMATION_COMMAND(FQuestRewardProfile(this, GI, Health, Mana, Database));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJTrustedQuestRewardPersistenceTest, "ProjectJ.MMO.Persistence.TrustedDevelopmentQuestReconnect",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJTrustedQuestRewardPersistenceTest::RunTest(const FString&)
+{
+    auto* GI = NewObject<UGameInstance>(GEngine); GI->InitializeStandalone();
+    auto* World = GI->GetWorld();
+    auto* Data = GI->GetSubsystem<UProject_JCharacterDataSubsystem>();
+    auto* Health = LoadObject<UProject_JConsumableDefinition>(nullptr, TEXT("/Game/UI/Gameplay/DA_ProjectJHealthPotion.DA_ProjectJHealthPotion"));
+    auto* Mana = LoadObject<UProject_JConsumableDefinition>(nullptr, TEXT("/Game/UI/Gameplay/DA_ProjectJManaPotion.DA_ProjectJManaPotion"));
+    FURL URL; URL.AddOption(TEXT("game=/Script/Project_J.Project_JNetworkLoadGameMode"));
+    if (!TestTrue(TEXT("Canonical content and native GameMode available"), Data && Health && Mana && Data->LoadPrimaryAssetDefinitions()
+        && Data->GetItemDefinition(Health->ItemId, Health->SchemaVersion) == Health
+        && Data->GetItemDefinition(Mana->ItemId, Mana->SchemaVersion) == Mana && World->SetGameMode(URL)))
+    { GI->Shutdown(); World->DestroyWorld(false); GEngine->DestroyWorldContext(World); return false; }
+    auto* Mode = CastChecked<AProject_JGameMode>(World->GetAuthGameMode());
+    Mode->bRequireTrustedSessions = true;
+    const FString Folder = FPaths::ProjectSavedDir() / TEXT("Validation/TrustedQuestReconnect") / FGuid::NewGuid().ToString();
+    FProjectJQuestRewardProfileTestAccess::SetDatabasePath(*GI->GetSubsystem<UProject_JLocalProfileSubsystem>(), Folder / TEXT("Local.sqlite"));
+    World->InitializeActorsForPlay(URL); World->GetWorldSettings()->NotifyBeginPlay(); World->GetWorldSettings()->NotifyMatchStarted();
+    ADD_LATENT_AUTOMATION_COMMAND(FQuestRewardProfile(this, GI, Health, Mana, Folder / TEXT("DevelopmentServerProfiles.sqlite"), 0, true));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJWorldEventGEAutomaticRewardTest, "ProjectJ.MMO.Persistence.WorldEventGEAutomaticReward",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJWorldEventGEAutomaticRewardTest::RunTest(const FString&)
+{
+    auto* GI = NewObject<UGameInstance>(GEngine); GI->InitializeStandalone();
+    auto* World = GI->GetWorld();
+    auto* Data = GI->GetSubsystem<UProject_JCharacterDataSubsystem>();
+    auto* Health = LoadObject<UProject_JConsumableDefinition>(nullptr, TEXT("/Game/UI/Gameplay/DA_ProjectJHealthPotion.DA_ProjectJHealthPotion"));
+    auto* Mana = LoadObject<UProject_JConsumableDefinition>(nullptr, TEXT("/Game/UI/Gameplay/DA_ProjectJManaPotion.DA_ProjectJManaPotion"));
+    FURL URL; URL.AddOption(TEXT("game=/Script/Project_J.Project_JNetworkLoadGameMode"));
+    if (!TestTrue(TEXT("Canonical content and native GameMode available"), Data && Health && Mana && Data->LoadPrimaryAssetDefinitions()
+        && Data->GetItemDefinition(Health->ItemId, Health->SchemaVersion) == Health
+        && Data->GetItemDefinition(Mana->ItemId, Mana->SchemaVersion) == Mana && World->SetGameMode(URL)))
+    { GI->Shutdown(); World->DestroyWorld(false); GEngine->DestroyWorldContext(World); return false; }
+    auto* Mode = CastChecked<AProject_JGameMode>(World->GetAuthGameMode());
+    Mode->bRequireTrustedSessions = true;
+    const FString Folder = FPaths::ProjectSavedDir() / TEXT("Validation/WorldEventGEAutomaticReward") / FGuid::NewGuid().ToString();
+    FProjectJQuestRewardProfileTestAccess::SetDatabasePath(*GI->GetSubsystem<UProject_JLocalProfileSubsystem>(), Folder / TEXT("Local.sqlite"));
+    World->InitializeActorsForPlay(URL); World->GetWorldSettings()->NotifyBeginPlay(); World->GetWorldSettings()->NotifyMatchStarted();
+    ADD_LATENT_AUTOMATION_COMMAND(FQuestRewardProfile(this, GI, Health, Mana, Folder / TEXT("DevelopmentServerProfiles.sqlite"), 0, true, true));
     return true;
 }
 

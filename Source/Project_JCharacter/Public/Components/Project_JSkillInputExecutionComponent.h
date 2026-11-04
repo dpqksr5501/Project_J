@@ -44,6 +44,8 @@ public:
 	/** Clears command history after weapon/state changes that invalidate a sequence. */
 	UFUNCTION(BlueprintCallable, Category = "Combat|Input")
 	void ClearCommandInputHistory();
+	/** Release held gameplay inputs at the authoritative death boundary. */
+	void ReleaseLifeInputs();
 
 private:
 	friend class FProjectJCommandReleaseTest;

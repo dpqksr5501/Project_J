@@ -19,6 +19,10 @@ class PROJECT_JCORE_API IProject_JSocialStateInterface
 	GENERATED_BODY()
 
 public:
+	// Authority consumers must not execute Blueprint presentation queries while committing damage.
+	// Unknown/custom providers return false; they do not imply a shared party.
+	virtual bool TryGetAuthoritativePartyId(FName& OutPartyId) const { OutPartyId = NAME_None; return false; }
+
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "MMO|Social")
 	FName GetPartyId() const;
 

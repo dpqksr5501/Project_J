@@ -6,6 +6,7 @@
 #include "Combat/Project_JComboDefinition.h"
 #include "Combat/Project_JCombatStyleDefinition.h"
 #include "Combat/Project_JAttackDefinition.h"
+#include "Combat/Project_JCombatHitValidation.h"
 #include "GameFramework/Character.h"
 #include "Movement/Project_JMovementQueries.h"
 #include "Movement/Project_JMoverComponent.h"
@@ -62,7 +63,7 @@ bool UProject_JGameplayAbility_Melee::CanActivateAbility(FGameplayAbilitySpecHan
 	// Enforce this natively so existing Blueprint tag overrides cannot bypass the contract.
 	const auto* Avatar = ActorInfo ? ActorInfo->AvatarActor.Get() : nullptr;
 	const auto* Equipment = Avatar ? Avatar->FindComponentByClass<UProject_JEquipmentRuntimeComponent>() : nullptr;
-	if (!Equipment || Equipment->GetWeaponRevision() == 0) { return false; }
+	if (!Project_J::Combat::CanPlayerMeleeAttack(Avatar) || !Equipment || Equipment->GetWeaponRevision() == 0) { return false; }
 	if (bEndingAttack || (ActorInfo && ActorInfo->AbilitySystemComponent.IsValid()
 		&& ActorInfo->AbilitySystemComponent->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_Attacking)))
 	{
@@ -88,7 +89,8 @@ void UProject_JGameplayAbility_Melee::ActivateAbility(const FGameplayAbilitySpec
 		return;
 	}
 	// Commit hooks may revoke equipment and synchronously end this activation.
-	if (!IsActive() || !HasActiveWeapon()) { return; }
+	if (!IsActive()) { return; }
+	if (!HasActiveWeapon()) { EndAbility(Handle, ActorInfo, ActivationInfo, true, true); return; }
 
 	ApplyCameraDirectionRotation();
 
@@ -196,7 +198,8 @@ void UProject_JGameplayAbility_Melee::EndAbility(const FGameplayAbilitySpecHandl
 
 bool UProject_JGameplayAbility_Melee::HasActiveWeapon() const
 {
-	return AttackWeaponRevision != 0 && AttackEquipment.IsValid()
+	return Project_J::Combat::CanPlayerMeleeAttack(GetAvatarActorFromActorInfo())
+		&& AttackWeaponRevision != 0 && AttackEquipment.IsValid()
 		&& AttackEquipment->GetWeaponRevision() == AttackWeaponRevision;
 }
 

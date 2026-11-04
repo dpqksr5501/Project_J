@@ -58,8 +58,8 @@ bool FProjectJSpatialDiscontinuityTest::RunTest(const FString&)
 	FActorSpawnParameters Spawn; Spawn.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	auto* NPC = Scope.World->SpawnActor<AProject_JNPCCharacter>(Spawn);
 	NPC->SetActorEnableCollision(false);
-	auto* Rewind = NewObject<UProject_JServerSideRewindComponent>(NPC);
-	NPC->AddInstanceComponent(Rewind); Rewind->RegisterComponent();
+	auto* Rewind = NPC->FindComponentByClass<UProject_JServerSideRewindComponent>();
+	if (!TestNotNull(TEXT("Production NPC owns rewind history without fixture attachment"), Rewind)) return false;
 	auto* Hit = NewObject<UProject_JCombatHitValidationComponent>(NPC);
 	NPC->AddInstanceComponent(Hit); Hit->RegisterComponent();
 	auto* GameState = Scope.World->SpawnActor<AGameStateBase>(Spawn); Scope.World->SetGameState(GameState);

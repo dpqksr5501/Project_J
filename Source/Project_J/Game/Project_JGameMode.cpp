@@ -1,6 +1,8 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Project_JGameMode.h"
+#include "Game/Project_JPlayerRetirement.h"
+#include "GameFramework/GameSession.h"
 #include "Engine/World.h"
 #include "Project_JGameState.h"
 #include "Project_JPlayerState.h"
@@ -89,6 +91,28 @@ void AProject_JGameMode::HandleStartingNewPlayer_Implementation(APlayerControlle
 		const auto* State = IsValid(NewPlayer) ? NewPlayer->GetPlayerState<AProject_JPlayerState>() : nullptr;
 		if (!IsValid(State) || !State->CanAcceptSessionCommand()) return;
 	}
+	if (UProject_JLocalProfileSubsystem::IsTrustedDevelopmentEnabled())
+	{
+		auto* State = IsValid(NewPlayer) ? NewPlayer->GetPlayerState<AProject_JPlayerState>() : nullptr;
+		auto* Profiles = GetGameInstance() ? GetGameInstance()->GetSubsystem<UProject_JLocalProfileSubsystem>() : nullptr;
+		if (!bRequireTrustedSessions || !Profiles || !IsValid(State)) return;
+		if (!Profiles->IsReady(State))
+		{
+			if (Profiles->HasProfileBinding(State)) return; // Loading/failed: never spawn fallback data.
+			const auto Lease = State->CaptureServerSession();
+			TWeakObjectPtr<AProject_JGameMode> WeakMode(this);
+			TWeakObjectPtr<APlayerController> WeakPlayer(NewPlayer);
+			TWeakObjectPtr<AProject_JPlayerState> WeakState(State);
+			Profiles->OpenTrustedDevelopmentProfile(State, [WeakMode, WeakPlayer, WeakState, Lease](bool Success)
+			{
+				auto* Mode = WeakMode.Get(); auto* PC = WeakPlayer.Get(); auto* PS = WeakState.Get();
+				if (Success && IsValid(Mode) && !Mode->IsActorBeingDestroyed() && IsValid(PC) && !PC->IsActorBeingDestroyed()
+					&& IsValid(PS) && PC->GetPlayerState<AProject_JPlayerState>() == PS && PS->IsServerSessionCurrent(Lease))
+					Mode->HandleStartingNewPlayer(PC);
+			});
+			return;
+		}
+	}
 	FString LocalProfile;
 	if (FParse::Value(FCommandLine::Get(), TEXT("ProjectJLocalProfile="), LocalProfile))
 	{
@@ -173,6 +197,11 @@ bool AProject_JGameMode::CompleteTrustedSession(const ProjectJ::MMO::FServerSess
 	const TStrongObjectPtr<APlayerController> Player(Pending.Controller.Get());
 	const TStrongObjectPtr<AProject_JPlayerState> State(Pending.State.Get());
 	if (!bOwnershipVerified || !CanBindSessionIdentity(Player.Get(), State.Get(), Attempt.AccountId, Attempt.CharacterId)) { CancelTrustedSession(Attempt); return false; }
+	const auto PreviousLease = State->CaptureServerSession();
+	const TStrongObjectPtr<UProject_JLocalProfileSubsystem> Profiles(GetGameInstance()
+		? GetGameInstance()->GetSubsystem<UProject_JLocalProfileSubsystem>() : nullptr);
+	if (PreviousLease.IsValid() && Profiles && !Profiles->CanRenewTrustedProfile(State.Get()))
+	{ CancelTrustedSession(Attempt); return false; } // Keep the old lease; retry after its accepted I/O drains.
 	ProjectJ::MMO::FServerSessionLease Lease, Replaced;
 	if (SessionGate.Accept(Attempt, Lease, Replaced) != ProjectJ::MMO::EAdmission::Accepted)
 	{ CancelTrustedSession(Attempt); return false; }
@@ -188,13 +217,15 @@ bool AProject_JGameMode::CompleteTrustedSession(const ProjectJ::MMO::FServerSess
 	// Publish the new native owner before callbacks. A nested acceptance can now
 	// replace it; outer cleanup/install must never overwrite that newer lease.
 	BoundSessions.Add(Lease.AccountId, {Lease, Pending.Controller, Pending.State});
-	for (const auto& Binding : Retired) RetireSession(Binding);
+	for (const auto& Binding : Retired) RetireSession(Binding, Binding.Controller != Pending.Controller, Binding.Controller == Pending.Controller && Binding.State == Pending.State);
 	if (!IsTrustedSessionCurrent(State.Get(), Lease)) { RevokeTrustedSession(State.Get(), Lease); return false; }
 	State->InstallServerSession(this, Lease);
 	FProject_JAccountId Account; Account.Value = Lease.AccountId;
 	FProject_JCharacterId Character; Character.Value = Lease.CharacterId;
 	State->SetIdentity(Account, Character);
 	if (!State->IsServerSessionCurrent(Lease)) { RevokeTrustedSession(State.Get(), Lease); return false; }
+	if (PreviousLease.IsValid() && Profiles && !Profiles->RenewTrustedProfile(State.Get(), PreviousLease, Lease))
+	{ RevokeTrustedSession(State.Get(), Lease); return false; }
 	OutLease = Lease;
 	return true;
 }
@@ -232,15 +263,26 @@ void AProject_JGameMode::PlayerSessionEnded(AProject_JPlayerState* Player)
 	for (const auto& Binding : Bindings) RevokeTrustedSession(Player, Binding.Lease);
 }
 
-void AProject_JGameMode::RetireSession(const FBoundSession& Binding)
+void AProject_JGameMode::RetireSession(const FBoundSession& Binding, bool bTerminateConnection, bool bPreserveProfileForRenewal)
 {
 	const TStrongObjectPtr<AProject_JPlayerState> State(Binding.State.Get());
 	const TStrongObjectPtr<APlayerController> Player(Binding.Controller.Get());
 	auto StillOwns = [&] { return IsValid(State.Get()) && State->OwnsServerSession(this, Binding.Lease); };
 	if (!StillOwns()) return; // Provisional/unpublished or already replaced by a callback.
 	State->bServerSessionRevoked = true;
-	if (auto* Profiles = GetGameInstance() ? GetGameInstance()->GetSubsystem<UProject_JLocalProfileSubsystem>() : nullptr) Profiles->Detach(State.Get());
+	if (!bPreserveProfileForRenewal)
+		if (auto* Profiles = GetGameInstance() ? GetGameInstance()->GetSubsystem<UProject_JLocalProfileSubsystem>() : nullptr) Profiles->Detach(State.Get());
 	if (!StillOwns()) return;
+	if (bTerminateConnection && IsValid(Player.Get()))
+	{
+		const bool bRetired = ProjectJ::Lifecycle::RetireConnectionAvatar(Player.Get(), StillOwns);
+		if (!StillOwns()) return;
+		if (bRetired)
+		{
+			if (!GameSession || !GameSession->KickPlayer(Player.Get(), FText::FromString(TEXT("Session replaced")))) Player->Destroy();
+			return;
+		}
+	}
 	const TStrongObjectPtr<APawn> ControlledPawn(IsValid(Player.Get()) ? Player->GetPawn() : nullptr);
 	const TStrongObjectPtr<UProject_JAbilitySystemComponent> ASC(State->GetProjectJAbilitySystemComponent());
 	const TStrongObjectPtr<APawn> Pawn(IsValid(ASC.Get()) ? Cast<APawn>(ASC->GetAvatarActor()) : nullptr);
@@ -264,6 +306,10 @@ void AProject_JGameMode::RetireSession(const FBoundSession& Binding)
 		ASC->CancelAbilityHandle(Handle);
 	}
 	if (IsValid(Pawn.Get()) && SameAvatar()) ASC->ClearActorInfo();
+	if (bTerminateConnection && StillOwns() && IsValid(Player.Get()))
+	{
+		if (!GameSession || !GameSession->KickPlayer(Player.Get(), FText::FromString(TEXT("Session replaced")))) Player->Destroy();
+	}
 }
 
 void AProject_JGameMode::EndPlay(const EEndPlayReason::Type Reason)

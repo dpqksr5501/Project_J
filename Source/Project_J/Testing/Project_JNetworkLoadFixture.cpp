@@ -1462,7 +1462,7 @@ void AProject_JNetworkLoadGameMode::BeginCanonicalMelee()
  if(bFinished || !IsValid(Target.Get()) || Target->IsActorBeingDestroyed() || Target->GetAbilitySystemComponent()!=TargetASC.Get()) { Finish(false,TEXT("Canonical recipient attribute callback changed identity"));return; }
  TargetASC->SetNumericAttributeBase(UProject_JAttributeSet::GetHealthAttribute(),1000.f);
  if(bFinished || !IsValid(Target.Get()) || Target->IsActorBeingDestroyed() || Target->GetAbilitySystemComponent()!=TargetASC.Get()) { Finish(false,TEXT("Canonical recipient attribute callback changed identity"));return; }
- auto* Rewind=NewObject<UProject_JServerSideRewindComponent>(Target.Get());Target->AddInstanceComponent(Rewind);Rewind->RegisterComponent();
+ auto* Rewind=Target->FindComponentByClass<UProject_JServerSideRewindComponent>();
  if(bFinished || !IsValid(Target.Get()) || Target->IsActorBeingDestroyed() || !IsValid(Rewind) || !Rewind->IsRegistered() || !Rewind->HasBegunPlay())
  { CanonicalMelee.Error=FString::Printf(TEXT("assembly finished=%d target_valid=%d target_destroying=%d rewind_valid=%d registered=%d begun=%d"),
     bFinished,IsValid(Target.Get()),IsValid(Target.Get())?Target->IsActorBeingDestroyed():-1,IsValid(Rewind),IsValid(Rewind)?Rewind->IsRegistered():-1,IsValid(Rewind)?Rewind->HasBegunPlay():-1);

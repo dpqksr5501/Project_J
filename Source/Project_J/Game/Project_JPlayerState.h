@@ -67,6 +67,8 @@ public:
 	virtual bool HasGrantedDefaultAbilities() const override { return bDefaultAbilitiesGranted; }
 	virtual void SetHasGrantedDefaultAbilities(bool bGranted) override { bDefaultAbilitiesGranted = bGranted; }
 	virtual FName GetPartyId_Implementation() const override { return PartyId; }
+	virtual bool TryGetAuthoritativePartyId(FName& OutPartyId) const override final
+	{ OutPartyId = PartyId; return HasAuthority() && !IsActorBeingDestroyed(); }
 	virtual FName GetGuildId_Implementation() const override { return GuildId; }
 
 	UFUNCTION(BlueprintPure, Category = "MMO|Identity")

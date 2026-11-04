@@ -10,6 +10,7 @@
 #include "GameFramework/WorldSettings.h"
 #include "Game/Project_JGameMode.h"
 #include "Game/Project_JPlayerState.h"
+#include "Social/Project_JSocialSubsystem.h"
 #include "Testing/Project_JNetworkLoadFixture.h"
 #include "Components/Project_JCommandBudgetComponent.h"
 #include "Project_JAbilitySystemComponent.h"
@@ -97,6 +98,12 @@ bool FProjectJServerSessionNativeOwnershipTest::RunTest(const FString&)
         { Reentered = true; ASC->InitAbilityActorInfo(Second, NewPawn); }
     });
     ON_SCOPE_EXIT { ASC->OnAbilityEnded.Remove(EndHandle); };
+    auto* Social = Instance->GetSubsystem<UProject_JSocialSubsystem>();
+    if (!TestNotNull(TEXT("Social authority exists in native session fixture"), Social)) return false;
+    const auto Party = Social->CreateParty(Second);
+    if (!TestTrue(TEXT("Current session creates real party"), Party.bSucceeded)) return false;
+    FProject_JPartyAuthorityFence BeforeEpochFence;
+    if (!TestTrue(TEXT("Party authority captures current same-state epoch"), Social->CapturePartyAuthority(Second, BeforeEpochFence))) return false;
     const uint64 BeforeRotation = ASC->GetActorInfoRevision();
     TestTrue(TEXT("Same connection can begin a new session epoch"), Mode->BeginTrustedSession(SecondPC, Account, Character, Attempt));
     if (!TestTrue(TEXT("Same-state rotation completes"), Mode->CompleteTrustedSession(Attempt, true, Rotated))) return false;
@@ -105,6 +112,11 @@ bool FProjectJServerSessionNativeOwnershipTest::RunTest(const FString&)
     TestTrue(TEXT("Old native pawn is detached before new publication"), SecondPC->GetPawn() == nullptr && SecondPawn->GetController() == nullptr);
     TestFalse(TEXT("Captured old same-state epoch is stale"), Second->IsServerSessionCurrent(SecondLease));
     TestTrue(TEXT("Fresh epoch still accepts commands"), UProject_JCommandBudgetComponent::AdmitClientCommand(Second));
+    TestFalse(TEXT("Party execution rejects former epoch on same PlayerState"), Social->IsPartyAuthorityCurrent(BeforeEpochFence));
+    TestFalse(TEXT("Actual party mutation rejects same-state stale epoch"), Social->TransferPartyLeadership(BeforeEpochFence, Character.Value).bSucceeded);
+    FProject_JPartyAuthorityFence AfterEpochFence;
+    TestTrue(TEXT("Fresh same-state epoch captures party authority"), Social->CapturePartyAuthority(Second, AfterEpochFence));
+    TestTrue(TEXT("Fresh fence retains unchanged party authority"), Social->IsPartyAuthorityCurrent(AfterEpochFence));
     ASC->OnAbilityEnded.Remove(EndHandle);
     SecondPC->Possess(NewPawn);
     ASC->CallServerTryActivateAbility(Grant, true, FPredictionKey());
