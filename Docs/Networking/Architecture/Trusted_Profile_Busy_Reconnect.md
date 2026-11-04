@@ -15,3 +15,11 @@ Every profile load/command/checkpoint/progress writer posts its normal game-thre
 `ProjectJ.MMO.Persistence.TrustedProfileBusyReconnect` uses the real native trusted-session/profile path. It blocks an accepted old-session XP command at `BeforeCommandEncode`, accepts two successive replacement connections while the gate is still held, and checks that loading remains pending. Releasing the old worker must restore its committed XP only to the latest session without a manual retry. A subsequent XP command must commit normally. Fixture teardown releases the worker before shutdown waits.
 
 The fixture is not a remote socket or spawned-avatar test. It has been authored but not executed in this cloud checkout because the supported Unreal/Windows toolchain is unavailable. `git diff --check` and the MMO architecture validation pass; they do not establish native build/runtime success.
+
+## Native-test follow-up: fenced restore preflight
+
+The Windows run reached the busy-reconnect drain but rejected loading the persisted profile. The ordinary trusted quest reconnect also rejected restore. Source inspection identified a shared contradiction: trusted open correctly installs closed command admission before loading, but the initial restore preflight called ordinary progression/quest/item validators that require that admission to be open.
+
+The fix keeps admission closed and selects explicit trusted **read-only** preflight. Progression still requires revision zero; quest restore still requires empty history and empty/pristine default state; identity, authority, lifetime, rules, definitions and item validation still apply. Public `RestoreSnapshot` mutation entry points retain their ordinary admission checks. The existing committed installer and its reentrancy checks are unchanged.
+
+The busy regression now also checks that ordinary restore preflight rejects while fenced, trusted read-only preflight accepts valid pristine data, malformed data remains rejected, and validation does not initialize state or reopen admission. Restore callback, readiness, XP, items and quest assertions are separated, and load errors include their validation stage. The revised implementation has not yet been verified by another native run; earlier static passes must not be presented as a fix-confirming runtime result.

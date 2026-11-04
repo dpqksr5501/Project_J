@@ -41,3 +41,9 @@ GitHub main 직접 push·병합·배포는 수행하지 않는다. Cloud의 정�
 ## 후속 W5/W7 보강
 
 실제 GE 피해→회차 기여→처치 종료→자동 XP/영속 표시 연결 시험 `ProjectJ.MMO.Persistence.WorldEventGEAutomaticReward`를 추가했다. 기존 연결의 저장 작업이 끝나기 전에 재접속한 경우, 정확한 세션에 묶인 제한된 대기 요청을 writer 종료 시 재개한다. 대기 중인 컴포넌트 변경은 차단하고, 두 번 교체된 오래된 세션을 다시 열지 않는다. 독립 정적 검토에서 발견한 재접속 정지·대기 상태 변경 허용 문제를 수정했다. 네이티브 시험은 작성 상태이며 실행 성공으로 보고하지 않는다.
+
+## Windows 첫 실행 후 수정 묶음
+
+Windows 별도 작업본은 레지스트리 own-header 순서, 잘못된 중첩 PlayerState 선언, 테스트의 protected 함수 접근을 수정한 뒤 UBT가 성공했다. 최초 네이티브20개는14통과·경고 포함1통과·5실패였다. 이 실패 이력은 보존한다.
+
+Cloud에서 다음 수정 묶음을 준비했다: 투사체 fixture 초기화/속성/BeginPlay 순서와 진단, 무기 수명 fixture의 실제 rewind 초기화, trusted 프로필 복구의 읽기 전용 검증과 mutation admission 분리, busy reconnect 진단, 서로 다른 연결의 최종 종료와 같은 연결 갱신의 grant 보존 조건 구분. 컴파일 수정3건도 포함한다. 이 수정 후 UE 빌드·네이티브 재실행은 수행하지 않았으므로5개 실패가 해결됐다고 확정하지 않는다. 기존 Mover 경고도 무경고 통과로 바꾸지 않는다. 삭제된 Windows 작업본을 재생성하지 않았다.

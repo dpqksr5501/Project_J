@@ -72,12 +72,28 @@ bool FProjectJServerSessionNativeOwnershipTest::RunTest(const FString&)
     auto* OldASC = First->GetProjectJAbilitySystemComponent(); OldASC->InitAbilityActorInfo(First, OldPawn);
     const auto OldGrant = OldASC->GiveAbility(FGameplayAbilitySpec(UProject_JGameplayAbility_Sprint::StaticClass(), 1));
     if (!TestTrue(TEXT("A real old-avatar ability execution is active"), OldASC->TryActivateAbility(OldGrant))) return false;
+    int32 OldExecutionEndCount = 0;
+    bool bOldExecutionCancelledBeforeDestruction = false;
+    const auto OldEndHandle = OldASC->OnAbilityEnded.AddLambda([&](const FAbilityEndedData& Data)
+    {
+        if (Data.AbilitySpecHandle != OldGrant) return;
+        ++OldExecutionEndCount;
+        bOldExecutionCancelledBeforeDestruction = Data.bWasCancelled
+            && !FirstPC->IsActorBeingDestroyed() && !First->IsActorBeingDestroyed() && !OldASC->IsBeingDestroyed();
+    });
+    ON_SCOPE_EXIT { OldASC->OnAbilityEnded.Remove(OldEndHandle); };
     TestTrue(TEXT("A reconnect uses the same persistent IDs on another native connection"), Mode->BeginTrustedSession(SecondPC, Account, Character, Attempt));
     if (!TestTrue(TEXT("New verified connection takes the single writer"), Mode->CompleteTrustedSession(Attempt, true, SecondLease))) return false;
     TestTrue(TEXT("Native Mover/input ownership is withdrawn through UnPossess"), FirstPC->GetPawn() == nullptr && OldPawn->GetController() == nullptr);
     TestTrue(TEXT("Old avatar actor info is cleared"), OldASC->GetAvatarActor() == nullptr);
-    const auto* RetainedGrant = OldASC->FindAbilitySpecFromHandle(OldGrant);
-    TestTrue(TEXT("Only old execution ended; grant ownership remains intact"), RetainedGrant && !RetainedGrant->IsActive());
+    OldASC->OnAbilityEnded.Remove(OldEndHandle);
+    TestEqual(TEXT("Terminal retirement ends the captured execution exactly once"), OldExecutionEndCount, 1);
+    TestTrue(TEXT("Execution is explicitly cancelled before controller/state/ASC destruction"), bOldExecutionCancelledBeforeDestruction);
+    TestTrue(TEXT("Different-connection replacement terminates the old controller"), FirstPC->IsActorBeingDestroyed());
+    // Terminal controller teardown can also retire the PlayerState-owned ASC and
+    // remove its grants. Retention belongs to same-connection renewal, below.
+    const auto* RetiredGrant = OldASC->FindAbilitySpecFromHandle(OldGrant);
+    TestTrue(TEXT("No active old grant survives terminal retirement"), !RetiredGrant || !RetiredGrant->IsActive());
     TestFalse(TEXT("Old captured work cannot apply after reconnect"), First->IsServerSessionCurrent(CapturedBeforeReconnect));
     TestFalse(TEXT("Revoked PlayerState cannot dispatch another command"), UProject_JCommandBudgetComponent::AdmitClientCommand(First));
     TestFalse(TEXT("Delayed logout for old epoch cannot detach the replacement"), Mode->RevokeTrustedSession(First, FirstLease));
@@ -109,6 +125,9 @@ bool FProjectJServerSessionNativeOwnershipTest::RunTest(const FString&)
     if (!TestTrue(TEXT("Same-state rotation completes"), Mode->CompleteTrustedSession(Attempt, true, Rotated))) return false;
     TestTrue(TEXT("Cancellation actually reentered actor-info publication"), Reentered && ASC->GetActorInfoRevision() > BeforeRotation);
     TestTrue(TEXT("Outer old cleanup cannot clear the newer avatar tuple"), ASC->GetAvatarActor() == NewPawn);
+    const auto* RenewedGrant = ASC->FindAbilitySpecFromHandle(Grant);
+    if (!TestTrue(TEXT("Same-connection renewal retains the grant but ends its old execution"), RenewedGrant && !RenewedGrant->IsActive())) return false;
+    TestFalse(TEXT("Same-connection renewal preserves the controller"), SecondPC->IsActorBeingDestroyed());
     TestTrue(TEXT("Old native pawn is detached before new publication"), SecondPC->GetPawn() == nullptr && SecondPawn->GetController() == nullptr);
     TestFalse(TEXT("Captured old same-state epoch is stale"), Second->IsServerSessionCurrent(SecondLease));
     TestTrue(TEXT("Fresh epoch still accepts commands"), UProject_JCommandBudgetComponent::AdmitClientCommand(Second));

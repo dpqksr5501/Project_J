@@ -734,7 +734,9 @@ void UProject_JLocalProfileSubsystem::CompleteOpen(
 	FProject_JQuestDefinitionIndex QuestIndex;
 	const bool QuestsPrepared = Q && Q->PrepareForProfile();
 	if (QuestsPrepared) Q->BuildDefinitionIndex(QuestIndex);
-	bool Success = B->bLoadSucceeded && P && Q && QuestsPrepared && !Player->GetPawn() && P->GetState().Revision == 0;
+	const TCHAR* RestoreStage = TEXT("InitialOwnerAndLoad");
+    const auto Preflight = [&](bool Passed, const TCHAR* Stage) { if (!Passed) RestoreStage = Stage; return Passed; };
+    bool Success = B->bLoadSucceeded && P && Q && QuestsPrepared && !Player->GetPawn() && P->GetState().Revision == 0;
 	if (Success && !B->LoadedPayload.IsEmpty() && !B->LoadedValues)
 	{
 		Success = false;
@@ -749,13 +751,15 @@ void UProject_JLocalProfileSubsystem::CompleteOpen(
 		TArray<FProject_JItemInstanceData> Bag;
 		TArray<FProject_JEquipmentArrayItem> Slots;
 		ProjectJ::LocalProfileRules::FQuestGuard LoadedRules;
-		Success = Snapshot.Account == B->Account && Snapshot.Character == B->Character &&
-				  ResolveDefinitions(GetGameInstance(), Snapshot.Progression, Class, History) &&
-				  Matches(Snapshot, *P, QuestIndex, Class, History) &&
-				  P->CanRestoreSnapshot(Snapshot.Progression, Class, History) &&
-				  Q->CanRestoreSnapshot(Snapshot.Quests, true) &&
-				  ResolveItems(Player, Snapshot, Bag, Slots, false, &B->LastAdmissionReason) &&
-				  LoadedRules.Capture(QuestIndex, Snapshot.Quests, GetGameInstance()->GetSubsystem<UProject_JCharacterDataSubsystem>());
+        // Trusted profiles were fenced before async loading. Read-only restore preflight
+        // must not ask ordinary command admission to reopen; pristine/value checks still apply.
+        Success = Preflight(Snapshot.Account == B->Account && Snapshot.Character == B->Character, TEXT("Identity")) &&
+            Preflight(ResolveDefinitions(GetGameInstance(), Snapshot.Progression, Class, History), TEXT("Definitions")) &&
+            Preflight(Matches(Snapshot, *P, QuestIndex, Class, History), TEXT("RulesFingerprint")) &&
+            Preflight(P->CanRestoreSnapshot(Snapshot.Progression, Class, History, true), TEXT("PristineProgression")) &&
+            Preflight(Q->CanRestoreSnapshot(Snapshot.Quests, true, true), TEXT("PristineQuests")) &&
+            Preflight(ResolveItems(Player, Snapshot, Bag, Slots, true, &B->LastAdmissionReason), TEXT("OwnedItems")) &&
+            Preflight(LoadedRules.Capture(QuestIndex, Snapshot.Quests, GetGameInstance()->GetSubsystem<UProject_JCharacterDataSubsystem>()), TEXT("QuestRules"));
 		if (!Success && B->LastAdmissionReason.IsEmpty())
 			B->LastAdmissionReason =
 				Snapshot.Format == 1
@@ -763,6 +767,7 @@ void UProject_JLocalProfileSubsystem::CompleteOpen(
 					: TEXT("프로필의 정의·규칙 버전·범위·소유권 검증 실패: 기존 저장을 보존했습니다");
 		if (Success)
 		{
+            RestoreStage = TEXT("InstallAndPublish");
 			const auto ParticipantsCurrent = [&]
 			{
 				const auto Live = [&](const UActorComponent* Component)
@@ -852,7 +857,7 @@ void UProject_JLocalProfileSubsystem::CompleteOpen(
 	{
 		B->Work->Seal();
 		UE_LOG(LogProjectJLocalProfile, Error,
-			   TEXT("Local profile load rejected; no new default state will overwrite it."));
+			   TEXT("Local profile load rejected at %s: %s; no new default state will overwrite it."), RestoreStage, *B->LastAdmissionReason);
 	}
 	auto Callback = MoveTemp(B->OnReady);
 	if (!Success && IsCurrent(B))

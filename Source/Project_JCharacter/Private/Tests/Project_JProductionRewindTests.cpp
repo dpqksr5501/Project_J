@@ -34,7 +34,7 @@ bool FProjectJProductionRewindTest::RunTest(const FString&)
  double Oldest = 0, Newest = 0;
  if (!TestTrue(TEXT("Standard target records real post-physics samples"), Rewind->TryGetHistoryTimeBounds(Oldest, Newest))) return false;
  const FVector Position = NPC->GetActorLocation();
- NPC->ResetCombatSpatialHistory();
+ TestTrue(TEXT("Production teleport resets history"), NPC->TeleportTo(NPC->GetActorLocation() + FVector(2000, 0, 500), NPC->GetActorRotation(), false, true));
  TestFalse(TEXT("Teleport/handover boundary clears production history"), Rewind->TryGetHistoryTimeBounds(Oldest, Newest));
  TestFalse(TEXT("Old timestamp cannot verify after spatial reset"), Rewind->ServerVerifyHit(Newest, Position - FVector(100,0,0), Position + FVector(100,0,0)));
  for (int32 Frame = 0; Frame < 6; ++Frame) { ++GFrameCounter; World->Tick(LEVELTICK_All, 1.f/60.f); }

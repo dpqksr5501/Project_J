@@ -49,6 +49,8 @@ class FBusyReconnect : public IAutomationLatentCommand
     TSharedPtr<FBlockedProfileWriter, ESPMode::ThreadSafe> Block = MakeShared<FBlockedProfileWriter, ESPMode::ThreadSafe>();
     double Started = FPlatformTime::Seconds();
     int32 Step = 0;
+    FProject_JProgressionSnapshot RestoreProgression;
+    FProject_JQuestSnapshot RestoreQuests;
     bool Check(bool OK, const TCHAR* Text) { return Test->TestTrue(Text, OK); }
     bool OpenReplacement()
     {
@@ -96,6 +98,10 @@ public:
         if (Step == 2)
         {
             if (Profiles->IsCheckpointPending(PS)) return false;
+            RestoreProgression = PS->FindComponentByClass<UProject_JProgressionComponent>()->CaptureSnapshot();
+            RestoreQuests = PS->FindComponentByClass<UProject_JQuestComponent>()->CaptureSnapshot();
+            if (!Check(!PS->FindComponentByClass<UProject_JProgressionComponent>()->CanRestoreSnapshot(RestoreProgression, nullptr, {}, true),
+                TEXT("Trusted initial-restore preflight still rejects an already initialized progression owner"))) return true;
             const auto Worker = Block;
             Profiles->SetCommandStageHookForTest(PS, [Worker](const TCHAR* Stage)
             {
@@ -125,6 +131,17 @@ public:
                 Quests->PersistentAdmission && !Quests->PersistentAdmission() &&
                 Inventory->PersistentAdmission && !Inventory->PersistentAdmission(),
                 TEXT("Queued trusted profile denies component mutations instead of falling back to prototype writers"))) return true;
+            if (!Check(!Progress->CanRestoreSnapshot(RestoreProgression, nullptr, {}) &&
+                Progress->CanRestoreSnapshot(RestoreProgression, nullptr, {}, true),
+                TEXT("Trusted pristine progression preflight works while ordinary command admission remains closed"))) return true;
+            if (!Check(!Quests->CanRestoreSnapshot(RestoreQuests, true) && Quests->CanRestoreSnapshot(RestoreQuests, true, true),
+                TEXT("Trusted pristine quest preflight works without reopening mutations"))) return true;
+            auto InvalidProgression = RestoreProgression; InvalidProgression.Level = 0;
+            auto InvalidQuests = RestoreQuests; InvalidQuests.Version = MAX_int32;
+            Check(!Progress->CanRestoreSnapshot(InvalidProgression, nullptr, {}, true) &&
+                !Quests->CanRestoreSnapshot(InvalidQuests, true, true), TEXT("Trusted read-only preflight still rejects malformed snapshots"));
+            Check(Progress->GetState().Revision == 0 && !Progress->PersistentAdmission() && !Quests->PersistentAdmission(),
+                TEXT("Trusted preflight neither initializes state nor opens command admission"));
             RetiredReady = Ready;
             // Replacement while queued must not inherit the predecessor's open callback/lease.
             if (!Check(OpenReplacement(), TEXT("Newer replacement retires an already queued open"))) return true;
@@ -134,9 +151,15 @@ public:
         if (Step == 4)
         {
             if (!Ready->Done || Profiles->IsCheckpointPending(PS)) return false;
-            if (!Check(!Block->TimedOut.load() && Ready->OK && Profiles->IsReady(PS) && !OldCommit->Done && !RetiredReady->Done &&
-                PS->FindComponentByClass<UProject_JProgressionComponent>()->GetExperience() == 1,
-                TEXT("Writer-drain notification restores committed XP only to newest epoch without manual retry"))) return true;
+            if (!Check(Ready->OK, TEXT("Writer-drain reconnect ready callback succeeds")))
+            { Test->AddInfo(Profiles->GetStatusText(PS).ToString()); return true; }
+            bool Restored = Check(!Block->TimedOut.load(), TEXT("Old writer was released by fixture, not timeout"));
+            Restored &= Check(Profiles->IsReady(PS), TEXT("Newest reconnect profile is ready"));
+            Restored &= Check(!OldCommit->Done, TEXT("Retired old command never publishes to old owner"));
+            Restored &= Check(!RetiredReady->Done, TEXT("Superseded queued open never receives ready callback"));
+            Restored &= Check(PS->FindComponentByClass<UProject_JProgressionComponent>()->GetExperience() == 1,
+                TEXT("Newest reconnect restores exactly one committed XP"));
+            if (!Restored) return true;
             FProject_JPersistentEdit Edit; Edit.Kind = EProject_JPersistentEdit::Experience;
             Edit.Request = Profiles->NewRequestId(PS); Edit.Amount = 1;
             NewCommit = MakeShared<FBusyReply>(); const auto Out = NewCommit;

@@ -584,9 +584,16 @@ public:
         if (Step == 16)
         {
             if (!OpenReply->Done || Profiles->IsCheckpointPending(Player.Get())) return false;
-            if (!Check(OpenReply->OK && Profiles->IsReady(Owner) && Q->HasCompleted(SuccessQuest->QuestId) && !Q->HasCompleted(FullQuest->QuestId) &&
-                !Q->HasCompleted(ByteQuest->QuestId) && SameItems(Owner, *PaidValues) && Owner->FindComponentByClass<UProject_JProgressionComponent>()->GetExperience() == 17,
-                TEXT("Real detach/reopen restores the exact paid instance identities and only successful completion"))) return true;
+            if (!Check(OpenReply->OK, TEXT("Reconnect profile ready callback succeeds")))
+            { Test->AddInfo(Profiles->GetStatusText(Owner).ToString()); return true; }
+            bool Restored = Check(Profiles->IsReady(Owner), TEXT("Reconnect binding remains ready"));
+            Restored &= Check(Q->HasCompleted(SuccessQuest->QuestId), TEXT("Reconnect restores successful quest completion"));
+            Restored &= Check(!Q->HasCompleted(FullQuest->QuestId), TEXT("Reconnect does not complete rejected full quest"));
+            Restored &= Check(!Q->HasCompleted(ByteQuest->QuestId), TEXT("Reconnect does not complete rejected oversized quest"));
+            Restored &= Check(SameItems(Owner, *PaidValues), TEXT("Reconnect restores exact paid item identities and counts"));
+            Restored &= Check(Owner->FindComponentByClass<UProject_JProgressionComponent>()->GetExperience() == 17,
+                TEXT("Reconnect restores exactly 17 XP"));
+            if (!Restored) return true;
             const int64 Revision = Profiles->GetCommittedRevision(Owner);
             int64 ProofRevision = 0;
             Check(Profiles->QueryCommittedQuest(Owner, SuccessQuest->QuestId, ProofRevision) && ProofRevision == Revision,

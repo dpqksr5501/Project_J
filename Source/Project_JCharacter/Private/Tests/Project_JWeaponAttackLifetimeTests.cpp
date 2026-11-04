@@ -7,6 +7,7 @@
 #include "Components/Project_JEquipmentManagerComponent.h"
 #include "Equipment/Project_JEquipmentItemDefinition.h"
 #include "Combat/Project_JAttackDefinition.h"
+#include "Combat/Project_JServerSideRewindComponent.h"
 #include "Project_JSpellbladeCharacter.h"
 #include "Project_JNPCCharacter.h"
 #include "Project_JAbilitySystemComponent.h"
@@ -35,6 +36,16 @@ bool FProjectJWeaponAttackLifetimeTest::RunTest(const FString&)
  FindFProperty<FObjectPropertyBase>(AProject_JBaseCharacter::StaticClass(), TEXT("AttributeSet"))->SetObjectPropertyValue_InContainer(Player, Attributes);
  ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetMaxHealthAttribute(), 100.f);
  ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetHealthAttribute(), 100.f);
+ // This isolated source fixture does not start the entire world. The production
+ // target must nevertheless begin play: its default rewind owner deliberately
+ // has no history until that lifecycle runs. Keep its pose fixed during rate-window
+ // ticks, while leaving the real post-physics rewind recorder enabled.
+ Target->DispatchBeginPlay();
+ auto* TargetRewind = Target->FindComponentByClass<UProject_JServerSideRewindComponent>();
+ if (!TestNotNull(TEXT("Production target owns rewind history"), TargetRewind)) return false;
+ TInlineComponentArray<UActorComponent*> TargetComponents(Target);
+ for (auto* Component : TargetComponents) if (Component != TargetRewind) Component->SetComponentTickEnabled(false);
+ Target->SetActorTickEnabled(false);
  auto* TargetASC = Target->GetAbilitySystemComponent(); TargetASC->InitAbilityActorInfo(Target, Target);
  auto* Equipment = NewObject<UProject_JEquipmentManagerComponent>(Player); Equipment->RegisterComponent();
  auto* Runtime = Player->FindComponentByClass<UProject_JEquipmentRuntimeComponent>(); Runtime->BindToEquipmentManager(Equipment);
@@ -90,7 +101,7 @@ bool FProjectJWeaponAttackLifetimeTest::RunTest(const FString&)
   const auto AdvanceDomainWindow = [&]
   {
    const double Until = Hit->RateWindowStartSeconds + 1.01;
-   for (int32 Step = 0; World->GetTimeSeconds() < Until && Step < 32; ++Step) World->Tick(LEVELTICK_All, .1f);
+   for (int32 Step = 0; World->GetTimeSeconds() < Until && Step < 32; ++Step) { ++GFrameCounter; World->Tick(LEVELTICK_All, .1f); }
    return World->GetTimeSeconds() >= Until;
   };
   if (!TestTrue(TEXT("Normal small world ticks reach the next domain rate window"), AdvanceDomainWindow())) return;
@@ -123,7 +134,12 @@ bool FProjectJWeaponAttackLifetimeTest::RunTest(const FString&)
   Budget->DestroyComponent(); // Return the fixture's temporary outer budget through its public lifecycle.
   Blocker->SetCollisionEnabled(ECollisionEnabled::NoCollision); Wall->Destroy();
   if (!TestTrue(TEXT("Native world time restores the original domain window naturally"), AdvanceDomainWindow())) return;
+  double HistoryOldest = 0, HistoryNewest = 0;
+  if (!TestTrue(TEXT("Recovered target has actual current post-physics history"),
+   TargetRewind->TryGetHistoryTimeBounds(HistoryOldest, HistoryNewest) && HistoryNewest == World->GetTimeSeconds())) return;
   Open(55); Target->SetActorEnableCollision(true);
+  if (!TestTrue(TEXT("Recorded target capsule confirms the recovered authoritative segment"),
+   TargetRewind->ServerVerifyHit(HistoryNewest, Start, End, Attack->HitSpec.TraceRadius))) return;
   TestFalse(TEXT("Normal recovery has no remaining world obstruction"), Hit->IsTargetObstructed(Target));
   Hit->ServerRequestSSRHit_Implementation(Target, World->GetTimeSeconds(), Start, End, Attack->AttackTag, LastBlockedSequence+1, 55);
   TestTrue(TEXT("A fresh admissible request commits normally after natural recovery"), Hit->RequestsInRateWindow == 1 && Hit->LastServerRequestSequence == LastBlockedSequence+1);

@@ -17,6 +17,7 @@
 #include "Combat/Project_JProjectileAttackDefinition.h"
 #include "Combat/Project_JCombatProjectile.h"
 #include "Combat/Project_JCombatStyleDefinition.h"
+#include "Combat/Project_JCombatHitValidation.h"
 #include "Project_JProjectileTestDamage.h"
 #include "TimerManager.h"
 #include "Components/CapsuleComponent.h"
@@ -31,18 +32,28 @@ bool FProjectJProjectileLifecycleTest::RunTest(const FString&)
  GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
  auto* CDO = GetMutableDefault<UProject_JGameplayAbility_Projectile>();
  const FGameplayTag OldTag = CDO->AttackTag;
- ON_SCOPE_EXIT { CDO->AttackTag = OldTag; World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
+ ON_SCOPE_EXIT {
+  CDO->AttackTag = OldTag;
+  World->EndPlay(EEndPlayReason::LevelTransition);
+  World->DestroyWorld(false); GEngine->DestroyWorldContext(World);
+ };
  FActorSpawnParameters Params; Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
  auto* Player = World->SpawnActor<AProject_JSpellbladeCharacter>(Params);
  auto* State = World->SpawnActor<AProject_JPlayerState>(Params);
  Player->SetPlayerState(State);
+ auto* Target = World->SpawnActor<AProject_JNPCCharacter>(Params);
+ // InitializeComponent registers each owner's default AttributeSet with GAS.
+ // Do not write attributes or retain grant handles before that lifecycle runs.
+ World->InitializeActorsForPlay(FURL());
  auto* ASC = State->GetProjectJAbilitySystemComponent();
- ASC->InitAbilityActorInfo(State, Player); ASC->AddAttributeSetSubobject(State->GetProjectJAttributeSet());
+ ASC->InitAbilityActorInfo(State, Player);
+ if (!TestTrue(TEXT("Initialized player ASC owns its production AttributeSet"),
+  ASC->GetSet<UProject_JAttributeSet>() == State->GetProjectJAttributeSet())) return false;
  ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetMaxHealthAttribute(), 100.f);
  ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetHealthAttribute(), 100.f);
- ASC->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_CombatMode);
- auto* Target = World->SpawnActor<AProject_JNPCCharacter>(Params);
  auto* TargetASC = Target->GetAbilitySystemComponent(); TargetASC->InitAbilityActorInfo(Target, Target);
+ if (!TestTrue(TEXT("Initialized NPC ASC owns its production AttributeSet"),
+  TargetASC->GetSet<UProject_JAttributeSet>() == Target->GetAttributeSet())) return false;
  TargetASC->SetNumericAttributeBase(UProject_JAttributeSet::GetMaxHealthAttribute(), 100.f);
  TargetASC->SetNumericAttributeBase(UProject_JAttributeSet::GetHealthAttribute(), 100.f);
  Player->SetActorEnableCollision(false);
@@ -50,6 +61,13 @@ bool FProjectJProjectileLifecycleTest::RunTest(const FString&)
  Target->SetActorEnableCollision(true);
  Target->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
  Target->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+ // Seed healthy resources before life observers bind; healing after a death
+ // latch would not be a valid substitute for constructing a live attacker.
+ World->GetWorldSettings()->NotifyBeginPlay(); World->GetWorldSettings()->NotifyMatchStarted();
+ if (!TestTrue(TEXT("Begun player retains the current ASC avatar"), ASC->GetAvatarActor() == Player)
+  || !TestTrue(TEXT("Begun NPC retains the current ASC avatar"), TargetASC->GetAvatarActor() == Target)
+  || !TestTrue(TEXT("Live player satisfies production attack eligibility"), Project_J::Combat::CanPlayerMeleeAttack(Player))) return false;
+ ASC->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_CombatMode);
  auto* Definition = NewObject<UProject_JProjectileAttackDefinition>(Player);
  Definition->AttackTag = FProject_JGameplayTags::Get().InputTag_Weapon_LMB;
  Definition->DamageEffect = UProject_JProjectileTestDamage::StaticClass();
@@ -62,21 +80,26 @@ bool FProjectJProjectileLifecycleTest::RunTest(const FString&)
  auto* Item = NewObject<UProject_JEquipmentItemDefinition>(Player);
  Item->EquipmentSlot = EProject_JEquipmentSlot::Weapon; Item->CombatStyleDefinition = Style;
  auto* Equipment = State->GetEquipmentManagerComponent();
- Player->FindComponentByClass<UProject_JEquipmentRuntimeComponent>()->BindToEquipmentManager(Equipment);
+ auto* Runtime = Player->FindComponentByClass<UProject_JEquipmentRuntimeComponent>();
+ Runtime->BindToEquipmentManager(Equipment);
  Equipment->EquipItem(Item);
  auto* Spec = ASC->FindAbilitySpecFromClass(UProject_JGameplayAbility_Projectile::StaticClass());
  if (!TestNotNull(TEXT("Equipment style grants projectile ability"), Spec)) return false;
  const auto Handle = Spec->Handle;
- auto* Ability = CastChecked<UProject_JGameplayAbility_Projectile>(Spec->GetPrimaryInstance());
- World->InitializeActorsForPlay(FURL());
- World->GetWorldSettings()->NotifyBeginPlay(); World->GetWorldSettings()->NotifyMatchStarted();
- ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetMaxHealthAttribute(), 100.f);
- ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetHealthAttribute(), 100.f);
- TargetASC->SetNumericAttributeBase(UProject_JAttributeSet::GetMaxHealthAttribute(), 100.f);
- TargetASC->SetNumericAttributeBase(UProject_JAttributeSet::GetHealthAttribute(), 100.f);
+ auto* Ability = Cast<UProject_JGameplayAbility_Projectile>(Spec->GetPrimaryInstance());
+ if (!TestNotNull(TEXT("Equipment grant creates an instanced projectile execution"), Ability)) return false;
+ if (!TestTrue(TEXT("Equipped weapon owns a current revision"), Runtime->GetWeaponRevision() != 0)
+  || !TestTrue(TEXT("Equipment supplies the gameplay style"), Player->GetCombatConfiguration().GameplayStyle == Style)
+  || !TestTrue(TEXT("Granted execution resolves the authored projectile"), Ability->ResolveDefinition(ASC->AbilityActorInfo.Get()) == Definition)
+  || !TestTrue(TEXT("Authored projectile definition is valid"), Definition->IsProjectileValid())
+  || !TestTrue(TEXT("Combat mode requirement is present"), ASC->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_CombatMode))
+  || !TestFalse(TEXT("No prior attack owns the attack tag"), ASC->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_Attacking))) return false;
+ FGameplayTagContainer FailureTags;
+ const bool bCanActivate = Ability->CanActivateAbility(Handle, ASC->AbilityActorInfo.Get(), nullptr, nullptr, &FailureTags);
+ if (!TestTrue(FString::Printf(TEXT("Projectile admission succeeds (failure tags: %s)"), *FailureTags.ToString()), bCanActivate)) return false;
  const auto Start = [&]() { return ASC->TryActivateAbility(Handle); };
- TestTrue(TEXT("Equipment catalog supplies projectile attack"), Start());
- TestTrue(TEXT("Windup retains active GAS execution"), Ability->IsActive());
+ if (!TestTrue(TEXT("Equipment catalog supplies projectile attack"), Start())
+  || !TestTrue(TEXT("Windup retains active GAS execution"), Ability->IsActive())) return false;
  ASC->CancelAbilityHandle(Handle);
  World->GetTimerManager().Tick(1.f);
  TestFalse(TEXT("Prelaunch cancel invalidates execution"), Ability->IsActive());

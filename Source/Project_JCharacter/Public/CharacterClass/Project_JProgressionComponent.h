@@ -97,8 +97,9 @@ class PROJECT_JCHARACTER_API UProject_JProgressionComponent : public UActorCompo
 	/** XP required for level N -> N+1. Missing entries use 100*N. */
 	UPROPERTY(EditDefaultsOnly, Category = "Progression") TArray<int64> ExperienceRequirements;
 	FProject_JProgressionSnapshot CaptureSnapshot() const;
+	/** Read-only preflight; trusted validation keeps admission closed but still requires a pristine owner. */
 	bool CanRestoreSnapshot(const FProject_JProgressionSnapshot &Snapshot, UProject_JCharacterClassDefinition *Class,
-							const TArray<UProject_JCharacterAdvancementDefinition *> &OrderedHistory) const;
+							const TArray<UProject_JCharacterAdvancementDefinition *> &OrderedHistory, bool bTrustedValidation = false) const;
 	/** Trusted server adapter only; resolve IDs first, then restore once on an uninitialized owner. */
 	bool RestoreSnapshot(const FProject_JProgressionSnapshot &Snapshot, UProject_JCharacterClassDefinition *Class,
 						 const TArray<UProject_JCharacterAdvancementDefinition *> &OrderedHistory);

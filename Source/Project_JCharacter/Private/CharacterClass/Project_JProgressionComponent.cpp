@@ -422,10 +422,10 @@ bool UProject_JProgressionComponent::ValidateRestoreSnapshot(
 }
 bool UProject_JProgressionComponent::CanRestoreSnapshot(
 	const FProject_JProgressionSnapshot &Snapshot, UProject_JCharacterClassDefinition *Class,
-	const TArray<UProject_JCharacterAdvancementDefinition *> &OrderedHistory) const
+	const TArray<UProject_JCharacterAdvancementDefinition *> &OrderedHistory, bool bTrustedValidation) const
 {
 	TArray<TObjectPtr<UProject_JCharacterAdvancementDefinition>> Active;
-	return ValidateRestoreSnapshot(Snapshot, Class, OrderedHistory, Active);
+	return State.Revision == 0 && ValidateRestoreSnapshot(Snapshot, Class, OrderedHistory, Active, bTrustedValidation);
 }
 bool UProject_JProgressionComponent::RestoreSnapshot(
 	const FProject_JProgressionSnapshot &Snapshot, UProject_JCharacterClassDefinition *Class,

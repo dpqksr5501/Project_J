@@ -73,7 +73,6 @@ protected:
     virtual bool DoesSupportWorldType(EWorldType::Type Type) const override;
 private:
     friend class AProject_JWorldEncounter;
-class AProject_JPlayerState;
 	friend class FProjectJWorldEventExecutionTest;
     friend class FProjectJWorldEventFairChurnTest;
     void Stop();
