@@ -1,4 +1,5 @@
 #include "Backend/Project_JSQLiteRepository.h"
+#include "Backend/Project_JQuestHistoryStorage.h"
 #include "HAL/FileManager.h"
 #include "Misc/Paths.h"
 #include "Misc/ScopeExit.h"
@@ -248,6 +249,36 @@ EProject_JRecordRead FProject_JSQLiteRepository::ReadChecked(const FAggregateKey
 	};
 	return Key.IsValid() && OpenLocked() ? ReadLocked(Key, Out) : EProject_JRecordRead::Unavailable;
 }
+bool FProject_JSQLiteRepository::ReadProfilePages(FGuid Character, const TArray<uint8>& CoreBytes,
+    int32 FirstPage, int32 NumPages, TArray<FRecord>& Out, int64 ExpectedCoreRevision) const
+{
+    check(!IsInGameThread());
+    if (!Character.IsValid() || FirstPage < 0 || NumPages < 1 || FirstPage >= ProjectJ::QuestHistory::MaxPages ||
+        NumPages > ProjectJ::QuestHistory::MaxPages - FirstPage) return false;
+    FScopeLock Lock(&Mutex);
+    FSystemWideCriticalSection FileLock(LockName, FTimespan::FromSeconds(1));
+    if (!FileLock.IsValid()) return false;
+    ON_SCOPE_EXIT { Database.Close(); };
+    if (!OpenLocked() || !Database.Execute(TEXT("BEGIN"))) return false;
+    bool Committed = false;
+    ON_SCOPE_EXIT { if (!Committed) Database.Execute(TEXT("ROLLBACK")); };
+    FRecord Core;
+    if (ReadLocked({TEXT("LocalProfile"), Character}, Core) != EProject_JRecordRead::Found ||
+        Core.bDeleted || Core.SchemaVersion != 1 || Core.Payload != CoreBytes ||
+        (ExpectedCoreRevision >= 0 && Core.Revision != ExpectedCoreRevision)) return false;
+    TArray<FRecord> Records; Records.Reserve(NumPages);
+    for (int32 Index = FirstPage; Index < FirstPage + NumPages; ++Index)
+    {
+        FRecord Page;
+#if WITH_DEV_AUTOMATION_TESTS
+        if (TestHook) TestHook(TEXT("ReadHistoryPage"), Database);
+#endif
+        if (ReadLocked(ProjectJ::LocalProfileHistory::PageKey(Character, Index), Page) != EProject_JRecordRead::Found) return false;
+        Records.Add(MoveTemp(Page));
+    }
+    if (!Database.Execute(TEXT("COMMIT"))) return false;
+    Committed = true; Out = MoveTemp(Records); return true;
+}
 bool FProject_JSQLiteRepository::Read(const FAggregateKey &Key, FRecord &Out) const
 {
 	return ReadChecked(Key, Out) == EProject_JRecordRead::Found;
@@ -294,7 +325,7 @@ FCommitResult FProject_JSQLiteRepository::CommitProfile(const FCommitRequest &Re
 		Stream.Sequence > MAX_uint32 || Intent.Num() > MaxIntentBytes)
 		return {};
 	// This port cannot be used as a receipt eviction API for arbitrary aggregates.
-	bool Lease = false;
+	bool Lease = false, Core = false, Pages = false;
 	for (const auto &M : Request.Mutations)
 	{
 		if (M.Key.Id != Stream.Character || M.bDelete || M.SchemaVersion != 1)
@@ -309,10 +340,11 @@ FCommitResult FProject_JSQLiteRepository::CommitProfile(const FCommitRequest &Re
 				return {};
 			Lease = true;
 		}
-		else if (M.Key.Kind != TEXT("LocalProfile") || Stream.Sequence < 0)
-			return {};
+        else if (M.Key.Kind == TEXT("LocalProfile")) { if (Stream.Sequence < 0) return {}; Core = true; }
+        else if (ProjectJ::LocalProfileHistory::PageIndex(M.Key) != INDEX_NONE) { if (Stream.Sequence < 0) return {}; Pages = true; }
+        else return {};
 	}
-	if (!Lease || (Stream.Sequence > 0 &&
+	if (!Lease || (Pages && !Core) || (Stream.Sequence > 0 &&
 				   (Intent.IsEmpty() || Request.IdempotencyKey.A != Stream.Session.A ||
 					Request.IdempotencyKey.B != Stream.Session.B || Request.IdempotencyKey.C != Stream.Session.C ||
 					Request.IdempotencyKey.D != uint32(Stream.Sequence))))
@@ -432,6 +464,8 @@ FCommitResult FProject_JSQLiteRepository::CommitInternal(const FCommitRequest &R
 		return {ECommitStatus::Unavailable, {}};
 	if (!Stream && Receipts >= MaxReceipts)
 		return {ECommitStatus::Capacity, {}};
+    TOptional<FRecord> OldCore;
+    TMap<int32, FRecord> OldPages;
 	for (const auto &M : Request.Mutations)
 	{
 		FRecord Existing;
@@ -440,8 +474,16 @@ FCommitResult FProject_JSQLiteRepository::CommitInternal(const FCommitRequest &R
 			return {ECommitStatus::Unavailable, {}};
 		if ((ReadStatus == EProject_JRecordRead::Found ? Existing.Revision : 0) != M.ExpectedRevision)
 			return {ECommitStatus::Conflict, {}};
+        if (Stream && M.Key.Kind == TEXT("LocalProfile")) OldCore = Existing;
+        if (Stream) if (const int32 Index = ProjectJ::LocalProfileHistory::PageIndex(M.Key); Index != INDEX_NONE) OldPages.Add(Index, Existing);
 		NewRecords += ReadStatus == EProject_JRecordRead::Missing;
 	}
+    if (Stream)
+    {
+        FString Failure;
+        if (!ProjectJ::LocalProfileHistory::ValidateCommit(Request, Stream->Character, OldCore.IsSet() ? &OldCore.GetValue() : nullptr, OldPages, Failure))
+        { LastFailure = MoveTemp(Failure); return {ECommitStatus::Invalid, {}}; }
+    }
 	if (Records + NewRecords > MaxRecords)
 		return {ECommitStatus::Capacity, {}};
 	FCommitResult Result{ECommitStatus::Committed, {}};

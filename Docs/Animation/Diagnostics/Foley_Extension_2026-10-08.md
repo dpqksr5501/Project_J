@@ -21,7 +21,7 @@ MMORPG의 클라이언트 표현 서비스를 유지하면서 새 음원·애니
 
 ## 초기 에셋 설정
 
-새 에셋 `/Game/DataAssetSets/Audio/DA_Mannequin_Foley`에 이주한 GASP MetaSound 12개를 연결한다. `/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_GreatSword_AnimProfile`의 FoleyAudioProfile만 새 에셋으로 지정한다. 다른 animation/combat/hand calibration 설정은 수정하지 않는다. 기존 캐릭터 프로필의 변경 전 파일은 `Saved/Validation/FoleyExtension_20261008/DA_GreatSword_AnimProfile.before.uasset`에 보관한다.
+새 에셋 `/Game/DataAssetSets/Audio/DA_Mannequin_Foley`에 이주한 GASP MetaSound 12개를 연결한다. `/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_Spellblade_AnimProfile`의 FoleyAudioProfile만 새 에셋으로 지정한다. 다른 animation/combat/hand calibration 설정은 수정하지 않는다. 기존 캐릭터 프로필의 변경 전 파일은 `Saved/Validation/FoleyExtension_20261008/DA_GreatSword_AnimProfile.before.uasset`에 보관한다.
 
 | 이벤트 | preset 접미사 | Group | Contact | 바닥 trace |
 | --- | --- | --- | --- | --- |

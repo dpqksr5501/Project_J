@@ -39,6 +39,13 @@ class PROJECT_J_API UProject_JWorldDefinition : public UPrimaryDataAsset
 {
     GENERATED_BODY()
 public:
+    static constexpr int32 MaxPreparationShapes = 8;
+    static bool AreStreamingSettingsValid(float Seconds, float Radius, float Maximum);
+    bool IsClockTuningValid() const;
+    bool IsPreparedArrivalAdmissionValid() const;
+#if WITH_EDITOR
+    virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
+#endif
     UPROPERTY(EditAnywhere, BlueprintReadOnly) FName RegionId;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) TArray<FProject_JWorldPlace> Places;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) TArray<FProject_JWorldConnection> Connections;
@@ -48,6 +55,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly) FString SourcePlanHash;
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(ClampMin="60")) float DayLengthSeconds = 2400;
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(ClampMin="0",ClampMax="24")) float InitialHour = 10;
+    /** Authority request permits, not engine I/O reservations. Default preserves existing 256-record admission. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Streaming|Arrival", meta=(ClampMin="1",ClampMax="256"))
+    int32 MaxSimultaneousPreparedArrivals = 256;
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(ClampMin="0",ClampMax="10")) float PredictionSeconds = 3;
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(ClampMin="1000",ClampMax="200000")) float PreparationRadius = 60000;
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(ClampMin="0",ClampMax="200000")) float MaxPredictionDistance = 60000;

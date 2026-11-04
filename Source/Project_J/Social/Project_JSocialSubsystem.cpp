@@ -1,6 +1,9 @@
 #include "Social/Project_JSocialSubsystem.h"
 
 #include "Game/Project_JPlayerState.h"
+#include "Project_JAttributeSet.h"
+#include "UObject/StrongObjectPtr.h"
+#include "ProfilingDebugging/CpuProfilerTrace.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogProjectJSocial, Log, All);
 
@@ -12,15 +15,21 @@ void UProject_JSocialSubsystem::BindPlayerState(AProject_JPlayerState* PlayerSta
 		return;
 	}
 
-	for (auto It = RevokedPlayers.CreateIterator(); It; ++It) if (!It->IsValid()) It.RemoveCurrent();
-	if (const auto Previous = OnlinePlayers.FindRef(CharacterId); Previous.IsValid() && Previous.Get() != PlayerState)
+	const auto Previous = OnlinePlayers.FindRef(CharacterId);
+	if (Previous.IsValid() && Previous.Get() != PlayerState)
 	{
-		RevokedPlayers.Add(Previous);
+		Previous->bSocialSessionRevoked = true;
 		Previous->SetSocialState(NAME_None, NAME_None, FGuid(), FGuid());
 	}
-	RevokedPlayers.Remove(PlayerState);
+	PlayerState->bSocialSessionRevoked = false;
 	OnlinePlayers.Add(CharacterId, PlayerState);
 	SynchronizePlayerSnapshot(PlayerState);
+	if (Previous.IsValid() && Previous.Get() != PlayerState && Previous->bSocialSessionRevoked)
+	{
+		Previous->StopPartySummaryObservation();
+		Previous->ApplyPartyRoster({});
+	}
+	ReconcilePartyRoster(CharacterParties.FindRef(CharacterId));
 }
 
 void UProject_JSocialSubsystem::UnbindPlayerState(AProject_JPlayerState* PlayerState)
@@ -34,32 +43,47 @@ void UProject_JSocialSubsystem::UnbindPlayerState(AProject_JPlayerState* PlayerS
 	if (const TWeakObjectPtr<AProject_JPlayerState>* BoundPlayer = OnlinePlayers.Find(CharacterId);
 		BoundPlayer && BoundPlayer->Get() == PlayerState)
 	{
+		const FName PreviousParty = CharacterParties.FindRef(CharacterId);
 		OnlinePlayers.Remove(CharacterId);
-		RevokedPlayers.Add(PlayerState);
+		PlayerState->bSocialSessionRevoked = true;
+		PlayerState->StopPartySummaryObservation();
 		PlayerState->SetSocialState(NAME_None, NAME_None, FGuid(), FGuid());
+		PlayerState->ApplyPartyRoster({});
+		ReconcilePartyRoster(PreviousParty);
 	}
 }
 
 FProject_JSocialOperationResult UProject_JSocialSubsystem::CreateParty(AProject_JPlayerState* Leader)
 {
-	return CreateGroup(Leader, TEXT("Party"), MaxPartyMembers, Parties, CharacterParties);
+	const auto Result = CreateGroup(Leader, TEXT("Party"), FMath::Clamp(MaxPartyMembers, 2, ProjectJMaxPartyRosterMembers), Parties, CharacterParties, PartyIds);
+	if (Result.bSucceeded) ReconcilePartyRoster(Result.GroupId);
+	return Result;
 }
 
 FProject_JSocialOperationResult UProject_JSocialSubsystem::JoinParty(
 	AProject_JPlayerState* Player,
 	FName PartyId)
 {
-	return JoinGroup(Player, PartyId, MaxPartyMembers, Parties, CharacterParties);
+	const auto Result = JoinGroup(Player, PartyId, FMath::Clamp(MaxPartyMembers, 2, ProjectJMaxPartyRosterMembers), Parties, CharacterParties);
+	if (Result.bSucceeded) ReconcilePartyRoster(Result.GroupId);
+	return Result;
 }
 
 FProject_JSocialOperationResult UProject_JSocialSubsystem::LeaveParty(AProject_JPlayerState* Player)
 {
-	return LeaveGroup(Player, Parties, CharacterParties);
+	const auto Result = LeaveGroup(Player, Parties, CharacterParties);
+	if (Result.bSucceeded)
+	{
+		Player->StopPartySummaryObservation();
+		Player->ApplyPartyRoster({});
+		ReconcilePartyRoster(Result.GroupId);
+	}
+	return Result;
 }
 
 FProject_JSocialOperationResult UProject_JSocialSubsystem::CreateGuild(AProject_JPlayerState* Leader)
 {
-	return CreateGroup(Leader, TEXT("Guild"), MaxGuildMembers, Guilds, CharacterGuilds);
+	return CreateGroup(Leader, TEXT("Guild"), MaxGuildMembers, Guilds, CharacterGuilds, GuildIds);
 }
 
 FProject_JSocialOperationResult UProject_JSocialSubsystem::JoinGuild(
@@ -85,10 +109,11 @@ bool UProject_JSocialSubsystem::RestoreMembership(
 		return false;
 	}
 
+	const FName PreviousParty = CharacterParties.FindRef(CharacterId);
 	if (!CanRestoreGroupMembership(
 			CharacterId,
 			PartyId,
-			MaxPartyMembers,
+			FMath::Clamp(MaxPartyMembers, 2, ProjectJMaxPartyRosterMembers),
 			Parties,
 			CharacterParties) ||
 		!CanRestoreGroupMembership(
@@ -104,7 +129,7 @@ bool UProject_JSocialSubsystem::RestoreMembership(
 	const bool bPartyRestored = RestoreGroupMembership(
 		CharacterId,
 		PartyId,
-		MaxPartyMembers,
+		FMath::Clamp(MaxPartyMembers, 2, ProjectJMaxPartyRosterMembers),
 		Parties,
 		CharacterParties);
 	const bool bGuildRestored = RestoreGroupMembership(
@@ -120,6 +145,13 @@ bool UProject_JSocialSubsystem::RestoreMembership(
 
 	OnlinePlayers.Add(CharacterId, Player);
 	SynchronizePlayerSnapshot(Player);
+	if (PartyId.IsNone())
+	{
+		Player->StopPartySummaryObservation();
+		Player->ApplyPartyRoster({});
+	}
+	ReconcilePartyRoster(PreviousParty);
+	if (PartyId != PreviousParty) ReconcilePartyRoster(PartyId);
 	return true;
 }
 
@@ -159,25 +191,28 @@ FName UProject_JSocialSubsystem::GetGuildIdForCharacter(const FGuid& CharacterId
 	return CharacterGuilds.FindRef(CharacterId);
 }
 
-FName UProject_JSocialSubsystem::CreateGroupId(const TCHAR* Prefix)
+FName UProject_JSocialSubsystem::CreateGroupId(const TCHAR* Prefix, FGroupIdSequence& Sequence)
 {
-	return FName(*FString::Printf(
-		TEXT("%s_%s"),
-		Prefix,
-		*FGuid::NewGuid().ToString(EGuidFormats::Digits)));
+	// FName stores 0 as no number and accepts positive internal int32 numbers.
+	// Do not wrap: an old group ID must never identify a newly created group.
+	if (Sequence.LastIssued == MAX_int32) return NAME_None;
+	if (Sequence.Namespace.IsNone())
+		Sequence.Namespace = FName(*FString::Printf(TEXT("%s_%s"), Prefix,
+			*FGuid::NewGuid().ToString(EGuidFormats::Digits)));
+	return FName(Sequence.Namespace, ++Sequence.LastIssued);
 }
 
 EProject_JSocialOperationFailure UProject_JSocialSubsystem::ResolveAuthoritativeCharacter(
 	AProject_JPlayerState* Player,
 	FGuid& OutCharacterId, bool bCheckSession) const
 {
-	if (!IsValid(Player) || Player->IsActorBeingDestroyed() || !Player->HasAuthority())
+	if (bEnding || !IsValid(Player) || Player->IsActorBeingDestroyed() || Player->bPartyRosterEnding || !Player->HasAuthority())
 	{
 		return EProject_JSocialOperationFailure::InvalidPlayer;
 	}
 
 	OutCharacterId = Player->GetCharacterId().Value;
-	if (bCheckSession && (RevokedPlayers.Contains(Player) ||
+	if (bCheckSession && (Player->bSocialSessionRevoked ||
 		(OnlinePlayers.FindRef(OutCharacterId).IsValid() && OnlinePlayers.FindRef(OutCharacterId).Get() != Player)))
 		return EProject_JSocialOperationFailure::StaleSession;
 	return OutCharacterId.IsValid() ? EProject_JSocialOperationFailure::None : EProject_JSocialOperationFailure::InvalidCharacterId;
@@ -188,7 +223,8 @@ FProject_JSocialOperationResult UProject_JSocialSubsystem::CreateGroup(
 	const TCHAR* Prefix,
 	int32 MaxMembers,
 	FGroupMap& Groups,
-	FMembershipMap& Memberships)
+	FMembershipMap& Memberships,
+	FGroupIdSequence& Sequence)
 {
 	FGuid CharacterId;
 	if (const auto Failure = ResolveAuthoritativeCharacter(Leader, CharacterId); Failure != EProject_JSocialOperationFailure::None)
@@ -202,8 +238,15 @@ FProject_JSocialOperationResult UProject_JSocialSubsystem::CreateGroup(
 			ExistingGroup);
 	}
 
+	// Count live and deleted identities together. Reject before issuing a name
+	// or publishing any membership; deletion history is not a reusable slot.
+	if (Groups.Num() >= FMath::Clamp(MaxTrackedGroupsPerKind, 0, 1048576))
+		return FProject_JSocialOperationResult::Failed(EProject_JSocialOperationFailure::HistoryCapacity);
+
 	FRuntimeGroup Group;
-	Group.GroupId = CreateGroupId(Prefix);
+	Group.GroupId = CreateGroupId(Prefix, Sequence);
+	if (Group.GroupId.IsNone())
+		return FProject_JSocialOperationResult::Failed(EProject_JSocialOperationFailure::RevisionExhausted);
 	Group.LeaderCharacterId = CharacterId;
 	Group.Members.Add(CharacterId);
 	Groups.Add(Group.GroupId, Group);
@@ -401,15 +444,17 @@ bool UProject_JSocialSubsystem::GetGroupSnapshot(EProject_JSocialGroupKind Kind,
 
 bool UProject_JSocialSubsystem::RestoreGroupSnapshot(EProject_JSocialGroupKind Kind, const FProject_JSocialGroupSnapshot& Snapshot)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_SocialRestoreSnapshot);
 	check(IsInGameThread());
-	if (Kind != EProject_JSocialGroupKind::Party && Kind != EProject_JSocialGroupKind::Guild) return false;
+	if (bEnding || (Kind != EProject_JSocialGroupKind::Party && Kind != EProject_JSocialGroupKind::Guild)) return false;
 	auto& Groups = Kind == EProject_JSocialGroupKind::Party ? Parties : Guilds;
 	auto& Memberships = Kind == EProject_JSocialGroupKind::Party ? CharacterParties : CharacterGuilds;
-	const int32 Capacity = FMath::Max(2, Kind == EProject_JSocialGroupKind::Party ? MaxPartyMembers : MaxGuildMembers);
+	const int32 Capacity = Kind == EProject_JSocialGroupKind::Party ? FMath::Clamp(MaxPartyMembers, 2, ProjectJMaxPartyRosterMembers) : FMath::Max(2, MaxGuildMembers);
 	if (Snapshot.Version != 1 || Snapshot.GroupId.IsNone() || Snapshot.Revision < 1 || Snapshot.Revision == MAX_int64 || Snapshot.Members.Num() > Capacity) { return false; }
 	if (Snapshot.bDeleted ? (!Snapshot.Members.IsEmpty() || Snapshot.LeaderCharacterId.IsValid()) :
 		(Snapshot.Members.IsEmpty() || !Snapshot.LeaderCharacterId.IsValid() || !Snapshot.Members.Contains(Snapshot.LeaderCharacterId))) { return false; }
 	TSet<FGuid> Members;
+	Members.Reserve(Snapshot.Members.Num());
 	for (const auto& Member : Snapshot.Members)
 	{
 		const FName ExistingGroup = Memberships.FindRef(Member);
@@ -422,14 +467,150 @@ bool UProject_JSocialSubsystem::RestoreGroupSnapshot(EProject_JSocialGroupKind K
 		return Snapshot.Revision == Existing->Revision && Snapshot.bDeleted == Existing->bDeleted &&
 			Snapshot.LeaderCharacterId == Existing->LeaderCharacterId && Snapshot.Members == Existing->Members;
 	}
-	TArray<FGuid> Affected = Snapshot.Members;
+	// Existing IDs keep their revision/restore contract even after a policy
+	// shrink. A new ID cannot alter membership or reserve a future ordinal at capacity.
+	if (!Existing && Groups.Num() >= FMath::Clamp(MaxTrackedGroupsPerKind, 0, 1048576)) return false;
+	// Snapshot order still owns future leader succession. Membership and online
+	// projections only need the set/leader delta, not a full remove/reinsert pass.
+	TArray<FGuid> Affected;
+	Affected.Reserve(Snapshot.Members.Num());
+	const bool bLeaderChanged = !Existing || Existing->LeaderCharacterId != Snapshot.LeaderCharacterId;
 	if (Existing)
 	{
-		for (const auto& Member : Existing->Members) { Memberships.Remove(Member); Affected.AddUnique(Member); }
+		for (const auto& Member : Existing->Members)
+		{
+			if (!Members.Contains(Member))
+			{
+				Memberships.Remove(Member);
+				Affected.Add(Member);
+			}
+		}
 	}
+	// A trusted restore can contain a future number from this live namespace.
+	// Reserve its high-water mark before publication so later local creation
+	// cannot overwrite that group or reuse its ID, including after deletion.
+	auto& Sequence = Kind == EProject_JSocialGroupKind::Party ? PartyIds : GuildIds;
+	if (!Sequence.Namespace.IsNone() && Snapshot.GroupId.GetComparisonIndex() == Sequence.Namespace.GetComparisonIndex())
+		Sequence.LastIssued = FMath::Max(Sequence.LastIssued, Snapshot.GroupId.GetNumber());
 	// Publish all maps before notifying online PlayerStates (callbacks may reenter).
 	Groups.Add(Snapshot.GroupId, Snapshot);
-	for (const auto& Member : Snapshot.Members) { Memberships.Add(Member, Snapshot.GroupId); }
+	for (const auto& Member : Snapshot.Members)
+	{
+		const bool bJoined = Memberships.FindRef(Member) != Snapshot.GroupId;
+		if (bJoined) { Memberships.Add(Member, Snapshot.GroupId); }
+		// Removed and current members are disjoint; validated membership is unique.
+		if (bJoined || bLeaderChanged) { Affected.Add(Member); }
+	}
 	for (const auto& Member : Affected) { SynchronizeOnlineMember(Member); }
+	if (Kind == EProject_JSocialGroupKind::Party)
+	{
+		for (const auto& Member : Affected)
+			if (CharacterParties.FindRef(Member).IsNone())
+				if (auto* Player = ResolveOnlineMember(Member))
+				{
+					Player->StopPartySummaryObservation(); Player->ApplyPartyRoster({});
+				}
+		ReconcilePartyRoster(Snapshot.GroupId);
+	}
 	return true;
+}
+
+
+void UProject_JSocialSubsystem::Deinitialize()
+{
+    bEnding = true;
+    for (const auto& Entry : OnlinePlayers)
+        if (auto* Player = Entry.Value.Get()) Player->StopPartySummaryObservation();
+    OnlinePlayers.Reset();
+    Super::Deinitialize();
+}
+
+AProject_JPlayerState* UProject_JSocialSubsystem::ResolveOnlineMember(const FGuid& CharacterId) const
+{
+    auto* Player = OnlinePlayers.FindRef(CharacterId).Get();
+    FGuid Current;
+    return ResolveAuthoritativeCharacter(Player, Current) == EProject_JSocialOperationFailure::None
+        && Current == CharacterId ? Player : nullptr;
+}
+
+FProject_JPartyMemberSummary UProject_JSocialSubsystem::BuildPartyMemberSummary(const FRuntimeGroup& Group, int32 Order) const
+{
+    FProject_JPartyMemberSummary Result;
+    Result.CharacterId = Group.Members[Order]; Result.PartyId = Group.GroupId;
+    Result.Order = static_cast<uint8>(Order); Result.bLeader = Result.CharacterId == Group.LeaderCharacterId;
+    if (auto* Player = ResolveOnlineMember(Result.CharacterId))
+    {
+        Result.bAvailableHere = true;
+        Result.DisplayName = Player->GetPlayerName().Replace(TEXT("\r"), TEXT(" ")).Replace(TEXT("\n"), TEXT(" ")).Replace(TEXT("\t"), TEXT(" ")).Left(64);
+        Result.Level = FMath::Max(1, Player->GetPublicCharacterLevel());
+        if (const auto* Attributes = Player->GetProjectJAttributeSet(); IsValid(Attributes))
+        {
+            const double Health = Attributes->GetHealth(), Maximum = Attributes->GetMaxHealth();
+            Result.bHealthKnown = FMath::IsFinite(Health) && FMath::IsFinite(Maximum) && Maximum > 0;
+            if (Result.bHealthKnown) Result.HealthPermille = FMath::RoundToInt(FMath::Clamp(Health / Maximum, 0.0, 1.0) * 1000.0);
+        }
+    }
+    return Result;
+}
+
+void UProject_JSocialSubsystem::ReconcilePartyRoster(FName PartyId)
+{
+    if (bEnding || PartyId.IsNone()) return;
+    const auto* Found = Parties.Find(PartyId);
+    if (!Found || Found->bDeleted || Found->Members.Num() > ProjectJMaxPartyRosterMembers) return;
+    // Never retain a map/array reference while owner UI callbacks can reenter.
+    const FRuntimeGroup Group = *Found;
+    TArray<TStrongObjectPtr<AProject_JPlayerState>> Recipients;
+    Recipients.Reserve(Group.Members.Num());
+    for (int32 Index = 0; Index < Group.Members.Num(); ++Index)
+    {
+        if (auto* Player = ResolveOnlineMember(Group.Members[Index])) Recipients.Emplace(Player);
+    }
+    const TStrongObjectPtr<ThisClass> KeepSelf(this);
+    for (const auto& Recipient : Recipients)
+    {
+        const auto* Current = Parties.Find(PartyId);
+        if (bEnding || !Current || Current->Revision != Group.Revision || Current->bDeleted) return;
+        const FGuid Character = Recipient->GetCharacterId().Value;
+        if (CharacterParties.FindRef(Character) != PartyId || ResolveOnlineMember(Character) != Recipient.Get()) continue;
+        // A preceding recipient callback may unbind/replace another member
+        // without advancing group revision. Rebuild only this bounded8 view.
+        TArray<FProject_JPartyMemberSummary> Rows;
+        Rows.Reserve(Group.Members.Num());
+        for (int32 Index = 0; Index < Group.Members.Num(); ++Index) Rows.Add(BuildPartyMemberSummary(Group, Index));
+        Recipient->SetPartySummaryObservation(this, true);
+        Recipient->ApplyPartyRoster(Rows);
+    }
+}
+
+void UProject_JSocialSubsystem::PublishPartyMemberSummary(AProject_JPlayerState* Source)
+{
+    FGuid Character;
+    if (ResolveAuthoritativeCharacter(Source, Character) != EProject_JSocialOperationFailure::None || ResolveOnlineMember(Character) != Source) return;
+    const FName PartyId = CharacterParties.FindRef(Character);
+    const auto* Found = Parties.Find(PartyId);
+    if (!Found || Found->bDeleted || Found->Members.Num() > ProjectJMaxPartyRosterMembers) return;
+    const FRuntimeGroup Group = *Found;
+    const int32 Order = Group.Members.Find(Character);
+    if (Order == INDEX_NONE) return;
+    TArray<TStrongObjectPtr<AProject_JPlayerState>> Recipients;
+    for (const auto& Member : Group.Members)
+        if (auto* Player = ResolveOnlineMember(Member)) Recipients.Emplace(Player);
+    const TStrongObjectPtr<ThisClass> KeepSelf(this);
+    const TStrongObjectPtr<AProject_JPlayerState> KeepSource(Source);
+    for (const auto& Recipient : Recipients)
+    {
+        const auto* Current = Parties.Find(PartyId);
+        if (bEnding || !Current || Current->bDeleted || Current->Revision != Group.Revision
+            || ResolveOnlineMember(Character) != Source || CharacterParties.FindRef(Character) != PartyId) return;
+        const FGuid Target = Recipient->GetCharacterId().Value;
+        if (ResolveOnlineMember(Target) != Recipient.Get() || CharacterParties.FindRef(Target) != PartyId) continue;
+        auto Rows = Recipient->GetPartyRoster();
+        auto* Existing = Rows.FindByPredicate([&](const auto& Item) { return Item.CharacterId == Character; });
+        if (!Existing || Rows.Num() != Group.Members.Num()) { ReconcilePartyRoster(PartyId); return; }
+        // Source health/name may also change during a previous local callback.
+        // Keep the frequent path to one source read/one dirty row per recipient.
+        *Existing = BuildPartyMemberSummary(Group, Order);
+        Recipient->ApplyPartyRoster(Rows);
+    }
 }

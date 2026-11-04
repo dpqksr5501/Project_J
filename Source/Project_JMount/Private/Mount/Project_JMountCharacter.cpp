@@ -1,4 +1,5 @@
 #include "Mount/Project_JMountCharacter.h"
+#include "Components/Project_JCommandBudgetComponent.h"
 #include "Movement/Project_JMovementQueries.h"
 
 #include "Animation/Project_JRiderAnimationProfile.h"
@@ -18,6 +19,7 @@
 #include "EnhancedInputComponent.h"
 #include "InputAction.h"
 #include "UObject/StrongObjectPtr.h"
+#include "Misc/ScopeExit.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogProjectJMountCharacter, Log, All);
 
@@ -224,11 +226,47 @@ void AProject_JMountCharacter::UnPossessed()
 	Super::UnPossessed();
 }
 
+void AProject_JMountCharacter::NotifyRiderRuntimeOwnerPrerequisitesChanged(APawn* AffectedRider)
+{
+	const TStrongObjectPtr<ThisClass> KeepSelf(this);
+	const TStrongObjectPtr<APawn> KeepRider(AffectedRider);
+	if (!IsValid(this) || IsActorBeingDestroyed() || bEndingPlay || !IsValid(AffectedRider)
+		|| AffectedRider->IsActorBeingDestroyed() || AffectedRider->GetWorld() != GetWorld()) return;
+	if (auto* Component = AffectedRider->FindComponentByClass<UProject_JMountComponent>())
+		Component->NotifyRuntimeOwnerPrerequisitesChanged();
+}
+
 void AProject_JMountCharacter::OnRep_Controller()
 {
+	const TStrongObjectPtr<ThisClass> KeepSelf(this);
 	Super::OnRep_Controller();
+	if (!IsValid(this) || IsActorBeingDestroyed() || bEndingPlay) return;
 	if (!IsLocallyControlled()) { ClearDismountInputBindings(); }
 	else if (InputComponent) { RestoreDismountInputBindings(InputComponent); }
+	NotifyRiderRuntimeOwnerPrerequisitesChanged(Rider);
+}
+
+void AProject_JMountCharacter::OnRep_PlayerState()
+{
+	const TStrongObjectPtr<ThisClass> KeepSelf(this);
+	Super::OnRep_PlayerState();
+	NotifyRiderRuntimeOwnerPrerequisitesChanged(Rider);
+}
+
+void AProject_JMountCharacter::OnReplicationStartedForIris(const FOnReplicationStartedParams& Params)
+{
+	const TStrongObjectPtr<ThisClass> KeepSelf(this);
+	Super::OnReplicationStartedForIris(Params);
+	NotifyRiderRuntimeOwnerPrerequisitesChanged(Rider);
+}
+
+void AProject_JMountCharacter::OnStopReplicationForIris(const FOnStopReplicationParams& Params)
+{
+	const TStrongObjectPtr<ThisClass> KeepSelf(this);
+	Super::OnStopReplicationForIris(Params);
+	// No driver identity is supplied. Only wake the existing owner; its safe
+	// post-actor phase rechecks the primary registration before changing a group.
+	NotifyRiderRuntimeOwnerPrerequisitesChanged(Rider);
 }
 
 void AProject_JMountCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -371,9 +409,15 @@ bool AProject_JMountCharacter::TryMountRider(APawn* NewRider)
 	return true;
 }
 
+bool AProject_JMountCharacter::AdmitClientMountCommand()
+{
+	return !bEndingPlay && Rider && GetController() &&
+		UProject_JCommandBudgetComponent::AdmitClientCommand(this, NextClientMountCommandTime, 0.2);
+}
+
 void AProject_JMountCharacter::ServerRequestDismount_Implementation()
 {
-	DismountRider(false);
+	if (AdmitClientMountCommand()) DismountRider(false);
 }
 
 bool AProject_JMountCharacter::DismountRider(bool bForce, bool bRestorePossession)
@@ -451,6 +495,15 @@ void AProject_JMountCharacter::OnRep_Rider(APawn* PreviousRider)
 	const TStrongObjectPtr<APawn> KeepPrevious(PreviousRider);
 	const TStrongObjectPtr<APawn> KeepNew(Rider);
 	const uint32 Revision = ++RiderTransitionRevision;
+	ON_SCOPE_EXIT
+	{
+		if (!IsValid(this) || IsActorBeingDestroyed() || bEndingPlay || RiderTransitionRevision != Revision) return;
+		// Pin both recipients before the first subscriber can destroy/GC/re-mount.
+		const TStrongObjectPtr<APawn> KeepCurrent(Rider);
+		NotifyRiderRuntimeOwnerPrerequisitesChanged(KeepPrevious.Get());
+		if (!IsValid(this) || IsActorBeingDestroyed() || bEndingPlay || RiderTransitionRevision != Revision || Rider != KeepCurrent.Get()) return;
+		if (KeepCurrent.Get() != KeepPrevious.Get()) NotifyRiderRuntimeOwnerPrerequisitesChanged(KeepCurrent.Get());
+	};
 	// Replication can coalesce A -> null -> B into A -> B. Retire A's
 	// restore slot before capturing B, including synchronous movement callbacks.
 	if (IsValid(PreviousRider) && PreviousRider != KeepNew.Get())
@@ -479,6 +532,7 @@ void AProject_JMountCharacter::OnRep_Rider(APawn* PreviousRider)
 
 void AProject_JMountCharacter::OnRep_MountState(EProject_JMountState PreviousState)
 {
+	NotifyRiderRuntimeOwnerPrerequisitesChanged(Rider);
 }
 
 bool AProject_JMountCharacter::FindDismountLocation(FVector& OutLocation) const

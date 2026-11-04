@@ -1,13 +1,22 @@
 #include "Backend/Project_JLocalProfileSubsystem.h"
 #include "Async/Async.h"
+#include "Crafting/Project_JCraftingRecipeDefinition.h"
+#include "Crafting/Project_JCraftingPlan.h"
 #include "Backend/Project_JLocalProfileSnapshot.h"
+#include "Inventory/Project_JOwnedItemProjection.h"
+#include "Backend/Project_JProfileRules.h"
+#include "Backend/Project_JQuestHistoryStorage.h"
 #include "Backend/Project_JSQLiteRepository.h"
 #include "CharacterClass/Project_JCharacterClassDefinition.h"
 #include "CharacterClass/Project_JCharacterDataSubsystem.h"
 #include "Components/Project_JEquipmentManagerComponent.h"
 #include "Components/Project_JInventoryComponent.h"
+#include "Components/Project_JCraftingJobsComponent.h"
+#include "Misc/DateTime.h"
 #include "Engine/World.h"
 #include "Equipment/Project_JEquipmentItemDefinition.h"
+#include "Companion/Project_JCompanionItemDefinition.h"
+#include "Mount/Project_JMountItemDefinition.h"
 #include "Game/Project_JPlayerState.h"
 #include "HAL/IConsoleManager.h"
 #include "Inventory/Project_JConsumableDefinition.h"
@@ -18,6 +27,7 @@
 #include "Project_JAbilitySystemComponent.h"
 #include "Serialization/MemoryWriter.h"
 #include "UObject/StrongObjectPtr.h"
+#include "ProfilingDebugging/CpuProfilerTrace.h"
 
 using namespace ProjectJ::MMO;
 DEFINE_LOG_CATEGORY_STATIC(LogProjectJLocalProfile, Log, All);
@@ -36,6 +46,14 @@ static FAutoConsoleCommandWithWorld GLocalProfileBackup(
 
 namespace
 {
+using FProfileValues = TSharedPtr<const FProject_JLocalProfileSnapshot, ESPMode::ThreadSafe>;
+FProfileValues DecodeProfileValues(FProject_JSQLiteRepository& Repository, FGuid Character,
+    const TArray<uint8>& Bytes, const FProfileValues& Known = {}, int64 ExpectedCoreRevision = -1)
+{
+	check(!IsInGameThread());
+	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_ProfileDecodeValues);
+	return ProjectJ::LocalProfileHistory::ReadProfileValues(Repository, Character, Bytes, Known, ExpectedCoreRevision);
+}
 FAggregateKey ProfileKey(FGuid Id)
 {
 	return {TEXT("LocalProfile"), Id};
@@ -74,137 +92,11 @@ bool ResolveDefinitions(UGameInstance *GI, const FProject_JProgressionSnapshot &
 	}
 	return true;
 }
-bool ResolveItems(AProject_JPlayerState *Player, const FProject_JLocalProfileSnapshot &Snapshot,
-				  TArray<FProject_JItemInstanceData> &Bag, TArray<FProject_JEquipmentArrayItem> &Slots,
-				  bool bTrustedApply = false, FString *Failure = nullptr)
-{
-	if (Snapshot.Format != 2)
-		return false;
-	auto *Data = Player->GetGameInstance()->GetSubsystem<UProject_JCharacterDataSubsystem>();
-	auto *Inventory = Player->GetInventoryComponent();
-	auto *Equipment = Player->GetEquipmentManagerComponent();
-	if (!Data || !Inventory || !Equipment)
-		return false;
-	for (const auto &Value : Snapshot.Items)
-	{
-		auto *Def = Data->GetItemDefinition(Value.Definition, Value.DefinitionVersion);
-		if (!Def)
-		{
-			if (Failure)
-				*Failure = FString::Printf(TEXT("아이템 정의 ID/version 불일치: %s v%d. 저장 원형을 보존하세요"),
-										   *Value.Definition.ToString(), Value.DefinitionVersion);
-			return false;
-		}
-		FProject_JItemInstanceData Item;
-		Item.InstanceId = Value.Instance;
-		Item.ItemDef = Def;
-		Item.ItemLevel = Value.Level;
-		Item.StackCount = Value.Count;
-		Item.BagOrder = Value.Order;
-		Item.bIsLocked = Item.bIsEquipped = Value.bInBag && Value.Slot != EProject_JEquipmentSlot::None;
-		if (Value.bInBag)
-			Bag.Add(Item);
-		if (Value.Slot != EProject_JEquipmentSlot::None)
-		{
-			auto &Entry = Slots.AddDefaulted_GetRef();
-			Entry.ItemDef = Cast<UProject_JEquipmentItemDefinition>(Def);
-			Entry.ItemInstance = Item;
-			Entry.Slot = Value.Slot;
-		}
-	}
-	return Inventory->ValidatePersistentItems(Bag, bTrustedApply) &&
-		   Equipment->ValidatePersistentEquipment(Slots, Bag, bTrustedApply);
-}
-bool CaptureItems(AProject_JPlayerState *Player, FProject_JLocalProfileSnapshot &Snapshot)
-{
-	auto *Data = Player->GetGameInstance()->GetSubsystem<UProject_JCharacterDataSubsystem>();
-	auto *Inventory = Player->GetInventoryComponent();
-	auto *Equipment = Player->GetEquipmentManagerComponent();
-	if (!Data || !Inventory || !Equipment)
-		return false;
-	for (const auto &Item : Inventory->GetItemInstances())
-	{
-		if (!Item.ItemDef || Data->GetItemDefinition(Item.ItemDef->ItemId, Item.ItemDef->SchemaVersion) != Item.ItemDef)
-			return false;
-		FProject_JPersistentItem Value;
-		Value.Instance = Item.InstanceId;
-		Value.Definition = Item.ItemDef->ItemId;
-		Value.DefinitionVersion = Item.ItemDef->SchemaVersion;
-		Value.Level = Item.ItemLevel;
-		Value.Count = Item.StackCount;
-		Value.Order = Item.BagOrder;
-		Snapshot.Items.Add(Value);
-	}
-	for (const auto &Entry : Equipment->CapturePersistentEquipment())
-	{
-		const auto &Item = Entry.ItemInstance;
-		if (!Item.ItemDef || Data->GetItemDefinition(Item.ItemDef->ItemId, Item.ItemDef->SchemaVersion) != Item.ItemDef)
-			return false;
-		if (auto *Found = Snapshot.Items.FindByPredicate([&](const auto &V) { return V.Instance == Item.InstanceId; }))
-		{
-			if (Found->Definition != Item.ItemDef->ItemId || Found->Level != Item.ItemLevel || Found->Count != 1 ||
-				Found->Slot != EProject_JEquipmentSlot::None)
-				return false;
-			Found->Slot = Entry.Slot;
-		}
-		else
-		{
-			FProject_JPersistentItem Value;
-			Value.Instance = Item.InstanceId;
-			Value.Definition = Item.ItemDef->ItemId;
-			Value.DefinitionVersion = Item.ItemDef->SchemaVersion;
-			Value.Level = Item.ItemLevel;
-			Value.Count = 1;
-			Value.bInBag = false;
-			Value.Slot = Entry.Slot;
-			Snapshot.Items.Add(Value);
-		}
-	}
-	TArray<FProject_JItemInstanceData> Bag;
-	TArray<FProject_JEquipmentArrayItem> Slots;
-	return ResolveItems(Player, Snapshot, Bag, Slots);
-}
-FString Fingerprint(const UProject_JProgressionComponent &P, const UProject_JQuestComponent &Q,
-					const UProject_JCharacterClassDefinition *Class,
-					const TArray<UProject_JCharacterAdvancementDefinition *> &History)
-{
-	TArray<uint8> Bytes;
-	FMemoryWriter W(Bytes);
-	int32 Maximum = P.MaximumLevel;
-	auto Requirements = P.ExperienceRequirements;
-	W << Maximum << Requirements;
-	FString ClassId = Class ? Class->ClassId.ToString().ToLower() : TEXT("none");
-	int32 ClassVersion = Class ? Class->SchemaVersion : 1, Floor = Class ? Class->StartingLevel : 1;
-	if (ClassVersion < 1 || Maximum < 1 || Maximum > 10000)
-		return {};
-	W << ClassId << ClassVersion << Floor;
-	for (const auto *Adv : History)
-	{
-		if (!Adv || Adv->SchemaVersion < 1)
-			return {};
-		FString Id = Adv->AdvancementId.ToString().ToLower();
-		int32 Version = Adv->SchemaVersion;
-		W << Id << Version;
-	}
-	TArray<UProject_JQuestDefinition *> Definitions;
-	for (const auto &Def : Q.Definitions)
-		if (Def)
-			Definitions.Add(Def.Get());
-	Definitions.Sort([](const auto &A, const auto &B) { return A.QuestId.LexicalLess(B.QuestId); });
-	for (const auto *Def : Definitions)
-	{
-		if (Q.FindDefinition(Def->QuestId) != Def)
-			return {};
-		FString Id = Def->QuestId.ToString().ToLower(), Event = Def->ObjectiveEvent.ToString().ToLower();
-		int32 Version = Def->SchemaVersion, Required = Def->RequiredCount;
-		int64 Reward = Def->RewardExperience;
-		bool Travel = Def->bTravelObjective;
-		W << Id << Version << Event << Required << Reward << Travel;
-	}
-	uint8 Digest[20];
-	FSHA1::HashBuffer(Bytes.GetData(), Bytes.Num(), Digest);
-	return BytesToHex(Digest, 20);
-}
+using ProjectJ::OwnedItems::CaptureItems;
+using ProjectJ::OwnedItems::ResolveItems;
+using ProjectJ::LocalProfileRules::Fingerprint;
+using ProjectJ::LocalProfileRules::Matches;
+
 } // namespace
 
 /** Native mailbox: one current commit plus one newest pending checkpoint, not an unbounded queue.
@@ -212,6 +104,14 @@ FString Fingerprint(const UProject_JProgressionComponent &P, const UProject_JQue
  */
 struct FProject_JLocalProfileWork
 {
+	struct FCounterKey
+	{
+		FName Quest, Objective;
+		bool operator==(const FCounterKey& Other) const { return Quest == Other.Quest && Objective == Other.Objective; }
+		friend uint32 GetTypeHash(const FCounterKey& Key) { return HashCombine(GetTypeHash(Key.Quest), GetTypeHash(Key.Objective)); }
+	};
+	struct FCounterGoal { int32 Required = 0, Desired = 0, Confirmed = 0; };
+	struct FProjection { FProfileValues Values; int64 Revision = 0; };
 	mutable FCriticalSection Mutex;
 	TSharedPtr<FProject_JSQLiteRepository, ESPMode::ThreadSafe> Repository;
 	TSharedPtr<FAggregateGate, ESPMode::ThreadSafe> Gate;
@@ -220,78 +120,228 @@ struct FProject_JLocalProfileWork
 	FProject_JRepositoryUsage Usage;
 	ECommitStatus LastResult = ECommitStatus::Committed;
 	bool bUsageKnown = false;
-	bool bRunning = false, bAccepting = true, bFaulted = false;
-	TOptional<TArray<uint8>> Pending;
-	TArray<uint8> LastQueued;
+	bool bRunning = false, bAccepting = true, bFaulted = false, bProgressOpen = false;
+	TOptional<FProject_JLocalProfileSnapshot> Pending;
+	TArray<uint8> LastQueued; // Confirmed bytes only; never a proposed encode.
+	FProfileValues ConfirmedValues;
+	TMap<FCounterKey, FCounterGoal> Progress;
+	int64 BlockedProgressRevision = -1;
+#if WITH_DEV_AUTOMATION_TESTS
+	TFunction<void(const TCHAR*)> CommandStageForTest;
+#endif
 	bool PendingIO() const
 	{
 		FScopeLock Lock(&Mutex);
 		return bRunning || Pending.IsSet();
 	}
-	bool Healthy() const
+	bool Healthy() const { FScopeLock Lock(&Mutex); return !bFaulted; }
+	int64 Revision() const { FScopeLock Lock(&Mutex); return ProfileRevision; }
+	void Seal() { FScopeLock Lock(&Mutex); bAccepting = false; }
+	void BeginCommand()
 	{
 		FScopeLock Lock(&Mutex);
-		return !bFaulted;
+		check(!bRunning);
+		bRunning = bProgressOpen = true;
 	}
-	int64 Revision() const
+	bool AddProgress(const TArray<FProject_JQuestProgressInput>& Inputs, int64 AppliedRevision,
+		bool bCommandPending, bool bCommandObserved, FGuid& OutTicket, bool& bOutStart)
 	{
 		FScopeLock Lock(&Mutex);
-		return ProfileRevision;
+		bOutStart = false;
+		if (!bAccepting || bFaulted || (bRunning && !bProgressOpen) || BlockedProgressRevision == ProfileRevision) return false;
+		int32 NewSlots = 0;
+		bool bChanges = false;
+		TSet<FCounterKey> Seen;
+		for (const auto& Input : Inputs)
+		{
+			const FCounterKey Key{Input.Quest, Input.Objective};
+			if (Input.Quest.IsNone() || Input.Required < 1 || Input.Required > 1000000 || Input.Current < 0 ||
+				Input.Current > Input.Required || Input.Amount < 1 || Input.Amount > 1000000 || Seen.Contains(Key)) return false;
+			Seen.Add(Key);
+			const auto* Goal = Progress.Find(Key);
+			if (Goal && Goal->Required != Input.Required) return false;
+			NewSlots += Goal ? 0 : 1;
+			bChanges |= FMath::Max(Input.Current, Goal ? Goal->Desired : 0) < Input.Required;
+		}
+		if (Progress.Num() + NewSlots > 128 * UProject_JQuestComponent::MaxObjectivesPerQuest) return false;
+		if (!bChanges) return true;
+		if (!bRunning)
+		{
+			// An older command must deliver its GT observer before another job can publish its values.
+			if (!bCommandObserved && (bCommandPending || ProfileRevision != AppliedRevision)) return false;
+			if (!ConfirmedValues || Gate->TryAcquire({ProfileKey(Character)}, OutTicket) != EAdmission::Accepted) return false;
+			bRunning = bProgressOpen = bOutStart = true;
+		}
+		for (const auto& Input : Inputs)
+		{
+			auto& Goal = Progress.FindOrAdd({Input.Quest, Input.Objective});
+			Goal.Required = Input.Required;
+			Goal.Confirmed = FMath::Max(Goal.Confirmed, Input.Current);
+			Goal.Desired = int32(FMath::Min<int64>(Input.Required,
+				int64(FMath::Max(Goal.Desired, Goal.Confirmed)) + Input.Amount));
+		}
+		return true;
 	}
-	void Seal()
+	static int32* FindCounter(FProject_JQuestSnapshot& Quests, const FCounterKey& Key)
+	{
+		auto* State = Quests.States.FindByPredicate([&](const auto& Value) { return Value.QuestId == Key.Quest; });
+		if (!State) return nullptr;
+		if (Key.Objective.IsNone()) return State->Objectives.IsEmpty() ? &State->Count : nullptr;
+		auto* Objective = State->Objectives.FindByPredicate([&](const auto& Value) { return Value.ObjectiveId == Key.Objective; });
+		return Objective ? &Objective->Count : nullptr;
+	}
+	static int32 ReadCounter(const FProject_JQuestSnapshot& Quests, const FCounterKey& Key)
+	{
+		const auto* State = Quests.States.FindByPredicate([&](const auto& Value) { return Value.QuestId == Key.Quest; });
+		if (!State) return 0;
+		return Key.Objective.IsNone() ? State->Count : State->GetObjectiveCount(Key.Objective);
+	}
+	void Fault(ECommitStatus Status)
 	{
 		FScopeLock Lock(&Mutex);
+		LastResult = Status;
+		bFaulted = true;
 		bAccepting = false;
+		Pending.Reset();
 	}
-	void Drain(FGuid Ticket)
+	FProjection FinishWriter(FGuid Ticket)
+	{
+		check(!IsInGameThread());
+		TMap<FCounterKey, FCounterGoal> Captured;
+		FProfileValues Baseline;
+		int64 ExpectedLeaseRevision = 0, ExpectedProfileRevision = 0;
+		{
+			FScopeLock Lock(&Mutex);
+			bProgressOpen = false; // One frozen tail only; later ingress must explicitly retry.
+			Baseline = ConfirmedValues;
+			ExpectedLeaseRevision = LeaseRevision;
+			ExpectedProfileRevision = ProfileRevision;
+			if (!bFaulted && BlockedProgressRevision != ProfileRevision)
+				for (const auto& Pair : Progress)
+					if (Pair.Value.Desired > Pair.Value.Confirmed) Captured.Add(Pair.Key, Pair.Value);
+		}
+		if (!Baseline && !Captured.IsEmpty())
+		{
+			FScopeLock Lock(&Mutex);
+			BlockedProgressRevision = ProfileRevision;
+		}
+		if (Baseline && !Captured.IsEmpty())
+		{
+			auto Proposed = *Baseline;
+			bool bValid = true, bChanged = false;
+			for (const auto& Pair : Captured)
+			{
+				int32* Counter = FindCounter(Proposed.Quests, Pair.Key);
+				if (!Counter || *Counter < 0 || *Counter > Pair.Value.Required) { bValid = false; break; }
+				const int32 Desired = FMath::Max(*Counter, Pair.Value.Desired);
+				bChanged |= Desired != *Counter;
+				*Counter = Desired;
+			}
+			TArray<uint8> Payload;
+			if (!bValid || (bChanged && !Proposed.Encode(Payload)))
+			{
+				FScopeLock Lock(&Mutex);
+				BlockedProgressRevision = ProfileRevision; // No spin; a confirmed recovery revision may retry.
+			}
+			else
+			{
+				bool bConfirmed = !bChanged;
+				if (bChanged)
+				{
+					FCommitRequest Request{FGuid::NewGuid(), TEXT("LocalProfileCheckpoint"),
+						{{LeaseKey(Character), ExpectedLeaseRevision, 1, SessionBytes(Session), false},
+						 {ProfileKey(Character), ExpectedProfileRevision, 1, MoveTemp(Payload), false}}};
+					FString HistoryFailure;
+					FCommitResult Result;
+					if (ProjectJ::LocalProfileHistory::PrepareHistoryMutations(*Repository, Character, *Baseline, Proposed, Request, HistoryFailure))
+						Result = Repository->CommitProfile(Request, {Character, Session, 0});
+					if (Result.Status == ECommitStatus::UnknownOutcome) Result = Repository->CommitProfile(Request, {Character, Session, 0});
+					FRecord Record, Lease;
+					bConfirmed = Accepted(Result.Status) && Repository->Read(ProfileKey(Character), Record) &&
+						Repository->Read(LeaseKey(Character), Lease) && !Record.bDeleted && !Lease.bDeleted &&
+						Record.SchemaVersion == 1 && Lease.SchemaVersion == 1 && Lease.Payload == SessionBytes(Session);
+					const FProfileValues Values = bConfirmed ? DecodeProfileValues(*Repository, Character, Record.Payload, Baseline, Record.Revision) : FProfileValues();
+					bConfirmed &= Values.IsValid();
+					if (bConfirmed)
+					{
+						FScopeLock Lock(&Mutex);
+						ConfirmedValues = Values;
+						LastQueued = MoveTemp(Record.Payload);
+						ProfileRevision = Record.Revision;
+						LeaseRevision = Lease.Revision;
+					}
+					else if (Result.Status == ECommitStatus::Invalid)
+					{
+						FScopeLock Lock(&Mutex);
+						BlockedProgressRevision = ProfileRevision;
+						}
+					else Fault(Accepted(Result.Status) ? ECommitStatus::Conflict : Result.Status);
+					FProject_JRepositoryUsage CurrentUsage;
+					const bool Known = Repository->GetUsage(CurrentUsage);
+					FScopeLock Lock(&Mutex);
+					Usage = CurrentUsage;
+					bUsageKnown = Known;
+				}
+				if (bConfirmed)
+				{
+					FScopeLock Lock(&Mutex);
+					BlockedProgressRevision = -1;
+					for (const auto& Pair : Captured)
+						if (auto* Goal = Progress.Find(Pair.Key))
+						{
+							Goal->Confirmed = FMath::Max(Goal->Confirmed, ReadCounter(ConfirmedValues->Quests, Pair.Key));
+							Goal->Desired = FMath::Max(Goal->Desired, Goal->Confirmed);
+						}
+				}
+			}
+		}
+		Repository->Close();
+		FScopeLock Lock(&Mutex);
+		bRunning = false;
+		Gate->Release(Ticket);
+		return {ConfirmedValues, ProfileRevision};
+	}
+	FProjection Drain(FGuid Ticket)
 	{
 		check(!IsInGameThread());
 		for (;;)
 		{
+			TOptional<FProject_JLocalProfileSnapshot> Snapshot;
+			{
+				FScopeLock Lock(&Mutex);
+				if (Pending.IsSet()) { Snapshot = MoveTemp(Pending.GetValue()); Pending.Reset(); }
+				else { bProgressOpen = false; break; }
+				for (const auto& Pair : Progress)
+					if (int32* Counter = FindCounter(Snapshot->Quests, Pair.Key)) *Counter = FMath::Max(*Counter, Pair.Value.Confirmed);
+			}
 			TArray<uint8> Payload;
+			int64 ExpectedLeaseRevision = 0, ExpectedProfileRevision = 0;
+			FProfileValues HistoryBaseline;
+			bool bEncoded = false;
+			{
+				TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_ProfileCheckpointEncode);
+				bEncoded = Snapshot->Encode(Payload);
+			}
+			if (!bEncoded) { Fault(ECommitStatus::Invalid); break; }
 			{
 				FScopeLock Lock(&Mutex);
-				if (Pending.IsSet())
-				{
-					Payload = MoveTemp(Pending.GetValue());
-					Pending.Reset();
-				}
+				if (LastQueued == Payload) continue;
+				ExpectedLeaseRevision = LeaseRevision;
+				ExpectedProfileRevision = ProfileRevision;
+				HistoryBaseline = ConfirmedValues;
 			}
-			if (Payload.IsEmpty())
-			{
-				Repository->Close(); // Do not hold the mailbox lock during disk I/O.
-				FScopeLock Lock(&Mutex);
-				if (Pending.IsSet())
-					continue; // A newer owned snapshot arrived while closing.
-				bRunning = false;
-				Gate->Release(Ticket);
-				return;
-			}
-			FCommitRequest Request;
-			Request.IdempotencyKey = FGuid::NewGuid();
-			Request.Operation = TEXT("LocalProfileCheckpoint");
-			Request.Mutations.Add({LeaseKey(Character), LeaseRevision, 1, SessionBytes(Session), false});
-			Request.Mutations.Add({ProfileKey(Character), ProfileRevision, 1, MoveTemp(Payload), false});
+			FCommitRequest Request{FGuid::NewGuid(), TEXT("LocalProfileCheckpoint"),
+				{{LeaseKey(Character), ExpectedLeaseRevision, 1, SessionBytes(Session), false},
+				 {ProfileKey(Character), ExpectedProfileRevision, 1, MoveTemp(Payload), false}}};
+			FProject_JLocalProfileSnapshot EmptyBefore;
+			EmptyBefore.Account = Snapshot->Account; EmptyBefore.Character = Character;
+			FString HistoryFailure;
+			if (!ProjectJ::LocalProfileHistory::PrepareHistoryMutations(*Repository, Character,
+				HistoryBaseline ? *HistoryBaseline : EmptyBefore, *Snapshot, Request, HistoryFailure))
+			{ Fault(ECommitStatus::Invalid); break; }
 			auto Result = Repository->CommitProfile(Request, {Character, Session, 0});
-			// Retry only the exact original command after an ambiguous native commit.
-			if (Result.Status == ECommitStatus::UnknownOutcome)
-				Result = Repository->CommitProfile(Request, {Character, Session, 0});
-			if (!Accepted(Result.Status) || Result.Revisions.Num() != 2)
-			{
-				FProject_JRepositoryUsage CurrentUsage;
-				const bool Known = Repository->GetUsage(CurrentUsage);
-				Repository->Close();
-				FScopeLock Lock(&Mutex);
-				LastResult = Result.Status;
-				Usage = CurrentUsage;
-				bUsageKnown = Known;
-				bFaulted = true;
-				bRunning = false;
-				bAccepting = false;
-				Pending.Reset();
-				Gate->Release(Ticket);
-				return;
-			}
+			if (Result.Status == ECommitStatus::UnknownOutcome) Result = Repository->CommitProfile(Request, {Character, Session, 0});
+			if (!Accepted(Result.Status) || Result.Revisions.Num() != Request.Mutations.Num()) { Fault(Result.Status); break; }
 			FProject_JRepositoryUsage CurrentUsage;
 			const bool Known = Repository->GetUsage(CurrentUsage);
 			FScopeLock Lock(&Mutex);
@@ -300,24 +350,49 @@ struct FProject_JLocalProfileWork
 			bUsageKnown = Known;
 			LeaseRevision = Result.Revisions[0];
 			ProfileRevision = Result.Revisions[1];
+			LastQueued = MoveTemp(Request.Mutations[1].Payload);
+			ConfirmedValues = MakeShared<FProject_JLocalProfileSnapshot, ESPMode::ThreadSafe>(MoveTemp(Snapshot.GetValue()));
 		}
+		return FinishWriter(Ticket);
 	}
 };
+
 
 struct FProject_JLocalProfileBinding
 {
 	TWeakObjectPtr<AProject_JPlayerState> Player;
+	ProjectJ::MMO::FServerSessionLease PlayerSession;
 	FGuid Account, Character;
 	TSharedPtr<FProject_JLocalProfileWork, ESPMode::ThreadSafe> Work;
 	TFunction<void(bool)> OnReady;
 	FDelegateHandle ProgressionChanged, QuestChanged, IdentityChanged;
 	bool bLoaded = false, bLoadSucceeded = false, bReady = false, bRetired = false;
-	bool bCommandPending = false;
+	bool bCommandPending = false, bCommandObserved = false;
+	int64 AppliedRevision = 0;
 	uint32 NextRequest = 0;
+	// GT-owned session observation: rejected admissions are not retained or automatically replayed.
+	uint64 RejectedProgressAdmissions = 0;
 	FProject_JPersistentCompletion CommandComplete;
 	FString LastAdmissionReason;
 	TArray<uint8> LoadedPayload;
+	FProfileValues LoadedValues;
+	ProjectJ::LocalProfileRules::FQuestGuard QuestRules;
 };
+
+namespace
+{
+bool RequireQuestRules(const TSharedPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe>& B,
+                       const FProject_JQuestDefinitionIndex& Index)
+{
+    const auto* Player = B->Player.Get();
+    const auto* Data = Player && Player->GetGameInstance() ? Player->GetGameInstance()->GetSubsystem<UProject_JCharacterDataSubsystem>() : nullptr;
+    if (B->QuestRules.IsCurrent(Index, Data)) return true;
+    B->bReady = false;
+    B->LastAdmissionReason = TEXT("저장된 퀘스트 규칙 변경/삭제: 기존 저장 보존, 명시적 이관 필요");
+    B->Work->Seal();
+    return false;
+}
+}
 
 void UProject_JLocalProfileSubsystem::Initialize(FSubsystemCollectionBase &Collection)
 {
@@ -375,7 +450,7 @@ bool UProject_JLocalProfileSubsystem::IsCurrent(
 	return !bClosing && B && !B->bRetired && IsValid(Player) && !Player->IsActorBeingDestroyed() &&
 		   Player->HasAuthority() && Player->GetGameInstance() == GetGameInstance() && Player->GetWorld() &&
 		   !Player->GetWorld()->bIsTearingDown && Player->GetAccountId().Value == B->Account &&
-		   Player->GetCharacterId().Value == B->Character && Found && *Found == B;
+		   Player->GetCharacterId().Value == B->Character && Player->IsServerSessionCurrent(B->PlayerSession) && Found && *Found == B;
 }
 void UProject_JLocalProfileSubsystem::OpenProfile(AProject_JPlayerState *Player, const FString &Profile,
 												  TFunction<void(bool)> OnReady)
@@ -400,11 +475,33 @@ void UProject_JLocalProfileSubsystem::OpenProfile(AProject_JPlayerState *Player,
 			return;
 		} // Reject duplicate active local profiles.
 	auto *Definitions = GetGameInstance()->GetSubsystem<UProject_JCharacterDataSubsystem>();
-	if (!Definitions || !Definitions->LoadPrimaryAssetDefinitions())
+	// GI bootstrap owns catalog refresh; opening a profile consumes its current publication.
+	if (!Definitions || !Definitions->EnsurePrimaryAssetDefinitions())
 	{
 		OnReady(false);
 		return;
 	}
+	const TStrongObjectPtr<UProject_JLocalProfileSubsystem> PreparingSelf(this);
+	const TStrongObjectPtr<UGameInstance> PreparingInstance(GetGameInstance());
+	const TStrongObjectPtr<UWorld> PreparingWorld(Player->GetWorld());
+	const TStrongObjectPtr<AProject_JPlayerState> PreparingPlayer(Player);
+	auto* PreparingQuests = Player->FindComponentByClass<UProject_JQuestComponent>();
+	if (!PreparingQuests || !PreparingQuests->PrepareForProfile() || bClosing || !IOGate || !IsValid(Player) ||
+		!Player->HasAuthority() || Player->IsActorBeingDestroyed() || !IsValid(PreparingWorld.Get()) ||
+		PreparingWorld->bIsTearingDown || Player->GetWorld() != PreparingWorld.Get() ||
+		Player->GetWorld()->GetNetMode() != NM_Standalone || GetGameInstance() != PreparingInstance.Get() ||
+		Player->GetGameInstance() != PreparingInstance.Get() || Player->GetPawn() ||
+		Player->FindComponentByClass<UProject_JQuestComponent>() != PreparingQuests ||
+		!Player->FindComponentByClass<UProject_JProgressionComponent>() ||
+		Player->FindComponentByClass<UProject_JProgressionComponent>()->GetState().Revision != 0 ||
+		Bindings.Num() >= 32 || Bindings.Contains(Player))
+	{
+		OnReady(false); return;
+	}
+	// Default acceptance publishes synchronously. A callback may have opened the
+	// same identity through another PlayerState since the original admission.
+	for (const auto& Pair : Bindings)
+		if (Pair.Value->Character == Character) { OnReady(false); return; }
 	FGuid Ticket;
 	if (IOGate->TryAcquire({ProfileKey(Character)}, Ticket) != EAdmission::Accepted)
 	{
@@ -413,11 +510,14 @@ void UProject_JLocalProfileSubsystem::OpenProfile(AProject_JPlayerState *Player,
 	}
 	auto B = MakeShared<FProject_JLocalProfileBinding, ESPMode::ThreadSafe>();
 	B->Player = Player;
+	B->PlayerSession = Player->CaptureServerSession();
 	B->Account = Account;
 	B->Character = Character;
 	B->OnReady = MoveTemp(OnReady);
 	auto Work = MakeShared<FProject_JLocalProfileWork, ESPMode::ThreadSafe>();
-	Work->Repository = MakeShared<FProject_JSQLiteRepository, ESPMode::ThreadSafe>(DatabasePath);
+	// Developer profile storage can hold a complete 1024-page quest archive plus
+	// its core/lease. This record budget is not a production player capacity.
+	Work->Repository = MakeShared<FProject_JSQLiteRepository, ESPMode::ThreadSafe>(DatabasePath, 4096);
 	Work->Gate = IOGate;
 	Work->Character = Character;
 	Work->Session = FGuid::NewGuid();
@@ -489,16 +589,31 @@ void UProject_JLocalProfileSubsystem::OpenProfile(AProject_JPlayerState *Player,
 			Work->Usage = Usage;
 			Work->bUsageKnown = Known;
 		}
+		// Parsing is part of the admitted native work, before returning its slot.
+		const FProfileValues Values = Success && !Record.Payload.IsEmpty()
+			? DecodeProfileValues(*Work->Repository, Work->Character, Record.Payload, {}, Record.Revision) : FProfileValues();
+		if (Success && !Record.Payload.IsEmpty() && !Values)
+		{
+			Success = false;
+			Error = TEXT("프로필 또는 완료 이력의 형식/참조가 호환되지 않습니다. 저장 원형을 보존하세요");
+		}
+		if (Values)
+		{
+			FScopeLock Lock(&Work->Mutex);
+			Work->ConfirmedValues = Values;
+			Work->LastQueued = Record.Payload;
+		}
 		Work->Repository->Close();
 		Work->Gate->Release(Ticket);
 		AsyncTask(ENamedThreads::GameThread,
-				  [WeakThis, B, Success, Error = MoveTemp(Error), Payload = MoveTemp(Record.Payload)]() mutable {
+				  [WeakThis, B, Success, Values, Error = MoveTemp(Error), Payload = MoveTemp(Record.Payload)]() mutable {
 					  if (auto *Self = WeakThis.Get(); Self && Self->IsCurrent(B))
 					  {
 						  B->bLoaded = true;
 						  B->bLoadSucceeded = Success;
 						  B->LastAdmissionReason = MoveTemp(Error);
 						  B->LoadedPayload = MoveTemp(Payload);
+						  B->LoadedValues = Values;
 						  Self->CompleteOpen(B);
 					  }
 				  });
@@ -512,6 +627,7 @@ void UProject_JLocalProfileSubsystem::PlayerBegunPlay(AProject_JPlayerState *Pla
 void UProject_JLocalProfileSubsystem::CompleteOpen(
 	const TSharedPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe> &B)
 {
+	check(IsInGameThread());
 	if (!IsCurrent(B) || !B->bLoaded || !B->OnReady || !B->Player->HasActorBegunPlay())
 		return;
 	auto *Player = B->Player.Get();
@@ -519,41 +635,68 @@ void UProject_JLocalProfileSubsystem::CompleteOpen(
 	auto *Q = Player->FindComponentByClass<UProject_JQuestComponent>();
 	const TStrongObjectPtr<UProject_JLocalProfileSubsystem> KeepSelf(this);
 	const TStrongObjectPtr<AProject_JPlayerState> KeepPlayer(Player);
-	bool Success = B->bLoadSucceeded && P && Q && !Player->GetPawn() && P->GetState().Revision == 0;
-	if (Success && !B->LoadedPayload.IsEmpty())
+	const TStrongObjectPtr<UProject_JProgressionComponent> KeepProgress(P);
+	const TStrongObjectPtr<UProject_JQuestComponent> KeepQuests(Q);
+	const TStrongObjectPtr<UProject_JCraftingJobsComponent> KeepJobs(Player->GetCraftingJobsComponent());
+	const TStrongObjectPtr<UProject_JInventoryComponent> KeepInventory(Player->GetInventoryComponent());
+	const TStrongObjectPtr<UProject_JEquipmentManagerComponent> KeepEquipment(Player->GetEquipmentManagerComponent());
+	FProject_JQuestDefinitionIndex QuestIndex;
+	const bool QuestsPrepared = Q && Q->PrepareForProfile();
+	if (QuestsPrepared) Q->BuildDefinitionIndex(QuestIndex);
+	bool Success = B->bLoadSucceeded && P && Q && QuestsPrepared && !Player->GetPawn() && P->GetState().Revision == 0;
+	if (Success && !B->LoadedPayload.IsEmpty() && !B->LoadedValues)
 	{
-		FProject_JLocalProfileSnapshot Snapshot;
+		Success = false;
+		if (B->LastAdmissionReason.IsEmpty()) B->LastAdmissionReason = TEXT("프로필 JSON 형식/범위 오류: 원형 보존 필요");
+	}
+	if (Success && B->LoadedValues)
+	{
+		const FProfileValues Values = B->LoadedValues;
+		const auto& Snapshot = *Values;
 		UProject_JCharacterClassDefinition *Class = nullptr;
 		TArray<UProject_JCharacterAdvancementDefinition *> History;
 		TArray<FProject_JItemInstanceData> Bag;
 		TArray<FProject_JEquipmentArrayItem> Slots;
-		const bool Decoded = FProject_JLocalProfileSnapshot::Decode(B->LoadedPayload, Snapshot);
-		Success = Decoded && Snapshot.Account == B->Account && Snapshot.Character == B->Character &&
+		ProjectJ::LocalProfileRules::FQuestGuard LoadedRules;
+		Success = Snapshot.Account == B->Account && Snapshot.Character == B->Character &&
 				  ResolveDefinitions(GetGameInstance(), Snapshot.Progression, Class, History) &&
-				  Snapshot.RulesFingerprint == Fingerprint(*P, *Q, Class, History) &&
+				  Matches(Snapshot, *P, QuestIndex, Class, History) &&
 				  P->CanRestoreSnapshot(Snapshot.Progression, Class, History) &&
 				  Q->CanRestoreSnapshot(Snapshot.Quests, true) &&
-				  ResolveItems(Player, Snapshot, Bag, Slots, false, &B->LastAdmissionReason);
+				  ResolveItems(Player, Snapshot, Bag, Slots, false, &B->LastAdmissionReason) &&
+				  LoadedRules.Capture(QuestIndex, Snapshot.Quests, GetGameInstance()->GetSubsystem<UProject_JCharacterDataSubsystem>());
 		if (!Success && B->LastAdmissionReason.IsEmpty())
 			B->LastAdmissionReason =
-				!Decoded ? TEXT("프로필 JSON 형식/범위 오류: 원형 보존 필요")
-				: Snapshot.Format == 1
+				Snapshot.Format == 1
 					? TEXT("진행도 전용 v1 프로필: 인벤토리 없는 상태를 추측하지 않습니다. 명시적 v2 이관 필요")
 					: TEXT("프로필의 정의·규칙 버전·범위·소유권 검증 실패: 기존 저장을 보존했습니다");
 		if (Success)
 		{
-			const TStrongObjectPtr<UProject_JProgressionComponent> KeepProgress(P);
-			const TStrongObjectPtr<UProject_JQuestComponent> KeepQuests(Q);
-			const TStrongObjectPtr<UProject_JInventoryComponent> KeepInventory(Player->GetInventoryComponent());
-			const TStrongObjectPtr<UProject_JEquipmentManagerComponent> KeepEquipment(
-				Player->GetEquipmentManagerComponent());
+			const auto ParticipantsCurrent = [&]
+			{
+				const auto Live = [&](const UActorComponent* Component)
+				{
+					return IsValid(Component) && !Component->IsBeingDestroyed() && Component->IsRegistered() &&
+						Component->GetOwner() == Player && Component->GetWorld() == Player->GetWorld();
+				};
+				return IsCurrent(B) && B->Player.Get() == Player && Live(P) && Live(Q) &&
+					Live(KeepInventory.Get()) && Live(KeepEquipment.Get()) && Live(KeepJobs.Get()) &&
+					Player->FindComponentByClass<UProject_JProgressionComponent>() == P &&
+					Player->FindComponentByClass<UProject_JQuestComponent>() == Q &&
+					Player->GetInventoryComponent() == KeepInventory.Get() &&
+					Player->GetEquipmentManagerComponent() == KeepEquipment.Get() &&
+					Player->GetCraftingJobsComponent() == KeepJobs.Get();
+			};
+			const int64 PreviousAppliedRevision = B->AppliedRevision;
+			const int64 ProjectionRevision = B->Work->Revision();
+			if (!IsCurrent(B)) return; // A preflight getter may have retired this binding before policy installation.
 			// Loading an existing owner has no bootstrap mutation window. Admission stays
 			// closed through all initial notifications; trusted installers do no I/O.
 			BindPersistentCommands(B);
 			Player->GetProjectJAbilitySystemComponent()->InitAbilityActorInfo(Player, nullptr);
 			Bag.Reset();
 			Slots.Reset();
-			Success = IsCurrent(B) &&
+			Success = ParticipantsCurrent() && !Player->GetPawn() &&
 					  P->ValidateCommittedProgression(Snapshot.Progression, Class, History, true, true) &&
 					  Q->ValidateCommittedQuests(Snapshot.Quests, true) &&
 					  ResolveItems(Player, Snapshot, Bag, Slots, true, &B->LastAdmissionReason);
@@ -563,29 +706,52 @@ void UProject_JLocalProfileSubsystem::CompleteOpen(
 				auto *E = KeepEquipment.Get();
 				const auto OldBag = I->GetItemInstances();
 				const auto OldSlots = E->CapturePersistentEquipment();
-				P->InstallCommittedProgression(Snapshot.Progression, Class, History);
-				Q->InstallCommittedQuests(Snapshot.Quests);
-				I->InstallPersistentItems(Bag);
-				E->InstallPersistentEquipment(Slots);
-				E->bPersistentProfileBound = true;
-				P->PublishCommittedExperience();
-				if (IsCurrent(B))
-					Q->PublishCommittedQuests();
-				if (IsCurrent(B))
-					I->PublishPersistentItems(OldBag);
-				if (IsCurrent(B))
-					E->PublishPersistentEquipment(OldSlots);
+				const auto CanInstall = [&]
+				{
+					if (!ParticipantsCurrent() || Player->GetPawn() || B->AppliedRevision != PreviousAppliedRevision) return false;
+					FProject_JQuestDefinitionIndex CurrentIndex;
+					Q->BuildDefinitionIndex(CurrentIndex);
+					return Matches(Snapshot, *P, CurrentIndex, Class, History) &&
+						LoadedRules.IsCurrent(CurrentIndex, GetGameInstance()->GetSubsystem<UProject_JCharacterDataSubsystem>()) &&
+						Q->ValidateCommittedQuests(Snapshot.Quests, true) && I->ValidatePersistentItems(Bag, true) &&
+						E->ValidatePersistentEquipment(Slots, Bag, true) && KeepJobs->ValidateCommittedJobs(Snapshot.CraftingJobs);
+				};
+				bool bProgressionChanged = false;
+				// The installer checks again after its last extensible ASC getter, before any value writes.
+				Success = P->TryInstallCommittedProgression(Snapshot.Progression, Class, History, CanInstall, bProgressionChanged);
+				if (Success)
+				{
+					B->QuestRules = MoveTemp(LoadedRules);
+					Q->InstallCommittedQuests(Snapshot.Quests);
+					I->InstallPersistentItems(Bag);
+					E->InstallPersistentEquipment(Slots);
+					KeepJobs->InstallCommittedJobs(Snapshot.CraftingJobs);
+					E->bPersistentProfileBound = true;
+					B->AppliedRevision = ProjectionRevision;
+					const auto CanPublish = [&] { return ParticipantsCurrent() && B->AppliedRevision == ProjectionRevision; };
+					P->PublishCommittedExperience(CanPublish);
+					if (CanPublish())
+						Q->PublishCommittedQuests();
+					if (CanPublish())
+						I->PublishPersistentItems(OldBag, CanPublish);
+					if (CanPublish())
+						E->PublishPersistentEquipment(OldSlots);
+					if (CanPublish()) KeepJobs->BroadcastCommittedJobs();
+				}
 			}
 		}
 	}
 	if (!IsCurrent(B))
 		return;
+	if (Success && !B->LoadedValues)
+		Success = B->QuestRules.Capture(QuestIndex, Q->CaptureSnapshot(), GetGameInstance()->GetSubsystem<UProject_JCharacterDataSubsystem>());
+	B->AppliedRevision = B->Work->Revision();
 	B->bReady = Success;
 	// An unchanged loaded profile needs no second receipt merely for spawning.
 	if (Success && !B->LoadedPayload.IsEmpty())
 	{
 		FScopeLock Lock(&B->Work->Mutex);
-		B->Work->LastQueued = B->LoadedPayload;
+		B->Work->LastQueued = MoveTemp(B->LoadedPayload);
 	}
 	if (Success)
 	{
@@ -609,6 +775,7 @@ void UProject_JLocalProfileSubsystem::CompleteOpen(
 	if (!Success && IsCurrent(B))
 		BindPersistentCommands(B);
 	B->LoadedPayload.Reset();
+	B->LoadedValues.Reset();
 	Callback(Success);
 	if (Success && IsCurrent(B))
 		Player->GetEquipmentManagerComponent()->bPersistentProfileBound = true;
@@ -620,14 +787,19 @@ void UProject_JLocalProfileSubsystem::CompleteOpen(
 void UProject_JLocalProfileSubsystem::RequestCheckpoint(AProject_JPlayerState *Player)
 {
 	check(IsInGameThread());
+	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_ProfileCheckpointCapture);
 	auto *Found = Bindings.Find(Player);
-	if (!Found || !IsCurrent(*Found) || !(*Found)->bReady || (*Found)->bCommandPending)
-		return;
+	if (!Found || !IsCurrent(*Found) || !(*Found)->bReady || (*Found)->bCommandPending ||
+		(*Found)->Work->Revision() != (*Found)->AppliedRevision) return;
 	auto B = *Found;
 	auto *P = Player->FindComponentByClass<UProject_JProgressionComponent>();
 	auto *Q = Player->FindComponentByClass<UProject_JQuestComponent>();
 	if (!P || !Q || P->GetState().Revision == 0)
 		return; // Pawn defaults must initialize a new profile first.
+	FProject_JQuestDefinitionIndex QuestIndex;
+	Q->BuildDefinitionIndex(QuestIndex);
+	if (!RequireQuestRules(B, QuestIndex)) return;
+	ProjectJ::LocalProfileRules::FQuestGuard CapturedRules;
 	FProject_JLocalProfileSnapshot Snapshot;
 	Snapshot.Account = B->Account;
 	Snapshot.Character = B->Character;
@@ -635,12 +807,15 @@ void UProject_JLocalProfileSubsystem::RequestCheckpoint(AProject_JPlayerState *P
 	Snapshot.Quests = Q->CaptureSnapshot();
 	UProject_JCharacterClassDefinition *Class = nullptr;
 	TArray<UProject_JCharacterAdvancementDefinition *> History;
-	TArray<uint8> Payload;
-	if (!ResolveDefinitions(GetGameInstance(), Snapshot.Progression, Class, History) ||
+	// Verify the old accepted rules/states before dropping any claimed details.
+	if (!Q->ValidateCommittedQuests(Snapshot.Quests) ||
+		!UProject_JQuestComponent::NormalizeClaimed(Snapshot.Quests) ||
+		!ResolveDefinitions(GetGameInstance(), Snapshot.Progression, Class, History) ||
 		P->GetState().ClassDefinition != Class ||
 		P->GetState().Advancement != (History.IsEmpty() ? nullptr : History.Last()) ||
-		(Snapshot.RulesFingerprint = Fingerprint(*P, *Q, Class, History)).IsEmpty() ||
-		!CaptureItems(Player, Snapshot) || !Snapshot.Encode(Payload))
+		(Snapshot.RulesFingerprint = Fingerprint(*P, QuestIndex, Class, History, &Snapshot.Quests)).IsEmpty() ||
+		!CapturedRules.Capture(QuestIndex, Snapshot.Quests, GetGameInstance()->GetSubsystem<UProject_JCharacterDataSubsystem>()) ||
+		!CaptureItems(Player, Snapshot))
 	{
 		B->bReady = false;
 		B->Work->Seal();
@@ -652,8 +827,7 @@ void UProject_JLocalProfileSubsystem::RequestCheckpoint(AProject_JPlayerState *P
 	FGuid Ticket;
 	{
 		FScopeLock Lock(&Work->Mutex);
-		if (!Work->bAccepting || Work->bFaulted || Work->LastQueued == Payload)
-			return;
+		if (!Work->bAccepting || Work->bFaulted || (Work->bRunning && !Work->bProgressOpen)) return;
 		if (!Work->bRunning && Work->Gate->TryAcquire({ProfileKey(B->Character)}, Ticket) != EAdmission::Accepted)
 		{
 			B->bReady = false;
@@ -661,28 +835,22 @@ void UProject_JLocalProfileSubsystem::RequestCheckpoint(AProject_JPlayerState *P
 				   TEXT("Local checkpoint admission unavailable; checkpoint not confirmed."));
 			return;
 		}
-		Work->LastQueued = Payload;
-		Work->Pending = MoveTemp(Payload);
+		B->QuestRules = MoveTemp(CapturedRules);
+		Work->Pending = MoveTemp(Snapshot);
 		if (Work->bRunning)
 			return;
-		Work->bRunning = true;
+		Work->bRunning = Work->bProgressOpen = true;
 	}
 	TWeakObjectPtr<UProject_JLocalProfileSubsystem> WeakThis(this);
 	TWeakPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe> WeakB(B);
 	Jobs.RemoveAll([](const auto &Job) { return Job.IsReady(); });
 	Jobs.Add(Async(EAsyncExecution::ThreadPool, [Work, Ticket, WeakThis, WeakB] {
-		Work->Drain(Ticket);
-		if (!Work->Healthy())
-			AsyncTask(ENamedThreads::GameThread, [WeakThis, WeakB]() {
-				if (auto *Self = WeakThis.Get())
-					if (auto Current = WeakB.Pin(); Self->IsCurrent(Current))
-					{
-						Current->bReady = false;
-						UE_LOG(LogProjectJLocalProfile, Error,
-							   TEXT("Local checkpoint failed or its writer was fenced; reload is required before "
-									"further saves."));
-					}
-			});
+		auto Projection = Work->Drain(Ticket);
+		AsyncTask(ENamedThreads::GameThread, [WeakThis, WeakB, Projection = MoveTemp(Projection)] {
+			if (auto* Self = WeakThis.Get())
+				if (auto Current = WeakB.Pin(); Self->IsCurrent(Current))
+					Self->CompleteProgress(Current, Projection.Values, Projection.Revision);
+		});
 	}));
 }
 void UProject_JLocalProfileSubsystem::RequestBackup(TFunction<void(bool, FString)> OnComplete)
@@ -745,7 +913,8 @@ bool UProject_JLocalProfileSubsystem::IsReady(const AProject_JPlayerState *Playe
 bool UProject_JLocalProfileSubsystem::IsCheckpointPending(const AProject_JPlayerState *Player) const
 {
 	const auto *Found = Bindings.Find(const_cast<AProject_JPlayerState *>(Player));
-	return Found && ((*Found)->bCommandPending || (*Found)->Work->PendingIO());
+	return Found && ((*Found)->bCommandPending || (*Found)->Work->PendingIO() ||
+		((*Found)->Work->Healthy() && (*Found)->Work->Revision() != (*Found)->AppliedRevision));
 }
 int64 UProject_JLocalProfileSubsystem::GetCommittedRevision(const AProject_JPlayerState *Player) const
 {
@@ -779,6 +948,10 @@ FText UProject_JLocalProfileSubsystem::GetStatusText(const AProject_JPlayerState
 		Work->bUsageKnown ? FString::Printf(TEXT("records %lld/%d · receipts %lld/%d"), Work->Usage.Records,
 											Work->Usage.RecordLimit, Work->Usage.Receipts, Work->Usage.ReceiptLimit)
 						  : TEXT("사용량 확인 불가");
+	if (Work->BlockedProgressRevision == Work->ProfileRevision)
+		State += TEXT(" · 퀘스트 진척 저장 용량 확인 필요: 감소/병합 후 다시 시도");
+	if (B.RejectedProgressAdmissions)
+		State += FString::Printf(TEXT(" · 진척 미수락 요청 %llu회(현재 세션 누적·자동 재전송 없음)"), B.RejectedProgressAdmissions);
 	if (!B.LastAdmissionReason.IsEmpty())
 		State += TEXT(" · ") + B.LastAdmissionReason;
 	return FText::FromString(
@@ -807,7 +980,7 @@ void UProject_JLocalProfileSubsystem::BindPersistentCommands(
 		auto *Self = WeakThis.Get();
 		auto Current = WeakB.Pin();
 		return Self && Self->IsCurrent(Current) && Current->bReady && Current->Work->Healthy() &&
-			   !Current->bCommandPending;
+			   !Current->bCommandPending && Current->Work->Revision() == Current->AppliedRevision;
 	};
 	auto *Player = B->Player.Get();
 	auto *P = Player->FindComponentByClass<UProject_JProgressionComponent>();
@@ -816,6 +989,11 @@ void UProject_JLocalProfileSubsystem::BindPersistentCommands(
 	P->CreatePersistentRequest = CreateRequest;
 	P->PersistentAdmission = Admission;
 	Q->SubmitPersistentEdit = Submit;
+	Q->SubmitPersistentProgress = [WeakThis, WeakB](const TArray<FProject_JQuestProgressInput>& Inputs) {
+		auto* Self = WeakThis.Get();
+		auto Current = WeakB.Pin();
+		return Self && Self->QueueQuestProgress(Current, Inputs);
+	};
 	Q->CreatePersistentRequest = CreateRequest;
 	Q->PersistentAdmission = Admission;
 	Player->GetInventoryComponent()->SubmitPersistentEdit = Submit;
@@ -824,6 +1002,9 @@ void UProject_JLocalProfileSubsystem::BindPersistentCommands(
 	Player->GetEquipmentManagerComponent()->SubmitPersistentEdit = Submit;
 	Player->GetEquipmentManagerComponent()->CreatePersistentRequest = CreateRequest;
 	Player->GetEquipmentManagerComponent()->PersistentAdmission = Admission;
+	Player->GetCraftingJobsComponent()->SubmitPersistentEdit = Submit;
+	Player->GetCraftingJobsComponent()->CreatePersistentRequest = CreateRequest;
+	Player->GetCraftingJobsComponent()->PersistentAdmission = Admission;
 }
 
 FGuid UProject_JLocalProfileSubsystem::NewRequestId(AProject_JPlayerState *Player)
@@ -837,13 +1018,23 @@ FGuid UProject_JLocalProfileSubsystem::NewRequestId(AProject_JPlayerState *Playe
 	return Session;
 }
 bool UProject_JLocalProfileSubsystem::SubmitEdit(AProject_JPlayerState *Player, const FProject_JPersistentEdit &Edit,
-												 FProject_JPersistentCompletion Complete)
+												 FProject_JPersistentCompletion Complete, FProject_JProfileDurableCompletion OnDurable)
 {
 	check(IsInGameThread());
+	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_ProfileCommandCapture);
+	if (Edit.Kind == EProject_JPersistentEdit::Craft || Edit.Kind == EProject_JPersistentEdit::StartCraftJob)
+	{
+		if (Edit.CraftingRecipe.IsNone() || Edit.CraftingRecipe.ToString().Len() > 64 ||
+			Edit.CraftingRecipeVersion < 1 || Edit.CraftingBatches < 1 || Edit.CraftingBatches > 100 ||
+			Edit.CraftingRulesDigest.Len() != 40) return false;
+		for (TCHAR Value : Edit.CraftingRulesDigest) if (!FChar::IsHexDigit(Value)) return false;
+	}
+	if ((Edit.Kind == EProject_JPersistentEdit::CollectCraftJob || Edit.Kind == EProject_JPersistentEdit::CancelCraftJob) &&
+		!Edit.CraftingJob.IsValid()) return false;
 	auto *Found = Bindings.Find(Player);
 	if (!Found || !IsCurrent(*Found) || !(*Found)->bReady || !Edit.Request.IsValid() || !(*Found)->Work->Healthy())
 		return false;
-	if ((*Found)->bCommandPending || (*Found)->Work->PendingIO())
+	if ((*Found)->bCommandPending || (*Found)->Work->PendingIO() || (*Found)->Work->Revision() != (*Found)->AppliedRevision)
 	{
 		(*Found)->LastAdmissionReason = TEXT("이전 저장 확인 중: 새 변경을 수락하지 않음");
 		return false;
@@ -861,16 +1052,21 @@ bool UProject_JLocalProfileSubsystem::SubmitEdit(AProject_JPlayerState *Player, 
 	auto *I = Player->GetInventoryComponent();
 	auto *E = Player->GetEquipmentManagerComponent();
 	FProject_JLocalProfileSnapshot Before;
+	TSet<FGuid> LockedInstances;
 	Before.Account = B->Account;
 	Before.Character = B->Character;
 	Before.Progression = P->CaptureSnapshot();
 	Before.Quests = Q->CaptureSnapshot();
+	FProject_JQuestDefinitionIndex QuestIndex;
+	Q->BuildDefinitionIndex(QuestIndex);
+	if (!RequireQuestRules(B, QuestIndex)) return false;
 	UProject_JCharacterClassDefinition *Class = nullptr;
 	TArray<UProject_JCharacterAdvancementDefinition *> History;
-	TArray<uint8> BeforeBytes;
 	if (!ResolveDefinitions(GetGameInstance(), Before.Progression, Class, History) ||
-		(Before.RulesFingerprint = Fingerprint(*P, *Q, Class, History)).IsEmpty() || !CaptureItems(Player, Before) ||
-		!Before.Encode(BeforeBytes))
+		(Before.RulesFingerprint = Fingerprint(*P, QuestIndex, Class, History, &Before.Quests)).IsEmpty() ||
+		!CaptureItems(Player, Before, (Edit.Kind == EProject_JPersistentEdit::Claim || Edit.Kind == EProject_JPersistentEdit::Craft || Edit.Kind == EProject_JPersistentEdit::Gather ||
+			Edit.Kind == EProject_JPersistentEdit::StartCraftJob || Edit.Kind == EProject_JPersistentEdit::CollectCraftJob ||
+			Edit.Kind == EProject_JPersistentEdit::CancelCraftJob) ? &LockedInstances : nullptr))
 		return false;
 	// Exact logical intent is receipt data, independent of later aggregate revisions.
 	// Keep Operation bounded; unique payloads must not grow the global FName pool.
@@ -889,11 +1085,30 @@ bool UProject_JLocalProfileSubsystem::SubmitEdit(AProject_JPlayerState *Player, 
 	W << ProgressionDefinition;
 	W << Kind << Instance << Target << Definition << Version << Quest << Amount << Level << Operation << SC << TC << SO
 	  << TO << Slot;
+	if (Edit.Kind == EProject_JPersistentEdit::Craft || Edit.Kind == EProject_JPersistentEdit::StartCraftJob)
+	{
+		FString Recipe = Edit.CraftingRecipe.ToString().ToLower(), Rules = Edit.CraftingRulesDigest.ToLower();
+		int32 RecipeVersion = Edit.CraftingRecipeVersion, Batches = Edit.CraftingBatches;
+		W << Recipe << RecipeVersion << Batches << Rules;
+	}
+	if (Edit.Kind == EProject_JPersistentEdit::CollectCraftJob || Edit.Kind == EProject_JPersistentEdit::CancelCraftJob)
+	{ FGuid JobId = Edit.CraftingJob; W << JobId; }
 	if (Intent.Num() > 440)
 		return false;
 	const FName IntentOperation(*FString::Printf(TEXT("ProfileEdit.%d"), int32(Edit.Kind)));
 	const FGuid Key = Edit.Request;
-	auto Proposed = Before;
+	const bool bCraft = Edit.Kind == EProject_JPersistentEdit::Craft;
+	const bool bStartJob = Edit.Kind == EProject_JPersistentEdit::StartCraftJob;
+	const bool bCollectJob = Edit.Kind == EProject_JPersistentEdit::CollectCraftJob;
+	const bool bCancelJob = Edit.Kind == EProject_JPersistentEdit::CancelCraftJob;
+	const bool bCraftPlan = bCraft || bStartJob || bCollectJob || bCancelJob;
+	const auto CraftKind = Edit.Kind;
+	const FGuid CraftJobId = bStartJob ? Key : Edit.CraftingJob;
+	const FString CraftRulesDigest = Edit.CraftingRulesDigest.ToLower();
+	const int32 CraftBatches = Edit.CraftingBatches;
+	ProjectJ::Crafting::FRecipeValues CraftRecipe;
+    TArray<ProjectJ::Crafting::FResolvedLine> ClaimRewards;
+	auto Proposed = bCraftPlan ? FProject_JLocalProfileSnapshot{} : Before;
 	auto Find = [&](FGuid Id) {
 		return Proposed.Items.IndexOfByPredicate([&](const auto &Item) { return Item.Instance == Id; });
 	};
@@ -916,37 +1131,63 @@ bool UProject_JLocalProfileSubsystem::SubmitEdit(AProject_JPlayerState *Player, 
 		}
 		if (Edit.Kind == K::Experience)
 			return P->PlanExperience(Edit.Amount, Proposed.Progression);
+		if (Edit.Kind == K::AcceptCompoundQuest)
+			return Q->PlanAcceptance(Edit.Quest, Proposed.Quests);
+		if (Edit.Kind == K::SetQuestTracking)
+			return (Edit.Amount == 0 || Edit.Amount == 1) &&
+				UProject_JQuestComponent::PlanTracking(Edit.Quest, Edit.Amount == 1, Proposed.Quests);
 		if (Edit.Kind == K::Claim)
 		{
 			auto *State =
 				Proposed.Quests.States.FindByPredicate([&](const auto &S) { return S.QuestId == Edit.Quest; });
 			const auto *Def = Q->FindDefinition(Edit.Quest);
-			if (!State || !Def || State->bClaimed || State->Count < Def->RequiredCount)
+			if (!State || !Def || State->bClaimed || !Def->IsComplete(*State))
 				return false;
+            if (!Def->CaptureRewardItems(GetGameInstance()->GetSubsystem<UProject_JCharacterDataSubsystem>(), ClaimRewards)) return false;
 			if (Def->RewardExperience > 0 && P->GetNextLevelExperience() > 0 &&
 				!P->PlanExperience(Def->RewardExperience, Proposed.Progression))
 				return false;
-			State->bClaimed = true;
-			State->bTracked = false;
-			return true;
+			return UProject_JQuestComponent::PlanClaimCompletion(Edit.Quest, Proposed.Quests);
 		}
-		if (Edit.Kind == K::Add)
+		if (Edit.Kind == K::Add || Edit.Kind == K::Gather)
 		{
 			auto *Data = GetGameInstance()->GetSubsystem<UProject_JCharacterDataSubsystem>();
 			const auto *Def = Edit.Definition;
 			if (!Def || Data->GetItemDefinition(Def->ItemId, Def->SchemaVersion) != Def || !Edit.Instance.IsValid() ||
 				Find(Edit.Instance) != INDEX_NONE || Edit.Amount < 1 || Edit.Amount > Def->MaxStackCount ||
-				Edit.Level < 1 || Edit.Level > 10000 || NextOrder() == INDEX_NONE)
+				Edit.Level < 1 || Edit.Level > 10000)
 				return false;
-			FProject_JPersistentItem Item;
-			Item.Instance = Edit.Instance;
-			Item.Definition = Def->ItemId;
-			Item.DefinitionVersion = Def->SchemaVersion;
-			Item.Level = Edit.Level;
-			Item.Count = int32(Edit.Amount);
-			Item.Order = NextOrder();
-			Proposed.Items.Add(Item);
-			return true;
+			int64 Remaining = Edit.Amount;
+			// Gather is a definition-only grant. Add deliberately keeps its explicit
+			// new-instance/OnItemAdded contract; restore/transfer/equipment are unchanged.
+			if (Edit.Kind == K::Gather && Def->MaxStackCount > 1 && !Def->IsA<UProject_JEquipmentItemDefinition>()
+				&& !Def->IsA<UProject_JCompanionItemDefinition>() && !Def->IsA<UProject_JMountItemDefinition>())
+			{
+				for (auto& Existing : Proposed.Items)
+				{
+					if (!Existing.bInBag || Existing.Slot != EProject_JEquipmentSlot::None || LockedInstances.Contains(Existing.Instance)
+						|| Existing.Definition != Def->ItemId || Existing.DefinitionVersion != Def->SchemaVersion || Existing.Level != Edit.Level
+						|| Existing.Count >= Def->MaxStackCount) continue;
+					const int64 Taken = FMath::Min(Remaining, int64(Def->MaxStackCount) - Existing.Count);
+					Existing.Count += int32(Taken); Remaining -= Taken;
+					if (!Remaining) break;
+				}
+			}
+			if (Remaining)
+			{
+				const int32 Order = NextOrder();
+				if (Order == INDEX_NONE) return false; // Full merge does not allocate an order.
+				FProject_JPersistentItem Item;
+				Item.Instance = Edit.Instance; // The same server-issued intent GUID, never a retry allocation.
+				Item.Definition = Def->ItemId;
+				Item.DefinitionVersion = Def->SchemaVersion;
+				Item.Level = Edit.Level;
+				Item.Count = int32(Remaining);
+				Item.Order = Order;
+				Proposed.Items.Add(Item);
+			}
+			return Edit.Kind != K::Gather || Q->PlanActivityProgress(Proposed.Quests, EProject_JQuestObjectiveKind::GatherItem,
+				Def->ItemId, Def->SchemaVersion, Edit.Amount, QuestIndex);
 		}
 		int32 Index = Find(Edit.Instance);
 		if (Index == INDEX_NONE)
@@ -1046,38 +1287,178 @@ bool UProject_JLocalProfileSubsystem::SubmitEdit(AProject_JPlayerState *Player, 
 			Proposed.Items.RemoveAt(Index);
 		return true;
 	};
-	TArray<uint8> Payload;
 	TArray<FProject_JItemInstanceData> PlannedBag;
 	TArray<FProject_JEquipmentArrayItem> PlannedSlots;
 	UProject_JCharacterClassDefinition *PlannedClass = nullptr;
 	TArray<UProject_JCharacterAdvancementDefinition *> PlannedHistory;
-	const bool Valid = Plan() &&
+	bool Valid = false;
+	if (bCraftPlan)
+	{
+		// GT captures definitions/progress; worker owns receipt-first UTC/planning.
+		auto* Data = GetGameInstance()->GetSubsystem<UProject_JCharacterDataSubsystem>();
+		Proposed.Quests = Before.Quests;
+		const bool bQuestBaselineValid = Q->ValidateCommittedQuests(Before.Quests)
+			&& UProject_JQuestComponent::NormalizeClaimed(Proposed.Quests);
+		if (bCraft || bStartJob)
+		{
+			const auto* Recipe = Data ? Data->GetCraftingRecipe(Edit.CraftingRecipe, Edit.CraftingRecipeVersion) : nullptr;
+			FString Rules;
+			Valid = Recipe && Recipe->Capture(*Data, CraftRecipe, Rules) && Rules == CraftRulesDigest &&
+				(bStartJob ? CraftRecipe.DurationSecondsPerBatch > 0 : CraftRecipe.DurationSecondsPerBatch == 0);
+			if (Valid && bCraft)
+				Valid = Q->PlanActivityProgress(Proposed.Quests, EProject_JQuestObjectiveKind::CraftRecipe,
+					Edit.CraftingRecipe, Edit.CraftingRecipeVersion, CraftBatches, QuestIndex);
+		}
+		else
+		{
+			const auto* Job = Before.CraftingJobs.FindByPredicate([&](const auto& Value) { return Value.Id == CraftJobId; });
+			Valid = Data && Job;
+			if (Valid && bCollectJob)
+			{
+				for (const auto& Output : Job->Outputs)
+				{
+					const auto* Def = Data->GetItemDefinition(Output.Definition, Output.DefinitionVersion);
+					if (!Def || Def->MaxStackCount != Output.MaxStackCount) { Valid = false; break; }
+				}
+				if (Valid) Valid = Q->PlanActivityProgress(Proposed.Quests, EProject_JQuestObjectiveKind::CraftRecipe,
+					Job->RecipeId, Job->RecipeVersion, Job->Batches, QuestIndex);
+			}
+		}
+		Valid = Valid && bQuestBaselineValid && !(Proposed.RulesFingerprint = Fingerprint(*P, QuestIndex, Class, History, &Proposed.Quests)).IsEmpty()
+			&& P->ValidateCommittedProgression(Before.Progression, Class, History) && Q->ValidateCommittedQuests(Proposed.Quests);
+		// An invalid new plan never bypasses the receipt lookup on a valid baseline.
+	}
+	else Valid = Q->ValidateCommittedQuests(Before.Quests) &&
+					   UProject_JQuestComponent::NormalizeClaimed(Proposed.Quests) && Plan() &&
 					   ResolveDefinitions(GetGameInstance(), Proposed.Progression, PlannedClass, PlannedHistory) &&
-					   !(Proposed.RulesFingerprint = Fingerprint(*P, *Q, PlannedClass, PlannedHistory)).IsEmpty() &&
+					   !(Proposed.RulesFingerprint = Fingerprint(*P, QuestIndex, PlannedClass, PlannedHistory, &Proposed.Quests)).IsEmpty() &&
 					   P->ValidateCommittedProgression(Proposed.Progression, PlannedClass, PlannedHistory) &&
 					   Q->ValidateCommittedQuests(Proposed.Quests) &&
-					   ResolveItems(Player, Proposed, PlannedBag, PlannedSlots) && Proposed.Encode(Payload);
+					   ResolveItems(Player, Proposed, PlannedBag, PlannedSlots);
 	FGuid Ticket;
 	if (IOGate->TryAcquire({ProfileKey(B->Character)}, Ticket) != EAdmission::Accepted)
 		return false;
+	Work->BeginCommand();
+	B->bCommandObserved = false;
 	B->bCommandPending = true;
 	B->CommandComplete = MoveTemp(Complete);
+	int64 RequestLeaseRevision = 0, RequestProfileRevision = 0;
+	{
+		FScopeLock Lock(&Work->Mutex);
+		RequestLeaseRevision = Work->LeaseRevision;
+		RequestProfileRevision = Work->ProfileRevision;
+	}
 	FCommitRequest Request{Key,
 						   IntentOperation,
-						   {{LeaseKey(B->Character), Work->LeaseRevision, 1, SessionBytes(Work->Session), false},
-							{ProfileKey(B->Character), Work->ProfileRevision, 1, Payload, false}}};
+						   {{LeaseKey(B->Character), RequestLeaseRevision, 1, SessionBytes(Work->Session), false},
+							{ProfileKey(B->Character), RequestProfileRevision, 1, {}, false}}};
 	TWeakObjectPtr<UProject_JLocalProfileSubsystem> WeakThis(this);
 	Jobs.RemoveAll([](const auto &Job) { return Job.IsReady(); });
 	Jobs.Add(Async(EAsyncExecution::ThreadPool, [WeakThis, B, Work, Request = MoveTemp(Request),
-												 Intent = MoveTemp(Intent), Valid, Ticket]() mutable {
+												 Intent = MoveTemp(Intent), Before = MoveTemp(Before), Proposed = MoveTemp(Proposed),
+												 bCraftPlan, CraftKind, CraftJobId, CraftRulesDigest, CraftBatches,
+												 CraftRecipe = MoveTemp(CraftRecipe), LockedInstances = MoveTemp(LockedInstances),
+                                                 ClaimRewards = MoveTemp(ClaimRewards), Valid, Ticket, OnDurable = MoveTemp(OnDurable)]() mutable {
+		check(!IsInGameThread());
+		bool BaseValid = false, ProposedValid = false;
+#if WITH_DEV_AUTOMATION_TESTS
+		if (Work->CommandStageForTest) Work->CommandStageForTest(TEXT("BeforeCommandEncode"));
+#endif
+		{
+			TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_ProfileCommandEncode);
+			TArray<uint8> BeforeBytes;
+			BaseValid = Before.Encode(BeforeBytes);
+		}
 		const FProject_JProfileStream Stream{Work->Character, Work->Session, Request.IdempotencyKey.D};
-		auto Result = Work->Repository->FindProfileReceipt(Request.IdempotencyKey, Request.Operation, Stream, Intent);
-		const bool IssuedNewCommit = Result.Status == ECommitStatus::Invalid && Valid;
+		FCommitResult Result;
+		// Validate the captured baseline before looking up receipts, as the GT path
+		// did. A known receipt remains replayable when the new plan is no longer valid.
+		if (BaseValid) Result = Work->Repository->FindProfileReceipt(Request.IdempotencyKey, Request.Operation, Stream, Intent);
+		// A known receipt must not rerun a plan, allocate output GUIDs or encode a
+		// replacement payload. Replay remains valid after recipe removal/change.
+		if (Result.Status == ECommitStatus::Invalid && BaseValid && Valid)
+		{
+			bool Planned = true;
+			if (bCraftPlan)
+			{
+				TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_ProfileCraftPlan);
+#if WITH_DEV_AUTOMATION_TESTS
+				if (Work->CommandStageForTest) Work->CommandStageForTest(TEXT("BeforeCraftPlan"));
+#endif
+				FProject_JLocalProfileSnapshot Crafted;
+				using K = EProject_JPersistentEdit;
+				ProjectJ::Crafting::EPlanResult PlannedResult = ProjectJ::Crafting::EPlanResult::InvalidRecipe;
+				if (CraftKind == K::Craft)
+					PlannedResult = ProjectJ::Crafting::Plan(CraftRecipe, CraftBatches, LockedInstances, Before, Crafted);
+				else if (CraftKind == K::StartCraftJob)
+					PlannedResult = ProjectJ::Crafting::StartJob(CraftRecipe, CraftBatches, CraftRulesDigest, CraftJobId,
+						FDateTime::UtcNow().GetTicks(), LockedInstances, Before, Crafted);
+				else if (CraftKind == K::CollectCraftJob)
+					PlannedResult = ProjectJ::Crafting::CollectJob(CraftJobId, FDateTime::UtcNow().GetTicks(), LockedInstances, Before, Crafted);
+				else if (CraftKind == K::CancelCraftJob)
+					PlannedResult = ProjectJ::Crafting::CancelJob(CraftJobId, LockedInstances, Before, Crafted);
+				Planned = PlannedResult == ProjectJ::Crafting::EPlanResult::Success;
+				if (Planned)
+				{
+					// Item ownership and the GT-admitted activity progress are one CAS.
+					Crafted.Quests = MoveTemp(Proposed.Quests);
+					Crafted.RulesFingerprint = MoveTemp(Proposed.RulesFingerprint);
+					Proposed = MoveTemp(Crafted);
+				}
+			}
+            if (Planned && !ClaimRewards.IsEmpty())
+            {
+                TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_ProfileQuestRewardPlan);
+#if WITH_DEV_AUTOMATION_TESTS
+                if (Work->CommandStageForTest) Work->CommandStageForTest(TEXT("BeforeQuestRewardPlan"));
+#endif
+                FProject_JLocalProfileSnapshot Granted;
+                Planned = ProjectJ::Crafting::PlanGrant(ClaimRewards, LockedInstances, Before, Granted) == ProjectJ::Crafting::EPlanResult::Success;
+                if (Planned)
+                {
+#if WITH_DEV_AUTOMATION_TESTS
+                    if (Work->CommandStageForTest) Work->CommandStageForTest(TEXT("AfterQuestRewardPlan"));
+#endif
+                    // Item ownership, XP and completion history share this one receipt/CAS.
+                    Granted.Progression = MoveTemp(Proposed.Progression);
+                    Granted.Quests = MoveTemp(Proposed.Quests);
+                    Granted.RulesFingerprint = MoveTemp(Proposed.RulesFingerprint);
+                    Proposed = MoveTemp(Granted);
+                }
+            }
+			TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_ProfileCommandEncode);
+			FString HistoryFailure;
+            const bool Encoded = Planned && Proposed.Encode(Request.Mutations[1].Payload);
+#if WITH_DEV_AUTOMATION_TESTS
+            if (Planned && !Encoded && !ClaimRewards.IsEmpty() && Work->CommandStageForTest) Work->CommandStageForTest(TEXT("QuestRewardEncodeRejected"));
+#endif
+			ProposedValid = Encoded &&
+				ProjectJ::LocalProfileHistory::PrepareHistoryMutations(*Work->Repository, Work->Character,
+					Before, Proposed, Request, HistoryFailure);
+		}
+		const bool IssuedNewCommit = Result.Status == ECommitStatus::Invalid && BaseValid && ProposedValid;
 		if (IssuedNewCommit)
 		{
+			TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_ProfileCommandCommit);
 			Result = Work->Repository->CommitProfile(Request, Stream, Intent);
 			if (Result.Status == ECommitStatus::UnknownOutcome)
 				Result = Work->Repository->CommitProfile(Request, Stream, Intent);
+		}
+		FProject_JProfileDurableResult Durable;
+		Durable.Request = Request.IdempotencyKey;
+		Durable.StoreStatus = Result.Status; // Preserve evidence before projection/session checks can replace Status.
+		if (OnDurable)
+		{
+			if (Accepted(Result.Status)) Durable.Outcome = EProject_JProfileDurableOutcome::Committed;
+			else
+			{
+				// One read, not another mutation/retry. Invalid proves absence only in this current epoch/intent.
+				Durable.bReceiptQueried = true;
+				Durable.ReceiptStatus = Work->Repository->FindProfileReceipt(Request.IdempotencyKey, Request.Operation, Stream, Intent).Status;
+				if (Accepted(Durable.ReceiptStatus)) Durable.Outcome = EProject_JProfileDurableOutcome::Committed;
+				else if (Durable.ReceiptStatus == ECommitStatus::Invalid) Durable.Outcome = EProject_JProfileDurableOutcome::ProvenAbsent;
+				// Expired/Unavailable/KeyReused are never proof of non-payment. Keep Unknown.
+			}
 		}
 		FRecord Record, Lease;
 		bool Confirmed = Accepted(Result.Status) && Work->Repository->Read(ProfileKey(Work->Character), Record) &&
@@ -1086,6 +1467,10 @@ bool UProject_JLocalProfileSubsystem::SubmitEdit(AProject_JPlayerState *Player, 
 						 Lease.Payload == SessionBytes(Work->Session);
 		if (Accepted(Result.Status) && !Confirmed)
 			Result.Status = ECommitStatus::Conflict;
+		FProfileValues KnownValues;
+		if (IssuedNewCommit) KnownValues = MakeShared<FProject_JLocalProfileSnapshot, ESPMode::ThreadSafe>(MoveTemp(Proposed));
+		else { FScopeLock Lock(&Work->Mutex); KnownValues = Work->ConfirmedValues; }
+		FProfileValues Values = Confirmed ? DecodeProfileValues(*Work->Repository, Work->Character, Record.Payload, KnownValues, Record.Revision) : FProfileValues();
 		FProject_JRepositoryUsage Usage;
 		const bool Known = Work->Repository->GetUsage(Usage);
 		{
@@ -1098,92 +1483,220 @@ bool UProject_JLocalProfileSubsystem::SubmitEdit(AProject_JPlayerState *Player, 
 				Work->ProfileRevision = Record.Revision;
 				Work->LeaseRevision = Lease.Revision;
 				Work->LastQueued = Record.Payload;
+				Work->ConfirmedValues = Values;
 			}
 		}
-		Work->Repository->Close();
-		Work->Gate->Release(Ticket);
+		if (Confirmed && !Values) Work->Fault(ECommitStatus::Conflict);
+		if (!Confirmed && Result.Status != ECommitStatus::Invalid && Result.Status != ECommitStatus::KeyReused && Result.Status != ECommitStatus::Expired)
+			Work->Fault(Result.Status);
+		auto Projection = Work->FinishWriter(Ticket);
 		AsyncTask(ENamedThreads::GameThread, [WeakThis, B, Confirmed, FirstApplication = IssuedNewCommit && Confirmed,
-											  Status = Result.Status, Payload = MoveTemp(Record.Payload)]() mutable {
+			Status = Result.Status, Projection = MoveTemp(Projection), Durable, OnDurable = MoveTemp(OnDurable)]() mutable {
+			if (auto* Self = WeakThis.Get(); Self && Self->IsCurrent(B)) B->bCommandObserved = true;
+			if (OnDurable)
+			{
+				auto Observe = MoveTemp(OnDurable);
+				Observe(Durable); // Native result survives owner retirement; no UObject was read by the worker.
+			}
+			// Observer may reenter, end the world or collect garbage. Resolve the weak subsystem afterwards.
 			if (auto *Self = WeakThis.Get())
-				Self->CompleteEdit(B, Confirmed, FirstApplication, Status, MoveTemp(Payload));
+			{
+				Self->CompleteEdit(B, Confirmed, FirstApplication, Status, Projection.Values, Projection.Revision);
+			}
 		});
 	}));
 	return true;
 }
-void UProject_JLocalProfileSubsystem::CompleteEdit(
-	const TSharedPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe> &B, bool Confirmed, bool FirstApplication,
-	ECommitStatus Status, TArray<uint8> Payload)
+bool UProject_JLocalProfileSubsystem::ApplyConfirmedProjection(
+	const TSharedPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe>& B, FProfileValues Values, int64 ProjectionRevision)
 {
-#if WITH_DEV_AUTOMATION_TESTS
-	if (bHoldCompletionsForTest)
-	{
-		TWeakObjectPtr<UProject_JLocalProfileSubsystem> WeakThis(this);
-		HeldCompletionsForTest.Add(
-			[WeakThis, B, Confirmed, FirstApplication, Status, Payload = MoveTemp(Payload)]() mutable {
-				if (auto *Self = WeakThis.Get())
-					Self->CompleteEdit(B, Confirmed, FirstApplication, Status, MoveTemp(Payload));
-			});
-		return;
-	}
-#endif
-
 	auto *Self = this;
-	if (!Self || !Self->IsCurrent(B))
-		return;
+	if (!Self->IsCurrent(B)) return false;
+	if (ProjectionRevision <= B->AppliedRevision) return true;
+	TGuardValue<bool> Applying(B->bCommandPending, true);
 	const TStrongObjectPtr<UProject_JLocalProfileSubsystem> KeepSelf(Self);
 	const TStrongObjectPtr<AProject_JPlayerState> KeepPlayer(B->Player.Get());
-	bool OK = Confirmed;
-	const bool First = FirstApplication;
+	bool OK = Values.IsValid();
 	auto *PS = B->Player.Get();
 	if (OK)
 	{
-		FProject_JLocalProfileSnapshot Snapshot;
+		const auto& Snapshot = *Values;
 		TArray<FProject_JItemInstanceData> Bag;
 		TArray<FProject_JEquipmentArrayItem> Slots;
 		auto *Progress = PS->FindComponentByClass<UProject_JProgressionComponent>();
 		auto *Quests = PS->FindComponentByClass<UProject_JQuestComponent>();
 		const TStrongObjectPtr<UProject_JProgressionComponent> KeepProgress(Progress);
 		const TStrongObjectPtr<UProject_JQuestComponent> KeepQuests(Quests);
+		const TStrongObjectPtr<UProject_JCraftingJobsComponent> KeepJobs(PS->GetCraftingJobsComponent());
 		const TStrongObjectPtr<UProject_JInventoryComponent> KeepInventory(PS->GetInventoryComponent());
 		const TStrongObjectPtr<UProject_JEquipmentManagerComponent> KeepEquipment(PS->GetEquipmentManagerComponent());
+		const auto ParticipantsCurrent = [&]
+		{
+			const auto Live = [&](const UActorComponent* Component)
+			{
+				return IsValid(Component) && !Component->IsBeingDestroyed() && Component->IsRegistered() &&
+					Component->GetOwner() == PS && Component->GetWorld() == PS->GetWorld();
+			};
+			return Self->IsCurrent(B) && B->Player.Get() == PS && Live(Progress) && Live(Quests) &&
+				Live(KeepInventory.Get()) && Live(KeepEquipment.Get()) && Live(KeepJobs.Get()) &&
+				PS->FindComponentByClass<UProject_JProgressionComponent>() == Progress &&
+				PS->FindComponentByClass<UProject_JQuestComponent>() == Quests &&
+				PS->GetInventoryComponent() == KeepInventory.Get() && PS->GetEquipmentManagerComponent() == KeepEquipment.Get() &&
+				PS->GetCraftingJobsComponent() == KeepJobs.Get();
+		};
+		const int64 PreviousAppliedRevision = B->AppliedRevision;
+		if (!ParticipantsCurrent()) return false;
 		UProject_JCharacterClassDefinition *Class = nullptr;
 		TArray<UProject_JCharacterAdvancementDefinition *> History;
-		OK = FProject_JLocalProfileSnapshot::Decode(Payload, Snapshot) && Snapshot.Account == B->Account &&
+		FProject_JQuestDefinitionIndex QuestIndex;
+		Quests->BuildDefinitionIndex(QuestIndex);
+		ProjectJ::LocalProfileRules::FQuestGuard AppliedRules;
+		OK = Snapshot.Account == B->Account &&
 			 Snapshot.Character == B->Character &&
 			 ResolveDefinitions(GetGameInstance(), Snapshot.Progression, Class, History) &&
-			 Snapshot.RulesFingerprint == Fingerprint(*Progress, *Quests, Class, History) &&
+			 Matches(Snapshot, *Progress, QuestIndex, Class, History) &&
 			 Progress->ValidateCommittedProgression(Snapshot.Progression, Class, History, true) &&
-			 Quests->ValidateCommittedQuests(Snapshot.Quests, true) && ResolveItems(PS, Snapshot, Bag, Slots, true);
+			 Quests->ValidateCommittedQuests(Snapshot.Quests, true) && ResolveItems(PS, Snapshot, Bag, Slots, true) &&
+			 AppliedRules.Capture(QuestIndex, Snapshot.Quests, GetGameInstance()->GetSubsystem<UProject_JCharacterDataSubsystem>());
 		if (OK)
 		{
-			auto *Inventory = PS->GetInventoryComponent();
-			auto *Equipment = PS->GetEquipmentManagerComponent();
+			auto *Inventory = KeepInventory.Get();
+			auto *Equipment = KeepEquipment.Get();
 			const auto OldBag = Inventory->GetItemInstances();
 			const auto OldSlots = Equipment->CapturePersistentEquipment();
+			const auto CanInstall = [&]
+			{
+				if (!ParticipantsCurrent() || B->AppliedRevision != PreviousAppliedRevision) return false;
+				FProject_JQuestDefinitionIndex CurrentIndex;
+				Quests->BuildDefinitionIndex(CurrentIndex);
+				return Matches(Snapshot, *Progress, CurrentIndex, Class, History) &&
+					AppliedRules.IsCurrent(CurrentIndex, GetGameInstance()->GetSubsystem<UProject_JCharacterDataSubsystem>()) &&
+					Quests->ValidateCommittedQuests(Snapshot.Quests, true) && Inventory->ValidatePersistentItems(Bag, true) &&
+					Equipment->ValidatePersistentEquipment(Slots, Bag, true) && KeepJobs->ValidateCommittedJobs(Snapshot.CraftingJobs);
+			};
+			bool bProgressionChanged = false;
+			OK = Progress->TryInstallCommittedProgression(Snapshot.Progression, Class, History, CanInstall, bProgressionChanged);
+			if (!OK) return false; // A paid commit remains durable; retirement never redirects it to a new owner.
+			B->QuestRules = MoveTemp(AppliedRules);
 			// All authoritative values are installed before the first notification.
-			Progress->InstallCommittedProgression(Snapshot.Progression, Class, History);
-			Quests->InstallCommittedQuests(Snapshot.Quests);
+			const bool bQuestChanged = Quests->InstallCommittedQuests(Snapshot.Quests);
 			Inventory->InstallPersistentItems(Bag);
 			Equipment->InstallPersistentEquipment(Slots);
-			Progress->PublishCommittedExperience();
-			if (Self->IsCurrent(B))
+			KeepJobs->InstallCommittedJobs(Snapshot.CraftingJobs);
+			// Commit the installed revision before callbacks. A reentrant newer
+			// progress projection owns subsequent publication and must not regress.
+			B->AppliedRevision = ProjectionRevision;
+			const auto CanPublish = [&] { return ParticipantsCurrent() && B->AppliedRevision == ProjectionRevision; };
+			if (CanPublish() && bProgressionChanged)
+				Progress->PublishCommittedExperience(CanPublish);
+			if (CanPublish() && bQuestChanged)
 				Quests->PublishCommittedQuests();
-			if (Self->IsCurrent(B))
-				Inventory->PublishPersistentItems(OldBag);
-			if (Self->IsCurrent(B))
+			if (CanPublish())
+				Inventory->PublishPersistentItems(OldBag, CanPublish);
+			if (CanPublish())
 				Equipment->PublishPersistentEquipment(OldSlots);
+			if (CanPublish()) KeepJobs->BroadcastCommittedJobs();
 		}
 	}
-	if (!Self->IsCurrent(B))
+	return OK;
+}
+bool UProject_JLocalProfileSubsystem::QueueQuestProgress(
+	const TSharedPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe>& B,
+	const TArray<FProject_JQuestProgressInput>& Inputs)
+{
+	check(IsInGameThread());
+	if (!IsCurrent(B) || !B->bReady || !B->Work->Healthy() || Inputs.Num() > 128 * UProject_JQuestComponent::MaxObjectivesPerQuest) return false;
+	if (Inputs.IsEmpty()) return true;
+	auto* Quest = B->Player->FindComponentByClass<UProject_JQuestComponent>();
+	FProject_JQuestDefinitionIndex Index;
+	Quest->BuildDefinitionIndex(Index);
+	if (!RequireQuestRules(B, Index)) return false;
+	for (const auto& Input : Inputs)
+	{
+		const auto* State = Quest->States.FindByPredicate([&](const auto& Value) { return Value.QuestId == Input.Quest; });
+		const auto* Definition = Index.FindRef(Input.Quest);
+		if (!State || !Definition || State->bClaimed || !Definition->IsStateValid(*State)) return false;
+		if (Input.Objective.IsNone())
+		{
+			if (!Definition->Objectives.IsEmpty() || Input.Required != Definition->RequiredCount || Input.Current != State->Count) return false;
+		}
+		else
+		{
+			const auto* Objective = Definition->Objectives.FindByPredicate([&](const auto& Value) { return Value.ObjectiveId == Input.Objective; });
+			if (!Objective || (Objective->Kind != EProject_JQuestObjectiveKind::Event && Objective->Kind != EProject_JQuestObjectiveKind::Travel) ||
+				Input.Required != Objective->RequiredCount || Input.Current != State->GetObjectiveCount(Input.Objective)) return false;
+		}
+	}
+	auto Work = B->Work;
+	FGuid Ticket;
+	bool bStart = false;
+	if (!Work->AddProgress(Inputs, B->AppliedRevision, B->bCommandPending, B->bCommandObserved, Ticket, bStart))
+	{
+		// Includes the compatible void producer: make transient rejection observable without a log or retry queue.
+		if (B->RejectedProgressAdmissions < MAX_uint64) ++B->RejectedProgressAdmissions;
+		return false;
+	}
+	if (bStart)
+	{
+		TWeakObjectPtr<UProject_JLocalProfileSubsystem> WeakThis(this);
+		Jobs.RemoveAll([](const auto& Job) { return Job.IsReady(); });
+		Jobs.Add(Async(EAsyncExecution::ThreadPool, [WeakThis, B, Work, Ticket] {
+			auto Projection = Work->Drain(Ticket);
+			AsyncTask(ENamedThreads::GameThread, [WeakThis, B, Projection = MoveTemp(Projection)] {
+				if (auto* Self = WeakThis.Get()) Self->CompleteProgress(B, Projection.Values, Projection.Revision);
+			});
+		}));
+	}
+	return true;
+}
+void UProject_JLocalProfileSubsystem::CompleteProgress(
+	const TSharedPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe>& B, FProfileValues Values, int64 ProjectionRevision)
+{
+	check(IsInGameThread());
+	if (!IsCurrent(B)) return;
+	const TStrongObjectPtr<ThisClass> KeepSelf(this);
+	const TStrongObjectPtr<AProject_JPlayerState> KeepPlayer(B->Player.Get());
+	const bool Applied = Values ? ApplyConfirmedProjection(B, Values, ProjectionRevision) : false;
+	if (!IsCurrent(B)) return;
+	if (!Applied && B->Work->Healthy()) B->Work->Fault(ECommitStatus::Conflict);
+	if (!Applied || !B->Work->Healthy()) B->bReady = false;
+}
+
+void UProject_JLocalProfileSubsystem::CompleteEdit(
+	const TSharedPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe> &B, bool Confirmed, bool FirstApplication,
+	ECommitStatus Status, FProfileValues Values, int64 ProjectionRevision)
+{
+	check(IsInGameThread());
+	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_ProfileCommandApply);
+#if WITH_DEV_AUTOMATION_TESTS
+	if (bHoldCompletionsForTest)
+	{
+		TWeakObjectPtr<UProject_JLocalProfileSubsystem> WeakThis(this);
+		HeldCompletionsForTest.Add(
+			[WeakThis, B, Confirmed, FirstApplication, Status, Values = MoveTemp(Values), ProjectionRevision]() mutable {
+				if (auto *Self = WeakThis.Get())
+					Self->CompleteEdit(B, Confirmed, FirstApplication, Status, MoveTemp(Values), ProjectionRevision);
+			});
 		return;
+	}
+#endif
+
+	if (!IsCurrent(B)) return;
+	const TStrongObjectPtr<ThisClass> KeepSelf(this);
+	const TStrongObjectPtr<AProject_JPlayerState> KeepPlayer(B->Player.Get());
+	const bool ProjectionOK = Values ? ApplyConfirmedProjection(B, Values, ProjectionRevision) : !Confirmed;
+	if (!IsCurrent(B)) return;
+	const bool OK = Confirmed && Values.IsValid() && ProjectionOK;
+	const bool First = FirstApplication;
 	B->bCommandPending = false;
+	B->bCommandObserved = false;
 	B->LastAdmissionReason = OK									  ? FString()
 							 : Status == ECommitStatus::KeyReused ? TEXT("같은 요청 키의 다른 payload를 거부함")
 							 : Status == ECommitStatus::Expired
 								 ? TEXT("요청 유효 범위 만료: 현재 상태 재동기화 필요")
 								 : TEXT("요청 검증/저장 실패: 소유권·수량·정의·버전·64KiB 한도 확인 필요");
-	if (!OK && Status != ECommitStatus::Invalid && Status != ECommitStatus::KeyReused &&
-		Status != ECommitStatus::Expired)
+	if (!ProjectionOK || !B->Work->Healthy() || (!OK && Status != ECommitStatus::Invalid && Status != ECommitStatus::KeyReused &&
+		Status != ECommitStatus::Expired))
 	{
 		B->bReady = false;
 		FScopeLock Lock(&B->Work->Mutex);
@@ -1196,6 +1709,16 @@ void UProject_JLocalProfileSubsystem::CompleteEdit(
 }
 
 #if WITH_DEV_AUTOMATION_TESTS
+void UProject_JLocalProfileSubsystem::SetCommandStageHookForTest(AProject_JPlayerState* Player, TFunction<void(const TCHAR*)> Hook)
+{
+	check(IsInGameThread());
+	auto* B = Bindings.Find(Player);
+	check(B && !IsCheckpointPending(Player));
+	(*B)->Work->CommandStageForTest = Hook;
+	(*B)->Work->Repository->TestHook = [Hook = MoveTemp(Hook)](const TCHAR* Point, FProject_JProfileDatabase&) {
+		if (Hook) Hook(Point);
+	};
+}
 void UProject_JLocalProfileSubsystem::LoseNextCommitAcknowledgementForTest(AProject_JPlayerState *Player)
 {
 	check(IsInGameThread());
@@ -1231,7 +1754,7 @@ bool UProject_JLocalProfileSubsystem::ValidateMigrationSnapshot(AProject_JPlayer
 {
 	check(IsInGameThread());
 	Error = TEXT("Unsupported profile, definitions, rules, inventory or equipment ownership");
-	if (!Player || Snapshot.Format != 2)
+	if (!Player || (Snapshot.Format != 2 && Snapshot.Format != 3 && Snapshot.Format != 4))
 		return false;
 	auto *P = Player->FindComponentByClass<UProject_JProgressionComponent>();
 	auto *Q = Player->FindComponentByClass<UProject_JQuestComponent>();
@@ -1239,8 +1762,10 @@ bool UProject_JLocalProfileSubsystem::ValidateMigrationSnapshot(AProject_JPlayer
 	TArray<UProject_JCharacterAdvancementDefinition *> History;
 	TArray<FProject_JItemInstanceData> Bag;
 	TArray<FProject_JEquipmentArrayItem> Slots;
+	FProject_JQuestDefinitionIndex QuestIndex;
+	if (Q) Q->BuildDefinitionIndex(QuestIndex);
 	if (!P || !Q || !ResolveDefinitions(Player->GetGameInstance(), Snapshot.Progression, Class, History) ||
-		Snapshot.RulesFingerprint != Fingerprint(*P, *Q, Class, History) ||
+		!Matches(Snapshot, *P, QuestIndex, Class, History) ||
 		!P->CanRestoreSnapshot(Snapshot.Progression, Class, History) || !Q->CanRestoreSnapshot(Snapshot.Quests, true) ||
 		!ResolveItems(Player, Snapshot, Bag, Slots, false, &Error))
 		return false;

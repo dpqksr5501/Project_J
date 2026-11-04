@@ -6,6 +6,7 @@
 #include "Project_JMountComponent.generated.h"
 
 class AProject_JMountCharacter;
+class APlayerState;
 class UProject_JAbilitySystemComponent;
 class UInputAction;
 
@@ -37,12 +38,21 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Mount")
 	bool IsMounted() const { return MountedMount != nullptr; }
 
+	/** Persistent owner of this component's current attached Avatar, after possession.
+	 *  Returns null for incomplete/retired, stolen, or mismatched relationships. */
+	APlayerState* ResolveRuntimeOwner() const;
+
 	/** Keep the rider's effective interaction action across the possession hand-off. */
 	void SetRiderInteractAction(UInputAction* Action);
 	const UInputAction* GetRiderInteractAction() const { return RiderInteractAction; }
 
 	UPROPERTY(BlueprintAssignable, Category = "Mount")
 	FProject_JMountChangedSignature OnMountChanged;
+
+	/** Replicated relationship prerequisites changed; not a mount/dismount command or transition. */
+	DECLARE_EVENT(UProject_JMountComponent, FRuntimeOwnerPrerequisitesChanged);
+	FRuntimeOwnerPrerequisitesChanged& OnRuntimeOwnerPrerequisitesChanged() { return RuntimeOwnerPrerequisitesChanged; }
+	void NotifyRuntimeOwnerPrerequisitesChanged();
 
 private:
 	virtual void BeginPlay() override;
@@ -51,7 +61,9 @@ private:
 	void ReleaseMountedTag();
 	bool CanAcceptMountRequest() const;
 	void RetireMount(bool bRestorePossession);
+	FRuntimeOwnerPrerequisitesChanged RuntimeOwnerPrerequisitesChanged;
 	uint32 MountRevision = 0;
+	double NextClientMountRequestTime = 0;
 	bool bEndingMount = false;
 	TWeakObjectPtr<UProject_JAbilitySystemComponent> MountedTagAbilitySystem;
 	UPROPERTY(Transient)

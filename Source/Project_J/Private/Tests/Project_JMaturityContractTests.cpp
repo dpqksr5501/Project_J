@@ -7,7 +7,7 @@
 #include "Game/Project_JInputLeaseSubsystem.h"
 #include "Game/Project_JPlayerState.h"
 #include "Social/Project_JSocialSubsystem.h"
-#include "Project_JGreatswordCharacter.h"
+#include "Project_JSpellbladeCharacter.h"
 #include "Engine/Engine.h"
 #include "Engine/GameInstance.h"
 #include "Engine/LocalPlayer.h"
@@ -27,7 +27,7 @@ bool FProjectJCheckedHandoverTest::RunTest(const FString&)
 	auto* World = UWorld::CreateWorld(EWorldType::Game, false);
 	GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
 	ON_SCOPE_EXIT { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
-	auto* Player = World->SpawnActor<AProject_JGreatswordCharacter>();
+	auto* Player = World->SpawnActor<AProject_JSpellbladeCharacter>();
 	auto* Manager = NewObject<UProject_JHandoverManager>(NewObject<UGameInstance>(GEngine));
 	FProject_JHandoverEnvelope Envelope;
 	TestTrue(TEXT("Native player snapshot builds"), Manager->BuildEnvelope(Player, TEXT("LocalNode"), Envelope));
@@ -107,6 +107,35 @@ bool FProjectJGroupSnapshotTest::RunTest(const FString&)
 	TestTrue(TEXT("A versioned deletion clears membership"), Social->RestoreGroupSnapshot(EProject_JSocialGroupKind::Guild, Group));
 	Conflicting.Revision = 8;
 	TestFalse(TEXT("A deletion tombstone prevents stale resurrection"), Social->RestoreGroupSnapshot(EProject_JSocialGroupKind::Guild, Conflicting));
+
+	auto* Peer = NewObject<AProject_JPlayerState>();
+	Peer->SetIdentity(FProject_JAccountId::NewId(), FProject_JCharacterId::NewId());
+	FProject_JSocialGroupSnapshot Roster;
+	Roster.GroupId = TEXT("FullRosterGuild");
+	Roster.LeaderCharacterId = FGuid::NewGuid();
+	Roster.Members = {Member->GetCharacterId().Value, Peer->GetCharacterId().Value, Roster.LeaderCharacterId};
+	while (Roster.Members.Num() < 100) Roster.Members.Add(FGuid::NewGuid());
+	TestTrue(TEXT("A full guild restores offline membership through the same authority path"), Social->RestoreGroupSnapshot(EProject_JSocialGroupKind::Guild, Roster));
+	Social->BindPlayerState(Member); Social->BindPlayerState(Peer);
+	++Roster.Revision;
+	Roster.Members.Swap(0, Roster.Members.Num() - 1);
+	TestTrue(TEXT("A revision and roster-order change preserves current membership"), Social->RestoreGroupSnapshot(EProject_JSocialGroupKind::Guild, Roster));
+	FProject_JSocialGroupSnapshot Stored;
+	TestTrue(TEXT("The authority still retains the complete ordered snapshot"), Social->GetGroupSnapshot(EProject_JSocialGroupKind::Guild, Roster.GroupId, Stored));
+	TestTrue(TEXT("Order remains available to future leader succession"), Stored.Members == Roster.Members);
+	TestEqual(TEXT("Unchanged member retains the offline leader"), Member->GetGuildLeaderCharacterId(), Roster.LeaderCharacterId);
+	TestEqual(TEXT("Unchanged peer retains its guild projection"), Peer->GetGuildId_Implementation(), Roster.GroupId);
+	const FGuid Added = FGuid::NewGuid();
+	Roster.Members.Remove(Peer->GetCharacterId().Value); Roster.Members.Add(Added); ++Roster.Revision;
+	TestTrue(TEXT("A small membership delta can replace one member in a full guild"), Social->RestoreGroupSnapshot(EProject_JSocialGroupKind::Guild, Roster));
+	TestTrue(TEXT("Removed online peer loses its guild projection"), Peer->GetGuildId_Implementation().IsNone());
+	TestTrue(TEXT("Removed peer leaves the authoritative membership index"), Social->GetGuildIdForCharacter(Peer->GetCharacterId().Value).IsNone());
+	TestEqual(TEXT("Added offline member enters the same authoritative index"), Social->GetGuildIdForCharacter(Added), Roster.GroupId);
+	TestEqual(TEXT("Retained member stays in the same guild"), Member->GetGuildId_Implementation(), Roster.GroupId);
+	Roster.LeaderCharacterId = Member->GetCharacterId().Value; ++Roster.Revision;
+	TestTrue(TEXT("A leader-only delta updates retained online projections"), Social->RestoreGroupSnapshot(EProject_JSocialGroupKind::Guild, Roster));
+	TestEqual(TEXT("Retained member observes the new leader"), Member->GetGuildLeaderCharacterId(), Member->GetCharacterId().Value);
+	TestFalse(TEXT("Earlier full snapshots cannot undo the accepted delta"), Social->RestoreGroupSnapshot(EProject_JSocialGroupKind::Guild, Stored));
 	return true;
 }
 

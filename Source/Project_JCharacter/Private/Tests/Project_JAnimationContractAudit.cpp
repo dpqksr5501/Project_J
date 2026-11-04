@@ -14,8 +14,8 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAnimationContractAudit, "ProjectJ.Grou
  EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJAnimationContractAudit::RunTest(const FString&)
 {
- auto* CharacterClass = LoadClass<AProject_JPlayerCharacter>(nullptr, TEXT("/Game/Character_BPs/GreatSword/BP_GreatSword.BP_GreatSword_C"));
- auto* Style = LoadObject<UProject_JCombatStyleDefinition>(nullptr, TEXT("/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword.DA_CombatStyle_Greatsword"));
+ auto* CharacterClass = LoadClass<AProject_JPlayerCharacter>(nullptr, TEXT("/Game/Character_BPs/Spellblade/BP_Spellblade.BP_Spellblade_C"));
+ auto* Style = LoadObject<UProject_JCombatStyleDefinition>(nullptr, TEXT("/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Spellblade.DA_CombatStyle_Spellblade"));
  if (!TestNotNull(TEXT("Character fixture"), CharacterClass) || !TestNotNull(TEXT("Combat style fixture"), Style) || !TestNotNull(TEXT("Weapon animation profile"), Style->WeaponAnimationProfile.Get())) { return false; }
  auto* Character = CastChecked<AProject_JPlayerCharacter>(CharacterClass->GetDefaultObject());
  TArray<UClass*> Classes { Character->GetMesh()->GetAnimClass(), Style->WeaponAnimationProfile->CombatAnimationLayerClass.LoadSynchronous() };

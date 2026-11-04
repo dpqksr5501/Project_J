@@ -1,7 +1,9 @@
 #pragma once
+struct FProject_JQuestProgressInput;
 #include "Async/Future.h"
 #include "CoreMinimal.h"
 #include "Inventory/Project_JPersistentEdit.h"
+#include "MMO/Repository.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "Project_JLocalProfileSubsystem.generated.h"
 
@@ -14,9 +16,24 @@ class FAggregateGate;
 enum class ECommitStatus : uint8;
 } // namespace ProjectJ::MMO
 
+/** Storage evidence only. ProvenAbsent describes the exact current-session/intent lookup instant,
+ * not a permanent rejection receipt. A later resubmission of that key may commit.
+ * Committed includes replay of the exact command; it never means a new grant was issued.
+ * An exclusive-resource consumer must fence its old operation before releasing its reservation. */
+enum class EProject_JProfileDurableOutcome : uint8 { Committed, ProvenAbsent, Unknown };
+struct FProject_JProfileDurableResult
+{
+	FGuid Request;
+	EProject_JProfileDurableOutcome Outcome = EProject_JProfileDurableOutcome::Unknown;
+	ProjectJ::MMO::ECommitStatus StoreStatus = ProjectJ::MMO::ECommitStatus::Invalid;
+	ProjectJ::MMO::ECommitStatus ReceiptStatus = ProjectJ::MMO::ECommitStatus::Invalid;
+	bool bReceiptQueried = false;
+};
+using FProject_JProfileDurableCompletion = TFunction<void(const FProject_JProfileDurableResult&)>;
+
 /** Standalone developer checkpoints, explicitly selected by a local launch flag.
  * Not account authentication, network persistence, or a durable economy service.
- * Existing progression and quest components remain the only live gameplay writers.
+ * Existing progression, quest, inventory/equipment and crafting-job components remain the live gameplay writers.
  */
 UCLASS()
 class PROJECT_J_API UProject_JLocalProfileSubsystem : public UGameInstanceSubsystem
@@ -39,16 +56,22 @@ class PROJECT_J_API UProject_JLocalProfileSubsystem : public UGameInstanceSubsys
 	static bool ValidateMigrationSnapshot(AProject_JPlayerState *Player, const FProject_JLocalProfileSnapshot &Snapshot,
 										  FString &Error);
 	void RequestBackup(TFunction<void(bool, FString)> OnComplete);
-	/** Trusted local command; bool is admission, completion is durable confirmation. */
+	/** Session-issued identity for one prepared logical intent; invalid if the profile cannot issue a request. */
 	FGuid NewRequestId(AProject_JPlayerState *Player);
+	/** Optional value observer runs exactly once on GT per accepted job, before live projection/Complete.
+	 * It survives owner/binding retirement, independently of this subsystem's weak lifetime.
+	 * Receivers retain native values or weak UObject references and copy results they need later.
+	 * World shutdown may retire a receiver: never mutate an ended/replacement world.
+	 * Existing bool Complete still means successful live installation/publication and remains owner-fenced. */
 	bool SubmitEdit(AProject_JPlayerState *Player, const FProject_JPersistentEdit &Edit,
-					FProject_JPersistentCompletion Complete = {});
+					FProject_JPersistentCompletion Complete = {}, FProject_JProfileDurableCompletion OnDurable = {});
 #if WITH_DEV_AUTOMATION_TESTS
 	int32 GetNativeJobCountForTest() const
 	{
 		return Jobs.Num();
 	}
 	void LoseNextCommitAcknowledgementForTest(AProject_JPlayerState *Player);
+	void SetCommandStageHookForTest(AProject_JPlayerState* Player, TFunction<void(const TCHAR*)> Hook);
 	void HoldCommandCompletionsForTest(bool Hold);
 	int32 GetHeldCompletionCountForTest() const
 	{
@@ -57,13 +80,26 @@ class PROJECT_J_API UProject_JLocalProfileSubsystem : public UGameInstanceSubsys
 	void FailCommandWritesForTest(AProject_JPlayerState *Player);
 #endif
   private:
+	friend struct FProjectJQuestRewardProfileTestAccess;
 	friend class FProjectJLocalProfileLifecycleTest;
+	friend class FProjectJProfileUnknownShapeTest;
+	friend class FProjectJProfileProgressCapacityTest;
+	friend class FProjectJProfileProgressAdmissionTest;
 	friend class FProjectJLocalProfileFailureTest;
 	friend class FProjectJProfileMigrationTest;
 	friend class FProjectJGameRetentionTest;
 	friend class FProjectJProfileRuntimeCoverageTest;
+	friend class FProjectJCraftingExecutionTest;
+	friend class FProjectJGatheringExecutionTest;
 	void CompleteEdit(const TSharedPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe> &Binding, bool Confirmed,
-					  bool FirstApplication, ProjectJ::MMO::ECommitStatus Status, TArray<uint8> Payload);
+					  bool FirstApplication, ProjectJ::MMO::ECommitStatus Status,
+					  TSharedPtr<const FProject_JLocalProfileSnapshot, ESPMode::ThreadSafe> Values, int64 ProjectionRevision);
+	bool ApplyConfirmedProjection(const TSharedPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe>& Binding,
+		TSharedPtr<const FProject_JLocalProfileSnapshot, ESPMode::ThreadSafe> Values, int64 ProjectionRevision);
+	void CompleteProgress(const TSharedPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe>& Binding,
+		TSharedPtr<const FProject_JLocalProfileSnapshot, ESPMode::ThreadSafe> Values, int64 ProjectionRevision);
+	bool QueueQuestProgress(const TSharedPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe>& Binding,
+		const TArray<FProject_JQuestProgressInput>& Inputs);
 	void CompleteOpen(const TSharedPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe> &Binding);
 	void BindPersistentCommands(const TSharedPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe> &Binding);
 	bool IsCurrent(const TSharedPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe> &Binding) const;

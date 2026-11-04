@@ -2,6 +2,7 @@
 
 #include "Project_J.h"
 #include "Modules/ModuleManager.h"
+#include "Misc/NetworkVersion.h"
 #include "Backend/Project_JProfileDatabase.h"
 
 class FProjectJGameModule final:public FDefaultGameModuleImpl
@@ -9,6 +10,11 @@ class FProjectJGameModule final:public FDefaultGameModuleImpl
 	void StartupModule() override
 	{
 		FDefaultGameModuleImpl::StartupModule();
+		// Use the engine's existing game protocol slot before any NetDriver
+		// handshake. Current and replay-compatible versions advance together
+		// until replay compatibility is explicitly implemented and tested.
+		FNetworkVersion::SetGameNetworkProtocolVersion(ProjectJ::Network::RealtimeProtocolVersion);
+		FNetworkVersion::SetGameCompatibleNetworkProtocolVersion(ProjectJ::Network::RealtimeProtocolVersion);
 #if !UE_SERVER
 		// OnlineSubsystemUtils asks for Voice on the first client connection even
 		// when capture is disabled. Load this known dependency before Iris creates

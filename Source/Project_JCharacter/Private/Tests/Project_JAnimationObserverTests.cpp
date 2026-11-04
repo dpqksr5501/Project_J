@@ -3,6 +3,7 @@
 #include "Misc/ScopeExit.h"
 #include "Animation/Project_JBudgetedSkeletalMeshComponent.h"
 #include "Animation/Project_JCharacterAnimInstance.h"
+#include "Animation/Project_JAnimationQualityPolicy.h"
 #include "System/Project_JCharacterAnimationBudgetSubsystem.h"
 #include "Project_JNPCCharacter.h"
 #include "Camera/CameraActor.h"
@@ -19,6 +20,23 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAnimationObserverRuntime, "ProjectJ.An
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJAnimationObserverRuntime::RunTest(const FString&)
 {
+    ProjectJ::Animation::FSecondaryMotionObservation Secondary;
+    Secondary.bAssetOptIn = true; Secondary.DistanceTier = 2.f;
+    TestFalse(TEXT("Opted-in observed remote Far accessory simulation can yield"), ProjectJ::Animation::ResolveSecondaryMotionQuality(Secondary));
+    Secondary.bLocal = true;
+    TestTrue(TEXT("Actual local protection is independent of gameplay pose demand"), ProjectJ::Animation::ResolveSecondaryMotionQuality(Secondary));
+    Secondary.bLocal = false; Secondary.DistanceTier = 1.f;
+    TestTrue(TEXT("Near/Mid accessory quality remains full"), ProjectJ::Animation::ResolveSecondaryMotionQuality(Secondary));
+    Secondary.DistanceTier.Reset();
+    TestTrue(TEXT("Unknown view observation preserves accessory quality"), ProjectJ::Animation::ResolveSecondaryMotionQuality(Secondary));
+    Secondary.DistanceTier = 3.f; Secondary.bOptOut = true;
+    TestTrue(TEXT("NoVisualBudget/actor opt-out preserves authored accessory policy"), ProjectJ::Animation::ResolveSecondaryMotionQuality(Secondary));
+    Secondary.bOptOut = false; Secondary.bAssetOptIn = false;
+    TestTrue(TEXT("Uninspected assets do not opt into new reductions"), ProjectJ::Animation::ResolveSecondaryMotionQuality(Secondary));
+    Secondary.bAssetOptIn = true; Secondary.bEnabled = false;
+    TestTrue(TEXT("Rollback restores the previous accessory admission"), ProjectJ::Animation::ResolveSecondaryMotionQuality(Secondary));
+    Secondary.bRouteAllows = false;
+    TestFalse(TEXT("No available body route cannot be resurrected by rollback"), ProjectJ::Animation::ResolveSecondaryMotionQuality(Secondary));
     UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
     GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
     World->InitializeActorsForPlay(FURL());

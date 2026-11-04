@@ -31,5 +31,6 @@ private:
 	FDelegateHandle TickHandle;
 	FDelegateHandle CleanupHandle;
 	bool bOwnAllocatorEnable = false, bEnding = false;
+	bool bObserveNativeClothFrame = false;
 	static constexpr int32 MaxMeshes = 4096;
 };

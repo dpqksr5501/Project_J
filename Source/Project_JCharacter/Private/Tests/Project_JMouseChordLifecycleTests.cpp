@@ -2,7 +2,7 @@
 #include "Misc/AutomationTest.h"
 #include "Components/Project_JSkillInputRouterComponent.h"
 #include "Combat/Project_JGameplayAbility_Melee.h"
-#include "Project_JGreatswordCharacter.h"
+#include "Project_JSpellbladeCharacter.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JGameplayTags.h"
 #include "Engine/Engine.h"
@@ -19,7 +19,7 @@ bool FProjectJMouseChordLifecycleTest::RunTest(const FString&)
  GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
  World->InitializeActorsForPlay(FURL());
  World->GetWorldSettings()->NotifyBeginPlay(); World->GetWorldSettings()->NotifyMatchStarted();
- auto* Player = World->SpawnActor<AProject_JGreatswordCharacter>();
+ auto* Player = World->SpawnActor<AProject_JSpellbladeCharacter>();
  auto* ASC = NewObject<UProject_JAbilitySystemComponent>(Player);
  FindFProperty<FObjectPropertyBase>(AProject_JBaseCharacter::StaticClass(), TEXT("AbilitySystemComponent"))->SetObjectPropertyValue_InContainer(Player, ASC);
  ASC->RegisterComponent(); ASC->InitAbilityActorInfo(Player, Player);

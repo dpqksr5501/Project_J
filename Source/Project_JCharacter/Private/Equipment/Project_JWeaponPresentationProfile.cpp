@@ -25,14 +25,15 @@ EDataValidationResult UProject_JWeaponPresentationProfile::IsDataValid(FDataVali
 	EDataValidationResult Result = Super::IsDataValid(Context);
 	bool bHasError = Result == EDataValidationResult::Invalid;
 
-	if (!WeaponActorClass)
+	// Explicit authoring validation may resolve payloads; runtime presentation never loads synchronously.
+	UClass* ActorClass = WeaponActorClass.LoadSynchronous();
+	if (!ActorClass || !ActorClass->IsChildOf(AActor::StaticClass()) || ActorClass->HasAnyClassFlags(CLASS_Abstract))
 	{
-		Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJWeaponPresentationProfile", "MissingActor", "WeaponActorClass is required."));
+		Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJWeaponPresentationProfile", "MissingActor", "WeaponActorClass must resolve to a concrete Actor class."));
 	}
-	else if (!WeaponActorClass->IsChildOf(AProject_JWeaponPresentationActor::StaticClass()))
+	else if (!ActorClass->IsChildOf(AProject_JWeaponPresentationActor::StaticClass()))
 	{
-		// Keep this a migration warning: existing profiles retain their visuals,
-		// while new assets are guided to the common root/mesh contract.
+		// Keep the existing compatibility warning for legacy visual actor roots.
 		Project_J::DataValidation::AddWarning(Context, NSLOCTEXT("ProjectJWeaponPresentationProfile", "LegacyActorClass", "WeaponActorClass should derive from AProject_JWeaponPresentationActor so it supplies the common WeaponRoot and WeaponMesh contract."));
 	}
 	if (DrawnSocketName.IsNone() && (DrawnAttachmentMode == EProject_JDrawnAttachmentMode::Socket || MotionPresentation.bSupportsIndependentMotion))

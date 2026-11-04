@@ -27,11 +27,13 @@ function Get-ProjectJSourceProvenance {
 function Get-ProjectJProvenanceSignature {
  param([Parameter(Mandatory)]$Provenance)
  if($Provenance.schema -ne 1 -or $Provenance.head -notmatch '^[0-9a-fA-F]{40}$' -or !$Provenance.files.Count -or !$Provenance.binaries.Count){throw 'Missing/invalid source provenance; historical empty overlays cannot certify a comparison.'}
- $fileRows=@($Provenance.files|Sort-Object path|ForEach-Object{
+ # Resolve dictionary keys explicitly: the live collector returns ordered maps,
+ # while JSON receipts return PSCustomObjects with adapted path properties.
+ $fileRows=@($Provenance.files|Sort-Object -Property {[string]$_.path}|ForEach-Object{
   if(!$_.path -or (!$_.deleted -and $_.sha256 -notmatch '^[0-9a-fA-F]{64}$')){throw 'Invalid source provenance row.'}
   "$($_.path):$($_.deleted):$($_.sha256)"
  })
- $binaryRows=@($Provenance.binaries|Sort-Object path|ForEach-Object{
+ $binaryRows=@($Provenance.binaries|Sort-Object -Property {[string]$_.path}|ForEach-Object{
   if(!$_.path -or $_.sha256 -notmatch '^[0-9a-fA-F]{64}$'){throw 'Invalid binary provenance row.'}
   "$($_.path):$($_.sha256)"
  })

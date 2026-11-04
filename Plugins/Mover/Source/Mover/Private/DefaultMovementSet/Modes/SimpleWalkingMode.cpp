@@ -5,6 +5,7 @@
 #include "MoverComponent.h"
 #include "DefaultMovementSet/Settings/CommonLegacyMovementSettings.h"
 #include "MoveLibrary/RollbackBlackboardLibrary.h"
+#include "MoveLibrary/GroundMovementUtils.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(SimpleWalkingMode)
 
@@ -64,51 +65,24 @@ void USimpleWalkingMode::GenerateMove_Implementation(const FMoverSimContext& Sim
 	const UMoverComponent* MoverComponent = GetMoverComponent();
 	const FVector UpVector = MoverComponent ? MoverComponent->GetUpDirection() : FVector::UpVector;
 
-	// Subtract vertical component but keep same magnitude
-	float DesiredVelMag = DesiredVelocity.Length();
-	DesiredVelocity -= DesiredVelocity.ProjectOnTo(UpVector);
-	float DesiredVel2DSquaredLength = DesiredVelocity.SquaredLength(); 
-	if (DesiredVel2DSquaredLength > 0.0f)
+	FSimpleWalkingInputParams InputParams;
+	InputParams.MoveInput = DesiredVelocity;
+	InputParams.FacingIntent = DesiredFacingDir;
+	InputParams.MoveInputType = MoveInputType;
+	InputParams.UpDirection = UpVector;
+	InputParams.CurrentFacing = StartingSyncState->GetOrientation_WorldSpace().Quaternion();
+	InputParams.MaxMoveSpeed = MaxMoveSpeed;
+	InputParams.bHasMaxMoveSpeed = bHasMaxMoveSpeed;
+	const FSimpleWalkingInputResult Projected = UGroundMovementUtils::ComputeSimpleWalkingInput(InputParams);
+	OutProposedMove.DirectionIntent = Projected.DirectionIntent;
+	OutProposedMove.bHasDirIntent = Projected.bHasDirIntent;
+	DesiredVelocity = Projected.DesiredVelocity;
+	const FQuat CurrentFacing = InputParams.CurrentFacing;
+	const FQuat DesiredFacing = Projected.DesiredFacing;
+	// Diagnostics belong to the live caller, not to the reusable value-only projection.
+	if (MoveInputType != EMoveInputType::DirectionalIntent && MoveInputType != EMoveInputType::Velocity)
 	{
-		DesiredVelocity *= DesiredVelMag / FMath::Sqrt(DesiredVel2DSquaredLength); 
-	}
-
-	const float DefaultDirectionalIntentSpeed = 100.0f;
-
-	switch (MoveInputType)
-	{
-	case EMoveInputType::DirectionalIntent:
-		{
-			OutProposedMove.DirectionIntent = DesiredVelocity;	// here, DesiredVelocity is already in "intent space" (unit length for "max intent") so we can use it directly
-			DesiredVelocity = bHasMaxMoveSpeed ? DesiredVelocity * MaxMoveSpeed : DesiredVelocity * DefaultDirectionalIntentSpeed;
-		}
-		break;
-	case EMoveInputType::Velocity:
-		{
-			// Clamp to max move speed
-			DesiredVelocity = bHasMaxMoveSpeed ? DesiredVelocity.GetClampedToMaxSize(MaxMoveSpeed) : DesiredVelocity;
-			OutProposedMove.DirectionIntent = MaxMoveSpeed > UE_KINDA_SMALL_NUMBER ? DesiredVelocity / MaxMoveSpeed : FVector::ZeroVector; // here, DesiredVelocity is converted to "intent space"
-		}
-		break;
-	case EMoveInputType::None:
-	case EMoveInputType::Invalid:
-	default:
-		{
-			UE_LOGF(LogMover, Warning, "Unhandled MoveInputType %i in USimpleWalkingMode", EnumToUnderlyingType(MoveInputType));
-			DesiredVelocity = FVector::ZeroVector;
-			OutProposedMove.DirectionIntent = FVector::ZeroVector;
-		}
-	break;
-	}
-
-	OutProposedMove.bHasDirIntent = !OutProposedMove.DirectionIntent.IsNearlyZero();
-	DesiredFacingDir -= DesiredFacingDir.ProjectOnTo(UpVector);
-	FQuat CurrentFacing = StartingSyncState->GetOrientation_WorldSpace().Quaternion();
-	FQuat DesiredFacing = CurrentFacing;
-	
-	if (DesiredFacingDir.Normalize())
-	{
-		DesiredFacing = FQuat::FindBetween(FVector::ForwardVector, DesiredFacingDir);
+		UE_LOGF(LogMover, Warning, "Unhandled MoveInputType %i in USimpleWalkingMode", EnumToUnderlyingType(MoveInputType));
 	}
 
 	OutProposedMove.LinearVelocity = StartingSyncState->GetVelocity_WorldSpace();

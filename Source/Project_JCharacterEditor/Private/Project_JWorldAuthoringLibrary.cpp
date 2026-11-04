@@ -11,6 +11,26 @@
 #include "Components/SplineComponent.h"
 #include "Components/SplineMeshComponent.h"
 #include "Engine/StaticMesh.h"
+#include "Engine/World.h"
+#include "NavigationSystem.h"
+#include "UObject/StrongObjectPtr.h"
+
+bool UProject_JWorldAuthoringLibrary::BuildEditorNavigation()
+{
+    if (!IsInGameThread() || !GEditor || GEditor->PlayWorld) { return false; }
+    UWorld* World = GEditor->GetEditorWorldContext().World();
+    if (!IsValid(World) || World->WorldType != EWorldType::Editor || World->bIsTearingDown) { return false; }
+    UNavigationSystemV1* Navigation = UNavigationSystemV1::GetCurrent(World);
+    if (!IsValid(Navigation)) { return false; }
+    TStrongObjectPtr<UWorld> WorldPin(World);
+    TStrongObjectPtr<UNavigationSystemV1> NavigationPin(Navigation);
+    // Native Build waits for its generators. It may decline a rebuild: this is not a freshness/projection certificate.
+    Navigation->Build();
+    return GEditor && !GEditor->PlayWorld && IsValid(World) && !World->bIsTearingDown
+        && GEditor->GetEditorWorldContext().World() == World
+        && UNavigationSystemV1::GetCurrent(World) == Navigation
+        && !Navigation->IsNavigationBuildInProgress();
+}
 
 bool UProject_JWorldAuthoringLibrary::ReimportRegionHeightmap(ALandscape* Landscape, const FString& File, int32 Resolution)
 {

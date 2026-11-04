@@ -11,8 +11,11 @@
 #include "GameplayTagContainer.h"
 #include "Logging/LogMacros.h"
 #include "Network/Project_JHandoverSerializable.h"
+#include "Iris/ReplicationSystem/NetRefHandle.h"
 #include "Project_JPlayerCharacter.generated.h"
 
+class AProject_JPlayerState;
+class UEngineReplicationBridge;
 class USpringArmComponent;
 class UCameraComponent;
 class UProject_JCameraComponent;
@@ -77,7 +80,7 @@ class PROJECT_JCHARACTER_API AProject_JPlayerCharacter : public AProject_JBaseCh
 	GENERATED_BODY()
 
 public:
-	virtual void ReceiveAuthorityCombatInput(const FGameplayTag& InputTag, float ClientTimestamp, uint32 InputSequence) override;
+	virtual void ReceiveAuthorityCombatInput(const FGameplayTag& InputTag, double ClientTimestamp, uint32 InputSequence) override;
 	virtual void ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdContext& InputCmd) override;
 	virtual FProject_JMoverPolicy ResolveMoverPolicy(const FProject_JMoverInputs& Requested,const FCharacterDefaultInputs* Input=nullptr) const override;
 	virtual float GetMoverMaxSpeed(bool bAcceptedSprint) const override;
@@ -87,6 +90,22 @@ private:
 
 	friend class UProject_JPlayerInputBindingComponent;
 	friend class FProjectJActiveMoveReentryTest;
+	// The session state wakes this Pawn when its Iris root registers after ours.
+	friend class AProject_JPlayerState;
+	void RefreshPlayerStateCreationDependency(bool bRegistrationStarted = false);
+	void RetirePlayerStateCreationDependency();
+	TWeakObjectPtr<APlayerState> CreationDependencyState;
+	TWeakObjectPtr<UEngineReplicationBridge> CreationDependencyBridge;
+	UE::Net::FNetRefHandle CreationDependencyParent, CreationDependencyPawn;
+	bool bCreationDependencyEnding = false;
+	void ObservePlayerStateAbilitySystem();
+	void StopObservingPlayerStateAbilitySystem();
+	void OnPlayerStateActorInfoSettled(UProject_JAbilitySystemComponent* Source);
+	bool CanConsumePlayerStateAbilitySystem(const APlayerState* State) const;
+	TWeakObjectPtr<UProject_JAbilitySystemComponent> ObservedPlayerStateASC;
+	FDelegateHandle PlayerStateActorInfoSettledHandle;
+	FDelegateHandle MountRuntimeOwnerPrerequisitesChangedHandle;
+	void OnMountRuntimeOwnerPrerequisitesChanged();
 
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
@@ -246,6 +265,10 @@ protected:
 	virtual void PawnClientRestart() override;
 	virtual void UnPossessed() override;
 	virtual void OnRep_PlayerState() override;
+	virtual void OnRep_Controller() override;
+	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
+	virtual void OnReplicationStartedForIris(const FOnReplicationStartedParams& Params) override;
+	virtual void OnStopReplicationForIris(const FOnStopReplicationParams& Params) override;
 	virtual AActor* GetAbilitySystemOwnerActor() const override;
 
 	/** Initialize input action bindings */
@@ -424,6 +447,9 @@ public:
 	class UProject_JInventoryComponent* GetInventoryComponent() const;
 
 private:
+	/** Post-retirement style reactions shared by replicated changes and the already-retired local equipment pair. */
+	void ApplyCurrentCombatStyleReaction();
+
 	/** Cosmetic-only signal for remote clients; it never grants combat gameplay state. */
 	UFUNCTION(Server, Reliable)
 	void ServerSetCombatIntroPresentation(bool bShouldShowIntro);
@@ -431,8 +457,15 @@ private:
 	UFUNCTION(Server, Reliable)
 	void ServerRequestUseMountItem(FGuid ItemInstanceId);
 
+	/** Trusted server/async continuation; the external RPC alone pays command admission. */
+	void UseMountItemAuthority(FGuid ItemInstanceId);
+
 	UFUNCTION(Server, Reliable)
 	void ServerTryInteract();
+
+	// Domain cooldown only; the shared command quota remains owned by PlayerState.
+	double NextClientInteractionRequestTime = 0.0;
+	double NextClientMountItemRequestTime = 0.0;
 
 
 public:

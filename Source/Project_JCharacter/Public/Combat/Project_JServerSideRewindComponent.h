@@ -14,7 +14,7 @@ struct FProject_JPoseHistoryBuffer
 	GENERATED_BODY()
 
 	UPROPERTY()
-	float Timestamp = 0.0f;
+	double Timestamp = 0.0;
 
 	UPROPERTY()
 	FVector Location = FVector::ZeroVector;
@@ -58,11 +58,15 @@ public:
 
 	// Perform a rollback sweep/check at a specific time in the past
 	UFUNCTION(BlueprintCallable, Category = "SSR")
-	bool ServerVerifyHit(float ClientTimestamp, const FVector& TraceStart, const FVector& TraceEnd, float TraceRadius = 0.0f);
+	bool ServerVerifyHit(double ClientTimestamp, const FVector& TraceStart, const FVector& TraceEnd, float TraceRadius = 0.0f);
+
+	/** GT-only O(1) retained timestamp observation; false leaves outputs unchanged. */
+	bool TryGetHistoryTimeBounds(double& OutOldest, double& OutNewest) const;
 
 private:
 	friend class FProjectJRewindHistoryTest;
 	friend class FProjectJRewindSchedulingTest;
+	friend class FProjectJSpatialDiscontinuityTest;
 	// Fixed-capacity circular buffer storing past transforms. It allocates once in
 	// BeginPlay and never shifts elements when old records expire.
 	TArray<FProject_JPoseHistoryBuffer> PoseHistory;
@@ -70,8 +74,8 @@ private:
 	int32 PoseHistoryCount = 0;
 
 	// Helper to find the closest poses to interpolate between
-	bool GetPosesForTime(float Time, FProject_JPoseHistoryBuffer& OutPose1, FProject_JPoseHistoryBuffer& OutPose2, float& OutAlpha) const;
+	bool GetPosesForTime(double Time, FProject_JPoseHistoryBuffer& OutPose1, FProject_JPoseHistoryBuffer& OutPose2, float& OutAlpha) const;
 	const FProject_JPoseHistoryBuffer& GetPoseHistoryRecord(int32 LogicalIndex) const;
 	void AppendPoseHistoryRecord(const FProject_JPoseHistoryBuffer& Record);
-	void DiscardExpiredPoseHistoryRecords(float CurrentTime);
+	void DiscardExpiredPoseHistoryRecords(double CurrentTime);
 };

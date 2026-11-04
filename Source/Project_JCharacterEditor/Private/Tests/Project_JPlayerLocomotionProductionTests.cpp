@@ -101,7 +101,7 @@ bool FProjectJPlayerLocomotionProductionGraph::RunTest(const FString&)
  TestTrue(TEXT("Full-body skills override the result of all procedural feet/body corrections"),Linked(FullSlot->FindPin(TEXT("Source")),Procedural->FindPin(TEXT("Pose"))));
  TestTrue(TEXT("Mounted blending receives the final skill pose"),Linked(Ground->FindPin(TEXT("Pose")),FullSlot->FindPin(TEXT("Pose"))));
  TestTrue(TEXT("UpperBody stays in its masked layering branch"),UpperSlot->FindPin(TEXT("Pose")) && UpperSlot->FindPin(TEXT("Pose"))->LinkedTo.Num()==1 && UpperSlot->FindPin(TEXT("Pose"))->LinkedTo[0]->GetOwningNode()->GetClass()->GetFName()==TEXT("AnimGraphNode_LayeredBoneBlend"));
- for (const TCHAR* Path:{TEXT("/Game/Character_BPs/BP_Player_Master.BP_Player_Master_C"),TEXT("/Game/Character_BPs/GreatSword/BP_GreatSword.BP_GreatSword_C")})
+ for (const TCHAR* Path:{TEXT("/Game/Character_BPs/BP_Player_Master.BP_Player_Master_C"),TEXT("/Game/Character_BPs/Spellblade/BP_Spellblade.BP_Spellblade_C")})
  {
   const auto* Class=LoadClass<AProject_JPlayerCharacter>(nullptr,Path);if(!TestNotNull(TEXT("Production avatar"),Class))continue;
   const auto* Pawn=CastChecked<AProject_JPlayerCharacter>(Class->GetDefaultObject());
@@ -188,7 +188,7 @@ bool FProjectJGroundLoopRootMotion::RunTest(const FString&)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJGroundSpeedAndCadence,"ProjectJ.PlayerLocomotion.GroundSpeedAndCadence",PlayerLocomotionTestFlags)
 bool FProjectJGroundSpeedAndCadence::RunTest(const FString&)
 {
- for(const TCHAR* Path:{TEXT("/Game/Character_BPs/BP_Player_Master.BP_Player_Master_C"),TEXT("/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C")})
+ for(const TCHAR* Path:{TEXT("/Game/Character_BPs/BP_Player_Master.BP_Player_Master_C"),TEXT("/Game/Character_BPs/Spellblade/BP_Spellblade.BP_Spellblade_C")})
  {
   const auto* Class=LoadClass<AProject_JPlayerCharacter>(nullptr,Path);if(!TestNotNull(TEXT("Production player"),Class))continue;
   const auto* Pawn=Class->GetDefaultObject<AProject_JPlayerCharacter>();
@@ -329,7 +329,7 @@ bool FProjectJDirectNativeQueries::RunTest(const FString&)
   {++Warping;TestTrue(TEXT("Each warping consumer retains its player reference"),Call->FindPinChecked(TEXT("Node"))->LinkedTo.Num()==1);}
  }
  TestEqual(TEXT("Distinct stride and orientation consumers remain"),Warping,2);
- auto* Body=LoadObject<UAnimBlueprint>(nullptr,TEXT("/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme.ABP_Greatsword_Woman_RunTIme"));if(!TestNotNull(TEXT("Production retarget body"),Body))return false;
+ auto* Body=LoadObject<UAnimBlueprint>(nullptr,TEXT("/Game/Animation_Logic/ABPs/Spellblade/ABP_Spellblade_Woman_RunTIme.ABP_Spellblade_Woman_RunTIme"));if(!TestNotNull(TEXT("Production retarget body"),Body))return false;
  Graphs.Reset();Body->GetAllGraphs(Graphs);int32 Wrist=0;
  for(auto* Graph:Graphs)for(UEdGraphNode* Node:Graph->Nodes)
  {
@@ -337,7 +337,7 @@ bool FProjectJDirectNativeQueries::RunTest(const FString&)
   if(auto* Var=Cast<UK2Node_VariableGet>(Node);Var && Var->VariableReference.GetMemberName()==GET_MEMBER_NAME_CHECKED(UProject_JRetargetAnimInstance,RightWristTarget))++Wrist;
  }
  TestEqual(TEXT("The primary hand directly consumes its native target"),Wrist,1);
- auto* Layer=LoadObject<UAnimBlueprint>(nullptr,TEXT("/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Layers.ABP_Greatsword_Layers"));if(!TestNotNull(TEXT("Weapon layer"),Layer))return false;
+ auto* Layer=LoadObject<UAnimBlueprint>(nullptr,TEXT("/Game/Animation_Logic/ABPs/Spellblade/ABP_Spellblade_Layers.ABP_Spellblade_Layers"));if(!TestNotNull(TEXT("Weapon layer"),Layer))return false;
  for(UEdGraph* Event:Layer->UbergraphPages)TestTrue(TEXT("Weapon layer has no disconnected event leftovers"),Event->Nodes.IsEmpty());
  return true;
 }

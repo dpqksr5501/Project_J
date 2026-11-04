@@ -22,6 +22,11 @@ UFlyingMode::UFlyingMode(const FObjectInitializer& ObjectInitializer)
 
 void UFlyingMode::GenerateMove_Implementation(const FMoverSimContext& SimContext, const FMoverTickStartData& StartState, const FMoverTimeStep& TimeStep, FProposedMove& OutProposedMove) const
 {
+	OutProposedMove = UAirMovementUtils::ComputeControlledFreeMove(BuildFreeMoveParams(StartState, TimeStep));
+}
+
+FFreeMoveParams UFlyingMode::BuildFreeMoveParams(const FMoverTickStartData& StartState, const FMoverTimeStep& TimeStep) const
+{
 	const UMoverComponent* MoverComp = GetMoverComponent();
 	const FCharacterDefaultInputs* CharacterInputs = StartState.InputCmd.InputCollection.FindDataByType<FCharacterDefaultInputs>();
 	const FMoverDefaultSyncState* StartingSyncState = StartState.SyncState.SyncStateCollection.FindDataByType<FMoverDefaultSyncState>();
@@ -67,7 +72,7 @@ void UFlyingMode::GenerateMove_Implementation(const FMoverSimContext& SimContext
 	Params.WorldToGravityQuat = MoverComp->GetWorldToGravityTransform();
 	Params.bUseAccelerationForVelocityMove = CommonLegacySettings->bUseAccelerationForVelocityMove;
 	
-	OutProposedMove = UAirMovementUtils::ComputeControlledFreeMove(Params);
+	return Params;
 }
 
 void UFlyingMode::SimulationTick_Implementation(const FSimulationTickParams& Params, FMoverTickEndData& OutputState)

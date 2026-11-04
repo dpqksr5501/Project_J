@@ -5,7 +5,7 @@
 #include "Engine/World.h"
 #include "Game/Project_JPlayerState.h"
 #include "Project_JPlayerCharacter.h"
-#include "Project_JGreatswordCharacter.h"
+#include "Project_JSpellbladeCharacter.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "CharacterClass/Project_JProgressionComponent.h"
 #include "CharacterClass/Project_JCharacterClassDefinition.h"
@@ -15,6 +15,8 @@
 #include "Components/CapsuleComponent.h"
 #include "Combat/Project_JCombatStyleDefinition.h"
 #include "Project_JGameplayTags.h"
+#include "Combat/Project_JAttackDefinition.h"
+#include "Components/Project_JCombatHitValidationComponent.h"
 #include "UObject/GarbageCollection.h"
 
 namespace ProjectJLevelAdmissionTests
@@ -88,7 +90,7 @@ bool FProjectJPlayerHandoverLevelAdmissionTest::RunTest(const FString&)
     ProjectJLevelAdmissionTests::FWorld F;
     auto* State=F.Owner();
     auto* P=State->FindComponentByClass<UProject_JProgressionComponent>(); P->InitializeDefaults(nullptr,nullptr,1);
-    auto* Player=F.World->SpawnActor<AProject_JGreatswordCharacter>();
+    auto* Player=F.World->SpawnActor<AProject_JSpellbladeCharacter>();
     if (!TestNotNull(TEXT("Concrete native player fixture"),Player)) return false;
     Player->SetPlayerState(State);
     if (!TestEqual(TEXT("Actual player resolves persistent level authority"),Player->GetProgressionComponent(),P)) return false;
@@ -98,6 +100,18 @@ bool FProjectJPlayerHandoverLevelAdmissionTest::RunTest(const FString&)
         Player->SetActorLocationAndRotation(FVector(50,20,10),FRotator(0,15,0),false,nullptr,ETeleportType::TeleportPhysics))) return false;
     const FTransform Before=Player->GetActorTransform();
     const FVector Goal=Before.GetLocation()+FVector(500,200,100); const FRotator Rotation(0,60,0);
+    auto* Hit=Player->FindComponentByClass<UProject_JCombatHitValidationComponent>();
+    if (!TestNotNull(TEXT("Actual player owns shared hit validation"),Hit)) return false;
+    auto* Attack=NewObject<UProject_JAttackDefinition>(Player);
+    Attack->AttackTag=FProject_JGameplayTags::Get().InputTag_Weapon_LMB;
+    Hit->BeginAttackNode(Attack->AttackTag,Attack,117);
+    const uint64 Window=Hit->BeginHitWindow();
+    if (!TestTrue(TEXT("Fixture owns an active authored hit window"),Hit->IsHitWindowCurrent(Window))) return false;
+    const double GeometryTime=F.World->GetTimeSeconds();
+    FVector TraceStart,TraceEnd;
+    Hit->RecordAuthoritativeTrace(Before.GetLocation(),Before.GetLocation()+FVector(50,0,0));
+    if (!TestTrue(TEXT("Fixture records real pre-handover geometry"),Hit->FindAuthoritativeTraceAtTime(GeometryTime,TraceStart,TraceEnd))) return false;
+    const uint64 OriginalSpatialRevision=Hit->GetSpatialRevision();
     TArray<uint8> Data; FMemoryWriter Writer(Data,true);
     FProject_JPlayerHandoverSnapshot Snapshot;
     Snapshot.Level=101; Snapshot.Location=Goal; Snapshot.Rotation=Rotation;
@@ -106,6 +120,9 @@ bool FProjectJPlayerHandoverLevelAdmissionTest::RunTest(const FString&)
     TestFalse(TEXT("Level rejected by persistent owner cannot publish a pose-only handover"),Player->TryApplyHandoverSnapshot(Data));
     TestTrue(TEXT("Rejected level leaves original pose"),Player->GetActorTransform().Equals(Before));
     TestEqual(TEXT("Rejected level leaves original persistent level"),P->GetState().Level,1);
+    TestEqual(TEXT("Admission failure preserves the current spatial epoch"),Hit->GetSpatialRevision(),OriginalSpatialRevision);
+    TestTrue(TEXT("Admission failure preserves retained weapon geometry"),Hit->FindAuthoritativeTraceAtTime(GeometryTime,TraceStart,TraceEnd));
+    TestTrue(TEXT("Admission failure preserves the active hit window"),Hit->IsHitWindowCurrent(Window));
     const auto Encode = [](FProject_JPlayerHandoverSnapshot Value)
     {
         TArray<uint8> Bytes; FMemoryWriter Archive(Bytes,true);
@@ -115,6 +132,9 @@ bool FProjectJPlayerHandoverLevelAdmissionTest::RunTest(const FString&)
     TestTrue(TEXT("Admitted packet restores both exact level and pose"),Player->TryApplyHandoverSnapshot(Encode(Snapshot)));
     TestEqual(TEXT("Valid packet changes persistent authority"),P->GetState().Level,2);
     TestTrue(TEXT("Valid packet reaches requested position"),Player->GetActorLocation().Equals(Goal));
+    TestEqual(TEXT("Admitted transform advances one spatial epoch"),Hit->GetSpatialRevision(),OriginalSpatialRevision+1);
+    TestFalse(TEXT("Admitted transform retires pre-handover weapon geometry"),Hit->FindAuthoritativeTraceAtTime(GeometryTime,TraceStart,TraceEnd));
+    TestTrue(TEXT("Admitted transform preserves the active hit window"),Hit->IsHitWindowCurrent(Window));
     auto* Class=NewObject<UProject_JCharacterClassDefinition>(); Class->ClassId=TEXT("ExactFloor"); Class->StartingLevel=3;
     TestTrue(TEXT("Higher admitted class floor initializes"),P->InitializeClass(Class));
     const FTransform FloorPose=Player->GetActorTransform();
@@ -123,11 +143,29 @@ bool FProjectJPlayerHandoverLevelAdmissionTest::RunTest(const FString&)
     TestTrue(TEXT("Below-floor packet leaves pose"),Player->GetActorTransform().Equals(FloorPose));
     auto* NextOwner=F.Owner(); auto* NextP=NextOwner->FindComponentByClass<UProject_JProgressionComponent>();
     NextP->InitializeDefaults(nullptr,nullptr,1);
-    const auto Changed=P->OnChanged.AddLambda([&] { Player->SetPlayerState(NextOwner); CollectGarbage(RF_NoFlags); });
+    Hit->RecordAuthoritativeTrace(FloorPose.GetLocation(),FloorPose.GetLocation()+FVector(50,0,0));
+    if (!TestTrue(TEXT("Failure fixture starts with retained geometry"),Hit->FindAuthoritativeTraceAtTime(GeometryTime,TraceStart,TraceEnd))) return false;
+    const uint64 BeforeCallbackSpatialRevision=Hit->GetSpatialRevision();
+    bool bCallbackSawRetiredGeometry=false,bCallbackSawCurrentWindow=false;
+    const auto Changed=P->OnChanged.AddLambda([&]
+    {
+        FVector CallbackStart,CallbackEnd;
+        bCallbackSawRetiredGeometry=Hit->GetSpatialRevision()==BeforeCallbackSpatialRevision+1
+            && !Hit->FindAuthoritativeTraceAtTime(GeometryTime,CallbackStart,CallbackEnd);
+        bCallbackSawCurrentWindow=Hit->IsHitWindowCurrent(Window);
+        Player->SetPlayerState(NextOwner); CollectGarbage(RF_NoFlags);
+    });
     Snapshot.Level=4;
     TestFalse(TEXT("Rebound owner during real publication cannot acknowledge old handover"),Player->TryApplyHandoverSnapshot(Encode(Snapshot)));
     P->OnChanged.Remove(Changed);
+    TestTrue(TEXT("The failure path actually changed the physical location"),Player->GetActorLocation().Equals(Snapshot.Location) && !Player->GetActorTransform().Equals(FloorPose));
+    TestTrue(TEXT("Progression callback already observes retired pre-transform geometry"),bCallbackSawRetiredGeometry);
+    TestTrue(TEXT("Progression callback still owns the authored hit window"),bCallbackSawCurrentWindow);
+    TestEqual(TEXT("Callback failure cannot restore the previous spatial epoch"),Hit->GetSpatialRevision(),BeforeCallbackSpatialRevision+1);
+    TestFalse(TEXT("Callback failure leaves no stale weapon geometry"),Hit->FindAuthoritativeTraceAtTime(GeometryTime,TraceStart,TraceEnd));
+    TestTrue(TEXT("Callback failure retains the active hit window"),Hit->IsHitWindowCurrent(Window));
     TestEqual(TEXT("Checked setter never mutates the replacement owner"),NextP->GetState().Level,1);
+    Hit->EndAttack();
     return !HasAnyErrors();
 }
 

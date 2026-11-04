@@ -20,6 +20,8 @@ class PROJECT_J_API AProject_JGameState : public AGameStateBase
 
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	/** Keep the engine's synchronized clock/filter response in double precision, including late joins. */
+	virtual double GetServerWorldTimeSeconds() const override;
 
 	UFUNCTION(BlueprintPure, Category = "MMO|World")
 	FProject_JWorldInstanceId GetWorldInstanceId() const { return WorldInstanceId; }
@@ -34,6 +36,11 @@ public:
 	void SetPublicEventId(FName InPublicEventId);
 
 protected:
+	friend class FProjectJServerClockPrecisionTest;
+	virtual void OnRep_ReplicatedWorldTimeSecondsDouble() override;
+	// Derived from the engine-owned sample mean. One local double preserves its
+	// existing zero sentinel/0.5 filter without a second sample writer or wire state.
+	double PreciseServerWorldTimeSecondsDelta = 0.0;
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "MMO|World")
 	FProject_JWorldInstanceId WorldInstanceId;
 

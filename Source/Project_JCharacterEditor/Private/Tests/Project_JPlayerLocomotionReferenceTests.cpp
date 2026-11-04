@@ -13,7 +13,7 @@
 #include "Curves/CurveFloat.h"
 #include "Components/Project_JWeaponPresentationComponent.h"
 #include "Equipment/Project_JWeaponPresentationProfile.h"
-#include "Project_JGreatswordCharacter.h"
+#include "Project_JSpellbladeCharacter.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 
@@ -84,7 +84,7 @@ bool FProjectJNonCosmeticAnimationCallbacks::RunTest(const FString&)
   UWorld* World=UWorld::CreateWorld(EWorldType::PIE,false);
   GEngine->CreateNewWorldContext(EWorldType::PIE).SetCurrentWorld(World);
   World->SetPlayInEditorInitialNetMode(bDedicated?NM_DedicatedServer:NM_Standalone);
-  auto* Pawn=World->SpawnActor<AProject_JGreatswordCharacter>();
+  auto* Pawn=World->SpawnActor<AProject_JSpellbladeCharacter>();
   auto* Profile=NewObject<UProject_JWeaponPresentationProfile>(World);
   Profile->WeaponActorClass=AActor::StaticClass();
   if (!bDedicated) World->bIsTearingDown=true;

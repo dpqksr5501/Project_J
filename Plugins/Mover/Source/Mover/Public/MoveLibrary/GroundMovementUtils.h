@@ -72,6 +72,72 @@ struct FGroundMoveParams
 	bool bUseAccelerationForVelocityMove = true;
 };
 
+/** Owning inputs for the existing SimpleWalking input projection; live settings/owner reads stay with the caller. */
+struct FSimpleWalkingInputParams
+{
+	FVector MoveInput = FVector::ZeroVector;
+	FVector FacingIntent = FVector::ZeroVector;
+	EMoveInputType MoveInputType = EMoveInputType::Invalid;
+	FVector UpDirection = FVector::UpVector;
+	FQuat CurrentFacing = FQuat::Identity;
+	float MaxMoveSpeed = 0.f;
+	bool bHasMaxMoveSpeed = false;
+};
+
+struct FSimpleWalkingInputResult
+{
+	FVector DesiredVelocity = FVector::ZeroVector;
+	FQuat DesiredFacing = FQuat::Identity;
+	FVector DirectionIntent = FVector::ZeroVector;
+	bool bHasDirIntent = false;
+};
+
+/** Closed prediction storage owns these five values. Unlike a view, it can outlive the live mode/state. */
+struct FSmoothWalkingStateValues
+{
+	FVector SpringVelocity = FVector::ZeroVector;
+	FVector SpringAcceleration = FVector::ZeroVector;
+	FVector IntermediateVelocity = FVector::ZeroVector;
+	FQuat IntermediateFacing = FQuat::Identity;
+	FVector IntermediateAngularVelocity = FVector::ZeroVector;
+};
+
+/** Borrowed references for one synchronous math call; never capture a live mode's view for worker execution.
+ * A future worker caller must construct its view from its own five native values on that worker. */
+struct FSmoothWalkingStateView
+{
+	FVector& SpringVelocity;
+	FVector& SpringAcceleration;
+	FVector& IntermediateVelocity;
+	FQuat& IntermediateFacing;
+	FVector& IntermediateAngularVelocity;
+};
+
+/** Owning scalar/vector inputs captured from the live mode for each step. */
+struct FSmoothWalkingMoveParams
+{
+	float DeltaSeconds = 0.f;
+	FVector DesiredVelocity = FVector::ZeroVector;
+	FQuat DesiredFacing = FQuat::Identity;
+	FQuat CurrentFacing = FQuat::Identity;
+	float Acceleration = 0.f;
+	float Deceleration = 0.f;
+	float DirectionalAccelerationFactor = 0.f;
+	float TurningStrength = 0.f;
+	float AccelerationSmoothingTime = 0.f;
+	float DecelerationSmoothingTime = 0.f;
+	float AccelerationSmoothingCompensation = 0.f;
+	float DecelerationSmoothingCompensation = 0.f;
+	float VelocityDeadzoneThreshold = 0.f;
+	float AccelerationDeadzoneThreshold = 0.f;
+	float OutsideInfluenceSmoothingTime = 0.f;
+	float FacingSmoothingTime = 0.f;
+	float FacingDeadzoneThreshold = 0.f;
+	float AngularVelocityDeadzoneThreshold = 0.f;
+	bool bSmoothFacingWithDoubleSpring = false;
+	bool bInitializeSpring = false;
+};
+
 /**
  * GroundMovementUtils: a collection of stateless static BP-accessible functions for a variety of ground movement-related operations
  */
@@ -81,6 +147,13 @@ class UGroundMovementUtils : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 	
 public:
+	/** Preserve the native projection math; invalid/None input diagnostics remain in the mode wrapper. */
+	static UE_API FSimpleWalkingInputResult ComputeSimpleWalkingInput(const FSimpleWalkingInputParams& Params);
+
+	/** Apply the shared equations to synchronous borrowed native fields. Caller owns storage and resolves live admission. */
+	static UE_API void ComputeSmoothWalkingMove(const FSmoothWalkingMoveParams& Params, FSmoothWalkingStateView SpringState,
+		FVector& InOutAngularVelocityDegrees, FVector& InOutVelocity);
+
 	/** Generate a new movement based on move/orientation intents and the prior state, constrained to the ground movement plane. Also applies deceleration friction as necessary. */
 	UFUNCTION(BlueprintCallable, Category = Mover)
 	static UE_API FProposedMove ComputeControlledGroundMove(const FGroundMoveParams& InParams);

@@ -1,6 +1,7 @@
 #include "Animation/Project_JPlayerAnimInstance.h"
 #include "Movement/Project_JMoverLifecycle.h"
 #include "Animation/Project_JCharacterAnimInstanceProxy.h"
+#include "Animation/Project_JPreparedAnimTrajectory.h"
 #include "Movement/Project_JMoverPawn.h"
 #include "Movement/Project_JMoverComponent.h"
 #include "Animation/Project_JLocomotionProfile.h"
@@ -22,6 +23,11 @@
 #include "UObject/UnrealType.h"
 #include "GameFramework/PlayerController.h"
 #include "Animation/Project_JAnimationQualityPolicy.h"
+#include "ProfilingDebugging/CpuProfilerTrace.h"
+#if !UE_BUILD_SHIPPING
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
+#endif
 
 namespace
 {
@@ -60,6 +66,8 @@ void UProject_JPlayerAnimInstance::BindLocomotionSource(UMoverComponent* Source)
 {
  check(IsInGameThread());
  if (Source && LocomotionSource.Get()==Source) return;
+ if(LocomotionSourceGeneration<MAX_uint64) ++LocomotionSourceGeneration;
+ GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>().RetirePreparedTrajectory();
  if (auto* Previous=LocomotionSource.Get()) Previous->OnBasedMovementApplied.RemoveAll(this);
  LocomotionSource=Source;
  // These values belong to one physical source, not to the retained AnimInstance.
@@ -88,6 +96,7 @@ void UProject_JPlayerAnimInstance::AccumulateBasedMovement(const FTransform& Del
 
 void UProject_JPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_Anim_PlayerGTUpdate);
 	auto* Pawn = TryGetPawnOwner();
 	auto* Mover = Project_J::Movement::FindMover(Pawn);
 	if (!Mover)
@@ -168,24 +177,67 @@ void UProject_JPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		!Data.Combat.bIsAttacking && !Data.Combat.bIsDodging && !Data.Combat.bIsHitReacting &&
 		!IsAnyMontagePlaying() && !NeedsFullRateVisualUpdate() &&
 		(CurrentOptimizationPolicy.Tier==EProject_JAnimBudgetTier::Mid || CurrentOptimizationPolicy.Tier==EProject_JAnimBudgetTier::Far);
+ const int32 PredictionHz=bBudgetEligible?FMath::Clamp(PredictionRate.GetValueOnGameThread(),30,60):60;
 	if (const auto* Property=PredictionRateProperty())
-		*Property->ContainerPtrToValuePtr<FFrameRate>(MoverPredictor.Get())=FFrameRate(bBudgetEligible?FMath::Clamp(PredictionRate.GetValueOnGameThread(),30,60):60,1);
-	UPoseSearchTrajectoryLibrary::PoseSearchGenerateTransformTrajectoryWithPredictor(Predictor, DeltaSeconds,
-		MoverTrajectory, PredictorYaw, Data.Movement.Trajectory, .033f, 15, .1f, 15);
-	Data.Movement.FutureTrajectoryVelocity = (Data.Movement.Trajectory.GetSampleAtTime(.6f).Position -
-		Data.Movement.Trajectory.GetSampleAtTime(.4f).Position) / .2f;
-	// Prediction is in visual-root space (Manny's mesh carries a -90 degree offset).
-	// Compare two samples in that space; actor yaw made straight motion look urgent.
-	static const auto* SourcePolicy=IConsoleManager::Get().FindConsoleVariable(TEXT("ProjectJ.AnimationQuality.SourcePolicy.Enabled"));
-	const float ReferenceYaw=SourcePolicy && SourcePolicy->GetInt()==0 ? Pawn->GetActorRotation().Yaw :
-		Data.Movement.Trajectory.GetSampleAtTime(0.f).Facing.Rotator().Yaw;
-	Data.Movement.FutureTrajectoryTurnAngle = FMath::FindDeltaAngleDegrees(ReferenceYaw,
-		Data.Movement.Trajectory.GetSampleAtTime(.5f).Facing.Rotator().Yaw);
-	Data.Movement.bHasTrajectory = !Data.Movement.Trajectory.Samples.IsEmpty();
+		*Property->ContainerPtrToValuePtr<FFrameRate>(MoverPredictor.Get())=FFrameRate(PredictionHz,1);
+ FProject_JPreparedAnimTrajectory Prepared;
+ bool bPreparedTrajectory=false;
+#if !UE_BUILD_SHIPPING
+ // GT capture/history or synchronous fallback time only; the existing worker scope
+ // measures deferred calculation separately. Sampling density and simulation are unchanged.
+ static const bool bMeasureTrajectory = FParse::Param(FCommandLine::Get(), TEXT("ProjectJRenderedCrowdTrajectoryMetrics"));
+ const uint64 TrajectoryStarted = bMeasureTrajectory ? FPlatformTime::Cycles64() : 0;
+#endif
+ {
+  TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_Anim_MoverTrajectoryGenerate);
+  bPreparedTrajectory=TryPrepareNativeTrajectory(DeltaSeconds,PredictionHz,Data,Prepared);
+  if(!bPreparedTrajectory)
+   UPoseSearchTrajectoryLibrary::PoseSearchGenerateTransformTrajectoryWithPredictor(Predictor, DeltaSeconds,
+    MoverTrajectory, PredictorYaw, Data.Movement.Trajectory, .033f, 15, .1f, 15);
+ }
+#if !UE_BUILD_SHIPPING
+ if (bMeasureTrajectory)
+ {
+  TrajectoryDiagnosticCounters.Cycles += FPlatformTime::Cycles64() - TrajectoryStarted;
+  ++TrajectoryDiagnosticCounters.Calls;
+  TrajectoryDiagnosticCounters.LastUpdateFrame = GFrameCounter;
+ }
+#endif
+ if(bPreparedTrajectory)
+ {
+  // GT policy uses the previous completed forecast until this update completes.
+  // The worker fills this frame's prediction before any trajectory graph consumer.
+  Data.Movement.FutureTrajectoryVelocity=ThreadSafeData.Movement.FutureTrajectoryVelocity;
+  Data.Movement.FutureTrajectoryTurnAngle=ThreadSafeData.Movement.FutureTrajectoryTurnAngle;
+  Data.Movement.bHasTrajectory=ThreadSafeData.Movement.bHasTrajectory;
+ }
+ else
+ {
+  static const auto* SourcePolicy=IConsoleManager::Get().FindConsoleVariable(TEXT("ProjectJ.AnimationQuality.SourcePolicy.Enabled"));
+  TOptional<float> ReferenceYaw;
+  if(SourcePolicy && SourcePolicy->GetInt()==0) ReferenceYaw=Pawn->GetActorRotation().Yaw;
+  FProject_JPreparedAnimTrajectory::UpdateDerivedMovement(Data,ReferenceYaw);
+ }
 	BuildProjectAirFrame(Data);
 	ThreadSafeData = Data;
 	PublishPlayerLocomotionSourceFrame(Data);
-	GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>().QueueGameThreadData(Data);
+ auto& Proxy=GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>();
+ if(bPreparedTrajectory) Proxy.QueueGameThreadData(MoveTemp(Data),MoveTemp(Prepared));
+ else Proxy.QueueGameThreadData(MoveTemp(Data));
+}
+
+void UProject_JPlayerAnimInstance::CommitPreparedTrajectorySnapshot(const FProject_JAnimThreadSafeData& Data,uint64 SourceGeneration)
+{
+ check(IsInGameThread());
+ const auto* Source=LocomotionSource.Get();
+ if(SourceGeneration!=LocomotionSourceGeneration || !IsValid(Source) || Source->IsBeingDestroyed() || !PlayerHasLocomotionSource) return;
+ // Keep the completed proxy output owned there. These GT copies preserve the
+ // next history update and quality policy's completed-forecast mirror.
+ MoverTrajectory=Data.Movement.Trajectory;
+ ThreadSafeData.Movement.Trajectory=Data.Movement.Trajectory;
+ ThreadSafeData.Movement.FutureTrajectoryVelocity=Data.Movement.FutureTrajectoryVelocity;
+ ThreadSafeData.Movement.FutureTrajectoryTurnAngle=Data.Movement.FutureTrajectoryTurnAngle;
+ ThreadSafeData.Movement.bHasTrajectory=Data.Movement.bHasTrajectory;
 }
 
 FString UProject_JPlayerAnimInstance::InspectFoundationPlayback() const

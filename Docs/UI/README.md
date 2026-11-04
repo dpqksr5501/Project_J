@@ -1,5 +1,7 @@
 # 플레이어 UI
 
+2026-10-26 퀵슬롯 후속은 갱신별 source/ActorInfo 세대와 콜백 뒤 유효성 검사, 중복 슬롯의 spec별1회 조회, GAS 회수 후 stale 결과 폐기를 보강했다. native165개와 새 Development 패키지의 기본/동적 UI 두 해상도4실행이 오류 없이 통과했다. 패키지 검수에서 발견한 Mover private archetype export·native 공통 설정 identity도 공통 로드·생성자/제작 경계에서 수정했다. [실행 근거와 미확정 trace 종료 등 현재 경계](../Architecture/Planning/Project_J_MMO_Architecture_Work_2026-10-26.md)를 따른다. 기존 packaged 결과를 최신 변경의 통과로 재사용하지 않는다.
+
 현재 기본 조작(2026-10-21)은 **왼쪽 Ctrl 단독 탭 = 걷기 전환**, **왼쪽 Alt 단독 탭 = 커서 표시/숨김**이다. 두 입력 모두 키를 놓을 때 한 번 확정하며 키 반복·다른 키/마우스와의 조합은 토글로 처리하지 않는다. Alt+Tab·Alt+Enter·Alt+F4 및 포커스 소실은 커서 전환을 취소한다. 오른쪽 Alt/AltGr와 기존 Ctrl UI 단축키는 유지한다.
 
 걷기는 기존 `/Game/Input/Actions/IA_Walk`와 플레이어/대검 BP의 기존 참조를 재사용한다. 현재 `IMC_Default`에 누락돼 있던 걷기 매핑을 왼쪽 Ctrl로 연결했고, action의 native `UProject_JInputTriggerModifierTap`이 단독 해제를 판단한다. 입력 컴포넌트는 `Triggered`만 소비하며 메뉴 이동 차단·탑승 중에는 지상 걷기 의도를 바꾸지 않는다. 기존 Ctrl 탑승 하강 매핑은 유지한다. 커서는 UI에 키보드 포커스가 있어도 동작해야 하므로 기존 Slate 전처리 경로를 유지하고 Alt로 바꿨다. 별도 커서 IA나 중복 입력 writer를 추가하지 않는다.

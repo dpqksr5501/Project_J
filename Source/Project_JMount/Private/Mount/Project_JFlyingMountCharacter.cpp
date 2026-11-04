@@ -596,7 +596,7 @@ void AProject_JFlyingMountCharacter::HandleTakeOff()
 
 void AProject_JFlyingMountCharacter::ServerRequestBeginFlight_Implementation()
 {
-	BeginFlight();
+	if (AdmitClientMountCommand()) BeginFlight();
 }
 
 void AProject_JFlyingMountCharacter::HandleDismount()

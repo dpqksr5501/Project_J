@@ -1,11 +1,15 @@
 #include "Components/Project_JEquipmentRuntimeComponent.h"
 #include "GameFramework/Pawn.h"
+#include "Net/UnrealNetwork.h"
+#include "UObject/StrongObjectPtr.h"
+#include "UObject/UObjectArray.h"
 #include "Movement/Project_JMovementQueries.h"
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Components/Project_JEquipmentManagerComponent.h"
 #include "Components/Project_JModularMeshComponent.h"
 #include "Animation/Project_JPresentationMeshResolver.h"
+#include "Animation/Project_JCopyPoseAnimInstance.h"
 #include "Equipment/Project_JEquipmentItemDefinition.h"
 #include "Equipment/Project_JGameplayEffect_EquipmentStats.h"
 #include "GameFramework/Character.h"
@@ -19,6 +23,7 @@
 #include "HAL/PlatformTime.h"
 #include "TimerManager.h"
 #include "Engine/World.h"
+#include "Misc/App.h"
 #include "Engine/StreamableManager.h"
 #include "Engine/SkeletalMesh.h"
 #include "Project_JPlayerCharacter.h"
@@ -31,18 +36,22 @@ DEFINE_LOG_CATEGORY_STATIC(LogProjectJEquipmentRuntime, Log, All);
 UProject_JEquipmentRuntimeComponent::UProject_JEquipmentRuntimeComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
-	SetIsReplicatedByDefault(false); // Only exists to drive visual/ASC on local/server
+	SetIsReplicatedByDefault(true);
+	PublicEquipment.OwnerRuntime = this;
 }
 
 void UProject_JEquipmentRuntimeComponent::BeginPlay()
 {
 	bIsEndingPlay = false;
+	PublicEquipment.OwnerRuntime = this;
 	Super::BeginPlay();
+	if (UsesReplicatedPresentation()) BindToEquipmentManager(nullptr);
 }
 
 void UProject_JEquipmentRuntimeComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	bIsEndingPlay = true;
+	PublicEquipment.OwnerRuntime = nullptr;
 	BindToEquipmentManager(nullptr);
 
 	Super::EndPlay(EndPlayReason);
@@ -52,57 +61,152 @@ void UProject_JEquipmentRuntimeComponent::OnComponentDestroyed(bool bDestroyingH
 {
 	// A component may be destroyed before BeginPlay (and therefore without EndPlay).
 	bIsEndingPlay = true;
+	PublicEquipment.OwnerRuntime = nullptr;
 	BindToEquipmentManager(nullptr);
 	Super::OnComponentDestroyed(bDestroyingHierarchy);
 }
 
+void UProject_JEquipmentRuntimeComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME_CONDITION(UProject_JEquipmentRuntimeComponent, PublicEquipment, COND_SkipOwner);
+}
+
+bool UProject_JEquipmentRuntimeComponent::UsesReplicatedPresentation() const
+{
+	const auto* Owner = GetOwner();
+	return Owner && !Owner->HasAuthority() && !Owner->HasLocalNetOwner();
+}
+
+UProject_JEquipmentItemDefinition* UProject_JEquipmentRuntimeComponent::GetPresentedItemInSlot(EProject_JEquipmentSlot Slot) const
+{
+	const auto* Item = RuntimeItems.Find(Slot);
+	return !bIsEndingPlay && !IsBeingDestroyed() && Item && IsValid(Item->ItemDef) ? Item->ItemDef : nullptr;
+}
+
 void UProject_JEquipmentRuntimeComponent::BindToEquipmentManager(UProject_JEquipmentManagerComponent* InEquipmentManager)
 {
-	if (InEquipmentManager && (!IsValid(InEquipmentManager) || !InEquipmentManager->IsAcceptingRequests())) { return; }
-	if ((bIsEndingPlay && InEquipmentManager) ||
-		(BoundEquipmentManager == InEquipmentManager && (InEquipmentManager || RuntimeItems.IsEmpty())))
+	const bool bRemote = !bIsEndingPlay && UsesReplicatedPresentation();
+	// Simulated clients consume their own Pawn's complete public snapshot, even
+	// if PlayerState has not resolved or this is a detached, retained rider.
+	if (bRemote) InEquipmentManager = nullptr;
+	if (InEquipmentManager && (!IsValid(InEquipmentManager) || !InEquipmentManager->IsAcceptingRequests())) return;
+	if (bIsEndingPlay && InEquipmentManager) return;
+	if (bUsingReplicatedPresentation == bRemote && BoundEquipmentManager == InEquipmentManager &&
+		(InEquipmentManager || RuntimeItems.IsEmpty() || bRemote))
 	{
+		if (bRemote) ReconcilePublicEquipment();
 		return;
 	}
 
+	const TStrongObjectPtr<UProject_JEquipmentRuntimeComponent> KeepSelf(this);
+	const TStrongObjectPtr<UProject_JEquipmentManagerComponent> KeepIncoming(InEquipmentManager);
 	const uint64 ThisBindingRevision = ++BindingRevision;
+	bUsingReplicatedPresentation = bRemote;
 	auto* PreviousManager = BoundEquipmentManager;
-	BoundEquipmentManager = nullptr; // Revoke before removal/grant callbacks can rebind.
+	BoundEquipmentManager = nullptr;
 	if (PreviousManager)
 	{
-		PreviousManager->OnEquipmentEquipped.RemoveDynamic(this, &UProject_JEquipmentRuntimeComponent::OnEquipmentEquipped);
-		PreviousManager->OnEquipmentUnequipped.RemoveDynamic(this, &UProject_JEquipmentRuntimeComponent::OnEquipmentUnequipped);
+		PreviousManager->OnEquipmentEquipped.RemoveDynamic(this, &ThisClass::OnEquipmentEquipped);
+		PreviousManager->OnEquipmentUnequipped.RemoveDynamic(this, &ThisClass::OnEquipmentUnequipped);
 		PreviousManager->OnRetired.Remove(ManagerRetiredHandle);
 	}
 	ManagerRetiredHandle.Reset();
 
-	// Also clean up if the old manager is absent but a slot still owns a request.
 	TArray<EProject_JEquipmentSlot> Keys;
 	RuntimeItems.GetKeys(Keys);
 	for (const EProject_JEquipmentSlot Slot : Keys)
 	{
-		const FProject_JEquipmentRuntimeItem* RuntimeItem = RuntimeItems.Find(Slot);
-		OnEquipmentUnequipped(Slot, RuntimeItem ? RuntimeItem->ItemDef : nullptr);
-		if (ThisBindingRevision != BindingRevision) { return; }
+		const auto* Item = RuntimeItems.Find(Slot);
+		OnEquipmentUnequipped(Slot, Item ? Item->ItemDef : nullptr);
+		if (ThisBindingRevision != BindingRevision) return;
 	}
-
-	if (ThisBindingRevision != BindingRevision || (bIsEndingPlay && InEquipmentManager)) { return; }
+	if (ThisBindingRevision != BindingRevision || (bIsEndingPlay && InEquipmentManager)) return;
+	// Weapon/cancellation callbacks can retire the incoming manager before we
+	// subscribe to OnRetired; a live pointer alone cannot authorize the seed.
+	if (InEquipmentManager && (!IsValid(InEquipmentManager) || !InEquipmentManager->IsAcceptingRequests())) return;
 	BoundEquipmentManager = InEquipmentManager;
-
 	if (BoundEquipmentManager)
 	{
-		BoundEquipmentManager->OnEquipmentEquipped.AddDynamic(this, &UProject_JEquipmentRuntimeComponent::OnEquipmentEquipped);
-		BoundEquipmentManager->OnEquipmentUnequipped.AddDynamic(this, &UProject_JEquipmentRuntimeComponent::OnEquipmentUnequipped);
+		BoundEquipmentManager->OnEquipmentEquipped.AddDynamic(this, &ThisClass::OnEquipmentEquipped);
+		BoundEquipmentManager->OnEquipmentUnequipped.AddDynamic(this, &ThisClass::OnEquipmentUnequipped);
 		ManagerRetiredHandle = BoundEquipmentManager->OnRetired.AddUObject(this,
-			&UProject_JEquipmentRuntimeComponent::OnEquipmentManagerRetired, InEquipmentManager);
-
-		// Initialize currently equipped items
-		TArray<UProject_JEquipmentItemDefinition*> CurrentItems = BoundEquipmentManager->GetAllEquippedItems();
-		for (UProject_JEquipmentItemDefinition* ItemDef : CurrentItems)
+			&ThisClass::OnEquipmentManagerRetired, InEquipmentManager);
+		const auto CurrentItems = BoundEquipmentManager->GetAllEquippedItems();
+		for (auto* ItemDef : CurrentItems)
 		{
 			OnEquipmentEquipped(ItemDef ? ItemDef->EquipmentSlot : EProject_JEquipmentSlot::None, ItemDef);
-			if (ThisBindingRevision != BindingRevision || bIsEndingPlay) { return; }
+			if (ThisBindingRevision != BindingRevision || bIsEndingPlay || IsBeingDestroyed()) return;
 		}
+	}
+	else if (bRemote) ReconcilePublicEquipment();
+}
+
+void UProject_JEquipmentRuntimeComponent::PublishPublicSlot(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef)
+{
+	auto* Owner = GetOwner();
+	if (!Owner || !Owner->HasAuthority() || Slot <= EProject_JEquipmentSlot::None || Slot > EProject_JEquipmentSlot::Mount) return;
+	const int32 Index = PublicEquipment.Items.IndexOfByPredicate([Slot](const auto& Row) { return Row.Slot == Slot; });
+	if (ItemDef)
+	{
+		if (Index != INDEX_NONE && PublicEquipment.Items[Index].ItemDef == ItemDef) return;
+		auto& Row = Index == INDEX_NONE ? PublicEquipment.Items.AddDefaulted_GetRef() : PublicEquipment.Items[Index];
+		Row.Slot = Slot; Row.ItemDef = ItemDef; PublicEquipment.MarkItemDirty(Row);
+	}
+	else
+	{
+		if (Index == INDEX_NONE) return;
+		PublicEquipment.Items.RemoveAtSwap(Index); PublicEquipment.MarkArrayDirty();
+	}
+	if (!bIsEndingPlay && !Owner->IsActorBeingDestroyed() && GetWorld() && !GetWorld()->bIsTearingDown) Owner->ForceNetUpdate();
+}
+
+void UProject_JEquipmentRuntimeComponent::OnPublicEquipmentReceived()
+{
+	++PublicEquipmentRevision;
+	if (!bIsEndingPlay && !IsBeingDestroyed() && HasBegunPlay() && UsesReplicatedPresentation())
+		BindToEquipmentManager(nullptr);
+}
+
+void UProject_JEquipmentRuntimeComponent::ReconcilePublicEquipment()
+{
+	auto* Owner = GetOwner();
+	if (bIsEndingPlay || IsBeingDestroyed() || !bUsingReplicatedPresentation || !UsesReplicatedPresentation() ||
+		!IsValid(Owner) || Owner->IsActorBeingDestroyed()) return;
+	const TStrongObjectPtr<UProject_JEquipmentRuntimeComponent> KeepSelf(this);
+	const TStrongObjectPtr<AActor> KeepOwner(Owner);
+	const uint64 SourceRevision = PublicEquipmentRevision, SourceBinding = BindingRevision;
+	const auto Current = [this, Owner, SourceRevision, SourceBinding]
+	{
+		return !bIsEndingPlay && !IsBeingDestroyed() && !Owner->IsActorBeingDestroyed() &&
+			PublicEquipmentRevision == SourceRevision && BindingRevision == SourceBinding && UsesReplicatedPresentation();
+	};
+	// At most one row per real equipment slot. Reconcile only complete, resolved
+	// snapshots. Unresolved replacement rows revoke the old visual immediately;
+	// Iris calls PostReplicatedReceive again when their definition resolves.
+	if (PublicEquipment.Items.Num() > static_cast<int32>(EProject_JEquipmentSlot::Mount)) return;
+	const auto Desired = PublicEquipment.Items;
+	TArray<TStrongObjectPtr<UProject_JEquipmentItemDefinition>> KeepDefinitions;
+	TSet<EProject_JEquipmentSlot> Seen;
+	for (const auto& Row : Desired)
+	{
+		if (Row.Slot <= EProject_JEquipmentSlot::None || Row.Slot > EProject_JEquipmentSlot::Mount || Seen.Contains(Row.Slot)) return;
+		Seen.Add(Row.Slot);
+		if (IsValid(Row.ItemDef)) KeepDefinitions.Emplace(Row.ItemDef.Get());
+	}
+	TArray<EProject_JEquipmentSlot> Keys; RuntimeItems.GetKeys(Keys);
+	for (auto Slot : Keys)
+	{
+		const auto* Existing = RuntimeItems.Find(Slot);
+		const auto* Wanted = Desired.FindByPredicate([Slot](const auto& Row) { return Row.Slot == Slot; });
+		if (Existing && (!Wanted || Existing->ItemDef != Wanted->ItemDef)) OnEquipmentUnequipped(Slot, Existing->ItemDef);
+		if (!Current()) return;
+	}
+	for (const auto& Row : Desired)
+	{
+		const auto* Existing = RuntimeItems.Find(Row.Slot);
+		if (IsValid(Row.ItemDef) && (!Existing || Existing->ItemDef != Row.ItemDef)) OnEquipmentEquipped(Row.Slot, Row.ItemDef);
+		if (!Current()) return;
 	}
 }
 
@@ -140,12 +244,10 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentEquipped(EProject_JEquipmen
 	}
 
 	RuntimeItems.Add(Slot, NewRuntimeItem);
+	PublishPublicSlot(Slot, ItemDef);
 	RefreshCurrentWeaponConfiguration();
 
-	if (OwnerCharacter->GetNetMode() != NM_DedicatedServer)
-	{
-		StartLocalSpawnEquipment(Slot, ItemDef);
-	}
+	StartLocalSpawnEquipment(Slot, ItemDef); // Visual admission never owns gameplay grants or public state.
 }
 
 void UProject_JEquipmentRuntimeComponent::OnEquipmentUnequipped(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef)
@@ -154,6 +256,7 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentUnequipped(EProject_JEquipm
 	// Own a copy across callbacks rather than retaining a mutable map reference.
 	FProject_JEquipmentRuntimeItem RuntimeItem;
 	if (!RuntimeItems.RemoveAndCopyValue(Slot, RuntimeItem)) return;
+	PublishPublicSlot(Slot, nullptr);
 	if (Slot == EProject_JEquipmentSlot::Weapon) { WeaponRevoked.Broadcast(); }
 	RemoveEquipmentGameplay(RuntimeItem);
 
@@ -197,10 +300,18 @@ void UProject_JEquipmentRuntimeComponent::ApplyEquipmentGameplay(APawn& OwnerCha
         auto* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC);
         bool bNeedsEffects = true;
         uint64 EffectGeneration = 0;
-        const FName EffectSource(*FString::Printf(TEXT("EquipmentEffects.%s.%d.%s"),
-            *GetPathNameSafe(BoundEquipmentManager), int32(ItemDef.EquipmentSlot), *ItemDef.GetPathName()));
+        FName EffectSource;
         if (ProjectJASC)
         {
+            // Use the engine's weak-object incarnation, not a reusable object index
+            // or per-manager path string. Zero preserves the existing null provider.
+            const int32 ProviderNumber = BoundEquipmentManager
+                ? GUObjectArray.AllocateSerialNumber(int32(BoundEquipmentManager->GetUniqueID())) : 0;
+            // A nonnumeric suffix keeps the full definition path in the comparison
+            // name when its asset/transient name itself ends in a number.
+            const FName DefinitionSource(*FString::Printf(TEXT("EquipmentEffects.%d.%s.Provider"),
+                int32(ItemDef.EquipmentSlot), *ItemDef.GetPathName()));
+            EffectSource = FName(DefinitionSource, ProviderNumber);
             if (!ProjectJASC->AcquireAbilityGrantSource(EffectSource, bNeedsEffects, EffectGeneration)) { return; }
             RuntimeItem.GrantedHandles.GrantSourceGenerations.Add(EffectSource, EffectGeneration);
         }
@@ -238,10 +349,18 @@ void UProject_JEquipmentRuntimeComponent::RemoveEquipmentGameplay(FProject_JEqui
 	RuntimeItem.GrantedAbilitySystem.Reset();
 }
 
+bool UProject_JEquipmentRuntimeComponent::CanCreateEquipmentVisuals() const
+{
+	const UWorld* VisualWorld = GetWorld();
+	const AActor* VisualOwner = GetOwner();
+	return FApp::CanEverRender() && !bIsEndingPlay && !IsBeingDestroyed() && VisualWorld && !VisualWorld->bIsTearingDown &&
+		IsValid(VisualOwner) && !VisualOwner->IsActorBeingDestroyed() && VisualOwner->GetNetMode() != NM_DedicatedServer;
+}
+
 void UProject_JEquipmentRuntimeComponent::StartLocalSpawnEquipment(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef)
 {
 	check(IsInGameThread());
-	if (bIsEndingPlay || !IsValid(ItemDef) || ItemDef->EquipmentMesh.IsNull()) return;
+	if (!CanCreateEquipmentVisuals() || !IsValid(ItemDef) || ItemDef->EquipmentMesh.IsNull()) return;
 	FProject_JEquipmentRuntimeItem* RuntimeItem = RuntimeItems.Find(Slot);
 	if (!RuntimeItem || RuntimeItem->ItemDef != ItemDef) return;
 	if (RuntimeItem->SpawnedMesh || RuntimeItem->VisualLoadToken || RuntimeItem->VisualAttempts >= MaxVisualAttempts
@@ -285,78 +404,169 @@ void UProject_JEquipmentRuntimeComponent::StartLocalSpawnEquipment(EProject_JEqu
 void UProject_JEquipmentRuntimeComponent::OnEquipmentMeshLoaded(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef)
 {
 	check(IsInGameThread());
-	if (bIsEndingPlay || !IsValid(ItemDef) || !RuntimeItems.Contains(Slot)) return;
+	if (bIsEndingPlay || IsBeingDestroyed() || !IsValid(ItemDef)) return;
+	uint64 ExpectedRevision = 0, ExpectedToken = 0;
+	{
+		auto* Initial = RuntimeItems.Find(Slot);
+		if (!Initial || Initial->ItemDef != ItemDef) return;
+		if (!CanCreateEquipmentVisuals())
+		{
+			CancelEquipmentMeshLoad(*Initial);
+			ScheduleVisualRetry();
+			return;
+		}
+		if (Initial->SpawnedMesh) return;
+		ExpectedRevision = Initial->VisualRevision;
+		ExpectedToken = Initial->VisualLoadToken;
+	}
 
-	FProject_JEquipmentRuntimeItem& RuntimeItem = RuntimeItems[Slot];
-	if (RuntimeItem.ItemDef != ItemDef) return;
-	// The shared visual lease pins the asset across budgeted application and until unequip.
-	if (RuntimeItem.SpawnedMesh) return;
-	USkeletalMesh* LoadedMesh = ItemDef->EquipmentMesh.Get();
+	APawn* const OwnerCharacter = Cast<APawn>(GetOwner());
+	UWorld* const OriginalWorld = GetWorld();
+	if (!IsValid(OwnerCharacter) || !OriginalWorld) return;
+	const uint64 ExpectedBinding = BindingRevision;
+	const FSoftObjectPath ExpectedPath = ItemDef->EquipmentMesh.ToSoftObjectPath();
+	const FName ExpectedSocket = ItemDef->AttachSocketName;
+	const EProject_JEquipmentPoseMode ExpectedPoseMode = ItemDef->PoseMode;
+	const bool bCastShadow = ItemDef->bCastDynamicShadow;
+	const float MaxDrawDistance = ItemDef->MaxDrawDistance;
+	const TStrongObjectPtr<ThisClass> KeepSelf(this);
+	const TStrongObjectPtr<APawn> KeepOwner(OwnerCharacter);
+	const TStrongObjectPtr<UWorld> KeepWorld(OriginalWorld);
+	const TStrongObjectPtr<UProject_JEquipmentItemDefinition> KeepItem(ItemDef);
+	const TStrongObjectPtr<UProject_JVisualAssetSubsystem> KeepService(VisualAssets.Get());
+	USkeletalMesh* const LoadedMesh = ItemDef->EquipmentMesh.Get();
+	const TStrongObjectPtr<USkeletalMesh> KeepMesh(LoadedMesh);
+
+	// Never retain a map reference over mesh/pose/registration callbacks. This
+	// narrower request ownership also permits retiring our old request if mutable
+	// definition metadata changed, without touching a replacement slot/token.
+	const auto OwnsRequest = [&]()
+	{
+		const auto* Current = RuntimeItems.Find(Slot);
+		return !IsBeingDestroyed() && GetOwner() == OwnerCharacter && GetWorld() == OriginalWorld &&
+			BindingRevision == ExpectedBinding && Current && Current->ItemDef == ItemDef &&
+			Current->VisualRevision == ExpectedRevision && Current->VisualLoadToken == ExpectedToken &&
+			!Current->SpawnedMesh && VisualAssets.Get() == KeepService.Get();
+	};
+	const auto IsCurrent = [&]()
+	{
+		return OwnsRequest() && CanCreateEquipmentVisuals() && IsValid(ItemDef) &&
+			(!KeepService.IsValid() || KeepService->GetWorld() == OriginalWorld) &&
+			ItemDef->EquipmentMesh.ToSoftObjectPath() == ExpectedPath && ItemDef->EquipmentMesh.Get() == LoadedMesh &&
+			ItemDef->AttachSocketName == ExpectedSocket && ItemDef->PoseMode == ExpectedPoseMode;
+	};
+	const auto ReleaseOwnRequest = [&]()
+	{
+		if (!OwnsRequest()) return;
+		RuntimeItems.FindChecked(Slot).VisualLoadToken = 0;
+		if (KeepService.IsValid()) KeepService->Release(ExpectedToken);
+		ScheduleVisualRetry();
+	};
 	if (!LoadedMesh)
 	{
-		if (auto* Service = VisualAssets.Get()) { Service->Release(RuntimeItem.VisualLoadToken); }
-		RuntimeItem.VisualLoadToken = 0;
-		ScheduleVisualRetry();
+		ReleaseOwnRequest();
 		UE_LOG(LogProjectJEquipmentRuntime, Warning, TEXT("Equipment mesh load failed. Item=%s Path=%s"),
-			*GetNameSafe(ItemDef), *ItemDef->EquipmentMesh.ToSoftObjectPath().ToString());
+			*GetNameSafe(ItemDef), *ExpectedPath.ToString());
 		return;
 	}
+	if (!IsCurrent()) { ReleaseOwnRequest(); return; }
 
-	APawn* OwnerCharacter = Cast<APawn>(GetOwner());
-	if (!IsValid(OwnerCharacter) || OwnerCharacter->IsActorBeingDestroyed() ||
-		OwnerCharacter->GetNetMode() == NM_DedicatedServer) return;
-
-	USkeletalMeshComponent* PoseSource = nullptr;
-	FName AttachmentSocket = ItemDef->AttachSocketName;
-	if (AttachmentSocket.IsNone())
+	const auto ResolveSource = [&](FName& OutSocket)
 	{
-		PoseSource = Project_J::Animation::ResolveEquipmentPoseSource(*OwnerCharacter, *LoadedMesh,
-			ItemDef->PoseMode == EProject_JEquipmentPoseMode::CopyPose);
-	}
-	else
-	{
-		PoseSource = Project_J::Animation::ResolveWeaponAttachmentMesh(*OwnerCharacter,
-			AttachmentSocket, NAME_None, true, AttachmentSocket);
-	}
-	if (!PoseSource)
+		OutSocket = ExpectedSocket;
+		return ExpectedSocket.IsNone()
+			? Project_J::Animation::ResolveEquipmentPoseSource(*OwnerCharacter, *LoadedMesh,
+				ExpectedPoseMode == EProject_JEquipmentPoseMode::CopyPose)
+			: Project_J::Animation::ResolveWeaponAttachmentMesh(*OwnerCharacter,
+				ExpectedSocket, NAME_None, true, OutSocket);
+	};
+	FName AttachmentSocket;
+	USkeletalMeshComponent* const PoseSource = ResolveSource(AttachmentSocket);
+	if (!IsCurrent()) { ReleaseOwnRequest(); return; }
+	if (!IsValid(PoseSource) || PoseSource->IsBeingDestroyed())
 	{
 		UE_LOG(LogProjectJEquipmentRuntime, Warning,
 			TEXT("Equipment visual has no compatible pose source or attachment socket. Owner=%s Mesh=%s Slot=%d"),
 			*GetNameSafe(OwnerCharacter), *GetNameSafe(LoadedMesh), int32(Slot));
-		CancelEquipmentMeshLoad(RuntimeItem);
-		ScheduleVisualRetry();
+		ReleaseOwnRequest();
 		return;
 	}
-
-	UProject_JModularMeshComponent* NewMeshComp = NewObject<UProject_JModularMeshComponent>(OwnerCharacter);
-	NewMeshComp->SetSkeletalMesh(LoadedMesh);
-	NewMeshComp->SetCastShadow(ItemDef->bCastDynamicShadow);
-	NewMeshComp->SetCullDistance(ItemDef->MaxDrawDistance);
-
-	if (ItemDef->AttachSocketName.IsNone())
+	const TStrongObjectPtr<USkeletalMeshComponent> KeepSource(PoseSource);
+	USkeletalMesh* const SourceAsset = PoseSource->GetSkeletalMeshAsset();
+	const TStrongObjectPtr<USkeletalMesh> KeepSourceAsset(SourceAsset);
+	const bool bSourceRegistered = PoseSource->IsRegistered();
+	const auto SourceIsCurrent = [&]()
 	{
-		if(ItemDef->PoseMode == EProject_JEquipmentPoseMode::CopyPose)
+		return IsCurrent() && IsValid(PoseSource) && !PoseSource->IsBeingDestroyed() &&
+			PoseSource->GetOwner() == OwnerCharacter && PoseSource->GetWorld() == OriginalWorld &&
+			PoseSource->IsRegistered() == bSourceRegistered && PoseSource->GetSkeletalMeshAsset() == SourceAsset;
+	};
+
+	const TStrongObjectPtr<UProject_JModularMeshComponent> Candidate(NewObject<UProject_JModularMeshComponent>(OwnerCharacter));
+	const auto CandidateIsCurrent = [&]()
+	{
+		return SourceIsCurrent() && Candidate.IsValid() && !Candidate->IsBeingDestroyed() &&
+			Candidate->GetOwner() == OwnerCharacter && Candidate->GetWorld() == OriginalWorld;
+	};
+	const auto DiscardCandidate = [&]()
+	{
+		if (Candidate.IsValid() && !Candidate->IsBeingDestroyed()) Candidate->DestroyComponent();
+		// Destruction is another callback boundary; re-find only our exact old request.
+		ReleaseOwnRequest();
+	};
+	if (!CandidateIsCurrent()) { DiscardCandidate(); return; }
+	Candidate->SetSkeletalMesh(LoadedMesh);
+	if (!CandidateIsCurrent() || Candidate->GetSkeletalMeshAsset() != LoadedMesh) { DiscardCandidate(); return; }
+	Candidate->SetCastShadow(bCastShadow);
+	Candidate->SetCullDistance(MaxDrawDistance);
+	if (!CandidateIsCurrent()) { DiscardCandidate(); return; }
+
+	if (ExpectedSocket.IsNone())
+	{
+		if (ExpectedPoseMode == EProject_JEquipmentPoseMode::CopyPose)
 		{
-			if(!NewMeshComp->AttachAndCopyPose(PoseSource))
+			if (!Candidate->AttachAndCopyPose(PoseSource))
 			{
-				NewMeshComp->DestroyComponent();
-				CancelEquipmentMeshLoad(RuntimeItem);
-				UE_LOG(LogProjectJEquipmentRuntime,Warning,TEXT("Copy-pose equipment has an incompatible base hierarchy. Item=%s"),*GetNameSafe(ItemDef));
+				DiscardCandidate();
+				UE_LOG(LogProjectJEquipmentRuntime, Warning, TEXT("Copy-pose equipment has an incompatible base hierarchy. Item=%s"), *GetNameSafe(ItemDef));
 				return;
 			}
 		}
-		else NewMeshComp->AttachAndSetLeader(PoseSource);
+		else Candidate->AttachAndSetLeader(PoseSource);
 	}
 	else
 	{
-		NewMeshComp->AttachToComponent(PoseSource, FAttachmentTransformRules::SnapToTargetNotIncludingScale, AttachmentSocket);
-		NewMeshComp->SetLeaderPoseComponent(nullptr); 
+		Candidate->AttachToComponent(PoseSource, FAttachmentTransformRules::SnapToTargetNotIncludingScale, AttachmentSocket);
+		if (!CandidateIsCurrent()) { DiscardCandidate(); return; }
+		Candidate->SetLeaderPoseComponent(nullptr);
 	}
+	const auto AttachmentIsCurrent = [&]()
+	{
+		if (!CandidateIsCurrent() || Candidate->GetSkeletalMeshAsset() != LoadedMesh ||
+			Candidate->GetAttachParent() != PoseSource || Candidate->GetAttachSocketName() != AttachmentSocket) return false;
+		if (!ExpectedSocket.IsNone()) return !Candidate->bFollowAttachParentPose && !Candidate->LeaderPoseComponent.IsValid();
+		return ExpectedPoseMode == EProject_JEquipmentPoseMode::CopyPose
+			? !Candidate->bFollowAttachParentPose && !Candidate->LeaderPoseComponent.IsValid() &&
+				Candidate->GetAnimClass() == UProject_JCopyPoseAnimInstance::StaticClass()
+			: Candidate->bFollowAttachParentPose && Candidate->LeaderPoseComponent.Get() == PoseSource;
+	};
+	if (!AttachmentIsCurrent()) { DiscardCandidate(); return; }
+	// Set asset and source before native registration initializes cloth or animation.
+	Candidate->RegisterComponent();
+	if (!AttachmentIsCurrent() || !Candidate->IsRegistered()) { DiscardCandidate(); return; }
+	// Source identity may have stayed live while a callback installed a different
+	// follower/socket winner. Resolve once more only at the publication boundary.
+	FName CurrentSocket;
+	USkeletalMeshComponent* const CurrentSource = ResolveSource(CurrentSocket);
+	if (!AttachmentIsCurrent() || !Candidate->IsRegistered() || CurrentSource != PoseSource || CurrentSocket != AttachmentSocket)
+	{ DiscardCandidate(); return; }
 
-	// Install the mesh and pose source before registration can initialize cloth
-	// or post-process dynamics. Do not reset the already-running body simulation.
-	NewMeshComp->RegisterComponent();
-	RuntimeItem.SpawnedMesh = NewMeshComp;
+	// The registered component's reflected SkinnedAsset now owns residency. Detach
+	// the request before Release; no callback may see this slot's delivered lease.
+	auto* Current = RuntimeItems.Find(Slot);
+	Current->SpawnedMesh = Candidate.Get();
+	Current->VisualLoadToken = 0;
+	if (KeepService.IsValid()) KeepService->Release(ExpectedToken);
 }
 
 void UProject_JEquipmentRuntimeComponent::CancelEquipmentMeshLoad(FProject_JEquipmentRuntimeItem& RuntimeItem) const
@@ -364,8 +574,9 @@ void UProject_JEquipmentRuntimeComponent::CancelEquipmentMeshLoad(FProject_JEqui
 	check(IsInGameThread());
 	if (RuntimeItem.VisualLoadToken)
 	{
-		if (auto* Service = VisualAssets.Get()) { Service->Release(RuntimeItem.VisualLoadToken); }
+		const uint64 PreviousToken = RuntimeItem.VisualLoadToken;
 		RuntimeItem.VisualLoadToken = 0;
+		if (auto* Service = VisualAssets.Get()) { Service->Release(PreviousToken); }
 	}
 }
 
@@ -378,7 +589,11 @@ uint64 UProject_JEquipmentRuntimeComponent::GetWeaponRevision() const
 void UProject_JEquipmentRuntimeComponent::RetryEquipmentVisuals()
 {
 	check(IsInGameThread());
-	if (bIsEndingPlay || !GetOwner() || GetOwner()->GetNetMode() == NM_DedicatedServer) { return; }
+	if (!CanCreateEquipmentVisuals())
+	{
+		if (GetWorld()) GetWorld()->GetTimerManager().ClearTimer(VisualRetryTimer);
+		return;
+	}
 	for (auto& Pair : RuntimeItems)
 	{
 		if (!Pair.Value.SpawnedMesh && !Pair.Value.VisualLoadToken) { StartLocalSpawnEquipment(Pair.Key, Pair.Value.ItemDef); }
@@ -390,8 +605,7 @@ void UProject_JEquipmentRuntimeComponent::ScheduleVisualRetry()
 {
 	if (!GetWorld()) { return; }
 	GetWorld()->GetTimerManager().ClearTimer(VisualRetryTimer);
-	if (bIsEndingPlay || IsBeingDestroyed() || GetWorld()->bIsTearingDown || !IsValid(GetOwner())
-		|| GetOwner()->IsActorBeingDestroyed() || GetOwner()->GetNetMode() == NM_DedicatedServer) { return; }
+	if (!CanCreateEquipmentVisuals()) { return; }
 	double Earliest = TNumericLimits<double>::Max();
 	for (const auto& Pair : RuntimeItems)
 	{
@@ -420,7 +634,9 @@ void UProject_JEquipmentRuntimeComponent::DestroyEquipmentVisual(FProject_JEquip
 void UProject_JEquipmentRuntimeComponent::RefreshCurrentWeaponConfiguration()
 {
 	AProject_JPlayerCharacter* OwnerPlayer = Cast<AProject_JPlayerCharacter>(GetOwner());
-	if (!OwnerPlayer) return;
+	// The existing Pawn pair RepNotifies are the sole remote style/profile writer.
+	// Public item deltas must not race or overwrite that separate replicated pair.
+	if (!OwnerPlayer || UsesReplicatedPresentation()) return;
 
 	OwnerPlayer->SetCurrentEquipmentConfiguration(ResolveCurrentCombatStyle(), ResolveCurrentWeaponPresentationProfile());
 }

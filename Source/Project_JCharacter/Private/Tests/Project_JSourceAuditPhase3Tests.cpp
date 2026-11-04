@@ -90,10 +90,10 @@ bool FProjectJAudit3BegunMountDestroyTest::RunTest(const FString&) {
 }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAudit3MontageRateTest,"ProjectJ.SourceAudit3.SharedMontageRate",SourceAuditPhase3TestFlags)
 bool FProjectJAudit3MontageRateTest::RunTest(const FString&) {
-    FWorld Scope; auto* W=Scope.World; auto* Player=W->SpawnActor<AProject_JGreatswordCharacter>();
+    FWorld Scope; auto* W=Scope.World; auto* Player=W->SpawnActor<AProject_JSpellbladeCharacter>();
     auto* ASC=NewObject<UProject_JAbilitySystemComponent>(Player);ASC->RegisterComponent();ASC->InitAbilityActorInfo(Player,Player);
     FindFProperty<FObjectPropertyBase>(AProject_JBaseCharacter::StaticClass(),TEXT("AbilitySystemComponent"))->SetObjectPropertyValue_InContainer(Player,ASC);
-    auto* Source=LoadObject<UProject_JCombatStyleDefinition>(nullptr,TEXT("/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword.DA_CombatStyle_Greatsword"));
+    auto* Source=LoadObject<UProject_JCombatStyleDefinition>(nullptr,TEXT("/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Spellblade.DA_CombatStyle_Spellblade"));
     if(!TestNotNull(TEXT("Authored style fixture"),Source))return false;
     auto* Style=DuplicateObject(Source,Player); Style->AbilitySets.Reset();Style->CommandSet=nullptr;
     Style->ComboDefinition=DuplicateObject(Source->ComboDefinition.Get(),Style);
@@ -132,7 +132,7 @@ bool FProjectJAudit3BudgetAuthoringTest::RunTest(const FString&) {
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAudit3MovementOwnerTest,"ProjectJ.SourceAudit3.MovementOwnerAndTimers",SourceAuditPhase3TestFlags)
 bool FProjectJAudit3MovementOwnerTest::RunTest(const FString&) {
     for(int32 Mode=0;Mode<3;++Mode){
-        FWorld Scope(true);auto* W=Scope.World;auto* Player=W->SpawnActor<AProject_JGreatswordCharacter>();auto* Next=W->SpawnActor<AProject_JGreatswordCharacter>();
+        FWorld Scope(true);auto* W=Scope.World;auto* Player=W->SpawnActor<AProject_JSpellbladeCharacter>();auto* Next=W->SpawnActor<AProject_JSpellbladeCharacter>();
         auto* ASC=NewObject<UProject_JAbilitySystemComponent>(Player);ASC->RegisterComponent();ASC->InitAbilityActorInfo(Player,Player);
         FindFProperty<FObjectPropertyBase>(AProject_JBaseCharacter::StaticClass(),TEXT("AbilitySystemComponent"))->SetObjectPropertyValue_InContainer(Player,ASC);
         auto* State=Player->FindComponentByClass<UProject_JLocomotionAnimStateComponent>();State->RefreshCachedReferences();

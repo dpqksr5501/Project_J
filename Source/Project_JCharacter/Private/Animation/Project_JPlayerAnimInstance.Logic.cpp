@@ -40,6 +40,8 @@ bool IsGroundOneShot(EProject_JPlayerPlaybackState State)
 void UProject_JPlayerAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeThreadSafeUpdateAnimation(DeltaSeconds);
+ if(!GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().CompletePreparedTrajectory())
+  PlayerHasLocomotionSource=false;
 	UpdateNativeLocomotionLogic();
 }
 void UProject_JPlayerAnimInstance::UpdateNativeLocomotionLogic()
@@ -288,7 +290,10 @@ bool UProject_JPlayerAnimInstance::EvaluateIsPivoting()
 
 void UProject_JPlayerAnimInstance::UpdateNativeTrajectory()
 {
-	const FTransformTrajectory Trajectory=GetFoundationTrajectory();PlayerTrajectory = Trajectory;
+ // This traversal owns a stable proxy snapshot until its update completes.
+ // Keep the BP-visible owned copy, without first allocating a return-value copy.
+ const auto& Trajectory = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Movement.Trajectory;
+ PlayerTrajectory = Trajectory;
 	auto Velocity=[&](FVector& Value,float A,float B)
 	{
 		UPoseSearchTrajectoryLibrary::GetTransformTrajectoryVelocity(Trajectory,A,B,Value,false);

@@ -22,7 +22,7 @@
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJPresentationMeshResolverTest,
 	"ProjectJ.Presentation.VisualMeshOwnership",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter | EAutomationTestFlags::NonNullRHI)
 
 bool FProjectJPresentationMeshResolverTest::RunTest(const FString&)
 {
@@ -33,7 +33,7 @@ bool FProjectJPresentationMeshResolverTest::RunTest(const FString&)
 	USkeletalMesh* SourceAsset = LoadObject<USkeletalMesh>(nullptr,
 		TEXT("/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple.SKM_Quinn_Simple"));
 	USkeletalMesh* FollowerAsset = LoadObject<USkeletalMesh>(nullptr,
-		TEXT("/Game/Characters/GreatSword/GreatSword_Woman.GreatSword_Woman"));
+		TEXT("/Game/Characters/Spellblade/Spellblade_Woman.Spellblade_Woman"));
 	if (!TestNotNull(TEXT("Animation source fixture"), SourceAsset) ||
 		!TestNotNull(TEXT("Visible follower fixture"), FollowerAsset))
 	{

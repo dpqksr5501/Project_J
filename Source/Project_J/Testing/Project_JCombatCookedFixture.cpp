@@ -16,7 +16,7 @@
 #include "GameFramework/PlayerController.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JGameplayTags.h"
-#include "Project_JGreatswordCharacter.h"
+#include "Project_JSpellbladeCharacter.h"
 #include "Project_JPlayerState.h"
 #include "NiagaraComponent.h"
 #include "PipelineStateCache.h"
@@ -48,7 +48,7 @@ bool UProject_JCombatCookedFixture::CreateCharacter()
 {
 	auto* World = GetWorld();
 	const double LoadStart = FPlatformTime::Seconds();
-	auto* VisualClass = LoadClass<AProject_JPlayerCharacter>(nullptr, TEXT("/Game/Character_BPs/GreatSword/BP_GreatSword.BP_GreatSword_C"));
+	auto* VisualClass = LoadClass<AProject_JPlayerCharacter>(nullptr, TEXT("/Game/Character_BPs/Spellblade/BP_Spellblade.BP_Spellblade_C"));
 	Item = LoadObject<UProject_JEquipmentItemDefinition>(nullptr, TEXT("/Game/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_Equip.DA_Greatsword_Equip"));
 	FFileHelper::SaveStringToFile(FString::Printf(TEXT("visual_and_equipment_load_ms=%.6f\ncooked=%d\n"), (FPlatformTime::Seconds() - LoadStart) * 1000, FPlatformProperties::RequiresCookedData()), *(Output / TEXT("load.txt")));
 	if (!VisualClass || !Item || !Item->CombatStyleDefinition || !Item->WeaponPresentationProfile) { return false; }
@@ -59,7 +59,7 @@ bool UProject_JCombatCookedFixture::CreateCharacter()
 	Controller = World->SpawnActor<AAIController>(Params);
 	State = World->SpawnActor<AProject_JPlayerState>(Params);
 	Params.bDeferConstruction = true;
-	Character = World->SpawnActor<AProject_JGreatswordCharacter>(AProject_JGreatswordCharacter::StaticClass(), FVector(0, 0, 100), FRotator::ZeroRotator, Params);
+	Character = World->SpawnActor<AProject_JSpellbladeCharacter>(AProject_JSpellbladeCharacter::StaticClass(), FVector(0, 0, 100), FRotator::ZeroRotator, Params);
 	if (!Controller || !State || !Character) { return false; }
 	for (const FName Name : {FName(TEXT("CharacterAnimProfile")), FName(TEXT("CharacterClassDefinition"))})
 	{

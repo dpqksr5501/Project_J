@@ -4,8 +4,9 @@
 #include "AbilitySystemInterface.h"
 #include "AbilitySystemComponent.h"
 #include "Combat/Project_JGameplayAbility_Melee.h"
-#include "Project_JGreatswordCharacter.h"
+#include "Project_JSpellbladeCharacter.h"
 #include "Project_JNPCCharacter.h"
+#include "Animation/AnimInstance.h"
 #include "Project_JPlayerMaturityFixtures.generated.h"
 
 UCLASS(NotBlueprintable, Transient)
@@ -13,6 +14,18 @@ class AProject_JPlayerMaturityASCFixture : public ACharacter, public IAbilitySys
 {
 	GENERATED_BODY()
 public:
+	TFunction<void(USkeletalMeshComponent*)> OnEquipmentAnimationInitialize;
+	TFunction<void(UActorComponent*, bool)> OnCueComponentActivated;
+	UFUNCTION()
+	void HandleCueComponentActivated(UActorComponent* Component, bool bReset)
+	{
+		if (OnCueComponentActivated)
+		{
+			// Consume before invoking native code which can activate another pooled cue.
+			auto Callback = MoveTemp(OnCueComponentActivated);
+			Callback(Component, bReset);
+		}
+	}
 	UPROPERTY(Transient) TObjectPtr<UAbilitySystemComponent> CurrentASC;
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return CurrentASC; }
 };
@@ -27,7 +40,7 @@ public:
 };
 
 UCLASS(NotBlueprintable, Transient)
-class AProject_JCombatFacingFixture : public AProject_JGreatswordCharacter
+class AProject_JCombatFacingFixture : public AProject_JSpellbladeCharacter
 {
 	GENERATED_BODY()
 public:
@@ -50,4 +63,21 @@ public:
 			Callback(bNewHidden);
 		}
 	}
+};
+
+/** Real post-process initialization seam. Its owner consumes the callback before any nested registration. */
+UCLASS(NotBlueprintable, Transient)
+class UProject_JEquipmentRegistrationAnimFixture : public UAnimInstance
+{
+ GENERATED_BODY()
+public:
+ virtual void NativeInitializeAnimation() override
+ {
+  Super::NativeInitializeAnimation();
+  if(auto* Owner=Cast<AProject_JPlayerMaturityASCFixture>(GetOwningActor());Owner && Owner->OnEquipmentAnimationInitialize)
+  {
+   auto Callback=MoveTemp(Owner->OnEquipmentAnimationInitialize);
+   Callback(GetSkelMeshComponent());
+  }
+ }
 };

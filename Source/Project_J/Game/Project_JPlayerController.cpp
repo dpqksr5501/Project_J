@@ -27,6 +27,7 @@
 #include "Game/Project_JProfilingCrowdComponent.h"
 #include "PoseSearch/PoseSearchDatabase.h"
 #include "Widgets/Input/SVirtualJoystick.h"
+#include "Framework/Application/SlateApplication.h"
 #include "UI/Project_JPlayerUIComponent.h"
 #include "InputKeyEventArgs.h"
 #include "Movement/Project_JMovementQueries.h"
@@ -136,6 +137,12 @@ void AProject_JPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReaso
 	Super::EndPlay(EndPlayReason);
 }
 
+void AProject_JPlayerController::UpdateCameraManager(float DeltaSeconds)
+{
+	Project_J::Movement::RequestMoverCameraUpdate(this);
+	Super::UpdateCameraManager(DeltaSeconds);
+}
+
 void AProject_JPlayerController::SetViewTarget(AActor* NewViewTarget,FViewTargetTransitionParams TransitionParams)
 {
 	// Unpossess during world cleanup must not retarget a destroyed pawn/camera
@@ -185,8 +192,10 @@ void AProject_JPlayerController::ReceivedPlayer()
 
 bool AProject_JPlayerController::ShouldUseTouchControls() const
 {
-	// are we on a mobile platform? Should we force touch?
-	return SVirtualJoystick::ShouldDisplayTouchInterface() || bForceTouchControls;
+	// Remote controllers and headless worlds have no touch presentation.
+	// SVirtualJoystick queries Slate, which a dedicated server never creates.
+	if (!IsLocalPlayerController() || !FSlateApplication::IsInitialized()) return false;
+	return bForceTouchControls || SVirtualJoystick::ShouldDisplayTouchInterface();
 }
 
 #if WITH_EDITOR
@@ -765,7 +774,10 @@ void AProject_JPlayerController::ServerUIPrototypeTest_Implementation(const FStr
 			}
 		}
 	}
-	if (Action == TEXT("finish") && Quests) { Quests->RecordObjective(TEXT("TravelMetres"), 20); }
+	if (Action == TEXT("finish") && Quests && !Quests->TryRecordObjective(TEXT("TravelMetres"), 20))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Quest progress was not admitted; no completion was confirmed. Retry only while the same trusted event remains valid."));
+	}
 	if (Action == TEXT("buff"))
 	{
 		for (int32 Index = 0; Index < 3; ++Index) ASC->ApplyGameplayEffectToSelf(GetDefault<UProject_JUIValidationEffect>(), 1.f, ASC->MakeEffectContext());

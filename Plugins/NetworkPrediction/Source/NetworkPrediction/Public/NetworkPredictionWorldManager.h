@@ -5,6 +5,12 @@
 
 #include "Services/NetworkPredictionServiceRegistry.h"
 #include "NetworkPredictionSerialization.h"
+#if !UE_BUILD_SHIPPING
+#include "NetworkPredictionComponent.h"
+#include "Engine/World.h"
+#include "GameFramework/Actor.h"
+#include "UObject/StrongObjectPtr.h"
+#endif
 
 #include "NetworkPredictionWorldManager.generated.h"
 
@@ -15,6 +21,14 @@ class ANetworkPredictionReplicatedManager;
 
 namespace UE::Net::Private
 {
+#if !UE_BUILD_SHIPPING
+ // Optional pure const model read. No driver/UObject API is introduced into NP.
+ struct CModelWireScalarProjection
+ {
+  template<typename Model,typename Sync>
+  auto Requires(const Sync* State,float* Out) -> decltype(Model::CaptureModelWireScalars(State,Out));
+ };
+#endif
 	struct FNetPredictionTestWorld;
 }
 
@@ -142,6 +156,12 @@ private:
 	template<typename ReplicatorType, typename ModelDef=typename ReplicatorType::ModelDef>
 	void BindClientNetRecv_Independent(FNetworkPredictionID ID, FReplicationProxy* RepProxy, TModelDataStore<ModelDef>* DataStore, ENetRole NetRole);
 
+#if !UE_BUILD_SHIPPING
+ template<typename ModelDef>
+ void FinishModelWireObservation(FNetworkPredictionID ID,FReplicationProxy* RepProxy,TModelDataStore<ModelDef>* DataStore,
+  uint64 Epoch,ENetRole Role,UNetworkPredictionComponent* Driver,AActor* ExpectedOwner,UWorld* World,bool bFixed,bool bAP,const FNetSerializeParams& P,bool bEncode=false,int32 EncodeTimeMS=INDEX_NONE);
+#endif
+
 	// ----
 
 	template<typename ReplicatorType, typename ModelDef=typename ReplicatorType::ModelDef>
@@ -184,6 +204,11 @@ void UNetworkPredictionWorldManager::ConfigureInstance(FNetworkPredictionID ID, 
 	TModelDataStore<ModelDef>* DataStore = Services.GetDataStore<ModelDef>();
 	TInstanceData<ModelDef>& InstanceData = *DataStore->Instances.Find(ID);
 	TInstanceFrameState<ModelDef>& FrameData = DataStore->Frames.FindOrAdd(ID);
+#if !UE_BUILD_SHIPPING
+ // Rebinding/ID/role/archetype changes may not inherit an earlier receive epoch.
+ for(FReplicationProxy* Proxy : {RepProxies.ServerRPC,RepProxies.AutonomousProxy,RepProxies.SimulatedProxy,RepProxies.Replay})
+  if(Proxy) Proxy->ResetModelWireObservation(int32(ID),uint8(Role));
+#endif
 
 	const int32 PrevPendingFrame = InstanceData.Info.View->PendingFrame;
 	const bool bNewInstance = (InstanceData.NetRole == ROLE_None);
@@ -497,6 +522,41 @@ void UNetworkPredictionWorldManager::BindServerNetRecv_Independent(FNetworkPredi
 //			TIndependentTickReplicator_SP
 // ---------------------------------------------------------------------------------------
 
+#if !UE_BUILD_SHIPPING
+template<typename ModelDef>
+void UNetworkPredictionWorldManager::FinishModelWireObservation(FNetworkPredictionID ID,FReplicationProxy* RepProxy,TModelDataStore<ModelDef>* DataStore,
+ uint64 Epoch,ENetRole Role,UNetworkPredictionComponent* Driver,AActor* ExpectedOwner,UWorld* World,bool bFixed,bool bAP,const FNetSerializeParams& P,bool bEncode,int32 EncodeTimeMS)
+{
+ check(IsInGameThread());
+ // Driver, owner, world and this manager are pinned by the synchronous caller.
+ const AActor* Owner=Driver->GetOwner();
+ const auto* Instance=DataStore->Instances.Find(ID);
+ const auto* Receive=DataStore->ClientRecv.Find(ID);
+ const auto ServicesRequired=bFixed?ENetworkPredictionService::ANY_FIXED:ENetworkPredictionService::ANY_INDEPENDENT;
+ if(!IsValid(this) || !IsValid(World) || World->bIsTearingDown || GetWorld()!=World
+  || World->GetSubsystem<UNetworkPredictionWorldManager>()!=this || !IsValid(Driver) || Driver->IsBeingDestroyed()
+  || !Driver->HasBeenInitialized() || !Driver->HasBegunPlay() || !Driver->IsRegistered() || Driver->GetWorld()!=World
+  || !IsValid(Owner) || Owner!=ExpectedOwner || Owner->GetLocalRole()!=Role || Owner->IsActorBeingDestroyed() || Owner->GetWorld()!=World
+  || !Instance || static_cast<const void*>(Instance->Info.Driver)!=static_cast<const void*>(Driver)
+  || Instance->NetRole!=Role || !EnumHasAnyFlags(Instance->ServiceMask,ServicesRequired) || (!bEncode && (!Receive || Receive->NetRole!=Role)))
+ { RepProxy->SetModelWireStatus(Epoch,ENPModelWireStatus::Retired); return; }
+ const auto Current=RepProxy->GetModelWireObservation();
+ if(Current.BindingEpoch!=Epoch || Current.SimID!=int32(ID) || Current.Role!=uint8(Role) || Current.Status==ENPModelWireStatus::StaleBinding) return;
+ if(P.Ar.IsError() || (bEncode && !P.Ar.IsSaving())) { RepProxy->SetModelWireStatus(Epoch,ENPModelWireStatus::ArchiveError); return; }
+ if(bEncode) { RepProxy->RecordAuthorityModelEncode(Epoch,EncodeTimeMS); return; }
+ // Fixed AP/SP carry a server frame, independent AP an input ack, independent SP NO frame.
+ const auto FrameKind=bFixed?ENPModelWireFrameKind::ServerFrame:(bAP?ENPModelWireFrameKind::ClientInputAck:ENPModelWireFrameKind::None);
+ const int32 Frame=bFixed?Receive->ServerFrame:(bAP?Receive->ServerFrame-1:INDEX_NONE);
+ const auto TimeKind=bFixed?ENPModelWireTimeKind::None:(bAP?ENPModelWireTimeKind::IndependentSimulationMS:ENPModelWireTimeKind::ServerVariableMS);
+ float Scalars[4]={std::numeric_limits<float>::quiet_NaN(),std::numeric_limits<float>::quiet_NaN(),
+  std::numeric_limits<float>::quiet_NaN(),std::numeric_limits<float>::quiet_NaN()};
+ if constexpr(TModels_V<UE::Net::Private::CModelWireScalarProjection,ModelDef,typename ModelDef::StateTypes::SyncType>)
+  if(FReplicationProxy::IsModelWireScalarObservationEnabled()) ModelDef::CaptureModelWireScalars(Receive->SyncState.Get(),Scalars);
+ // Same post-codec receive slot as the time above; no second NetRecv or view read.
+ RepProxy->RecordModelWireReceive(Epoch,FrameKind,Frame,TimeKind,bFixed?INDEX_NONE:Receive->SimTimeMS,Scalars);
+}
+#endif
+
 template<typename ReplicatorType, typename ModelDef>
 void UNetworkPredictionWorldManager::BindClientNetRecv_Fixed(FNetworkPredictionID ID, FReplicationProxy* RepProxy, TModelDataStore<ModelDef>* DataStore, ENetRole NetRole)
 {
@@ -512,14 +572,41 @@ void UNetworkPredictionWorldManager::BindClientNetRecv_Fixed(FNetworkPredictionI
 	InitClientRecvData<ModelDef>(ID, ClientRecvData, DataStore, NetRole);
 
 	FFixedTickState* TickState = &this->FixedTickState;
-	RepProxy->NetSerializeFunc = [DataStore, ClientRecvIdx, TickState](const FNetSerializeParams& P)
+#if !UE_BUILD_SHIPPING
+ const uint64 ObservationEpoch=RepProxy->GetModelWireObservationEpoch();
+ const TWeakObjectPtr<UNetworkPredictionWorldManager> ObservationManager(this);
+ TWeakObjectPtr<UNetworkPredictionComponent> ObservationDriver;
+ if constexpr (std::is_base_of_v<UNetworkPredictionComponent,typename ModelDef::Driver>)
+  ObservationDriver=DataStore->Instances.Find(ID)->Info.Driver;
+ if(!ObservationDriver.IsValid()) RepProxy->SetModelWireStatus(ObservationEpoch,ENPModelWireStatus::UnsupportedDriver);
+#endif
+	RepProxy->NetSerializeFunc = [DataStore, ClientRecvIdx, TickState
+#if !UE_BUILD_SHIPPING
+  , ID, RepProxy, ObservationEpoch, ObservationManager, ObservationDriver, NetRole
+#endif
+ ](const FNetSerializeParams& P)
 	{
 		npEnsure(P.Ar.IsLoading());
+#if !UE_BUILD_SHIPPING
+  const bool bObserve=FReplicationProxy::IsModelWireObservationEnabled();
+  const bool bObserveGT=bObserve && IsInGameThread();
+  if(bObserve && !bObserveGT) FReplicationProxy::ReportUnsupportedModelWireThread();
+  // Default-off path does not pin, allocate a history, or alter codec execution.
+  TStrongObjectPtr<UNetworkPredictionWorldManager> ManagerPin(bObserveGT?ObservationManager.Get():nullptr);
+  TStrongObjectPtr<UNetworkPredictionComponent> DriverPin(bObserveGT?ObservationDriver.Get():nullptr);
+  TStrongObjectPtr<AActor> OwnerPin(DriverPin.IsValid()?DriverPin->GetOwner():nullptr);
+  TStrongObjectPtr<UWorld> WorldPin(ManagerPin.IsValid()?ManagerPin->GetWorld():nullptr);
+#endif
 		DataStore->ClientRecvBitMask[ClientRecvIdx] = true;
 		auto& ClientRecvData = DataStore->ClientRecv.GetByIndexChecked(ClientRecvIdx);
 
 		UE_NP_TRACE_SIM(ClientRecvData.TraceID);
 		ReplicatorType::NetRecv(P, ClientRecvData, DataStore, TickState);
+#if !UE_BUILD_SHIPPING
+  if(bObserveGT && ManagerPin.IsValid() && DriverPin.IsValid() && OwnerPin.IsValid() && WorldPin.IsValid())
+   ManagerPin->FinishModelWireObservation(ID,RepProxy,DataStore,ObservationEpoch,NetRole,DriverPin.Get(),OwnerPin.Get(),WorldPin.Get(),true,
+    std::is_same_v<ReplicatorType,TFixedTickReplicator_AP<ModelDef>>,P);
+#endif
 	};
 }
 
@@ -538,14 +625,41 @@ void UNetworkPredictionWorldManager::BindClientNetRecv_Independent(FNetworkPredi
 	InitClientRecvData<ModelDef>(ID, ClientRecvData, DataStore, NetRole);
 
 	FVariableTickState* TickState = &this->VariableTickState;
-	RepProxy->NetSerializeFunc = [DataStore, ClientRecvIdx, TickState](const FNetSerializeParams& P)
+#if !UE_BUILD_SHIPPING
+ const uint64 ObservationEpoch=RepProxy->GetModelWireObservationEpoch();
+ const TWeakObjectPtr<UNetworkPredictionWorldManager> ObservationManager(this);
+ TWeakObjectPtr<UNetworkPredictionComponent> ObservationDriver;
+ if constexpr (std::is_base_of_v<UNetworkPredictionComponent,typename ModelDef::Driver>)
+  ObservationDriver=DataStore->Instances.Find(ID)->Info.Driver;
+ if(!ObservationDriver.IsValid()) RepProxy->SetModelWireStatus(ObservationEpoch,ENPModelWireStatus::UnsupportedDriver);
+#endif
+	RepProxy->NetSerializeFunc = [DataStore, ClientRecvIdx, TickState
+#if !UE_BUILD_SHIPPING
+  , ID, RepProxy, ObservationEpoch, ObservationManager, ObservationDriver, NetRole
+#endif
+ ](const FNetSerializeParams& P)
 	{
 		npEnsure(P.Ar.IsLoading());
+#if !UE_BUILD_SHIPPING
+  const bool bObserve=FReplicationProxy::IsModelWireObservationEnabled();
+  const bool bObserveGT=bObserve && IsInGameThread();
+  if(bObserve && !bObserveGT) FReplicationProxy::ReportUnsupportedModelWireThread();
+  // Default-off path does not pin, allocate a history, or alter codec execution.
+  TStrongObjectPtr<UNetworkPredictionWorldManager> ManagerPin(bObserveGT?ObservationManager.Get():nullptr);
+  TStrongObjectPtr<UNetworkPredictionComponent> DriverPin(bObserveGT?ObservationDriver.Get():nullptr);
+  TStrongObjectPtr<AActor> OwnerPin(DriverPin.IsValid()?DriverPin->GetOwner():nullptr);
+  TStrongObjectPtr<UWorld> WorldPin(ManagerPin.IsValid()?ManagerPin->GetWorld():nullptr);
+#endif
 		DataStore->ClientRecvBitMask[ClientRecvIdx] = true;
 		auto& ClientRecvData = DataStore->ClientRecv.GetByIndexChecked(ClientRecvIdx);
 
 		UE_NP_TRACE_SIM(ClientRecvData.TraceID);
 		ReplicatorType::NetRecv(P, ClientRecvData, DataStore, TickState);
+#if !UE_BUILD_SHIPPING
+  if(bObserveGT && ManagerPin.IsValid() && DriverPin.IsValid() && OwnerPin.IsValid() && WorldPin.IsValid())
+   ManagerPin->FinishModelWireObservation(ID,RepProxy,DataStore,ObservationEpoch,NetRole,DriverPin.Get(),OwnerPin.Get(),WorldPin.Get(),false,
+    std::is_same_v<ReplicatorType,TIndependentTickReplicator_AP<ModelDef>>,P);
+#endif
 	};
 }
 
@@ -586,11 +700,40 @@ void UNetworkPredictionWorldManager::BindNetSend_IndependentLocal(FNetworkPredic
 
 	// Tick is based on local VariableTickState
 	FVariableTickState* TickState = &this->VariableTickState;
-	RepProxy->NetSerializeFunc = [ID, DataStore, TickState](const FNetSerializeParams& P)
+#if !UE_BUILD_SHIPPING
+ const uint64 ObservationEpoch=RepProxy->GetModelWireObservationEpoch();
+ const TWeakObjectPtr<UNetworkPredictionWorldManager> ObservationManager(this);
+ TWeakObjectPtr<UNetworkPredictionComponent> ObservationDriver;
+ if constexpr (std::is_base_of_v<UNetworkPredictionComponent,typename ModelDef::Driver>)
+  ObservationDriver=DataStore->Instances.Find(ID)->Info.Driver;
+ if constexpr (std::is_same_v<ReplicatorType,TIndependentTickReplicator_SP<ModelDef>>)
+  if(!ObservationDriver.IsValid()) RepProxy->SetModelWireStatus(ObservationEpoch,ENPModelWireStatus::UnsupportedDriver);
+#endif
+	RepProxy->NetSerializeFunc = [ID, DataStore, TickState
+#if !UE_BUILD_SHIPPING
+  , RepProxy, ObservationEpoch, ObservationManager, ObservationDriver
+#endif
+ ](const FNetSerializeParams& P)
 	{
 		npEnsure(P.Ar.IsSaving());
+#if !UE_BUILD_SHIPPING
+  constexpr bool bSP=std::is_same_v<ReplicatorType,TIndependentTickReplicator_SP<ModelDef>>;
+  const bool bObserve=bSP && FReplicationProxy::IsModelWireObservationEnabled();
+  const bool bObserveGT=bObserve && IsInGameThread();
+  if(bObserve && !bObserveGT) FReplicationProxy::ReportUnsupportedModelWireThread();
+  TStrongObjectPtr<UNetworkPredictionWorldManager> ManagerPin(bObserveGT?ObservationManager.Get():nullptr);
+  TStrongObjectPtr<UNetworkPredictionComponent> DriverPin(bObserveGT?ObservationDriver.Get():nullptr);
+  TStrongObjectPtr<AActor> OwnerPin(DriverPin.IsValid()?DriverPin->GetOwner():nullptr);
+  TStrongObjectPtr<UWorld> WorldPin(ManagerPin.IsValid()?ManagerPin->GetWorld():nullptr);
+  // The exact first SP timestamp: copied before the unchanged native serializer reads it.
+  const int32 EncodeTimeMS=bObserveGT?(*TickState).Frames[(*TickState).PendingFrame].TotalMS:INDEX_NONE;
+#endif
 		UE_NP_TRACE_SIM(ID.GetTraceID());
 		ReplicatorType::NetSend(P, ID, DataStore, TickState);
+#if !UE_BUILD_SHIPPING
+  if(bObserveGT && ManagerPin.IsValid() && DriverPin.IsValid() && OwnerPin.IsValid() && WorldPin.IsValid())
+   ManagerPin->FinishModelWireObservation(ID,RepProxy,DataStore,ObservationEpoch,ROLE_Authority,DriverPin.Get(),OwnerPin.Get(),WorldPin.Get(),false,false,P,true,EncodeTimeMS);
+#endif
 	};
 }
 
@@ -602,12 +745,41 @@ void UNetworkPredictionWorldManager::BindNetSend_IndependentRemote(FNetworkPredi
 	
 	// Tick is based on ServerRecv_IndependentTick data
 	const int32 ServerRecvIdx = DataStore->ServerRecv_IndependentTick.GetIndex(ID);
-	RepProxy->NetSerializeFunc = [ID, this, DataStore, ServerRecvIdx](const FNetSerializeParams& P)
+#if !UE_BUILD_SHIPPING
+ const uint64 ObservationEpoch=RepProxy->GetModelWireObservationEpoch();
+ const TWeakObjectPtr<UNetworkPredictionWorldManager> ObservationManager(this);
+ TWeakObjectPtr<UNetworkPredictionComponent> ObservationDriver;
+ if constexpr (std::is_base_of_v<UNetworkPredictionComponent,typename ModelDef::Driver>)
+  ObservationDriver=DataStore->Instances.Find(ID)->Info.Driver;
+ if constexpr (std::is_same_v<ReplicatorType,TIndependentTickReplicator_SP<ModelDef>>)
+  if(!ObservationDriver.IsValid()) RepProxy->SetModelWireStatus(ObservationEpoch,ENPModelWireStatus::UnsupportedDriver);
+#endif
+	RepProxy->NetSerializeFunc = [ID, this, DataStore, ServerRecvIdx
+#if !UE_BUILD_SHIPPING
+  , RepProxy, ObservationEpoch, ObservationManager, ObservationDriver
+#endif
+ ](const FNetSerializeParams& P)
 	{
 		npEnsureSlow(P.Ar.IsSaving());
+#if !UE_BUILD_SHIPPING
+  constexpr bool bSP=std::is_same_v<ReplicatorType,TIndependentTickReplicator_SP<ModelDef>>;
+  const bool bObserve=bSP && FReplicationProxy::IsModelWireObservationEnabled();
+  const bool bObserveGT=bObserve && IsInGameThread();
+  if(bObserve && !bObserveGT) FReplicationProxy::ReportUnsupportedModelWireThread();
+  TStrongObjectPtr<UNetworkPredictionWorldManager> ManagerPin(bObserveGT?ObservationManager.Get():nullptr);
+  TStrongObjectPtr<UNetworkPredictionComponent> DriverPin(bObserveGT?ObservationDriver.Get():nullptr);
+  TStrongObjectPtr<AActor> OwnerPin(DriverPin.IsValid()?DriverPin->GetOwner():nullptr);
+  TStrongObjectPtr<UWorld> WorldPin(ManagerPin.IsValid()?ManagerPin->GetWorld():nullptr);
+  // The exact first SP timestamp: copied before the unchanged native serializer reads it.
+  const int32 EncodeTimeMS=bObserveGT?VariableTickState.Frames[VariableTickState.PendingFrame].TotalMS:INDEX_NONE;
+#endif
 		TServerRecvData_Independent<ModelDef>& ServerRecv = DataStore->ServerRecv_IndependentTick.GetByIndexChecked(ServerRecvIdx);
 		UE_NP_TRACE_SIM(ID.GetTraceID());
 		ReplicatorType::NetSend(P, ID, DataStore, ServerRecv, &this->VariableTickState);
+#if !UE_BUILD_SHIPPING
+  if(bObserveGT && ManagerPin.IsValid() && DriverPin.IsValid() && OwnerPin.IsValid() && WorldPin.IsValid())
+   ManagerPin->FinishModelWireObservation(ID,RepProxy,DataStore,ObservationEpoch,ROLE_Authority,DriverPin.Get(),OwnerPin.Get(),WorldPin.Get(),false,false,P,true,EncodeTimeMS);
+#endif
 	};
 }
 

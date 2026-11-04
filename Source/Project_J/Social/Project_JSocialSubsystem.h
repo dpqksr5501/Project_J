@@ -5,6 +5,7 @@
 #include "Project_JSocialSubsystem.generated.h"
 
 class AProject_JPlayerState;
+struct FProject_JPartyMemberSummary;
 
 UENUM(BlueprintType)
 enum class EProject_JSocialGroupKind : uint8 { Party, Guild };
@@ -32,7 +33,8 @@ enum class EProject_JSocialOperationFailure : uint8
 	GroupNotFound,
 	GroupFull,
 	RevisionExhausted,
-	StaleSession
+	StaleSession,
+	HistoryCapacity
 };
 
 USTRUCT(BlueprintType)
@@ -82,6 +84,7 @@ class PROJECT_J_API UProject_JSocialSubsystem : public UGameInstanceSubsystem
 	GENERATED_BODY()
 
 public:
+	virtual void Deinitialize() override;
 	void BindPlayerState(AProject_JPlayerState* PlayerState);
 	void UnbindPlayerState(AProject_JPlayerState* PlayerState);
 
@@ -118,19 +121,30 @@ public:
 	FName GetGuildIdForCharacter(const FGuid& CharacterId) const;
 
 private:
+	friend class AProject_JPlayerState;
+	friend class FProjectJSocialGroupNameTest;
+	void PublishPartyMemberSummary(AProject_JPlayerState* Source);
+	void ReconcilePartyRoster(FName PartyId);
+	AProject_JPlayerState* ResolveOnlineMember(const FGuid& CharacterId) const;
+	bool bEnding = false;
 	using FRuntimeGroup = FProject_JSocialGroupSnapshot;
+	FProject_JPartyMemberSummary BuildPartyMemberSummary(const FRuntimeGroup& Group, int32 Order) const;
 
 	using FGroupMap = TMap<FName, FRuntimeGroup>;
 	using FMembershipMap = TMap<FGuid, FName>;
 
-	static FName CreateGroupId(const TCHAR* Prefix);
+	// One unique namespace per GI/kind; internal FName numbers never wrap or repeat.
+	struct FGroupIdSequence { FName Namespace; int32 LastIssued = 0; };
+	FGroupIdSequence PartyIds, GuildIds;
+	static FName CreateGroupId(const TCHAR* Prefix, FGroupIdSequence& Sequence);
 	EProject_JSocialOperationFailure ResolveAuthoritativeCharacter(AProject_JPlayerState* Player, FGuid& OutCharacterId, bool bCheckSession = true) const;
 	FProject_JSocialOperationResult CreateGroup(
 		AProject_JPlayerState* Leader,
 		const TCHAR* Prefix,
 		int32 MaxMembers,
 		FGroupMap& Groups,
-		FMembershipMap& Memberships);
+		FMembershipMap& Memberships,
+		FGroupIdSequence& Sequence);
 	FProject_JSocialOperationResult JoinGroup(
 		AProject_JPlayerState* Player,
 		FName GroupId,
@@ -158,15 +172,18 @@ private:
 	void SynchronizeGroupMembers(const FRuntimeGroup& Group);
 	static FGuid ResolveGroupLeader(FName GroupId, const FGroupMap& Groups);
 
-	UPROPERTY(Config, EditAnywhere, Category = "MMO|Social", meta = (ClampMin = "2"))
+	UPROPERTY(Config, EditAnywhere, Category = "MMO|Social", meta = (ClampMin = "2", ClampMax = "8"))
 	int32 MaxPartyMembers = 8;
 
 	UPROPERTY(Config, EditAnywhere, Category = "MMO|Social", meta = (ClampMin = "2"))
 	int32 MaxGuildMembers = 100;
 
+	/** Provisional in-memory entry ceiling per kind, including deletion history.
+	 *  Zero closes new IDs; existing identities and their replay fences are retained. */
+	UPROPERTY(Config, EditAnywhere, Category = "MMO|Social", meta = (ClampMin = "0", ClampMax = "1048576"))
+	int32 MaxTrackedGroupsPerKind = 65536;
+
 	TMap<FGuid, TWeakObjectPtr<AProject_JPlayerState>> OnlinePlayers;
-	// Weak revocations prevent a detached PlayerState regaining writes when its replacement logs out.
-	TSet<TWeakObjectPtr<AProject_JPlayerState>> RevokedPlayers;
 	FGroupMap Parties;
 	FGroupMap Guilds;
 	FMembershipMap CharacterParties;

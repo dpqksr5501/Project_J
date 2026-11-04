@@ -4,7 +4,7 @@
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
-#include "Project_JGreatswordCharacter.h"
+#include "Project_JSpellbladeCharacter.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JGameplayTags.h"
 #include "Combat/Project_JGameplayAbility_Sprint.h"
@@ -19,7 +19,7 @@
 
 namespace
 {
-UProject_JAbilitySystemComponent* InstallInputASC(AProject_JGreatswordCharacter* Player)
+UProject_JAbilitySystemComponent* InstallInputASC(AProject_JSpellbladeCharacter* Player)
 {
     auto* ASC = NewObject<UProject_JAbilitySystemComponent>(Player);
     FindFProperty<FObjectPropertyBase>(AProject_JBaseCharacter::StaticClass(), TEXT("AbilitySystemComponent"))->SetObjectPropertyValue_InContainer(Player, ASC);
@@ -44,8 +44,8 @@ bool FProjectJRouterCancelReentryTest::RunTest(const FString&)
     auto* World = UWorld::CreateWorld(EWorldType::Game, false);
     GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
     ON_SCOPE_EXIT { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
-    auto* Previous = World->SpawnActor<AProject_JGreatswordCharacter>();
-    auto* Current = World->SpawnActor<AProject_JGreatswordCharacter>();
+    auto* Previous = World->SpawnActor<AProject_JSpellbladeCharacter>();
+    auto* Current = World->SpawnActor<AProject_JSpellbladeCharacter>();
     auto* PreviousASC = InstallInputASC(Previous);
     auto* CurrentASC = InstallInputASC(Current);
     const auto& Tags = FProject_JGameplayTags::Get();
@@ -83,8 +83,8 @@ bool FProjectJActiveMoveReentryTest::RunTest(const FString&)
     auto* World = UWorld::CreateWorld(EWorldType::Game, false);
     GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
     ON_SCOPE_EXIT { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
-    auto* Previous = World->SpawnActor<AProject_JGreatswordCharacter>();
-    auto* Current = World->SpawnActor<AProject_JGreatswordCharacter>();
+    auto* Previous = World->SpawnActor<AProject_JSpellbladeCharacter>();
+    auto* Current = World->SpawnActor<AProject_JSpellbladeCharacter>();
     auto* Controller = World->SpawnActor<APlayerController>();
     Controller->SetAsLocalPlayerController(); Controller->Possess(Previous);
     auto* ASC = InstallInputASC(Previous);

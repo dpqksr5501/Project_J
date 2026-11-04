@@ -12,6 +12,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "DefaultMovementSet/CharacterMoverComponent.h"
+#include "MoverDataModelTypes.h"
 
 UProject_JCharacterAnimInstance::UProject_JCharacterAnimInstance() { bUseMultiThreadedAnimationUpdate=true; }
 void UProject_JCharacterAnimInstance::NativeInitializeAnimation()
@@ -41,12 +42,24 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
   Data.Movement.GroundSpeed=Data.Movement.Velocity.Size2D();
   const auto Local=OwningCharacter->GetActorQuat().UnrotateVector(Data.Movement.Velocity);
   Data.Movement.RelativeVelocityDirection=Data.Movement.GroundSpeed>UE_SMALL_NUMBER ? FMath::RadiansToDegrees(FMath::Atan2(Local.Y,Local.X)):0.f;
+  // Common Mover owners include NPCs; the player-specific combat/aim helper
+  // below is not a physical-state producer. Keep UObject/input queries on GT.
+  const auto* Mover=OwningCharacter->GetMover();
+  if (IsValid(OwningCharacter.Get()) && !OwningCharacter->IsActorBeingDestroyed() && OwningCharacter->HasActorBegunPlay() &&
+      IsValid(Mover) && !Mover->IsBeingDestroyed() && Mover->IsRegistered() && Mover->HasBeenInitialized() && Mover->HasBegunPlay() &&
+      Mover->GetOwner()==OwningCharacter.Get() && Mover->GetWorld()==OwningCharacter->GetWorld())
+  {
+   Data.Air.bIsInAir=Mover->IsAirborne();
+   Data.Air.bIsFalling=Mover->IsFalling();
+   const auto* Input=Mover->GetLastInputCmd().InputCollection.FindDataByType<FCharacterDefaultInputs>();
+   Data.Input.bHasMoveInput=Input && !Input->GetMoveInput_WorldSpace().IsNearlyZero();
+  }
   FillPlayerThreadSafeData(Data);
   FillMountThreadSafeData(Data);
   FillMontageThreadSafeData(Data);
  }
  ThreadSafeData=Data;
- GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>().QueueGameThreadData(Data);
+ GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>().QueueGameThreadData(MoveTemp(Data));
 }
 void UProject_JCharacterAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeconds)
 {
@@ -185,6 +198,14 @@ EProject_JStateControllerFoot UProject_JCharacterAnimInstance::ResolveStateContr
 EProject_JAnimationLocomotionMode UProject_JCharacterAnimInstance::GetThreadSafeLocomotionMode() const
 {
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().LocomotionMode;
+}
+bool UProject_JCharacterAnimInstance::GetThreadSafeIsFalling() const
+{
+ return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Air.bIsFalling;
+}
+FVector UProject_JCharacterAnimInstance::GetThreadSafeVelocity() const
+{
+ return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Movement.Velocity;
 }
 float UProject_JCharacterAnimInstance::GetThreadSafeFullBodyMontageWeight() const
 {

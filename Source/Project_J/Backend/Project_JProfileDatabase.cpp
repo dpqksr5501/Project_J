@@ -10,6 +10,25 @@ namespace
 // SQLite rollback locking protocol; interoperates with native SQLite tools.
 // WAL deliberately unsupported (io_methods v1). No engine-global VFS override.
 constexpr LONGLONG PendingByte = 0x40000000, ReservedByte = PendingByte + 1, SharedFirst = PendingByte + 2;
+FString CanonicalPath(const char* Name)
+{
+	FString Path = UTF8_TO_TCHAR(Name);
+	Path.ReplaceInline(TEXT("\\"), TEXT("/"));
+	// SQLite keeps a single logical name for the database and its sidecars.
+	// Decode an explicit Win32 file prefix before UE's ordinary path normalization.
+	if (Path.StartsWith(TEXT("//?/UNC/"), ESearchCase::IgnoreCase)) Path = TEXT("//") + Path.RightChop(8);
+	else Path.RemoveFromStart(TEXT("//?/"), ESearchCase::CaseSensitive);
+	return FPaths::ConvertRelativePathToFull(Path);
+}
+FString NativePath(const FString& Path)
+{
+	FString Native = Path.Replace(TEXT("/"), TEXT("\\"));
+	// Match the physical platform file's extended-length handling. Each sidecar
+	// is converted separately: a short DB name can still have a long journal name.
+	if (Native.Len() >= MAX_PATH)
+		Native = Native.StartsWith(TEXT("\\\\")) ? TEXT("\\\\?\\UNC\\") + Native.RightChop(2) : TEXT("\\\\?\\") + Native;
+	return Native;
+}
 struct FFile
 {
 	sqlite3_file Base;
@@ -232,6 +251,7 @@ int Open(sqlite3_vfs *, const char *Name, sqlite3_file *File, int Flags, int *Ou
 		IFileManager::Get().MakeDirectory(*FPaths::GetPath(Path), true);
 		Flags |= SQLITE_OPEN_CREATE | SQLITE_OPEN_EXCLUSIVE | SQLITE_OPEN_DELETEONCLOSE;
 	}
+	Path = NativePath(Name ? CanonicalPath(Name) : FPaths::ConvertRelativePathToFull(Path));
 	const bool RW = (Flags & SQLITE_OPEN_READWRITE) != 0;
 	F->Handle = CreateFileW(
 		*Path, GENERIC_READ | (RW ? GENERIC_WRITE : 0), FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
@@ -248,20 +268,22 @@ int Open(sqlite3_vfs *, const char *Name, sqlite3_file *File, int Flags, int *Ou
 }
 int Delete(sqlite3_vfs *, const char *Name, int)
 {
-	if (DeleteFileW(UTF8_TO_TCHAR(Name)))
+	const FString Path = NativePath(CanonicalPath(Name));
+	if (DeleteFileW(*Path))
 		return SQLITE_OK;
 	return GetLastError() == ERROR_FILE_NOT_FOUND ? SQLITE_OK : SQLITE_IOERR_DELETE;
 }
 int Access(sqlite3_vfs *, const char *Name, int Flags, int *Out)
 {
-	const DWORD A = GetFileAttributesW(UTF8_TO_TCHAR(Name));
+	const FString Path = NativePath(CanonicalPath(Name));
+	const DWORD A = GetFileAttributesW(*Path);
 	*Out = A != INVALID_FILE_ATTRIBUTES && !(A & FILE_ATTRIBUTE_DIRECTORY) &&
 		   (Flags != SQLITE_ACCESS_READWRITE || !(A & FILE_ATTRIBUTE_READONLY));
 	return SQLITE_OK;
 }
 int FullPath(sqlite3_vfs *, const char *Name, int N, char *Out)
 {
-	const FString P = FPaths::ConvertRelativePathToFull(UTF8_TO_TCHAR(Name));
+	const FString P = CanonicalPath(Name);
 	FTCHARToUTF8 U(*P);
 	if (U.Length() + 1 > N)
 		return SQLITE_CANTOPEN;

@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Combat/Project_JCombatTypes.h"
+#include "Combat/Project_JMeleeTrajectory.h"
 #include "Engine/DataAsset.h"
 #include "GameplayTagContainer.h"
 #include "Project_JAttackDefinition.generated.h"
@@ -94,6 +95,19 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Hit")
 	FProject_JComboHitSpec HitSpec;
+
+	/** Optional authored gameplay path. Disabled retains live source-pose traces. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Hit")
+	FProject_JMeleeTrajectory MeleeTrajectory;
+	/** Empty means supported. Enabled data never silently falls back to a live pose. */
+	FString GetMeleeTrajectoryFailure(const USkeletalMesh* SourceMesh) const;
+
+	/** Server NPC melee only. One preserves the locked-target attack; larger values allow registered hostile sweep contacts.
+	 * Counts unique validated targets attempted by one attack, including immunity/failed effects. Captured at activation. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Hit|NPC", meta = (ClampMin = "1", ClampMax = "32"))
+	int32 NPCMaxMeleeTargets = 1;
+
+	static constexpr int32 MaxNPCMeleeTargets = 32;
 
 	/** The server selects this effect from the active attack; clients never choose it. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Damage")

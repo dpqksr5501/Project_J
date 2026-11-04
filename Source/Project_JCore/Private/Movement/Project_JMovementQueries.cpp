@@ -2,6 +2,10 @@
 #include "DefaultMovementSet/CharacterMoverComponent.h"
 #include "DefaultMovementSet/Settings/CommonLegacyMovementSettings.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/PlayerController.h"
+#include "GameFramework/Pawn.h"
+#include "Camera/PlayerCameraManager.h"
+#include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -16,6 +20,23 @@ namespace Project_J::Movement
 UCharacterMoverComponent* FindMover(const AActor* Owner)
 {
 	return Owner ? Owner->FindComponentByClass<UCharacterMoverComponent>() : nullptr;
+}
+
+void RequestMoverCameraUpdate(APlayerController* Controller)
+{
+	check(IsInGameThread());
+	if (!IsValid(Controller) || Controller->IsActorBeingDestroyed() ||
+		Controller->GetNetMode() != NM_Client || !Controller->IsLocalPlayerController()) return;
+	UWorld* const World = Controller->GetWorld();
+	APawn* const Pawn = Controller->GetPawn();
+	APlayerCameraManager* const Camera = Controller->PlayerCameraManager.Get();
+	if (!IsValid(World) || World->bIsTearingDown || !IsValid(Pawn) || Pawn->IsActorBeingDestroyed() ||
+		Pawn->GetWorld() != World || Pawn->GetController() != Controller || Pawn->GetMovementComponent() ||
+		!IsValid(Camera) || Camera->IsActorBeingDestroyed() || Camera->GetWorld() != World ||
+		Camera->GetOwningPlayerController() != Controller || !Camera->bUseClientSideCameraUpdates) return;
+	const UCharacterMoverComponent* const Mover = FindMover(Pawn);
+	if (IsValid(Mover) && Mover->GetOwner() == Pawn)
+		Camera->bShouldSendClientSideCameraUpdate = true;
 }
 
 FPhysicalFrame ReadPhysicalFrame(const AActor* Owner)

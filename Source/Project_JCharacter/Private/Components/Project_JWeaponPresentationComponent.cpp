@@ -17,7 +17,10 @@
 #include "Combat/Project_JAttackDefinition.h"
 #include "Combat/Project_JCombatStyleDefinition.h"
 #include "Equipment/Project_JWeaponPresentationProfile.h"
+#include "Equipment/Project_JWeaponPresentationActor.h"
 #include "Engine/World.h"
+#include "Misc/App.h"
+#include "UObject/StrongObjectPtr.h"
 #include "Engine/SkeletalMesh.h"
 #include "Engine/StaticMeshSocket.h"
 #include "Engine/SkeletalMeshSocket.h"
@@ -28,6 +31,7 @@
 #include "Project_JBaseCharacter.h"
 #include "PoseSearch/PoseSearchDatabase.h"
 #include "System/Project_JPresentationBudgetSubsystem.h"
+#include "System/Project_JVisualAssetSubsystem.h"
 
 
 
@@ -46,13 +50,26 @@ namespace Project_J::WeaponPresentation
 		OutGrip = FTransform::Identity;
 		if (!Root) { OutReason = TEXT("MissingWeaponRoot"); return false; }
 		if (!GripComponent) { OutReason = TEXT("MissingWeaponGrip"); return false; }
-		if (Cast<USkeletalMeshComponent>(GripComponent)) { OutReason = TEXT("SkeletalWeaponGrip"); return false; }
 		if (GripComponent != Root && !GripComponent->IsAttachedTo(Root))
 		{ OutReason = TEXT("GripOutsideWeaponRoot"); return false; }
-		const UStaticMeshComponent* Mesh = Cast<UStaticMeshComponent>(GripComponent);
-		const UStaticMeshSocket* Socket = Mesh ? Mesh->GetSocketByName(GripName) : nullptr;
-		if (!Socket) { OutReason = TEXT("UnsupportedWeaponGripComponent"); return false; }
-		FTransform Grip(Socket->RelativeRotation, Socket->RelativeLocation, Socket->RelativeScale);
+		FTransform Grip;
+		if (const auto* Skinned=Cast<USkeletalMeshComponent>(GripComponent))
+		{
+			const auto* Asset=Skinned->GetSkeletalMeshAsset();
+			const auto* Socket=Asset ? Asset->FindSocket(GripName) : nullptr;
+			// Only a fixed root reference socket can define the mount. Never feed
+			// animated ornament bones or last frame's solved/world grip back into IK.
+			if (!Socket || Asset->GetRefSkeleton().FindBoneIndex(Socket->BoneName)!=0)
+			{ OutReason=TEXT("SkeletalGripRequiresRootSocket"); return false; }
+			Grip=Socket->GetSocketLocalTransform()*Asset->GetRefSkeleton().GetRefBonePose()[0];
+		}
+		else
+		{
+			const auto* Mesh=Cast<UStaticMeshComponent>(GripComponent);
+			const auto* Socket=Mesh ? Mesh->GetSocketByName(GripName) : nullptr;
+			if (!Socket) { OutReason=TEXT("UnsupportedWeaponGripComponent"); return false; }
+			Grip=FTransform(Socket->RelativeRotation,Socket->RelativeLocation,Socket->RelativeScale);
+		}
 		for (const USceneComponent* Child = GripComponent; Child != Root; Child = Child->GetAttachParent())
 		{
 			if (Child->GetAttachSocketName() != NAME_None) { OutReason = TEXT("SocketMountedWeaponChild"); return false; }
@@ -81,7 +98,7 @@ void UProject_JWeaponPresentationComponent::TickComponent(float DeltaTime, ELeve
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	if (bRetryBudget && FPlatformTime::Seconds() >= NextBudgetRetry)
-	{ bRetryBudget = false; RefreshPresentation(); }
+	{ bRetryBudget = false; QueueBudgetedPresentation(); }
 
 	if (!SpawnedWeapon)
 	{
@@ -155,12 +172,13 @@ void UProject_JWeaponPresentationComponent::BeginPlay()
 bool UProject_JWeaponPresentationComponent::CanCreatePresentation() const
 {
 	return !bEndingPlay && !IsBeingDestroyed() && IsValid(GetOwner()) && !GetOwner()->IsActorBeingDestroyed()
-		&& GetWorld() && !GetWorld()->bIsTearingDown && GetWorld()->GetNetMode() != NM_DedicatedServer;
+		&& FApp::CanEverRender() && GetWorld() && !GetWorld()->bIsTearingDown && GetWorld()->GetNetMode() != NM_DedicatedServer;
 }
 
 void UProject_JWeaponPresentationComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 {
 	bEndingPlay = true;
+	ReleaseWeaponClassLease();
 	DestroyWeaponPresentation();
 	Super::OnComponentDestroyed(bDestroyingHierarchy);
 }
@@ -168,6 +186,7 @@ void UProject_JWeaponPresentationComponent::OnComponentDestroyed(bool bDestroyin
 void UProject_JWeaponPresentationComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	bEndingPlay = true;
+	ReleaseWeaponClassLease();
 	EndIndependentMotion();
 	DestroyWeaponPresentation();
 	Super::EndPlay(EndPlayReason);
@@ -187,6 +206,8 @@ void UProject_JWeaponPresentationComponent::EnterCombatPresentation()
 
 void UProject_JWeaponPresentationComponent::ExitCombatPresentation()
 {
+	TStrongObjectPtr<ThisClass> PinnedThis(this);
+	TStrongObjectPtr<AActor> PinnedOwner(GetOwner());
 	bCombatPresentationActive = false;
 	EndIndependentMotion();
 	TwoHandGripRequests.Reset();
@@ -205,39 +226,34 @@ void UProject_JWeaponPresentationComponent::BeginSheathePresentation()
 
 void UProject_JWeaponPresentationComponent::AttachWeaponToSheathedSocket()
 {
+	TStrongObjectPtr<ThisClass> PinnedThis(this);
+	TStrongObjectPtr<AActor> PinnedOwner(GetOwner());
 	EndIndependentMotion();
-
-	const UProject_JWeaponPresentationProfile* PresentationProfile = GetCurrentPresentationProfile();
-	if (!SpawnedWeapon)
-	{
-		RefreshPresentation();
-	}
-
-	if (PresentationProfile)
-	{
-		AttachWeaponToSocket(PresentationProfile->SheathedSocketName,
-			PresentationProfile->VisualSheathedSocketName, TEXT("Sheathe"));
-	}
 	CurrentPresentationSocket = EProject_JWeaponPresentationSocket::Sheathed;
-	UpdateGripTargets();
+	if (!SpawnedWeapon) { RefreshPresentation(); }
+	if (!CanCreatePresentation() || !IsValid(SpawnedWeapon) || SpawnedWeapon->IsActorBeingDestroyed()) { return; }
+	TStrongObjectPtr<const UProject_JWeaponPresentationProfile> Profile(GetCurrentPresentationProfile());
+	if (Profile.IsValid())
+	{
+		AttachWeaponToSocket(Profile->SheathedSocketName, Profile->VisualSheathedSocketName, TEXT("Sheathe"));
+	}
+	if (CanCreatePresentation()) { UpdateGripTargets(); }
 }
 
 void UProject_JWeaponPresentationComponent::AttachWeaponToDrawnSocket()
 {
-	TGuardValue<bool> ImmediateGuard(bApplyingBudget, true); // Authored draw frame cannot wait in a cosmetic queue.
-	const UProject_JWeaponPresentationProfile* PresentationProfile = GetCurrentPresentationProfile();
-	if (!SpawnedWeapon)
-	{
-		RefreshPresentation();
-	}
-
-	if (PresentationProfile)
-	{
-		AttachWeaponToSocket(PresentationProfile->DrawnSocketName,
-			PresentationProfile->VisualDrawnSocketName, TEXT("Draw"), true);
-	}
+	TStrongObjectPtr<ThisClass> PinnedThis(this);
+	TStrongObjectPtr<AActor> PinnedOwner(GetOwner());
+	TGuardValue<bool> ImmediateGuard(bApplyingBudget, true); // Warm authored draw frames stay immediate.
 	CurrentPresentationSocket = EProject_JWeaponPresentationSocket::Drawn;
-	UpdateGripTargets();
+	if (!SpawnedWeapon) { RefreshPresentation(); }
+	if (!CanCreatePresentation() || !IsValid(SpawnedWeapon) || SpawnedWeapon->IsActorBeingDestroyed()) { return; }
+	TStrongObjectPtr<const UProject_JWeaponPresentationProfile> Profile(GetCurrentPresentationProfile());
+	if (Profile.IsValid())
+	{
+		AttachWeaponToSocket(Profile->DrawnSocketName, Profile->VisualDrawnSocketName, TEXT("Draw"), true);
+	}
+	if (CanCreatePresentation()) { UpdateGripTargets(); }
 }
 
 void UProject_JWeaponPresentationComponent::SetWeaponPresentationSocket(EProject_JWeaponPresentationSocket Socket)
@@ -256,20 +272,28 @@ void UProject_JWeaponPresentationComponent::RefreshPresentation()
 {
 	check(IsInGameThread());
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_WeaponPresentation_Refresh);
-	if (bRefreshingPresentation) { return; }
+	if (bRefreshingPresentation) { QueueBudgetedPresentation(); return; }
+	// Keep the guard's storage and its owner alive across actor destruction,
+	// construction and Niagara/rig callbacks that can reenter and collect garbage.
+	TStrongObjectPtr<ThisClass> PinnedThis(this);
+	TStrongObjectPtr<AActor> PinnedOwner(GetOwner());
+	TWeakObjectPtr<UWorld> OriginalWorld(GetWorld());
 	TGuardValue<bool> RefreshGuard(bRefreshingPresentation, true);
-	if (!CanCreatePresentation()) { DestroyWeaponPresentation(); return; }
-
-	const UProject_JWeaponPresentationProfile* PresentationProfile = GetCurrentPresentationProfile();
-	APawn* OwnerCharacter = Cast<APawn>(GetOwner());
-	USkeletalMeshComponent* Mesh = OwnerCharacter ? Project_J::Movement::FindPoseSource(OwnerCharacter) : nullptr;
-	if (!PresentationProfile)
+	const auto OwnerIsCurrent = [this, &PinnedOwner, OriginalWorld]
 	{
-		// An empty weapon slot is a valid state, not a failed spawn.
-		DestroyWeaponPresentation();
-		return;
-	}
-	if (IsValid(SpawnedWeapon) && !SpawnedWeapon->IsActorBeingDestroyed() && Mesh
+		return CanCreatePresentation() && GetOwner() == PinnedOwner.Get() && GetWorld() == OriginalWorld.Get();
+	};
+	if (!CanCreatePresentation()) { ReleaseWeaponClassLease(); DestroyWeaponPresentation(); return; }
+
+	TStrongObjectPtr<const UProject_JWeaponPresentationProfile> PinnedProfile(GetCurrentPresentationProfile());
+	APawn* OwnerCharacter = Cast<APawn>(PinnedOwner.Get());
+	TStrongObjectPtr<USkeletalMeshComponent> PinnedMesh(OwnerCharacter ? Project_J::Movement::FindPoseSource(OwnerCharacter) : nullptr);
+	const UProject_JWeaponPresentationProfile* PresentationProfile = PinnedProfile.Get();
+	USkeletalMeshComponent* Mesh = PinnedMesh.Get();
+	if (WeaponClassLease && (WeaponClassProfile.Get() != PresentationProfile || !PresentationProfile ||
+		WeaponClassPath != PresentationProfile->WeaponActorClass.ToSoftObjectPath() ||
+		!WeaponClassLoader.IsValid() || WeaponClassLoader->GetWorld() != GetWorld())) { ReleaseWeaponClassLease(); }
+	if (PresentationProfile && IsValid(SpawnedWeapon) && !SpawnedWeapon->IsActorBeingDestroyed() && Mesh
 		&& AppliedProfile.Get() == PresentationProfile && AppliedActorClass.Get() == PresentationProfile->WeaponActorClass.Get()
 		&& AppliedCharacterMesh.Get() == Mesh && AppliedSkeletalMesh.Get() == Mesh->GetSkeletalMeshAsset())
 	{
@@ -290,50 +314,70 @@ void UProject_JWeaponPresentationComponent::RefreshPresentation()
 					bPrimaryContactAttachment != Desired.bPrimaryContact))
 			{
 				AttachWeaponToSocket(SourceSocket, VisualSocket, TEXT("Refresh"), bDrawn);
-				UpdateGripTargets();
+				if (OwnerIsCurrent() && GetCurrentPresentationProfile() == PinnedProfile.Get() &&
+					Project_J::Movement::FindPoseSource(OwnerCharacter) == PinnedMesh.Get()) { UpdateGripTargets(); }
 			}
 		}
+		if (OwnerIsCurrent() && GetCurrentPresentationProfile() == PinnedProfile.Get() &&
+			Project_J::Movement::FindPoseSource(OwnerCharacter) == PinnedMesh.Get()) { CancelBudgetedPresentation(); }
 		return;
 	}
-	if (SpawnedWeapon) { DestroyWeaponPresentation(); }
-	if (!PresentationProfile->WeaponActorClass || !Mesh)
+	if (!PresentationProfile || SpawnedWeapon) { DestroyWeaponPresentation(); }
+	if (!OwnerIsCurrent()) { return; }
+	// A nested Refresh is suppressed by the existing guard. Resolve its latest
+	// selection once here instead of using stale pre-destruction B or recursing.
+	PinnedProfile.Reset(GetCurrentPresentationProfile());
+	PinnedMesh.Reset(Project_J::Movement::FindPoseSource(OwnerCharacter));
+	PresentationProfile = PinnedProfile.Get(); Mesh = PinnedMesh.Get();
+	if (!PresentationProfile) { ReleaseWeaponClassLease(); CancelBudgetedPresentation(); return; } // A callback unequipped the slot.
+	if (PresentationProfile->WeaponActorClass.IsNull() || !Mesh)
 	{
+		ReleaseWeaponClassLease();
 		CancelBudgetedPresentation();
 		UE_LOG(LogTemp, Warning, TEXT("[ProjectJ][WeaponPresentation] Refresh failed: Owner=%s Profile=%s ActorClass=%s Mesh=%s World=%s"),
 			*GetNameSafe(OwnerCharacter),
 			*GetNameSafe(PresentationProfile),
-			PresentationProfile ? *GetNameSafe(PresentationProfile->WeaponActorClass) : TEXT("None"),
+			*PresentationProfile->WeaponActorClass.ToString(),
 			*GetNameSafe(Mesh),
 			*GetNameSafe(GetWorld()));
 		return;
 	}
+	TStrongObjectPtr<UClass> PinnedActorClass(ResolveWeaponActorClass(PresentationProfile));
+	if (!PinnedActorClass.IsValid()) { return; } // Accepted cold load, admission backoff, or terminal authoring failure.
 	if (ShouldBudgetPresentation())
 	{
-		auto* Budget = GetWorld()->GetSubsystem<UProject_JPresentationBudgetSubsystem>();
-		bRetryBudget = !Budget || !Budget->Request(this, ++PresentationRevision);
-		if (bRetryBudget)
-		{
-			NextBudgetRetry = FPlatformTime::Seconds() + 0.1 + (GetUniqueID() % 17) * 0.003;
-			SetComponentTickEnabled(true);
-		}
+		QueueBudgetedPresentation();
 		return;
 	}
 
+	UClass* SelectedActorClass = PinnedActorClass.Get();
+	const USkeletalMesh* SelectedMeshAsset = Mesh->GetSkeletalMeshAsset();
+	const auto SelectionIsCurrent = [this, &OwnerIsCurrent, &PinnedProfile, &PinnedMesh, OwnerCharacter, SelectedActorClass, SelectedMeshAsset]
+	{
+		return OwnerIsCurrent() && GetCurrentPresentationProfile() == PinnedProfile.Get() &&
+			Project_J::Movement::FindPoseSource(OwnerCharacter) == PinnedMesh.Get() &&
+			PinnedProfile->WeaponActorClass.Get() == SelectedActorClass && PinnedMesh->GetSkeletalMeshAsset() == SelectedMeshAsset;
+	};
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.Owner = OwnerCharacter;
 	SpawnParams.Instigator = OwnerCharacter;
 	{
 		TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_WeaponPresentation_Spawn);
-		SpawnedWeapon = GetWorld()->SpawnActor<AActor>(PresentationProfile->WeaponActorClass, OwnerCharacter->GetActorLocation(), OwnerCharacter->GetActorRotation(), SpawnParams);
+		SpawnedWeapon = GetWorld()->SpawnActor<AActor>(SelectedActorClass, OwnerCharacter->GetActorLocation(), OwnerCharacter->GetActorRotation(), SpawnParams);
 	}
-	if (!CanCreatePresentation()) { DestroyWeaponPresentation(); return; }
+	if (!SelectionIsCurrent() || (SpawnedWeapon && (!IsValid(SpawnedWeapon) || SpawnedWeapon->IsActorBeingDestroyed())))
+	{ DestroyWeaponPresentation(); QueueBudgetedPresentation(); return; }
 	if (SpawnedWeapon)
 	{
 		AppliedProfile = PresentationProfile;
-		AppliedActorClass = PresentationProfile->WeaponActorClass.Get();
+		AppliedActorClass = SelectedActorClass;
 		AppliedCharacterMesh = Mesh;
 		AppliedSkeletalMesh = Mesh->GetSkeletalMeshAsset();
 		SetWeaponPresentationSocket(CurrentPresentationSocket);
+		if (!SelectionIsCurrent() || !IsValid(SpawnedWeapon) || SpawnedWeapon->IsActorBeingDestroyed()) { DestroyWeaponPresentation(); QueueBudgetedPresentation(); return; }
+		ReleaseWeaponClassLease(); // The spawned actor now owns its class/CDO payload.
+		// A nested request already satisfied by this current spawn needs no apply.
+		CancelBudgetedPresentation();
 		UpdateSocketComponentCache();
 		UpdateGripTargets();
 		NotifyWeaponTargetChanged(SpawnedWeapon->GetRootComponent());
@@ -354,8 +398,9 @@ void UProject_JWeaponPresentationComponent::RefreshPresentation()
 	}
 	else
 	{
+		ReleaseWeaponClassLease(); CancelBudgetedPresentation();
 		UE_LOG(LogTemp, Warning, TEXT("[ProjectJ][WeaponPresentation] Draw failed: SpawnActor returned null for class %s."),
-			*GetNameSafe(PresentationProfile->WeaponActorClass));
+			*GetNameSafe(SelectedActorClass));
 	}
 }
 
@@ -434,6 +479,11 @@ bool UProject_JWeaponPresentationComponent::AttachWeaponToSocket(FName SourceSoc
 	if (!CanCreatePresentation()) { return false; }
 	APawn* OwnerCharacter = Cast<APawn>(GetOwner());
 	const UProject_JWeaponPresentationProfile* Profile = GetCurrentPresentationProfile();
+	if (auto* Weapon=Cast<AProject_JWeaponPresentationActor>(SpawnedWeapon))
+	{
+		Weapon->SetPresentationDrawnState(bDrawn);
+		InvalidateSocketComponentCache();
+	}
 	const FProject_JResolvedWeaponAttachment Attachment = ResolveAttachment(bDrawn);
 	USkeletalMeshComponent* Mesh = Attachment.Mesh.Get();
 	if (!SpawnedWeapon || !Mesh)
@@ -477,9 +527,9 @@ void UProject_JWeaponPresentationComponent::DestroyWeaponPresentation()
 	{
 		NotifyWeaponTargetChanged(nullptr);
 		TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_WeaponPresentation_Destroy);
-		AActor* PreviousWeapon = SpawnedWeapon;
+		TStrongObjectPtr<AActor> PreviousWeapon(IsValid(SpawnedWeapon) ? SpawnedWeapon.Get() : nullptr);
 		SpawnedWeapon = nullptr;
-		PreviousWeapon->Destroy();
+		if (PreviousWeapon.IsValid() && !PreviousWeapon->IsActorBeingDestroyed()) { PreviousWeapon->Destroy(); }
 	}
 	GripTargets = FProject_JWeaponGripTargets();
 	AnimationGripTargets = {};
@@ -496,6 +546,75 @@ bool UProject_JWeaponPresentationComponent::ShouldBudgetPresentation() const
 	return Project_J::WeaponPresentation::CVarBudgetRemote.GetValueOnGameThread() != 0 && Pawn
 		&& GetNetMode() == NM_Client && !Pawn->IsLocallyControlled();
 }
+void UProject_JWeaponPresentationComponent::SchedulePresentationRetry()
+{
+	// Admission rejection alone retries. A delivered missing/invalid class is terminal until an explicit refresh.
+	bRetryBudget = true;
+	NextBudgetRetry = FPlatformTime::Seconds() + 0.1 + (GetUniqueID() % 17) * 0.003;
+	SetComponentTickEnabled(true);
+}
+
+void UProject_JWeaponPresentationComponent::QueueBudgetedPresentation()
+{
+	if (!CanCreatePresentation()) { return; }
+	auto* Budget = GetWorld()->GetSubsystem<UProject_JPresentationBudgetSubsystem>();
+	bRetryBudget = !Budget || !Budget->Request(this, ++PresentationRevision);
+	if (bRetryBudget) { SchedulePresentationRetry(); }
+}
+
+void UProject_JWeaponPresentationComponent::ReleaseWeaponClassLease()
+{
+	++WeaponClassRevision;
+	const uint64 PreviousLease = WeaponClassLease;
+	WeaponClassLease = 0;
+	WeaponClassProfile.Reset(); WeaponClassPath.Reset();
+	if (auto* Loader = WeaponClassLoader.Get()) { Loader->Release(PreviousLease); }
+	WeaponClassLoader.Reset();
+}
+
+UClass* UProject_JWeaponPresentationComponent::ResolveWeaponActorClass(const UProject_JWeaponPresentationProfile* Profile)
+{
+	const FSoftObjectPath Path = Profile->WeaponActorClass.ToSoftObjectPath();
+	if (!Path.IsValid()) { ReleaseWeaponClassLease(); CancelBudgetedPresentation(); return nullptr; }
+	if (WeaponClassProfile.Get() != Profile || WeaponClassPath != Path || (WeaponClassLease && !WeaponClassLoader.IsValid()) ||
+		(WeaponClassLoader.IsValid() && WeaponClassLoader->GetWorld() != GetWorld()))
+	{
+		ReleaseWeaponClassLease(); WeaponClassProfile = Profile; WeaponClassPath = Path;
+	}
+	if (UClass* ActorClass = Profile->WeaponActorClass.Get())
+	{
+		if (ActorClass->IsChildOf(AActor::StaticClass()) && !ActorClass->HasAnyClassFlags(CLASS_Abstract)) { return ActorClass; }
+		ReleaseWeaponClassLease(); CancelBudgetedPresentation(); return nullptr;
+	}
+	if (WeaponClassLease) { CancelBudgetedPresentation(); return nullptr; }
+	auto* Loader = GetWorld()->GetSubsystem<UProject_JVisualAssetSubsystem>();
+	if (!Loader) { CancelBudgetedPresentation(); return nullptr; } // Unsupported preview worlds cannot gain loader capacity.
+	WeaponClassLoader = Loader;
+	const uint64 Revision = ++WeaponClassRevision;
+	TWeakObjectPtr<ThisClass> WeakThis(this);
+	TWeakObjectPtr<AActor> WeakOwner(GetOwner());
+	TWeakObjectPtr<UWorld> WeakWorld(GetWorld());
+	TWeakObjectPtr<const UProject_JWeaponPresentationProfile> WeakProfile(Profile);
+	WeaponClassLease = Loader->Request(this, Path, [WeakThis, WeakOwner, WeakWorld, WeakProfile, Path, Revision](UObject* Asset)
+	{
+		TStrongObjectPtr<ThisClass> Self(WeakThis.Get());
+		TStrongObjectPtr<AActor> Owner(WeakOwner.Get());
+		if (!Self.IsValid() || Self->WeaponClassRevision != Revision) { return; }
+		if (!Self->CanCreatePresentation() || Self->GetOwner() != Owner.Get() || Self->GetWorld() != WeakWorld.Get() ||
+			Self->GetCurrentPresentationProfile() != WeakProfile.Get() || !WeakProfile.IsValid() ||
+			WeakProfile->WeaponActorClass.ToSoftObjectPath() != Path)
+		{ Self->ReleaseWeaponClassLease(); return; }
+		auto* ActorClass = Cast<UClass>(Asset);
+		if (!ActorClass || !ActorClass->IsChildOf(AActor::StaticClass()) || ActorClass->HasAnyClassFlags(CLASS_Abstract))
+		{ Self->ReleaseWeaponClassLease(); Self->CancelBudgetedPresentation(); return; }
+		// Loading and physical creation retain their existing independent budgets.
+		Self->QueueBudgetedPresentation();
+	});
+	if (!WeaponClassLease) { SchedulePresentationRetry(); }
+	else { CancelBudgetedPresentation(); }
+	return nullptr;
+}
+
 void UProject_JWeaponPresentationComponent::CancelBudgetedPresentation()
 {
 	++PresentationRevision; bRetryBudget = false;

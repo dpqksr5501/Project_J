@@ -16,7 +16,7 @@ Project J는 개인 학습·기술 연구·포트폴리오를 위한 UE 5.8 C++ 
 | --- | --- | --- |
 | 캐릭터·몬스터 | Skeletal Mesh·프로필·AnimBP 연결. 골격·비율·리타기팅과 발/손 접촉 확인 | [리깅·UE5 후처리](Docs/Animation/Authoring/Character_Rigging_And_UE5_Postprocess_Playbook.md) |
 | 의상·방어구·무기 | 장비 정의·표현 프로필과 부착 위치 구성. 호환 파츠의 Leader Pose, 소켓·그립·클리핑·LOD 확인 | [모듈러 장비](Docs/Gameplay/Authoring/ModularCharacterEquipmentGuide.md) · [LOD 제작](Docs/Animation/Authoring/Mesh_LOD_Authoring.md) |
-| 이동·전투 애니메이션 | Pose Match/Chooser용 이동 데이터·무기별 프로필·공격 몽타주 구성. root motion과 전환·공격/복귀 타이밍 확인 | [이동 확장](Docs/Animation/Authoring/DataDrivenLocomotionExtensionGuide.md) · [공격·콤보](Docs/Combat/Authoring/GreatswordCombatAuthoringGuide.md) |
+| 이동·전투 애니메이션 | Pose Match/Chooser용 이동 데이터·무기별 프로필·공격 몽타주 구성. root motion과 전환·공격/복귀 타이밍 확인 | [이동 확장](Docs/Animation/Authoring/DataDrivenLocomotionExtensionGuide.md) · [공격·콤보](Docs/Combat/Authoring/SpellbladeCombatAuthoringGuide.md) |
 | Niagara 이펙트 | 공격 태그별 표현 프로필·몽타주 Notify에 연결. 무기 소켓·Trail 구간·잔상·중단 시 정리 확인 | [전투 VFX](Docs/Combat/Architecture/CombatVFXArchitecture.md#authoring) |
 | 캐릭터 사운드 | 이벤트·접촉 위치·Physical Surface별 오디오 프로필 구성. 타이밍·기본음 대체·원격 청취·군중 비용 확인 | [캐릭터 오디오](Docs/Animation/Architecture/Foley_Audio_System.md) |
 | 직업·스킬·콤보 | 입력 태그·AbilitySet·콤보 그래프·AttackDefinition 조합. 입력 분기와 판정·이동·연출의 일치 확인 | [직업 도구](Docs/Gameplay/Authoring/Content_Authoring_System.md#tool) · [장비·직업 데이터](Docs/Gameplay/Authoring/Content_Authoring_System.md#data) |
@@ -39,6 +39,8 @@ Project J는 개인 학습·기술 연구·포트폴리오를 위한 UE 5.8 C++ 
 기존 파일을 교체·삭제하거나 Git/LFS 이력을 변경할 때는 정확한 경로·근거·참조 영향과 보존 방법을 설명하고 해당 작업 범위를 확인한다. 향후 임시 콘텐츠를 교체한다는 계획은 현재 미확인 파일의 공개 권한과 별개다.
 
 ## PR과 검증
+
+새 측정·진단·복구 자료는 [중앙 보관 규칙](Docs/Maintenance/Local_Archive_Policy.md)을 따른다. 대형 로컬 원자료는 Saved 중앙 보관소와 해시/위치 명세로 관리하고, PR에는 작은 공유 결과·조건·한계를 연결한다. 기존 복원 경로를 확인하며 동일 압축 사본을 반복 추가하지 않는다.
 
 PR에는 문제의 재현 조건, 변경 후 동작과 범위, 기존 구조를 유지하거나 바꾼 이유, 수행한 검증과 남은 항목을 적는다. 다른 날짜의 측정이나 이전 빌드를 현재 변경의 결과로 쓰지 않는다.
 

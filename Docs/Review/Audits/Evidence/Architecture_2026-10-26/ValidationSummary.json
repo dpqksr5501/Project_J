@@ -1,0 +1,1178 @@
+{
+  "schema_version": 1,
+  "scope": "Architecture audit, not exhaustive function/asset or performance certification",
+  "baseline_head": "8de7b7a44bb15db1968ec0e8038967d37f535881",
+  "engine": {
+    "MajorVersion": 5,
+    "MinorVersion": 8,
+    "PatchVersion": 4,
+    "Changelist": 58902052,
+    "CompatibleChangelist": 55116800,
+    "IsLicenseeVersion": 0,
+    "IsPromotedBuild": 1,
+    "BranchName": "++UE5+Release-5.8"
+  },
+  "editor_build": {
+    "process": {
+      "exitCode": 0,
+      "directUBT": true,
+      "processCheck": "Get-Process; wrapper CIM unavailable"
+    },
+    "arguments": [
+      "Project_JEditor",
+      "Win64",
+      "Development",
+      "-Project=C:\\Users\\I\\Documents\\GitHub\\Project_J/Project_J.uproject",
+      "-WaitMutex",
+      "-NoHotReloadFromIDE",
+      "-NoUBA",
+      "-UBARootDir=C:\\Users\\I\\Documents\\GitHub\\Project_J/Saved/UnrealBuildAccelerator",
+      "-DisableUnity",
+      "-MaxParallelActions=4",
+      "-Log=C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\ArchitectureAudit_20261026\\EditorBuild/UBT.log"
+    ],
+    "log_sha256": "d9bb857e65a1ca9bd164ebb6c8bf2ea9d93f06c28efc473e845d12bea82c28f5",
+    "result": "Succeeded",
+    "seconds": 387.9,
+    "actions": 535
+  },
+  "python_tests": {
+    "command": "python -m unittest discover -s Scripts/Tests -p 'test_*.py'",
+    "passed": 48,
+    "seconds": 3.153,
+    "receipt": "Observed command output; no separate raw log retained"
+  },
+  "architecture_validator": {
+    "command": "python Scripts/Validation/Validate-MMOArchitecture.py",
+    "result": "pass",
+    "catalog_features": 205,
+    "domains": 20,
+    "meaning": "Catalog consistency and module DAG; not implemented feature count"
+  },
+  "native_runs": [
+    {
+      "name": "NativeVerified",
+      "requested": 122,
+      "process": {
+        "exitCode": 3,
+        "hasExited": true,
+        "nativeHandleCapturedBeforeWait": true
+      },
+      "completed": [
+        {
+          "result": "Success",
+          "test": "ProjectJ.AsyncTargeting.Benchmark.16384"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.AsyncTargeting.Benchmark.256"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.AsyncTargeting.Benchmark.4096"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.AsyncTargeting.BatchDispatchComparison"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.AsyncTargeting.BatchMath"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.AsyncTargeting.ComponentContext"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.AsyncTargeting.ComponentDefaultParallel"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.AsyncTargeting.Lifecycle"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.AsyncTargeting.Math"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.AsyncTargeting.SpatialEdgeCases"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.AsyncTargeting.SpatialEquivalence"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.AbilitySetEffectLevel"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.ActiveMoveReentry"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.EquipmentGrantIdentity"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.EquipmentStatLease"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.EquipmentStatTuple"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.FollowerPolicyLifetime"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.HandoverConfiguration"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.HandoverFiniteTick"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.HandoverParticipantLifetime"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.HandoverPayloadSnapshot"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.InputLeaseCallback"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.InventoryConsumeContract"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.LoopbackFiniteClock"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.MessagePayloadLifetime"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.MountAttachRetired"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.MountControllerReassigned"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.MountPhaseSuperseded"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.MountReplicatedReplacement"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.MoveIntentOrder"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.NPCCallbackGC"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.NPCCommitSuperseded"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.NPCGrantRegistrationSuperseded"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.NPCLifeRetired"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.NPCPreparedBatchSuperseded"
+        }
+      ],
+      "last_started": "ProjectJ.Continuation.NPCRegistrationCallbackGC",
+      "final_report_present": false,
+      "summary": null,
+      "first_native_error_and_stack": [
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: === Critical error: ===",
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: ",
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: Fatal error!",
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: ",
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: Unhandled Exception: EXCEPTION_ACCESS_VIOLATION writing address 0x0000000000000040",
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: ",
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: [Callstack] 0x000001f8f1887ae0 UnrealEditor-Mover.dll!UImmediateMovementModeTransition::Clear() [C:\\Users\\I\\Documents\\GitHub\\Project_J\\Plugins\\Mover\\Source\\Mover\\Private\\MovementModeTransition.cpp:91]",
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: [Callstack] 0x000001f8f186bbab UnrealEditor-Mover.dll!UKinematicActorSimulation::Uninit() [C:\\Users\\I\\Documents\\GitHub\\Project_J\\Plugins\\Mover\\Source\\Mover\\Private\\KinematicActorSimulation.cpp:55]",
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: [Callstack] 0x000001f8f1869eee UnrealEditor-Mover.dll!UKinematicActorSimulation::BeginDestroy() [C:\\Users\\I\\Documents\\GitHub\\Project_J\\Plugins\\Mover\\Source\\Mover\\Private\\KinematicActorSimulation.cpp:18]",
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: [Callstack] 0x00007ffe0f2fe927 UnrealEditor-CoreUObject.dll!UnknownFunction []",
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: [Callstack] 0x00007ffe0f2362ad UnrealEditor-CoreUObject.dll!UnknownFunction []",
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: [Callstack] 0x00007ffe0f17802d UnrealEditor-CoreUObject.dll!UnknownFunction []",
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: [Callstack] 0x00007ffe0f1fca3a UnrealEditor-CoreUObject.dll!UnknownFunction []",
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: [Callstack] 0x00007ffe0f1a7d3b UnrealEditor-CoreUObject.dll!UnknownFunction []",
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: [Callstack] 0x000001f9039ba5a8 UnrealEditor-Project_J.dll!TBaseFunctorDelegateInstance<void __cdecl(void),FDefaultDelegateUserPolicy,`FProjectJNPCRegistrationGCTest::RunTest'::`4'::<lambda_2> >::ExecuteIfSafe() [C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source\\Runtime\\Core\\Public\\Delegates\\DelegateInstancesImpl.h:807]",
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: [Callstack] 0x000001f9035722c8 UnrealEditor-Project_JCharacter.dll!UProject_JTargetScoringComponent::InvalidateQueryContext() [C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Components\\Project_JTargetScoringComponent.cpp:139]",
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: [Callstack] 0x000001f9035afbe9 UnrealEditor-Project_JCharacter.dll!UProject_JNPCDecisionSubsystem::UnregisterAgent() [C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\System\\Project_JNPCDecisionSubsystem.cpp:178]",
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: [Callstack] 0x000001f90357325b UnrealEditor-Project_JCharacter.dll!UProject_JTargetScoringComponent::StopBatchedNPCDecisions() [C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Components\\Project_JTargetScoringComponent.cpp:126]",
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: [Callstack] 0x000001f9039b9847 UnrealEditor-Project_J.dll!FProjectJNPCRegistrationGCTest::RunTest() [C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JNPCRegistrationCallbackTests.cpp:121]",
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: [Callstack] 0x00007ffde1931256 UnrealEditor-Core.dll!UnknownFunction []",
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: [Callstack] 0x00007ffde1950500 UnrealEditor-Core.dll!UnknownFunction []",
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: [Callstack] 0x000001f93c76f30f UnrealEditor-AutomationWorker.dll!UnknownFunction []",
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: [Callstack] 0x000001f93c76e29d UnrealEditor-AutomationWorker.dll!UnknownFunction []",
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: [Callstack] 0x000001f93c7727ba UnrealEditor-AutomationWorker.dll!UnknownFunction []",
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: [Callstack] 0x000001f93c7613fe UnrealEditor-AutomationWorker.dll!UnknownFunction []",
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: [Callstack] 0x00007ff6a84532dd UnrealEditor-Cmd.exe!UnknownFunction []",
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: [Callstack] 0x00007ff6a843c4ac UnrealEditor-Cmd.exe!UnknownFunction []",
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: [Callstack] 0x00007ff6a843c5ba UnrealEditor-Cmd.exe!UnknownFunction []",
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: [Callstack] 0x00007ff6a84412d6 UnrealEditor-Cmd.exe!UnknownFunction []",
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: [Callstack] 0x00007ff6a8455cf4 UnrealEditor-Cmd.exe!UnknownFunction []",
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: [Callstack] 0x00007ff6a8458422 UnrealEditor-Cmd.exe!UnknownFunction []",
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: [Callstack] 0x00007ffeeccbdda7 KERNEL32.DLL!UnknownFunction []",
+        "[2026.10.26-02.12.48:768][984]LogWindows: Error: "
+      ],
+      "log_sha256": "6f6859bfbf9f80facdc8f4e00496f0aa5b1a716b1b2d1c38429d315ba3d82174",
+      "arguments": [
+        "C:/Users/I/Documents/GitHub/Project_J/Project_J.uproject",
+        "-unattended",
+        "-nosound",
+        "-nop4",
+        "-NoDDCCleanup",
+        "-NoLiveCoding",
+        "-NullRHI",
+        "-UserDir=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/ArchitectureAudit_20261026/NativeVerified/User",
+        "-ABSLOG=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/ArchitectureAudit_20261026/NativeVerified/Run.log",
+        "-ReportExportPath=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/ArchitectureAudit_20261026/NativeVerified",
+        "-TestExit=Automation Test Queue Empty",
+        "-ExecCmds=a.Budget.BudgetMs 0.1,Automation RunTests ProjectJ.AsyncTargeting.BatchDispatchComparison+ProjectJ.AsyncTargeting.BatchMath+ProjectJ.AsyncTargeting.Benchmark+ProjectJ.AsyncTargeting.ComponentContext+ProjectJ.AsyncTargeting.ComponentDefaultParallel+ProjectJ.AsyncTargeting.Lifecycle+ProjectJ.AsyncTargeting.Math+ProjectJ.AsyncTargeting.SpatialEdgeCases+ProjectJ.AsyncTargeting.SpatialEquivalence+ProjectJ.Continuation.AbilitySetEffectLevel+ProjectJ.Continuation.ActiveMoveReentry+ProjectJ.Continuation.EquipmentGrantIdentity+ProjectJ.Continuation.EquipmentStatLease+ProjectJ.Continuation.EquipmentStatTuple+ProjectJ.Continuation.FollowerPolicyLifetime+ProjectJ.Continuation.HandoverConfiguration+ProjectJ.Continuation.HandoverFiniteTick+ProjectJ.Continuation.HandoverParticipantLifetime+ProjectJ.Continuation.HandoverPayloadSnapshot+ProjectJ.Continuation.InputLeaseCallback+ProjectJ.Continuation.InventoryConsumeContract+ProjectJ.Continuation.LoopbackFiniteClock+ProjectJ.Continuation.MessagePayloadLifetime+ProjectJ.Continuation.MountAttachRetired+ProjectJ.Continuation.MountControllerReassigned+ProjectJ.Continuation.MountPhaseSuperseded+ProjectJ.Continuation.MountReplicatedReplacement+ProjectJ.Continuation.MoveIntentOrder+ProjectJ.Continuation.NPCCallbackGC+ProjectJ.Continuation.NPCCommitSuperseded+ProjectJ.Continuation.NPCGrantRegistrationSuperseded+ProjectJ.Continuation.NPCLifeRetired+ProjectJ.Continuation.NPCPreparedBatchSuperseded+ProjectJ.Continuation.NPCRegistrationCallbackGC+ProjectJ.Continuation.NPCRegistrationRetired+ProjectJ.Continuation.NPCRegistrationStopped+ProjectJ.Continuation.NPCRegistrationSuperseded+ProjectJ.Continuation.NPCResultBroadcastGC+ProjectJ.Continuation.PlayerHandoverLevelAdmission+ProjectJ.Continuation.ProgressionLevelAdmission+ProjectJ.Continuation.ProgressionRestoreRetirement+ProjectJ.Continuation.QuestRewardRollback+ProjectJ.Continuation.QueuedInputOrigin+ProjectJ.Continuation.RouterCancelReentry+ProjectJ.Continuation.SharedNotifyGCLifetime+ProjectJ.Continuation.StyleEffectAdmission+ProjectJ.Continuation.UIModelOwnership+ProjectJ.Continuation.UISkillReleaseOwnership+ProjectJ.Continuation.VisualAssetAdmissions+ProjectJ.Continuation.WeaponMotionNumericAdmission+ProjectJ.Continuation.WeaponMotionParentAssetValidation+ProjectJ.Foley.ContactPolicies+ProjectJ.Foley.CrowdAdmission+ProjectJ.Foley.DedicatedServer+ProjectJ.Foley.EventFallbackRouting+ProjectJ.Foley.LifetimeAndMissingContent+ProjectJ.Foley.LocomotionAssetContacts+ProjectJ.Foley.ProfileValidation+ProjectJ.Foley.SurfaceFallback+ProjectJ.GroupA.DynamicNavRecovery+ProjectJ.GroupA.EquipmentRetry+ProjectJ.GroupA.PathPressure+ProjectJ.GroupA.VisualPressure+ProjectJ.Input.MouseChordLifecycle+ProjectJ.Maturity.Backend.MutationOutcome+ProjectJ.Maturity.Combat.HitWindowOwnership+ProjectJ.Maturity.Editor.GuidedIKCompileValidation+ProjectJ.Maturity.Editor.WeaponSocketFrame+ProjectJ.Maturity.GAS.ResourceInvariants+ProjectJ.Maturity.Handover.ApplyAndAdmission+ProjectJ.Maturity.Input.SharedMappingLease+ProjectJ.Maturity.Mount.LandingRecovery+ProjectJ.Maturity.NPC.ActionSuspension+ProjectJ.Maturity.Social.GroupSnapshot+ProjectJ.MMO.Catalog+ProjectJ.MMO.Coordination.MultiOwner+ProjectJ.MMO.Coordination.RequestLifetime+ProjectJ.MMO.Repository.AtomicReplay+ProjectJ.MMO.Repository.BoundsAndTombstones+ProjectJ.MMO.Repository.ConcurrentWriters+ProjectJ.MountDismountMotion.SuccessAndRejection+ProjectJ.MountRemount.RetainedInputRecovery+ProjectJ.Mover.CommandAdmission+ProjectJ.Mover.CommandNumericAdmission+ProjectJ.Mover.ControllerlessIdleInput+ProjectJ.Mover.FlightSolverReplicationOrder+ProjectJ.Mover.JumpIdentityAfterPredictionRejection+ProjectJ.Mover.LandingBrakingRollback+ProjectJ.Mover.PresentationQualityAdmission+ProjectJ.Mover.RepossessPreservesAttributes+ProjectJ.Mover.StrafeSprintCommandAdmission+ProjectJ.NPCAction.ContextSeparation+ProjectJ.NPCAction.IntentLifecycle+ProjectJ.NPCAction.LatePathCompletion+ProjectJ.NPCAction.PathAdmission+ProjectJ.NPCDecision.Experiment+ProjectJ.NPCDecision.NativeBatch+ProjectJ.NPCDecision.Revalidation+ProjectJ.NPCDecision.SpatialImportance+ProjectJ.NPCGameplay.GroundRootMotion+ProjectJ.NPCGameplay.WeaponPresentationTeardown+ProjectJ.RuntimeOwnership.AggregateRetirement.Equipment+ProjectJ.RuntimeOwnership.AggregateRetirement.EquipmentProvider+ProjectJ.RuntimeOwnership.AggregateRetirement.Inventory+ProjectJ.RuntimeOwnership.AnimationProxyPinsQueuedAssets+ProjectJ.RuntimeOwnership.DestroyedCombatBinding+ProjectJ.RuntimeOwnership.DestroyedMountCanBeResummonedBeforeGC+ProjectJ.RuntimeOwnership.EquipmentCommitLifetime+ProjectJ.RuntimeOwnership.GrantSourceReentry+ProjectJ.RuntimeOwnership.InputBindingReentry+ProjectJ.RuntimeOwnership.InputRetirement+ProjectJ.RuntimeOwnership.LateControllerActorInfo+ProjectJ.RuntimeOwnership.LocomotionTagLease+ProjectJ.RuntimeOwnership.MontageBlendOutDrainsBeforeBudget+ProjectJ.RuntimeOwnership.ProgressionRetirement+ProjectJ.RuntimeOwnership.QuestRetirement+ProjectJ.RuntimeOwnership.RetiredAvatarCannotActivateOrObserve+ProjectJ.RuntimeOwnership.RetiredAvatarCannotCancelSprint+ProjectJ.RuntimeOwnership.SprintMovePrediction+ProjectJ.RuntimeOwnership.StatusBindingReentry+ProjectJ.World.EnvironmentTransition+ProjectJ.World.StreamingPrediction; Quit"
+      ]
+    },
+    {
+      "name": "NativeIsolatedGC",
+      "requested": 1,
+      "process": {
+        "exitCode": 0,
+        "hasExited": true,
+        "nativeHandleCapturedBeforeWait": true
+      },
+      "completed": [
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.NPCRegistrationCallbackGC"
+        }
+      ],
+      "last_started": "ProjectJ.Continuation.NPCRegistrationCallbackGC",
+      "final_report_present": true,
+      "summary": {
+        "succeeded": 1,
+        "warnings": 0,
+        "failed": 0,
+        "notRun": 0,
+        "inProcess": 0,
+        "duration": 0.10576799511909485,
+        "requested": 1,
+        "actual": 1,
+        "missing": []
+      },
+      "first_native_error_and_stack": [],
+      "log_sha256": "fcd3eb87afda81553d1eba8fd5bf16ced03b330f99c3b00d34eb5c2a295ab6b5",
+      "arguments": [
+        "C:/Users/I/Documents/GitHub/Project_J/Project_J.uproject",
+        "-unattended",
+        "-nosound",
+        "-nop4",
+        "-NoDDCCleanup",
+        "-NoLiveCoding",
+        "-NullRHI",
+        "-UserDir=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/ArchitectureAudit_20261026/NativeIsolatedGC/User",
+        "-ABSLOG=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/ArchitectureAudit_20261026/NativeIsolatedGC/Run.log",
+        "-ReportExportPath=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/ArchitectureAudit_20261026/NativeIsolatedGC",
+        "-TestExit=Automation Test Queue Empty",
+        "-ExecCmds=a.Budget.BudgetMs 0.1,Automation RunTests ProjectJ.Continuation.NPCRegistrationCallbackGC; Quit"
+      ]
+    },
+    {
+      "name": "NativeRemaining",
+      "requested": 121,
+      "process": {
+        "exitCode": 3,
+        "hasExited": true,
+        "nativeHandleCapturedBeforeWait": true
+      },
+      "completed": [
+        {
+          "result": "Success",
+          "test": "ProjectJ.AsyncTargeting.Benchmark.16384"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.AsyncTargeting.Benchmark.256"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.AsyncTargeting.Benchmark.4096"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.AsyncTargeting.BatchDispatchComparison"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.AsyncTargeting.BatchMath"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.AsyncTargeting.ComponentContext"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.AsyncTargeting.ComponentDefaultParallel"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.AsyncTargeting.Lifecycle"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.AsyncTargeting.Math"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.AsyncTargeting.SpatialEdgeCases"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.AsyncTargeting.SpatialEquivalence"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.AbilitySetEffectLevel"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.ActiveMoveReentry"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.EquipmentGrantIdentity"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.EquipmentStatLease"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.EquipmentStatTuple"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.FollowerPolicyLifetime"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.HandoverConfiguration"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.HandoverFiniteTick"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.HandoverParticipantLifetime"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.HandoverPayloadSnapshot"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.InputLeaseCallback"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.InventoryConsumeContract"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.LoopbackFiniteClock"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.MessagePayloadLifetime"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.MountAttachRetired"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.MountControllerReassigned"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.MountPhaseSuperseded"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.MountReplicatedReplacement"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.MoveIntentOrder"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.NPCCallbackGC"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.NPCCommitSuperseded"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.NPCGrantRegistrationSuperseded"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.NPCLifeRetired"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.NPCPreparedBatchSuperseded"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.NPCRegistrationRetired"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.NPCRegistrationStopped"
+        },
+        {
+          "result": "Success",
+          "test": "ProjectJ.Continuation.NPCRegistrationSuperseded"
+        }
+      ],
+      "last_started": "ProjectJ.Continuation.NPCResultBroadcastGC",
+      "final_report_present": false,
+      "summary": null,
+      "first_native_error_and_stack": [
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: === Critical error: ===",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: ",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: Fatal error!",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: ",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: Unhandled Exception: EXCEPTION_ACCESS_VIOLATION writing address 0x0000000000000040",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: ",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: [Callstack] 0x000002ae3a5d7ae0 UnrealEditor-Mover.dll!UImmediateMovementModeTransition::Clear() [C:\\Users\\I\\Documents\\GitHub\\Project_J\\Plugins\\Mover\\Source\\Mover\\Private\\MovementModeTransition.cpp:91]",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: [Callstack] 0x000002ae3a5bbbab UnrealEditor-Mover.dll!UKinematicActorSimulation::Uninit() [C:\\Users\\I\\Documents\\GitHub\\Project_J\\Plugins\\Mover\\Source\\Mover\\Private\\KinematicActorSimulation.cpp:55]",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: [Callstack] 0x000002ae3a5b9eee UnrealEditor-Mover.dll!UKinematicActorSimulation::BeginDestroy() [C:\\Users\\I\\Documents\\GitHub\\Project_J\\Plugins\\Mover\\Source\\Mover\\Private\\KinematicActorSimulation.cpp:18]",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: [Callstack] 0x00007ffe0f2fe927 UnrealEditor-CoreUObject.dll!UnknownFunction []",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: [Callstack] 0x00007ffe0f2362ad UnrealEditor-CoreUObject.dll!UnknownFunction []",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: [Callstack] 0x00007ffe0f17802d UnrealEditor-CoreUObject.dll!UnknownFunction []",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: [Callstack] 0x00007ffe0f1fca3a UnrealEditor-CoreUObject.dll!UnknownFunction []",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: [Callstack] 0x00007ffe0f1a7d3b UnrealEditor-CoreUObject.dll!UnknownFunction []",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: [Callstack] 0x00007ffd9e76fbc6 UnrealEditor-Project_J.dll!UProject_JNPCResultCallbackFixture::execReceive() [C:\\Users\\I\\Documents\\GitHub\\Project_J\\Intermediate\\Build\\Win64\\UnrealEditor\\Inc\\Project_J\\UHT\\Project_JNPCCallbackFixture.gen.cpp:255]",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: [Callstack] 0x00007ffe0f147b2c UnrealEditor-CoreUObject.dll!UnknownFunction []",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: [Callstack] 0x00007ffe0f4c19b2 UnrealEditor-CoreUObject.dll!UnknownFunction []",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: [Callstack] 0x00007ffd9ec072b1 UnrealEditor-Project_JCharacter.dll!TMulticastScriptDelegate<FNotThreadSafeDelegateMode>::ProcessDelegate<UObject>() [C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source\\Runtime\\Core\\Public\\UObject\\ScriptDelegates.h:1441]",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: [Callstack] 0x00007ffd9ec41e04 UnrealEditor-Project_JCharacter.dll!UProject_JTargetScoringComponent::ApplyResult() [C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Components\\Project_JTargetScoringComponent.cpp:179]",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: [Callstack] 0x000002ae3a829f3e UnrealEditor-Project_JCore.dll!`UProject_JTargetScoringSubsystem::Submit'::`2'::<lambda_1>::operator()() [C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCore\\Private\\System\\Project_JTargetScoringSubsystem.cpp:126]",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: [Callstack] 0x000002ae3a82df1d UnrealEditor-Project_JCore.dll!UProject_JTargetScoringSubsystem::Tick() [C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCore\\Private\\System\\Project_JTargetScoringSubsystem.cpp:261]",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: [Callstack] 0x00007ffd9e806117 UnrealEditor-Project_J.dll!FProjectJNPCResultGCTest::RunTest() [C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JNPCCallbackContractTests.cpp:184]",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: [Callstack] 0x00007ffde1931256 UnrealEditor-Core.dll!UnknownFunction []",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: [Callstack] 0x00007ffde1950500 UnrealEditor-Core.dll!UnknownFunction []",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: [Callstack] 0x000002aeb0c7f30f UnrealEditor-AutomationWorker.dll!UnknownFunction []",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: [Callstack] 0x000002aeb0c7e29d UnrealEditor-AutomationWorker.dll!UnknownFunction []",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: [Callstack] 0x000002aeb0c827ba UnrealEditor-AutomationWorker.dll!UnknownFunction []",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: [Callstack] 0x000002aeb0c713fe UnrealEditor-AutomationWorker.dll!UnknownFunction []",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: [Callstack] 0x00007ff6a84532dd UnrealEditor-Cmd.exe!UnknownFunction []",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: [Callstack] 0x00007ff6a843c4ac UnrealEditor-Cmd.exe!UnknownFunction []",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: [Callstack] 0x00007ff6a843c5ba UnrealEditor-Cmd.exe!UnknownFunction []",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: [Callstack] 0x00007ff6a84412d6 UnrealEditor-Cmd.exe!UnknownFunction []",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: [Callstack] 0x00007ff6a8455cf4 UnrealEditor-Cmd.exe!UnknownFunction []",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: [Callstack] 0x00007ff6a8458422 UnrealEditor-Cmd.exe!UnknownFunction []",
+        "[2026.10.26-02.20.11:124][242]LogWindows: Error: [Callstack] 0x00007ffeeccbdda7 KERNEL32.DLL!UnknownFunction []"
+      ],
+      "log_sha256": "ccd511f3322d1e51aeb72630b7046770ee8c45e5022127750b35b12d791edc4b",
+      "arguments": [
+        "C:/Users/I/Documents/GitHub/Project_J/Project_J.uproject",
+        "-unattended",
+        "-nosound",
+        "-nop4",
+        "-NoDDCCleanup",
+        "-NoLiveCoding",
+        "-NullRHI",
+        "-UserDir=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/ArchitectureAudit_20261026/NativeRemaining/User",
+        "-ABSLOG=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/ArchitectureAudit_20261026/NativeRemaining/Run.log",
+        "-ReportExportPath=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/ArchitectureAudit_20261026/NativeRemaining",
+        "-TestExit=Automation Test Queue Empty",
+        "-ExecCmds=a.Budget.BudgetMs 0.1,Automation RunTests ProjectJ.AsyncTargeting.BatchDispatchComparison+ProjectJ.AsyncTargeting.BatchMath+ProjectJ.AsyncTargeting.Benchmark+ProjectJ.AsyncTargeting.ComponentContext+ProjectJ.AsyncTargeting.ComponentDefaultParallel+ProjectJ.AsyncTargeting.Lifecycle+ProjectJ.AsyncTargeting.Math+ProjectJ.AsyncTargeting.SpatialEdgeCases+ProjectJ.AsyncTargeting.SpatialEquivalence+ProjectJ.Continuation.AbilitySetEffectLevel+ProjectJ.Continuation.ActiveMoveReentry+ProjectJ.Continuation.EquipmentGrantIdentity+ProjectJ.Continuation.EquipmentStatLease+ProjectJ.Continuation.EquipmentStatTuple+ProjectJ.Continuation.FollowerPolicyLifetime+ProjectJ.Continuation.HandoverConfiguration+ProjectJ.Continuation.HandoverFiniteTick+ProjectJ.Continuation.HandoverParticipantLifetime+ProjectJ.Continuation.HandoverPayloadSnapshot+ProjectJ.Continuation.InputLeaseCallback+ProjectJ.Continuation.InventoryConsumeContract+ProjectJ.Continuation.LoopbackFiniteClock+ProjectJ.Continuation.MessagePayloadLifetime+ProjectJ.Continuation.MountAttachRetired+ProjectJ.Continuation.MountControllerReassigned+ProjectJ.Continuation.MountPhaseSuperseded+ProjectJ.Continuation.MountReplicatedReplacement+ProjectJ.Continuation.MoveIntentOrder+ProjectJ.Continuation.NPCCallbackGC+ProjectJ.Continuation.NPCCommitSuperseded+ProjectJ.Continuation.NPCGrantRegistrationSuperseded+ProjectJ.Continuation.NPCLifeRetired+ProjectJ.Continuation.NPCPreparedBatchSuperseded+ProjectJ.Continuation.NPCRegistrationRetired+ProjectJ.Continuation.NPCRegistrationStopped+ProjectJ.Continuation.NPCRegistrationSuperseded+ProjectJ.Continuation.NPCResultBroadcastGC+ProjectJ.Continuation.PlayerHandoverLevelAdmission+ProjectJ.Continuation.ProgressionLevelAdmission+ProjectJ.Continuation.ProgressionRestoreRetirement+ProjectJ.Continuation.QuestRewardRollback+ProjectJ.Continuation.QueuedInputOrigin+ProjectJ.Continuation.RouterCancelReentry+ProjectJ.Continuation.SharedNotifyGCLifetime+ProjectJ.Continuation.StyleEffectAdmission+ProjectJ.Continuation.UIModelOwnership+ProjectJ.Continuation.UISkillReleaseOwnership+ProjectJ.Continuation.VisualAssetAdmissions+ProjectJ.Continuation.WeaponMotionNumericAdmission+ProjectJ.Continuation.WeaponMotionParentAssetValidation+ProjectJ.Foley.ContactPolicies+ProjectJ.Foley.CrowdAdmission+ProjectJ.Foley.DedicatedServer+ProjectJ.Foley.EventFallbackRouting+ProjectJ.Foley.LifetimeAndMissingContent+ProjectJ.Foley.LocomotionAssetContacts+ProjectJ.Foley.ProfileValidation+ProjectJ.Foley.SurfaceFallback+ProjectJ.GroupA.DynamicNavRecovery+ProjectJ.GroupA.EquipmentRetry+ProjectJ.GroupA.PathPressure+ProjectJ.GroupA.VisualPressure+ProjectJ.Input.MouseChordLifecycle+ProjectJ.Maturity.Backend.MutationOutcome+ProjectJ.Maturity.Combat.HitWindowOwnership+ProjectJ.Maturity.Editor.GuidedIKCompileValidation+ProjectJ.Maturity.Editor.WeaponSocketFrame+ProjectJ.Maturity.GAS.ResourceInvariants+ProjectJ.Maturity.Handover.ApplyAndAdmission+ProjectJ.Maturity.Input.SharedMappingLease+ProjectJ.Maturity.Mount.LandingRecovery+ProjectJ.Maturity.NPC.ActionSuspension+ProjectJ.Maturity.Social.GroupSnapshot+ProjectJ.MMO.Catalog+ProjectJ.MMO.Coordination.MultiOwner+ProjectJ.MMO.Coordination.RequestLifetime+ProjectJ.MMO.Repository.AtomicReplay+ProjectJ.MMO.Repository.BoundsAndTombstones+ProjectJ.MMO.Repository.ConcurrentWriters+ProjectJ.MountDismountMotion.SuccessAndRejection+ProjectJ.MountRemount.RetainedInputRecovery+ProjectJ.Mover.CommandAdmission+ProjectJ.Mover.CommandNumericAdmission+ProjectJ.Mover.ControllerlessIdleInput+ProjectJ.Mover.FlightSolverReplicationOrder+ProjectJ.Mover.JumpIdentityAfterPredictionRejection+ProjectJ.Mover.LandingBrakingRollback+ProjectJ.Mover.PresentationQualityAdmission+ProjectJ.Mover.RepossessPreservesAttributes+ProjectJ.Mover.StrafeSprintCommandAdmission+ProjectJ.NPCAction.ContextSeparation+ProjectJ.NPCAction.IntentLifecycle+ProjectJ.NPCAction.LatePathCompletion+ProjectJ.NPCAction.PathAdmission+ProjectJ.NPCDecision.Experiment+ProjectJ.NPCDecision.NativeBatch+ProjectJ.NPCDecision.Revalidation+ProjectJ.NPCDecision.SpatialImportance+ProjectJ.NPCGameplay.GroundRootMotion+ProjectJ.NPCGameplay.WeaponPresentationTeardown+ProjectJ.RuntimeOwnership.AggregateRetirement.Equipment+ProjectJ.RuntimeOwnership.AggregateRetirement.EquipmentProvider+ProjectJ.RuntimeOwnership.AggregateRetirement.Inventory+ProjectJ.RuntimeOwnership.AnimationProxyPinsQueuedAssets+ProjectJ.RuntimeOwnership.DestroyedCombatBinding+ProjectJ.RuntimeOwnership.DestroyedMountCanBeResummonedBeforeGC+ProjectJ.RuntimeOwnership.EquipmentCommitLifetime+ProjectJ.RuntimeOwnership.GrantSourceReentry+ProjectJ.RuntimeOwnership.InputBindingReentry+ProjectJ.RuntimeOwnership.InputRetirement+ProjectJ.RuntimeOwnership.LateControllerActorInfo+ProjectJ.RuntimeOwnership.LocomotionTagLease+ProjectJ.RuntimeOwnership.MontageBlendOutDrainsBeforeBudget+ProjectJ.RuntimeOwnership.ProgressionRetirement+ProjectJ.RuntimeOwnership.QuestRetirement+ProjectJ.RuntimeOwnership.RetiredAvatarCannotActivateOrObserve+ProjectJ.RuntimeOwnership.RetiredAvatarCannotCancelSprint+ProjectJ.RuntimeOwnership.SprintMovePrediction+ProjectJ.RuntimeOwnership.StatusBindingReentry+ProjectJ.World.EnvironmentTransition+ProjectJ.World.StreamingPrediction; Quit"
+      ]
+    }
+  ],
+  "selected_test_roster": [
+    {
+      "name": "ProjectJ.Continuation.HandoverParticipantLifetime",
+      "path": "Source/Project_J/Private/Tests/Project_JHandoverContractTests.cpp",
+      "line": 14
+    },
+    {
+      "name": "ProjectJ.Continuation.HandoverPayloadSnapshot",
+      "path": "Source/Project_J/Private/Tests/Project_JHandoverContractTests.cpp",
+      "line": 43
+    },
+    {
+      "name": "ProjectJ.Continuation.HandoverFiniteTick",
+      "path": "Source/Project_J/Private/Tests/Project_JHandoverContractTests.cpp",
+      "line": 64
+    },
+    {
+      "name": "ProjectJ.Continuation.InputLeaseCallback",
+      "path": "Source/Project_J/Private/Tests/Project_JInputLeaseCallbackTests.cpp",
+      "line": 30
+    },
+    {
+      "name": "ProjectJ.Continuation.ProgressionLevelAdmission",
+      "path": "Source/Project_J/Private/Tests/Project_JLevelHandoverAdmissionTests.cpp",
+      "line": 40
+    },
+    {
+      "name": "ProjectJ.Continuation.PlayerHandoverLevelAdmission",
+      "path": "Source/Project_J/Private/Tests/Project_JLevelHandoverAdmissionTests.cpp",
+      "line": 84
+    },
+    {
+      "name": "ProjectJ.Continuation.StyleEffectAdmission",
+      "path": "Source/Project_J/Private/Tests/Project_JLevelHandoverAdmissionTests.cpp",
+      "line": 134
+    },
+    {
+      "name": "ProjectJ.Continuation.ProgressionRestoreRetirement",
+      "path": "Source/Project_J/Private/Tests/Project_JLevelHandoverAdmissionTests.cpp",
+      "line": 163
+    },
+    {
+      "name": "ProjectJ.Maturity.Handover.ApplyAndAdmission",
+      "path": "Source/Project_J/Private/Tests/Project_JMaturityContractTests.cpp",
+      "line": 23
+    },
+    {
+      "name": "ProjectJ.Maturity.Backend.MutationOutcome",
+      "path": "Source/Project_J/Private/Tests/Project_JMaturityContractTests.cpp",
+      "line": 65
+    },
+    {
+      "name": "ProjectJ.Maturity.Social.GroupSnapshot",
+      "path": "Source/Project_J/Private/Tests/Project_JMaturityContractTests.cpp",
+      "line": 88
+    },
+    {
+      "name": "ProjectJ.Maturity.Input.SharedMappingLease",
+      "path": "Source/Project_J/Private/Tests/Project_JMaturityContractTests.cpp",
+      "line": 113
+    },
+    {
+      "name": "ProjectJ.Continuation.NPCCommitSuperseded",
+      "path": "Source/Project_J/Private/Tests/Project_JNPCCallbackContractTests.cpp",
+      "line": 55
+    },
+    {
+      "name": "ProjectJ.Continuation.NPCLifeRetired",
+      "path": "Source/Project_J/Private/Tests/Project_JNPCCallbackContractTests.cpp",
+      "line": 74
+    },
+    {
+      "name": "ProjectJ.Continuation.NPCGrantRegistrationSuperseded",
+      "path": "Source/Project_J/Private/Tests/Project_JNPCCallbackContractTests.cpp",
+      "line": 88
+    },
+    {
+      "name": "ProjectJ.Continuation.NPCCallbackGC",
+      "path": "Source/Project_J/Private/Tests/Project_JNPCCallbackContractTests.cpp",
+      "line": 111
+    },
+    {
+      "name": "ProjectJ.Continuation.NPCResultBroadcastGC",
+      "path": "Source/Project_J/Private/Tests/Project_JNPCCallbackContractTests.cpp",
+      "line": 162
+    },
+    {
+      "name": "ProjectJ.Continuation.NPCPreparedBatchSuperseded",
+      "path": "Source/Project_J/Private/Tests/Project_JNPCCallbackContractTests.cpp",
+      "line": 188
+    },
+    {
+      "name": "ProjectJ.Continuation.NPCRegistrationRetired",
+      "path": "Source/Project_J/Private/Tests/Project_JNPCRegistrationCallbackTests.cpp",
+      "line": 34
+    },
+    {
+      "name": "ProjectJ.Continuation.NPCRegistrationStopped",
+      "path": "Source/Project_J/Private/Tests/Project_JNPCRegistrationCallbackTests.cpp",
+      "line": 54
+    },
+    {
+      "name": "ProjectJ.Continuation.NPCRegistrationSuperseded",
+      "path": "Source/Project_J/Private/Tests/Project_JNPCRegistrationCallbackTests.cpp",
+      "line": 73
+    },
+    {
+      "name": "ProjectJ.Continuation.NPCRegistrationCallbackGC",
+      "path": "Source/Project_J/Private/Tests/Project_JNPCRegistrationCallbackTests.cpp",
+      "line": 94
+    },
+    {
+      "name": "ProjectJ.RuntimeOwnership.QuestRetirement",
+      "path": "Source/Project_J/Private/Tests/Project_JQuestLifetimeTests.cpp",
+      "line": 15
+    },
+    {
+      "name": "ProjectJ.Continuation.QueuedInputOrigin",
+      "path": "Source/Project_J/Private/Tests/Project_JQueuedInputOriginTests.cpp",
+      "line": 24
+    },
+    {
+      "name": "ProjectJ.Continuation.MoveIntentOrder",
+      "path": "Source/Project_J/Private/Tests/Project_JQueuedInputOriginTests.cpp",
+      "line": 62
+    },
+    {
+      "name": "ProjectJ.Continuation.QuestRewardRollback",
+      "path": "Source/Project_J/Private/Tests/Project_JRewardTransportAdmissionTests.cpp",
+      "line": 16
+    },
+    {
+      "name": "ProjectJ.Continuation.LoopbackFiniteClock",
+      "path": "Source/Project_J/Private/Tests/Project_JRewardTransportAdmissionTests.cpp",
+      "line": 52
+    },
+    {
+      "name": "ProjectJ.Continuation.HandoverConfiguration",
+      "path": "Source/Project_J/Private/Tests/Project_JRewardTransportAdmissionTests.cpp",
+      "line": 76
+    },
+    {
+      "name": "ProjectJ.RuntimeOwnership.RetiredAvatarCannotCancelSprint",
+      "path": "Source/Project_J/Private/Tests/Project_JRuntimeOwnershipTests.cpp",
+      "line": 86
+    },
+    {
+      "name": "ProjectJ.RuntimeOwnership.DestroyedMountCanBeResummonedBeforeGC",
+      "path": "Source/Project_J/Private/Tests/Project_JRuntimeOwnershipTests.cpp",
+      "line": 121
+    },
+    {
+      "name": "ProjectJ.RuntimeOwnership.RetiredAvatarCannotActivateOrObserve",
+      "path": "Source/Project_J/Private/Tests/Project_JRuntimeOwnershipTests.cpp",
+      "line": 151
+    },
+    {
+      "name": "ProjectJ.RuntimeOwnership.SprintMovePrediction",
+      "path": "Source/Project_J/Private/Tests/Project_JRuntimeOwnershipTests.cpp",
+      "line": 199
+    },
+    {
+      "name": "ProjectJ.Mover.CommandAdmission",
+      "path": "Source/Project_J/Private/Tests/Project_JRuntimeOwnershipTests.cpp",
+      "line": 239
+    },
+    {
+      "name": "ProjectJ.Mover.StrafeSprintCommandAdmission",
+      "path": "Source/Project_J/Private/Tests/Project_JRuntimeOwnershipTests.cpp",
+      "line": 353
+    },
+    {
+      "name": "ProjectJ.Mover.CommandNumericAdmission",
+      "path": "Source/Project_J/Private/Tests/Project_JRuntimeOwnershipTests.cpp",
+      "line": 405
+    },
+    {
+      "name": "ProjectJ.Mover.ControllerlessIdleInput",
+      "path": "Source/Project_J/Private/Tests/Project_JRuntimeOwnershipTests.cpp",
+      "line": 444
+    },
+    {
+      "name": "ProjectJ.Mover.JumpIdentityAfterPredictionRejection",
+      "path": "Source/Project_J/Private/Tests/Project_JRuntimeOwnershipTests.cpp",
+      "line": 468
+    },
+    {
+      "name": "ProjectJ.RuntimeOwnership.LateControllerActorInfo",
+      "path": "Source/Project_J/Private/Tests/Project_JRuntimeOwnershipTests.cpp",
+      "line": 514
+    },
+    {
+      "name": "ProjectJ.Mover.RepossessPreservesAttributes",
+      "path": "Source/Project_J/Private/Tests/Project_JRuntimeOwnershipTests.cpp",
+      "line": 547
+    },
+    {
+      "name": "ProjectJ.Mover.FlightSolverReplicationOrder",
+      "path": "Source/Project_J/Private/Tests/Project_JRuntimeOwnershipTests.cpp",
+      "line": 570
+    },
+    {
+      "name": "ProjectJ.Mover.PresentationQualityAdmission",
+      "path": "Source/Project_J/Private/Tests/Project_JRuntimeOwnershipTests.cpp",
+      "line": 601
+    },
+    {
+      "name": "ProjectJ.RuntimeOwnership.StatusBindingReentry",
+      "path": "Source/Project_J/Private/Tests/Project_JStatusBindingReentryTests.cpp",
+      "line": 12
+    },
+    {
+      "name": "ProjectJ.Continuation.UIModelOwnership",
+      "path": "Source/Project_J/Private/Tests/Project_JUIModelOwnershipTests.cpp",
+      "line": 12
+    },
+    {
+      "name": "ProjectJ.Continuation.UISkillReleaseOwnership",
+      "path": "Source/Project_J/Private/Tests/Project_JUISkillReleaseOwnershipTests.cpp",
+      "line": 16
+    },
+    {
+      "name": "ProjectJ.Continuation.SharedNotifyGCLifetime",
+      "path": "Source/Project_J/Testing/Project_JSharedNotifyPerformance.cpp",
+      "line": 27
+    },
+    {
+      "name": "ProjectJ.World.EnvironmentTransition",
+      "path": "Source/Project_J/Tests/Project_JWorldTests.cpp",
+      "line": 5
+    },
+    {
+      "name": "ProjectJ.World.StreamingPrediction",
+      "path": "Source/Project_J/Tests/Project_JWorldTests.cpp",
+      "line": 17
+    },
+    {
+      "name": "ProjectJ.Maturity.Editor.GuidedIKCompileValidation",
+      "path": "Source/Project_JAnimationNodes/Private/Tests/Project_JGuidedIKAuthoringTests.cpp",
+      "line": 8
+    },
+    {
+      "name": "ProjectJ.Maturity.NPC.ActionSuspension",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JActionSuspensionTests.cpp",
+      "line": 17
+    },
+    {
+      "name": "ProjectJ.Continuation.RouterCancelReentry",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JActiveInputCallbackTests.cpp",
+      "line": 40
+    },
+    {
+      "name": "ProjectJ.Continuation.ActiveMoveReentry",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JActiveInputCallbackTests.cpp",
+      "line": 79
+    },
+    {
+      "name": "ProjectJ.RuntimeOwnership.AggregateRetirement.Inventory",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JAggregateRetirementTests.cpp",
+      "line": 18
+    },
+    {
+      "name": "ProjectJ.RuntimeOwnership.AggregateRetirement.Equipment",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JAggregateRetirementTests.cpp",
+      "line": 51
+    },
+    {
+      "name": "ProjectJ.RuntimeOwnership.AggregateRetirement.EquipmentProvider",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JAggregateRetirementTests.cpp",
+      "line": 99
+    },
+    {
+      "name": "ProjectJ.RuntimeOwnership.AnimationProxyPinsQueuedAssets",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JAnimationProxyLifetimeTests.cpp",
+      "line": 11
+    },
+    {
+      "name": "ProjectJ.RuntimeOwnership.MontageBlendOutDrainsBeforeBudget",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JComponentOwnershipTests.cpp",
+      "line": 120
+    },
+    {
+      "name": "ProjectJ.Continuation.VisualAssetAdmissions",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JContinuationContractsTests.cpp",
+      "line": 21
+    },
+    {
+      "name": "ProjectJ.Continuation.FollowerPolicyLifetime",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JContinuationContractsTests.cpp",
+      "line": 153
+    },
+    {
+      "name": "ProjectJ.Continuation.WeaponMotionNumericAdmission",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JContinuationContractsTests.cpp",
+      "line": 254
+    },
+    {
+      "name": "ProjectJ.RuntimeOwnership.EquipmentCommitLifetime",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JEquipmentCommitLifetimeTests.cpp",
+      "line": 14
+    },
+    {
+      "name": "ProjectJ.RuntimeOwnership.DestroyedCombatBinding",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JEquipmentCommitLifetimeTests.cpp",
+      "line": 69
+    },
+    {
+      "name": "ProjectJ.Continuation.EquipmentGrantIdentity",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JEquipmentGrantIdentityTests.cpp",
+      "line": 14
+    },
+    {
+      "name": "ProjectJ.Continuation.AbilitySetEffectLevel",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JEquipmentStatContractTests.cpp",
+      "line": 19
+    },
+    {
+      "name": "ProjectJ.Continuation.EquipmentStatLease",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JEquipmentStatContractTests.cpp",
+      "line": 57
+    },
+    {
+      "name": "ProjectJ.Continuation.EquipmentStatTuple",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JEquipmentStatContractTests.cpp",
+      "line": 110
+    },
+    {
+      "name": "ProjectJ.Foley.SurfaceFallback",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JFoleyTests.cpp",
+      "line": 32
+    },
+    {
+      "name": "ProjectJ.Foley.EventFallbackRouting",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JFoleyTests.cpp",
+      "line": 57
+    },
+    {
+      "name": "ProjectJ.Foley.ContactPolicies",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JFoleyTests.cpp",
+      "line": 103
+    },
+    {
+      "name": "ProjectJ.Foley.CrowdAdmission",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JFoleyTests.cpp",
+      "line": 151
+    },
+    {
+      "name": "ProjectJ.Foley.LifetimeAndMissingContent",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JFoleyTests.cpp",
+      "line": 198
+    },
+    {
+      "name": "ProjectJ.Foley.LocomotionAssetContacts",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JFoleyTests.cpp",
+      "line": 282
+    },
+    {
+      "name": "ProjectJ.Foley.ProfileValidation",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JFoleyTests.cpp",
+      "line": 312
+    },
+    {
+      "name": "ProjectJ.Foley.DedicatedServer",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JFoleyTests.cpp",
+      "line": 335
+    },
+    {
+      "name": "ProjectJ.RuntimeOwnership.GrantSourceReentry",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JGrantReentryTests.cpp",
+      "line": 11
+    },
+    {
+      "name": "ProjectJ.RuntimeOwnership.InputRetirement",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JInputRetirementTests.cpp",
+      "line": 19
+    },
+    {
+      "name": "ProjectJ.RuntimeOwnership.InputBindingReentry",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JInputRetirementTests.cpp",
+      "line": 73
+    },
+    {
+      "name": "ProjectJ.Continuation.InventoryConsumeContract",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JInternalRefinementTests.cpp",
+      "line": 49
+    },
+    {
+      "name": "ProjectJ.Input.MouseChordLifecycle",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JMouseChordLifecycleTests.cpp",
+      "line": 14
+    },
+    {
+      "name": "ProjectJ.Maturity.Combat.HitWindowOwnership",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JNotifyOwnershipTests.cpp",
+      "line": 11
+    },
+    {
+      "name": "ProjectJ.NPCAction.IntentLifecycle",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JNPCActionTests.cpp",
+      "line": 79
+    },
+    {
+      "name": "ProjectJ.NPCAction.ContextSeparation",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JNPCActionTests.cpp",
+      "line": 112
+    },
+    {
+      "name": "ProjectJ.NPCAction.PathAdmission",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JNPCActionTests.cpp",
+      "line": 143
+    },
+    {
+      "name": "ProjectJ.NPCAction.LatePathCompletion",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JNPCActionTests.cpp",
+      "line": 174
+    },
+    {
+      "name": "ProjectJ.NPCGameplay.GroundRootMotion",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JNPCActionTests.cpp",
+      "line": 247
+    },
+    {
+      "name": "ProjectJ.GroupA.PathPressure",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JNPCActionTests.cpp",
+      "line": 383
+    },
+    {
+      "name": "ProjectJ.NPCDecision.NativeBatch",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JNPCDecisionTests.cpp",
+      "line": 191
+    },
+    {
+      "name": "ProjectJ.NPCDecision.Revalidation",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JNPCDecisionTests.cpp",
+      "line": 197
+    },
+    {
+      "name": "ProjectJ.NPCDecision.Experiment",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JNPCDecisionTests.cpp",
+      "line": 200
+    },
+    {
+      "name": "ProjectJ.NPCDecision.SpatialImportance",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JNPCDecisionTests.cpp",
+      "line": 204
+    },
+    {
+      "name": "ProjectJ.Mover.LandingBrakingRollback",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JPlayerLocomotionNativeLogicTests.cpp",
+      "line": 111
+    },
+    {
+      "name": "ProjectJ.RuntimeOwnership.ProgressionRetirement",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JProgressionLifetimeTests.cpp",
+      "line": 13
+    },
+    {
+      "name": "ProjectJ.RuntimeOwnership.LocomotionTagLease",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JStateOwnershipTests.cpp",
+      "line": 16
+    },
+    {
+      "name": "ProjectJ.NPCGameplay.WeaponPresentationTeardown",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JSystemsModernizationTests.cpp",
+      "line": 165
+    },
+    {
+      "name": "ProjectJ.GroupA.EquipmentRetry",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JSystemsModernizationTests.cpp",
+      "line": 191
+    },
+    {
+      "name": "ProjectJ.AsyncTargeting.ComponentContext",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JTargetScoringComponentTests.cpp",
+      "line": 11
+    },
+    {
+      "name": "ProjectJ.AsyncTargeting.ComponentDefaultParallel",
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JTargetScoringComponentTests.cpp",
+      "line": 131
+    },
+    {
+      "name": "ProjectJ.GroupA.DynamicNavRecovery",
+      "path": "Source/Project_JCharacterEditor/Private/Tests/Project_JNPCNavigationIntegrationTests.cpp",
+      "line": 259
+    },
+    {
+      "name": "ProjectJ.Continuation.WeaponMotionParentAssetValidation",
+      "path": "Source/Project_JCharacterEditor/Private/Tests/Project_JWeaponMotionAssetValidationTests.cpp",
+      "line": 9
+    },
+    {
+      "name": "ProjectJ.Maturity.Editor.WeaponSocketFrame",
+      "path": "Source/Project_JCharacterEditor/Private/Tests/Project_JWeaponMotionEditingTests.cpp",
+      "line": 5
+    },
+    {
+      "name": "ProjectJ.Continuation.MessagePayloadLifetime",
+      "path": "Source/Project_JCore/Private/Tests/Project_JMessageRouterTests.cpp",
+      "line": 47
+    },
+    {
+      "name": "ProjectJ.AsyncTargeting.BatchMath",
+      "path": "Source/Project_JCore/Private/Tests/Project_JTargetScoringBatchTests.cpp",
+      "line": 26
+    },
+    {
+      "name": "ProjectJ.AsyncTargeting.BatchDispatchComparison",
+      "path": "Source/Project_JCore/Private/Tests/Project_JTargetScoringBatchTests.cpp",
+      "line": 151
+    },
+    {
+      "name": "ProjectJ.AsyncTargeting.Math",
+      "path": "Source/Project_JCore/Private/Tests/Project_JTargetScoringTests.cpp",
+      "line": 25
+    },
+    {
+      "name": "ProjectJ.AsyncTargeting.Lifecycle",
+      "path": "Source/Project_JCore/Private/Tests/Project_JTargetScoringTests.cpp",
+      "line": 54
+    },
+    {
+      "name": "ProjectJ.AsyncTargeting.Benchmark",
+      "path": "Source/Project_JCore/Private/Tests/Project_JTargetScoringTests.cpp",
+      "line": 192
+    },
+    {
+      "name": "ProjectJ.AsyncTargeting.SpatialEquivalence",
+      "path": "Source/Project_JCore/Private/Tests/Project_JTargetSpatialSnapshotTests.cpp",
+      "line": 6
+    },
+    {
+      "name": "ProjectJ.AsyncTargeting.SpatialEdgeCases",
+      "path": "Source/Project_JCore/Private/Tests/Project_JTargetSpatialSnapshotTests.cpp",
+      "line": 40
+    },
+    {
+      "name": "ProjectJ.GroupA.VisualPressure",
+      "path": "Source/Project_JCore/Private/Tests/Project_JVisualAssetTests.cpp",
+      "line": 69
+    },
+    {
+      "name": "ProjectJ.Maturity.GAS.ResourceInvariants",
+      "path": "Source/Project_JGAS/Private/Tests/Project_JResourceInvariantTests.cpp",
+      "line": 12
+    },
+    {
+      "name": "ProjectJ.MMO.Catalog",
+      "path": "Source/Project_JMMO/Private/Tests/FoundationTests.cpp",
+      "line": 18
+    },
+    {
+      "name": "ProjectJ.MMO.Repository.AtomicReplay",
+      "path": "Source/Project_JMMO/Private/Tests/FoundationTests.cpp",
+      "line": 39
+    },
+    {
+      "name": "ProjectJ.MMO.Repository.BoundsAndTombstones",
+      "path": "Source/Project_JMMO/Private/Tests/FoundationTests.cpp",
+      "line": 60
+    },
+    {
+      "name": "ProjectJ.MMO.Repository.ConcurrentWriters",
+      "path": "Source/Project_JMMO/Private/Tests/FoundationTests.cpp",
+      "line": 83
+    },
+    {
+      "name": "ProjectJ.MMO.Coordination.MultiOwner",
+      "path": "Source/Project_JMMO/Private/Tests/FoundationTests.cpp",
+      "line": 94
+    },
+    {
+      "name": "ProjectJ.MMO.Coordination.RequestLifetime",
+      "path": "Source/Project_JMMO/Private/Tests/FoundationTests.cpp",
+      "line": 129
+    },
+    {
+      "name": "ProjectJ.Maturity.Mount.LandingRecovery",
+      "path": "Source/Project_JMount/Private/Tests/Project_JMountRefinementTests.cpp",
+      "line": 196
+    },
+    {
+      "name": "ProjectJ.MountRemount.RetainedInputRecovery",
+      "path": "Source/Project_JMount/Private/Tests/Project_JMountRefinementTests.cpp",
+      "line": 264
+    },
+    {
+      "name": "ProjectJ.MountDismountMotion.SuccessAndRejection",
+      "path": "Source/Project_JMount/Private/Tests/Project_JMountRefinementTests.cpp",
+      "line": 346
+    },
+    {
+      "name": "ProjectJ.Continuation.MountAttachRetired",
+      "path": "Source/Project_JMount/Private/Tests/Project_JMountTransitionTests.cpp",
+      "line": 41
+    },
+    {
+      "name": "ProjectJ.Continuation.MountReplicatedReplacement",
+      "path": "Source/Project_JMount/Private/Tests/Project_JMountTransitionTests.cpp",
+      "line": 67
+    },
+    {
+      "name": "ProjectJ.Continuation.MountPhaseSuperseded",
+      "path": "Source/Project_JMount/Private/Tests/Project_JMountTransitionTests.cpp",
+      "line": 92
+    },
+    {
+      "name": "ProjectJ.Continuation.MountControllerReassigned",
+      "path": "Source/Project_JMount/Private/Tests/Project_JMountTransitionTests.cpp",
+      "line": 122
+    }
+  ],
+  "mover_critical_sources": [
+    {
+      "path": "Plugins/Mover/Source/Mover/Private/KinematicActorSimulation.cpp",
+      "sha256": "cf5b5506f197cd3d6325427a1b3ef2aa89f36a942073f53f8142a3752ece85e9",
+      "installed_engine_sha256": "cf5b5506f197cd3d6325427a1b3ef2aa89f36a942073f53f8142a3752ece85e9",
+      "same": true
+    },
+    {
+      "path": "Plugins/Mover/Source/Mover/Private/MovementModeStateMachine.cpp",
+      "sha256": "c3bbf1c87a615b3fe8ee117cfc12d8a0f42c0bcfe957ce8815189ba3dc510d5e",
+      "installed_engine_sha256": "c3bbf1c87a615b3fe8ee117cfc12d8a0f42c0bcfe957ce8815189ba3dc510d5e",
+      "same": true
+    },
+    {
+      "path": "Plugins/Mover/Source/Mover/Private/MovementModeTransition.cpp",
+      "sha256": "c8f50c547a0c0a2498dff968ca7d3ef70ac36b957c90a050e785d329b2c7137d",
+      "installed_engine_sha256": "c8f50c547a0c0a2498dff968ca7d3ef70ac36b957c90a050e785d329b2c7137d",
+      "same": true
+    }
+  ],
+  "asset_read_process": {
+    "exitCode": 0,
+    "hasExited": true,
+    "assetSave": false,
+    "selectedHashPreserved": true
+  },
+  "mcp": {
+    "tools_exposed_to_session": false,
+    "local_127_0_0_1_port_8000": "WinError10061 connection refused",
+    "fallback": "Public editor Python reads; no policy changes"
+  },
+  "limits": [
+    "Native batches crashed; do not sum overlapping completions or claim 122 passed",
+    "NullRHI regression is not frame-time/GPU/network load evidence",
+    "No new Cook/Shipping/dedicated-server or multi-client load run",
+    "No production code/config/assets changed; helper scripts and full raw logs are local Saved evidence"
+  ],
+  "baseline_file_inventory": {
+    "counts": {
+      "Source": 652,
+      "Config": 9,
+      "Plugins": 257
+    },
+    "semantic_review_completion": false,
+    "changed_or_missing_source_config_plugin_files": []
+  }
+}

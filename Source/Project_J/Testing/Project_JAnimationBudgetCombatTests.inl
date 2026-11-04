@@ -17,7 +17,7 @@
 #include "Misc/App.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JGameplayTags.h"
-#include "Project_JGreatswordCharacter.h"
+#include "Project_JSpellbladeCharacter.h"
 #include "Project_JNPCCharacter.h"
 #include "Project_JPlayerState.h"
 #include "UObject/UnrealType.h"
@@ -39,7 +39,7 @@ class FCombatComparison : public IAutomationLatentCommand
 	ECombatExit Exit;
 	int32 Mode = 0, Ticks = 0, AttackTick = 0;
 	UWorld* World = nullptr;
-	TWeakObjectPtr<AProject_JGreatswordCharacter> Player;
+	TWeakObjectPtr<AProject_JSpellbladeCharacter> Player;
 	TWeakObjectPtr<AProject_JNPCCharacter> Target;
 	TWeakObjectPtr<AProject_JPlayerState> State;
 	TWeakObjectPtr<UAbilitySystemComponent> ASC, TargetASC;
@@ -82,7 +82,7 @@ class FCombatComparison : public IAutomationLatentCommand
 		if (!Start(World, Mode, 100, 20.0f)) { Test->AddError(TEXT("Cannot start background pose workload")); return false; }
 		World->GetSubsystem<UProject_JCharacterAnimationBudgetSubsystem>()->SetEnabledOverride(Mode == 1);
 		Item.Reset(LoadObject<UProject_JEquipmentItemDefinition>(nullptr, TEXT("/Game/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_Equip.DA_Greatsword_Equip")));
-		UClass* VisualClass = LoadClass<AProject_JPlayerCharacter>(nullptr, TEXT("/Game/Character_BPs/GreatSword/BP_GreatSword.BP_GreatSword_C"));
+		UClass* VisualClass = LoadClass<AProject_JPlayerCharacter>(nullptr, TEXT("/Game/Character_BPs/Spellblade/BP_Spellblade.BP_Spellblade_C"));
 		if (!Item || !VisualClass) { Test->AddError(TEXT("Missing authored equipment/character fixture")); return false; }
 		const auto* Template = CastChecked<AProject_JPlayerCharacter>(VisualClass->GetDefaultObject());
 		FActorSpawnParameters Params;
@@ -91,7 +91,7 @@ class FCombatComparison : public IAutomationLatentCommand
 		auto* Controller = World->SpawnActor<AAIController>(Params);
 		State = World->SpawnActor<AProject_JPlayerState>(Params);
 		Params.bDeferConstruction = true;
-		Player = World->SpawnActor<AProject_JGreatswordCharacter>(AProject_JGreatswordCharacter::StaticClass(), Origin, FRotator::ZeroRotator, Params);
+		Player = World->SpawnActor<AProject_JSpellbladeCharacter>(AProject_JSpellbladeCharacter::StaticClass(), Origin, FRotator::ZeroRotator, Params);
 		if (!Controller || !State.IsValid() || !Player.IsValid()) { return false; }
 		for (const FName Name : { FName(TEXT("CharacterAnimProfile")), FName(TEXT("CharacterClassDefinition")) })
 		{
@@ -295,7 +295,7 @@ public:
 			}
 			else
 			{
-				TWeakObjectPtr<AProject_JGreatswordCharacter> Destroyed = Player;
+				TWeakObjectPtr<AProject_JSpellbladeCharacter> Destroyed = Player;
 				Player->Destroy();
 				Test->TestFalse(TEXT("Destroyed combat actor is invalid"), Destroyed.IsValid());
 				Player.Reset();

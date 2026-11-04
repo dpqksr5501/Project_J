@@ -37,12 +37,22 @@ void UMoverTrajectoryPredictor::Predict(UMoverComponent& MoverComponent, FTransf
 	// IMPORTANT! The first sample returned is actually the current state
 	TArray<FTrajectorySampleInfo> MoverPredictionSamples = MoverComponent.GetPredictedTrajectory(PredictParams);
 
+    ResamplePredictionSamples(MoverPredictionSamples, InOutTrajectory, NumPredictionSamples,
+        SecondsPerPredictionSample, NumHistorySamples);
+}
+
+bool UMoverTrajectoryPredictor::ResamplePredictionSamples(const TArray<FTrajectorySampleInfo>& MoverPredictionSamples,
+    FTransformTrajectory& InOutTrajectory, int32 NumPredictionSamples,
+    float SecondsPerPredictionSample, int32 NumHistorySamples)
+{
 	if (InOutTrajectory.Samples.Num() != (NumHistorySamples + 1 + NumPredictionSamples))
 	{
 		UE_LOGF(LogMover, Warning, "UMoverTrajectoryPredictor::Predict - InOutTrajectory Samples array containing %d items does not match the requirement for %i history samples, 1 current sample, %i predicted samples", InOutTrajectory.Samples.Num(), NumHistorySamples, NumPredictionSamples);
+        return false;
 	}
 	else
 	{
+        if (MoverPredictionSamples.Num() < 2) return false;
 		// Subsample or supersample the mover prediction to the trajectory prediction
 
 		int MoverPredictionSampleIndex = 1; // we start at index 1, since index 0 is actually the current state
@@ -92,6 +102,7 @@ void UMoverTrajectoryPredictor::Predict(UMoverComponent& MoverComponent, FTransf
 			AccumulatedSeconds += SecondsPerPredictionSample;
 		}
 	}
+    return true;
 }
 
 void UMoverTrajectoryPredictor::GetGravity(FVector& OutGravityAccel)

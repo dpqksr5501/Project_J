@@ -10,7 +10,6 @@
 #include "UObject/StrongObjectPtr.h"
 #include "Combat/Project_JGameplayAbility_Melee.h"
 #include "Interaction/Project_JInteractionQuery.h"
-#include "Combat/Project_JServerSideRewindComponent.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "Serialization/MemoryReader.h"
 #include "Serialization/MemoryWriter.h"
@@ -34,11 +33,14 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Controller.h"
+#include "GameFramework/PlayerController.h"
 #include "GameplayTagContainer.h"
 #include "Project_JGameplayTags.h"
 #include "Camera/Project_JCameraComponent.h"
 #include "GameFramework/PlayerState.h"
 #include "Project_JAbilitySystemComponent.h"
+#include "Network/Project_JOwnedPawnScopeComponent.h"
+#include "Project_JAbilitySystemOwnerInterface.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Project_JAttributeSet.h"
@@ -52,6 +54,7 @@
 #include "Components/Project_JCombatStateComponent.h"
 #include "Components/Project_JEquipmentManagerComponent.h"
 #include "Components/Project_JInventoryComponent.h"
+#include "Components/Project_JCommandBudgetComponent.h"
 #include "Components/Project_JSkillInputExecutionComponent.h"
 #include "Components/Project_JSkillInputRouterComponent.h"
 #include "Components/Project_JWeaponPresentationComponent.h"
@@ -65,6 +68,10 @@
 #include "InputCoreTypes.h"
 #include "Net/UnrealNetwork.h"
 #include "Engine/World.h"
+#include "Engine/NetDriver.h"
+#include "Net/Iris/ReplicationSystem/ReplicationSystemUtil.h"
+#include "Net/Iris/ReplicationSystem/EngineReplicationBridge.h"
+#include "Iris/ReplicationSystem/ReplicationSystem.h"
 #include "Engine/OverlapResult.h"
 #include "HAL/IConsoleManager.h"
 
@@ -172,8 +179,99 @@ void AProject_JPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 	DOREPLIFETIME_CONDITION(AProject_JPlayerCharacter, bReplicatedCombatIntroPresentation, COND_SkipOwner);
 }
 
+// Creation-only: retain PlayerState's own steady priority/count-limiter policy.
+void AProject_JPlayerCharacter::RefreshPlayerStateCreationDependency(bool bRegistrationStarted)
+{
+    using namespace UE::Net;
+    UProject_JOwnedPawnScopeComponent::Wake(this);
+    UWorld* World = GetWorld();
+    APlayerState* State = GetPlayerState();
+    const UNetDriver* Driver = World ? World->GetNetDriver() : nullptr;
+    const UReplicationSystem* System = Driver ? Driver->GetReplicationSystem() : nullptr;
+    UEngineReplicationBridge* Bridge = IsValid(this) && HasAuthority() && GetIsReplicated() && !bCreationDependencyEnding &&
+        !IsActorBeingDestroyed() && World && !World->bIsTearingDown &&
+        (HasActorBegunPlay() || IsActorBeginningPlay()) && IsValid(State) && !State->IsActorBeingDestroyed() &&
+        State->HasAuthority() && State->GetIsReplicated() && State->GetWorld() == World && State->GetPawn() == this &&
+        (State->HasActorBegunPlay() || State->IsActorBeginningPlay()) && System && System->IsServer()
+        ? FReplicationSystemUtil::GetActorReplicationBridge(this) : nullptr;
+    if (!IsValid(Bridge) || System->GetReplicationBridge() != Bridge ||
+        FReplicationSystemUtil::GetActorReplicationBridge(State) != Bridge)
+    {
+        RetirePlayerStateCreationDependency();
+        return;
+    }
+    const FNetRefHandle Parent = Bridge->GetReplicatedRefHandle(State);
+    const FNetRefHandle Pawn = Bridge->GetReplicatedRefHandle(this);
+    if (!Parent.IsCompleteHandle() || !Pawn.IsCompleteHandle() || Parent == Pawn ||
+        Bridge->GetReplicatedObject(Parent) != State || Bridge->GetReplicatedObject(Pawn) != this)
+    {
+        // Either actor may register last. Its OnReplicationStarted wakes this
+        // path; never force-register an actor or poll for a missing handle.
+        RetirePlayerStateCreationDependency();
+        return;
+    }
+    const bool bSamePair = CreationDependencyState.Get() == State && CreationDependencyBridge.Get() == Bridge &&
+        FNetRefHandle::FullCompare(CreationDependencyParent, Parent) && FNetRefHandle::FullCompare(CreationDependencyPawn, Pawn);
+    if (bSamePair && !bRegistrationStarted) return;
+    if (!bSamePair) RetirePlayerStateCreationDependency();
+    // OnStop has no driver identity. Root stop removes its graph links in Iris;
+    // keep weak keys until revalidation rather than deleting another driver's
+    // primary edge. Add is idempotent even if registration reuses the same pair.
+    Bridge->AddCreationDependencyLink(Parent, Pawn);
+    CreationDependencyState = State;
+    CreationDependencyBridge = Bridge;
+    CreationDependencyParent = Parent;
+    CreationDependencyPawn = Pawn;
+}
+
+void AProject_JPlayerCharacter::RetirePlayerStateCreationDependency()
+{
+    using namespace UE::Net;
+    APlayerState* State = CreationDependencyState.Get();
+    UEngineReplicationBridge* Bridge = CreationDependencyBridge.Get();
+    const FNetRefHandle Parent = CreationDependencyParent, Pawn = CreationDependencyPawn;
+    CreationDependencyState.Reset(); CreationDependencyBridge.Reset();
+    CreationDependencyParent = {}; CreationDependencyPawn = {};
+    UWorld* World = GetWorld();
+    const UNetDriver* Driver = World ? World->GetNetDriver() : nullptr;
+    const UReplicationSystem* System = Driver ? Driver->GetReplicationSystem() : nullptr;
+    // Remove rejects stale handles. After root stop/driver teardown the engine
+    // owns removal; only a still-registered exact pair may be retired here.
+    if (!World || World->bIsTearingDown || !System || !System->IsServer() || !IsValid(Bridge) ||
+        System->GetReplicationBridge() != Bridge || !IsValid(State) || State->GetWorld() != World ||
+        !Parent.IsCompleteHandle() || !Pawn.IsCompleteHandle() ||
+        !FNetRefHandle::FullCompare(Bridge->GetReplicatedRefHandle(State), Parent) ||
+        !FNetRefHandle::FullCompare(Bridge->GetReplicatedRefHandle(this), Pawn) ||
+        Bridge->GetReplicatedObject(Parent) != State || Bridge->GetReplicatedObject(Pawn) != this) return;
+    Bridge->RemoveCreationDependencyLink(Parent, Pawn);
+}
+
+void AProject_JPlayerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)
+{
+    Super::OnPlayerStateChanged(NewPlayerState, OldPlayerState);
+    RefreshPlayerStateCreationDependency();
+}
+
+void AProject_JPlayerCharacter::OnReplicationStartedForIris(const FOnReplicationStartedParams& Params)
+{
+    const TStrongObjectPtr<AProject_JPlayerCharacter> KeepSelf(this);
+    if (IsActorBeginningPlay()) bCreationDependencyEnding = false;
+    Super::OnReplicationStartedForIris(Params);
+    if (IsValid(this)) RefreshPlayerStateCreationDependency(true);
+}
+
+void AProject_JPlayerCharacter::OnStopReplicationForIris(const FOnStopReplicationParams& Params)
+{
+    // Callback has no driver identity. Re-read the primary lease at the safe
+    // phase instead of revoking a still-valid primary for a secondary stop.
+    UProject_JOwnedPawnScopeComponent::Wake(this, false);
+    Super::OnStopReplicationForIris(Params);
+}
+
 void AProject_JPlayerCharacter::BeginPlay()
 {
+	bCreationDependencyEnding = false;
+	ObservePlayerStateAbilitySystem();
 	Super::BeginPlay();
 
 	if (CombatStateComponent)
@@ -215,6 +313,12 @@ void AProject_JPlayerCharacter::BeginPlay()
 
 void AProject_JPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	bCreationDependencyEnding = true;
+	UProject_JOwnedPawnScopeComponent::WithdrawFor(this);
+	StopObservingPlayerStateAbilitySystem();
+	if (IsValid(MountComponent)) MountComponent->OnRuntimeOwnerPrerequisitesChanged().Remove(MountRuntimeOwnerPrerequisitesChangedHandle);
+	MountRuntimeOwnerPrerequisitesChangedHandle.Reset();
+	RetirePlayerStateCreationDependency();
 #if !UE_BUILD_SHIPPING
 	UnregisterMouseTurnCameraTrace();
 #endif
@@ -254,6 +358,7 @@ void AProject_JPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason
 
 void AProject_JPlayerCharacter::PossessedBy(AController* NewController)
 {
+    if (HasAuthority()) UProject_JOwnedPawnScopeComponent::Ensure(Cast<APlayerController>(NewController));
 	Super::PossessedBy(NewController);
 
 	if (LocomotionAnimStateComponent)
@@ -276,21 +381,112 @@ void AProject_JPlayerCharacter::PawnClientRestart()
 
 void AProject_JPlayerCharacter::UnPossessed()
 {
+	UProject_JOwnedPawnScopeComponent::WithdrawFor(this);
 	StopSprint();
 	SprintMoveInput = FVector2D::ZeroVector;
 	if (PlayerInputBindingComponent) PlayerInputBindingComponent->UnbindInput();
 	Super::UnPossessed();
 }
 
+bool AProject_JPlayerCharacter::CanConsumePlayerStateAbilitySystem(const APlayerState* State) const
+{
+	if (!IsValid(State) || State->IsActorBeingDestroyed() || State->GetWorld() != GetWorld()) return false;
+	if (HasAuthority()) return State->GetPawn() == this;
+	const auto* OwnerInterface = Cast<IProject_JAbilitySystemOwnerInterface>(State);
+	const auto* ASC = OwnerInterface ? OwnerInterface->GetProjectJAbilitySystemComponent() : nullptr;
+	return IsValid(ASC) && !ASC->IsBeingDestroyed() && ASC->GetOwner() == State
+		&& !ASC->IsActorInfoChanging() && ASC->AbilityActorInfo.IsValid()
+		&& ASC->GetOwnerActor() == State && ASC->AbilityActorInfo->OwnerActor.Get() == State
+		&& ASC->GetAvatarActor_Direct() == this && ASC->GetAvatarActor() == this;
+}
+
+void AProject_JPlayerCharacter::StopObservingPlayerStateAbilitySystem()
+{
+	if (auto* ASC = ObservedPlayerStateASC.Get()) ASC->OnActorInfoSettled.Remove(PlayerStateActorInfoSettledHandle);
+	ObservedPlayerStateASC.Reset();
+	PlayerStateActorInfoSettledHandle.Reset();
+}
+
+void AProject_JPlayerCharacter::ObservePlayerStateAbilitySystem()
+{
+	if (bCreationDependencyEnding) return;
+	// Authority also observes registration changes on the same possessed mount;
+	// those do not produce a new-pawn notification on its controller.
+	if (IsValid(MountComponent) && !MountRuntimeOwnerPrerequisitesChangedHandle.IsValid())
+		MountRuntimeOwnerPrerequisitesChangedHandle = MountComponent->OnRuntimeOwnerPrerequisitesChanged().AddUObject(this, &ThisClass::OnMountRuntimeOwnerPrerequisitesChanged);
+	if (HasAuthority()) return;
+	APlayerState* State = GetPlayerState();
+	if (!State && IsValid(MountComponent)) State = MountComponent->ResolveRuntimeOwner();
+	// APawn clears PlayerState during mounting. Retain only a weak subscription
+	// through that gap/ASC.Clear so a later actual publication can wake this Pawn.
+	if (!State) return;
+	if (!IsValid(State) || State->IsActorBeingDestroyed() || State->GetWorld() != GetWorld())
+	{
+		StopObservingPlayerStateAbilitySystem();
+		return;
+	}
+	const auto* OwnerInterface = Cast<IProject_JAbilitySystemOwnerInterface>(State);
+	auto* ASC = OwnerInterface ? OwnerInterface->GetProjectJAbilitySystemComponent() : nullptr;
+	if (!IsValid(ASC) || ASC->IsBeingDestroyed()
+		|| ASC->GetOwner() != State || ASC->GetWorld() != GetWorld()) ASC = nullptr;
+	if (ObservedPlayerStateASC.Get() == ASC) return;
+	StopObservingPlayerStateAbilitySystem();
+	ObservedPlayerStateASC = ASC;
+	if (ASC) PlayerStateActorInfoSettledHandle = ASC->OnActorInfoSettled.AddUObject(this, &ThisClass::OnPlayerStateActorInfoSettled);
+}
+
+void AProject_JPlayerCharacter::OnPlayerStateActorInfoSettled(UProject_JAbilitySystemComponent* Source)
+{
+	if (bCreationDependencyEnding || IsActorBeingDestroyed() || ObservedPlayerStateASC.Get() != Source) return;
+	// Re-read on every callback: an earlier subscriber can Init/Clear reentrantly.
+	// The ordinary OnRep path rechecks the exact tuple before APawn can rewrite
+	// PlayerState.Pawn. With a null PS (mounted rider), it never writes that link.
+	OnRep_PlayerState();
+}
+
+void AProject_JPlayerCharacter::OnMountRuntimeOwnerPrerequisitesChanged()
+{
+	if (bCreationDependencyEnding || IsActorBeingDestroyed()) return;
+	if (HasAuthority())
+	{
+		auto* CurrentMount = IsValid(MountComponent) ? MountComponent->GetMountedMount() : nullptr;
+		if (IsValid(CurrentMount) && !CurrentMount->IsActorBeingDestroyed()
+			&& CurrentMount->GetWorld() == GetWorld() && CurrentMount->GetRider() == this)
+			UProject_JOwnedPawnScopeComponent::Wake(CurrentMount, false);
+		return;
+	}
+	// Same ASC tuple across dismount: topology completion, not a new recipient
+	// epoch, wakes the existing pre-Super/back-reference and consumer fences.
+	OnRep_PlayerState();
+}
+
+void AProject_JPlayerCharacter::OnRep_Controller()
+{
+	const TStrongObjectPtr<ThisClass> KeepSelf(this);
+	Super::OnRep_Controller();
+	if (!IsValid(this) || IsActorBeingDestroyed() || bCreationDependencyEnding) return;
+	OnMountRuntimeOwnerPrerequisitesChanged();
+}
+
 void AProject_JPlayerCharacter::OnRep_PlayerState()
 {
-	Super::OnRep_PlayerState();
-
-	if (LocomotionAnimStateComponent)
+	ObservePlayerStateAbilitySystem();
+	APlayerState* State = GetPlayerState();
+	const auto* PublishedMount = State ? Cast<AProject_JMountCharacter>(State->GetPawn()) : nullptr;
+	const bool bRetainedMountedRider = PublishedMount && PublishedMount->GetRider() == this;
+	if ((!State || CanConsumePlayerStateAbilitySystem(State)) && !bRetainedMountedRider)
 	{
-		LocomotionAnimStateComponent->RefreshCachedReferences();
+		Super::OnRep_PlayerState();
 	}
-
+	else
+	{
+		// APawn::OnRep_PlayerState calls SetPlayerState and unconditionally writes
+		// State.Pawn=this. Reject stale/unpublished recipients before that write;
+		// an already controlled mount retains its own back-reference.
+		InitializeAbilitySystem();
+		BindEquipmentRuntimeToResolvedEquipmentManager();
+	}
+	if (LocomotionAnimStateComponent) LocomotionAnimStateComponent->RefreshCachedReferences();
 	RefreshAbilitySystemDependentComponents();
 }
 
@@ -349,9 +545,18 @@ void AProject_JPlayerCharacter::Tick(float DeltaTime)
 
 AActor* AProject_JPlayerCharacter::GetAbilitySystemOwnerActor() const
 {
-	if (APlayerState* PS = GetPlayerState())
+	if (APlayerState* PS = GetPlayerState(); CanConsumePlayerStateAbilitySystem(PS))
 	{
-		return PS;
+		// A retained mount rider is resolved below using its existing reciprocal
+		// mount/session contract, rather than lending an arbitrary stale PS.
+		if (const auto* Mount = Cast<AProject_JMountCharacter>(PS->GetPawn()); !Mount || Mount->GetRider() != this)
+			return PS;
+	}
+	// APawn clears the rider's PlayerState during the mount possession hand-off.
+	// Resolve only the current reciprocal mount session; never cache an old owner.
+	if (IsValid(MountComponent))
+	{
+		if (auto* PS = MountComponent->ResolveRuntimeOwner()) { return PS; }
 	}
 	return Super::GetAbilitySystemOwnerActor();
 }
@@ -416,7 +621,7 @@ void AProject_JPlayerCharacter::RequestUseMountItem(FGuid ItemInstanceId)
 
 	if (HasAuthority())
 	{
-		ServerRequestUseMountItem_Implementation(ItemInstanceId);
+		UseMountItemAuthority(ItemInstanceId);
 	}
 	else
 	{
@@ -425,6 +630,13 @@ void AProject_JPlayerCharacter::RequestUseMountItem(FGuid ItemInstanceId)
 }
 
 void AProject_JPlayerCharacter::ServerRequestUseMountItem_Implementation(FGuid ItemInstanceId)
+{
+	// Match mount/interaction admission before inventory lookup, load replacement or spawn.
+	if (!UProject_JCommandBudgetComponent::AdmitClientCommand(this, NextClientMountItemRequestTime, 0.2)) return;
+	UseMountItemAuthority(ItemInstanceId);
+}
+
+void AProject_JPlayerCharacter::UseMountItemAuthority(FGuid ItemInstanceId)
 {
 	if (IsActorBeingDestroyed() || !HasAuthority()) return;
 	if (GetMountComponent() && GetMountComponent()->IsMounted())
@@ -505,7 +717,7 @@ void AProject_JPlayerCharacter::ServerRequestUseMountItem_Implementation(FGuid I
 				if (Character->HasAuthority() && MountClassRef.Get())
 				{
 					// Recheck the inventory, lock state, and current mount after loading.
-					Character->ServerRequestUseMountItem_Implementation(ItemInstanceId);
+					Character->UseMountItemAuthority(ItemInstanceId);
 				}
 				else if (Character->HasAuthority())
 				{
@@ -579,6 +791,10 @@ void AProject_JPlayerCharacter::TryInteract()
 
 void AProject_JPlayerCharacter::ServerTryInteract_Implementation()
 {
+	// Client requests pay the existing session budget before collision/reflected
+	// work, plus the same domain interval used by mount requests. Trusted server
+	// TryInteract calls retain their existing execution path.
+	if (!UProject_JCommandBudgetComponent::AdmitClientCommand(this, NextClientInteractionRequestTime, 0.2)) return;
 	TryInteract();
 }
 
@@ -718,19 +934,32 @@ void AProject_JPlayerCharacter::OnRep_ReplicatedCombatIntroPresentation()
 
 void AProject_JPlayerCharacter::OnProgressionChanged()
 {
+	TStrongObjectPtr<ThisClass> PinnedThis(this);
+	TWeakObjectPtr<UWorld> OriginalWorld(GetWorld());
 	const int32 PreviousRevision = CombatConfiguration.Revision;
 	if (GetCombatConfiguration().Revision != PreviousRevision)
 	{
 		OnRep_CurrentCombatStyle();
-		if (CombatPresentationComponent) CombatPresentationComponent->RefreshPresentation();
 	}
+	if (IsActorBeingDestroyed() || GetWorld() != OriginalWorld.Get() || (GetWorld() && GetWorld()->bIsTearingDown)) { return; }
 	// A level-only update must not clear command sequences or reload animation layers.
 	if (CharacterUIBindingComponent) CharacterUIBindingComponent->UpdateCharacterLevel(GetCharacterLevel_Implementation());
 }
 
 void AProject_JPlayerCharacter::OnRep_CurrentCombatStyle()
 {
-	GetCombatConfiguration();
+	TStrongObjectPtr<ThisClass> PinnedThis(this);
+	TWeakObjectPtr<UWorld> OriginalWorld(GetWorld());
+	const int32 Revision = GetCombatConfiguration().Revision;
+	if (CombatPresentationComponent) { CombatPresentationComponent->RefreshPresentation(); }
+	if (IsActorBeingDestroyed() || GetWorld() != OriginalWorld.Get() ||
+		(GetWorld() && GetWorld()->bIsTearingDown) || GetCombatConfiguration().Revision != Revision) { return; }
+	ApplyCurrentCombatStyleReaction();
+}
+
+void AProject_JPlayerCharacter::ApplyCurrentCombatStyleReaction()
+{
+	// Both private callers retain the owner and validate their world/configuration after retirement.
 	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
 	{
 		if (auto* Combo = Cast<UProject_JGameplayAbility_Melee>(ASC->GetAnimatingAbility())) { Combo->ReconcileCombatConfiguration(); }
@@ -751,14 +980,17 @@ void AProject_JPlayerCharacter::OnRep_CurrentCombatStyle()
 
 void AProject_JPlayerCharacter::OnRep_CurrentWeaponPresentationProfile()
 {
-	if (WeaponPresentationComponent)
-	{
-		WeaponPresentationComponent->RefreshPresentation();
-	}
-	if (CombatPresentationComponent)
-	{
-		CombatPresentationComponent->RefreshPresentation();
-	}
+	TStrongObjectPtr<ThisClass> PinnedThis(this);
+	TWeakObjectPtr<UWorld> OriginalWorld(GetWorld());
+	TWeakObjectPtr<UProject_JWeaponPresentationProfile> SelectedProfile(CurrentWeaponPresentationProfile);
+	const int32 Revision = GetCombatConfiguration().Revision;
+	// Remote profile-only updates obey the same order as the local pair setter:
+	// retire old cues before destroying/replacing their weapon attachment.
+	if (CombatPresentationComponent) { CombatPresentationComponent->RefreshPresentation(); }
+	if (IsActorBeingDestroyed() || GetWorld() != OriginalWorld.Get() ||
+		(GetWorld() && GetWorld()->bIsTearingDown) || CurrentWeaponPresentationProfile != SelectedProfile.Get() ||
+		GetCombatConfiguration().Revision != Revision) { return; }
+	if (WeaponPresentationComponent) { WeaponPresentationComponent->RefreshPresentation(); }
 }
 
 void AProject_JPlayerCharacter::ApplyCombatPresentationState(
@@ -1001,6 +1233,8 @@ void AProject_JPlayerCharacter::SetCurrentEquipmentConfiguration(
 	UProject_JCombatStyleDefinition* InCombatStyle, UProject_JWeaponPresentationProfile* InPresentationProfile)
 {
 	check(IsInGameThread());
+	TStrongObjectPtr<ThisClass> PinnedThis(this);
+	TWeakObjectPtr<UWorld> OriginalWorld(GetWorld());
 	const bool bStyleChanged = CurrentCombatStyle != InCombatStyle;
 	const bool bProfileChanged = CurrentWeaponPresentationProfile != InPresentationProfile;
 	if (!bStyleChanged && !bProfileChanged)
@@ -1012,19 +1246,28 @@ void AProject_JPlayerCharacter::SetCurrentEquipmentConfiguration(
 	// Existing replicated properties and Blueprint setter signatures stay intact.
 	CurrentCombatStyle = InCombatStyle;
 	CurrentWeaponPresentationProfile = InPresentationProfile;
+	const auto CanContinue = [this, OriginalWorld, InCombatStyle, InPresentationProfile]
+	{
+		return !IsActorBeingDestroyed() && GetWorld() == OriginalWorld.Get() &&
+			(!GetWorld() || !GetWorld()->bIsTearingDown) && CurrentCombatStyle == InCombatStyle &&
+			CurrentWeaponPresentationProfile == InPresentationProfile;
+	};
 	if (CombatPresentationComponent)
 	{
 		CombatPresentationComponent->RefreshPresentation();
 	}
+	if (!CanContinue()) { return; }
 	if (bProfileChanged && WeaponPresentationComponent)
 	{
 		WeaponPresentationComponent->RefreshPresentation();
 	}
+	if (!CanContinue()) { return; }
 	if (bStyleChanged)
 	{
-		// Shared local/replicated style reaction: input history and animation layer.
-		OnRep_CurrentCombatStyle();
+		// Cues were already retired before weapon replacement. Do not cancel/re-prefetch the same pair twice.
+		ApplyCurrentCombatStyleReaction();
 	}
+	if (!CanContinue()) { return; }
 	if (HasAuthority())
 	{
 		ForceNetUpdate();
@@ -1434,7 +1677,7 @@ void AProject_JPlayerCharacter::HandleSkillInputTagPressed(FGameplayTag InputTag
 	}
 }
 
-void AProject_JPlayerCharacter::ReceiveAuthorityCombatInput(const FGameplayTag& InputTag, float ClientTimestamp, uint32 InputSequence)
+void AProject_JPlayerCharacter::ReceiveAuthorityCombatInput(const FGameplayTag& InputTag, double ClientTimestamp, uint32 InputSequence)
 {
 	if (SkillInputExecutionComponent)
 	{ SkillInputExecutionComponent->ReceiveAuthorityCombatInput(InputTag, ClientTimestamp, InputSequence); }
@@ -1518,12 +1761,14 @@ bool AProject_JPlayerCharacter::TryApplyHandoverSnapshot(const TArray<uint8>& In
 	{
 		return false;
 	}
+	// The transform has changed even if a subsequent progression callback rejects
+	// the remaining handover. No old capsule or weapon geometry may survive it.
+	ResetCombatSpatialHistory();
 
 	if (IsActorBeingDestroyed() || GetAbilitySystemOwnerActor() != StateOwner.Get()
 		|| GetProgressionComponent() != Progression.Get() || !TrySetCharacterLevel(Snapshot.Level)
 		|| GetCharacterLevel_Implementation() != Snapshot.Level) { return false; }
 
-	if (UProject_JServerSideRewindComponent* Rewind = FindComponentByClass<UProject_JServerSideRewindComponent>()) Rewind->ResetHistory();
 	ForceNetUpdate();
 	return !IsActorBeingDestroyed() && IsValid(StateOwner.Get()) && !StateOwner->IsActorBeingDestroyed()
 		&& GetAbilitySystemOwnerActor() == StateOwner.Get() && GetProgressionComponent() == Progression.Get()

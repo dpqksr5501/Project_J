@@ -3,6 +3,7 @@
 #include "Misc/AutomationTest.h"
 #include "System/Project_JTargetScoringSubsystem.h"
 #include "Engine/World.h"
+#include "Engine/Engine.h"
 #include "GameFramework/Actor.h"
 #include "HAL/PlatformTime.h"
 #include <limits>
@@ -46,8 +47,31 @@ bool FProjectJTargetScoringMathTest::RunTest(const FString& Parameters)
 	TestEqual(TEXT("Parallel reduction has exact serial id"), Parallel.BestId, Serial.BestId);
 	TestEqual(TEXT("Parallel reduction has exact serial score"), Parallel.BestScore, Serial.BestScore);
 	TestEqual(TEXT("Parallel eligibility matches"), Parallel.EligibleCandidates, Serial.EligibleCandidates);
+	// Golden winners span both sides of a reduction-chunk boundary and the final chunk.
+	// Zero score is eligible, range is inclusive, and input position is not the tie break.
+	FSnapshot Edge;
+	Edge.Range = 100.0; Edge.DistanceWeight = Edge.DirectionWeight = 0.0;
+	Edge.Candidates.SetNum(MaxCandidates);
+	for (int32 Index = 0; Index < Edge.Candidates.Num(); ++Index) { Edge.Candidates[Index] = {100000 + Index, FVector(101, 0, 0)}; }
+	Edge.Candidates[BatchSize - 1] = {30, FVector(100, 0, 0)};
+	Edge.Candidates[BatchSize] = {20, FVector(0, 50, 0)};
+	Edge.Candidates.Last() = {7, FVector(-100, 0, 0)};
+	Edge.Candidates[0] = {INDEX_NONE, FVector::ZeroVector};
+	Edge.Candidates[1] = {1, FVector(std::numeric_limits<double>::quiet_NaN(), 0, 0)};
+	for (bool bParallel : {false, true})
+	{
+		const auto Boundary = Evaluate(Edge, bParallel, Cancelled);
+		TestTrue(TEXT("Chunk-boundary golden case completes"), Boundary.Status == EStatus::Completed);
+		TestEqual(TEXT("Stable lowest id wins across chunk boundaries"), Boundary.BestId, 7);
+		TestEqual(TEXT("Eligible zero score is retained"), Boundary.BestScore, 0.0);
+		TestEqual(TEXT("Range-boundary zero-score eligibility is exact"), Boundary.EligibleCandidates, 3);
+		const auto Empty = Evaluate(FSnapshot(), bParallel, Cancelled);
+		TestTrue(TEXT("Empty candidate query is a completed no-match"), Empty.Status == EStatus::Completed && Empty.BestId == INDEX_NONE && Empty.EligibleCandidates == 0);
+	}
 	Cancelled.store(true);
-	TestTrue(TEXT("Cancellation avoids a result"), Evaluate(Snapshot, true, Cancelled).Status == EStatus::Cancelled);
+	const auto CancelledResult = Evaluate(Edge, true, Cancelled);
+	TestTrue(TEXT("Cancellation avoids a result"), CancelledResult.Status == EStatus::Cancelled);
+	TestTrue(TEXT("Cancelled reduction publishes no partial winner"), CancelledResult.BestId == INDEX_NONE && CancelledResult.EligibleCandidates == 0);
 	return true;
 }
 
@@ -56,8 +80,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJTargetScoringLifecycleTest, "ProjectJ.
 bool FProjectJTargetScoringLifecycleTest::RunTest(const FString& Parameters)
 {
 	UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+	GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
 	auto* Subsystem = World->GetSubsystem<UProject_JTargetScoringSubsystem>();
-	if (!TestNotNull(TEXT("Game world creates subsystem"), Subsystem)) { World->DestroyWorld(false); return false; }
+	if (!TestNotNull(TEXT("Game world creates subsystem"), Subsystem)) { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); return false; }
 	TestFalse(TEXT("Idle subsystem does not tick"), Subsystem->IsTickable());
 	int32 Callbacks = 0;
 	const auto Callback = [&Callbacks](const FProjectJTargetScoringCompletion&) { ++Callbacks; };
@@ -102,12 +127,15 @@ bool FProjectJTargetScoringLifecycleTest::RunTest(const FString& Parameters)
 	TestEqual(TEXT("Teardown cancels before subsystem deinitialization"), Subsystem->GetPendingCount(), 0);
 	TestFalse(TEXT("Teardown rejects new queries"), Subsystem->Submit(Subsystem, MakeSnapshot(1), EProject_JTargetScoringExecution::Serial, 0, Callback).IsValid());
 	World->DestroyWorld(false);
+	GEngine->DestroyWorldContext(World);
 	TestEqual(TEXT("World teardown suppresses pending callback"), Callbacks, 1);
 	World = UWorld::CreateWorld(EWorldType::Game, false);
+	GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
 	Subsystem = World->GetSubsystem<UProject_JTargetScoringSubsystem>();
 	TestTrue(TEXT("Replacement world gets a different epoch"), Subsystem->GetWorldEpoch() != OldEpoch);
 	TestEqual(TEXT("Replacement world starts empty"), Subsystem->GetPendingCount(), 0);
 	World->DestroyWorld(false);
+	GEngine->DestroyWorldContext(World);
 	return true;
 }
 

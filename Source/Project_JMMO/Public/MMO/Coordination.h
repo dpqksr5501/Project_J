@@ -52,4 +52,53 @@ private:
     bool bClosed = false;
     TSet<FGuid> Active;
 };
+
+/** Server-issued before asynchronous credential/character-ownership verification.
+ * Values are process-local capabilities, never client-authentication claims.
+ */
+struct FServerSessionAttempt
+{
+    FGuid AccountId, CharacterId, Ticket;
+    uint64 Serial = 0;
+    bool IsValid() const { return AccountId.IsValid() && CharacterId.IsValid() && Ticket.IsValid() && Serial != 0; }
+    bool operator==(const FServerSessionAttempt& Other) const
+    { return AccountId == Other.AccountId && CharacterId == Other.CharacterId && Ticket == Other.Ticket && Serial == Other.Serial; }
+};
+
+/** Runtime writer identity, independent from the current Avatar and persisted data. */
+struct FServerSessionLease
+{
+    FGuid AccountId, CharacterId, Epoch;
+    bool IsValid() const { return AccountId.IsValid() && CharacterId.IsValid() && Epoch.IsValid(); }
+    bool operator==(const FServerSessionLease& Other) const
+    { return AccountId == Other.AccountId && CharacterId == Other.CharacterId && Epoch == Other.Epoch; }
+};
+
+/** One accepted character per account and one writer per character on this host.
+ * Begin replaces only the pending attempt, preserving any accepted lease until
+ * verified acceptance. An older completion cannot replace a newer Begin.
+ * Callers own UObject cleanup; no callbacks, tasks or I/O run under this lock.
+ * This is not credential verification or a distributed session repository.
+ */
+class PROJECT_JMMO_API FServerSessionGate
+{
+public:
+    explicit FServerSessionGate(int32 InCapacity = 128) : Capacity(FMath::Max(1, InCapacity)) {}
+    /** Startup configuration only: refuses a populated or closed gate. No allocation or eviction. */
+    bool SetCapacity(int32 InCapacity);
+    EAdmission Begin(const FGuid& AccountId, const FGuid& CharacterId, FServerSessionAttempt& OutAttempt);
+    EAdmission Accept(const FServerSessionAttempt& Attempt, FServerSessionLease& OutLease, FServerSessionLease& OutReplaced);
+    bool Cancel(const FServerSessionAttempt& Attempt);
+    bool Release(const FServerSessionLease& Lease);
+    bool IsCurrent(const FServerSessionLease& Lease) const;
+    void Close();
+private:
+    struct FAccountSlot { FServerSessionAttempt Pending; FServerSessionLease Current; };
+    mutable FCriticalSection Mutex;
+    int32 Capacity;
+    bool bClosed = false;
+    uint64 NextSerial = 0;
+    TMap<FGuid, FAccountSlot> Accounts;
+    TMap<FGuid, FGuid> CharacterAccounts;
+};
 }

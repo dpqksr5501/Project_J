@@ -6,7 +6,7 @@
 #include "Engine/SkeletalMesh.h"
 #include "ReferenceSkeleton.h"
 #include "Animation/Project_JRetargetAnimInstance.h"
-#include "Project_JGreatswordCharacter.h"
+#include "Project_JSpellbladeCharacter.h"
 #include "Engine/World.h"
 #include "Engine/Engine.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -73,7 +73,7 @@ bool FProjectJCompatibleBodyPoseSourcePolicy::RunTest(const FString&)
 {
  auto* World=UWorld::CreateWorld(EWorldType::Game,false);
  GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
- auto* Pawn=World->SpawnActor<AProject_JGreatswordCharacter>();
+ auto* Pawn=World->SpawnActor<AProject_JSpellbladeCharacter>();
  if (TestNotNull(TEXT("Client source fixture"),Pawn))
  {
   auto* Source=Pawn->GetMesh();
@@ -95,10 +95,10 @@ bool FProjectJCompatibleBodyPoseSourcePolicy::RunTest(const FString&)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAvatarPoseRoutes,"ProjectJ.PlayerLocomotion.AvatarPoseRoutes",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
 bool FProjectJAvatarPoseRoutes::RunTest(const FString&)
 {
- const auto* Class=LoadClass<AProject_JPlayerCharacter>(nullptr,TEXT("/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C"));
+ const auto* Class=LoadClass<AProject_JPlayerCharacter>(nullptr,TEXT("/Game/Character_BPs/Spellblade/BP_Spellblade.BP_Spellblade_C"));
  const auto* Avatar=Class?Class->GetDefaultObject<AProject_JPlayerCharacter>():nullptr;
  const auto* Master=LoadObject<UAnimBlueprint>(nullptr,TEXT("/Game/Animation_Logic/ABPs/ABP_Player_Master.ABP_Player_Master"));
- const auto* Fallback=LoadObject<UAnimBlueprint>(nullptr,TEXT("/Game/GreatSword/Animation/ABP_GreatSword_Retarget.ABP_GreatSword_Retarget"));
+ const auto* Fallback=LoadObject<UAnimBlueprint>(nullptr,TEXT("/Game/Spellblade/Animation/ABP_Spellblade_Retarget.ABP_Spellblade_Retarget"));
  if (!TestNotNull(TEXT("Direct body fixture"),Avatar) || !Master || !Fallback) return false;
  auto* Source=Avatar->GetMesh();const auto* Mesh=Source->GetSkeletalMeshAsset();
  if (!Mesh || !Mesh->GetPostProcessAnimBlueprint()) return false;
@@ -121,7 +121,7 @@ bool FProjectJAvatarPoseRoutes::RunTest(const FString&)
  for(auto* Graph:Graphs) for(UEdGraphNode* Node:Graph->Nodes)
   if(Node->IsA<UAnimGraphNode_CopyBone>() && Node->NodeComment==TEXT("ProjectJ.SourcePoseMarkers")) ++Markers;
  TestEqual(TEXT("Common master has no body-specific final marker writers"),Markers,0);
- auto* BodyBlueprint=LoadObject<UAnimBlueprint>(nullptr,TEXT("/Game/GreatSword/Animation/ABP_GreatSword_Body.ABP_GreatSword_Body"));
+ auto* BodyBlueprint=LoadObject<UAnimBlueprint>(nullptr,TEXT("/Game/Spellblade/Animation/ABP_Spellblade_Body.ABP_Spellblade_Body"));
  if(!BodyBlueprint)return false;
  Graphs.Reset();BodyBlueprint->GetAllGraphs(Graphs);Markers=0;
  for(auto* Graph:Graphs)for(UEdGraphNode* Node:Graph->Nodes)
@@ -140,7 +140,7 @@ bool FProjectJCompatibleBodyServerSource::RunTest(const FString&)
  auto* World=UWorld::CreateWorld(EWorldType::PIE,false);
  GEngine->CreateNewWorldContext(EWorldType::PIE).SetCurrentWorld(World);
  World->SetPlayInEditorInitialNetMode(NM_DedicatedServer);
- auto* Pawn=World->SpawnActor<AProject_JGreatswordCharacter>();
+ auto* Pawn=World->SpawnActor<AProject_JSpellbladeCharacter>();
  if (TestNotNull(TEXT("Dedicated source fixture"),Pawn))
  {
   TestEqual(TEXT("Fixture uses the server initialization path"),Pawn->GetNetMode(),NM_DedicatedServer);

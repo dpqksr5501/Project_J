@@ -593,6 +593,7 @@ bool UProject_JPlayerLocomotionLibrary::ConfigureGameplayAvatar(UBlueprint* Avat
   Mover->MovementModes.Add(DefaultModeNames::Walking,NewObject<UBaseMovementMode>(Mover,WalkingClass,NAME_None,RF_Public|RF_Transactional|RF_ArchetypeObject));
  if(!Cast<UProject_JFallingMode>(Mover->MovementModes.FindRef(DefaultModeNames::Falling)))
   Mover->MovementModes.Add(DefaultModeNames::Falling,NewObject<UProject_JFallingMode>(Mover,NAME_None,RF_Public|RF_Transactional|RF_ArchetypeObject));
+ Mover->NormalizeTemplateModeExports();
  FPropertyChangedEvent ModesChanged(FindFProperty<FProperty>(UMoverComponent::StaticClass(),GET_MEMBER_NAME_CHECKED(UMoverComponent,MovementModes)));
  static_cast<UObject*>(Mover)->PostEditChangeProperty(ModesChanged);
  Defaults->GetMesh()->SetSkeletalMeshAsset(SourceMesh);
@@ -726,7 +727,7 @@ int32 UProject_JPlayerLocomotionLibrary::CleanImportedBlueprintReferences(UBluep
 
 int32 UProject_JPlayerLocomotionLibrary::RebindGameplayRetargeter(UAnimBlueprint* Target,UIKRetargeter* Previous,UIKRetargeter* Replacement)
 {
- if(!Target || !Previous || !Replacement || Previous==Replacement || !Target->GetPathName().StartsWith(TEXT("/Game/Animation_Logic/ABPs/GreatSword/"))) return INDEX_NONE;
+ if(!Target || !Previous || !Replacement || Previous==Replacement || !Target->GetPathName().StartsWith(TEXT("/Game/Animation_Logic/ABPs/Spellblade/"))) return INDEX_NONE;
  Target->Modify(); TMap<UObject*,UObject*> Map{{Previous,Replacement}};
  const auto Flags=EArchiveReplaceObjectFlags::IgnoreOuterRef|EArchiveReplaceObjectFlags::IgnoreArchetypeRef;
  FArchiveReplaceObjectRef<UObject> GraphReferences(Target,Map,Flags);

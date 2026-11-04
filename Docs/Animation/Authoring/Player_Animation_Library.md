@@ -183,7 +183,7 @@ direct Editor UBT 최종 빌드와 새 프로세스 native 회귀 **87개**가 �
 
 MCP로 시작한 실제 PIE에서 지상 시작/정지·OTM/Strafe·Walk/Sprint, 후진/전방 급회전 12조건, 공중 재선택/착지 8조건, 연속 루프 회전 5조건과 전신 몽타주 6개가 통과했다. Manny source와 대검 몸체의 무릎 포즈 갱신·발 보정과 몽타주 하체를 함께 검사했다. 별도 진단 관측 검사 17쌍은 반복 조회의 동일 결과, 테스트 메시 정지 중 고정된 capture frame과 증가하는 나이, 재개 후 정상 갱신을 확인했다. 이동 속도·재생률·공중 관성·접촉 커브·잠금 해제·경사 보정과 몸체 리타깃 설정을 변경하지 않았다.
 
-미확정 보존 항목은 `/Game/ThirdPerson/Blueprints/BP_Player_Third`다. 전체 로드 때 이미 삭제된 `Project_JMotionMatchingTrajectoryComponent` subobject의 Linker 경고가 발생했다. 현재 hard/soft/search/management referencer와 Source/Scripts/Config 호출은 없고, 과거 점검에도 독립 샘플로 남아 있다. 제작 용도 폐기 근거가 부족하므로 삭제·기본값 재설정·강제 저장하지 않았다. 현행 GameMode의 생산 Pawn은 `BP_GreatSword`다. 이 샘플을 새 제작의 시작점으로 쓰지 않고 `BP_Player_Master` 자식을 사용한다. 향후 샘플을 유지·수리할지 별도 퇴역할지 결정할 항목이며, 경고가 해결됐다고 보고하지 않는다.
+미확정 보존 항목은 `/Game/ThirdPerson/Blueprints/BP_Player_Third`다. 전체 로드 때 이미 삭제된 `Project_JMotionMatchingTrajectoryComponent` subobject의 Linker 경고가 발생했다. 현재 hard/soft/search/management referencer와 Source/Scripts/Config 호출은 없고, 과거 점검에도 독립 샘플로 남아 있다. 제작 용도 폐기 근거가 부족하므로 삭제·기본값 재설정·강제 저장하지 않았다. 현행 GameMode의 생산 Pawn은 `BP_Spellblade`다. 이 샘플을 새 제작의 시작점으로 쓰지 않고 `BP_Player_Master` 자식을 사용한다. 향후 샘플을 유지·수리할지 별도 퇴역할지 결정할 항목이며, 경고가 해결됐다고 보고하지 않는다.
 
 GUI 전체 경고 0건을 뜻하지 않는다. MCP의 라이선스 안내, 위 샘플 Linker 경고, 반복 진단 명령 dispatch에서 `DumpAnimBudget` 콘솔 검색 성능 안내가 남았다. 마지막 추가 조회 스크립트의 잘못된 Python getter도 읽기 전용 오류 후 수정해 재실행한 근거를 보존한다. 최종 native 회귀의 경고 0건과 구분한다. Cook/Shipping·대규모 군중 성능·모든 경사/체형/프레임의 외형 검수는 이번 범위가 아니다.
 

@@ -7,6 +7,9 @@ public class Project_J : ModuleRules
 	public Project_J(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+		// The socket audience fixture reads public Iris NetRefHandles directly.
+		// Declare its direct dependency, as the character FastArray module does.
+		SetupIrisSupport(Target);
 
 		PublicDependencyModuleNames.AddRange(new string[] {
 			"Core",
@@ -20,6 +23,7 @@ public class Project_J : ModuleRules
 			"GameplayAbilities",
 			"GameplayTags",
 			"GameplayTasks",
+			"NetCore",
 			"Project_JCore",
 			"Project_JMMO",
 			"Project_JGAS",
@@ -29,15 +33,16 @@ public class Project_J : ModuleRules
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {
+			"NavigationSystem", // Native navigation readiness used directly by the socket fixture.
 			"SQLiteCore",
 			"Mover",
 			"NetworkPrediction",
 			"HTTP",
 			"Json",
 			"JsonUtilities",
-			"NetCore",
 			"RHI",
 			"RenderCore",
+			"ImageWriteQueue",
 			"Niagara",
 			"ClothingSystemRuntimeInterface"
 		});
@@ -49,7 +54,7 @@ public class Project_J : ModuleRules
 			PrivateDependencyModuleNames.Add("Project_JMount");
 			PrivateDependencyModuleNames.Add("Project_JAnimationNodes");
 			PrivateDependencyModuleNames.Add("AnimationBlueprintLibrary"); // Public read-only notify copy API for editor diagnostics.
-			PrivateDependencyModuleNames.AddRange(new string[] { "PoseSearch", "BlendStack", "IKRig", "AnimGraphRuntime" });
+			PrivateDependencyModuleNames.AddRange(new string[] { "PoseSearch", "Chooser", "BlendStack", "IKRig", "AnimGraphRuntime" });
 		}
 		if (Target.Type == TargetType.Editor || Target.Type == TargetType.Server)
 		{

@@ -1,4 +1,7 @@
 #include "Components/Project_JEquipmentManagerComponent.h"
+#include "Components/Project_JEquipmentRuntimeComponent.h"
+#include "GameFramework/PlayerState.h"
+#include "GameFramework/Pawn.h"
 #include "Combat/Project_JCombatStyleDefinition.h"
 #include "Components/Project_JInventoryComponent.h"
 #include "Components/Project_JCommandBudgetComponent.h"
@@ -46,23 +49,9 @@ void FProject_JEquipmentArray::PreReplicatedRemove(const TArrayView<int32> &Remo
 
 // --- UProject_JEquipmentManagerComponent ---
 
-void FProject_JPublicEquipmentArray::PostReplicatedAdd(const TArrayView<int32> &Indices, int32)
+void FProject_JPublicEquipmentArray::PostReplicatedReceive(const FFastArraySerializer::FPostReplicatedReceiveParameters&)
 {
-	for (int32 Index : Indices)
-		if (OwnerComponent && Items.IsValidIndex(Index))
-			OwnerComponent->HandlePublicEquipment(Items[Index], false);
-}
-void FProject_JPublicEquipmentArray::PostReplicatedChange(const TArrayView<int32> &Indices, int32)
-{
-	for (int32 Index : Indices)
-		if (OwnerComponent && Items.IsValidIndex(Index))
-			OwnerComponent->HandlePublicEquipment(Items[Index], false);
-}
-void FProject_JPublicEquipmentArray::PreReplicatedRemove(const TArrayView<int32> &Indices, int32)
-{
-	for (int32 Index : Indices)
-		if (OwnerComponent && Items.IsValidIndex(Index))
-			OwnerComponent->HandlePublicEquipment(Items[Index], true);
+	if (OwnerRuntime) OwnerRuntime->OnPublicEquipmentReceived();
 }
 
 bool UProject_JEquipmentManagerComponent::UsesPublicEquipment() const
@@ -72,17 +61,14 @@ bool UProject_JEquipmentManagerComponent::UsesPublicEquipment() const
 		   !GetOwner()->HasLocalNetOwner();
 }
 
-void UProject_JEquipmentManagerComponent::HandlePublicEquipment(const FProject_JPublicEquipmentItem &Item,
-																bool bRemoved)
+const FProject_JPublicEquipmentArray* UProject_JEquipmentManagerComponent::ResolvePublicEquipment() const
 {
-	// Same presentation contract as owner replication, without reconstructing private item data.
-	FProject_JEquipmentArrayItem Presentation;
-	Presentation.ItemDef = Item.ItemDef;
-	Presentation.Slot = Item.Slot;
-	if (bRemoved)
-		OnRep_EquipmentRemoved(Presentation);
-	else
-		OnRep_EquipmentAdded(Presentation);
+	// A public equipment query is scoped to a currently represented Avatar.
+	// A distant PlayerState intentionally has no public item payload of its own.
+	const auto* State = Cast<APlayerState>(GetOwner());
+	const AActor* Avatar = State ? State->GetPawn() : GetOwner();
+	const auto* Runtime = IsValid(Avatar) && !Avatar->IsActorBeingDestroyed() ? Avatar->FindComponentByClass<UProject_JEquipmentRuntimeComponent>() : nullptr;
+	return IsValid(Runtime) && !Runtime->IsBeingDestroyed() ? &Runtime->GetPublicEquipment() : nullptr;
 }
 
 UProject_JEquipmentManagerComponent::UProject_JEquipmentManagerComponent()
@@ -90,21 +76,18 @@ UProject_JEquipmentManagerComponent::UProject_JEquipmentManagerComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 	SetIsReplicatedByDefault(true);
 	EquipmentArray.OwnerComponent = this;
-	PublicEquipmentArray.OwnerComponent = this;
 }
 
 void UProject_JEquipmentManagerComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty> &OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME_CONDITION(UProject_JEquipmentManagerComponent, EquipmentArray, COND_OwnerOnly);
-	DOREPLIFETIME_CONDITION(UProject_JEquipmentManagerComponent, PublicEquipmentArray, COND_SkipOwner);
 }
 
 void UProject_JEquipmentManagerComponent::BeginPlay()
 {
 	bEnding = false;
 	EquipmentArray.OwnerComponent = this;
-	PublicEquipmentArray.OwnerComponent = this;
 	Super::BeginPlay();
 }
 
@@ -139,7 +122,6 @@ void UProject_JEquipmentManagerComponent::Retire()
 	}
 	bEnding = true;
 	EquipmentArray.OwnerComponent = nullptr;
-	PublicEquipmentArray.OwnerComponent = nullptr;
 	OnEquipmentEquipped.Clear();
 	OnEquipmentUnequipped.Clear();
 	OnRequestCompleted.Clear();
@@ -207,26 +189,32 @@ bool UProject_JEquipmentManagerComponent::ValidatePersistentEquipment(
 void UProject_JEquipmentManagerComponent::InstallPersistentEquipment(const TArray<FProject_JEquipmentArrayItem> &Slots)
 {
 	check(IsInGameThread());
-	EquipmentArray.Items.Reset();
-	PublicEquipmentArray.Items.Reset();
+	const auto HasSlot = [&](EProject_JEquipmentSlot Slot) { return Slots.ContainsByPredicate([&](const auto& E) { return E.Slot == Slot; }); };
+	if (EquipmentArray.Items.RemoveAllSwap([&](const auto& E) { return !HasSlot(E.Slot); })) EquipmentArray.MarkArrayDirty();
 	for (const auto &Entry : Slots)
 	{
-		auto &Item = EquipmentArray.Items.AddDefaulted_GetRef();
-		Item.ItemDef = Entry.ItemDef;
-		Item.ItemInstance = Entry.ItemInstance;
-		Item.Slot = Entry.Slot;
-		EquipmentArray.MarkItemDirty(Item);
-		auto &Public = PublicEquipmentArray.Items.AddDefaulted_GetRef();
-		Public.Slot = Item.Slot;
-		Public.ItemDef = Item.ItemDef;
-		PublicEquipmentArray.MarkItemDirty(Public);
+		auto* Item = EquipmentArray.Items.FindByPredicate([&](const auto& E) { return E.Slot == Entry.Slot; });
+		const bool bNewPrivate = Item == nullptr;
+		if (!Item) Item = &EquipmentArray.Items.AddDefaulted_GetRef();
+		if (bNewPrivate || Item->ItemDef != Entry.ItemDef || !(Item->ItemInstance == Entry.ItemInstance))
+		{
+			Item->ItemDef = Entry.ItemDef;
+			Item->ItemInstance = Entry.ItemInstance;
+			Item->Slot = Entry.Slot;
+			EquipmentArray.MarkItemDirty(*Item);
+		}
+
 	}
-	EquipmentArray.MarkArrayDirty();
-	PublicEquipmentArray.MarkArrayDirty();
 }
 void UProject_JEquipmentManagerComponent::PublishPersistentEquipment(const TArray<FProject_JEquipmentArrayItem> &Before)
 {
 	const auto After = EquipmentArray.Items;
+	bool bChanged = Before.Num() != After.Num();
+	for (const auto& Item : After)
+	{
+		const auto* Old = Before.FindByPredicate([&](const auto& V) { return V.Slot == Item.Slot; });
+		bChanged |= !Old || Old->ItemDef != Item.ItemDef || !(Old->ItemInstance == Item.ItemInstance);
+	}
 	auto Equal = [](const auto &A, const auto &B) {
 		return A.Slot == B.Slot && A.ItemDef == B.ItemDef && A.ItemInstance.InstanceId == B.ItemInstance.InstanceId;
 	};
@@ -236,18 +224,21 @@ void UProject_JEquipmentManagerComponent::PublishPersistentEquipment(const TArra
 	for (const auto &Item : After)
 		if (!Before.ContainsByPredicate([&](const auto &V) { return Equal(Item, V); }))
 			BroadcastEquipmentEquipped(Item);
-	if (CanPublishState())
+	if (bChanged && CanPublishState())
 		GetOwner()->ForceNetUpdate();
 }
 
 FProject_JEquipmentOperationResult UProject_JEquipmentManagerComponent::ExecuteEquipmentRequest(
-	FGuid InstanceId, EProject_JEquipmentSlot Slot, bool bUnequip, FGuid RequestId)
+	FGuid InstanceId, EProject_JEquipmentSlot Slot, bool bUnequip, FGuid RequestId, bool* OutSharedAdmission)
 {
+	// Stack-local observation only: direct/legacy callers keep the existing operation result and one budget charge.
+	if (OutSharedAdmission) *OutSharedAdmission = false;
 	using Failure = EProject_JEquipmentOperationFailure;
 	if (!HasMutationAuthority())
 		return FProject_JEquipmentOperationResult::FailureResult(Failure::NotAuthority);
 	if (!UProject_JCommandBudgetComponent::AdmitClientCommand(GetOwner()))
 		return FProject_JEquipmentOperationResult::FailureResult(Failure::RateLimited, InstanceId, Slot);
+	if (OutSharedAdmission) *OutSharedAdmission = true;
 	const double Now = FPlatformTime::Seconds();
 	if (RequestWindowStart < 0 || Now - RequestWindowStart >= 1.0)
 	{
@@ -289,8 +280,12 @@ void UProject_JEquipmentManagerComponent::ServerRequestEquipmentChange_Implement
 																					  EProject_JEquipmentSlot Slot,
 																					  bool bUnequip)
 {
-	if (HasMutationAuthority() && RequestId.IsValid())
-		ClientEquipmentRequestCompleted(RequestId, ExecuteEquipmentRequest(InstanceId, Slot, bUnequip, RequestId));
+	const TStrongObjectPtr<ThisClass> KeepSelf(this);
+	if (!HasMutationAuthority() || !RequestId.IsValid()) return;
+	bool bSharedAdmission = false;
+	const auto Result = ExecuteEquipmentRequest(InstanceId, Slot, bUnequip, RequestId, &bSharedAdmission);
+	// Rejected ingress has no reply; admitted domain failures and persistent Pending retain their normal response.
+	if (bSharedAdmission && CanPublishState()) ClientEquipmentRequestCompleted(RequestId, Result);
 }
 
 void UProject_JEquipmentManagerComponent::ClientEquipmentRequestCompleted_Implementation(
@@ -432,8 +427,8 @@ UProject_JEquipmentItemDefinition *UProject_JEquipmentManagerComponent::GetEquip
 {
 	if (UsesPublicEquipment())
 	{
-		const auto *Item =
-			PublicEquipmentArray.Items.FindByPredicate([Slot](const auto &Entry) { return Entry.Slot == Slot; });
+		const auto* Public = ResolvePublicEquipment();
+		const auto *Item = Public ? Public->Items.FindByPredicate([Slot](const auto &Entry) { return Entry.Slot == Slot; }) : nullptr;
 		return Item ? Item->ItemDef.Get() : nullptr;
 	}
 	const int32 FoundIndex = FindEquipmentIndexBySlot(Slot);
@@ -446,9 +441,9 @@ TArray<UProject_JEquipmentItemDefinition *> UProject_JEquipmentManagerComponent:
 	TArray<UProject_JEquipmentItemDefinition *> Result;
 	if (UsesPublicEquipment())
 	{
-		for (const auto &Item : PublicEquipmentArray.Items)
-			if (Item.ItemDef)
-				Result.Add(Item.ItemDef);
+		if (const auto* Public = ResolvePublicEquipment())
+			for (const auto &Item : Public->Items)
+				if (Item.ItemDef) Result.Add(Item.ItemDef);
 		return Result;
 	}
 	for (const FProject_JEquipmentArrayItem &Item : EquipmentArray.Items)
@@ -468,13 +463,14 @@ FString UProject_JEquipmentManagerComponent::GetReplicationDiagnosticSummary() c
 	uint32 StateHash = 0;
 	if (UsesPublicEquipment())
 	{
-		for (const auto &Item : PublicEquipmentArray.Items)
+		const auto* Public = ResolvePublicEquipment();
+		if (Public) for (const auto &Item : Public->Items)
 		{
 			StateHash = HashCombineFast(StateHash, GetTypeHash(Item.Slot));
 			StateHash = HashCombineFast(StateHash, GetTypeHash(GetNameSafe(Item.ItemDef)));
 		}
-		return FString::Printf(TEXT("Items=%d ArrayKey=%d StateHash=%08X"), PublicEquipmentArray.Items.Num(),
-							   PublicEquipmentArray.ArrayReplicationKey, StateHash);
+		return FString::Printf(TEXT("Items=%d ArrayKey=%d StateHash=%08X"), Public ? Public->Items.Num() : 0,
+							   Public ? Public->ArrayReplicationKey : 0, StateHash);
 	}
 	for (const FProject_JEquipmentArrayItem &Item : EquipmentArray.Items)
 	{
@@ -709,10 +705,6 @@ FProject_JEquipmentOperationResult UProject_JEquipmentManagerComponent::CommitEq
 	NewItem.Slot = Slot;
 
 	EquipmentArray.MarkItemDirty(NewItem);
-	auto &PublicItem = PublicEquipmentArray.Items.AddDefaulted_GetRef();
-	PublicItem.Slot = NewItem.Slot;
-	PublicItem.ItemDef = NewItem.ItemDef;
-	PublicEquipmentArray.MarkItemDirty(PublicItem);
 	BroadcastEquipmentEquipped(NewItem);
 
 	return FProject_JEquipmentOperationResult::Success(ItemInstance.InstanceId, Slot);
@@ -811,8 +803,6 @@ bool UProject_JEquipmentManagerComponent::RemoveEquipmentAt(int32 Index)
 	}
 	EquipmentArray.Items.RemoveAt(Index);
 	EquipmentArray.MarkArrayDirty();
-	PublicEquipmentArray.Items.RemoveAll([&RemovedItem](const auto &Item) { return Item.Slot == RemovedItem.Slot; });
-	PublicEquipmentArray.MarkArrayDirty();
 	BroadcastEquipmentUnequipped(RemovedItem);
 	return true;
 }

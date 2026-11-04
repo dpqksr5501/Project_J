@@ -25,6 +25,11 @@ public:
  void ApplyOptimizationPolicy(const FProject_JAnimOptimizationPolicy& NewPolicy);
  UFUNCTION(BlueprintPure, Category="Animation|Snapshot", meta=(BlueprintThreadSafe))
  EProject_JAnimationLocomotionMode GetThreadSafeLocomotionMode() const;
+ /** Current proxy values; physical owner/Mover observation occurs on the game thread. */
+ UFUNCTION(BlueprintPure, Category="Animation|Snapshot", meta=(BlueprintThreadSafe))
+ bool GetThreadSafeIsFalling() const;
+ UFUNCTION(BlueprintPure, Category="Animation|Snapshot", meta=(BlueprintThreadSafe))
+ FVector GetThreadSafeVelocity() const;
  UFUNCTION(BlueprintPure, Category="Animation|Snapshot", meta=(BlueprintThreadSafe))
  float GetThreadSafeFullBodyMontageWeight() const;
  UFUNCTION(BlueprintPure, Category="Animation|Snapshot", meta=(BlueprintThreadSafe))

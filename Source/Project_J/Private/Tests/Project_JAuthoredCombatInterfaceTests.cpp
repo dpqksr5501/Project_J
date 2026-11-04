@@ -19,7 +19,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAuthoredCombatInterfaceTest,
 bool FProjectJAuthoredCombatInterfaceTest::RunTest(const FString&)
 {
     UClass* AuthoredClass = LoadClass<AProject_JPlayerCharacter>(nullptr,
-        TEXT("/Game/Character_BPs/GreatSword/BP_GreatSword.BP_GreatSword_C"));
+        TEXT("/Game/Character_BPs/Spellblade/BP_Spellblade.BP_Spellblade_C"));
     if (!TestNotNull(TEXT("Actual production Blueprint class"), AuthoredClass)) return false;
     UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
     if (!TestNotNull(TEXT("Test world"), World)) return false;

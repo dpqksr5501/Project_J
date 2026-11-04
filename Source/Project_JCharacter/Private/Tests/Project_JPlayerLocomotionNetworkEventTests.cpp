@@ -4,7 +4,7 @@
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "GameFramework/WorldSettings.h"
-#include "Project_JGreatswordCharacter.h"
+#include "Project_JSpellbladeCharacter.h"
 #include "Project_JLocomotionAnimStateComponent.h"
 #include "Components/Project_JReplicatedAnimEventComponent.h"
 #include "Tests/Project_JMoverFrameFixture.h"
@@ -29,7 +29,7 @@ bool FProjectJPlayerLocomotionMoverAimPublication::RunTest(const FString&)
         World->EndPlay(EEndPlayReason::Quit); World->DestroyWorld(false);
         GEngine->DestroyWorldContext(World);
     };
-    auto* Player=World->SpawnActor<AProject_JGreatswordCharacter>();
+    auto* Player=World->SpawnActor<AProject_JSpellbladeCharacter>();
     auto* Class=LoadClass<UProject_JPlayerAnimInstance>(nullptr,TEXT("/Game/Animation_Logic/ABPs/ABP_Player_Master.ABP_Player_Master_C"));
     if(!TestNotNull(TEXT("Production GASP class"),Class)) return false;
     auto* Anim=NewObject<UProject_JPlayerAnimInstance>(Player->GetMesh(),Class);
@@ -77,7 +77,7 @@ bool FProjectJPlayerLocomotionStaleFallOffEvent::RunTest(const FString&)
         World->DestroyWorld(false);
         GEngine->DestroyWorldContext(World);
     };
-    auto* Player=World->SpawnActor<AProject_JGreatswordCharacter>();
+    auto* Player=World->SpawnActor<AProject_JSpellbladeCharacter>();
     auto* Events=Player->FindComponentByClass<UProject_JReplicatedAnimEventComponent>();
     auto* Request=Events->FindFunction(TEXT("ServerDispatchEvent"));
     auto* State=FindFProperty<FStructProperty>(Events->GetClass(),TEXT("ReplicatedAnimEvents"));
@@ -119,7 +119,7 @@ bool FProjectJPlayerLocomotionRemoteLandingOwnership::RunTest(const FString&)
         World->EndPlay(EEndPlayReason::Quit); World->DestroyWorld(false);
         GEngine->DestroyWorldContext(World);
     };
-    auto* Player=World->SpawnActor<AProject_JGreatswordCharacter>();
+    auto* Player=World->SpawnActor<AProject_JSpellbladeCharacter>();
     auto* State=Player->GetLocomotionAnimStateComponent(); State->RefreshCachedReferences();
     TestTrue(TEXT("Presentation still holds an airborne Mover frame"),ProjectJ::Tests::PublishMoverFrame(Player,MOVE_Falling,FVector(0,0,-450)));
     State->HandleReplicatedLandingStarted(1,0.f,450.f,false,false,false);
@@ -149,7 +149,7 @@ bool FProjectJConfirmedLandingImpactTest::RunTest(const FString&)
  auto* World=UWorld::CreateWorld(EWorldType::Game,false);GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
  World->InitializeActorsForPlay(FURL());World->GetWorldSettings()->NotifyBeginPlay();World->GetWorldSettings()->NotifyMatchStarted();
  ON_SCOPE_EXIT { World->EndPlay(EEndPlayReason::Quit);World->DestroyWorld(false);GEngine->DestroyWorldContext(World); };
- auto* Player=World->SpawnActor<AProject_JGreatswordCharacter>();
+ auto* Player=World->SpawnActor<AProject_JSpellbladeCharacter>();
  TestTrue(TEXT("Grounded physical frame"),ProjectJ::Tests::PublishMoverFrame(Player,MOVE_Walking));
  auto* Locomotion=Player->GetLocomotionAnimStateComponent();Locomotion->SetComponentTickEnabled(false);
  Locomotion->LastFallSpeed=Locomotion->VerticalSpeed=0.f;Locomotion->bIsJumping=true;

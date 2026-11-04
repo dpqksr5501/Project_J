@@ -69,62 +69,113 @@ void UProject_JInventoryComponent::BeginPlay()
 	InventoryArray.OwnerComponent = this;
 	Super::BeginPlay();
 }
-bool UProject_JInventoryComponent::ValidatePersistentItems(const TArray<FProject_JItemInstanceData> &Items,
-														   bool bTrustedApply) const
+bool UProject_JInventoryComponent::ValidatePersistentItems(const TArray<FProject_JItemInstanceData>& Items, bool bTrustedApply) const
 {
-	const bool Admitted = bTrustedApply ? (CanPublishState() && GetOwner()->HasAuthority()) : HasMutationAuthority();
-	if (!Admitted || Items.Num() > 4096)
-		return false;
-	TSet<FGuid> Ids;
-	TSet<int32> Orders;
-	for (const auto &Item : Items)
-	{
-		if (!Item.IsValid() || Item.ItemDef->ItemId.IsNone() || Item.ItemDef->SchemaVersion < 1 ||
-			Item.StackCount > Item.ItemDef->MaxStackCount || Item.ItemLevel < 1 || Item.ItemLevel > 10000 ||
-			Item.BagOrder < 0 || Item.BagOrder == MAX_int32 || Ids.Contains(Item.InstanceId) ||
-			Orders.Contains(Item.BagOrder) || Item.bIsLocked != Item.bIsEquipped)
-			return false;
-		Ids.Add(Item.InstanceId);
-		Orders.Add(Item.BagOrder);
-	}
-	return true;
+    return ValidateItemValues(Items, bTrustedApply, nullptr);
+}
+bool UProject_JInventoryComponent::ValidateNativeRewardItems(const TArray<FProject_JItemInstanceData>& Items,
+    const TArray<FProject_JItemInstanceData>& Before) const
+{
+    return ValidateItemValues(Items, true, &Before);
+}
+bool UProject_JInventoryComponent::ValidateItemValues(const TArray<FProject_JItemInstanceData>& Items,
+    bool bTrustedApply, const TArray<FProject_JItemInstanceData>* PreservedLocks) const
+{
+    const bool Admitted = bTrustedApply ? CanPublishState() && GetOwner()->HasAuthority() : HasMutationAuthority();
+    if (!Admitted || Items.Num() > 4096 || (PreservedLocks && PreservedLocks->Num() > 4096)) return false;
+    TMap<FGuid, const FProject_JItemInstanceData*> OldLocks;
+    if (PreservedLocks)
+        for (const auto& Old : *PreservedLocks)
+            if (Old.bIsLocked && !Old.bIsEquipped) OldLocks.Add(Old.InstanceId, &Old);
+    TSet<FGuid> Ids;
+    TSet<int32> Orders;
+    for (const auto& Item : Items)
+    {
+        const auto* Old = OldLocks.Find(Item.InstanceId);
+        const bool KeptTransientLock = Old && **Old == Item;
+        if (Old && !KeptTransientLock) return false;
+        if (!Item.IsValid() || Item.ItemDef->ItemId.IsNone() || Item.ItemDef->SchemaVersion < 1 ||
+            Item.StackCount > Item.ItemDef->MaxStackCount || Item.ItemLevel < 1 || Item.ItemLevel > 10000 ||
+            Item.BagOrder < 0 || Item.BagOrder == MAX_int32 || Ids.Contains(Item.InstanceId) ||
+            Orders.Contains(Item.BagOrder) || (Item.bIsLocked != Item.bIsEquipped && !KeptTransientLock)) return false;
+        Ids.Add(Item.InstanceId); Orders.Add(Item.BagOrder);
+    }
+    // No preserved transient lock can disappear or be rewritten by a reward grant.
+    for (const auto& Old : OldLocks) if (!Ids.Contains(Old.Key)) return false;
+    return true;
 }
 void UProject_JInventoryComponent::InstallPersistentItems(const TArray<FProject_JItemInstanceData> &Items)
 {
 	check(IsInGameThread());
 	check(ValidatePersistentItems(Items, true));
-	InventoryArray.Items.Reset();
+    InstallPreparedItems(Items);
+}
+void UProject_JInventoryComponent::InstallPreparedItems(const TArray<FProject_JItemInstanceData>& Items)
+{
+    check(IsInGameThread());
+	TMap<FGuid, const FProject_JItemInstanceData*> Desired;
+	Desired.Reserve(Items.Num());
+	for (const auto& Item : Items) Desired.Add(Item.InstanceId, &Item);
+	if (InventoryArray.Items.RemoveAllSwap([&](const auto& Entry) { return !Desired.Contains(Entry.ItemInstance.InstanceId); }))
+		InventoryArray.MarkArrayDirty();
+	TMap<FGuid, int32> Existing;
+	Existing.Reserve(InventoryArray.Items.Num());
+	for (int32 Index = 0; Index < InventoryArray.Items.Num(); ++Index)
+		Existing.Add(InventoryArray.Items[Index].ItemInstance.InstanceId, Index);
 	for (const auto &Item : Items)
 	{
-		auto &Entry = InventoryArray.Items.AddDefaulted_GetRef();
-		Entry.ItemInstance = Item;
-		InventoryArray.MarkItemDirty(Entry);
-	}
-	InventoryArray.MarkArrayDirty();
-}
-void UProject_JInventoryComponent::PublishPersistentItems(const TArray<FProject_JItemInstanceData> &Before)
-{
-	const auto After = GetItemInstances();
-	for (const auto &Item : Before)
-		if (!After.ContainsByPredicate([&](const auto &V) { return V.InstanceId == Item.InstanceId; }))
+		if (const int32* Index = Existing.Find(Item.InstanceId))
 		{
-			if (!CanPublishState())
+			auto& Entry = InventoryArray.Items[*Index];
+			if (!(Entry.ItemInstance == Item))
+			{
+				Entry.ItemInstance = Item;
+				InventoryArray.MarkItemDirty(Entry);
+			}
+		}
+		else
+		{
+			auto& Entry = InventoryArray.Items.AddDefaulted_GetRef();
+			Entry.ItemInstance = Item;
+			InventoryArray.MarkItemDirty(Entry);
+		}
+	}
+}
+void UProject_JInventoryComponent::PublishPersistentItems(const TArray<FProject_JItemInstanceData>& Before)
+{
+    PublishPreparedItems(Before, [this] { return CanPublishState(); });
+}
+void UProject_JInventoryComponent::PublishPersistentItems(const TArray<FProject_JItemInstanceData>& Before, TFunctionRef<bool()> Current)
+{
+    PublishPreparedItems(Before, [this, &Current] { return CanPublishState() && Current(); });
+}
+void UProject_JInventoryComponent::PublishPreparedItems(const TArray<FProject_JItemInstanceData>& Before, TFunctionRef<bool()> IsCurrent)
+{
+    if (!IsCurrent()) return;
+	const auto After = GetItemInstances();
+	TMap<FGuid, const FProject_JItemInstanceData*> OldById, NewById;
+	OldById.Reserve(Before.Num()); NewById.Reserve(After.Num());
+	for (const auto& Item : Before) OldById.Add(Item.InstanceId, &Item);
+	for (const auto& Item : After) NewById.Add(Item.InstanceId, &Item);
+	bool bChanged = false;
+	for (const auto &Item : Before)
+		if (!NewById.Contains(Item.InstanceId))
+		{
+			if (!IsCurrent())
 				return;
 			OnItemRemoved.Broadcast(Item);
+			bChanged = true;
 		}
 	for (const auto &Item : After)
 	{
-		if (!CanPublishState())
-			return;
-		const auto *Old = Before.FindByPredicate([&](const auto &V) { return V.InstanceId == Item.InstanceId; });
-		if (!Old)
-			OnItemAdded.Broadcast(Item);
-		else if (Old->ItemDef != Item.ItemDef || Old->ItemLevel != Item.ItemLevel ||
-				 Old->StackCount != Item.StackCount || Old->BagOrder != Item.BagOrder ||
-				 Old->bIsLocked != Item.bIsLocked || Old->bIsEquipped != Item.bIsEquipped)
-			OnItemChanged.Broadcast(Item);
+		const auto* Old = OldById.Find(Item.InstanceId);
+        if (Old && **Old == Item) continue;
+        if (!IsCurrent()) return;
+        if (!Old) OnItemAdded.Broadcast(Item);
+        else OnItemChanged.Broadcast(Item);
+        bChanged = true;
 	}
-	if (CanPublishState())
+	if (bChanged && IsCurrent())
 		GetOwner()->ForceNetUpdate();
 }
 
@@ -271,6 +322,16 @@ bool UProject_JInventoryComponent::SetItemStackCount(FGuid InstanceId, int32 New
 		return false;
 	}
 
+	// A matching live value is not a new economy command. Keep all owner,
+	// session and count checks above; malformed current metadata follows the
+	// existing mutation/adapter validation path instead of a successful no-op.
+	if (NewStackCount == Item.ItemInstance.StackCount && Item.ItemInstance.IsValid() &&
+		!Item.ItemInstance.ItemDef->ItemId.IsNone() && Item.ItemInstance.ItemDef->SchemaVersion > 0 &&
+		Item.ItemInstance.ItemLevel >= 1 && Item.ItemInstance.ItemLevel <= 10000 &&
+		Item.ItemInstance.ItemDef->MaxStackCount >= NewStackCount)
+	{
+		return true;
+	}
 	if (SubmitPersistentEdit)
 	{
 		FProject_JPersistentEdit Edit;
@@ -346,8 +407,17 @@ bool UProject_JInventoryComponent::SetItemInstanceLocked(FGuid InstanceId, bool 
 	}
 
 	FProject_JInventoryArrayItem &Item = InventoryArray.Items[FoundIndex];
+	const bool bDesiredEquipped = bLocked && bEquipped;
+	if (Item.ItemInstance.IsValid() && !Item.ItemInstance.ItemDef->ItemId.IsNone() &&
+		Item.ItemInstance.ItemDef->SchemaVersion > 0 && Item.ItemInstance.ItemLevel >= 1 &&
+		Item.ItemInstance.ItemLevel <= 10000 &&
+		Item.ItemInstance.StackCount <= Item.ItemInstance.ItemDef->MaxStackCount &&
+		Item.ItemInstance.bIsLocked == bLocked && Item.ItemInstance.bIsEquipped == bDesiredEquipped)
+	{
+		return true;
+	}
 	Item.ItemInstance.bIsLocked = bLocked;
-	Item.ItemInstance.bIsEquipped = bLocked && bEquipped;
+	Item.ItemInstance.bIsEquipped = bDesiredEquipped;
 	InventoryArray.MarkItemDirty(Item);
 	const FProject_JItemInstanceData Snapshot = Item.ItemInstance;
 	OnItemChanged.Broadcast(Snapshot);
@@ -524,11 +594,8 @@ void UProject_JInventoryComponent::ServerUseItem_Implementation(FGuid RequestId,
 {
 	if (!HasMutationAuthority() || !RequestId.IsValid())
 		return;
-	if (!UProject_JCommandBudgetComponent::AdmitClientCommand(GetOwner()))
-	{
-		ClientUseCompleted(RequestId, EProject_JItemUseResult::RateLimited);
-		return;
-	}
+	// Unadmitted ingress must not create an unbounded reliable rejection stream.
+	if (!UProject_JCommandBudgetComponent::AdmitClientCommand(GetOwner())) return;
 	const double Now = GetWorld()->GetTimeSeconds();
 	if (Now - UseRequestWindow >= 1 || UseRequestWindow < 0)
 	{
@@ -582,6 +649,9 @@ EProject_JItemUseResult UProject_JInventoryComponent::TryUseItem(FGuid InstanceI
 	const auto *Def = Cast<UProject_JConsumableDefinition>(Item.ItemDef);
 	const auto *Interface = Cast<IAbilitySystemInterface>(GetOwner());
 	auto *ASC = Interface ? Interface->GetAbilitySystemComponent() : nullptr;
+	const auto *OriginalProjectASC = Cast<UProject_JAbilitySystemComponent>(ASC);
+	if (OriginalProjectASC && OriginalProjectASC->IsActorInfoChanging())
+		return EProject_JItemUseResult::Unavailable;
 	if (!Def || !ASC || !ASC->HasAttributeSetForAttribute(UProject_JAttributeSet::GetHealthAttribute()) ||
 		!ASC->HasAttributeSetForAttribute(UProject_JAttributeSet::GetManaAttribute()) ||
 		!FMath::IsFinite(Def->RestoreHealth) || !FMath::IsFinite(Def->RestoreMana) || Def->RestoreHealth < 0 ||
@@ -606,6 +676,7 @@ EProject_JItemUseResult UProject_JInventoryComponent::TryUseItem(FGuid InstanceI
 	const TStrongObjectPtr<UAbilitySystemComponent> KeepASC(ASC);
 	const TStrongObjectPtr<AActor> OriginalAvatar(ASC->GetAvatarActor());
 	const TStrongObjectPtr<AActor> OriginalASCOwner(ASC->GetOwnerActor());
+	const uint64 OriginalActorInfoRevision = OriginalProjectASC ? OriginalProjectASC->GetActorInfoRevision() : 0;
 	const float CooldownSeconds = Def->CooldownSeconds;
 	auto *Effect = NewObject<UGameplayEffect>();
 	Effect->DurationPolicy = EGameplayEffectDurationType::Instant;
@@ -630,7 +701,9 @@ EProject_JItemUseResult UProject_JInventoryComponent::TryUseItem(FGuid InstanceI
 	const auto *CurrentInterface = Cast<IAbilitySystemInterface>(GetOwner());
 	if (!HasMutationAuthority() || GetOwner() != KeepOwner.Get() || !CurrentInterface ||
 		CurrentInterface->GetAbilitySystemComponent() != KeepASC.Get() || !IsValid(ASC) || ASC->IsBeingDestroyed() ||
-		ASC->GetAvatarActor() != OriginalAvatar.Get() || ASC->GetOwnerActor() != OriginalASCOwner.Get())
+		ASC->GetAvatarActor() != OriginalAvatar.Get() || ASC->GetOwnerActor() != OriginalASCOwner.Get() ||
+		(OriginalProjectASC && (OriginalProjectASC->IsActorInfoChanging() ||
+			OriginalProjectASC->GetActorInfoRevision() != OriginalActorInfoRevision)))
 		return EProject_JItemUseResult::Unavailable;
 	if ((OriginalAvatar.Get() && (!IsValid(OriginalAvatar.Get()) || OriginalAvatar->IsActorBeingDestroyed())) ||
 		(OriginalASCOwner.Get() && (!IsValid(OriginalASCOwner.Get()) || OriginalASCOwner->IsActorBeingDestroyed())))
@@ -668,11 +741,8 @@ void UProject_JInventoryComponent::ServerBagChange_Implementation(FGuid RequestI
 {
 	if (!HasMutationAuthority() || !RequestId.IsValid())
 		return;
-	if (!UProject_JCommandBudgetComponent::AdmitClientCommand(GetOwner()))
-	{
-		ClientBagCompleted(RequestId, EProject_JBagResult::RateLimited);
-		return;
-	}
+	// Unadmitted ingress must not create an unbounded reliable rejection stream.
+	if (!UProject_JCommandBudgetComponent::AdmitClientCommand(GetOwner())) return;
 	const double Now = GetWorld()->GetTimeSeconds();
 	if (BagRequestWindow < 0 || Now - BagRequestWindow >= 1)
 	{
@@ -845,7 +915,7 @@ bool UProject_JInventoryComponent::CanUsePersistentItem(FGuid Id) const
 	const auto *I = Cast<IAbilitySystemInterface>(GetOwner());
 	auto *A = I ? I->GetAbilitySystemComponent() : nullptr;
 	const auto *BindingASC = Cast<UProject_JAbilitySystemComponent>(A);
-	if (!BindingASC || BindingASC->GetActorInfoRevision() == 0 || A->GetOwnerActor() != GetOwner())
+	if (!BindingASC || BindingASC->IsActorInfoChanging() || BindingASC->GetActorInfoRevision() == 0 || A->GetOwnerActor() != GetOwner())
 		return false;
 	if (!D || !A || !A->HasAttributeSetForAttribute(UProject_JAttributeSet::GetHealthAttribute()) ||
 		!A->HasAttributeSetForAttribute(UProject_JAttributeSet::GetManaAttribute()) ||
@@ -891,7 +961,7 @@ EProject_JItemUseResult UProject_JInventoryComponent::SubmitPersistentUse(FGuid 
 			auto *D = Definition.Get();
 			const auto *Current = Cast<IAbilitySystemInterface>(Self->GetOwner());
 			const auto *CurrentASC = Cast<UProject_JAbilitySystemComponent>(A);
-			OK = CurrentASC && CurrentASC->GetActorInfoRevision() == ActorInfoRevision;
+			OK = CurrentASC && !CurrentASC->IsActorInfoChanging() && CurrentASC->GetActorInfoRevision() == ActorInfoRevision;
 			const TStrongObjectPtr<UAbilitySystemComponent> KeepASC(A);
 			const TStrongObjectPtr<UProject_JConsumableDefinition> KeepDefinition(D);
 			const TStrongObjectPtr<AActor> KeepAvatar(Avatar.Get());

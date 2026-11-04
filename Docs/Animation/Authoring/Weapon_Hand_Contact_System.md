@@ -6,7 +6,7 @@ UE5 호환 몸체는 공통 master를 직접 재생하고, 비호환 몸체만 �
 
 | 경로 | 접촉 목표와 graph 연결 | 적용 범위 |
 | --- | --- | --- |
-| 현재 UE5 GreatSword 직접 몸체 | InputPose → 선택적 sole 보정 → 필요한 marker → HandContactGoals → 몸체 FBIK → 두 팔 Guided → 헤어/치마 RigidBody 2개 | 실제 `ABP_GreatSword_Body` 구성. 아래 예전 핀 표를 그대로 이식하지 않음 |
+| 현재 UE5 GreatSword 직접 몸체 | InputPose → 선택적 sole 보정 → 필요한 marker → HandContactGoals → 몸체 FBIK → 두 팔 Guided → 헤어/치마 RigidBody 2개 | 실제 `ABP_Spellblade_Body` 구성. 아래 예전 핀 표를 그대로 이식하지 않음 |
 | 기존 Bip01 retarget follower | retarget 출력 → 오른팔/왼팔 Guided → 해당 몸체의 물리 | 아래 legacy 예시의 component/primary-hand-space 목표 계약 |
 | 새 몸체/무기 | 검증한 재생 경로에 필요한 접촉 단계만 선택 | 추가 처리가 없으면 동일 graph/solver를 강제로 설치하지 않음 |
 
@@ -155,7 +155,7 @@ PalmInHand * Wrist = BodyOffset * Goal;
 3. 기존 캐릭터 애니메이션 프로필의 인라인 `HandGripCalibration`.
 4. 기본 Palm 이름과 항등 오프셋.
 
-현재 만든 에셋은 `DA_HGP_Greatsword`다. 아래는 설정 절차이며, 개별 저장 에셋의 연결 상태는 에디터에서 확인한다.
+현재 만든 에셋은 `DA_HGP_Spellblade`다. 아래는 설정 절차이며, 개별 저장 에셋의 연결 상태는 에디터에서 확인한다.
 
 1. DA의 Primary/Secondary Palm 이름에 `PalmGrip_R` / `PalmGrip_L`을 입력한다.
 2. 팔 역할을 다음처럼 설정한다.
@@ -169,7 +169,7 @@ PalmInHand * Wrist = BodyOffset * Goal;
 Shoulder는 이 솔버에서 상완 루트다. 쇄골을 입력하는 항목이 아니다. Hand를 생략하면 Palm의 부모에서 추론한다. Shoulder와 Elbow는 함께 지정하거나 함께 비운다. 둘 다 비운 방식은 Hand의 직계 부모 두 개를 사용하므로 단순 팔 계층에서만 사용한다.
 
 3. 새 몸체는 `Missing Palm Policy = Disable Contact IK`로 둔다. 기존 에셋 기본값인 `Legacy Wrist Origin (Compatibility)`는 Palm이 없을 때 이전 손목 원점 목표를 유지한다. 명시적으로 잘못된 손 이름이나 소켓 부모 불일치는 호환 모드에서도 허용하지 않는다.
-4. `ABP_Greatsword_Woman_RunTIme`의 **클래스 디폴트 → 오른쪽 위 디테일 → Project J → IK → Config → Hand Grip Profile**에 DA를 지정한다. 아래쪽 애님 프리뷰 인스턴스 설정과 구분한다. 검색창에 `Hand Grip`을 입력해도 된다.
+4. `ABP_Spellblade_Woman_RunTIme`의 **클래스 디폴트 → 오른쪽 위 디테일 → Project J → IK → Config → Hand Grip Profile**에 DA를 지정한다. 아래쪽 애님 프리뷰 인스턴스 설정과 구분한다. 검색창에 `Hand Grip`을 입력해도 된다.
 5. 오른팔 Guided 노드의 `Arm Definition Source = Primary Body Profile`을 선택한다. Effector에 `RightWristTarget` 또는 기존 Make Transform을 연결하고 Alpha는 `RightGripAlpha`를 유지한다. `Match Wrist Rotation`은 켜고 `Use Explicit Elbow Guide`는 기본적으로 끈다.
 6. 컴파일·저장 후 Idle, 평타, 연계, 복귀를 확인한다. 기존 수동 노드는 `Node Settings` 기본값으로 계속 동작한다. 자동 에셋 마이그레이션은 하지 않는다.
 
@@ -269,7 +269,7 @@ WeaponContact의 `socketErr`는 원시 Palm–실제 무기 소켓 거리, `cali
 
 노드 그래프 래퍼는 `Project_JAnimationNodes`의 `UncookedOnly`에 둔다. 이전 Editor 모듈 위치에서 저장된 노드는 Class Redirect로 연결한다. 런타임 솔버는 `Project_JCharacter`에 남는다. 이전 Editor 모듈의 숨겨진 구조 경고 원인을 수정한 것이다.
 
-저장된 `ABP_Greatsword_Woman_RunTIme` 하나의 읽기 전용 컴파일은 Blueprint 오류 0, 경고 0, 로드 실패 0, 종료 코드 0이다. 로그: `Saved/Logs/HandContactRig_Blueprint_Scoped.log`. 프로세스 요약의 경고 1개는 설치된 MCP 플러그인의 시작 안내이며 ABP 경고가 아니다. MCP 도구나 에셋 저장은 사용하지 않았다. 초기 commandlet은 절대 allowlist 경로를 프로젝트 경로 뒤에 붙여 거부했고 더 넓은 읽기 전용 컴파일을 수행했다. 종료 후 프로젝트 상대 경로로 범위를 수정해 재검증했다.
+저장된 `ABP_Spellblade_Woman_RunTIme` 하나의 읽기 전용 컴파일은 Blueprint 오류 0, 경고 0, 로드 실패 0, 종료 코드 0이다. 로그: `Saved/Logs/HandContactRig_Blueprint_Scoped.log`. 프로세스 요약의 경고 1개는 설치된 MCP 플러그인의 시작 안내이며 ABP 경고가 아니다. MCP 도구나 에셋 저장은 사용하지 않았다. 초기 commandlet은 절대 allowlist 경로를 프로젝트 경로 뒤에 붙여 거부했고 더 넓은 읽기 전용 컴파일을 수행했다. 종료 후 프로젝트 상대 경로로 범위를 수정해 재검증했다.
 
 추가 숨은 그래프 메시지는 에디터 전용 `ProjectJ.Animation.ValidateBlueprintGraph /Game/Path/Asset.Asset`로 조회할 수 있다. 노드/그래프 이름과 메시지를 기록하며 저장하지 않는다. 연결되지 않은 노드도 포함하므로 실제 컴파일의 정리된 그래프와 동일한 검사는 아니다.
 
@@ -346,7 +346,7 @@ Idle / 손 주도 공격:
 
 1. C++ 빌드 반영 후 에디터를 열고 무기 Presentation DA의 **Drawn Attachment Mode = Primary Grip to Body Palm**을 선택한다.
 2. `Primary Grip Socket Name = WeaponGrip_R`를 유지한다. 소스 `Drawn Socket Name = WeaponSocket_Greatsword_Combat`, 납도 소켓과 기존 Visual 소켓도 유지한다.
-3. 몸체 런타임 ABP의 클래스 디폴트에 `DA_HGP_Greatsword`가 할당됐는지 확인한다. DA의 Palm `PalmGrip_R/L`, Hand/UpperArm/Forearm은 실제 몸체 이름을 쓴다. Guided 노드 연결은 그대로 유지한다.
+3. 몸체 런타임 ABP의 클래스 디폴트에 `DA_HGP_Spellblade`가 할당됐는지 확인한다. DA의 Palm `PalmGrip_R/L`, Hand/UpperArm/Forearm은 실제 몸체 이름을 쓴다. Guided 노드 연결은 그대로 유지한다.
 4. Idle와 공격의 공통 파지가 뜨면 몸체 **Palm 위치·회전** 또는 **Primary Hand Offset**을 조정한다. Palm에 검 원점을 프리뷰 부착한 모습은 Grip 정렬 결과와 다르므로 PIE에서 최종 접촉을 확인한다. 기존 Visual 소켓을 맞추는 방식은 Socket 모드에서만 정상 부착에 적용된다.
 5. Idle → 평타 → Idle, 연계/캔슬, 납도, AO, 몸체·장비 교체를 확인한다. Weapon Motion 스테이트를 추가할 필요는 없다. 구간별 키나 손 해제에 필요한 스테이트는 유지한다.
 
@@ -402,7 +402,7 @@ ProjectJ.Animation.GuidedIKTrace 0
 <a id="mount-idle-정렬이-적용되지-않은-실제-캡처와-수정"></a>
 #### Idle 정렬이 적용되지 않은 실제 캡처와 수정
 
-2026-10-02 23:18 저장된 사용자 로그의 마지막 PIE 구간에서 실제 무기 DA는 `DA_Greatsword_Presentation`, 몸체 DA는 `DA_HGP_Greatsword`, 요청 모드는 `PrimaryGripContact`였다. 그런데 발도 중 `UnsupportedWeaponRootScale` 또는 `UnsupportedHandScale`로 대체되어 `appliedPalmMount=0`, 실제 소켓은 `WeaponSocket_Visual_R`였다. 공격 전·복귀 후 Idle 접촉 오차는 약 2.243cm, 방향 오차는 약 35.714도였다. 기존 목적지에 대한 `worldErrCm=0`은 대체 Visual 부착이 정확하다는 뜻이며 Palm 접촉 성공을 뜻하지 않는다.
+2026-10-02 23:18 저장된 사용자 로그의 마지막 PIE 구간에서 실제 무기 DA는 `DA_Greatsword_Presentation`, 몸체 DA는 `DA_HGP_Spellblade`, 요청 모드는 `PrimaryGripContact`였다. 그런데 발도 중 `UnsupportedWeaponRootScale` 또는 `UnsupportedHandScale`로 대체되어 `appliedPalmMount=0`, 실제 소켓은 `WeaponSocket_Visual_R`였다. 공격 전·복귀 후 Idle 접촉 오차는 약 2.243cm, 방향 오차는 약 35.714도였다. 기존 목적지에 대한 `worldErrCm=0`은 대체 Visual 부착이 정확하다는 뜻이며 Palm 접촉 성공을 뜻하지 않는다.
 
 이전 소켓에서 상속된 Root 월드 스케일을 새 Palm 목적지의 허용 조건으로 검사하던 오류를 제거했다. Grip-in-Root도 작성된 로컬 데이터만으로 계산한다. 목적지 몸체·손 및 작성 변환의 스케일 검사는 공통 함수로 유지하되, float 포즈가 double로 변환될 때 생기는 수치 차이는 최대 축 대비 0.01%까지 허용한다. 실제 비균일·반전·영 스케일은 계속 거부한다. 기존 로그는 소수 2자리여서 `UnsupportedHandScale`이 미세 오차인지 실제 비균일인지 확정할 수 없으며, 새 `AttachmentScale` 로그로 구분한다.
 
@@ -420,7 +420,7 @@ ProjectJ.Animation.GuidedIKTrace 0
 
 로그는 `Saved/Logs/PrimaryGripAttachment_Automation.log`, `PrimaryGripAttachment_Lifecycle.log`다. 새 부착 테스트는 무기 메시 상대 이동/회전/균일 스케일, 몸체 스케일, 기존 기본값, 순환 억제, 공격·비항등 복귀, 공격 중 보정 변경, 기존 Actor 유지, 몸체 메시 교체, handoff 없는 exit blend, IK 없는 직업, 누락 Palm, 비균일·Absolute 변환 거부와 납도를 검사한다. 테스트용 소켓/메시는 메모리에서만 만들고 프로젝트 에셋을 저장하지 않는다.
 
-저장된 `ABP_Greatsword_Woman_RunTIme` 한 개의 범위 컴파일도 오류 0·ABP 경고 0·로드 실패 0·종료 코드 0이다. 로그는 `Saved/Logs/PrimaryGripAttachment_Blueprint_Scoped.log`. 프로세스 요약의 경고 1개는 설치된 MCP 플러그인 시작 안내이며 MCP 도구 호출은 없다.
+저장된 `ABP_Spellblade_Woman_RunTIme` 한 개의 범위 컴파일도 오류 0·ABP 경고 0·로드 실패 0·종료 코드 0이다. 로그는 `Saved/Logs/PrimaryGripAttachment_Blueprint_Scoped.log`. 프로세스 요약의 경고 1개는 설치된 MCP 플러그인 시작 안내이며 MCP 도구 호출은 없다.
 
 이후 사용자가 에디터에서 Palm 부착 설정을 적용하고 Idle 파지가 정상 동작함을 확인했다. 기존 Visual 소켓을 제거하는 구성도 정상 동작한다고 보고했다. 이는 사용자 시각 확인이며 새 PIE 로그의 수치 오차를 자동 재측정한 결과는 아니다. 공격 중 양손 파지 연결과 추가 검수 범위는 [보조 손 접촉](Weapon_Hand_Contact_System.md#secondary)을 따른다.
 
@@ -479,7 +479,7 @@ ProjectJ.Animation.GuidedIKTrace 0
 
 1. 소스 Drawn Socket Name은 소스 스켈레톤의 `WeaponSocket_Greatsword_Combat`, 보이는 Visual Drawn Socket Name은 `WeaponSocket_Visual_R`이다. 서로 다른 메시의 소유권을 구분한다.
 2. 검의 `WeaponGrip_R/L`은 손잡이의 접촉점이다. 몸체 손목 위치로 옮겨 문제를 숨기지 않는다. 몸체의 `PalmGrip_R/L`이 실제 손바닥 접촉 위치·방향을 정의한다.
-3. 몸체 DA `DA_HGP_Greatsword`를 런타임 ABP Class Defaults → Project J → IK → Config → Hand Grip Profile에 지정한다. Guided 노드 Primary Body Profile을 선택하고 기존 Right Grip 또는 RightWristTarget과 RightGripAlpha를 사용한다. Effector는 이미 변환된 컴포넌트 공간 손목 목표다.
+3. 몸체 DA `DA_HGP_Spellblade`를 런타임 ABP Class Defaults → Project J → IK → Config → Hand Grip Profile에 지정한다. Guided 노드 Primary Body Profile을 선택하고 기존 Right Grip 또는 RightWristTarget과 RightGripAlpha를 사용한다. Effector는 이미 변환된 컴포넌트 공간 손목 목표다.
 4. 왼팔 Guided 노드는 Secondary Body Profile을 사용한다. 기본 Effector에는 LeftWristTarget을 연결하며, Target Space 핀에는 `bUsePrimaryHandSpaceGrip`, LeftGripInPrimaryHandSpace, PrimaryHandBoneName을 연결한다. true면 이번 평가의 기준 뼈 포즈에서 합성하고 false면 컴포넌트 공간 목표를 쓴다. Alpha는 LeftGripAlpha다.
 5. 그래프는 리타깃 → 오른팔 Guided → 왼팔 Guided → 의상/헤어 물리 순서다. 같은 팔에 FABRIK·Two Bone IK·Guided를 중복 적용하지 않는다. 왼팔 새 연결은 에디터에서 추가하고 기존 RigidBody는 유지한다.
 6. 현재 대검을 구간 스테이트로 제어할 때 Drawn/Attack Secondary Alpha는 0으로 두고 몽타주의 Two-Hand Grip IK 구간에서 Secondary Alpha 1을 사용한다. 스테이트 없이 소스 공격 전체를 양손으로 잡으려면 Attack 기본값 1을 선택한다. 항상 양손 Idle은 Drawn 1, 한손 무기는 Enable Secondary Grip Contact를 끈다. 몸체 프로필에는 파지 상태가 아닌 해부학적 기준을 둔다.
@@ -553,7 +553,7 @@ Drawn 기본값은 발도 Idle와 일반 이동에서 적용된다. 공격 기�
 <a id="secondary-에디터에서-왼팔-연결"></a>
 ### 기존 follower의 에디터 왼팔 연결
 
-**기존 Bip01 follower 예시**인 `ABP_Greatsword_Woman_RunTIme`의 AnimGraph에서 오른팔 노드 다음, RigidBody 이전에 **Project J Guided Hand IK**를 하나 추가한다.
+**기존 Bip01 follower 예시**인 `ABP_Spellblade_Woman_RunTIme`의 AnimGraph에서 오른팔 노드 다음, RigidBody 이전에 **Project J Guided Hand IK**를 하나 추가한다.
 
 ```text
 Retarget Pose From Mesh → Local To Component
@@ -566,7 +566,7 @@ Retarget Pose From Mesh → Local To Component
 - `Arm Definition Source = Secondary Body Profile`.
 - `Match Wrist Rotation = true`.
 - `Use Explicit Elbow Guide = false`로 시작한다. DA의 Secondary Bend Stability를 사용한다.
-- 몸체 `DA_HGP_Greatsword`의 Secondary Palm은 `PalmGrip_L`, Shoulder/Elbow/Hand는 `Bip01-L-UpperArm`, `Bip01-L-Forearm`, `Bip01-L-Hand`다. 소켓의 실제 부모가 지정한 Hand와 일치해야 한다.
+- 몸체 `DA_HGP_Spellblade`의 Secondary Palm은 `PalmGrip_L`, Shoulder/Elbow/Hand는 `Bip01-L-UpperArm`, `Bip01-L-Forearm`, `Bip01-L-Hand`다. 소켓의 실제 부모가 지정한 Hand와 일치해야 한다.
 - 검의 무기 DA `Secondary Grip Socket Name = WeaponGrip_L`을 유지한다.
 
 Contact / Target Space의 세 설정을 핀으로 노출한다. 입력 연결은 다음과 같다.
@@ -617,7 +617,7 @@ Primary/Secondary Body Profile을 선택하면 각 팔의 뼈 역할과 굽힘 �
 
 새 테스트는 서로 다른 두 팔 길이와 임의 뼈 이름, 손바닥 오프셋을 사용한다. 오른팔 Alpha 0.55의 엔진 포즈 블렌드 뒤 왼팔이 같은 평가의 목표 위치·회전을 잡는지, 후속 평가의 기준 포즈 변경, 독립 목표로의 공간 전환, 누락/자기 팔 기준 뼈/기준 뼈 LOD 제거를 검사한다. 실제 소스/임포트 몸체 fixture에서는 공격만 양손, 복귀 중 보조 접촉 비활성화, 노티파이와 Motion Alpha의 강제 활성화 차단, 오래된 레거시 추적 경로 차단 및 양손 정책 재활성화를 검사한다.
 
-저장된 `ABP_Greatsword_Woman_RunTIme` 한 개의 범위 컴파일은 오류 0·ABP 경고 0·로드 실패 0·종료 코드 0이다. 로그는 `Saved/Logs/SecondaryHandContact_Blueprint_Scoped.log`. 설치된 MCP 플러그인의 시작 안내 경고는 ABP 경고와 구분하며 MCP 도구는 호출하지 않았다. 이 범위 컴파일은 사용자 최종 노드 연결 이전의 저장본 검증이다.
+저장된 `ABP_Spellblade_Woman_RunTIme` 한 개의 범위 컴파일은 오류 0·ABP 경고 0·로드 실패 0·종료 코드 0이다. 로그는 `Saved/Logs/SecondaryHandContact_Blueprint_Scoped.log`. 설치된 MCP 플러그인의 시작 안내 경고는 ABP 경고와 구분하며 MCP 도구는 호출하지 않았다. 이 범위 컴파일은 사용자 최종 노드 연결 이전의 저장본 검증이다.
 
 기존 Two-Hand Grip IK 구간 통합 후 직접 UBT 빌드는 26.77초에 성공했다. `SecondaryHandContact`, `TwoHandIKTransitionAndCurve`, `PrimaryGripAttachment`, `StableGripTargetsAndAuthoredAlpha`, `VisualMeshOwnership` 5개는 `Saved/Logs/TwoHandGripWindows_Automation.log`에서, `ProjectJ.NPCGameplay.WeaponPresentationTeardown`은 `Saved/Logs/TwoHandGripWindows_Teardown.log`에서 Success다. 두 실행 모두 종료 코드 0으로, 이번 통합 관련 검증은 총 6개다.
 
@@ -688,7 +688,7 @@ Primary/Secondary Body Profile을 선택하면 각 팔의 뼈 역할과 굽힘 �
 
 1. 빌드 후 재시작·런타임 ABP 컴파일. 기존 Guided 연결과 Right Grip 핀을 유지할 수 있다. `RightWristTarget`은 Make Transform 없이 같은 손목 목표를 제공한다.
 2. 일반 자동 몽타주 공격은 `Follow Montage Blend Out`을 켠다. 이때 `Contact Recovery Seconds`를 늘려도 몽타주 가중치 복귀는 튜닝되지 않는다.
-3. 몸체 DA를 런타임 ABP 클래스 디폴트의 `Project J → IK → Config → Hand Grip Profile`에 지정한다. 현재 `DA_HGP_Greatsword`의 Palm은 `PalmGrip_R/L`, 팔 역할은 실제 Bip01 UpperArm/Forearm/Hand다.
+3. 몸체 DA를 런타임 ABP 클래스 디폴트의 `Project J → IK → Config → Hand Grip Profile`에 지정한다. 현재 `DA_HGP_Spellblade`의 Palm은 `PalmGrip_R/L`, 팔 역할은 실제 Bip01 UpperArm/Forearm/Hand다.
 4. 왼손은 연결 여부부터 확인한다. 소스 주도 구간에는 컴포넌트 공간 목표를, 오른손 주도 구간에는 `bUsePrimaryHandSpaceGrip`가 true일 때 현재 오른손 포즈 기준의 목표를 사용한다. 한 공간만 계속 사용하는 그래프는 두 소유권 모드를 모두 표현하지 못한다.
 5. RigidBody 3개의 피직스 에셋과 영향 본을 확인한다. 스크린샷만으로 통합 가능하다고 판단하지 않는다. 의상 물리가 팔·손 접촉을 덮어쓰지 않아야 한다.
 6. 평타, 연계, 캔슬, 납도, 무기/몸체 교체, 원격, LOD·가시성·저빈도와 텔레포트를 검증한다. 성능 측정 시 진단을 끈다.

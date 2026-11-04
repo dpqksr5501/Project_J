@@ -549,8 +549,17 @@ void UProject_JProgressionComponent::InstallCommittedExperience(const FProject_J
 {
 	check(IsInGameThread());
 	check(ValidateCommittedExperience(Snapshot, true));
-	State.Level = Snapshot.Level;
-	Experience = Snapshot.Experience;
+    InstallPreparedExperience(Snapshot);
+}
+void UProject_JProgressionComponent::InstallPreparedExperience(const FProject_JProgressionSnapshot& Snapshot)
+{
+    check(IsInGameThread());
+    State.Level = Snapshot.Level;
+    Experience = Snapshot.Experience;
+}
+void UProject_JProgressionComponent::PublishPreparedExperience(TFunctionRef<bool()> IsCurrent)
+{
+    if (IsCurrent()) Publish();
 }
 
 bool UProject_JProgressionComponent::PlanClass(UProject_JCharacterClassDefinition *Class,
@@ -585,15 +594,38 @@ bool UProject_JProgressionComponent::ValidateCommittedProgression(
 	return (Trusted || CanMutate()) && (State.Revision > 0 || (AllowUninitialized && State.Revision == 0)) &&
 		   ValidateRestoreSnapshot(Snapshot, Class, History, Active, true);
 }
-void UProject_JProgressionComponent::InstallCommittedProgression(
-	const FProject_JProgressionSnapshot &Snapshot, UProject_JCharacterClassDefinition *Class,
-	const TArray<UProject_JCharacterAdvancementDefinition *> &History)
+bool UProject_JProgressionComponent::InstallCommittedProgression(
+    const FProject_JProgressionSnapshot& Snapshot, UProject_JCharacterClassDefinition* Class,
+    const TArray<UProject_JCharacterAdvancementDefinition*>& History)
 {
-	check(IsInGameThread());
-	TArray<TObjectPtr<UProject_JCharacterAdvancementDefinition>> Active;
-	const bool bValidSnapshot = ValidateRestoreSnapshot(Snapshot, Class, History, Active, true);
-	checkf(bValidSnapshot, TEXT("Committed progression snapshot must have been validated"));
-	if (!bValidSnapshot) { return; }
+    bool Changed = false;
+    const bool Installed = TryInstallCommittedProgression(Snapshot, Class, History, [] { return true; }, Changed);
+    checkf(Installed, TEXT("Committed progression snapshot must have been validated"));
+    return Installed && Changed;
+}
+bool UProject_JProgressionComponent::TryInstallCommittedProgression(
+    const FProject_JProgressionSnapshot& InSnapshot, UProject_JCharacterClassDefinition* InClass,
+    const TArray<UProject_JCharacterAdvancementDefinition*>& InHistory, TFunctionRef<bool()> CanInstall, bool& OutChanged)
+{
+    check(IsInGameThread());
+    if (InHistory.Num() > 256 || InSnapshot.AdvancementHistory.Num() > 256) return false;
+    const TStrongObjectPtr<ThisClass> KeepSelf(this);
+    const TStrongObjectPtr<AActor> KeepOwner(GetOwner());
+    const TStrongObjectPtr<UProject_JCharacterClassDefinition> KeepClass(InClass);
+    TArray<TStrongObjectPtr<UProject_JCharacterAdvancementDefinition>> KeepHistory;
+    for (auto* Entry : InHistory) KeepHistory.Emplace(Entry);
+    const auto Snapshot = InSnapshot;
+    const auto History = InHistory;
+    auto* Class = InClass;
+    if (!CanInstall()) return false;
+    TArray<TObjectPtr<UProject_JCharacterAdvancementDefinition>> Active;
+    if (!ValidateRestoreSnapshot(Snapshot, Class, History, Active, true) || !CanInstall()) return false;
+	const int64 NewExperience = Snapshot.SchemaVersion >= 2 ? Snapshot.Experience : 0;
+	const bool bActiveIdentityChanged = ActiveAdvancements != Active;
+	const bool bChanged = State.Revision == 0 || State.ClassDefinition != Class ||
+		State.Advancement != (History.IsEmpty() ? nullptr : History.Last()) ||
+		State.Level != Snapshot.Level || Experience != NewExperience ||
+		AcquiredAdvancements != Snapshot.AdvancementHistory || bActiveIdentityChanged;
 	bRebuildCommittedClass = State.ClassDefinition != Class;
 	bRebuildCommittedAdvancements = false;
 	CommittedGrantsToAdd.Reset();
@@ -602,6 +634,9 @@ void UProject_JProgressionComponent::InstallCommittedProgression(
 		bool AppendOnly = Snapshot.AdvancementHistory.Num() == AcquiredAdvancements.Num() + 1;
 		for (int32 Index = 0; AppendOnly && Index < AcquiredAdvancements.Num(); ++Index)
 			AppendOnly = AcquiredAdvancements[Index] == Snapshot.AdvancementHistory[Index];
+		// Reusing IDs is insufficient when an existing active grant owner changed.
+		for (int32 Index = 0; AppendOnly && Index < ActiveAdvancements.Num(); ++Index)
+			AppendOnly = Active.IsValidIndex(Index) && Active[Index] == ActiveAdvancements[Index];
 		bRebuildCommittedAdvancements =
 			bRebuildCommittedClass || !AppendOnly ||
 			History.Last()->AbilityGrantPolicy == EProject_JAdvancementAbilityGrantPolicy::ReplacePreviousAdvancement;
@@ -610,58 +645,78 @@ void UProject_JProgressionComponent::InstallCommittedProgression(
 		else
 			CommittedGrantsToAdd.Add(History.Last());
 	}
+	else if (bActiveIdentityChanged)
+	{
+		// A re-resolved definition can keep its persisted ID while replacing the
+		// active grant owner. Retire old leases before publishing its new grants.
+		bRebuildCommittedAdvancements = true;
+		CommittedGrantsToAdd = Active;
+	}
 	bInitializeCommittedAttributes = !State.ClassDefinition && Class;
 	State.ClassDefinition = Class;
 	State.Advancement = History.IsEmpty() ? nullptr : History.Last();
 	State.Level = Snapshot.Level;
-	Experience = Snapshot.SchemaVersion >= 2 ? Snapshot.Experience : 0;
+	Experience = NewExperience;
 	AcquiredAdvancements = Snapshot.AdvancementHistory;
 	ActiveAdvancements = MoveTemp(Active);
+    OutChanged = bChanged;
+    return true;
 }
 void UProject_JProgressionComponent::PublishCommittedExperience()
 {
-	const FProgressionMutationLifetime Lifetime(this, GetASC());
-	if (bRebuildCommittedClass || bRebuildCommittedAdvancements || !CommittedGrantsToAdd.IsEmpty())
-	{
-		const bool RebuildClass = bRebuildCommittedClass, RebuildAdv = bRebuildCommittedAdvancements;
-		bRebuildCommittedClass = bRebuildCommittedAdvancements = false;
-		TArray<TStrongObjectPtr<UProject_JCharacterAdvancementDefinition>> Grants;
-		for (UProject_JCharacterAdvancementDefinition *Adv : CommittedGrantsToAdd)
-			Grants.Emplace(Adv);
-		CommittedGrantsToAdd.Reset();
-		TGuardValue<bool> Guard(bChanging, true);
-		auto *Set = GetDefault<UProject_JAbilitySet>();
-		if (auto *ASC = GrantedAbilitySystem.Get())
-		{
-			if (RebuildClass)
-				Set->TakeFromAbilitySystem(ASC, &ClassHandles);
-			if (RebuildAdv)
-				Set->TakeFromAbilitySystem(ASC, &AdvancementHandles);
-		}
-		if (!IsMutationCurrent(Lifetime.Owner.Get(), Lifetime.ASC.Get()))
-			return;
-		if (RebuildClass)
-			GrantClass();
-		if (!GrantedAbilitySystem.IsValid())
-			GrantedAbilitySystem = GetASC();
-		for (const auto &PinnedAdv : Grants)
-		{
-			const auto *Adv = PinnedAdv.Get();
-			if (!CanGrant())
-				return;
-			GrantSets(Adv->AdditionalAbilitySets, TEXT("Advancement.") + Adv->AdvancementId.ToString(),
-					  AdvancementHandles);
-			GrantStyle(Adv->CombatStyleOverride, AdvancementHandles);
-		}
-	}
-	if (!IsMutationCurrent(Lifetime.Owner.Get(), Lifetime.ASC.Get()))
-		return;
-	if (bInitializeCommittedAttributes)
-	{
-		bInitializeCommittedAttributes = false;
-		if (auto *Avatar = Cast<AProject_JBaseCharacter>(GetASC()->GetAvatarActor()))
-			Avatar->InitializeDefaultAttributes(true);
-	}
-	if (IsMutationCurrent(Lifetime.Owner.Get(), Lifetime.ASC.Get()))
-		Publish();
+    PublishCommittedExperience([] { return true; });
+}
+void UProject_JProgressionComponent::PublishCommittedExperience(TFunctionRef<bool()> Current)
+{
+    if (!Current()) return;
+    const TStrongObjectPtr<ThisClass> KeepSelf(this);
+    const TStrongObjectPtr<AActor> KeepOwner(GetOwner());
+    const FProgressionMutationLifetime Lifetime(this, GetASC());
+    const auto IsCurrent = [&]
+    {
+        return Current() && IsMutationCurrent(Lifetime.Owner.Get(), Lifetime.ASC.Get()) && Current();
+    };
+    if (!IsCurrent()) return;
+    if (bRebuildCommittedClass || bRebuildCommittedAdvancements || !CommittedGrantsToAdd.IsEmpty())
+    {
+        const bool RebuildClass = bRebuildCommittedClass, RebuildAdv = bRebuildCommittedAdvancements;
+        bRebuildCommittedClass = bRebuildCommittedAdvancements = false;
+        TArray<TStrongObjectPtr<UProject_JCharacterAdvancementDefinition>> Grants;
+        for (UProject_JCharacterAdvancementDefinition* Adv : CommittedGrantsToAdd) Grants.Emplace(Adv);
+        CommittedGrantsToAdd.Reset();
+        TGuardValue<bool> Guard(bChanging, true);
+        auto* Set = GetDefault<UProject_JAbilitySet>();
+        if (auto* ASC = GrantedAbilitySystem.Get())
+        {
+            if (RebuildClass) { if (!IsCurrent()) return; Set->TakeFromAbilitySystem(ASC, &ClassHandles); }
+            if (RebuildAdv) { if (!IsCurrent()) return; Set->TakeFromAbilitySystem(ASC, &AdvancementHandles); }
+        }
+        if (!IsCurrent()) return;
+        if (RebuildClass) { GrantClass(); if (!IsCurrent()) return; }
+        if (!GrantedAbilitySystem.IsValid())
+        {
+            auto* ResolvedASC = GetASC();
+            if (!IsCurrent() || ResolvedASC != Lifetime.ASC.Get()) return;
+            GrantedAbilitySystem = ResolvedASC;
+        }
+        for (const auto& PinnedAdv : Grants)
+        {
+            const auto* Adv = PinnedAdv.Get();
+            if (!IsCurrent() || !CanGrant() || !IsCurrent()) return;
+            GrantSets(Adv->AdditionalAbilitySets, TEXT("Advancement.") + Adv->AdvancementId.ToString(), AdvancementHandles);
+            if (!IsCurrent()) return;
+            GrantStyle(Adv->CombatStyleOverride, AdvancementHandles);
+            if (!IsCurrent()) return;
+        }
+    }
+    if (!IsCurrent()) return;
+    if (bInitializeCommittedAttributes)
+    {
+        auto* CurrentASC = GetASC();
+        if (!IsCurrent() || CurrentASC != Lifetime.ASC.Get()) return;
+        const TStrongObjectPtr<AProject_JBaseCharacter> Avatar(Cast<AProject_JBaseCharacter>(CurrentASC->GetAvatarActor()));
+        bInitializeCommittedAttributes = false;
+        if (Avatar) Avatar->InitializeDefaultAttributes(true);
+    }
+    if (IsCurrent()) Publish();
 }

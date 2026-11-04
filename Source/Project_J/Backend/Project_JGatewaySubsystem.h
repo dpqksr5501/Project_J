@@ -36,7 +36,7 @@ public:
 		const FProject_JBackendRequestContext& RequestContext,
 		FOnBackendEnvelopeResponse OnResponse) override;
 
-	// Enqueue a log message to be sent to the backend asynchronously (Rate Limited)
+	// Game-thread only; remote logging fails closed off-thread or after Deinitialize.
 	void EnqueueRemoteLog(const FString& Message, const FString& Severity);
 	bool IsRemoteTelemetryEnabled() const;
 
@@ -84,6 +84,7 @@ private:
 	FTimerHandle LogFlushTimerHandle;
 	bool bLogFlushInFlight = false;
 
+	void ScheduleRemoteLogFlush();
 	void FlushRemoteLogs();
 	void TrimRemoteLogQueue();
 	UFUNCTION()

@@ -23,7 +23,7 @@ class PROJECT_JCORE_API IProject_JCombatInterface
 
 public:
 	/** Native authority receiver; transport lives on the owning ASC, not the pawn. */
-	virtual void ReceiveAuthorityCombatInput(const FGameplayTag& InputTag, float ClientTimestamp, uint32 InputSequence) {}
+	virtual void ReceiveAuthorityCombatInput(const FGameplayTag& InputTag, double ClientTimestamp, uint32 InputSequence) {}
 
 	// Returns the combat participant's current character level.
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Combat")

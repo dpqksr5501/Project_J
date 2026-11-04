@@ -29,7 +29,7 @@ inputs=local_inputs(world)
 combat_action=unreal.load_asset('/Game/Input/Actions/IA_ToggleCombat')
 
 names = ['LMB1', 'LMB2', 'Q1_or_LR2', 'Q2', 'R', 'T']
-montages = [unreal.load_asset('/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_' + n) for n in names]
+montages = [unreal.load_asset('/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/AM_Spellblade_' + n) for n in names]
 assert all(montages)
 bones = ['thigh_l', 'calf_l', 'foot_l', 'thigh_r', 'calf_r', 'foot_r']
 body_contact = bool(globals().get('PLAYER_MONTAGE_VALIDATE_BODY_CONTACT', False))

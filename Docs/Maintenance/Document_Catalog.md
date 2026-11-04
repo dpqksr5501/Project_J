@@ -4,7 +4,7 @@
 
 목록은 파일 위치와 문서 종류를 안내한다. 구현 완료·현재 성능을 판정하는 표가 아니며, 각 문서의 날짜·범위·후속 기록을 함께 읽는다. 통합 문서 안내는 이전 링크를 이어주는 진입점이고 상세 본문은 통합 가이드에 있다.
 
-문서 폴더 파일 3430개, Markdown 271개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
+문서 폴더 파일 3690개, Markdown 288개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
 
 ## 주제별 목록
 
@@ -31,6 +31,7 @@
 | [MMORPG 확장 기반과 콘텐츠 경계](../Architecture/Extensions/MMO_Foundation_2026-09-12.md) | 기반 계약·당시 검증 | Architecture/Extensions/MMO_Foundation_2026-09-12.md |
 | [콘텐츠와 MMORPG 확장 기반](../Architecture/Extensions/README.md) | 목차·문서 관리 | Architecture/Extensions/README.md |
 | [Deferred MMORPG Systems](../Architecture/Planning/DeferredMMORPGSystems.md) | 계획·제안 | Architecture/Planning/DeferredMMORPGSystems.md |
+| [MMORPG 아키텍처 구현·검증 작업 — 2026-10-26](../Architecture/Planning/Project_J_MMO_Architecture_Work_2026-10-26.md) | 계획·제안 | Architecture/Planning/Project_J_MMO_Architecture_Work_2026-10-26.md |
 | [Project_J MMORPG Execution Roadmap](../Architecture/Planning/ProjectJ_Mmorpg_Execution_Roadmap_2026-09-03.md) | 계획·제안 | Architecture/Planning/ProjectJ_Mmorpg_Execution_Roadmap_2026-09-03.md |
 | [전체 실행 계획](../Architecture/Planning/README.md) | 목차·문서 관리 | Architecture/Planning/README.md |
 | [아키텍처](../Architecture/README.md) | 목차·문서 관리 | Architecture/README.md |
@@ -76,13 +77,16 @@
 | [무기 접촉 복귀와 몸체 프로필](../Animation/Architecture/Weapon_Contact_Recovery.md) | 통합 문서 안내 | Animation/Architecture/Weapon_Contact_Recovery.md |
 | [무기 궤적과 손 파지의 소유권](../Animation/Architecture/Weapon_Grip_Drive_Policy.md) | 통합 문서 안내 | Animation/Architecture/Weapon_Grip_Drive_Policy.md |
 | [캐릭터 리깅과 UE5 후처리 제작·문제 해결 가이드](../Animation/Authoring/Character_Rigging_And_UE5_Postprocess_Playbook.md) | 제작 가이드 | Animation/Authoring/Character_Rigging_And_UE5_Postprocess_Playbook.md |
+| [Greatsword_A 전투·장착·복귀 파일 묶음](../Animation/Authoring/Data/GreatswordA_20261103/Groups.md) | 제작 가이드 | Animation/Authoring/Data/GreatswordA_20261103/Groups.md |
 | [데이터 기반 이동 콘텐츠 확장](../Animation/Authoring/DataDrivenLocomotionExtensionGuide.md) | 제작 가이드 | Animation/Authoring/DataDrivenLocomotionExtensionGuide.md |
+| [Greatsword_A 애니메이션 조사 — 2026-11-03](../Animation/Authoring/Greatsword_A_Animation_Survey_2026-11-03.md) | 제작 가이드 | Animation/Authoring/Greatsword_A_Animation_Survey_2026-11-03.md |
 | [손바닥 접촉 기준과 Guided Hand IK](../Animation/Authoring/Guided_Hand_Contact.md) | 통합 문서 안내 | Animation/Authoring/Guided_Hand_Contact.md |
 | [인간형 스켈레톤과 추가 뼈 제작 기준](../Animation/Authoring/HumanoidSkeletonRetargetingStandards.md) | 제작 가이드 | Animation/Authoring/HumanoidSkeletonRetargetingStandards.md |
 | [캐릭터·의상·장비 LOD 제작](../Animation/Authoring/Mesh_LOD_Authoring.md) | 제작 가이드 | Animation/Authoring/Mesh_LOD_Authoring.md |
 | [플레이어 애니메이션 라이브러리와 추가 수입](../Animation/Authoring/Player_Animation_Library.md) | 제작 가이드 | Animation/Authoring/Player_Animation_Library.md |
 | [애니메이션 제작 가이드](../Animation/Authoring/README.md) | 목차·문서 관리 | Animation/Authoring/README.md |
 | [보조 손 접촉과 직업별 파지 설정](../Animation/Authoring/Secondary_Hand_Contact.md) | 통합 문서 안내 | Animation/Authoring/Secondary_Hand_Contact.md |
+| [Spellblade 이름·무기 이주](../Animation/Authoring/Spellblade_Migration_2026-11-01.md) | 제작 가이드 | Animation/Authoring/Spellblade_Migration_2026-11-01.md |
 | [무기 파지와 손 접촉 통합 가이드](../Animation/Authoring/Weapon_Hand_Contact_System.md) | 통합 상세 가이드 | Animation/Authoring/Weapon_Hand_Contact_System.md |
 | [마우스 회전 끊김 콘솔 진단](../Animation/Debug/Mouse_Turn_Trace_2026-10-06.md) | 구조·계약 | Animation/Debug/Mouse_Turn_Trace_2026-10-06.md |
 | [애니메이션 소스 수명과 Strafe 출발 점검 — 2026-10-23](../Animation/Diagnostics/Animation_Source_Review_2026-10-23.md) | 진단·수정 기록 | Animation/Diagnostics/Animation_Source_Review_2026-10-23.md |
@@ -142,7 +146,7 @@
 | [Combat Locomotion Architecture](../Combat/Architecture/CombatLocomotionArchitecture.md) | 통합 문서 안내 | Combat/Architecture/CombatLocomotionArchitecture.md |
 | [Combat VFX Architecture](../Combat/Architecture/CombatVFXArchitecture.md) | 구조·계약 | Combat/Architecture/CombatVFXArchitecture.md |
 | [Scalable Combat Foundation](../Combat/Architecture/ScalableCombatFoundation.md) | 구조·계약 | Combat/Architecture/ScalableCombatFoundation.md |
-| [Greatsword Combat Authoring Guide](../Combat/Authoring/GreatswordCombatAuthoringGuide.md) | 제작 가이드 | Combat/Authoring/GreatswordCombatAuthoringGuide.md |
+| [Spellblade Combat Authoring Guide](../Combat/Authoring/SpellbladeCombatAuthoringGuide.md) | 제작 가이드 | Combat/Authoring/SpellbladeCombatAuthoringGuide.md |
 | [무기 메시·텍스처 제작 규격](../Combat/Authoring/Weapon_Asset_Standards.md) | 제작 가이드 | Combat/Authoring/Weapon_Asset_Standards.md |
 | [전투](../Combat/README.md) | 목차·문서 관리 | Combat/README.md |
 | [Combat Draw/Sheathe 중 stale one-shot 차단 (2026-08-12)](../Combat/Reports/CombatIntro_StaleOneShot_Resolution_2026-08-12.md) | 시점별 보고·검증 | Combat/Reports/CombatIntro_StaleOneShot_Resolution_2026-08-12.md |
@@ -180,6 +184,7 @@
 | [Project_J — 8×8km MMORPG 시작 권역 전체 제작 및 차기 권역 확장 아키텍처 (Codex 실행 지시서 v4)](../World/Project_J_8x8km_WorldGen_Completion_Expansion_v4.md) | 구조·계약 | World/Project_J_8x8km_WorldGen_Completion_Expansion_v4.md |
 | [Project_J — 8×8km 시작 권역 비주얼 품질·원경·수계·메모리 통합 개선 실행 지시서 (Codex v5)](../World/Project_J_World_Visual_Quality_Recovery_Codex_v5.md) | 구조·계약 | World/Project_J_World_Visual_Quality_Recovery_Codex_v5.md |
 | [메인 오픈 월드 제작](../World/README.md) | 목차·문서 관리 | World/README.md |
+| [권위 월드 이벤트 실행](../World/World_Event_Runtime.md) | 구조·계약 | World/World_Event_Runtime.md |
 | [월드 작업 인수인계 — 2026-10-18](../World/WORLD_HANDOFF_2026-10-18.md) | 구조·계약 | World/WORLD_HANDOFF_2026-10-18.md |
 
 ### 월드 생성·설계
@@ -231,6 +236,7 @@
 | [성능 설계·수집·결과](../Performance/README.md) | 목차·문서 관리 | Performance/README.md |
 | [200명 Mover 측정 원자료](../Performance/Reports/Data/Mover200_20261022/README.md) | 목차·문서 관리 | Performance/Reports/Data/Mover200_20261022/README.md |
 | [대검 스켈레탈 Nanite 적용과 비용 비교 — 2026-10-24](../Performance/Reports/ProjectJ_Character_Nanite_2026-10-24.md) | 시점별 보고·검증 | Performance/Reports/ProjectJ_Character_Nanite_2026-10-24.md |
+| [직접 ABP 200명 · Cloth 병목 진단과 품질 예산](../Performance/Reports/ProjectJ_Cloth_Budget_200_2026-10-25.md) | 시점별 보고·검증 | Performance/Reports/ProjectJ_Cloth_Budget_200_2026-10-25.md |
 | [UE5 호환 직접 ABP · 200명 비용 비교 — 2026-10-25](../Performance/Reports/ProjectJ_DirectRig_200_2026-10-25.md) | 시점별 보고·검증 | Performance/Reports/ProjectJ_DirectRig_200_2026-10-25.md |
 | [Mover 구조 결함 수정과 200명 재검증 — 2026-10-22](../Performance/Reports/ProjectJ_Mover_200_2026-10-22.md) | 시점별 보고·검증 | Performance/Reports/ProjectJ_Mover_200_2026-10-22.md |
 | [Project_J Profiling Baseline Results](../Performance/Reports/ProjectJ_Profiling_Baseline_Results_2026-09-03.md) | 시점별 결과 | Performance/Reports/ProjectJ_Profiling_Baseline_Results_2026-09-03.md |
@@ -284,6 +290,8 @@
 | [Project_J 전체 구조 심화 감사 — 구현·검증 결과 및 남은 범위](../Review/Audits/Project_J_Deep_Structure_Audit_2026-10-13.md) | 검토 기록 | Review/Audits/Project_J_Deep_Structure_Audit_2026-10-13.md |
 | [Project_J 구조·소유권·심화 검토 지도](../Review/Audits/Project_J_Deep_Structure_Map_2026-10-13.md) | 검토 기록 | Review/Audits/Project_J_Deep_Structure_Map_2026-10-13.md |
 | [main 통합과 Mirror Data 결정 반영](../Review/Audits/Project_J_Main_Integration_2026-10-15.md) | 검토 기록 | Review/Audits/Project_J_Main_Integration_2026-10-15.md |
+| [MMORPG 아키텍처 완료도·재사용 범위 점검 — 2026-11-04](../Review/Audits/Project_J_MMO_Architecture_Readiness_2026-11-04.md) | 검토 기록 | Review/Audits/Project_J_MMO_Architecture_Readiness_2026-11-04.md |
+| [Project J MMORPG 실행 구조·확장 기반 감사 — 2026-10-26](../Review/Audits/Project_J_MMO_Foundation_Audit_2026-10-26.md) | 검토 기록 | Review/Audits/Project_J_MMO_Foundation_Audit_2026-10-26.md |
 | [Mover·플레이어 애니메이션 전환 후 소스 재점검](../Review/Audits/Project_J_Mover_Animation_Source_Reaudit_2026-10-20.md) | 검토 기록 | Review/Audits/Project_J_Mover_Animation_Source_Reaudit_2026-10-20.md |
 | [PC BP·DA 잔여 구조 검토와 Door 정리 — 2026-10-15](../Review/Audits/Project_J_PC_Asset_Review_Closure_2026-10-15.md) | 검토 기록 | Review/Audits/Project_J_PC_Asset_Review_Closure_2026-10-15.md |
 | [PC 구조 정리 최종 확인과 커밋 경계 — 2026-10-15](../Review/Audits/Project_J_PC_Commit_Preparation_2026-10-15.md) | 검토 기록 | Review/Audits/Project_J_PC_Commit_Preparation_2026-10-15.md |
@@ -340,11 +348,14 @@
 | [애니메이션 원본 보관과 Manny 제작·회귀 전환](Animation_Source_Archive_2026-10-21.md) | 목차·문서 관리 | Maintenance/Animation_Source_Archive_2026-10-21.md |
 | [변경 마감·중복과 레거시 관리](Change_Completion_Policy.md) | 목차·문서 관리 | Maintenance/Change_Completion_Policy.md |
 | [전체 문서 목록](Document_Catalog.md) | 목차·문서 관리 | Maintenance/Document_Catalog.md |
+| [로컬 분석·보관 자료의 중앙 관리](Local_Archive_Policy.md) | 목차·문서 관리 | Maintenance/Local_Archive_Policy.md |
 | [문서 분류·본문 통합 결과 — 2026-10-03](Organization_Result_2026-10-03.md) | 목차·문서 관리 | Maintenance/Organization_Result_2026-10-03.md |
 | [문서 관리와 보존 규칙](README.md) | 목차·문서 관리 | Maintenance/README.md |
 | [로컬 검증 산출물 정리와 최적화 근거 보존 — 2026-10-16](Storage_Cleanup_2026-10-16.md) | 목차·문서 관리 | Maintenance/Storage_Cleanup_2026-10-16.md |
 | [저장 공간 정리와 현재 문서 갱신 — 2026-10-21](Storage_Cleanup_2026-10-21.md) | 목차·문서 관리 | Maintenance/Storage_Cleanup_2026-10-21.md |
 | [리깅·200명 측정 자료 안전 정리 — 2026-10-25](Storage_Cleanup_2026-10-25.md) | 목차·문서 관리 | Maintenance/Storage_Cleanup_2026-10-25.md |
+| [MMORPG 검증 산출물 안전 정리 — 2026-10-29](Storage_Cleanup_2026-10-29.md) | 목차·문서 관리 | Maintenance/Storage_Cleanup_2026-10-29.md |
+| [필수 아키텍처 마감 후 저장 공간 정리 — 2026-11-04](Storage_Cleanup_2026-11-04.md) | 목차·문서 관리 | Maintenance/Storage_Cleanup_2026-11-04.md |
 
 ### 보관 자료
 
@@ -379,6 +390,8 @@
 | [Animation/Archive/PreMover_20261019](../Animation/Archive/PreMover_20261019) | 2 | 문서 이동·보존 기록 |
 | [Animation/Archive/PreMover_20261019/Project_J/Testing](../Animation/Archive/PreMover_20261019/Project_J/Testing) | 6 | 문서 이동·보존 기록 |
 | [Animation/Archive/PreMover_20261019/Project_JCharacter/Private/Tests](../Animation/Archive/PreMover_20261019/Project_JCharacter/Private/Tests) | 7 | 문서 이동·보존 기록 |
+| [Animation/Authoring/Data/GreatswordA_20261103](../Animation/Authoring/Data/GreatswordA_20261103) | 23 | 문서 이동·보존 기록 |
+| [Animation/Authoring/Data/SpellbladeMigration_20261101](../Animation/Authoring/Data/SpellbladeMigration_20261101) | 1 | 문서 이동·보존 기록 |
 | [Animation/Diagnostics](../Animation/Diagnostics) | 4 | 문서 이동·보존 기록 |
 | [Animation/Planning/GASP_Backward_Reface_2026-10-12_Evidence](../Animation/Planning/GASP_Backward_Reface_2026-10-12_Evidence) | 6 | 문서 이동·보존 기록 |
 | [Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/Evidence](../Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/Evidence) | 5 | 문서 이동·보존 기록 |
@@ -410,8 +423,25 @@
 | [Handoffs/MotionMatchingCrowd_2026-10-05](../Handoffs/MotionMatchingCrowd_2026-10-05) | 1 | 문서 이동·보존 기록 |
 | [Handoffs/MotionMatchingCrowd_2026-10-05/Screenshots](../Handoffs/MotionMatchingCrowd_2026-10-05/Screenshots) | 15 | 문서 이동·보존 기록 |
 | [Handoffs/WholeProjectAudit_2026-10-14](../Handoffs/WholeProjectAudit_2026-10-14) | 1 | 문서 이동·보존 기록 |
-| [Maintenance]() | 4 | 문서 이동·보존 기록 |
+| [Maintenance]() | 5 | 문서 이동·보존 기록 |
+| [Media](../Media) | 1 | 문서 이동·보존 기록 |
 | [Performance/Reports](../Performance/Reports) | 2 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/ClothBudget200_20261025](../Performance/Reports/Data/ClothBudget200_20261025) | 21 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/ClothBudget200_20261025/ClothBudget_Local_Follow_NoBlur_20261026](../Performance/Reports/Data/ClothBudget200_20261025/ClothBudget_Local_Follow_NoBlur_20261026) | 7 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/ClothBudget200_20261025/ClothBudget_Off_A_20261026](../Performance/Reports/Data/ClothBudget200_20261025/ClothBudget_Off_A_20261026) | 7 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/ClothBudget200_20261025/ClothBudget_Off_B_20261026](../Performance/Reports/Data/ClothBudget200_20261025/ClothBudget_Off_B_20261026) | 7 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/ClothBudget200_20261025/ClothBudget_On_A_20261026](../Performance/Reports/Data/ClothBudget200_20261025/ClothBudget_On_A_20261026) | 7 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/ClothBudget200_20261025/ClothBudget_On_B_20261026](../Performance/Reports/Data/ClothBudget200_20261025/ClothBudget_On_B_20261026) | 7 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/ClothBudget200_20261025/ClothBudget_On_Final_20261026](../Performance/Reports/Data/ClothBudget200_20261025/ClothBudget_On_Final_20261026) | 7 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/ClothBudget200_20261025/ClothBudget_On_FinalB_20261026](../Performance/Reports/Data/ClothBudget200_20261025/ClothBudget_On_FinalB_20261026) | 7 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/ClothBudget200_20261025/ClothBudget_Remote_Follow_NoBlur_20261026](../Performance/Reports/Data/ClothBudget200_20261025/ClothBudget_Remote_Follow_NoBlur_20261026) | 7 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/ClothBudget200_20261025/RigCause_ClothNoCollision_A_20261025](../Performance/Reports/Data/ClothBudget200_20261025/RigCause_ClothNoCollision_A_20261025) | 7 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/ClothBudget200_20261025/RigCause_ClothNoCollision_B_20261025](../Performance/Reports/Data/ClothBudget200_20261025/RigCause_ClothNoCollision_B_20261025) | 7 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/ClothBudget200_20261025/RigCause_ClothOff_A_20261025](../Performance/Reports/Data/ClothBudget200_20261025/RigCause_ClothOff_A_20261025) | 7 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/ClothBudget200_20261025/RigCause_ClothOff_B_20261025](../Performance/Reports/Data/ClothBudget200_20261025/RigCause_ClothOff_B_20261025) | 7 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/ClothBudget200_20261025/RigCause_DefaultConfirm_20261025](../Performance/Reports/Data/ClothBudget200_20261025/RigCause_DefaultConfirm_20261025) | 7 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/ClothBudget200_20261025/RigCause_InnerSerial_A_20261025](../Performance/Reports/Data/ClothBudget200_20261025/RigCause_InnerSerial_A_20261025) | 7 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data/ClothBudget200_20261025/RigCause_InnerSerial_B_20261025](../Performance/Reports/Data/ClothBudget200_20261025/RigCause_InnerSerial_B_20261025) | 7 | 문서 이동·보존 기록 |
 | [Performance/Reports/Data/DirectRig200_20261025](../Performance/Reports/Data/DirectRig200_20261025) | 8 | 문서 이동·보존 기록 |
 | [Performance/Reports/Data/DirectRig200_20261025/RigDirect200_A_20261025](../Performance/Reports/Data/DirectRig200_20261025/RigDirect200_A_20261025) | 6 | 문서 이동·보존 기록 |
 | [Performance/Reports/Data/DirectRig200_20261025/RigDirect200_B_20261025](../Performance/Reports/Data/DirectRig200_20261025/RigDirect200_B_20261025) | 6 | 문서 이동·보존 기록 |
@@ -829,6 +859,8 @@
 | [Review/Audits/Evidence_2026-10-13/MatchedNonUnity/A2](../Review/Audits/Evidence_2026-10-13/MatchedNonUnity/A2) | 3 | 문서 이동·보존 기록 |
 | [Review/Audits/Evidence_2026-10-13/MatchedNonUnity/C1](../Review/Audits/Evidence_2026-10-13/MatchedNonUnity/C1) | 3 | 문서 이동·보존 기록 |
 | [Review/Audits/Evidence_2026-10-13/MatchedNonUnity/C2](../Review/Audits/Evidence_2026-10-13/MatchedNonUnity/C2) | 3 | 문서 이동·보존 기록 |
+| [Review/Audits/Evidence/Architecture_2026-10-26](../Review/Audits/Evidence/Architecture_2026-10-26) | 2 | 문서 이동·보존 기록 |
+| [Review/Audits/Evidence/MMOFoundation_2026-10-26](../Review/Audits/Evidence/MMOFoundation_2026-10-26) | 1 | 문서 이동·보존 기록 |
 | [Review/Audits/PCStructureEvidence_2026-10-15](../Review/Audits/PCStructureEvidence_2026-10-15) | 5 | 문서 이동·보존 기록 |
 | [Review/Audits/PCStructureEvidence_2026-10-15/Reconciliation](../Review/Audits/PCStructureEvidence_2026-10-15/Reconciliation) | 2 | 문서 이동·보존 기록 |
 | [Review/Audits/PCStructureEvidence_2026-10-15/Remaining](../Review/Audits/PCStructureEvidence_2026-10-15/Remaining) | 5 | 문서 이동·보존 기록 |

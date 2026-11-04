@@ -11,6 +11,8 @@ struct FProjectJVisualAssetStats
 	uint64 TimedOut = 0, BackoffRejected = 0;
 	int32 InFlight = 0, PeakInFlight = 0;
 	int32 LastTickApplications = 0;
+	int32 LastTickLeaseVisits = 0;
+	uint64 ExecutedTicks = 0;
 	double LastTickMilliseconds = 0;
 };
 
@@ -30,6 +32,7 @@ public:
 	static constexpr int32 MaxApplicationsPerTick = 8;
 	static constexpr int32 MaxLeaseVisitsPerTick = 128;
 	static constexpr double ApplyBudgetMilliseconds = 1.0;
+	static constexpr double IdleSweepIntervalSeconds = 0.5;
 	/** Zero means rejected. Accepted callbacks run once on GT, with null on failure.
 	 * Preload uses an empty callback and retains its token until its consumer no longer needs the asset. */
 	uint64 Request(UObject* Owner, FSoftObjectPath Path, TFunction<void(UObject*)> Apply = {});
@@ -49,19 +52,28 @@ private:
 #if WITH_DEV_AUTOMATION_TESTS
 	friend class FProjectJVisualPressureTest;
 	friend class FProjectJSubsystemCallbackGCTest;
+	friend class FProjectJVisualResidencyCommand;
+	friend class FProjectJVisualLeaseChurnCommand;
 	void ExpireForTest(uint64 Token);
 #endif
 	void Stop();
 	void OnTearDown(UWorld* World);
 	TArray<TSharedPtr<FProjectJVisualAssetGroup>> Groups;
 	TArray<TSharedPtr<FProjectJVisualAssetLease>> Leases;
+	// Tokens remain stable while swap removal keeps retirement work independent
+	// of the other characters' resident and pending leases.
+	TMap<uint64, int32> LeaseSlots;
 	// Admission must not scan every other player's leases during an arrival burst.
 	TMap<TWeakObjectPtr<UObject>, int32> OwnerLeaseCounts;
 	TMap<FSoftObjectPath, double> FailedUntil;
 	FDelegateHandle TearDownHandle;
 	FProjectJVisualAssetStats Stats;
 	uint64 NextToken = 0;
-	int32 Cursor = 0;
+	// Non-owning token links preserve fair round-robin order independently of dense slots.
+	uint64 LeaseCursorToken = 0;
+	int32 PendingLeases = 0, IdleSweepRemaining = 0;
+	double NextIdleSweep = 0;
+	bool bGroupCleanupNeeded = false;
 	bool bAccepting = false;
 	bool bTicking = false;
 };

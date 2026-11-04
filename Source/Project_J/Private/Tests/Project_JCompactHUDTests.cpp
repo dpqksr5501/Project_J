@@ -2,6 +2,7 @@
 #include "Misc/AutomationTest.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "Engine/Texture2D.h"
 #include "Game/Project_JPlayerState.h"
 #include "Game/Project_JQuestComponent.h"
 #include "CharacterClass/Project_JProgressionComponent.h"
@@ -17,7 +18,9 @@
 #include "UI/Project_JUILayoutSettings.h"
 #include "UI/Project_JStatusEffects.h"
 #include "GameplayEffect.h"
+#include "UObject/UnrealType.h"
 #include "Kismet/GameplayStatics.h"
+#include "UObject/StrongObjectPtr.h"
 #include <limits>
 
 namespace ProjectJCompactTests
@@ -316,11 +319,15 @@ bool FProjectJStatusEffectTest::RunTest(const FString &)
 	ProjectJCompactTests::FWorld W;
 	auto *ASC = W.State->GetProjectJAbilitySystemComponent();
 	auto *Model = NewObject<UProject_JStatusEffectModel>();
+	int32 Publications = 0;
+	Model->OnChanged.AddLambda([&Publications] { ++Publications; });
 	Model->Bind(ASC);
 	auto *Hidden = NewObject<UGameplayEffect>();
 	Hidden->DurationPolicy = EGameplayEffectDurationType::Infinite;
 	ASC->ApplyGameplayEffectToSelf(Hidden, 1, ASC->MakeEffectContext());
 	TestTrue(TEXT("Internal effects hidden"), Model->States.IsEmpty());
+	TestTrue(TEXT("Internal effects acquire no status observers"), Model->ObservedEffects.IsEmpty());
+	TestFalse(TEXT("Internal effects start no UI timer"), W.World->GetTimerManager().TimerExists(Model->Timer));
 	auto *Effect = NewObject<UGameplayEffect>();
 	Effect->DurationPolicy = EGameplayEffectDurationType::HasDuration;
 	Effect->DurationMagnitude = FScalableFloat(10.f);
@@ -328,17 +335,157 @@ bool FProjectJStatusEffectTest::RunTest(const FString &)
 	UI.DisplayName = FText::FromString(TEXT("Recovery"));
 	UI.Description = FText::FromString(TEXT("Player facing effect"));
 	const auto Handle = ASC->ApplyGameplayEffectToSelf(Effect, 1, ASC->MakeEffectContext());
-	Model->Refresh();
 	TestEqual(TEXT("Intentional status visible"), Model->States.Num(), 1);
 	if (!Model->States.IsEmpty()) TestTrue(TEXT("Finite remaining time"), Model->States[0].Remaining > 0 && Model->States[0].Remaining <= 10);
-	ASC->RemoveActiveGameplayEffect(Handle);
+	TestTrue(TEXT("Visible finite status starts a countdown timer"), W.World->GetTimerManager().TimerExists(Model->Timer));
+	const float BeforeTimeChange = Model->States.IsEmpty() ? 0.f : Model->States[0].Remaining;
+	ASC->ModifyActiveEffectStartTime(Handle, -1.f);
+	if (!Model->States.IsEmpty()) TestTrue(TEXT("Native time change updates the view without manual refresh"), Model->States[0].Remaining < BeforeTimeChange);
+	const int32 FinitePublication = Publications;
+	const float PreviousRemaining = Model->States.IsEmpty() ? 0.f : Model->States[0].Remaining;
+	W.World->Tick(LEVELTICK_All, .25f);
 	Model->Refresh();
+	TestTrue(TEXT("Exact finite remaining-time changes still publish"), Publications > FinitePublication);
+	if (!Model->States.IsEmpty()) TestTrue(TEXT("Real world time decreases the finite UI countdown"), Model->States[0].Remaining < PreviousRemaining);
+	ASC->RemoveActiveGameplayEffect(Handle);
 	TestTrue(TEXT("Removed effect disappears"), Model->States.IsEmpty());
+	TestFalse(TEXT("Last finite removal retires the countdown timer"), W.World->GetTimerManager().TimerExists(Model->Timer));
+
+	auto *Infinite = NewObject<UGameplayEffect>();
+	Infinite->DurationPolicy = EGameplayEffectDurationType::Infinite;
+	// This installed engine does not export the editor SetStackingType symbol.
+	// Author the transient definition's editable enum, then use normal GAS stacking.
+	auto *Stacking = FindFProperty<FEnumProperty>(UGameplayEffect::StaticClass(), TEXT("StackingType"));
+	if (!TestNotNull(TEXT("Stacking rule remains an editable definition property"), Stacking)) { Model->Unbind(); return false; }
+	Stacking->GetUnderlyingProperty()->SetIntPropertyValue(Stacking->ContainerPtrToValuePtr<void>(Infinite),
+		int64(EGameplayEffectStackingType::AggregateByTarget));
+	TestTrue(TEXT("Transient definition has the authored stacking rule"), Infinite->GetStackingType() == EGameplayEffectStackingType::AggregateByTarget);
+	Infinite->StackLimitCount = 3;
+	auto &InfiniteUI = Infinite->FindOrAddComponent<UProject_JStatusEffectUIData>();
+	InfiniteUI.DisplayName = FText::FromString(TEXT("Persistent status"));
+	InfiniteUI.Description = FText::FromString(TEXT("Stable owner UI"));
+	auto InfiniteHandle = ASC->ApplyGameplayEffectToSelf(Infinite, 1, ASC->MakeEffectContext());
+	if (!TestTrue(TEXT("Real infinite GAS effect remains active"), InfiniteHandle.IsValid()) ||
+		!TestEqual(TEXT("Infinite owner status is visible"), Model->States.Num(), 1)) { Model->Unbind(); return false; }
+	TestFalse(TEXT("Infinite status uses native changes with no idle timer"), W.World->GetTimerManager().TimerExists(Model->Timer));
+	TestEqual(TEXT("Only UI effects are observed"), Model->ObservedEffects.Num(), 1);
+	const int32 StablePublication = Publications;
+	for (int32 RefreshIndex = 0; RefreshIndex < 3; ++RefreshIndex) Model->Refresh();
+	TestEqual(TEXT("Identical infinite views do not notify the HUD again"), Publications, StablePublication);
+	W.World->Tick(LEVELTICK_All, .3f);
+	Model->Refresh();
+	TestEqual(TEXT("Idle infinite status omits duplicate publication"), Publications, StablePublication);
+	const auto StackedHandle = ASC->ApplyGameplayEffectToSelf(Infinite, 1, ASC->MakeEffectContext());
+	TestEqual(TEXT("Normal GAS stacking retains the status handle"), StackedHandle, InfiniteHandle);
+	if (!Model->States.IsEmpty()) TestEqual(TEXT("Normal GAS stack change reaches the view"), Model->States[0].StackCount, 2);
+	TestTrue(TEXT("Stack changes publish"), Publications > StablePublication);
+	const int32 StackedPublication = Publications;
+	Model->Refresh();
+	TestEqual(TEXT("Repeated stacked view is silent"), Publications, StackedPublication);
+	InfiniteHandle = ASC->SetActiveGameplayEffectInhibit(MoveTemp(InfiniteHandle), true, true);
+	TestTrue(TEXT("Inhibited status disappears"), Model->States.IsEmpty());
+	TestTrue(TEXT("Inhibited status keeps its change observers"), Model->ObservedEffects.Contains(InfiniteHandle));
+	TestFalse(TEXT("Inhibited status needs no idle timer"), W.World->GetTimerManager().TimerExists(Model->Timer));
+	TestTrue(TEXT("Inhibition changes publish"), Publications > StackedPublication);
+	const int32 InhibitedPublication = Publications;
+	InfiniteHandle = ASC->SetActiveGameplayEffectInhibit(MoveTemp(InfiniteHandle), false, true);
+	TestEqual(TEXT("Uninhibited status returns"), Model->States.Num(), 1);
+	TestTrue(TEXT("Uninhibition changes publish"), Publications > InhibitedPublication);
+	const int32 MetadataPublication = Publications;
+	InfiniteUI.DisplayName = FText::FromString(TEXT("Updated status"));
+	InfiniteUI.Description = FText::FromString(TEXT("Updated owner tooltip"));
+	InfiniteUI.Icon = TSoftObjectPtr<UTexture2D>(FSoftObjectPath(TEXT("/Engine/EngineResources/DefaultTexture.DefaultTexture")));
+	InfiniteUI.bDebuff = true;
+	InfiniteUI.Priority = 7;
+	Model->Refresh();
+	TestTrue(TEXT("Displayed metadata changes publish"), Publications > MetadataPublication);
+	if (!Model->States.IsEmpty()) TestTrue(TEXT("Updated metadata reaches the current view"), Model->States[0].Name.EqualTo(InfiniteUI.DisplayName)
+		&& Model->States[0].Description.EqualTo(InfiniteUI.Description) && Model->States[0].Icon == InfiniteUI.Icon
+		&& Model->States[0].bDebuff && Model->States[0].Priority == 7);
+	auto *ShortEffect = NewObject<UGameplayEffect>();
+	ShortEffect->DurationPolicy = EGameplayEffectDurationType::HasDuration;
+	ShortEffect->DurationMagnitude = FScalableFloat(.1f);
+	ShortEffect->FindOrAddComponent<UProject_JStatusEffectUIData>().DisplayName = FText::FromString(TEXT("Expiring status"));
+	const auto ExpiringHandle = ASC->ApplyGameplayEffectToSelf(ShortEffect, 1, ASC->MakeEffectContext());
+	TestEqual(TEXT("Finite and infinite statuses coexist"), Model->States.Num(), 2);
+	const int32 BeforeExpiryPublication = Publications;
+	W.World->Tick(LEVELTICK_All, .2f);
+	Model->Refresh();
+	TestFalse(TEXT("Elapsed finite effect leaves the view"), Model->States.ContainsByPredicate([ExpiringHandle](const auto &State) { return State.Handle == ExpiringHandle; }));
+	TestTrue(TEXT("Expiry changes publish"), Publications > BeforeExpiryPublication);
 	ProjectJCompactTests::FWorld Other;
+	const int32 BeforeRebindPublication = Publications;
 	Model->Bind(Other.State->GetProjectJAbilitySystemComponent());
+	if (auto* Delegate = ASC->OnGameplayEffectStackChangeDelegate(InfiniteHandle))
+		TestFalse(TEXT("Retired source stack observer is detached"), Delegate->IsBoundToObject(Model));
+	if (auto* Delegate = ASC->OnGameplayEffectTimeChangeDelegate(InfiniteHandle))
+		TestFalse(TEXT("Retired source time observer is detached"), Delegate->IsBoundToObject(Model));
+	if (auto* Delegate = ASC->OnGameplayEffectInhibitionChangedDelegate(InfiniteHandle))
+		TestFalse(TEXT("Retired source inhibition observer is detached"), Delegate->IsBoundToObject(Model));
+	TestTrue(TEXT("ASC replacement still publishes the explicit reset"), Publications > BeforeRebindPublication);
+	const int32 AfterRebindPublication = Publications;
 	ASC->ApplyGameplayEffectToSelf(Effect, 1, ASC->MakeEffectContext());
 	TestTrue(TEXT("Old source no longer updates model"), Model->States.IsEmpty());
+	TestEqual(TEXT("Retired source produces no status publication"), Publications, AfterRebindPublication);
 	Model->Unbind();
+	TestEqual(TEXT("Explicit Unbind publishes even an empty reset"), Publications, AfterRebindPublication + 1);
+	return true;
+}
+
+namespace ProjectJCompactTests
+{
+class FStatusCountdownCommand : public IAutomationLatentCommand
+{
+public:
+	explicit FStatusCountdownCommand(FAutomationTestBase* InTest) : Test(InTest), Model(NewObject<UProject_JStatusEffectModel>())
+	{
+		auto* Source = W.State->GetProjectJAbilitySystemComponent();
+		Model->Bind(Source);
+		auto* Effect = NewObject<UGameplayEffect>();
+		Effect->DurationPolicy = EGameplayEffectDurationType::HasDuration;
+		Effect->DurationMagnitude = FScalableFloat(10.f);
+		Effect->FindOrAddComponent<UProject_JStatusEffectUIData>().DisplayName = FText::FromString(TEXT("Countdown"));
+		Handle = Source->ApplyGameplayEffectToSelf(Effect, 1, Source->MakeEffectContext());
+		InitialRemaining = Model->States.IsEmpty() ? 0.f : Model->States[0].Remaining;
+		Model->OnChanged.AddLambda([this] { ++Publications; });
+	}
+	~FStatusCountdownCommand() { Model->Unbind(); }
+	bool Update() override
+	{
+		// Separate latent updates advance actual engine frames, allowing the real
+		// world timer to fire. No direct Refresh or synthetic delegate broadcast.
+		W.World->Tick(LEVELTICK_All, Step < 3 ? .3f : .6f);
+		if (++Step < 3) return false;
+		if (Step == 3)
+		{
+			Test->TestTrue(TEXT("Native countdown timer publishes without a GAS change"), Publications > 0);
+			Test->TestTrue(TEXT("Countdown consumes current world time without explicit refresh"),
+				Model->States.Num() == 1 && Model->States[0].Remaining < InitialRemaining);
+			Handle = W.State->GetProjectJAbilitySystemComponent()->SetActiveGameplayEffectInhibit(MoveTemp(Handle), true, true);
+			IdlePublications = Publications;
+			return false;
+		}
+		Test->TestTrue(TEXT("Hidden finite status remains applied while countdown is idle"),
+			W.State->GetProjectJAbilitySystemComponent()->GetActiveGameplayEffect(Handle) && Model->States.IsEmpty());
+		Test->TestEqual(TEXT("Inhibited countdown publishes no idle updates"), Publications, IdlePublications);
+		Handle = W.State->GetProjectJAbilitySystemComponent()->SetActiveGameplayEffectInhibit(MoveTemp(Handle), false, true);
+		Test->TestTrue(TEXT("Native uninhibition immediately restores the finite view"), Model->States.Num() == 1);
+		return true;
+	}
+private:
+	FAutomationTestBase* Test;
+	FWorld W;
+	TStrongObjectPtr<UProject_JStatusEffectModel> Model;
+	FActiveGameplayEffectHandle Handle;
+	int32 Step = 0, Publications = 0, IdlePublications = 0;
+	float InitialRemaining = 0;
+};
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJStatusCountdownTest, "ProjectJ.UI.Extended.StatusCountdownEvents",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJStatusCountdownTest::RunTest(const FString&)
+{
+	ADD_LATENT_AUTOMATION_COMMAND(ProjectJCompactTests::FStatusCountdownCommand(this));
 	return true;
 }
 #endif

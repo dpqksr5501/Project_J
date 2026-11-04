@@ -78,6 +78,79 @@ namespace ProjectJDistortionPrecache
 #endif
 }
 
+
+namespace ProjectJSkyCapturePrecache
+{
+	static TAutoConsoleVariable<int32> CVarEnabled(TEXT("ProjectJ.Rendering.PrecacheSkyCaptureDepth"), 1,
+		TEXT("Supplement UE 5.8 sky-capture depth PSOs through the existing engine collector. Set before material load; 0 is the comparison baseline."));
+
+	static bool AddMissingCaptureDepth(FGraphicsPipelineStateInitializer& PSO)
+	{
+		// Match the engine's capture-only cubemap variant, never the main-view sky.
+		// UE 5.8 SkyPassRendering collects DepthStencil/Load/StencilWrite, while
+		// ReflectionEnvironmentRealTimeCapture uses ShadowDepth/Clear/StencilNop.
+		const ETextureCreateFlags CaptureColorFlags = TexCreate_TargetArraySlicesIndependently
+			| TexCreate_ShaderResource | TexCreate_UAV | TexCreate_RenderTargetable;
+		if (PSO.RenderTargetsEnabled != 1 || PSO.RenderTargetFormats[0] != PF_FloatR11G11B10
+			|| PSO.RenderTargetFlags[0] != CaptureColorFlags || PSO.NumSamples != 1
+			|| PSO.DepthStencilTargetFormat != PF_DepthStencil
+			|| PSO.DepthTargetLoadAction != ERenderTargetLoadAction::ELoad
+			|| PSO.DepthTargetStoreAction != ERenderTargetStoreAction::EStore
+			|| PSO.StencilTargetLoadAction != ERenderTargetLoadAction::ELoad
+			|| PSO.StencilTargetStoreAction != ERenderTargetStoreAction::EStore
+			|| PSO.DepthStencilAccess != FExclusiveDepthStencil(FExclusiveDepthStencil::DepthWrite_StencilWrite))
+		{
+			return false;
+		}
+		PSO.DepthStencilTargetFormat = PF_ShadowDepth;
+		PSO.DepthStencilTargetFlag = TexCreate_DepthStencilTargetable | TexCreate_ShaderResource;
+		PSO.DepthTargetLoadAction = ERenderTargetLoadAction::EClear;
+		PSO.StencilTargetLoadAction = ERenderTargetLoadAction::ENoAction;
+		PSO.StencilTargetStoreAction = ERenderTargetStoreAction::ENoAction;
+		PSO.DepthStencilAccess = FExclusiveDepthStencil(FExclusiveDepthStencil::DepthWrite_StencilNop);
+		return true;
+	}
+
+	class FCollector final : public IPSOCollector
+	{
+	public:
+		explicit FCollector(ERHIFeatureLevel::Type InFeatureLevel) : IPSOCollector(INDEX_NONE), FeatureLevel(InFeatureLevel) {}
+		virtual void CollectPSOInitializers(const FSceneTexturesConfig& SceneTexturesConfig, const FMaterial& Material,
+			const FPSOPrecacheVertexFactoryData& VertexFactoryData, const FPSOPrecacheParams& Params, TArray<FPSOPrecacheData>& Out) override
+		{
+#if !UE_VERSION_OLDER_THAN(5, 8, 0) && UE_VERSION_OLDER_THAN(5, 9, 0)
+			if (!CVarEnabled.GetValueOnAnyThread() || !Material.IsSky()
+				|| GetFeatureLevelShadingPath(FeatureLevel) != EShadingPath::Deferred
+				|| GetPSOPrecacheMode() == EPSOPrecacheMode::PreloadShader) { return; }
+			const int32 Index = ProjectJDistortionPrecache::FindCollector(TEXT("SkyPass"));
+			if (Index == INDEX_NONE) { return; }
+			const auto Factory = FPSOCollectorCreateManager::GetCreateFunction(EShadingPath::Deferred, Index);
+			if (!Factory) { return; }
+			TUniquePtr<IPSOCollector> Original(Factory(FeatureLevel));
+			if (!Original) { return; }
+			TArray<FPSOPrecacheData> Candidates;
+			Original->CollectPSOInitializers(SceneTexturesConfig, Material, VertexFactoryData, Params, Candidates);
+			for (FPSOPrecacheData& Candidate : Candidates)
+			{
+				if (Candidate.Type == FPSOPrecacheData::EType::Graphics && AddMissingCaptureDepth(Candidate.GraphicsPSOInitializer))
+				{
+					// Preserve engine shaders, VF, validation identity, required and priority.
+					Out.Add(MoveTemp(Candidate));
+				}
+			}
+#endif
+		}
+	private:
+		ERHIFeatureLevel::Type FeatureLevel;
+	};
+#if IS_MONOLITHIC
+	// Same public registration boundary as the rough-refraction supplement above.
+	// The inline collector count is not shared by modular Editor game DLLs.
+	static IPSOCollector* Create(ERHIFeatureLevel::Type FeatureLevel) { return new FCollector(FeatureLevel); }
+	static FRegisterPSOCollectorCreateFunction Registration(&Create, EShadingPath::Deferred, TEXT("ProjectJSkyCaptureDepth"));
+#endif
+}
+
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJDistortionPrecacheTest, "ProjectJ.GroupE.DistortionPrecacheLayout",
@@ -104,6 +177,47 @@ bool FProjectJDistortionPrecacheTest::RunTest(const FString&)
 	TestEqual(TEXT("Modular Editor does not register into a module-local count"), ProjectJDistortionPrecache::FindCollector(TEXT("ProjectJRoughRefraction")), INDEX_NONE);
 #endif
 	TestEqual(TEXT("Unknown collector is unavailable"), ProjectJDistortionPrecache::FindCollector(TEXT("ProjectJMissingCollector")), INDEX_NONE);
+
+	FGraphicsPipelineStateInitializer SkyCapture;
+	SkyCapture.RenderTargetsEnabled = 1;
+	SkyCapture.RenderTargetFormats[0] = PF_FloatR11G11B10;
+	SkyCapture.RenderTargetFlags[0] = TexCreate_TargetArraySlicesIndependently
+		| TexCreate_ShaderResource | TexCreate_UAV | TexCreate_RenderTargetable;
+	SkyCapture.NumSamples = 1;
+	SkyCapture.DepthStencilTargetFormat = PF_DepthStencil;
+	SkyCapture.DepthStencilTargetFlag = TexCreate_DepthStencilTargetable | TexCreate_ShaderResource;
+	SkyCapture.DepthTargetLoadAction = ERenderTargetLoadAction::ELoad;
+	SkyCapture.DepthTargetStoreAction = ERenderTargetStoreAction::EStore;
+	SkyCapture.StencilTargetLoadAction = ERenderTargetLoadAction::ELoad;
+	SkyCapture.StencilTargetStoreAction = ERenderTargetStoreAction::EStore;
+	SkyCapture.DepthStencilAccess = FExclusiveDepthStencil(FExclusiveDepthStencil::DepthWrite_StencilWrite);
+	SkyCapture.StatePrecachePSOHash = 123;
+	const FGraphicsPipelineStateInitializer LegacyCapture = SkyCapture;
+	TestTrue(TEXT("Legacy sky capture depth layout supplemented"), ProjectJSkyCapturePrecache::AddMissingCaptureDepth(SkyCapture));
+	TestEqual(TEXT("Actual capture shadow depth format"), SkyCapture.DepthStencilTargetFormat, PF_ShadowDepth);
+	TestEqual(TEXT("Actual capture depth creation flags"), SkyCapture.DepthStencilTargetFlag, TexCreate_DepthStencilTargetable | TexCreate_ShaderResource);
+	TestEqual(TEXT("Actual capture clears depth"), SkyCapture.DepthTargetLoadAction, ERenderTargetLoadAction::EClear);
+	TestEqual(TEXT("Actual capture does not load stencil"), SkyCapture.StencilTargetLoadAction, ERenderTargetLoadAction::ENoAction);
+	TestEqual(TEXT("Actual capture does not store stencil"), SkyCapture.StencilTargetStoreAction, ERenderTargetStoreAction::ENoAction);
+	TestTrue(TEXT("Actual capture never writes stencil"), SkyCapture.DepthStencilAccess == FExclusiveDepthStencil(FExclusiveDepthStencil::DepthWrite_StencilNop));
+	TestEqual(TEXT("Original color format preserved"), SkyCapture.RenderTargetFormats[0], LegacyCapture.RenderTargetFormats[0]);
+	TestEqual(TEXT("Minimal shader/state hash preserved"), SkyCapture.StatePrecachePSOHash, LegacyCapture.StatePrecachePSOHash);
+	TestFalse(TEXT("Already corrected capture is untouched"), ProjectJSkyCapturePrecache::AddMissingCaptureDepth(SkyCapture));
+	SkyCapture = LegacyCapture;
+	SkyCapture.NumSamples = 4;
+	TestFalse(TEXT("Other sample counts are untouched"), ProjectJSkyCapturePrecache::AddMissingCaptureDepth(SkyCapture));
+	SkyCapture = LegacyCapture;
+	SkyCapture.RenderTargetFlags[0] &= ~TexCreate_TargetArraySlicesIndependently;
+	TestFalse(TEXT("Main-view sky is untouched"), ProjectJSkyCapturePrecache::AddMissingCaptureDepth(SkyCapture));
+	SkyCapture = LegacyCapture;
+	SkyCapture.DepthStencilTargetFormat = PF_Unknown;
+	TestFalse(TEXT("Depth-buffer-disabled capture is untouched"), ProjectJSkyCapturePrecache::AddMissingCaptureDepth(SkyCapture));
+	TestTrue(TEXT("Engine sky collector available without validation"), ProjectJDistortionPrecache::FindCollector(TEXT("SkyPass")) != INDEX_NONE);
+#if IS_MONOLITHIC
+	TestTrue(TEXT("Sky supplement registered separately without validation"), ProjectJDistortionPrecache::FindCollector(TEXT("ProjectJSkyCaptureDepth")) != INDEX_NONE);
+#else
+	TestEqual(TEXT("Modular Editor leaves sky collector registration untouched"), ProjectJDistortionPrecache::FindCollector(TEXT("ProjectJSkyCaptureDepth")), INDEX_NONE);
+#endif
 	return true;
 }
 #endif

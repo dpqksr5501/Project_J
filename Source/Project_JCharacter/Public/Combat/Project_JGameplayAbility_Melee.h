@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Abilities/GameplayAbility.h"
+#include "Project_JGameplayAbility.h"
 #include "Combat/Project_JAttackDefinition.h"
 #include "Project_JGameplayAbility_Melee.generated.h"
 
@@ -14,7 +14,7 @@ struct FProject_JComboNode;
  * Listens for Gameplay Events triggered by AnimNotifies to branch combos based on input tags.
  */
 UCLASS()
-class PROJECT_JCHARACTER_API UProject_JGameplayAbility_Melee : public UGameplayAbility
+class PROJECT_JCHARACTER_API UProject_JGameplayAbility_Melee : public UProject_JGameplayAbility
 {
 	GENERATED_BODY()
 

@@ -6,6 +6,8 @@
 
 | 확인할 내용 | 기준 기록 |
 | --- | --- |
+| MMORPG 아키텍처 실제 구현·검증 | [현재 작업](../Architecture/Planning/Project_J_MMO_Architecture_Work_2026-10-26.md). 감사 이후의 수명·요청·변경분 복제·저장 worker·서버 이벤트와 검증 결과를 이어 읽는다. 전체 콘텐츠/운영 서비스 완료와 구분한다. |
+| 전체 MMORPG 실행·확장 기반 감사 | [2026-10-26 전체 구조 감사](Audits/Project_J_MMO_Foundation_Audit_2026-10-26.md). 현재 실행 흐름·20개 영역·우선 발견·설계 순서를 대조했다. Mover GC 묶음 회귀 크래시와 단독 통과, 실제 에셋 조회·빌드 성공 및 부하 미검증을 구분한다. 생산 코드/에셋 수정은 없다. |
 | Mover·애니메이션 전환 후 소스 | [입력 승인·숫자/소유권 경계와 확장 회귀](Audits/Project_J_Mover_Animation_Source_Reaudit_2026-10-20.md). 실제 수정과 유지 이유·검증 한계를 구분한다. |
 | MMORPG 구조 권고와 현재 실행 경계 | [현재40항목 상태표](Architecture/Project_J_MMO_Remaining_2026-10-19.md) · [최종 검증 요약](Architecture/Project_J_MMO_Validation_2026-10-19.json). 장기 저장·이관·직업/전직의 내부 완료와 운영 인증/서비스·Server 환경 차단을 구분한다. [앞 단계 ZIP 대조](Architecture/Project_J_MMO_Architecture_2026-10-19.md)는 이력이다. |
 | 6850ed45 소스 감사 1·2·3차 마감 | [28개 항목의 수정·회귀·지원 범위와 제한](Audits/Project_J_Source_Audit_6850ed45_Closure_2026-10-19.md). 실제 socket SSR·복구, 최종 빌드·Cook·패키지, Server 환경 차단과 산출물 정리를 구분한다. |

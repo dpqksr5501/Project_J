@@ -18,7 +18,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJBodyPoseMarkerContract,
  "ProjectJ.PlayerLocomotion.BodyPoseMarkerAuthoring",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
 bool FProjectJBodyPoseMarkerContract::RunTest(const FString&)
 {
- auto* Mesh=LoadObject<USkeletalMesh>(nullptr,TEXT("/Game/GreatSword/Meshes/SK_GreatSword_Complete.SK_GreatSword_Complete"));
+ auto* Mesh=LoadObject<USkeletalMesh>(nullptr,TEXT("/Game/Spellblade/Meshes/SK_Spellblade_Complete.SK_Spellblade_Complete"));
  if(!TestNotNull(TEXT("Fixture skeleton"),Mesh))return false;
  auto* Factory=NewObject<UAnimBlueprintFactory>();Factory->TargetSkeleton=Mesh->GetSkeleton();
  Factory->ParentClass=UProject_JRetargetAnimInstance::StaticClass();

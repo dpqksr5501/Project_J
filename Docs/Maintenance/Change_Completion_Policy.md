@@ -54,7 +54,33 @@ MMORPG의 서버 권위·예측과 클라이언트 표현, Avatar 교체·재접
 
 애니메이션 변경은 기존 [애니메이션 기준](../Animation/README.md)을 따른다. 선택 asset의 존재, graph 분기 도달, 실제 pose/화면은 서로 다른 증거다. 입력 의미·발/손 접촉·notify·단발/MM 복귀와 기존 OTM/Strafe·TIP 등 영향을 받는 계약을 보호하고 수치만 통과한 결과를 시각 품질 승인으로 바꾸지 않는다.
 
+## 선택 에셋 검증과 Cook
+
+`Run-ContinuationAssetValidation.ps1 -SelectionManifest <JSON>`은 기존 등록 Data Validation을 명시한 `/Game/Package.Asset` 목록에 실행한다. 기본 `-AssetTypes` 모드는 별도이며 기존 partial/warning 표시는 유지한다. Cook/Stage 및 frozen Deployment 도구는 이제 `-SelectionManifest`와 완료한 `-AssetValidation <runName>`을 요구한다. partial·skipped·unable·warning·limit·누락·stale 결과는 Cook 시작을 허용하지 않는다.
+
+manifest는 UTF-8 JSON의 `schema`, `assetPaths`, `inputFiles` 세 필드만 사용한다. 아래는 형식 예시다. validator가 실제로 읽는 추가 package 원본이 있으면 `inputFiles`에 함께 선언한다.
+
+```json
+{
+  "schema": 1,
+  "assetPaths": ["/Game/DataAssetSets/Crafting/DA_PrototypeHealthToMana.DA_PrototypeHealthToMana"],
+  "inputFiles": ["Content/DataAssetSets/Crafting/DA_PrototypeHealthToMana.uasset"]
+}
+```
+
+선택은 unique object path 1..128개, 입력은 unique Content 상대 package 파일 1..512개다. 각 대상 package의 실제 `.uasset`/`.umap` 중 정확히 하나를 자동 포함하고 총 입력도512개 이내여야 한다. 둘 다 있거나 없으면 거절한다. `.uexp`/`.ubulk`/`.uptnl` 등 외부 payload도 사용한다면 명시한다. traversal·reparse·누락·모호한 JSON/중복/미지원 필드를 거절하며 모든 Content 또는 의존성을 자동 탐색하지 않는다. **선언한 입력의 동일성 근거이며 전체 Cook closure의 검증 보장이 아니다.** plugin/engine package 직접 선택·WP external actor 전체 검증·native map 실행은 이 계약으로 승인하지 않는다.
+
+```powershell
+$manifest=(Resolve-Path './Selection.json').Path
+& './Scripts/Audit/Run-ContinuationAssetValidation.ps1' -Name SelectedDefinitions1 -SelectionManifest $manifest
+& './Scripts/Audit/Run-ContinuationPackaging.ps1' -Mode Cook -Name ValidatedCook1 -Maps @('/Engine/Maps/Entry') -SelectionManifest $manifest -AssetValidation SelectedDefinitions1
+```
+
+strict receipt는 실제 native 선택 행·종료/완료 수치, manifest와 선언/자동 입력 hash, 실행 전후 Source/runtime 지문을 연결한다. Cook/Stage 시작 전과 정상 종료 후 다시 검사하고, native 종료 기록을 먼저 보존한 뒤 재검사를 통과한 경우에만 admission을 게시한다. Stage/Package는 원 Cook의 정상 완료와 같은 admission도 요구하므로 과거 검증 없는 Cook 결과를 자동 승격하지 않는다. 실제 asset Cook root는 기존 map/AssetManager/AlwaysCook 계약에서 지정해야 하며 검증 목록 자체가 Cook root를 추가하지는 않는다. 실제 Stage·packaged 실행은 필요한 통합 단계에서 별도로 확인한다.
+
 ## 검증은 변경 위험에 맞춘다
+
+최적화·진단·제작 복구 등 새 로컬 보관 자료는 [중앙 보관 규칙](Local_Archive_Policy.md)을 따른다. 기존 ArchiveStore·위치/해시 명세·복원 도구를 재사용하고, 동일 자료의 날짜별 압축 사본을 늘리지 않는다. 이동과 압축을 마감할 때 원본/보존본 SHA와 기존 참조·복원을 필요한 범위에서 검증한다. Saved 원자료를 Git/LFS에 추가하거나 과거 실행의 원문·실패를 삭제하는 것은 이 기준의 자동 후속 작업이 아니다.
 
 | 변경 | 필요한 검증의 기준 |
 | --- | --- |

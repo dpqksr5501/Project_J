@@ -86,12 +86,14 @@ FString AProject_JNPCDecisionExperiment::GetSummary() const
 	const auto* Scheduler = GetWorld() ? GetWorld()->GetSubsystem<UProject_JNPCDecisionSubsystem>() : nullptr;
 	if (!Scheduler) { return TEXT("NPC decision scheduler unavailable"); }
 	const auto& Stats = Scheduler->GetStats();
-	return FString::Printf(TEXT("NPCDecision agents=%d targets=%d outstanding=%d batches=%llu decisions=%llu applied=%llu discarded=%llu rejected=%llu last_gt_ms=%.3f target_reads=%d cells=%d fallback=%d observers=%d incomplete_observers=%d promotions=%d full_tick_ms=%.3f max_full_tick_ms=%.3f shared_snapshot_ms=%.3f oldest_ready_ms=%.3f"),
+	return FString::Printf(TEXT("NPCDecision agents=%d targets=%d outstanding=%d batches=%llu decisions=%llu applied=%llu discarded=%llu rejected=%llu last_gt_ms=%.3f target_reads=%d cells=%d fallback=%d observers=%d incomplete_observers=%d promotions=%d full_tick_ms=%.3f max_full_tick_ms=%.3f shared_snapshot_ms=%.3f oldest_ready_ms=%.3f capture_pending=%d capture_ready=%d capture_next=%d capture_targets=%d capture_age_ms=%.3f capture_deferrals=%llu capture_expired=%llu capture_invalidated=%llu"),
 		Scheduler->GetAgentCount(), Scheduler->GetTargetCount(), Scheduler->GetOutstandingCount(), Stats.SubmittedBatches,
 		Stats.SubmittedDecisions, Stats.AppliedDecisions, Stats.DiscardedDecisions, Stats.RejectedBatches, Stats.LastTickGameThreadMilliseconds,
 		Stats.LastTickTargetPositionReads, Stats.LastTickSpatialCells, Stats.LastTickLinearFallbacks, Stats.LastTickObservers,
 		Stats.bObserverCoverageIncomplete ? 1 : 0, Stats.LastTickPromotions, Stats.LastFullTickMilliseconds, Stats.MaxFullTickMilliseconds,
-		Stats.LastSharedSnapshotMilliseconds, Stats.OldestReadyResultMilliseconds);
+		Stats.LastSharedSnapshotMilliseconds, Stats.OldestReadyResultMilliseconds,
+		Stats.bCapturePending ? 1 : 0, Stats.bCaptureReady ? 1 : 0, Stats.CaptureNextIndex, Stats.CaptureTargetCount,
+		Stats.CaptureAgeMilliseconds, Stats.CaptureDeferrals, Stats.CaptureExpired, Stats.CaptureInvalidated);
 }
 
 void AProject_JNPCDecisionExperiment::Tick(float DeltaSeconds)

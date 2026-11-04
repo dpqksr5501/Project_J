@@ -447,6 +447,12 @@ void UProject_JGameplayAbility_Melee::StartComboNode(const FProject_JComboNode& 
 		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 		return;
 	}
+	if (AttackDefinition->MeleeTrajectory.bEnabled)
+	{
+		const auto* SourceMesh=Project_J::Movement::FindPoseSource(GetAvatarActorFromActorInfo());
+		if (!AttackDefinition->GetMeleeTrajectoryFailure(SourceMesh?SourceMesh->GetSkeletalMeshAsset():nullptr).IsEmpty())
+		{ EndAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo,true,true); return; }
+	}
 	ApplyAttackMovementPolicy(*AttackDefinition);
 	UAnimMontage* NodeMontage = AttackDefinition->Montage.Get();
 	const FName NodeSection = AttackDefinition->MontageSectionName;
@@ -602,7 +608,7 @@ void UProject_JGameplayAbility_Melee::OnMeleeHitReceived(FGameplayEventData Payl
 				{
 					const UWorld* World = GetWorld();
 					const AGameStateBase* GameState = World ? World->GetGameState() : nullptr;
-					const float ClientTimestamp = GameState ? GameState->GetServerWorldTimeSeconds() : (World ? World->GetTimeSeconds() : 0.0f);
+					const double ClientTimestamp = GameState ? GameState->GetServerWorldTimeSeconds() : (World ? World->GetTimeSeconds() : 0.0f);
 					if (UProject_JCombatHitValidationComponent* CombatComp = AvatarActor->FindComponentByClass<UProject_JCombatHitValidationComponent>())
 					{
 						CombatComp->SubmitPredictedHit(HitActor, ClientTimestamp, HitResult->TraceStart, HitResult->TraceEnd);

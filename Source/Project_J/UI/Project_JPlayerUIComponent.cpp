@@ -1,6 +1,7 @@
 #include "UI/Project_JPlayerUIComponent.h"
 #include "UObject/StrongObjectPtr.h"
 #include "UI/Project_JPlayerHUDWidget.h"
+#include "Components/Project_JCraftingJobsComponent.h"
 #include "UI/Project_JInventoryViewModel.h"
 #include "UI/Project_JUILayoutSettings.h"
 #include "Game/Project_JQuestComponent.h"
@@ -35,6 +36,8 @@
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
 #include "ProfilingDebugging/CsvProfiler.h"
+#include "ProfilingDebugging/CpuProfilerTrace.h"
+#include "Misc/ScopeExit.h"
 CSV_DEFINE_CATEGORY(ProjectJUI, true);
 
 namespace
@@ -107,6 +110,7 @@ void UProject_JPlayerUIComponent::BeginPlay()
 }
 void UProject_JPlayerUIComponent::QueueSkillRefresh()
 {
+	++SkillsPresentationRevision;
 	if (GetWorld() && !bEnding && !SkillsRefreshTimer.IsValid())
 		SkillsRefreshTimer = GetWorld()->GetTimerManager().SetTimerForNextTick(
 			[WeakThis = TWeakObjectPtr<UProject_JPlayerUIComponent>(this)]()
@@ -185,9 +189,13 @@ void UProject_JPlayerUIComponent::RefreshSources()
 		if (State)
 		{
 			State->OnCharacterIdentityChanged.AddUObject(this, &ThisClass::OnCharacterIdentityChanged);
+			State->OnPartyRosterChanged.AddUObject(this, &ThisClass::OnPartyRosterChanged);
 			BoundQuests = State->FindComponentByClass<UProject_JQuestComponent>();
 			if (BoundQuests.IsValid())
+            {
 				BoundQuests->OnChanged.AddUObject(this, &ThisClass::OnQuestsChanged);
+                BoundQuests->OnHistoryPageChanged.AddUObject(this, &ThisClass::OnQuestsChanged);
+            }
 		}
 		if (ASC)
 		{
@@ -203,10 +211,12 @@ void UProject_JPlayerUIComponent::RefreshSources()
 				BoundProgression->OnChanged.AddUObject(this, &ThisClass::QueueSkillRefresh);
 		}
 	}
+	BindCraftingSource(State ? State->GetCraftingJobsComponent() : nullptr);
 	InventoryModel->Bind(State ? State->GetInventoryComponent() : nullptr,
 						 State ? State->GetEquipmentManagerComponent() : nullptr);
 	RefreshPresentation();
 	Screen->RefreshQuests();
+	OnPartyRosterChanged();
 }
 void UProject_JPlayerUIComponent::ReleaseAllSkills()
 {
@@ -408,6 +418,8 @@ void UProject_JPlayerUIComponent::ResetInteraction()
 }
 void UProject_JPlayerUIComponent::ClearSources()
 {
+    const TStrongObjectPtr<UProject_JPlayerHUDWidget> PreviousScreen(Screen);
+	ClearCraftingSource();
 	if (StatusEffects) StatusEffects->Unbind();
 	if (BoundASC.IsValid())
 	{
@@ -420,18 +432,26 @@ void UProject_JPlayerUIComponent::ClearSources()
 		BoundASC->RegisterGenericGameplayTagEvent().RemoveAll(this);
 	}
 	if (BoundQuests.IsValid())
+    {
 		BoundQuests->OnChanged.RemoveAll(this);
+        BoundQuests->OnHistoryPageChanged.RemoveAll(this);
+    }
 	BoundQuests.Reset();
 	if (BoundProgression.IsValid())
 		BoundProgression->OnChanged.RemoveAll(this);
 	if (BoundState.IsValid())
+	{
 		BoundState->OnCharacterIdentityChanged.RemoveAll(this);
+		BoundState->OnPartyRosterChanged.RemoveAll(this);
+	}
 	AttributeHandles.Reset();
 	BoundASC.Reset();
 	BoundProgression.Reset();
 	BoundState.Reset();
 	BoundCharacterId.Invalidate();
 	bPresentationInitialized = false;
+    // All old binding writes are complete before focus/widget callbacks can install a newer source.
+    if (PreviousScreen.IsValid()) PreviousScreen->ClearQuestPresentation(this);
 }
 void UProject_JPlayerUIComponent::UpdateAttributes(const FOnAttributeChangeData &)
 {
@@ -468,16 +488,65 @@ void UProject_JPlayerUIComponent::UpdateHUD()
 }
 void UProject_JPlayerUIComponent::UpdateSkills()
 {
+	check(IsInGameThread());
 	CSV_SCOPED_TIMING_STAT(ProjectJUI, QuickSlotPresentation);
-	if (!Screen || !GetWorld() || bEnding)
+	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_UIQuickSlots);
+	const uint64 Revision = ++SkillsPresentationRevision;
+	if (!IsValid(Screen) || !GetWorld() || bEnding || IsBeingDestroyed())
 		return;
-	TArray<FProject_JQuickSlotState> States;
-	bool bCountdown = false;
-	for (int32 Index = 0; Index < HUDPreferences.Slots.Num(); ++Index)
+	if (bUpdatingSkills) { QueueSkillRefresh(); return; }
+	TGuardValue<bool> Updating(bUpdatingSkills, true);
+	const TStrongObjectPtr<ThisClass> KeepSelf(this);
+	const TStrongObjectPtr<AActor> Owner(GetOwner());
+	const TStrongObjectPtr<UProject_JPlayerHUDWidget> View(Screen);
+	const TStrongObjectPtr<UProject_JAbilitySystemComponent> ASC(BoundASC.Get());
+	const TStrongObjectPtr<UProject_JInventoryViewModel> Model(InventoryModel);
+	const TWeakObjectPtr<AProject_JPlayerState> StateOwner = BoundState;
+	const TWeakObjectPtr<UWorld> World = GetWorld();
+	const auto ActorInfo = ASC.IsValid() ? ASC->AbilityActorInfo : nullptr;
+	const uint64 ActorInfoRevision = ASC.IsValid() ? ASC->GetActorInfoRevision() : 0;
+	const int32 AbilityCount = ASC.IsValid() ? ASC->GetActivatableAbilities().Num() : 0;
+	const TWeakObjectPtr<AActor> Avatar = ActorInfo ? ActorInfo->AvatarActor : nullptr;
+	const TWeakObjectPtr<AActor> AbilityOwner = ActorInfo ? ActorInfo->OwnerActor : nullptr;
+	const bool bHadAvatar = Avatar.IsValid(), bHadAbilityOwner = AbilityOwner.IsValid(), bHadState = StateOwner.IsValid();
+	const uint64 KeyRevision = KeyBindingRevision;
+	const auto IsCurrent = [&]
 	{
-		FProject_JQuickSlotState State;
-		State.Binding = HUDPreferences.Slots[Index];
-		State.KeyHint = InputKeys.Keys.IsValidIndex(Index) ? InputKeys.Keys[Index].GetDisplayName() : FText::GetEmpty();
+		return !bEnding && !IsBeingDestroyed() && Owner.IsValid() && !Owner->IsActorBeingDestroyed()
+			&& World.IsValid() && GetWorld() == World.Get() && !World->bIsTearingDown
+			&& Revision == SkillsPresentationRevision && KeyRevision == KeyBindingRevision && Screen == View.Get()
+			&& BoundASC.Get() == ASC.Get() && BoundState == StateOwner && InventoryModel == Model.Get()
+			&& (!bHadState || (StateOwner.IsValid() && !StateOwner->IsActorBeingDestroyed()))
+			&& (!bHadAvatar || (Avatar.IsValid() && !Avatar->IsActorBeingDestroyed()))
+			&& (!bHadAbilityOwner || (AbilityOwner.IsValid() && !AbilityOwner->IsActorBeingDestroyed()))
+			&& (!ASC.IsValid() || (ASC->GetActivatableAbilities().Num() == AbilityCount &&
+				ASC->GetActorInfoRevision() == ActorInfoRevision && ASC->AbilityActorInfo == ActorInfo && (!ActorInfo ||
+				(ActorInfo->AvatarActor == Avatar && ActorInfo->OwnerActor == AbilityOwner))));
+	};
+	const auto Abandon = [&]
+	{
+		CSV_CUSTOM_STAT(ProjectJUI, AbortedQuickSlotSnapshots, 1, ECsvCustomStatOp::Accumulate);
+		if (!bEnding && !IsBeingDestroyed() && Owner.IsValid() && !Owner->IsActorBeingDestroyed()
+			&& World.IsValid() && !World->bIsTearingDown) QueueSkillRefresh();
+	};
+	LastSkillSpecVisits = LastSkillAbilityEvaluations = 0;
+	if (!IsCurrent()) return;
+	ON_SCOPE_EXIT
+	{
+		CSV_CUSTOM_STAT(ProjectJUI, QuickSlotSpecVisits, LastSkillSpecVisits, ECsvCustomStatOp::Set);
+		CSV_CUSTOM_STAT(ProjectJUI, QuickSlotAbilityEvaluations, LastSkillAbilityEvaluations, ECsvCustomStatOp::Set);
+	};
+	struct FSkillState { bool bAvailable = false; float Cooldown = 0, Duration = 0; };
+	TMap<FGameplayTag, FSkillState> Skills;
+	const auto Bindings = HUDPreferences.Slots;
+	const auto Keys = InputKeys.Keys;
+	TArray<FProject_JQuickSlotState> States;
+	States.Reserve(Bindings.Num());
+	for (int32 Index = 0; Index < Bindings.Num(); ++Index)
+	{
+		auto& State = States.AddDefaulted_GetRef();
+		State.Binding = Bindings[Index];
+		State.KeyHint = Keys.IsValidIndex(Index) ? Keys[Index].GetDisplayName() : FText::GetEmpty();
 		if (State.Binding.Kind == EProject_JQuickSlotKind::Skill)
 		{
 			const auto *Slot = PresentedSkills.FindByPredicate(
@@ -486,35 +555,62 @@ void UProject_JPlayerUIComponent::UpdateSkills()
 			{
 				State.Name = Slot->Label;
 				State.Icon = Slot->Icon;
-			}
-			if (Slot && BoundASC.IsValid())
-			{
-				FScopedAbilityListLock Lock(*BoundASC.Get());
-				float Duration = 0;
-				for (const auto &Spec : BoundASC->GetActivatableAbilities())
-					if (Spec.Ability && Spec.GetDynamicSpecSourceTags().HasTagExact(Slot->InputTag))
-					{
-						State.bAvailable |=
-							Spec.Ability->CanActivateAbility(Spec.Handle, BoundASC->AbilityActorInfo.Get());
-						float Time = 0, Total = 0;
-						Spec.Ability->GetCooldownTimeRemainingAndDuration(Spec.Handle, BoundASC->AbilityActorInfo.Get(),
-																		  Time, Total);
-						State.Cooldown = FMath::Max(State.Cooldown, Time);
-						Duration = FMath::Max(Duration, Total);
-					}
-				State.CooldownFraction = Duration > 0 ? FMath::Clamp(State.Cooldown / Duration, 0.f, 1.f) : 0;
+				Skills.FindOrAdd(State.Binding.InputTag);
 			}
 		}
-		else if (State.Binding.Kind == EProject_JQuickSlotKind::Item && InventoryModel)
+	}
+	if (ASC.IsValid() && ActorInfo && !Skills.IsEmpty())
+	{
+		FScopedAbilityListLock Lock(*ASC.Get());
+		for (const auto& Spec : ASC->GetActivatableAbilities())
 		{
-			const auto *Inventory = BoundState.IsValid() ? BoundState->GetInventoryComponent() : nullptr;
-			if (const auto *Summary = InventoryModel->FindItemSummary(State.Binding.ItemId); Summary && Summary->Definition.IsValid())
+			++LastSkillSpecVisits;
+			if (!Spec.Ability || Spec.PendingRemove) continue;
+			TArray<FGameplayTag, TInlineAllocator<10>> Matches;
+			for (const auto& Tag : Spec.GetDynamicSpecSourceTags()) if (Skills.Contains(Tag)) Matches.Add(Tag);
+			if (Matches.IsEmpty()) continue;
+			const TStrongObjectPtr<UGameplayAbility> Ability(Spec.Ability);
+			const auto Handle = Spec.Handle;
+			++LastSkillAbilityEvaluations;
+			const bool bAvailable = Ability->CanActivateAbility(Handle, ActorInfo.Get());
+			// Native and Blueprint condition/cooldown queries may replace the view,
+			// clear sources, change ActorInfo in place, or collect garbage.
+			if (!IsCurrent() || Spec.PendingRemove) { Abandon(); return; }
+			float Time = 0, Total = 0;
+			Ability->GetCooldownTimeRemainingAndDuration(Handle, ActorInfo.Get(), Time, Total);
+			if (!IsCurrent() || Spec.PendingRemove) { Abandon(); return; }
+			for (const auto& Tag : Matches)
+			{
+				auto& Skill = Skills.FindChecked(Tag);
+				Skill.bAvailable |= bAvailable;
+				Skill.Cooldown = FMath::Max(Skill.Cooldown, Time);
+				Skill.Duration = FMath::Max(Skill.Duration, Total);
+			}
+		}
+	}
+	// Unlocking GAS can itself deliver deferred ability changes.
+	if (!IsCurrent()) { Abandon(); return; }
+	bool bCountdown = false;
+	for (auto& State : States)
+	{
+		if (State.Binding.Kind == EProject_JQuickSlotKind::Skill)
+		{
+			if (const auto* Skill = Skills.Find(State.Binding.InputTag))
+			{
+				State.bAvailable = Skill->bAvailable; State.Cooldown = Skill->Cooldown;
+				State.CooldownFraction = Skill->Duration > 0 ? FMath::Clamp(Skill->Cooldown / Skill->Duration, 0.f, 1.f) : 0;
+			}
+		}
+		else if (State.Binding.Kind == EProject_JQuickSlotKind::Item && Model.IsValid())
+		{
+			const auto *Inventory = StateOwner.IsValid() ? StateOwner->GetInventoryComponent() : nullptr;
+			if (const auto *Summary = Model->FindItemSummary(State.Binding.ItemId); Summary && Summary->Definition.IsValid())
 			{
 				const auto *Definition = Summary->Definition.Get();
 				State.Name = Definition->ItemName;
 				State.Icon = Definition->Icon;
 				State.Quantity = Summary->Quantity;
-				State.bAvailable = Summary->UsableInstance.IsValid() && !InventoryModel->bPending;
+				State.bAvailable = Summary->UsableInstance.IsValid() && !Model->bPending;
 				if (const auto *Def = Cast<UProject_JConsumableDefinition>(Definition); Def && Inventory)
 				{
 					State.Cooldown = Inventory->GetUseCooldownRemaining();
@@ -529,13 +625,13 @@ void UProject_JPlayerUIComponent::UpdateSkills()
 				: State.Binding.Kind == EProject_JQuickSlotKind::Item
 				? NSLOCTEXT("ProjectJUI", "SlotItemReason", "보유량·잠금·서버 처리 상태를 확인하세요")
 				: NSLOCTEXT("ProjectJUI", "SlotSkillReason", "습득·자원·전투 상태 조건을 확인하세요");
-		States.Add(State);
 	}
-	Screen->UpdateQuickSlots(States);
+	View->UpdateQuickSlots(States);
+	if (!IsCurrent()) { Abandon(); return; }
 	if (bCountdown)
-		GetWorld()->GetTimerManager().SetTimer(SkillsTimer, this, &ThisClass::UpdateSkills, 0.2f, false);
+		World->GetTimerManager().SetTimer(SkillsTimer, this, &ThisClass::UpdateSkills, 0.2f, false);
 	else
-		GetWorld()->GetTimerManager().ClearTimer(SkillsTimer);
+		World->GetTimerManager().ClearTimer(SkillsTimer);
 }
 void UProject_JPlayerUIComponent::PressSkill(int32 Index)
 {
@@ -878,4 +974,105 @@ void UProject_JPlayerUIComponent::UpdateObservedTarget()
 	const auto *State = TargetPawn ? TargetPawn->GetPlayerState() : Cast<APlayerState>(ObservedTarget.Get());
 	Screen->PresentTarget(State && !State->GetPlayerName().IsEmpty() ? FText::FromString(State->GetPlayerName()) : NSLOCTEXT("ProjectJUI", "Target", "대상"), Current, Maximum);
 	GetWorld()->GetTimerManager().SetTimer(TargetTimer, this, &ThisClass::UpdateObservedTarget, .2f, false);
+}
+
+void UProject_JPlayerUIComponent::OnPartyRosterChanged()
+{
+	if (bEnding || !Screen) return;
+	const auto* PC = Cast<APlayerController>(GetOwner());
+	const auto* State = BoundState.Get();
+	if (!PC || !PC->IsLocalPlayerController() || !State || State->IsActorBeingDestroyed()
+		|| PC->GetPlayerState<AProject_JPlayerState>() != State || State->GetCharacterId().Value != BoundCharacterId)
+	{
+		Screen->PresentPartyRoster({}); return;
+	}
+	Screen->PresentPartyRoster(State->GetPartyRoster());
+}
+
+int32 UProject_JPlayerUIComponent::GetPresentedPartyMemberCount() const
+{
+	return !bEnding && Screen ? Screen->GetPresentedPartyMemberCount() : 0;
+}
+
+UProject_JCraftingJobsComponent* UProject_JPlayerUIComponent::GetCraftingJobsComponent() const
+{
+	const auto* PC = Cast<APlayerController>(GetOwner());
+	const auto* State = BoundState.Get();
+	auto* Jobs = BoundCraftingJobs.Get();
+	return !bEnding && Screen && Screen->IsInViewport() && PC && PC->IsLocalPlayerController()
+		&& State && !State->IsActorBeingDestroyed() && PC->GetPlayerState<AProject_JPlayerState>() == State
+		&& BoundCharacterId.IsValid() && State->GetCharacterId().Value == BoundCharacterId
+		&& Jobs && !Jobs->IsBeingDestroyed() && Jobs->IsRegistered() && Jobs->GetWorld() == GetWorld()
+		&& Jobs->GetOwner() == State && State->GetCraftingJobsComponent() == Jobs
+		&& Jobs->GetPresentationCharacterId() == BoundCharacterId ? Jobs : nullptr;
+}
+void UProject_JPlayerUIComponent::ClearCraftingSource()
+{
+	const TStrongObjectPtr<UProject_JPlayerUIComponent> KeepSelf(this);
+	const TStrongObjectPtr<UProject_JCraftingJobsComponent> Old(BoundCraftingJobs.Get());
+	const FDelegateHandle OldJobs = CraftingJobsHandle, OldRequest = CraftingRequestHandle;
+	// Retire the binding before any widget/focus callbacks can reenter.
+	BoundCraftingJobs.Reset(); CraftingJobsHandle.Reset(); CraftingRequestHandle.Reset();
+	++CraftingBindingRevision;
+	if (Old.IsValid()) { Old->OnChanged.Remove(OldJobs); Old->OnRequestChanged.Remove(OldRequest); }
+	if (Screen) Screen->PresentCraftingJobs(nullptr);
+}
+void UProject_JPlayerUIComponent::BindCraftingSource(UProject_JCraftingJobsComponent* Source)
+{
+	if (BoundCraftingJobs.Get() == Source) return;
+	const TStrongObjectPtr<UProject_JPlayerUIComponent> KeepSelf(this);
+	const TStrongObjectPtr<UProject_JCraftingJobsComponent> KeepSource(Source);
+	const uint64 Previous = CraftingBindingRevision;
+	ClearCraftingSource();
+	// A new source installed from a teardown callback owns its own handles.
+	if (CraftingBindingRevision != Previous + 1 || bEnding || !Screen) return;
+	BoundCraftingJobs = Source;
+	// Subscribe before owner-scope replication arrives. Scope/identity agreement gates presentation,
+	// not this structural subscription; OnChanged will publish when the atomic scope is current.
+	const auto* PC = Cast<APlayerController>(GetOwner());
+	const auto* State = BoundState.Get();
+	if (!Source || !Screen->IsInViewport() || !PC || !PC->IsLocalPlayerController()
+		|| !State || State->IsActorBeingDestroyed() || PC->GetPlayerState<AProject_JPlayerState>() != State
+		|| Source->IsBeingDestroyed() || !Source->IsRegistered() || Source->GetWorld() != GetWorld()
+		|| Source->GetOwner() != State || State->GetCraftingJobsComponent() != Source)
+	{ BoundCraftingJobs.Reset(); return; }
+	const uint64 Revision = CraftingBindingRevision;
+	const TWeakObjectPtr<UProject_JCraftingJobsComponent> Expected(Source);
+	CraftingJobsHandle = Source->OnChanged.AddWeakLambda(this, [this, Expected, Revision]
+	{
+		if (Revision != CraftingBindingRevision || BoundCraftingJobs != Expected || !Screen) return;
+		Screen->PresentCraftingJobs(GetCraftingJobsComponent());
+	});
+	CraftingRequestHandle = Source->OnRequestChanged.AddWeakLambda(this, [this, Expected, Revision]
+	{
+		if (Revision != CraftingBindingRevision || BoundCraftingJobs != Expected || !Screen) return;
+		Screen->RefreshCraftingRequest(GetCraftingJobsComponent());
+	});
+	Screen->PresentCraftingJobs(GetCraftingJobsComponent());
+}
+void UProject_JPlayerUIComponent::ReleaseCraftingScreen(const UProject_JPlayerHUDWidget* ExpectedScreen)
+{
+	if (Screen == ExpectedScreen) ClearCraftingSource();
+}
+void UProject_JPlayerUIComponent::RequestCraftingJobAction(UProject_JCraftingJobsComponent* ExpectedSource,
+	FGuid ExpectedCharacterId, uint64 ExpectedGeneration, FGuid JobId, EProject_JCraftingJobAction Action)
+{
+	const TStrongObjectPtr<UProject_JPlayerUIComponent> KeepSelf(this);
+	const TStrongObjectPtr<UProject_JCraftingJobsComponent> Source(GetCraftingJobsComponent());
+	if (!Source.IsValid() || Source.Get() != ExpectedSource || !JobId.IsValid()
+		|| !ExpectedCharacterId.IsValid() || ExpectedCharacterId != BoundCharacterId
+		|| ExpectedGeneration == 0 || ExpectedGeneration != Source->GetPresentationGeneration()) return;
+	const auto Rows = Source->GetJobs();
+	if (!Rows.ContainsByPredicate([JobId, ExpectedCharacterId, ExpectedGeneration](const FProject_JCraftingJobSummary& Row) { return Row.JobId == JobId && Row.OwnerCharacterId == ExpectedCharacterId && Row.OwnerGeneration == ExpectedGeneration; })
+		|| Source->GetRequestState().Stage == EProject_JCraftingRequestStage::Pending) return;
+	if (Action == EProject_JCraftingJobAction::Collect)
+	{
+		if (Source->GetRemainingSeconds(JobId) != 0) return;
+		Source->RequestCollectJob(JobId);
+	}
+	else if (Action == EProject_JCraftingJobAction::Cancel) Source->RequestCancelJob(JobId);
+}
+int32 UProject_JPlayerUIComponent::GetPresentedCraftingJobCount() const
+{
+	return !bEnding && Screen ? Screen->GetPresentedCraftingJobCount() : 0;
 }

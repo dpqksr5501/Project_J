@@ -87,15 +87,23 @@ class PROJECT_JCHARACTER_API AProject_JBaseCharacter : public AProject_JMoverPaw
 
   protected:
 	friend class FProjectJRepossessAttributeDefaultsTest;
+	friend class FProjectJPartyRosterExecutionCommand;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Foley")
 	TObjectPtr<UProject_JFoleyComponent> FoleyComponent;
 
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void TeleportSucceeded(bool bIsATest) override;
+	/** Successful physical discontinuities retire geometry, not the active ability/window. */
+	void ResetCombatSpatialHistory();
+	UFUNCTION()
+	void OnMoverTeleportSucceeded(const FVector& FromLocation, const FQuat& FromRotation,
+		const FVector& ToLocation, const FQuat& ToRotation);
 	virtual void PossessedBy(AController *NewController) override;
 	virtual void UnPossessed() override;
 	virtual void OnRep_PlayerState() override;
 	virtual void OnRep_Controller() override;
+	virtual void OnRep_Owner() override;
 
   public:
 	UFUNCTION(BlueprintPure, Category = "Significance")

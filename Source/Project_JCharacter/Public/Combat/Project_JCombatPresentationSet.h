@@ -16,6 +16,15 @@ enum class EProject_JCombatVFXAttachmentTarget : uint8
 	World
 };
 
+/** Timing producer owns importance. Profiles only select optional cosmetic payloads. */
+UENUM(BlueprintType)
+enum class EProject_JCombatCuePurpose : uint8
+{
+    Cosmetic,
+    /** Baseline attention on every relevant rendered client until the exact warning lease ends. */
+    GameplayWarning
+};
+
 /** One authored effect at an animation-facing presentation cue. */
 USTRUCT(BlueprintType)
 struct PROJECT_JCHARACTER_API FProject_JCombatVFXCueDefinition
@@ -27,7 +36,8 @@ struct PROJECT_JCHARACTER_API FProject_JCombatVFXCueDefinition
 	FGameplayTag CueTag;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "VFX")
-	TObjectPtr<UNiagaraSystem> NiagaraSystem = nullptr;
+	// Keep the stable serialized field name; only the client loads the payload.
+	TSoftObjectPtr<UNiagaraSystem> NiagaraSystem;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "VFX")
 	EProject_JCombatVFXAttachmentTarget AttachmentTarget = EProject_JCombatVFXAttachmentTarget::Weapon;
@@ -46,6 +56,11 @@ struct PROJECT_JCHARACTER_API FProject_JCombatVFXCueDefinition
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "VFX|Lifetime", meta = (DisplayName = "Keep Alive Until Notify End"))
 	bool bLooping = false;
+
+	/** Remote cosmetics share the world's spawn-attempt budget. Disable only for authored exact-timing cues.
+	 * Locally controlled/viewed owners remain immediate; one-shots denied at their instant are never replayed late. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "VFX|Budget")
+	bool bUseRemoteSpawnBudget = true;
 
 	/**
 	 * Removes any surviving particles at notify end instead of allowing their Niagara

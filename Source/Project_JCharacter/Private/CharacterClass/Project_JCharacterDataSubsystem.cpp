@@ -3,6 +3,11 @@
 #include "Project_JBaseCharacter.h"
 #include "Engine/AssetManager.h"
 #include "Inventory/Project_JItemDefinition.h"
+#include "Crafting/Project_JCraftingRecipeDefinition.h"
+#include "HAL/PlatformTime.h"
+#include "Misc/ScopeExit.h"
+#include "ProfilingDebugging/CpuProfilerTrace.h"
+#include "UObject/StrongObjectPtr.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogProjectJCharacterData, Log, All);
 
@@ -13,13 +18,12 @@ UProject_JCharacterDataSubsystem::UProject_JCharacterDataSubsystem()
 void UProject_JCharacterDataSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
-	PopulateRegistry();
 	// Config is an optional explicit source. Production class/item definitions
 	// are also registered PrimaryAssets and must be available before consumers
 	// initialize, independently of opting into local-profile persistence.
 	if (!LoadPrimaryAssetDefinitions())
 	{
-		ClassMap.Reset(); AdvancementMap.Reset(); ItemMap.Reset();
+		ClassMap.Reset(); AdvancementMap.Reset(); ItemMap.Reset(); CraftingRecipeMap.Reset(); bCraftingRegistryReady = false;
 		UE_LOG(LogProjectJCharacterData, Error, TEXT("Character PrimaryAsset registry initialization failed; no partial registry is published."));
 	}
 	else if (ClassMap.IsEmpty() && AdvancementMap.IsEmpty())
@@ -32,94 +36,90 @@ void UProject_JCharacterDataSubsystem::Deinitialize()
 {
 	ClassMap.Empty();
 	AdvancementMap.Empty();
-	ItemMap.Empty();
+	ItemMap.Empty(); CraftingRecipeMap.Empty(); bPrimaryRegistryReady = bCraftingRegistryReady = false; CraftingRegistryError.Reset();
 	Super::Deinitialize();
 }
 
-void UProject_JCharacterDataSubsystem::PopulateRegistry()
+void UProject_JCharacterDataSubsystem::PostReloadConfig(FProperty* PropertyThatWasLoaded)
 {
-	ClassMap.Empty();
-	AdvancementMap.Empty();
+	Super::PostReloadConfig(PropertyThatWasLoaded);
+	bPrimaryRegistryReady = false;
+}
 
-	// Load and register classes
-	for (const TSoftObjectPtr<UProject_JCharacterClassDefinition>& ClassSoftPtr : ClassDefinitions)
-	{
-		if (UProject_JCharacterClassDefinition* LoadedClass = ClassSoftPtr.LoadSynchronous())
-		{
-			const FName ClassId = LoadedClass->ClassId;
-			if (ClassId.IsNone())
-			{
-				UE_LOG(LogProjectJCharacterData, Warning, TEXT("Found class definition with empty ClassId: %s"), *LoadedClass->GetName());
-				continue;
-			}
-
-			if (ClassMap.Contains(ClassId))
-			{
-				UE_LOG(LogProjectJCharacterData, Error, TEXT("Duplicate ClassId registered: %s"), *ClassId.ToString());
-				continue;
-			}
-
-			ClassMap.Add(ClassId, LoadedClass);
-		}
-	}
-
-	// Load and register advancements
-	for (const TSoftObjectPtr<UProject_JCharacterAdvancementDefinition>& AdvSoftPtr : AdvancementDefinitions)
-	{
-		if (UProject_JCharacterAdvancementDefinition* LoadedAdv = AdvSoftPtr.LoadSynchronous())
-		{
-			const FName AdvId = LoadedAdv->AdvancementId;
-			if (AdvId.IsNone())
-			{
-				UE_LOG(LogProjectJCharacterData, Warning, TEXT("Found advancement definition with empty AdvancementId: %s"), *LoadedAdv->GetName());
-				continue;
-			}
-
-			if (AdvancementMap.Contains(AdvId))
-			{
-				UE_LOG(LogProjectJCharacterData, Error, TEXT("Duplicate AdvancementId registered: %s"), *AdvId.ToString());
-				continue;
-			}
-
-			AdvancementMap.Add(AdvId, LoadedAdv);
-		}
-	}
-	TArray<UProject_JCharacterClassDefinition*> Classes;
-	TArray<UProject_JCharacterAdvancementDefinition*> Advancements;
-	for (const auto& Pair : ClassMap) Classes.Add(Pair.Value);
-	for (const auto& Pair : AdvancementMap) Advancements.Add(Pair.Value);
-	TArray<FText> Errors;
-	if (!ProjectJ::ValidateAdvancementGraph(Classes, Advancements, Errors))
-	{
-		for (const auto& Error : Errors) UE_LOG(LogProjectJCharacterData, Error, TEXT("%s"), *Error.ToString());
-		// Invalid dependency graphs are never made available to authoritative requests.
-		AdvancementMap.Reset();
-	}
-
+bool UProject_JCharacterDataSubsystem::EnsurePrimaryAssetDefinitions()
+{
+	check(IsInGameThread());
+	return bPrimaryRegistryReady || LoadPrimaryAssetDefinitions();
 }
 
 bool UProject_JCharacterDataSubsystem::LoadPrimaryAssetDefinitions()
 {
 	check(IsInGameThread());
+	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_DefinitionRegistryRefresh);
+	// Failed explicit refresh cannot be mistaken for current admission readiness.
+	bPrimaryRegistryReady = false;
+	const double Started = FPlatformTime::Seconds();
+	bool bPublished = false;
+	++Stats.Refreshes; Stats.LastResolvedPaths = Stats.LastSynchronousLoads = 0;
+	ON_SCOPE_EXIT
+	{
+		Stats.LastRefreshMilliseconds = (FPlatformTime::Seconds() - Started) * 1000;
+		if (!bPublished) ++Stats.FailedRefreshes;
+	};
 	auto* Assets = UAssetManager::GetIfInitialized();
 	if (!Assets) return false;
-	TArray<FPrimaryAssetId> ClassIds, AdvancementIds;
-	Assets->GetPrimaryAssetIdList(TEXT("Project_JCharacterClassDefinition"), ClassIds);
-	Assets->GetPrimaryAssetIdList(TEXT("Project_JCharacterAdvancementDefinition"), AdvancementIds);
-	if (ClassIds.Num() + AdvancementIds.Num() > 1024) return false;
-	auto Classes = ClassMap; auto Advancements = AdvancementMap;
-	for (const auto& Id : ClassIds)
+	const auto Gather = [&](const auto& Configured, FName Type, TArray<FSoftObjectPath>& Paths)
 	{
-		auto* Definition = Cast<UProject_JCharacterClassDefinition>(Assets->GetPrimaryAssetPath(Id).TryLoad());
-		if (!Definition || Definition->ClassId.IsNone() || Definition->SchemaVersion < 1) return false;
-		if (const auto* Existing = Classes.Find(Definition->ClassId); Existing && Existing->Get() != Definition) return false;
+		if (Configured.Num() > MaxCharacterDefinitions) return false;
+		TSet<FSoftObjectPath> Seen;
+		for (const auto& Soft : Configured)
+		{
+			const FSoftObjectPath Path = Soft.ToSoftObjectPath();
+			// Duplicate explicit entries are authoring errors; overlap with the
+			// PrimaryAsset scan of the same path is the normal shared-source case.
+			if (!Path.IsValid() || Seen.Contains(Path)) return false;
+			Seen.Add(Path); Paths.Add(Path);
+		}
+		TArray<FPrimaryAssetId> Ids;
+		Assets->GetPrimaryAssetIdList(Type, Ids);
+		if (Ids.Num() > MaxCharacterDefinitions) return false;
+		for (const auto& Id : Ids)
+		{
+			const FSoftObjectPath Path = Assets->GetPrimaryAssetPath(Id);
+			if (!Path.IsValid()) return false;
+			if (!Seen.Contains(Path)) { Seen.Add(Path); Paths.Add(Path); }
+		}
+		return Paths.Num() <= MaxCharacterDefinitions;
+	};
+	TArray<FSoftObjectPath> ClassPaths, AdvancementPaths;
+	if (!Gather(ClassDefinitions, TEXT("Project_JCharacterClassDefinition"), ClassPaths) ||
+		!Gather(AdvancementDefinitions, TEXT("Project_JCharacterAdvancementDefinition"), AdvancementPaths) ||
+		ClassPaths.Num() + AdvancementPaths.Num() > MaxCharacterDefinitions) return false;
+
+	// Build fresh membership from current sources. A removed definition must not
+	// survive merely because a previous refresh published it. Pin across loads.
+	TMap<FName, TObjectPtr<UProject_JCharacterClassDefinition>> Classes;
+	TMap<FName, TObjectPtr<UProject_JCharacterAdvancementDefinition>> Advancements;
+	TMap<FName, TObjectPtr<UProject_JItemDefinition>> Items;
+	TArray<TStrongObjectPtr<UObject>> Pins;
+	const auto Resolve = [&](const FSoftObjectPath& Path)
+	{
+		++Stats.LastResolvedPaths;
+		UObject* Object = Path.ResolveObject();
+		if (!Object) { ++Stats.LastSynchronousLoads; Object = Path.TryLoad(); }
+		if (Object) Pins.Emplace(Object);
+		return Object;
+	};
+	for (const auto& Path : ClassPaths)
+	{
+		auto* Definition = Cast<UProject_JCharacterClassDefinition>(Resolve(Path));
+		if (!Definition || Definition->ClassId.IsNone() || Definition->SchemaVersion < 1 || Classes.Contains(Definition->ClassId)) return false;
 		Classes.Add(Definition->ClassId, Definition);
 	}
-	for (const auto& Id : AdvancementIds)
+	for (const auto& Path : AdvancementPaths)
 	{
-		auto* Definition = Cast<UProject_JCharacterAdvancementDefinition>(Assets->GetPrimaryAssetPath(Id).TryLoad());
-		if (!Definition || Definition->AdvancementId.IsNone() || Definition->SchemaVersion < 1) return false;
-		if (const auto* Existing = Advancements.Find(Definition->AdvancementId); Existing && Existing->Get() != Definition) return false;
+		auto* Definition = Cast<UProject_JCharacterAdvancementDefinition>(Resolve(Path));
+		if (!Definition || Definition->AdvancementId.IsNone() || Definition->SchemaVersion < 1 || Advancements.Contains(Definition->AdvancementId)) return false;
 		Advancements.Add(Definition->AdvancementId, Definition);
 	}
 	TArray<UProject_JCharacterClassDefinition*> ClassValues;
@@ -128,22 +128,79 @@ bool UProject_JCharacterDataSubsystem::LoadPrimaryAssetDefinitions()
 	for (const auto& Pair : Advancements) AdvancementValues.Add(Pair.Value);
 	TArray<FText> Errors;
 	if (!ProjectJ::ValidateAdvancementGraph(ClassValues, AdvancementValues, Errors)) return false;
-	TMap<FName,TObjectPtr<UProject_JItemDefinition>> Items;
-	for(const FName Type : {FName(TEXT("Project_JEquipmentItemDefinition")), FName(TEXT("Project_JConsumableDefinition"))})
+
+	TSet<FSoftObjectPath> ItemPaths;
+	for (const FName Type : {FName(TEXT("Project_JEquipmentItemDefinition")), FName(TEXT("Project_JConsumableDefinition")), FName(TEXT("Project_JCompanionItemDefinition"))})
 	{
-		TArray<FPrimaryAssetId> Ids;Assets->GetPrimaryAssetIdList(Type,Ids);
-		if(Items.Num()+Ids.Num()>1024)return false;
-		for(const auto& Id:Ids)
+		TArray<FPrimaryAssetId> Ids; Assets->GetPrimaryAssetIdList(Type, Ids);
+		if (ItemPaths.Num() + Ids.Num() > MaxItemDefinitions) return false;
+		for (const auto& Id : Ids)
 		{
-			auto* Def=Cast<UProject_JItemDefinition>(Assets->GetPrimaryAssetPath(Id).TryLoad());
-			if(!Def||Def->ItemId.IsNone()||Def->SchemaVersion<1||Def->MaxStackCount<1)return false;
-			if(Items.Contains(Def->ItemId)&&Items[Def->ItemId]!=Def)return false;
-			Items.Add(Def->ItemId,Def);
+			const FSoftObjectPath Path = Assets->GetPrimaryAssetPath(Id);
+			if (!Path.IsValid()) return false;
+			if (ItemPaths.Contains(Path)) continue;
+			ItemPaths.Add(Path);
+			auto* Definition = Cast<UProject_JItemDefinition>(Resolve(Path));
+			if (!Definition || Definition->ItemId.IsNone() || Definition->SchemaVersion < 1 || Definition->MaxStackCount < 1 || Items.Contains(Definition->ItemId)) return false;
+			Items.Add(Definition->ItemId, Definition);
 		}
 	}
-	ClassMap = MoveTemp(Classes); AdvancementMap = MoveTemp(Advancements);ItemMap=MoveTemp(Items);
+	ClassMap = MoveTemp(Classes); AdvancementMap = MoveTemp(Advancements); ItemMap = MoveTemp(Items);
+	bPrimaryRegistryReady = bPublished = true;
+	// Optional recipe errors cannot turn valid core class/item publication into
+	// failure or prevent a profile with existing ownership from opening.
+	RefreshCraftingRecipes();
 	return true;
 }
+bool UProject_JCharacterDataSubsystem::RefreshCraftingRecipes()
+{
+	check(IsInGameThread());
+	bCraftingRegistryReady = false;
+	const auto Fail = [this](const TCHAR* Message) { CraftingRegistryError = Message; return false; };
+	auto* Assets = UAssetManager::GetIfInitialized();
+	if (!Assets || CraftingRecipeDefinitions.Num() > MaxCraftingRecipes)
+		return Fail(TEXT("Optional crafting source is unavailable or exceeds its definition bound."));
+	TArray<FSoftObjectPath> Paths; TSet<FSoftObjectPath> Seen;
+	for (const auto& Soft : CraftingRecipeDefinitions)
+	{
+		const auto Path = Soft.ToSoftObjectPath();
+		if (!Path.IsValid() || Seen.Contains(Path)) return Fail(TEXT("Invalid or duplicate configured recipe path."));
+		Seen.Add(Path); Paths.Add(Path);
+	}
+	TArray<FPrimaryAssetId> Ids;
+	Assets->GetPrimaryAssetIdList(TEXT("Project_JCraftingRecipeDefinition"), Ids);
+	if (Ids.Num() > MaxCraftingRecipes) return Fail(TEXT("Optional recipe discovery exceeded its bound."));
+	for (const auto& Id : Ids)
+	{
+		const auto Path = Assets->GetPrimaryAssetPath(Id);
+		if (!Path.IsValid()) return Fail(TEXT("Invalid recipe PrimaryAsset path."));
+		if (!Seen.Contains(Path)) { Seen.Add(Path); Paths.Add(Path); }
+	}
+	if (Paths.Num() > MaxCraftingRecipes) return Fail(TEXT("Optional recipe union exceeded its bound."));
+	TMap<FName, TObjectPtr<UProject_JCraftingRecipeDefinition>> Recipes;
+	TArray<TStrongObjectPtr<UProject_JCraftingRecipeDefinition>> Pins;
+	for (const auto& Path : Paths)
+	{
+		auto* Recipe = Cast<UProject_JCraftingRecipeDefinition>(Path.ResolveObject());
+		if (!Recipe) Recipe = Cast<UProject_JCraftingRecipeDefinition>(Path.TryLoad());
+		if (!Recipe) return Fail(TEXT("Optional recipe asset could not be resolved."));
+		Pins.Emplace(Recipe);
+		ProjectJ::Crafting::FRecipeValues Values; FString Digest;
+		if (!Recipe->Capture(*this, Values, Digest) || Recipes.Contains(Recipe->RecipeId))
+			return Fail(TEXT("Optional recipe rules, canonical item references or IDs are invalid."));
+		Recipes.Add(Recipe->RecipeId, Recipe);
+	}
+	CraftingRecipeMap = MoveTemp(Recipes);
+	CraftingRegistryError.Reset(); bCraftingRegistryReady = true;
+	return true;
+}
+UProject_JCraftingRecipeDefinition* UProject_JCharacterDataSubsystem::GetCraftingRecipe(FName Id, int32 Version) const
+{
+	if (!bCraftingRegistryReady) return nullptr;
+	const auto* Found = CraftingRecipeMap.Find(Id);
+	return Found && *Found && (*Found)->SchemaVersion == Version ? Found->Get() : nullptr;
+}
+
 UProject_JItemDefinition* UProject_JCharacterDataSubsystem::GetItemDefinition(FName Id,int32 Version) const
 {
 	const auto* Found=ItemMap.Find(Id);return Found&&*Found&&(*Found)->SchemaVersion==Version?Found->Get():nullptr;

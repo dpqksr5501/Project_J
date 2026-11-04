@@ -30,7 +30,7 @@
 #include "ProfilingDebugging/TraceAuxiliary.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JGameplayTags.h"
-#include "Project_JGreatswordCharacter.h"
+#include "Project_JSpellbladeCharacter.h"
 #include "Project_JPlayerState.h"
 #include "UObject/StrongObjectPtr.h"
 #include "UObject/UnrealType.h"
@@ -59,7 +59,7 @@ const TCHAR* PhaseName(EPhase Phase)
 
 struct FBot
 {
- TWeakObjectPtr<AProject_JGreatswordCharacter> Pawn;
+ TWeakObjectPtr<AProject_JSpellbladeCharacter> Pawn;
  TWeakObjectPtr<AProject_JPlayerState> State;
  TWeakObjectPtr<AAIController> Controller;
  FVector Origin;
@@ -118,7 +118,7 @@ struct FRun
   {
    TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_EquipmentSoak_LoadFixtureAssets);
    // Deliberate setup preload. Subsequent repetitions are shared-asset/warm-cache tests.
-   VisualTemplate.Reset(LoadClass<AProject_JPlayerCharacter>(nullptr, TEXT("/Game/Character_BPs/GreatSword/BP_GreatSword.BP_GreatSword_C")));
+   VisualTemplate.Reset(LoadClass<AProject_JPlayerCharacter>(nullptr, TEXT("/Game/Character_BPs/Spellblade/BP_Spellblade.BP_Spellblade_C")));
    Item.Reset(LoadObject<UProject_JEquipmentItemDefinition>(nullptr, TEXT("/Game/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_Equip.DA_Greatsword_Equip")));
   }
   Started = PhaseStarted = LastTick = FPlatformTime::Seconds();
@@ -169,7 +169,7 @@ struct FRun
   Bot.Controller = W->SpawnActor<AAIController>(Params);
   Bot.State = W->SpawnActor<AProject_JPlayerState>(Params);
   Params.bDeferConstruction = true;
-  Bot.Pawn = W->SpawnActor<AProject_JGreatswordCharacter>(AProject_JGreatswordCharacter::StaticClass(), Bot.Origin, FRotator::ZeroRotator, Params);
+  Bot.Pawn = W->SpawnActor<AProject_JSpellbladeCharacter>(AProject_JSpellbladeCharacter::StaticClass(), Bot.Origin, FRotator::ZeroRotator, Params);
   if (!Bot.Controller.IsValid() || !Bot.State.IsValid() || !Bot.Pawn.IsValid()) return false;
   auto* Pawn = Bot.Pawn.Get();
   // Copy only immutable visual/class defaults. Never execute the user's BP BeginPlay

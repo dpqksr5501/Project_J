@@ -461,7 +461,7 @@ AOI 카운터 probe 100개는 이동·GAS·애니메이션을 소비하지 않�
 | 원본 책임 | 현재 구현과 유지 이유 |
 | --- | --- |
 | Mover 입력, gait·속도·방향 분류·회전 offset, floor, post-finalize | Project J Mover 입력·이동 코드가 소유한다. OTM/Strafe, Strafe 전방 3방향 Sprint와 물리 jump ID를 유지한다. 원본 BP의 입력·회전 writer를 추가로 실행하지 않는다. |
-| SmoothWalking gait 가속·감속, facing spring 설정·경사 속도·180도 보정 | `Project_JGroundMovementLibrary`에서 계산한다. 기존 BP 함수는 C++ 호출 하나다. 설치 엔진의 SmoothWalking 생성자가 DLL에 export되지 않는 제약 때문에 이 어댑터를 유지한다. 엔진 solver·rollback spring 상태를 복제한 별도 구현은 만들지 않는다. |
+| SmoothWalking gait 가속·감속, facing spring 설정·경사 속도·180도 보정 | `Project_JGroundMovementLibrary`에서 계산한다.2026-10-27 프로젝트 소유 Mover fork의 MinimalAPI로 native 부모를 추가해 기존 BP의 얇은 override를 상속 경로로 이관했다. 설정22개·BP 경로·엔진 solver·rollback spring은 유지하며 향후 실제 BP override도 지원한다. 배포 검증/성능의 현재 범위는 [MMO 작업](../../Architecture/Planning/Project_J_MMO_Architecture_Work_2026-10-26.md)을 따른다. |
 | ABP trajectory → essential → states → aim → lean 순서와 전환·Chooser 판단 | `Project_JGASP58AnimInstance`가 계산·실행한다. pose callback의 BP는 native 호출 경계이며 매 프레임 중복 갱신 이벤트는 없다. |
 | Mover Experimental State Machine / Pose Match | 원본의 Mover 기본 선택도 이 경로다. CMC용 별도 Motion Matching 갱신·Pivot 조건·post-selection writer를 병렬로 되살리지 않는다. Project J 공중 query와 재선택/playhead 계약은 유지한다. |
 | Steering·Orientation/Stride Warping·Offset Root·Dead Blending·Inertialization·Biped feet | 실제 master의 연결된 포즈 체인과 원본 설정을 유지한다. 엔진 native 포즈 노드를 다시 C++로 복제하지 않는다. |
@@ -851,7 +851,7 @@ UEFN 원본과 Manny 변환본의 Relaxed/Neutral Idle·Walk·Run·Sprint 표본
 
 실제 `/Game/Animation_Logic/RTG_Greatsword_Manny`의 source 팔 기준 회전 4개가 identity여서, 기존 target 기준 포즈와 새 Manny source의 팔 기준이 맞지 않았다. Relaxed Idle 표본의 source 팔꿈치 굽힘은 좌우 약 23/20도였지만 표시 몸체는 약 7.6/6.5도로 펴졌다. 복제 RTG에서 source `upperarm_l/r`, `lowerarm_l/r`만 엔진 ChainToChain 자동 정렬해 약 25/22도로 회복되는 것을 확인한 뒤 실제 RTG에 적용했다. Target retarget pose, source root offset, 다리 설정과 선택 중인 pose 이름은 보존했다. 특정 Idle 교체나 런타임 각도 상수로 가리지 않았다.
 
-비슷한 오류로 target rig의 검지~새끼손가락이 실제 3마디 중 뒤 2마디만 finger chain으로 정의되고, 첫 마디는 존재하지 않는 별도 metacarpal로 분류돼 있었다. `/Game/Characters/GreatSword/IK_GreatSword_Woman`의 8개 chain 시작을 실제 proximal phalanx로 수정하고 가짜 metacarpal chain 8개와 대응 FK 행을 제거했다. 엄지를 포함한 손가락 10개는 같은 마디끼리 대응하는 OneToOne으로 통일했다. 실제 rig의 hard/soft referencer는 생산 RTG 한 개였다.
+비슷한 오류로 target rig의 검지~새끼손가락이 실제 3마디 중 뒤 2마디만 finger chain으로 정의되고, 첫 마디는 존재하지 않는 별도 metacarpal로 분류돼 있었다. `/Game/Characters/Spellblade/IK_Spellblade_Woman`의 8개 chain 시작을 실제 proximal phalanx로 수정하고 가짜 metacarpal chain 8개와 대응 FK 행을 제거했다. 엄지를 포함한 손가락 10개는 같은 마디끼리 대응하는 OneToOne으로 통일했다. 실제 rig의 hard/soft referencer는 생산 RTG 한 개였다.
 
 엔진의 ChainToChain 자동 기준 정렬은 정규화된 길이 위치를 사용하므로, 마디 비율이 다른 손가락의 OneToOne 재생과 기준이 달랐다. 최초 Idle 표본은 개선됐지만 새 이동·점프 회귀가 최대 약 10.8도 잔여 차이를 검출했다. Editor 전용 `AlignOneToOneRetargetChains`는 명시된 equal-count OneToOne chain의 같은 순번 segment 방향을 정렬한다. Source pose 회전만 공식 controller로 갱신하며, target pose·root·runtime 상태를 쓰거나 자체 저장하지 않는다. 저장된 결과를 새 프로세스에서 다시 정렬했을 때 변경 0을 확인했다. 이는 편집 시 기준 보정 도구이며 플레이 매 프레임 계산을 추가하지 않는다.
 

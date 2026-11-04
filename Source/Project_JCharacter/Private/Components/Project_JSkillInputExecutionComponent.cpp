@@ -130,11 +130,11 @@ void UProject_JSkillInputExecutionComponent::HandleInputTagPressedFromSource(FGa
 		// Send raw input rather than the resolved result. The server replays the
 		// same command table, so a client cannot claim an arbitrary command tag.
 		if (auto* ASC = InputAbilitySystem.Get())
-		{ ASC->ServerSendCombatInputEvent(BoundPlayerCharacter, InputTag, static_cast<float>(InputTimestamp), ++LocalInputSequence); }
+		{ ASC->ServerSendCombatInputEvent(BoundPlayerCharacter, InputTag, InputTimestamp, ++LocalInputSequence); }
 	}
 }
 
-void UProject_JSkillInputExecutionComponent::ReceiveAuthorityCombatInput(const FGameplayTag InputTag, const float ClientTimestamp, const uint32 InputSequence)
+void UProject_JSkillInputExecutionComponent::ReceiveAuthorityCombatInput(const FGameplayTag InputTag, const double ClientTimestamp, const uint32 InputSequence)
 {
 	// This RPC carries raw player intent only. Montage events and resolved Command
 	// aliases must originate on the server, never from a client-supplied event tag.
@@ -163,7 +163,7 @@ void UProject_JSkillInputExecutionComponent::ReceiveAuthorityCombatInput(const F
 	LastServerInputSequence = InputSequence;
 
 	const double Timestamp = FMath::IsFinite(ClientTimestamp)
-		? FMath::Clamp(static_cast<double>(ClientTimestamp), ServerNow - MaxAcceptedInputAge, ServerNow + 0.05)
+		? FMath::Clamp(ClientTimestamp, ServerNow - MaxAcceptedInputAge, ServerNow + 0.05)
 		: ServerNow;
 	bool bConsumeRawInput = false;
 	const FGameplayTag DispatchTag = ResolveDispatchInputTag(InputTag, Timestamp, bConsumeRawInput);

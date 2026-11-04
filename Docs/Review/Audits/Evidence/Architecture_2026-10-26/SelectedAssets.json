@@ -1,0 +1,714 @@
+{
+  "asset_mutation": false,
+  "asset_save": false,
+  "world_definition": {
+    "region_id": "Starter.Lv1_30",
+    "authoring_version": 1,
+    "prediction_seconds": 3.0,
+    "preparation_radius": 60000.0,
+    "max_prediction_distance": 60000.0,
+    "place_count": 20,
+    "connection_count": 7
+  },
+  "configured_game_mode": {
+    "default_pawn_class": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C",
+    "player_controller_class": "/Game/ThirdPerson/Blueprints/BP_ThirdPersonPlayerController.BP_ThirdPersonPlayerController_C",
+    "player_state_class": "/Script/Project_J.Project_JPlayerState"
+  },
+  "pawns": [
+    {
+      "class": "/Game/Character_BPs/BP_Player_Master.BP_Player_Master_C",
+      "mesh": {
+        "skeletal_mesh_asset": "/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple",
+        "anim_class": "/Game/Animation_Logic/ABPs/ABP_Player_Master.ABP_Player_Master_C",
+        "visibility_based_anim_tick_option": "<VisibilityBasedAnimTickOption.ALWAYS_TICK_POSE_AND_REFRESH_BONES: 0>"
+      }
+    },
+    {
+      "class": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C",
+      "mesh": {
+        "skeletal_mesh_asset": "/Game/GreatSword/Meshes/SK_GreatSword_Complete.SK_GreatSword_Complete",
+        "anim_class": "/Game/Animation_Logic/ABPs/ABP_Player_Master.ABP_Player_Master_C",
+        "visibility_based_anim_tick_option": "<VisibilityBasedAnimTickOption.ALWAYS_TICK_POSE_AND_REFRESH_BONES: 0>"
+      }
+    }
+  ],
+  "classes": [
+    {
+      "package": "/Game/DataAssetSets/Class/DA_Class_Greatsword",
+      "values": {
+        "class_id": "GreatSword",
+        "schema_version": 1,
+        "ability_sets": [
+          "/Game/AS/AS_Humanoid_Core.AS_Humanoid_Core"
+        ],
+        "default_combat_style": "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword.DA_CombatStyle_Greatsword"
+      }
+    }
+  ],
+  "class_hard_dependencies": [
+    {
+      "package": "/Game/DataAssetSets/Class/DA_Class_Greatsword",
+      "depth": 0,
+      "hard_dependencies": [
+        "/Game/AS/AS_Humanoid_Core",
+        "/Game/DataAssetSets/Attributes/DA_Player_Attributes",
+        "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/AS/AS_Humanoid_Core",
+      "depth": 1,
+      "hard_dependencies": [
+        "/Game/GAs/GA_CombatToggle",
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/DataAssetSets/Attributes/DA_Player_Attributes",
+      "depth": 1,
+      "hard_dependencies": [
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword",
+      "depth": 1,
+      "hard_dependencies": [
+        "/Game/AS/AS_Greatsword_Base",
+        "/Game/DataAssetSets/Animation_Profiles/WeaponProfiles/DA_Greatsword_WeaponProfile",
+        "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword",
+        "/Game/DataAssetSets/Combo/DA_Combo_Greatsword",
+        "/Game/DataAssetSets/CommandSet/DA_CommandSet_Greatsword",
+        "/Game/DataAssetSets/Presentation/Greatsword/DA_CPS_Greatsword_Base",
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/GAs/GA_CombatToggle",
+      "depth": 2,
+      "hard_dependencies": [
+        "/Game/GEs/BP_GE_CombatMode",
+        "/Script/GameplayAbilities",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/AS/AS_Greatsword_Base",
+      "depth": 2,
+      "hard_dependencies": [
+        "/Game/GAs/GreatSword/GA_Greatsword",
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/DataAssetSets/Animation_Profiles/WeaponProfiles/DA_Greatsword_WeaponProfile",
+      "depth": 2,
+      "hard_dependencies": [
+        "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_Equip",
+        "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_UnEquip",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword",
+      "depth": 2,
+      "hard_dependencies": [
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1",
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB2",
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMBRMB",
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR1",
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR2",
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q1",
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q2",
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_R",
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB1",
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB2",
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_T",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/DataAssetSets/Combo/DA_Combo_Greatsword",
+      "depth": 2,
+      "hard_dependencies": [
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1",
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB2",
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMBRMB",
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR1",
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR2",
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q1",
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q2",
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_R",
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB1",
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB2",
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_T",
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/DataAssetSets/CommandSet/DA_CommandSet_Greatsword",
+      "depth": 2,
+      "hard_dependencies": [
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/DataAssetSets/Presentation/Greatsword/DA_CPS_Greatsword_Base",
+      "depth": 2,
+      "hard_dependencies": [
+        "/Game/DataAssetSets/Presentation/Greatsword/DA_AP_Greatsword/DA_AP_Greatsword",
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/GEs/BP_GE_CombatMode",
+      "depth": 3,
+      "hard_dependencies": [
+        "/Script/GameplayAbilities",
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/GAs/GreatSword/GA_Greatsword",
+      "depth": 3,
+      "hard_dependencies": [
+        "/Script/GameplayAbilities",
+        "/Script/GameplayAbilitiesEditor",
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_Equip",
+      "depth": 3,
+      "hard_dependencies": [
+        "/Game/Anim_Assets/Great_Sword/Animations/Sword/AS_DGS_GetSword",
+        "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_UnEquip",
+      "depth": 3,
+      "hard_dependencies": [
+        "/Game/Anim_Assets/Great_Sword/Animations/Sword/AS_DGS_PutSword",
+        "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1",
+      "depth": 3,
+      "hard_dependencies": [
+        "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LMB1",
+        "/Game/GEs/GE_TestDamege",
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB2",
+      "depth": 3,
+      "hard_dependencies": [
+        "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LMB2",
+        "/Game/GEs/GE_TestDamege",
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMBRMB",
+      "depth": 3,
+      "hard_dependencies": [
+        "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LMBRMB",
+        "/Game/GEs/GE_TestDamege",
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR1",
+      "depth": 3,
+      "hard_dependencies": [
+        "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LR1",
+        "/Game/GEs/GE_TestDamege",
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR2",
+      "depth": 3,
+      "hard_dependencies": [
+        "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LR2",
+        "/Game/GEs/GE_TestDamege",
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q1",
+      "depth": 3,
+      "hard_dependencies": [
+        "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_Q1_or_LR2",
+        "/Game/GEs/GE_TestDamege",
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q2",
+      "depth": 3,
+      "hard_dependencies": [
+        "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_Q2",
+        "/Game/GEs/GE_TestDamege",
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_R",
+      "depth": 3,
+      "hard_dependencies": [
+        "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_R",
+        "/Game/GEs/GE_TestDamege",
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB1",
+      "depth": 3,
+      "hard_dependencies": [
+        "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_RMB1",
+        "/Game/GEs/GE_TestDamege",
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB2",
+      "depth": 3,
+      "hard_dependencies": [
+        "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_RMB2",
+        "/Game/GEs/GE_TestDamege",
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_T",
+      "depth": 3,
+      "hard_dependencies": [
+        "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_T",
+        "/Game/GEs/GE_TestDamege",
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/DataAssetSets/Presentation/Greatsword/DA_AP_Greatsword/DA_AP_Greatsword",
+      "depth": 3,
+      "hard_dependencies": [
+        "/Game/SlashTrail_SoftTofu/Niagara/Basic/NS_SlashTrail_Basic",
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/Anim_Assets/Great_Sword/Animations/Sword/AS_DGS_GetSword",
+      "depth": 4,
+      "hard_dependencies": [
+        "/Engine/Animation/DefaultAnimBoneCompressionSettings",
+        "/Engine/Animation/DefaultAnimCurveCompressionSettings",
+        "/Engine/Animation/DefaultVariableFrameStrippingSettings",
+        "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+        "/Script/AnimationData",
+        "/Script/ControlRig",
+        "/Script/MovieScene"
+      ]
+    },
+    {
+      "package": "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+      "depth": 4,
+      "hard_dependencies": []
+    },
+    {
+      "package": "/Game/Anim_Assets/Great_Sword/Animations/Sword/AS_DGS_PutSword",
+      "depth": 4,
+      "hard_dependencies": [
+        "/Engine/Animation/DefaultAnimBoneCompressionSettings",
+        "/Engine/Animation/DefaultAnimCurveCompressionSettings",
+        "/Engine/Animation/DefaultVariableFrameStrippingSettings",
+        "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+        "/Script/AnimationData",
+        "/Script/ControlRig",
+        "/Script/MovieScene"
+      ]
+    },
+    {
+      "package": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LMB1",
+      "depth": 4,
+      "hard_dependencies": [
+        "/Game/Anim_Assets/Great_Sword/Animations/Sword/Sword_Atk_2Times_A_Seq1",
+        "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/GEs/GE_TestDamege",
+      "depth": 4,
+      "hard_dependencies": [
+        "/Script/GameplayAbilities",
+        "/Script/Project_JGAS"
+      ]
+    },
+    {
+      "package": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LMB2",
+      "depth": 4,
+      "hard_dependencies": [
+        "/Game/Anim_Assets/Great_Sword/Animations/Sword/Sword_Atk_2Times_A_Seq2",
+        "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LMBRMB",
+      "depth": 4,
+      "hard_dependencies": [
+        "/Game/Anim_Assets/Great_Sword/Animations/Sword/Sword_VerticalSlash_Seq",
+        "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LR1",
+      "depth": 4,
+      "hard_dependencies": [
+        "/Game/Anim_Assets/Great_Sword/Animations/Sword/Sword_Attack__3_Times_C_Seq1",
+        "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LR2",
+      "depth": 4,
+      "hard_dependencies": [
+        "/Game/Anim_Assets/Great_Sword/Animations/Sword/Sword_Attack__3_Times_C_Seq2",
+        "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme",
+        "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_Q1_or_LR2",
+      "depth": 4,
+      "hard_dependencies": [
+        "/Game/Anim_Assets/Great_Sword/Animations/Sword/Sword_ComboAttack_Seq1",
+        "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_Q2",
+      "depth": 4,
+      "hard_dependencies": [
+        "/Game/Anim_Assets/Great_Sword/Animations/Sword/Sword_ComboAttack_Seq2",
+        "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_R",
+      "depth": 4,
+      "hard_dependencies": [
+        "/Game/Anim_Assets/Great_Sword/Animations/Sword/Sword_SpinAttackVertical_Seq",
+        "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_RMB1",
+      "depth": 4,
+      "hard_dependencies": [
+        "/Game/Anim_Assets/Great_Sword/Animations/Sword/Sword_ATK_2Times_B_Seq1",
+        "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_RMB2",
+      "depth": 4,
+      "hard_dependencies": [
+        "/Game/Anim_Assets/Great_Sword/Animations/Sword/Sword_ATK_2Times_B_Seq2",
+        "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_T",
+      "depth": 4,
+      "hard_dependencies": [
+        "/Game/Anim_Assets/Great_Sword/Animations/Sword/Sword_TornadoAttack_Seq",
+        "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/SlashTrail_SoftTofu/Niagara/Basic/NS_SlashTrail_Basic",
+      "depth": 4,
+      "hard_dependencies": [
+        "/Game/SlashTrail_SoftTofu/Material/SlashTrail/Instances/MI_SlashTrail_Distort_",
+        "/Game/SlashTrail_SoftTofu/Niagara/NET_UEFN_Default_SoftTofu",
+        "/Game/SlashTrail_SoftTofu/Niagara/NMS_Color_Core",
+        "/Niagara/DynamicInputs/Multiply/Multiply_Vector",
+        "/Niagara/DynamicInputs/TypeConversions/VectorFromFloat",
+        "/Niagara/Enums/ENiagaraChannelCorrelation",
+        "/Niagara/Enums/ENiagaraEmitterLifeCycleMode",
+        "/Niagara/Enums/ENiagaraEmitterScalabilityMode_Limited",
+        "/Niagara/Enums/ENiagaraInactiveMode",
+        "/Niagara/Enums/ENiagaraRandomnessMode",
+        "/Niagara/Enums/ENiagaraScaleColorMode",
+        "/Niagara/Enums/ENiagaraSystemInactiveMode",
+        "/Niagara/Enums/ENiagara_ColorInitializationMode",
+        "/Niagara/Enums/ENiagara_EmitterStateOptions",
+        "/Niagara/Enums/ENiagara_InfiniteLoopDuration",
+        "/Niagara/Enums/ENiagara_LifetimeMode",
+        "/Niagara/Enums/ENiagara_MassInitializationMode",
+        "/Niagara/Enums/ENiagara_PositionInitializationMode",
+        "/Niagara/Enums/ENiagara_SizeScaleMode",
+        "/Niagara/Enums/ENiagara_SpriteRotationMode",
+        "/Niagara/Enums/ENiagara_UVFlippingMode",
+        "/Niagara/Enums/Ribbons/ENiagara_UnsetDirectSet",
+        "/Niagara/Enums/Ribbons/ENiagara_UnsetDirectSetRandom",
+        "/Niagara/Modules/Emitter/EmitterState",
+        "/Niagara/Modules/Emitter/SpawnRate",
+        "/Niagara/Modules/Spawn/Initialization/V2/InitializeParticle",
+        "/Niagara/Modules/System/SystemState",
+        "/Niagara/Modules/Update/Lifetime/ParticleState",
+        "/Niagara/ParameterDefinitions/CoreParameters",
+        "/Niagara/ParameterDefinitions/RibbonRenderer",
+        "/Script/DataHierarchyEditor",
+        "/Script/Niagara",
+        "/Script/NiagaraEditor"
+      ]
+    },
+    {
+      "package": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Sword_Atk_2Times_A_Seq1",
+      "depth": 5,
+      "hard_dependencies": [
+        "/Engine/Animation/DefaultAnimBoneCompressionSettings",
+        "/Engine/Animation/DefaultAnimCurveCompressionSettings",
+        "/Engine/Animation/DefaultVariableFrameStrippingSettings",
+        "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+        "/Script/AnimationData",
+        "/Script/AnimationModifiers",
+        "/Script/ControlRig",
+        "/Script/MovieScene"
+      ]
+    },
+    {
+      "package": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Sword_Atk_2Times_A_Seq2",
+      "depth": 5,
+      "hard_dependencies": [
+        "/Engine/Animation/DefaultAnimBoneCompressionSettings",
+        "/Engine/Animation/DefaultAnimCurveCompressionSettings",
+        "/Engine/Animation/DefaultVariableFrameStrippingSettings",
+        "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+        "/Script/AnimationData",
+        "/Script/AnimationModifiers",
+        "/Script/ControlRig",
+        "/Script/MovieScene"
+      ]
+    },
+    {
+      "package": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Sword_VerticalSlash_Seq",
+      "depth": 5,
+      "hard_dependencies": [
+        "/Engine/Animation/DefaultAnimBoneCompressionSettings",
+        "/Engine/Animation/DefaultAnimCurveCompressionSettings",
+        "/Engine/Animation/DefaultVariableFrameStrippingSettings",
+        "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+        "/Script/AnimationData",
+        "/Script/ControlRig",
+        "/Script/MovieScene"
+      ]
+    },
+    {
+      "package": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Sword_Attack__3_Times_C_Seq1",
+      "depth": 5,
+      "hard_dependencies": [
+        "/Engine/Animation/DefaultAnimBoneCompressionSettings",
+        "/Engine/Animation/DefaultAnimCurveCompressionSettings",
+        "/Engine/Animation/DefaultVariableFrameStrippingSettings",
+        "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+        "/Script/AnimationData",
+        "/Script/AnimationModifiers",
+        "/Script/ControlRig",
+        "/Script/MovieScene"
+      ]
+    },
+    {
+      "package": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Sword_Attack__3_Times_C_Seq2",
+      "depth": 5,
+      "hard_dependencies": [
+        "/Engine/Animation/DefaultAnimBoneCompressionSettings",
+        "/Engine/Animation/DefaultAnimCurveCompressionSettings",
+        "/Engine/Animation/DefaultVariableFrameStrippingSettings",
+        "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+        "/Script/AnimationData",
+        "/Script/AnimationModifiers",
+        "/Script/ControlRig",
+        "/Script/MovieScene"
+      ]
+    },
+    {
+      "package": "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme",
+      "depth": 5,
+      "hard_dependencies": [
+        "/Game/Animation_Logic/ABPs/GreatSword/RTG_Greatsword_Manny",
+        "/Game/Characters/GreatSword/Clothes/sho_Physics",
+        "/Game/Characters/GreatSword/GreatSword_Woman_Physics",
+        "/Game/Characters/GreatSword/GreatSword_Woman_Skeleton",
+        "/Game/DataAssetSets/Presentation/Retarget/DA_RetargetBody_Greatsword",
+        "/Script/AnimGraph",
+        "/Script/AnimGraphRuntime",
+        "/Script/IKRig",
+        "/Script/IKRigDeveloper",
+        "/Script/Project_JAnimationNodes",
+        "/Script/Project_JCharacter"
+      ]
+    },
+    {
+      "package": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Sword_ComboAttack_Seq1",
+      "depth": 5,
+      "hard_dependencies": [
+        "/Engine/Animation/DefaultAnimBoneCompressionSettings",
+        "/Engine/Animation/DefaultAnimCurveCompressionSettings",
+        "/Engine/Animation/DefaultVariableFrameStrippingSettings",
+        "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+        "/Script/AnimationData",
+        "/Script/AnimationModifiers",
+        "/Script/ControlRig",
+        "/Script/MovieScene"
+      ]
+    },
+    {
+      "package": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Sword_ComboAttack_Seq2",
+      "depth": 5,
+      "hard_dependencies": [
+        "/Engine/Animation/DefaultAnimBoneCompressionSettings",
+        "/Engine/Animation/DefaultAnimCurveCompressionSettings",
+        "/Engine/Animation/DefaultVariableFrameStrippingSettings",
+        "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+        "/Script/AnimationData",
+        "/Script/AnimationModifiers",
+        "/Script/ControlRig",
+        "/Script/MovieScene"
+      ]
+    },
+    {
+      "package": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Sword_SpinAttackVertical_Seq",
+      "depth": 5,
+      "hard_dependencies": [
+        "/Engine/Animation/DefaultAnimBoneCompressionSettings",
+        "/Engine/Animation/DefaultAnimCurveCompressionSettings",
+        "/Engine/Animation/DefaultVariableFrameStrippingSettings",
+        "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+        "/Script/AnimationData",
+        "/Script/ControlRig",
+        "/Script/MovieScene"
+      ]
+    },
+    {
+      "package": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Sword_ATK_2Times_B_Seq1",
+      "depth": 5,
+      "hard_dependencies": [
+        "/Engine/Animation/DefaultAnimBoneCompressionSettings",
+        "/Engine/Animation/DefaultAnimCurveCompressionSettings",
+        "/Engine/Animation/DefaultVariableFrameStrippingSettings",
+        "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+        "/Script/AnimationData",
+        "/Script/AnimationModifiers",
+        "/Script/ControlRig",
+        "/Script/MovieScene"
+      ]
+    },
+    {
+      "package": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Sword_ATK_2Times_B_Seq2",
+      "depth": 5,
+      "hard_dependencies": [
+        "/Engine/Animation/DefaultAnimBoneCompressionSettings",
+        "/Engine/Animation/DefaultAnimCurveCompressionSettings",
+        "/Engine/Animation/DefaultVariableFrameStrippingSettings",
+        "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+        "/Script/AnimationData",
+        "/Script/AnimationModifiers",
+        "/Script/ControlRig",
+        "/Script/MovieScene"
+      ]
+    },
+    {
+      "package": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Sword_TornadoAttack_Seq",
+      "depth": 5,
+      "hard_dependencies": [
+        "/Engine/Animation/DefaultAnimBoneCompressionSettings",
+        "/Engine/Animation/DefaultAnimCurveCompressionSettings",
+        "/Engine/Animation/DefaultVariableFrameStrippingSettings",
+        "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+        "/Script/AnimationData",
+        "/Script/ControlRig",
+        "/Script/MovieScene"
+      ]
+    },
+    {
+      "package": "/Game/SlashTrail_SoftTofu/Material/SlashTrail/Instances/MI_SlashTrail_Distort_",
+      "depth": 5,
+      "hard_dependencies": [
+        "/Game/SlashTrail_SoftTofu/Material/SlashTrail/M_SlashTrail_Master"
+      ]
+    },
+    {
+      "package": "/Game/SlashTrail_SoftTofu/Niagara/NET_UEFN_Default_SoftTofu",
+      "depth": 5,
+      "hard_dependencies": [
+        "/Script/Niagara"
+      ]
+    },
+    {
+      "package": "/Game/SlashTrail_SoftTofu/Niagara/NMS_Color_Core",
+      "depth": 5,
+      "hard_dependencies": [
+        "/Niagara/Enums/ENiagaraScaleColorMode",
+        "/Niagara/ParameterDefinitions/CoreParameters",
+        "/Script/DataHierarchyEditor",
+        "/Script/Niagara",
+        "/Script/NiagaraEditor"
+      ]
+    }
+  ],
+  "dependency_walk_pending": 0,
+  "dependency_depth_limit": 5,
+  "dependency_package_limit": 200,
+  "errors": [],
+  "limits": "Selected CDO/DA and saved registry dependencies only. No level actor, runtime network, HLOD coverage, IO latency, or visual quality certification."
+}

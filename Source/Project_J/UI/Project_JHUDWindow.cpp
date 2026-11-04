@@ -22,12 +22,16 @@ void UProject_JUICommandButton::InitializeCommand(UProject_JPlayerHUDWidget *InH
 	HUD = InHUD;
 	Command = InCommand;
 	OnClicked.AddUniqueDynamic(this, &ThisClass::Execute);
-	auto *Text = NewObject<UTextBlock>(this);
+	auto *Text = Cast<UTextBlock>(GetContent());
+	if (!Text)
+	{
+		Text = NewObject<UTextBlock>(this);
+		SetContent(Text);
+	}
 	Text->SetText(Label);
 	auto Font = Text->GetFont();
 	Font.Size = 12;
 	Text->SetFont(Font);
-	SetContent(Text);
 	FButtonStyle Style = GetStyle();
 	Style.Normal = *FCoreStyle::Get().GetBrush("WhiteBrush");
 	Style.Hovered = Style.Normal;

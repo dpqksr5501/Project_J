@@ -63,8 +63,17 @@ public:
 	uint64 Submit(UObject* Owner, APawn* Pawn, const FVector& Goal, uint64 IntentRevision,
 		TFunction<void(const FProjectJNPCPathCompletion&)> Completion,
 		EProjectJNPCPathPriority Priority = EProjectJNPCPathPriority::Normal);
+	/** True: this same owner/intent is still queued; Goal was updated or already equal.
+	 * False: no mutation; action callers stop refreshing that pending token.
+	 * Never changes age/deadline/priority,
+	 * dispatches work or edits a query already handed to the navigation system.
+	 */
+	bool RefreshQueuedGoal(uint64 Token, UObject* Owner, uint64 IntentRevision, const FVector& Goal);
 	/** No callback after cancellation. Dispatched slots remain reserved until engine completion. */
 	void Cancel(uint64 Token);
+	/** GT-only: path flags plus a live, registered NavData in this current server world.
+	 * Does not certify a destination region or replace intent/position checks. */
+	bool IsPathUsable(const FNavPathSharedPtr& Path) const;
 	int32 GetRequestCount() const { return Requests.Num(); }
 	const FProjectJNPCPathStats& GetStats() const { return Stats; }
 #if WITH_DEV_AUTOMATION_TESTS
@@ -90,7 +99,7 @@ private:
 	friend class FProjectJNPCPathPressureTest;
 	/** Deterministic engine-boundary simulation; does not execute navigation or create a worker. */
 	void SimulateDispatchForTest(uint64 Token, bool bExpired);
-	void AgeForTest(uint64 Token, double Seconds);
+	void AgeForTest(uint64 Token, double Seconds, bool bIncludeDeadline = false);
 #endif
 	void Stop();
 	void OnTearDown(UWorld* World);

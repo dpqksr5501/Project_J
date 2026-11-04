@@ -49,6 +49,13 @@ public:
 	virtual void BeginDestroy() override;
 private:
 	friend class FProjectJStatusBindingReentryTest;
+	friend class FProjectJStatusEffectTest;
+	struct FEffectBindings { FDelegateHandle Stack, Time, Inhibition; };
+	TMap<FActiveGameplayEffectHandle, FEffectBindings> ObservedEffects;
+	bool ObserveEffect(FActiveGameplayEffectHandle Handle);
+	void ForgetEffect(FActiveGameplayEffectHandle Handle);
+	static void RemoveEffectBindings(UAbilitySystemComponent* Source, FActiveGameplayEffectHandle Handle, const FEffectBindings& Bindings);
+	void RefreshObservedEffects();
 	TWeakObjectPtr<UAbilitySystemComponent> ASC;
 	FDelegateHandle AddedHandle;
 	FDelegateHandle RemovedHandle;

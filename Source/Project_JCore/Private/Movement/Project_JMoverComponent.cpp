@@ -183,6 +183,10 @@ void UProject_JAttachedMovementMode::SimulationTick_Implementation(const FSimula
 
 UProject_JMoverComponent::UProject_JMoverComponent()
 {
+ // Serialized Blueprint/level settings use this native template identity.
+ // A dynamically named object made in PostInitProperties is not a native
+ // default subobject import in a cooked executable.
+ RegisterDefaultSharedSettings(CreateDefaultSubobject<UCommonLegacyMovementSettings>(TEXT("CommonLegacyMovementSettings_0")));
  GroundWalkingMode=FSoftClassPath(TEXT("/Game/Animation_Logic/PlayerMovement/BP_MovementMode_Walking.BP_MovementMode_Walking_C"));
 	MovementModes.Add(DefaultModeNames::Falling,CreateDefaultSubobject<UProject_JFallingMode>(TEXT("ProjectFallingMode")));
 	PersistentSyncStateDataTypes.Add(FMoverDataPersistence(FProject_JMoverLifecycle::StaticStruct(),true));
@@ -206,11 +210,29 @@ void UProject_JMoverComponent::OnRegister()
  Super::OnRegister();
 }
 
-void UProject_JMoverComponent::PostInitProperties()
+int32 UProject_JMoverComponent::NormalizeTemplateModeExports()
 {
-	Super::PostInitProperties();
-	// Native default subobjects are validated before OnRegister/PostCDOCompiled.
-	RefreshSharedSettings();
+ if (!IsTemplate()) return 0;
+ int32 Changed = 0;
+ for (const auto& Pair : MovementModes)
+ {
+  auto* Mode = Pair.Value.Get();
+  if (Mode && Mode->GetOuter() == this && Mode->HasAnyFlags(RF_ArchetypeObject | RF_DefaultSubObject)
+   && !Mode->HasAnyFlags(RF_Public))
+  {
+   // SavePackage imports an instance's archetype independently of property
+   // visibility. Keep its identity/tuning; repair only the template export.
+   Mode->SetFlags(RF_Public);
+   ++Changed;
+  }
+ }
+ return Changed;
+}
+
+void UProject_JMoverComponent::PostLoad()
+{
+ Super::PostLoad();
+ NormalizeTemplateModeExports();
 }
 
 void UProject_JMoverComponent::BeginPlay()

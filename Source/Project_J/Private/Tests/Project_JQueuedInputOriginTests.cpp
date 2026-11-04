@@ -3,7 +3,7 @@
 #include "Misc/ScopeExit.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
-#include "Project_JGreatswordCharacter.h"
+#include "Project_JSpellbladeCharacter.h"
 #include "Components/Project_JPlayerInputBindingComponent.h"
 #include "EnhancedInputComponent.h"
 #include "InputAction.h"
@@ -29,8 +29,8 @@ bool FProjectJQueuedInputOriginTest::RunTest(const FString&)
     GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
     ON_SCOPE_EXIT { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
     FActorSpawnParameters Spawn; Spawn.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    auto* Previous = World->SpawnActor<AProject_JGreatswordCharacter>(FVector::ZeroVector, FRotator::ZeroRotator, Spawn);
-    auto* Current = World->SpawnActor<AProject_JGreatswordCharacter>(FVector(1000, 0, 0), FRotator::ZeroRotator, Spawn);
+    auto* Previous = World->SpawnActor<AProject_JSpellbladeCharacter>(FVector::ZeroVector, FRotator::ZeroRotator, Spawn);
+    auto* Current = World->SpawnActor<AProject_JSpellbladeCharacter>(FVector(1000, 0, 0), FRotator::ZeroRotator, Spawn);
     auto* Binding = Previous->FindComponentByClass<UProject_JPlayerInputBindingComponent>();
     auto* OldInput = NewObject<UEnhancedInputComponent>(Previous); OldInput->RegisterComponent();
     auto* NewInput = NewObject<UEnhancedInputComponent>(Current); NewInput->RegisterComponent();

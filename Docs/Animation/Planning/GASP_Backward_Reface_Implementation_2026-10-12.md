@@ -19,7 +19,7 @@
 | 항목 | GASP 원본 | Project_J 변경 전 / 이번 구현 |
 | --- | --- | --- |
 | 엔진 | 5.7.4, 원본 프로젝트 읽기 전용 | 5.8.3, 설치된 엔진 직접 UBT 빌드 |
-| Pawn | `/Game/Blueprints/SandboxCharacter_CMC` | `/Game/Character_BPs/GreatSword/BP_GreatSword` |
+| Pawn | `/Game/Blueprints/SandboxCharacter_CMC` | `/Game/Character_BPs/Spellblade/BP_Spellblade` |
 | ABP | `/Game/Blueprints/SandboxCharacter_CMC_ABP` | `/Game/Animation_Logic/ABPs/ABP_Humanoid_Master` |
 | Spin/후진 후보 | `PSD_Dense_Stand_Run_SpinTransition`: F/B × L/R × 090/180, 총 8개 | 이전 Run Cycle 70개, Loop 8개, GeneralTurn 12개, Turn 4개에 Reface 없음 → 원본 B_180 두 개 추가 |
 | 검색 특징 | `PSS_Default`, `PSN_Dense_All`, Loops 20개와 공통 정규화 | 기존 `PSS_Combat_Run_Continuity` 유지. 전용 Cycle 복사본 70개와 Reface 2개만 별도 정규화 |

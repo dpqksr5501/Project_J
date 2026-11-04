@@ -8,7 +8,7 @@
 | --- | --- |
 | 실제 `SK_Mannequin`을 공유하는 UE5 몸체 | Pawn의 source mesh에 몸체를 지정하고 공통 master를 직접 사용한다. 별도 Retarget Pose From Mesh가 필요 없다. |
 | 이름·계층·기준 포즈가 검증된 별도 UE5 호환 Skeleton | Compatible Skeletons를 명시하고 master·전투 레이어·소켓·공유 뼈를 검증한다. 이름이 UE5라는 이유만으로 자동 승인하지 않는다. |
-| 이전 GreatSword의 Bip01 몸체 | Manny source → `RTG_Greatsword_Manny` → 기존 몸체 접촉·물리. 비표준 골격에는 기존 runtime retarget가 필요하다. |
+| 이전 GreatSword의 Bip01 몸체 | Manny source → `RTG_Spellblade_Manny` → 기존 몸체 접촉·물리. 비표준 골격에는 기존 runtime retarget가 필요하다. |
 | UE5 리그 시험 브랜치의 GreatSword 318본 몸체 | 숨은 Complete source → 공통 master → 손/헤어/치마 Post Process → Body·Head·의상 8개 공유. 망토 표면만 독립 Cloth. |
 
 직접 몸체를 만드는 BP는 기존 비표준 VisualFollower를 제거하고 source mesh를 표시하거나, 분리 파츠가 표시를 담당하면 모든 가중 본을 포함한 source를 숨겨 공유한다. 후자의 경우 숨은 source도 필요한 포즈 평가를 유지해야 한다. `VisualFollower`/`RetargetFollower` 역할 태그를 장비에 붙이지 않는다. 호환 몸체가 source를 직접 대체할 경우 손·발·무기 소켓, 몸체 비율, LOD와 postprocess를 함께 검수한다.
@@ -63,7 +63,7 @@ UEFN 호환 직접 재생은 Idle에서 상완 벌어짐을 좁게 만들었고,
 
 공통 이름이나 호환 등록보다 실제 부모 관계·관절 위치·기준 회전을 먼저 확인한다. 이전 Bip01 대검은 팔 `Bip01-L/R-UpperArm → Forearm → Hand`, 다리 `Bip01-L/R-Thigh → Calf → Foot`의 3관절을 사용한다. UE5 리그 시험 브랜치의 318본 메시에서는 표준 `upperarm → lowerarm → hand`와 `thigh → calf → foot`가 구동 체인이고 Bip01 본은 보존 가지다. Limb Solver의 시작·끝·Goal을 모두 지정하고 실제로 목표에 도달하는지 검사한다. Processor 전체 initialized 또는 체인 이름 일치만으로 솔버 작동을 판정하지 않는다. Bip01 축을 Manny와 같다고 보고 Hinge Z를 일괄 적용하지 않는다. 얼굴·망토·장식 뼈와 실제 손가락 마디도 별도로 구분한다.
 
-`RTG_Greatsword_Manny`의 source 팔 기준 포즈와 손가락 OneToOne 마디 정렬, target rig의 사지 시작점은 현재 보정값을 유지한다. 새 몸체의 bind 차이는 먼저 의도한 체형/기준 포즈인지 잘못된 리깅·임포트인지 판별한다. 결함이면 원본/임포트를 고치고, 정상적인 비호환 골격의 포즈 매핑만 해당 Family/Body와 retarget pose에서 조정한다. 공용 Manny 애니메이션을 몸체별로 무조건 재변환하거나 profile offset으로 잘못된 bind를 숨기지 않는다. [실제 IK 점검과 회귀](../Architecture/Player_Locomotion_Migration_2026-10-19.md#비표준-bip01-ik-매핑과-실제-솔버-점검-2026-10-21)를 따른다.
+`RTG_Spellblade_Manny`의 source 팔 기준 포즈와 손가락 OneToOne 마디 정렬, target rig의 사지 시작점은 현재 보정값을 유지한다. 새 몸체의 bind 차이는 먼저 의도한 체형/기준 포즈인지 잘못된 리깅·임포트인지 판별한다. 결함이면 원본/임포트를 고치고, 정상적인 비호환 골격의 포즈 매핑만 해당 Family/Body와 retarget pose에서 조정한다. 공용 Manny 애니메이션을 몸체별로 무조건 재변환하거나 profile offset으로 잘못된 bind를 숨기지 않는다. [실제 IK 점검과 회귀](../Architecture/Player_Locomotion_Migration_2026-10-19.md#비표준-bip01-ik-매핑과-실제-솔버-점검-2026-10-21)를 따른다.
 
 현재 프로젝트의 `SKM_Quinn_Simple`은 Manny와 동일한 `SK_Mannequin`을 사용하므로 공용 변환 모션을 직접 재생할 수 있다. 6클립·두 시점·두 메시의 포즈 평가 24표본을 확인했다. 하지만 같은 Skeleton에서도 메시 기준 포즈의 길이·체형은 다를 수 있다. 발 Control Rig의 초기 변환/길이와 접지·Stride/LegIK, 무기·손바닥 소켓을 실제 Quinn 플레이에서 검수한다. 현재 Manny Rig의 `Set Initial Transforms From Mesh` 설정을 확인하지 않은 채 새 체형도 자동으로 같은 결과라고 판단하지 않는다. 이번 확인은 Quinn용 Rig 튜닝이나 전체 플레이 외형 승인을 수행한 것이 아니다.
 
@@ -73,9 +73,9 @@ UEFN 호환 직접 재생은 Idle에서 상완 벌어짐을 좁게 만들었고,
 
 제작 경로는 두 가지다. 표준 코어의 이름·부모·축, 실제 mesh bind pose, 애니메이션·slot·blend profile 계약이 검증된 UE5 호환 몸체는 공통 마스터 ABP를 직접 재생한다. 추가 얼굴·헤어·치마·망토 본이 있다는 이유로 실시간 리타깃을 요구하지 않는다. 코어/포즈 계약을 맞출 수 없는 몸체만 canonical source와 명시적인 Retarget Family/Body, follower 그래프를 사용한다. 가동 중 두 경로를 자동 추정해 전환하거나 같은 몸체에 중첩하지 않는다.
 
-시험 브랜치의 대검은 실제 Complete 메시에서 `ABP_Player_Master`를 직접 재생하고 `ABP_GreatSword_Body` Post Process로 손 접촉과 헤어·치마를 평가한다. Body·Head·의상 8개는 이 최종 포즈를 공유하고 망토만 독립 vertex cloth를 계산한다. 얼굴 가중 본 44개는 유지하며 별도 표정 제작을 뜻하지 않는다. 체형 차이는 그 자체로 리타깃 필수 조건이 아니다. 공통 발 Rig의 초기 transform은 실제 메시에서 가져오고, 독립 무기 궤적은 손 보정 전 포즈를 사용한다. `PrepareCompatibleBody`가 옮긴 정확한 blend profile 이름·본별 factor·montage slot은 보존한다. 실제 에셋과 검증 범위는 [플레이어 마스터](../../Architecture/Runtime/Player_Character_Master.md)를 따른다.
+시험 브랜치의 대검은 실제 Complete 메시에서 `ABP_Player_Master`를 직접 재생하고 `ABP_Spellblade_Body` Post Process로 손 접촉과 헤어·치마를 평가한다. Body·Head·의상 8개는 이 최종 포즈를 공유하고 망토만 독립 vertex cloth를 계산한다. 얼굴 가중 본 44개는 유지하며 별도 표정 제작을 뜻하지 않는다. 체형 차이는 그 자체로 리타깃 필수 조건이 아니다. 공통 발 Rig의 초기 transform은 실제 메시에서 가져오고, 독립 무기 궤적은 손 보정 전 포즈를 사용한다. `PrepareCompatibleBody`가 옮긴 정확한 blend profile 이름·본별 factor·montage slot은 보존한다. 실제 에셋과 검증 범위는 [플레이어 마스터](../../Architecture/Runtime/Player_Character_Master.md)를 따른다.
 
-USkeleton reference pose와 실제 SkeletalMesh bind pose를 원본 export의 예상값과 함께 비교한다. 공유 Skeleton을 쓰는 다른 체형의 mesh bind 길이는 의도적으로 다를 수 있으므로 수치 일치를 일괄 요구하지 않는다. 이번 제공 패키지에서는 전용 대상의 reference/bind 불일치를 조사해 실제 메시를 지정한 IKRigController와 UE→FBX→Blender 왕복 비교 후 reference pose를 갱신했다. 이 사례를 공용 Skeleton의 reference를 각 메시마다 덮으라는 지침으로 사용하지 않는다. [직접 비교 자료](../../../SourceArt/Characters/GreatSword/UE5/README.md)는 높이·발 기울기·팔 길이와 importer의 말단 표시 축 한계를 구분한다. 호환 Skeleton 옵션이나 그래프 선택·재생 시계만으로 접지를 승인하지 않고 실제 부츠/몸체 표면과 측면 화면도 확인한다.
+USkeleton reference pose와 실제 SkeletalMesh bind pose를 원본 export의 예상값과 함께 비교한다. 공유 Skeleton을 쓰는 다른 체형의 mesh bind 길이는 의도적으로 다를 수 있으므로 수치 일치를 일괄 요구하지 않는다. 이번 제공 패키지에서는 전용 대상의 reference/bind 불일치를 조사해 실제 메시를 지정한 IKRigController와 UE→FBX→Blender 왕복 비교 후 reference pose를 갱신했다. 이 사례를 공용 Skeleton의 reference를 각 메시마다 덮으라는 지침으로 사용하지 않는다. [직접 비교 자료](../../../SourceArt/Characters/Spellblade/UE5/README.md)는 높이·발 기울기·팔 길이와 importer의 말단 표시 축 한계를 구분한다. 호환 Skeleton 옵션이나 그래프 선택·재생 시계만으로 접지를 승인하지 않고 실제 부츠/몸체 표면과 측면 화면도 확인한다.
 
 분리 장비는 `UProject_JEquipmentItemDefinition.PoseMode`로 선택한다.
 

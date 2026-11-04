@@ -6,7 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "Game/Project_JPlayerState.h"
 #include "UI/Project_JPlayerUIComponent.h"
-#include "Project_JGreatswordCharacter.h"
+#include "Project_JSpellbladeCharacter.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JGameplayTags.h"
 #include "Combat/Project_JGameplayAbility_Sprint.h"
@@ -32,7 +32,7 @@ bool FProjectJAudit2SharedSkillHoldTest::RunTest(const FString&)
         ON_SCOPE_EXIT { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
         auto* State = World->SpawnActor<AProject_JPlayerState>();
         auto* Controller = World->SpawnActor<APlayerController>();
-        auto* Player = World->SpawnActor<AProject_JGreatswordCharacter>();
+        auto* Player = World->SpawnActor<AProject_JSpellbladeCharacter>();
         State->SetOwner(Controller); Controller->SetPlayerState(State); Player->SetPlayerState(State);
         Controller->SetAsLocalPlayerController(); Controller->Possess(Player);
         auto* ASC = State->GetProjectJAbilitySystemComponent(); ASC->InitAbilityActorInfo(State, Player);
@@ -88,7 +88,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAudit2ConsumedUnavailableUITest,
     "ProjectJ.SourceAudit2.ConsumedUnavailableUI", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJAudit2ConsumedUnavailableUITest::RunTest(const FString&)
 {
-    for (int32 Count : {1, 2})
+    for (int32 Count : {1, 2}) for (int32 Mode = 0; Mode < 3; ++Mode)
     {
         auto* World = UWorld::CreateWorld(EWorldType::Game, false);
         GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
@@ -105,7 +105,15 @@ bool FProjectJAudit2ConsumedUnavailableUITest::RunTest(const FString&)
         auto* Definition = NewObject<UProject_JConsumableDefinition>(State); Definition->ItemId = TEXT("Audit2Potion"); Definition->MaxStackCount = 10; Definition->RestoreHealth = 20;
         const auto Item = Inventory->AddItemDefinition(Definition, Count);
         auto* Receiver = NewObject<UProject_JSourceAuditPhase2UIReceiver>(State);
-        Receiver->OnConsumption = [=] { ASC->InitAbilityActorInfo(State, OtherAvatar); };
+        Receiver->OnConsumption = [=]
+        {
+            if (Mode == 0) ASC->InitAbilityActorInfo(State, OtherAvatar);
+            else
+            {
+                if (Mode == 2) ASC->ClearActorInfo();
+                ASC->InitAbilityActorInfo(State, State);
+            }
+        };
         Inventory->OnItemChanged.AddDynamic(Receiver, &UProject_JSourceAuditPhase2UIReceiver::OnItem);
         Inventory->OnItemRemoved.AddDynamic(Receiver, &UProject_JSourceAuditPhase2UIReceiver::OnItem);
         Inventory->OnUseCompleted.AddDynamic(Receiver, &UProject_JSourceAuditPhase2UIReceiver::OnReply);

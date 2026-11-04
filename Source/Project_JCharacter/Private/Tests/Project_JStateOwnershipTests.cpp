@@ -4,7 +4,7 @@
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "UObject/UnrealType.h"
-#include "Project_JGreatswordCharacter.h"
+#include "Project_JSpellbladeCharacter.h"
 #include "Project_JLocomotionAnimStateComponent.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JGameplayTags.h"
@@ -20,7 +20,7 @@ bool FProjectJLocomotionTagOwnershipTest::RunTest(const FString&)
     UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
     GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
     ON_SCOPE_EXIT { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
-    auto* Player = World->SpawnActor<AProject_JGreatswordCharacter>();
+    auto* Player = World->SpawnActor<AProject_JSpellbladeCharacter>();
     auto* State = Player ? Player->GetLocomotionAnimStateComponent() : nullptr;
     if (!TestNotNull(TEXT("Registered locomotion owner"), State)) { return false; }
     auto* Property = FindFProperty<FObjectPropertyBase>(AProject_JBaseCharacter::StaticClass(), TEXT("AbilitySystemComponent"));

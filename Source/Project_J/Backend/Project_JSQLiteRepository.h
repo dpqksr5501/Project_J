@@ -36,6 +36,9 @@ class FProject_JSQLiteRepository final : public ProjectJ::MMO::IRepository
 	explicit FProject_JSQLiteRepository(FString InFilename, int32 InMaxRecords = 1024, int32 InMaxReceipts = 4096);
 	bool Read(const ProjectJ::MMO::FAggregateKey &Key, ProjectJ::MMO::FRecord &Out) const override;
 	EProject_JRecordRead ReadChecked(const ProjectJ::MMO::FAggregateKey &Key, ProjectJ::MMO::FRecord &Out) const;
+	/** One bounded read transaction pinned to exact core bytes; failure preserves Out. */
+	bool ReadProfilePages(FGuid Character, const TArray<uint8>& CoreBytes, int32 FirstPage, int32 NumPages,
+		TArray<ProjectJ::MMO::FRecord>& Out, int64 ExpectedCoreRevision = -1) const;
 	ProjectJ::MMO::FCommitResult Commit(const ProjectJ::MMO::FCommitRequest &Request) override;
 	ProjectJ::MMO::FCommitResult CommitProfile(const ProjectJ::MMO::FCommitRequest &Request,
 											   const FProject_JProfileStream &Stream, const TArray<uint8> &Intent = {});

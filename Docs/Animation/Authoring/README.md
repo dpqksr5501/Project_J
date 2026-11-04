@@ -32,3 +32,17 @@ flowchart LR
 4. [진단](../Diagnostics/README.md)에서 무기·손·팔꿈치 측정 방법 확인.
 
 몸체 프로필은 해부학·보정, 무기 프로필은 Grip·부착·접촉 기능, 몽타주 스테이트는 파지 구간을 담당한다. 개별 몸체·무기 조합의 도달 범위와 추가 물리는 별도로 검수한다.
+
+## 근접 gameplay 궤적 제작
+
+`Project_JAssetMigrationLibrary.BakeCanonicalMeleeTrajectory(Attack, SourceMesh, bExecute=false, bSave=false)`는 선택한 공격 정의의 `MeleeTrajectory`만 작성하는 편집기 C++ 도구다. 기본 호출은 JSON preflight와 후보 키만 반환한다. 실행은 clean·fully loaded persistent 공격 에셋을 요구하고, 저장은 명시한 해당 패키지에만 수행한다. 기존 능력 CDO나 원본 NPC/플레이어 그래프를 바꾸지 않는다. 저장 실패 후 디스크 rollback을 보장하지 않으므로 반환된 실행·저장·실패 필드를 각각 확인한다.
+
+현재 지원 입력은 같은 skeleton의 clean mesh·montage·단일 non-additive RAW sequence, 한 slot/비반복 segment/0에서 시작하는 비반복 section, 순방향·비워프 실행, 선택된 근접 notify 하나다. 실제 sequence를 120Hz 절대 montage 시간 격자와 정확한 window 양 끝에서 평가해 2..64개 mesh 공간 키를 만든다. 더 긴/복잡한 공격을 자동 단순화하거나 여러 클립을 추측해 합치지 않는다. source metadata·raw motion·retarget/mesh/socket 입력과 출력 키를 함께 stamp하며 등록된 Data Validation이 변경을 거절한다. source 수정 후 다시 제작·검증한다.
+
+런타임은 이 데이터를 명시한 gameplay geometry로 사용한다. 실제 GAS montage 간격의 두 관측 root를 translation lerp/shortest quaternion slerp로 매핑하고 동일한 mesh 상대 변환·양의 균일 scale을 요구한다. 기반이 있으면 같은 유효 component/bone의 게시 좌표계가 그대로인 구간만 지원한다. 이동하는 기반·warp·resimulation·async 물리 backend·점프/reverse·불연속은 현재 미지원이며 켜진 데이터가 무효일 때 기본 chord로 조용히 대체하지 않는다. 관측 사이 실제 물리 궤적 또는 화면의 blended/IK 무기 곡선과 일치한다는 뜻은 아니다.
+
+NPC는 `NPCActivationDefinition.AttackDefinitionOverride`로 기존 NPCAttack ability에 데이터를 전달한다. null이면 기존 CDO 기본값을 사용한다. 부여된 능력의 약한 `SourceObject`를 보완하기 위해 activation이 선택 데이터를 정확한 grant 수명 동안 보유한다. 실행 중 정의를 편집해도 현재 grant의 데이터는 바뀌지 않으며 명시 Stop→Start로 새 선택을 사용한다. 플레이어 장비/능력의 기존 grant 소비와 NPC 비모션매칭 그래프는 유지한다.
+
+새 참조 `DA_Attack_NPC_PrototypeCleave_Canonical`과 `DA_NPC_PrototypeCleaveCanonicalActivation`은 원본 PrototypeCleave 정의를 보존한 선택용 자산이다. 실제 호출 검증은 `Measure-RenderedCrowd.ps1 -NPCAuthoredPath`가 기존 NPC cohort에 이 정의를 지정하며, 기본 실행·피해·예산·정리 기준은 유지한다. 다른 골격·보스·무기·탈것의 호환성과 표현 품질은 해당 입력으로 검증해야 한다.
+
+배포 전에는 선택 공격/activation과 실제 mesh·montage·sequence·skeleton 등 validator가 읽는 package를 [선택 에셋 검증과 Cook 계약](../../Maintenance/Change_Completion_Policy.md#선택-에셋-검증과-cook)에 선언한다. baked 키가 있다는 사실만으로 최신 source 검증을 통과한 것으로 판단하지 않는다.

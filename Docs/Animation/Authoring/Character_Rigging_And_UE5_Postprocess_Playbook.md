@@ -2,7 +2,9 @@
 
 이 문서는 Blender 리깅 → UE 실제 익스포트와 비교 → FBX 왕복 → UE 임포트 → 몸체 후처리 → 플레이 검수의 재사용 절차다. GreatSword 작업에서 확인한 원인·실패·해결을 일반 제작 기준으로 정리한다. 특정 캐릭터의 수치나 해결책을 모든 캐릭터에 복사하는 매뉴얼은 아니다.
 
-공통 골격/애니메이션 계약은 [휴머노이드 표준](HumanoidSkeletonRetargetingStandards.md), 실제 연결·소유권과 최신 검증은 [플레이어 마스터](../../Architecture/Runtime/Player_Character_Master.md), GreatSword의 수정 blend/FBX/비교 장면은 [제작 원본](../../../SourceArt/Characters/GreatSword/UE5/README.md)을 따른다. 이 문서가 그 자원이나 런타임 설정의 두 번째 권위가 되지 않도록 한다.
+2026-11-01부터 이 캐릭터·전용 에셋·제작 리그의 현재 이름은 **Spellblade**다. 아래 과거 측정의 GreatSword는 같은 캐릭터의 이전 이름이다. [이름·독립 무기 이주 기록](Spellblade_Migration_2026-11-01.md)은 보존 ID, 숨긴 컬렉션의 FBX 누락, 무기 스킨과 기준점 역할, 검증 범위를 별도로 설명한다.
+
+공통 골격/애니메이션 계약은 [휴머노이드 표준](HumanoidSkeletonRetargetingStandards.md), 실제 연결·소유권과 최신 검증은 [플레이어 마스터](../../Architecture/Runtime/Player_Character_Master.md), GreatSword의 수정 blend/FBX/비교 장면은 [제작 원본](../../../SourceArt/Characters/Spellblade/UE5/README.md)을 따른다. 이 문서가 그 자원이나 런타임 설정의 두 번째 권위가 되지 않도록 한다.
 
 ## 1. 먼저 고정할 제작 계약
 

@@ -7,6 +7,7 @@
 #include "Async/Async.h"
 #include "Misc/ScopeExit.h"
 #include "UObject/StrongObjectPtr.h"
+#include <atomic>
 
 namespace { constexpr double AllowedEnvelopeFutureSkewSeconds = 3.0; }
 
@@ -494,11 +495,18 @@ void UProject_JHandoverManager::DispatchTransfer(const FGuid& TransferId)
 	if (!Record || Record->State != EProject_JHandoverState::AwaitingAck) { return; }
 	const auto ActiveTransport = Transport;
 	if (!ActiveTransport) { FailTransfer(*Record, EProject_JHandoverFailureReason::TransportUnavailable); return; }
+	// Bind this callback to its own request before dispatch. Adapters may deliver
+	// from workers or reenter inline; one matching response or dispatch failure
+	// claims the attempt before any GT task is queued. Unrelated packets do not.
+	const int32 Attempt = Request.Attempt;
+	const auto CompletionClaimed = MakeShared<std::atomic<bool>, ESPMode::ThreadSafe>(false);
 	const bool bDispatched = ActiveTransport->Send(
 		Request,
-		[WeakThis = TWeakObjectPtr<UProject_JHandoverManager>(this), Revision = LifetimeRevision](
+		[WeakThis = TWeakObjectPtr<UProject_JHandoverManager>(this), Revision = LifetimeRevision, Id, Attempt, CompletionClaimed](
 			const FProject_JHandoverTransportResponse& Response)
 		{
+			// Value-only checks on the invoking thread. Resolve UObjects only on GT.
+			if (Response.TransferId != Id || Response.Attempt != Attempt || CompletionClaimed->exchange(true)) { return; }
 			if (IsInGameThread())
 			{
 				if (UProject_JHandoverManager* Manager = WeakThis.Get(); Manager && Manager->LifetimeRevision == Revision)
@@ -517,7 +525,9 @@ void UProject_JHandoverManager::DispatchTransfer(const FGuid& TransferId)
 			});
 		});
 
-	if (!bDispatched)
+	// A matching worker response may already be queued when Send reports false.
+	// Let that claimed completion win, just like the existing inline response.
+	if (!bDispatched && !CompletionClaimed->exchange(true))
 	{
 		Record = HandoverStates.Find(Id);
 		if (Record && Record->State == EProject_JHandoverState::AwaitingAck && Record->AttemptCount == Request.Attempt)

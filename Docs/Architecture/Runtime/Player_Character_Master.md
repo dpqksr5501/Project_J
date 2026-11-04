@@ -5,7 +5,7 @@
 ```text
 AProject_JMoverPawn → AProject_JBaseCharacter → AProject_JPlayerCharacter
   └─ /Game/Character_BPs/BP_Player_Master
-       └─ /Game/Character_BPs/GreatSword/BP_GreatSword
+       └─ /Game/Character_BPs/Spellblade/BP_Spellblade
 
 UProject_JPlayerAnimInstance
   └─ /Game/Animation_Logic/ABPs/ABP_Player_Master
@@ -34,9 +34,11 @@ UProject_JPlayerAnimInstance
 
 ## 의상 포즈 연결
 
-기존 `UProject_JModularMeshComponent`의 `bFollowAttachParentPose`를 켠 authored 파츠는 등록 시 skeletal attach parent를 LeaderPose로 사용한다. `codex/greatsword-ue5-rig-test`의 대검은 `CharacterMesh0`에 `/Game/GreatSword/Meshes/SK_GreatSword_Complete`를 직접 설치한다. 공통 마스터와 몸체 Post Process가 만든 318본 최종 포즈를 Body·Head·의상 8개가 공유한다. 별도의 Manny 메시와 `GreatSwordPose` 컴포넌트는 현재 BP에서 사용하지 않는다. 등록 해제·재등록·부모 교체·분리에서도 이전 LeaderPose를 해제하고 현재 부모를 사용한다. BP Construction Script의 연결 호출을 다시 추가하지 않는다. 공유 파츠의 bone pose 평가는 끄며, 일반 파츠의 component Tick도 끈다. **독립 Chaos Cloth가 연결된 파츠는 예외적으로 component Tick이 필요하다.** 활성 cloth 메타데이터/리소스로 판단하고 전용 파츠 이름이나 두 번째 예산 시스템을 만들지 않는다. Dedicated Server에서는 cosmetic cloth Tick을 켜지 않는다.
+기존 `UProject_JModularMeshComponent`의 `bFollowAttachParentPose`를 켠 authored 파츠는 등록 시 skeletal attach parent를 LeaderPose로 사용한다. `codex/greatsword-ue5-rig-test`의 대검은 `CharacterMesh0`에 `/Game/Spellblade/Meshes/SK_Spellblade_Complete`를 직접 설치한다. 공통 마스터와 몸체 Post Process가 만든 318본 최종 포즈를 Body·Head·의상 8개가 공유한다. 별도의 Manny 메시와 `GreatSwordPose` 컴포넌트는 현재 BP에서 사용하지 않는다. 등록 해제·재등록·부모 교체·분리에서도 이전 LeaderPose를 해제하고 현재 부모를 사용한다. BP Construction Script의 연결 호출을 다시 추가하지 않는다. 공유 파츠의 bone pose 평가는 끄며, 일반 파츠의 component Tick도 끈다. **독립 Chaos Cloth가 연결된 파츠는 예외적으로 component Tick이 필요하다.** 활성 cloth 메타데이터/리소스로 판단하고 전용 파츠 이름이나 두 번째 예산 시스템을 만들지 않는다. Dedicated Server에서는 cosmetic cloth Tick을 켜지 않는다.
 
 공통 본만 따라가는 파츠에는 LeaderPose를 사용한다. 파츠 자체의 추가 뼈를 독립적으로 평가해야 하면 자동 LeaderPose를 끄고 기존 `AttachAndCopyPose`와 해당 Post Process를 사용한다. `AttachAndSetLeader`로 생성한 장비도 동일한 수명 정책을 사용한다. 같은 source에 다시 연결할 때 강제 갱신하지 않아 물리 상태 재생성을 피한다. 장비의 mesh/pose source를 설치한 **뒤에** 등록하여 cloth/Post Process가 빈 source로 시작하지 않게 한다. 슬롯 교체는 기존 visual revision·lease 취소/해제 계약을 유지하고 표시 몸체의 AnimInstance나 전체 물리를 초기화하지 않는다. LeaderPose만으로 draw call이나 머티리얼 비용까지 제거되지는 않는다.
+
+장비 로드 완료는 등록 전후에 같은 binding·visual revision·token·definition/path와 source/asset/attachment를 재확인한다. 등록은 실제 AnimInstance 초기화 콜백을 실행할 수 있으므로 mutable 슬롯 참조를 그 너머 보관하지 않는다. 아직 게시하지 않은 candidate는 호출이 소유하고, 퇴역 시 그 candidate만 파괴한다. 등록·게시 성공 후에는 컴포넌트의 reflected SkinnedAsset가 메시를 보유하므로 token을 먼저 떼고 공유 로더에 반환한다. 장착 해제는 게시된 컴포넌트를 정리하며 성공한 load lease를 계속 보유할 필요는 없다. 원래 preload consumer와 아직 끝나지 않은 native load 예약은 별도 수명을 유지한다. [121차 재현·인계 근거](../Planning/Project_J_MMO_Architecture_Work_2026-10-26.md#121차-장비-등록-재진입과-자산-소유권-인계)를 따른다.
 
 ### 대검의 실제 2차 물리 소유권
 
@@ -81,9 +83,11 @@ UProject_JPlayerAnimInstance
 
 ### UE5 리그 시험 범위 (2026-10-25)
 
-외부 원본은 `C:/Users/I/Desktop/GreatSword_UE5_Final`이며 변경하지 않는다. 제공된 UE 5.8 패키지에서 `/Game/GreatSword`만 복사했고 공통 Mannequin을 덮어쓰지 않았다. 이전 메시와 물리는 LOD 검수 맵, 리타깃/IK 제작 자산과 이전 테스트가 소비하므로 보존한다. 이전 프로필도 기존 제작 경로의 의미가 있어 새 몸체 프로필과 합치지 않는다. 새 BP의 최종 연결은 기존 경로 `/Game/Character_BPs/GreatSword/BP_GreatSword`가 소유한다.
+외부 원본 패키지 `GreatSword_UE5_Final`은 보존한다. 2026-10-29 사용자 요청으로 이 PC의 보관 위치를 `C:/Users/I/Desktop/Greatsword/Character/GreatSword_UE5_Final`로 옮겼으며 패키지의 `Intermediate`·`DerivedDataCache`만 제거했다. 원본 내용과 `Saved`는 유지했고 검 원본은 같은 보관 루트의 `Weapon/GothicGreatsword_v74_Final4K`에 모았다. 이 로컬 보관 경로는 다른 PC의 필수 실행 조건이 아니다. 수정된 제작 리그와 현재 재임포트 원본은 저장소의 `SourceArt/Characters/Spellblade/UE5`를 계속 사용한다. 제공된 UE 5.8 패키지에서 `/Game/GreatSword`만 복사했고 공통 Mannequin을 덮어쓰지 않았다. 이전 메시와 물리는 LOD 검수 맵, 리타깃/IK 제작 자산과 이전 테스트가 소비하므로 보존한다. 이전 프로필도 기존 제작 경로의 의미가 있어 새 몸체 프로필과 합치지 않는다. 새 BP의 최종 연결은 기존 경로 `/Game/Character_BPs/Spellblade/BP_Spellblade`가 소유한다.
 
-UE의 Manny Simple·Quinn Simple 및 수정된 Complete를 공식 FBX 익스포터로 내보내 Blender의 같은 씬으로 가져와 비교했다. [제작 원본·직접 비교 씬과 측정](../../../SourceArt/Characters/GreatSword/UE5/README.md)을 보존한다. 표준 공유 89본(root 포함)의 계층은 일치하며 추가 229본과 38개 메시의 정점·웨이트를 보존했다. 수정 FBX 19개를 재임포트해 재질·Nanite·망토 Cloth를 유지했다. 실제 메시와 Skeleton의 bind 위치 차이는 0.000016cm 미만이다.
+2026-10-29 정리 검토는 `/Game/GreatSword`, `/Game/Characters/GreatSword`, `/Game/Character_BPs/GreatSword`, `/Game/Weapons/Greatsword/Basic`의 저장 에셋 145개에서 Asset Registry의 hard/soft package·management 참조를 읽고 캐릭터 CDO와 장비/표현 설정을 확인했다. 선택한 캐릭터·장비·표현 root의 의존성에 105개가 포함되며, 이 수는 editor preview 의존성까지 포함하므로 실제 runtime 사용 수로 해석하지 않는다. 나머지 40개도 기존 LOD 검수·리타깃/비교·모듈식 장비 제작 역할을 구분해 유지했다. 참조 0인 17개 중 `Ch_Texture/pdw_00_nude_0001_m`, `Clothes/Textures/pdw_00_cloak_0001_d`, `Clothes/Textures/pdw_00_hand_0001_d` 세 텍스처는 용도 미확정 후보이며 자동 삭제하지 않았다(앞 경로는 모두 `/Game/Characters/GreatSword/`). 새 Complete도 이전 폴더의 재질과 텍스처를 사용하므로 이전 폴더 전체 삭제는 불가하다. 조사한 임포트 원본 경로는 모두 존재했고 이번 보관 이동 대상 경로를 직접 사용하는 항목은 없었다. 실행 근거는 `Saved/Validation/GreatswordCleanup_20261029`이며 에셋 삭제·수정·저장은 수행하지 않았다. PIE/Cook·새 장비 교체 검증을 수행한 결과는 아니다.
+
+UE의 Manny Simple·Quinn Simple 및 수정된 Complete를 공식 FBX 익스포터로 내보내 Blender의 같은 씬으로 가져와 비교했다. [제작 원본·직접 비교 씬과 측정](../../../SourceArt/Characters/Spellblade/UE5/README.md)을 보존한다. 표준 공유 89본(root 포함)의 계층은 일치하며 추가 229본과 38개 메시의 정점·웨이트를 보존했다. 수정 FBX 19개를 재임포트해 재질·Nanite·망토 Cloth를 유지했다. 실제 메시와 Skeleton의 bind 위치 차이는 0.000016cm 미만이다.
 
 현재 직접 재생 검증은 `Saved/Validation/GreatSwordDirect_20261025`다. `FinishBodyMarkers.json`은 공통 마스터의 기존 발 helper 네 개만 유지하고, 직접 몸체 입력이 helper 다섯 개를 소유함을 확인한다. `BP_Player_Master`는 이번 작업에서 수정하지 않았다. 공통 ABP 변경은 실제 메시의 초기 transform으로 발 Rig를 초기화하는 설정이며 대검 이름별 분기를 추가하지 않는다. `LiveAudit.json`은 실제 Complete/common master/body Post Process와 공유 파츠 10개, 생성된 리타깃 프로세서 0개를 확인한다.
 

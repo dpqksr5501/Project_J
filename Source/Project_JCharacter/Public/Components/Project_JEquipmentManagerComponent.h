@@ -10,6 +10,7 @@
 
 class UProject_JEquipmentItemDefinition;
 class UProject_JEquipmentManagerComponent;
+class UProject_JEquipmentRuntimeComponent;
 class UProject_JInventoryComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FProject_JEquipmentChangedSignature, EProject_JEquipmentSlot, Slot,
@@ -77,10 +78,9 @@ struct PROJECT_JCHARACTER_API FProject_JPublicEquipmentArray : public FFastArray
 {
 	GENERATED_BODY()
 	UPROPERTY() TArray<FProject_JPublicEquipmentItem> Items;
-	UPROPERTY(NotReplicated) TObjectPtr<UProject_JEquipmentManagerComponent> OwnerComponent = nullptr;
-	void PostReplicatedAdd(const TArrayView<int32> &Indices, int32 FinalSize);
-	void PostReplicatedChange(const TArrayView<int32> &Indices, int32 FinalSize);
-	void PreReplicatedRemove(const TArrayView<int32> &Indices, int32 FinalSize);
+	UPROPERTY(NotReplicated) TObjectPtr<UProject_JEquipmentRuntimeComponent> OwnerRuntime = nullptr;
+	// Reconcile one complete delta, including removals and unresolved reference repair.
+	void PostReplicatedReceive(const FFastArraySerializer::FPostReplicatedReceiveParameters& Parameters);
 	bool NetDeltaSerialize(FNetDeltaSerializeInfo &Params)
 	{
 		return FastArrayDeltaSerialize<FProject_JPublicEquipmentItem, FProject_JPublicEquipmentArray>(Items, Params,
@@ -181,6 +181,7 @@ class PROJECT_JCHARACTER_API UProject_JEquipmentManagerComponent : public UActor
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	void RequestUnequipSlot(EProject_JEquipmentSlot Slot);
 
+	/** Owner/authority equipment; remote queries see only the current relevant Avatar. */
 	UFUNCTION(BlueprintPure, Category = "Equipment")
 	UProject_JEquipmentItemDefinition *GetEquippedItemInSlot(EProject_JEquipmentSlot Slot) const;
 
@@ -190,14 +191,13 @@ class PROJECT_JCHARACTER_API UProject_JEquipmentManagerComponent : public UActor
 	/** Development diagnostics: compact state identity for verifying FastArray replication across PIE worlds. */
 	FString GetReplicationDiagnosticSummary() const;
 
-	/** Development diagnostics: client-side FastArray delta callbacks observed since the last reset. */
+	/** Private PlayerState FastArray callbacks only; Avatar public transport is separate. */
 	FString GetReplicationDiagnosticDeltaSummary() const;
 	void ResetReplicationDiagnosticDeltaCounters();
 
 	void OnRep_EquipmentAdded(FProject_JEquipmentArrayItem &Item);
 	void OnRep_EquipmentChanged(FProject_JEquipmentArrayItem &Item);
 	void OnRep_EquipmentRemoved(FProject_JEquipmentArrayItem &Item);
-	void HandlePublicEquipment(const FProject_JPublicEquipmentItem &Item, bool bRemoved);
 
   protected:
 	virtual void BeginPlay() override;
@@ -205,6 +205,8 @@ class PROJECT_JCHARACTER_API UProject_JEquipmentManagerComponent : public UActor
   private:
 	friend class FProjectJAuditEquipmentNetworkTest;
 	friend class FProjectJEquipmentPrivacyTest;
+	friend class FProjectJCommandReplyAdmissionTest;
+	friend class FProjectJCommittedDeltaTest;
 	bool bEnding = false;
 	bool CanPublishState() const;
 	bool HasMutationAuthority() const;
@@ -214,7 +216,7 @@ class PROJECT_JCHARACTER_API UProject_JEquipmentManagerComponent : public UActor
 	UFUNCTION(Client, Reliable)
 	void ClientEquipmentRequestCompleted(FGuid RequestId, FProject_JEquipmentOperationResult Result);
 	FProject_JEquipmentOperationResult ExecuteEquipmentRequest(FGuid InstanceId, EProject_JEquipmentSlot Slot,
-															   bool bUnequip, FGuid RequestId = FGuid());
+															   bool bUnequip, FGuid RequestId = FGuid(), bool* OutSharedAdmission = nullptr);
 	FProject_JEquipmentOperationResult SubmitPersistentEquipment(FGuid RequestId, FGuid InstanceId,
 																 EProject_JEquipmentSlot Slot, bool bUnequip);
 	double RequestWindowStart = -1.0;
@@ -239,6 +241,7 @@ class PROJECT_JCHARACTER_API UProject_JEquipmentManagerComponent : public UActor
 	int32 FindEquipmentIndexBySlot(EProject_JEquipmentSlot Slot) const;
 	bool RemoveEquipmentAt(int32 Index);
 	bool UsesPublicEquipment() const;
+	const FProject_JPublicEquipmentArray* ResolvePublicEquipment() const;
 
   private:
 	// Prevent delegate callbacks from nesting slot replacement/teardown. No worker lock.
@@ -246,9 +249,6 @@ class PROJECT_JCHARACTER_API UProject_JEquipmentManagerComponent : public UActor
 
 	UPROPERTY(Replicated)
 	FProject_JEquipmentArray EquipmentArray;
-	/** Derived only by authoritative equipment commits, before publication. */
-	UPROPERTY(Replicated)
-	FProject_JPublicEquipmentArray PublicEquipmentArray;
 
 #if !UE_BUILD_SHIPPING
 	int32 ReplicationDiagnosticAddedCount = 0;

@@ -1,9 +1,13 @@
 #include "Mount/Project_JMountComponent.h"
+#include "Components/Project_JCommandBudgetComponent.h"
 #include "Movement/Project_JMovementQueries.h"
 
 #include "Mount/Project_JMountCharacter.h"
 #include "Net/UnrealNetwork.h"
 #include "Project_JAbilitySystemComponent.h"
+#include "Project_JAbilitySystemOwnerInterface.h"
+#include "GameFramework/PlayerState.h"
+#include "GameFramework/Controller.h"
 #include "Project_JGameplayTags.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
@@ -46,6 +50,7 @@ bool UProject_JMountComponent::RequestMount(AProject_JMountCharacter* Mount)
 
 void UProject_JMountComponent::ServerRequestMount_Implementation(AProject_JMountCharacter* Mount)
 {
+	if (!UProject_JCommandBudgetComponent::AdmitClientCommand(GetOwner(), NextClientMountRequestTime, 0.2)) return;
 	if (CanAcceptMountRequest() && IsValid(Mount) && Mount->GetWorld() == GetWorld() && !MountedMount)
 	{
 		Mount->TryMountRider(Cast<APawn>(GetOwner()));
@@ -55,7 +60,19 @@ void UProject_JMountComponent::ServerRequestMount_Implementation(AProject_JMount
 void UProject_JMountComponent::OnRep_MountedMount(AProject_JMountCharacter* PreviousMount)
 {
 	if (!CanAcceptMountRequest()) { return; }
-	OnMountChanged.Broadcast(PreviousMount, MountedMount);
+	const TStrongObjectPtr<ThisClass> KeepSelf(this);
+	const TStrongObjectPtr<AActor> KeepOwner(GetOwner());
+	const TStrongObjectPtr<AProject_JMountCharacter> KeepPrevious(PreviousMount), KeepCurrent(MountedMount);
+	OnMountChanged.Broadcast(KeepPrevious.Get(), KeepCurrent.Get());
+	NotifyRuntimeOwnerPrerequisitesChanged();
+}
+
+void UProject_JMountComponent::NotifyRuntimeOwnerPrerequisitesChanged()
+{
+	if (!CanAcceptMountRequest()) return;
+	const TStrongObjectPtr<ThisClass> KeepSelf(this);
+	const TStrongObjectPtr<AActor> KeepOwner(GetOwner());
+	RuntimeOwnerPrerequisitesChanged.Broadcast();
 }
 
 bool UProject_JMountComponent::CanAcceptMountRequest() const
@@ -63,6 +80,45 @@ bool UProject_JMountComponent::CanAcceptMountRequest() const
 	const AActor* Owner = GetOwner();
 	return !bEndingMount && IsValid(this) && IsValid(Owner) && !Owner->IsActorBeingDestroyed()
 		&& GetWorld() && !GetWorld()->bIsTearingDown;
+}
+
+APlayerState* UProject_JMountComponent::ResolveRuntimeOwner() const
+{
+	const auto* Rider = Cast<APawn>(GetOwner());
+	const auto* Mount = MountedMount.Get();
+	if (!CanAcceptMountRequest() || !IsValid(Rider) || Rider->GetController() || !IsValid(Mount)
+		|| Mount->IsActorBeingDestroyed() || Mount->bEndingPlay || Mount->GetWorld() != GetWorld()
+		|| Mount->GetRider() != Rider || (Mount->GetMountState() != EProject_JMountState::Mounting
+			&& Mount->GetMountState() != EProject_JMountState::Mounted)) { return nullptr; }
+	const auto* Controller = Mount->GetController();
+	if (!Controller)
+	{
+		// Foreign player controllers are owner-only. Public mounted identity uses
+		// only the current reciprocal replicated session on simulated clients.
+		// Authority and the owning/AP mount retain the controller/session checks below.
+		if (GetNetMode() != NM_Client || Rider->GetLocalRole() != ROLE_SimulatedProxy
+			|| Mount->GetLocalRole() != ROLE_SimulatedProxy || Rider->GetWorld() != GetWorld()) { return nullptr; }
+		auto* PublicState = Mount->GetPlayerState();
+		if (!IsValid(PublicState) || PublicState->IsActorBeingDestroyed() || PublicState->GetWorld() != GetWorld()
+			|| PublicState->GetPawn() != Mount) { return nullptr; }
+		const auto* PublicOwnerInterface = Cast<IProject_JAbilitySystemOwnerInterface>(PublicState);
+		const auto* PublicASC = PublicOwnerInterface ? PublicOwnerInterface->GetProjectJAbilitySystemComponent() : nullptr;
+		return IsValid(PublicASC) && PublicASC->IsRegistered() && !PublicASC->IsBeingDestroyed()
+			&& PublicASC->GetWorld() == GetWorld() && PublicASC->GetOwner() == PublicState
+			&& !PublicASC->IsActorInfoChanging() && PublicASC->GetOwnerActor() == PublicState
+			&& PublicASC->GetAvatarActor() == Rider ? PublicState : nullptr;
+	}
+	if (!IsValid(Controller) || Controller->IsActorBeingDestroyed() || Controller->GetWorld() != GetWorld()
+		|| Controller->GetPawn() != Mount || (Rider->HasAuthority() && Mount->SessionController.Get() != Controller)) { return nullptr; }
+	auto* State = Controller->GetPlayerState<APlayerState>();
+	if (!IsValid(State) || State->IsActorBeingDestroyed() || State->GetWorld() != GetWorld()
+		|| Mount->GetPlayerState() != State || State->GetPawn() != Mount || State->GetOwner() != Controller) { return nullptr; }
+	const auto* OwnerInterface = Cast<IProject_JAbilitySystemOwnerInterface>(State);
+	const auto* ASC = OwnerInterface ? OwnerInterface->GetProjectJAbilitySystemComponent() : nullptr;
+	// A new/cleared recipient must be explicitly initialized before it can serve
+	// this retained Avatar. The mount's own ASC never substitutes for the rider's.
+	return IsValid(ASC) && !ASC->IsActorInfoChanging() && ASC->GetOwnerActor() == State
+		&& ASC->GetAvatarActor() == Rider ? State : nullptr;
 }
 
 void UProject_JMountComponent::SetRiderInteractAction(UInputAction* Action)

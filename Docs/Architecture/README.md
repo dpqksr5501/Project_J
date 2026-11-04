@@ -1,5 +1,9 @@
 # 아키텍처
 
+[현재 MMORPG 아키텍처 구현·검증 기록](Planning/Project_J_MMO_Architecture_Work_2026-10-26.md)은 전체 감사 후 진행한 실제 기반 개선이다. 합의한 필수 작업은167차에서 마감했다. 수명·요청 승인·변경분 복제·worker 직렬화·월드 이벤트 실행과 검증 파이프라인을 다루며, [현재 범위 점검](../Review/Audits/Project_J_MMO_Architecture_Readiness_2026-11-04.md)에서 적용 결과와 후속 콘텐츠/운영 연결을 구분한다. 과거 active·다음 작업 표기를 자동 재개 지시로 사용하지 않는다.
+
+[2026-10-26 MMORPG 실행·확장 기반 감사](../Review/Audits/Project_J_MMO_Foundation_Audit_2026-10-26.md)는 문서·소스·설정·선택 실제 에셋을 대조한 최신 구조 검토다. 병렬 처리 전후 GT 비용, Mover/Mass 연결, 저장·복제·스트리밍과 운영 경계를 검토했으며 생산 기능을 수정하지 않았다. 빌드·Python 통과와 native GC 묶음 크래시·단독 통과, 미수행 부하를 구분한다.
+
 [최신 PC 소스·BP·DA 정리](../Review/Audits/Project_J_PC_Structure_Cleanup_2026-10-15.md)는 반복 수정 뒤의 실제 호출·상태 소유권을 기준으로 중복 grant, 입력 반환과 애니메이션/편집 정책을 정리한 결과다. 새 추상화보다 기존 PS/ASC·source lease·snapshot 계약을 재사용하며, 유지 이유와 미검증을 분리한다.
 
 현재 후속 구조·수명·실제 데이터 조사는 [심화 감사](../Review/Audits/Project_J_Deep_Structure_Audit_2026-10-13.md)와 [시스템 지도](../Review/Audits/Project_J_Deep_Structure_Map_2026-10-13.md)에 기록한다. DS01–18의 실제 변경·계약 검토·미검증을 구분한다. 최종 전체 회귀 332개·Game/Cook과 기록한 통합 검증을 수행했으며, CPU 일부 증가와 packaged RHI trace 종료 실패는 남아 있다.

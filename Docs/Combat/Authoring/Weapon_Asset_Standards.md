@@ -41,7 +41,7 @@
 
 - 지오메트리 LOD 제작·예외는 [메시 LOD 제작 기준](../../Animation/Authoring/Mesh_LOD_Authoring.md)을 따른다. 현재 기본 체인은 LOD0–2이며, 새 무기의 실루엣과 전환 품질은 해당 에셋에서 확인한다. 기본 대검의 삼각형 수를 모든 무기의 공통 상한으로 고정하지 않는다.
 - 공용 `Project_JWeaponPresentationActor`를 사용하는 정적 무기는 로컬·원격 모두 화면 크기 기반 LOD를 사용한다. 명시적인 제작용 forced LOD는 해당 용도와 소유권을 유지한다.
-- 메시 피벗·단위·손잡이/접지 소켓은 해당 무기의 장착·모션 계약에 맞춘다. 손 접촉 제작은 [무기 파지와 손 접촉](../../Animation/Authoring/Weapon_Hand_Contact_System.md), 실제 대검 장비 연결은 [대검 제작 가이드](GreatswordCombatAuthoringGuide.md)를 따른다.
+- 메시 피벗·단위·손잡이/접지 소켓은 해당 무기의 장착·모션 계약에 맞춘다. 손 접촉 제작은 [무기 파지와 손 접촉](../../Animation/Authoring/Weapon_Hand_Contact_System.md), 실제 대검 장비 연결은 [대검 제작 가이드](SpellbladeCombatAuthoringGuide.md)를 따른다.
 
 ## 신규 무기 검수
 

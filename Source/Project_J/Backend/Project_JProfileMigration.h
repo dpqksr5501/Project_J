@@ -22,7 +22,7 @@ struct FProject_JMigrationInspection
 	}
 };
 /** Offline worker-only I/O. Never opens a source for writing; never switches a live DB.
- * Ownership is a complete, explicitly supplied v2 snapshot for each v1 character.
+ * Ownership is a complete, explicitly supplied v2/v3 checkpoint without jobs for each v1 character.
  * Caller validates definitions/rules on the game thread before creating a result. */
 class FProject_JProfileMigration
 {

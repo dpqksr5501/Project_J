@@ -7,6 +7,7 @@
 #include "AbilitySystem/Project_JAbilitySet.h"
 #include "ActiveGameplayEffectHandle.h"
 #include "Equipment/Project_JEquipmentTypes.h"
+#include "Components/Project_JEquipmentManagerComponent.h"
 #include "Project_JEquipmentRuntimeComponent.generated.h"
 
 class UProject_JEquipmentItemDefinition;
@@ -49,7 +50,8 @@ struct FProject_JEquipmentRuntimeItem
 
 /**
  * Handles the visual and runtime representation (Mesh, ASC Grants, Stats) 
- * of equipment on the character. Listens to the PlayerState's EquipmentManager.
+ * of equipment on the character. Authority/owner bind the persistent manager;
+ * observers consume only this relevant Pawn's complete public FastArray.
  */
 UCLASS(ClassGroup=(Equipment), meta=(BlueprintSpawnableComponent))
 class PROJECT_JCHARACTER_API UProject_JEquipmentRuntimeComponent : public UActorComponent
@@ -58,6 +60,13 @@ class PROJECT_JCHARACTER_API UProject_JEquipmentRuntimeComponent : public UActor
 
 public:	
 	UProject_JEquipmentRuntimeComponent();
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	/** Public item definitions/slots only. Never contains private item instances. */
+	const FProject_JPublicEquipmentArray& GetPublicEquipment() const { return PublicEquipment; }
+	UFUNCTION(BlueprintPure, Category="Equipment")
+	UProject_JEquipmentItemDefinition* GetPresentedItemInSlot(EProject_JEquipmentSlot Slot) const;
+	/** FastArray completion; no per-frame polling or visual restart for unchanged slots. */
+	void OnPublicEquipmentReceived();
 
 protected:
 	virtual void BeginPlay() override;
@@ -85,10 +94,18 @@ protected:
 	void OnEquipmentUnequipped(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef);
 
 private:
+	friend class FProjectJEquipmentPrivacyTest;
 	friend class FProjectJEquipmentLoadLifecycleTest;
 	friend class FProjectJEquipmentRetryTest;
 	friend class FProjectJEquipmentGrantOwnershipTest;
 	static constexpr uint32 MaxVisualAttempts = 4;
+	bool UsesReplicatedPresentation() const;
+	void ReconcilePublicEquipment();
+	void PublishPublicSlot(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef);
+	UPROPERTY(Replicated) FProject_JPublicEquipmentArray PublicEquipment;
+	uint64 PublicEquipmentRevision = 0;
+	bool bUsingReplicatedPresentation = false;
+	bool CanCreateEquipmentVisuals() const;
 	void ScheduleVisualRetry();
 	FTimerHandle VisualRetryTimer;
 

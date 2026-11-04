@@ -159,7 +159,8 @@ public:
 	int32 SchemaVersion = 1;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
-	TSubclassOf<AActor> WeaponActorClass;
+	// Visual payload only. Server combat, pose and notify metadata remain available without this class.
+	TSoftClassPtr<AActor> WeaponActorClass;
 
 	/** Opt-in palm calibration. Invalid/missing rigid anchors fall back to the configured sockets. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Attachment")

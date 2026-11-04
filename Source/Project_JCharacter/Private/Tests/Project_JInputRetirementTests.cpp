@@ -3,7 +3,7 @@
 #include "Misc/ScopeExit.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
-#include "Project_JGreatswordCharacter.h"
+#include "Project_JSpellbladeCharacter.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JGameplayTags.h"
 #include "Combat/Project_JGameplayAbility_Melee.h"
@@ -23,7 +23,7 @@ bool FProjectJInputRetirementTest::RunTest(const FString&)
     auto* World = UWorld::CreateWorld(EWorldType::Game, false);
     GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
     ON_SCOPE_EXIT { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
-    auto* Player = World->SpawnActor<AProject_JGreatswordCharacter>();
+    auto* Player = World->SpawnActor<AProject_JSpellbladeCharacter>();
     auto* ASC = NewObject<UProject_JAbilitySystemComponent>(Player);
     FindFProperty<FObjectPropertyBase>(AProject_JBaseCharacter::StaticClass(), TEXT("AbilitySystemComponent"))->SetObjectPropertyValue_InContainer(Player, ASC);
     ASC->RegisterComponent(); ASC->InitAbilityActorInfo(Player, Player);
@@ -77,7 +77,7 @@ bool FProjectJInputBindingReentryTest::RunTest(const FString&)
     auto* World = UWorld::CreateWorld(EWorldType::Game, false);
     GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
     ON_SCOPE_EXIT { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
-    auto* Player = World->SpawnActor<AProject_JGreatswordCharacter>();
+    auto* Player = World->SpawnActor<AProject_JSpellbladeCharacter>();
     auto* ASC = NewObject<UProject_JAbilitySystemComponent>(Player);
     FindFProperty<FObjectPropertyBase>(AProject_JBaseCharacter::StaticClass(), TEXT("AbilitySystemComponent"))->SetObjectPropertyValue_InContainer(Player, ASC);
     ASC->RegisterComponent(); ASC->InitAbilityActorInfo(Player, Player);

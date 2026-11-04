@@ -35,7 +35,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMountedInteractInputTest, "ProjectJ.Mo
 bool FProjectJMountedInteractInputTest::RunTest(const FString&)
 {
 	FFixWorld W;
-	auto* Player = W.World->SpawnActor<AProject_JGreatswordCharacter>();
+	auto* Player = W.World->SpawnActor<AProject_JSpellbladeCharacter>();
 	auto* Mount = W.World->SpawnActor<AProject_JMountLifecycleFixture>();
 	if (!TestNotNull(TEXT("Player fixture"), Player) || !TestNotNull(TEXT("Mount fixture"), Mount)) { return false; }
 	auto* Action = NewObject<UInputAction>();

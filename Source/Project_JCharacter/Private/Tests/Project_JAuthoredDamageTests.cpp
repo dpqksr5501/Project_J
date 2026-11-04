@@ -31,7 +31,7 @@ bool FProjectJAuthoredDamageTest::RunTest(const FString&)
     auto* Attacker = MakeActor(FVector::ZeroVector); auto* Target = MakeActor(FVector(100, 0, 0));
     auto* Hit = NewObject<UProject_JCombatHitValidationComponent>(Attacker); Hit->RegisterComponent();
     const auto* Reference = LoadObject<UProject_JAttackDefinition>(nullptr,
-        TEXT("/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1.DA_Attack_Greatsword_LMB1"));
+        TEXT("/Game/DataAssetSets/AttackDefinition/Spellblade/DA_Attack_Spellblade_LMB1.DA_Attack_Spellblade_LMB1"));
     if (!TestNotNull(TEXT("Existing working prototype attack"), Reference) || !Reference->DamageEffect) { return false; }
     const auto* Effect = Reference->DamageEffect->GetDefaultObject<UGameplayEffect>();
     float HealthDelta = 0;
@@ -44,7 +44,7 @@ bool FProjectJAuthoredDamageTest::RunTest(const FString&)
     for (const TCHAR* Name : {TEXT("LMB1"), TEXT("LMB2"), TEXT("LMBRMB"), TEXT("LR1"), TEXT("LR2"),
         TEXT("Q1"), TEXT("Q2"), TEXT("R"), TEXT("RMB1"), TEXT("RMB2"), TEXT("T")})
     {
-        const FString Path = FString::Printf(TEXT("/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_%s.DA_Attack_Greatsword_%s"), Name, Name);
+        const FString Path = FString::Printf(TEXT("/Game/DataAssetSets/AttackDefinition/Spellblade/DA_Attack_Spellblade_%s.DA_Attack_Spellblade_%s"), Name, Name);
         auto* Definition = LoadObject<UProject_JAttackDefinition>(nullptr, *Path);
         if (!TestNotNull(Path, Definition)) { continue; }
         // Each definition must demonstrate damage against a living target; the

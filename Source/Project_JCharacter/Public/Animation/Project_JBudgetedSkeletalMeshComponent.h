@@ -1,6 +1,7 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "SkeletalMeshComponentBudgeted.h"
+#include "Animation/Project_JSharedPhysicsBounds.h"
 #include "Project_JBudgetedSkeletalMeshComponent.generated.h"
 
 class UProject_JCharacterAnimationBudgetSubsystem;
@@ -29,12 +30,16 @@ public:
 	bool HasAnimationUpdateRequirement() const { return bUpdateOverride; }
 	/** GT observation shared by animation consumers; never writes gameplay/AI significance. */
 	float GetAnimationDistanceTier() const;
+	/** Actual local-view observation only. Unknown remains unknown to optional cosmetic consumers. GT only. */
+	TOptional<float> GetObservedAnimationDistanceTier() const { check(IsInGameThread()); return ObservedDistanceTier; }
 	/** Independent cosmetic cloth grant; unknown observation preserves authored quality. */
 	bool HasFullClothQualityGrant() const { return ObservedFullClothQuality.Get(true); }
 	/** Requested tick state is distinct from the allocator's current scheduled tick. */
 	bool GetRequestedTickEnabled() const { return bRequestedTick; }
 	bool CanUseBudget() const;
 	virtual void SetComponentTickEnabled(bool bEnabled) override;
+    virtual void SetSkeletalMesh(USkeletalMesh* NewMesh,bool bReinitPose=true) override;
+    virtual void SetPhysicsAsset(class UPhysicsAsset* NewAsset,bool bForceReInit=false) override;
 
 	/** Actor-level escape hatch; never changes process CVars or other characters. */
 	UPROPERTY(EditAnywhere, Category="Budgeting|ProjectJ")
@@ -43,11 +48,20 @@ public:
 	UPROPERTY(EditAnywhere, Category="Budgeting|ProjectJ")
 	bool bBudgetTickWhenNotRendered = true;
 protected:
+    virtual void OnRegister() override;
+    virtual void OnUnregister() override;
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 private:
 	friend class UProject_JCharacterAnimationBudgetSubsystem;
+    friend class UProject_JModularMeshComponent;
+    bool IsSharedPhysicsBoundsAvailable() const;
+    bool TryReadSharedPhysicsBounds(const Project_J::Bounds::FKey& Key,TConstArrayView<Project_J::Bounds::FBodyValue> BodyValues,FBoxSphereBounds& OutLocal) const;
+    void PublishSharedPhysicsBounds(const Project_J::Bounds::FKey& Key,TConstArrayView<Project_J::Bounds::FBodyValue> BodyValues,const FBoxSphereBounds& Local) const;
+    void RetireSharedPhysicsBounds();
+    mutable Project_J::Bounds::FEntry SharedPhysicsBounds;
+    bool bChangingSharedBoundsSource=false;
 	void EnterBudget();
 	void LeaveBudget();
 	void DetachService();

@@ -1,5 +1,6 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
+#include "Misc/ScopeExit.h"
 #include "Components/Project_JCombatHitValidationComponent.h"
 #include "Combat/Project_JAttackDefinition.h"
 #include "Components/Project_JWeaponPresentationComponent.h"
@@ -10,6 +11,8 @@
 #include "Engine/World.h"
 #include "Engine/Engine.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "CollisionShape.h"
 #include "Movement/Project_JMoverPawn.h"
 #include "Engine/SkeletalMesh.h"
 #include "Engine/StaticMesh.h"
@@ -23,6 +26,17 @@
 #include "Project_JNPCCharacter.h"
 #include "AbilitySystemComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Tests/Project_JSpatialHistoryFixture.h"
+#include "UObject/StrongObjectPtr.h"
+#include "UObject/GarbageCollection.h"
+#include <limits>
+#include "Tests/Project_JPlayerMaturityFixtures.h"
+#include "Project_JAbilitySystemComponent.h"
+#include "Project_JAttributeSet.h"
+#include "Combat/Project_JServerSideRewindComponent.h"
+#include "GameFramework/WorldSettings.h"
+#include "Components/BoxComponent.h"
+#include "GameplayEffect.h"
 
 class FGameStateTestAccessor : public AGameStateBase
 {
@@ -36,6 +50,8 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJCanonicalMeleeTraceTest, "ProjectJ.Com
 bool FProjectJCanonicalMeleeTraceTest::RunTest(const FString&)
 {
 	UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+	GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
+	ON_SCOPE_EXIT { GEngine->DestroyWorldContext(World); };
 	FActorSpawnParameters Params;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	ACharacter* Character = World->SpawnActor<ACharacter>(Params);
@@ -70,6 +86,43 @@ bool FProjectJCanonicalMeleeTraceTest::RunTest(const FString&)
 	TestTrue(TEXT("Presentation weapon moved"), Presentation->GetWeaponSocketTransform(TEXT("WeaponHit_Tip"), VisualTransform));
 	TestTrue(TEXT("Moved presentation weapon cannot change gameplay trace"), Notify->ResolveTraceLocation(LeaderMesh).Equals(TraceLocation));
 	TestTrue(TEXT("Visual tip moved independently from gameplay trace"), FVector::DistSquared(TraceLocation, VisualTransform.GetLocation()) > FMath::Square(100.0));
+
+	// Shared-notify housekeeping only: actual Begin/End with a real skeletal socket,
+	// no HitValidation component, no owned attack/asset grant and therefore token0.
+	{
+		TStrongObjectPtr<UProject_JAnimNotifyState_MeleeHit> KeepNotify(Notify);
+		const TStrongObjectPtr<USkeletalMesh> Asset(LoadObject<USkeletalMesh>(nullptr,
+			TEXT("/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple.SKM_Quinn_Simple")));
+		if (!TestTrue(TEXT("Shared melee cleanup uses a real existing skeleton root bone"), Asset.IsValid() && Asset->GetRefSkeleton().GetNum() > 0))
+		{ World->DestroyWorld(false); return false; }
+		auto* RetiredCharacter = World->SpawnActor<ACharacter>(Params);
+		if (!TestNotNull(TEXT("Second actual mesh participates in the shared notify"), RetiredCharacter))
+		{ World->DestroyWorld(false); return false; }
+		auto* RetiredMesh = RetiredCharacter->GetMesh();
+		LeaderMesh->SetSkeletalMesh(Asset.Get()); RetiredMesh->SetSkeletalMesh(Asset.Get());
+		Notify->SocketName = Asset->GetRefSkeleton().GetBoneName(0);
+		if (!TestTrue(TEXT("Both actual meshes expose the authored test socket"), LeaderMesh->DoesSocketExist(Notify->SocketName) && RetiredMesh->DoesSocketExist(Notify->SocketName)))
+		{ World->DestroyWorld(false); return false; }
+		FAnimNotifyEventReference Event; Event.SetNotifyInstanceID(11401);
+		Notify->NotifyBegin(LeaderMesh, nullptr, 1.f, Event);
+		Notify->NotifyBegin(RetiredMesh, nullptr, 1.f, Event);
+		Notify->NotifyBegin(LeaderMesh, nullptr, 1.f, Event);
+		TestTrue(TEXT("Same-call Begin burst isolates meshes and preserves duplicate execution suppression"),
+			Notify->TraceStates.Num() == 2 && Notify->TraceStates.FindChecked(LeaderMesh).Num() == 1 && Notify->PostGCHandle.IsValid());
+		const TWeakObjectPtr<USkeletalMeshComponent> DeadMesh(RetiredMesh);
+		RetiredCharacter->Destroy(); RetiredCharacter = nullptr; RetiredMesh = nullptr;
+		TestEqual(TEXT("Destroyed mesh storage is weakly retained until native GC"), Notify->TraceStates.Num(), 2);
+		CollectGarbage(RF_NoFlags, true);
+		TestFalse(TEXT("The actual destroyed participant is no longer a valid weak mesh"), DeadMesh.IsValid());
+		TestTrue(TEXT("Native post-GC returns the stale melee entry without another Begin"),
+			!Notify->TraceStates.Contains(DeadMesh) && Notify->TraceStates.Num() == 1 && Notify->TraceStates.Contains(LeaderMesh));
+		Notify->NotifyEnd(LeaderMesh, nullptr, Event);
+		TestTrue(TEXT("Normal End retires the surviving melee execution"), Notify->TraceStates.IsEmpty());
+		const TWeakObjectPtr<UProject_JAnimNotifyState_MeleeHit> DeadNotify(Notify);
+		KeepNotify.Reset(); Notify = nullptr;
+		CollectGarbage(RF_NoFlags, true);
+		TestFalse(TEXT("Real notify collection retires its weak GC delegate safely"), DeadNotify.IsValid());
+	}
 
 	Presentation->SpawnedWeapon = nullptr;
 	World->DestroyWorld(false);
@@ -289,6 +342,253 @@ bool FProjectJSSRHistoricalSweepTest::RunTest(const FString&)
 	// Query overwritten record prior to wrap (e.g. record 0 at 20.0) -> must reject
 	const bool bFoundOverwritten = HitVal->FindAuthoritativeTraceAtTime(20.01f, 100, AttackTag, OutStart, OutEnd, bOutWindow);
 	TestFalse(TEXT("Rejects overwritten record in ring buffer"), bFoundOverwritten);
+
+	// The same component now records one complete authoritative path per native dispatch.
+	HitVal->EndAttack();
+	auto* PacketAttack = NewObject<UProject_JAttackDefinition>(HitVal);
+	HitVal->BeginAttackNode(AttackTag, PacketAttack, Key);
+	const uint64 PacketWindow = HitVal->BeginHitWindow(), PacketSpatial = HitVal->GetSpatialRevision();
+	TArray<FProject_JAuthoritativeTraceSegment> Path;
+	for (int32 I = 0; I < 3; ++I)
+	{
+		FProject_JAuthoritativeTraceSegment Piece;
+		Piece.TraceStart = FVector(I * 10, I * 20, 0); Piece.TraceEnd = FVector(I * 10 + 5, I * 20 + 10, 0); Path.Add(Piece);
+	}
+	const uint64 FirstPacket = HitVal->RecordAuthoritativeTracePacket(Path, PacketWindow, PacketSpatial);
+	TestTrue(TEXT("A completed path gets one real publication"), FirstPacket != 0);
+	TestEqual(TEXT("Three pieces occupy one ring record"), HitVal->SweepHistoryCount, 1);
+	TestEqual(TEXT("Retained geometry accounts for actual pieces"), HitVal->SweepHistorySegmentCount, 3);
+	FProject_JAuthoritativeSweepRecord ReadPacket;
+	TestTrue(TEXT("Public packet readback preserves the atomic path"), HitVal->FindAuthoritativeTracePacketAtTime(World->GetTimeSeconds(), Key, AttackTag, ReadPacket));
+	TestTrue(TEXT("Atomic path has all three actual pieces"), ReadPacket.bAtomicPath && ReadPacket.Segments.Num() == 3);
+	if (ReadPacket.Segments.Num() == 3)
+		TestTrue(TEXT("Later piece endpoints are not a first-to-last chord"), ReadPacket.Segments[2].TraceStart == Path[2].TraceStart && ReadPacket.Segments[2].TraceEnd == Path[2].TraceEnd);
+	OutStart = OutEnd = FVector(99); bOutWindow = true;
+	TestFalse(TEXT("Legacy two-vector API cannot flatten an atomic path"), HitVal->FindAuthoritativeTraceAtTime(World->GetTimeSeconds(), Key, AttackTag, OutStart, OutEnd, bOutWindow));
+	TestTrue(TEXT("Unavailable legacy readback initializes every output"), OutStart.IsZero() && OutEnd.IsZero() && !bOutWindow);
+	TestTrue(TEXT("Contact selects its exact owned segment without another record"), HitVal->SelectAuthoritativeTraceSegment(FirstPacket, PacketWindow, PacketSpatial, 1));
+	TestTrue(TEXT("Authority origin is the contact piece"), HitVal->LastAuthoritativeTraceStart == Path[1].TraceStart && HitVal->LastAuthoritativeTraceEnd == Path[1].TraceEnd);
+	TestEqual(TEXT("Segment selection does not grow history"), HitVal->SweepHistoryCount, 1);
+	TestFalse(TEXT("Out-of-range piece does not select another geometry"), HitVal->SelectAuthoritativeTraceSegment(FirstPacket, PacketWindow, PacketSpatial, 3));
+	TestEqual(TEXT("Foreign spatial revision cannot publish"), HitVal->RecordAuthoritativeTracePacket(Path, PacketWindow, PacketSpatial + 1), uint64(0));
+	Path[1].TraceStart.X = std::numeric_limits<double>::quiet_NaN();
+	TestEqual(TEXT("Nonfinite path rejects the entire publication"), HitVal->RecordAuthoritativeTracePacket(Path, PacketWindow, PacketSpatial), uint64(0));
+	TestEqual(TEXT("Rejected path preserves the last valid whole record"), HitVal->SweepHistoryCount, 1);
+	TestEqual(TEXT("Rejected path preserves retained geometry count"), HitVal->SweepHistorySegmentCount, 3);
+	Path[1].TraceStart = FVector(10, 20, 0);
+	TArray<FProject_JAuthoritativeTraceSegment> MaximumPath; MaximumPath.Init(Path[0], UProject_JCombatHitValidationComponent::MaxTracePacketSegments);
+	TArray<FProject_JAuthoritativeTraceSegment> OverflowPath = MaximumPath; OverflowPath.Add(Path[0]);
+	TestEqual(TEXT("Over-cap path cannot publish a shortened prefix"), HitVal->RecordAuthoritativeTracePacket(OverflowPath, PacketWindow, PacketSpatial), uint64(0));
+	uint64 LatestPacket = 0;
+	for (int32 I = 0; I < 4; ++I) LatestPacket = HitVal->RecordAuthoritativeTracePacket(MaximumPath, PacketWindow, PacketSpatial);
+	TestTrue(TEXT("Bounded maximum path is admitted intact"), LatestPacket != 0);
+	TestEqual(TEXT("Geometry cap evicts oldest whole packets"), HitVal->SweepHistorySegmentCount, 189);
+	TestEqual(TEXT("Whole-packet eviction retains three complete paths"), HitVal->SweepHistoryCount, 3);
+	int32 RetainedPieces = 0, AllocatedSlots = 0;
+	for (const auto& Record : HitVal->AuthoritativeSweepHistory)
+	{
+		RetainedPieces += Record.Segments.Num();
+		AllocatedSlots += Record.Segments.Max() > 0;
+	}
+	TestEqual(TEXT("Inactive slots retain no path array capacity"), AllocatedSlots, 3);
+	TestEqual(TEXT("Physical path storage contains no evicted prefixes"), RetainedPieces, 189);
+	TestFalse(TEXT("An older publication cannot select a later path"), HitVal->SelectAuthoritativeTraceSegment(FirstPacket, PacketWindow, PacketSpatial, 0));
+	HitVal->EndHitWindow(PacketWindow);
+	TestFalse(TEXT("A real window close revokes contact selection"), HitVal->SelectAuthoritativeTraceSegment(LatestPacket, PacketWindow, PacketSpatial, 0));
+	TestTrue(TEXT("Public packet lookup retains the exact close marker"), HitVal->FindAuthoritativeTracePacketAtTime(World->GetTimeSeconds(), Key, AttackTag, ReadPacket));
+	TestTrue(TEXT("Close marker has no open geometry or duplicated path allocation"), !ReadPacket.bHitWindowOpen && ReadPacket.Segments.IsEmpty());
+	// Publicly permitted mixed writers at one native instant still obey the final close publication.
+	HitVal->BeginAttackNode(AttackTag, PacketAttack, Key);
+	const uint64 MixedWindow = HitVal->BeginHitWindow();
+	HitVal->RecordAuthoritativeTrace(Path[0].TraceStart, Path[0].TraceEnd);
+	TestTrue(TEXT("Mixed history admits the complete atomic path"), HitVal->RecordAuthoritativeTracePacket(Path, MixedWindow, PacketSpatial) != 0);
+	HitVal->EndHitWindow(MixedWindow);
+	TestTrue(TEXT("Mixed same-time packet lookup finds the final publication"), HitVal->FindAuthoritativeTracePacketAtTime(World->GetTimeSeconds(), Key, AttackTag, ReadPacket));
+	TestTrue(TEXT("Final atomic close defeats an earlier same-time legacy open"), ReadPacket.bAtomicPath && !ReadPacket.bHitWindowOpen && ReadPacket.Segments.IsEmpty());
+	OutStart = OutEnd = FVector(99); bOutWindow = true;
+	TestFalse(TEXT("Mixed same-time history cannot masquerade as a legacy open chord"), HitVal->FindAuthoritativeTraceAtTime(World->GetTimeSeconds(), Key, AttackTag, OutStart, OutEnd, bOutWindow));
+	TestTrue(TEXT("Mixed unavailable legacy outputs are cleared"), OutStart.IsZero() && OutEnd.IsZero() && !bOutWindow);
+	HitVal->ResetSpatialHistory();
+	TestEqual(TEXT("Spatial discontinuity retires every whole record"), HitVal->SweepHistoryCount, 0);
+	TestEqual(TEXT("Spatial discontinuity releases all retained geometry"), HitVal->SweepHistorySegmentCount, 0);
+	HitVal->EndAttack();
+	for (const auto& Record : HitVal->AuthoritativeSweepHistory)
+		TestEqual(TEXT("Attack retirement leaves no owning path capacity"), Record.Segments.Max(), 0);
+
+	const auto VerifyPacketRPC = [&]() -> bool
+	{
+		auto* PacketWorld = UWorld::CreateWorld(EWorldType::Game, false);
+		GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(PacketWorld);
+		ON_SCOPE_EXIT { if (PacketWorld->GetBegunPlay()) PacketWorld->EndPlay(EEndPlayReason::Quit); PacketWorld->DestroyWorld(false); GEngine->DestroyWorldContext(PacketWorld); };
+		const auto MakeRecipient = [&](const FVector& Position)
+		{
+			auto* Actor = PacketWorld->SpawnActor<AProject_JPlayerMaturityASCFixture>(AProject_JPlayerMaturityASCFixture::StaticClass(), Position, FRotator::ZeroRotator, Params);
+			if (!Actor) return Actor;
+			auto* ASC = NewObject<UProject_JAbilitySystemComponent>(Actor); Actor->CurrentASC = ASC;
+			Actor->AddInstanceComponent(ASC); ASC->RegisterComponent(); ASC->InitAbilityActorInfo(Actor, Actor);
+			auto* Attributes = NewObject<UProject_JAttributeSet>(Actor); ASC->AddAttributeSetSubobject(Attributes);
+			ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetMaxHealthAttribute(), 100.f);
+			ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetHealthAttribute(), 100.f);
+			return Actor;
+		};
+		auto* Attacker = MakeRecipient(FVector(0, 0, 100)); auto* Victim = MakeRecipient(FVector(120, 0, 100));
+		if (!TestNotNull(TEXT("Packet RPC actual authority source"), Attacker) || !TestNotNull(TEXT("Packet RPC actual recipient"), Victim)) return false;
+		auto* PacketHit = NewObject<UProject_JCombatHitValidationComponent>(Attacker); Attacker->AddInstanceComponent(PacketHit); PacketHit->RegisterComponent();
+		auto* Rewind = NewObject<UProject_JServerSideRewindComponent>(Victim); Victim->AddInstanceComponent(Rewind); Rewind->RegisterComponent();
+		const auto* Reference = LoadObject<UProject_JAttackDefinition>(nullptr, TEXT("/Game/DataAssetSets/AttackDefinition/Spellblade/DA_Attack_Spellblade_LMB1.DA_Attack_Spellblade_LMB1"));
+		if (!TestNotNull(TEXT("Existing authored damage effect for packet RPC"), Reference) || !Reference->DamageEffect) return false;
+		const auto* Effect = Reference->DamageEffect->GetDefaultObject<UGameplayEffect>();
+		float Delta = 0.f;
+		for (const auto& Modifier : Effect->Modifiers)
+			if (Modifier.Attribute == UProject_JAttributeSet::GetHealthAttribute() && Modifier.ModifierOp == EGameplayModOp::Additive)
+			{ float Magnitude = 0; if (Modifier.ModifierMagnitude.GetStaticMagnitudeIfPossible(1.f, Magnitude)) Delta += Magnitude; }
+		if (!TestTrue(TEXT("Packet RPC uses a real instant authored health loss"), Effect->DurationPolicy == EGameplayEffectDurationType::Instant && Delta < 0)) return false;
+		PacketWorld->InitializeActorsForPlay(FURL()); PacketWorld->GetWorldSettings()->NotifyBeginPlay();
+		PacketWorld->Tick(LEVELTICK_All, .05f); // Native interval scheduler records the actual target capsule.
+		const double CaptureTime = PacketWorld->GetTimeSeconds();
+		const FVector TargetPosition = Victim->GetCapsuleComponent()->GetComponentLocation();
+		TArray<FProject_JAuthoritativeTraceSegment> Pieces;
+		FProject_JAuthoritativeTraceSegment Miss; Miss.TraceStart = Attacker->GetActorLocation() + FVector(0, 200, 0); Miss.TraceEnd = Miss.TraceStart + FVector(10, 0, 0); Pieces.Add(Miss);
+		FProject_JAuthoritativeTraceSegment Match; Match.TraceStart = TargetPosition + FVector(0, -100, 0); Match.TraceEnd = TargetPosition + FVector(0, -80, 0); Pieces.Add(Match);
+		auto* Definition = NewObject<UProject_JAttackDefinition>(PacketHit); Definition->AttackTag = AttackTag; Definition->DamageEffect = Reference->DamageEffect; Definition->HitSpec = Reference->HitSpec;
+		if (!TestTrue(TEXT("Native rewind rejects the unrelated first piece"), !Rewind->ServerVerifyHit(CaptureTime, Miss.TraceStart, Miss.TraceEnd, Definition->HitSpec.TraceRadius)) ||
+			!TestTrue(TEXT("Native rewind confirms the later piece against an actually recorded capsule"), Rewind->ServerVerifyHit(CaptureTime, Match.TraceStart, Match.TraceEnd, Definition->HitSpec.TraceRadius))) return false;
+		PacketHit->BeginAttackNode(AttackTag, Definition, Key);
+		const uint64 Window = PacketHit->BeginHitWindow();
+		if (!TestTrue(TEXT("Real RPC source publishes a complete path"), PacketHit->RecordAuthoritativeTracePacket(Pieces, Window, PacketHit->GetSpatialRevision()) != 0)) return false;
+		const auto MakeBlocker = [&](const FVector& Location)
+		{
+			auto* Blocker = PacketWorld->SpawnActor<AActor>(Params); if (!Blocker) return Blocker;
+			auto* Box = NewObject<UBoxComponent>(Blocker); Blocker->AddInstanceComponent(Box); Blocker->SetRootComponent(Box);
+			Box->SetBoxExtent(FVector(5, 4, 200)); Box->SetCollisionEnabled(ECollisionEnabled::QueryOnly); Box->SetCollisionObjectType(ECC_WorldStatic);
+			Box->SetCollisionResponseToAllChannels(ECR_Ignore); Box->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+			Box->RegisterComponent(); Blocker->SetActorLocation(Location); return Blocker;
+		};
+		const auto Occluder = [&](const FVector& Origin) -> AActor*
+		{
+			FHitResult Hit; FCollisionQueryParams Query(SCENE_QUERY_STAT(ProjectJPacketRPCFixture), false, Attacker); Query.AddIgnoredActor(Attacker);
+			return PacketWorld->LineTraceSingleByChannel(Hit, Origin, Victim->GetActorLocation(), ECC_Visibility, Query) ? Hit.GetActor() : nullptr;
+		};
+		int32 Effects = 0; bool ExactSource = true;
+		const FDelegateHandle Applied = Victim->CurrentASC->OnGameplayEffectAppliedDelegateToSelf.AddLambda(
+			[&](UAbilitySystemComponent* EffectSource, const FGameplayEffectSpec& Spec, FActiveGameplayEffectHandle)
+			{ if (Spec.Def == Effect) { ++Effects; ExactSource &= EffectSource == Attacker->CurrentASC.Get(); } });
+		ON_SCOPE_EXIT { Victim->CurrentASC->OnGameplayEffectAppliedDelegateToSelf.Remove(Applied); };
+		const float Before = Victim->CurrentASC->GetNumericAttribute(UProject_JAttributeSet::GetHealthAttribute());
+		auto* BlockedMatch = MakeBlocker(TargetPosition + FVector(0, -60, 0));
+		if (!TestNotNull(TEXT("Actual matched-piece visibility blocker"), BlockedMatch)) return false;
+		bool Passed = TestTrue(TEXT("Native visibility query blocks the matching piece"), Occluder(Match.TraceStart) == BlockedMatch);
+		auto* MissLOS = Occluder(Miss.TraceStart);
+		Passed &= TestTrue(TEXT("Unrelated first piece has clear visibility"), !MissLOS || MissLOS == Victim);
+		PacketHit->ServerRequestSSRHit(Victim, CaptureTime, Match.TraceStart, Match.TraceEnd, AttackTag, 1, Key);
+		Passed &= TestEqual(TEXT("Blocked matching piece does not confirm a GE"), Effects, 0);
+		Passed &= TestEqual(TEXT("Blocked matching piece leaves health unchanged"), Victim->CurrentASC->GetNumericAttribute(UProject_JAttributeSet::GetHealthAttribute()), Before);
+		Passed &= TestEqual(TEXT("Blocked admitted packet still consumes its request sequence"), PacketHit->LastServerRequestSequence, 1);
+		BlockedMatch->Destroy();
+		auto* UnrelatedBlocker = MakeBlocker(FMath::Lerp(Miss.TraceStart, TargetPosition, .5));
+		if (!TestNotNull(TEXT("Actual unrelated-piece visibility blocker"), UnrelatedBlocker)) return false;
+		PacketWorld->Tick(LEVELTICK_All, .05f); // Normal scene retirement; retain the original real historical timestamp.
+		Passed &= TestTrue(TEXT("Native visibility query now blocks only the unrelated first origin"), Occluder(Miss.TraceStart) == UnrelatedBlocker);
+		auto* MatchLOS = Occluder(Match.TraceStart);
+		Passed &= TestTrue(TEXT("Actual matching piece remains visible"), !MatchLOS || MatchLOS == Victim);
+		PacketHit->ServerRequestSSRHit(Victim, CaptureTime, Match.TraceStart, Match.TraceEnd, AttackTag, 2, Key);
+		Passed &= TestEqual(TEXT("Actual server RPC reaches a later packet piece and applies one GE"), Effects, 1);
+		Passed &= TestTrue(TEXT("Confirmed packet effect reports the exact source ASC"), ExactSource);
+		Passed &= TestEqual(TEXT("Later-piece GE applies the existing authored health delta"), Victim->CurrentASC->GetNumericAttribute(UProject_JAttributeSet::GetHealthAttribute()), FMath::Max(0.f, Before + Delta));
+		PacketHit->ServerRequestSSRHit(Victim, CaptureTime, Match.TraceStart, Match.TraceEnd, AttackTag, 3, Key);
+		Passed &= TestEqual(TEXT("Repeated packet request cannot damage the same victim twice"), Effects, 1);
+		PacketHit->EndAttack(); UnrelatedBlocker->Destroy();
+		if (!Passed) return false;
+		// A normal current-collision recipient has no rewind owner. Set up a separate
+		// stationary query scene before beginning its attack; no private pose/clock data.
+		Attacker->GetCharacterMovement()->DisableMovement();
+		Attacker->GetCharacterMovement()->StopMovementImmediately();
+		Attacker->SetActorLocation(FVector(0, 1000, 100));
+		auto* PhysicsVictim = MakeRecipient(FVector(90, 1010, 100));
+		if (!TestNotNull(TEXT("Current-physics recipient"), PhysicsVictim)) return false;
+		PhysicsVictim->GetCharacterMovement()->DisableMovement(); PhysicsVictim->GetCharacterMovement()->StopMovementImmediately();
+		PhysicsVictim->GetCapsuleComponent()->InitCapsuleSize(10.f, 10.f);
+		PhysicsVictim->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		PhysicsVictim->GetCapsuleComponent()->SetCollisionObjectType(ECC_Pawn);
+		PhysicsVictim->GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECR_Block);
+		TestNull(TEXT("The new recipient genuinely has no historical-rewind component"), PhysicsVictim->FindComponentByClass<UProject_JServerSideRewindComponent>());
+		Definition->HitSpec.TraceRadius = 1.f; // Transient fixture definition, not an authored asset/CDO change.
+		PacketWorld->Tick(LEVELTICK_All, .05f);
+		const FVector PhysicsCenter = PhysicsVictim->GetCapsuleComponent()->GetComponentLocation();
+		const FVector DiagonalStart = PhysicsCenter - FVector(90, 10, 0), DiagonalEnd = DiagonalStart + FVector(100, 100, 0);
+		const FVector ContactStart = PhysicsCenter + FVector(-20, 0, 0), ContactEnd = PhysicsCenter + FVector(20, 0, 0);
+		const auto NativeContact = [&](const FVector& Start, const FVector& End)
+		{
+			TArray<FHitResult> Hits; FCollisionQueryParams Query(SCENE_QUERY_STAT(ProjectJCurrentSSRFixture), false, Attacker);
+			Query.AddIgnoredActor(Attacker);
+			PacketWorld->SweepMultiByObjectType(Hits, Start, End, FQuat::Identity, FCollisionObjectQueryParams(ECC_Pawn), FCollisionShape::MakeSphere(1.f), Query);
+			return Hits.ContainsByPredicate([PhysicsVictim](const FHitResult& Hit) { return Hit.GetActor() == PhysicsVictim; });
+		};
+		const FBox DiagonalBounds = FBox(DiagonalStart.ComponentMin(DiagonalEnd), DiagonalStart.ComponentMax(DiagonalEnd)).ExpandBy(1.f);
+		if (!TestTrue(TEXT("Negative control overlaps the former coarse boxes but not the native capsule/sphere sweep"),
+			PhysicsVictim->GetComponentsBoundingBox().Intersect(DiagonalBounds) && FMath::PointDistToSegment(PhysicsCenter, DiagonalStart, DiagonalEnd) > 11.f
+			&& !NativeContact(DiagonalStart, DiagonalEnd) && NativeContact(ContactStart, ContactEnd))) return false;
+		int32 PhysicsEffects = 0; bool PhysicsExactSource = true;
+		const auto PhysicsApplied = PhysicsVictim->CurrentASC->OnGameplayEffectAppliedDelegateToSelf.AddLambda(
+			[&](UAbilitySystemComponent* Source, const FGameplayEffectSpec& Spec, FActiveGameplayEffectHandle)
+			{ if (Spec.Def == Effect) { ++PhysicsEffects; PhysicsExactSource &= Source == Attacker->CurrentASC.Get(); } });
+		ON_SCOPE_EXIT { PhysicsVictim->CurrentASC->OnGameplayEffectAppliedDelegateToSelf.Remove(PhysicsApplied); };
+		const float PhysicsBefore = PhysicsVictim->CurrentASC->GetNumericAttribute(UProject_JAttributeSet::GetHealthAttribute());
+		PacketHit->BeginAttackNode(AttackTag, Definition, Key); PacketHit->SetHitWindowOpen(true);
+		PacketHit->RecordAuthoritativeTrace(DiagonalStart, DiagonalEnd);
+		// A genuine contact hint cannot replace the server-owned diagonal geometry.
+		PacketHit->ServerRequestSSRHit(PhysicsVictim, PacketWorld->GetTimeSeconds(), ContactStart, ContactEnd, AttackTag, 4, Key);
+		Passed &= TestEqual(TEXT("Coarse AABB overlap cannot apply a current-physics GE"), PhysicsEffects, 0);
+		Passed &= TestEqual(TEXT("Rejected coarse overlap preserves actual health"), PhysicsVictim->CurrentASC->GetNumericAttribute(UProject_JAttributeSet::GetHealthAttribute()), PhysicsBefore);
+		Passed &= TestEqual(TEXT("Rejected valid geometry still consumes native sequence admission"), PacketHit->LastServerRequestSequence, 4);
+		PacketWorld->Tick(LEVELTICK_All, .05f);
+		Passed &= TestTrue(TEXT("The physical recipient stayed at its admitted fixture pose"), PhysicsVictim->GetCapsuleComponent()->GetComponentLocation().Equals(PhysicsCenter, 1.e-4));
+		PacketHit->RecordAuthoritativeTrace(ContactStart, ContactEnd);
+		const double PhysicsTime = PacketWorld->GetTimeSeconds();
+		const FVector MissHint = DiagonalStart + FVector(0, 80, 0);
+		PacketHit->ServerRequestSSRHit(PhysicsVictim, PhysicsTime, MissHint, MissHint + FVector(1, 0, 0), AttackTag, 5, Key);
+		Passed &= TestEqual(TEXT("Actual current native contact applies one authored GE despite a nonintersecting client hint"), PhysicsEffects, 1);
+		Passed &= TestTrue(TEXT("Current-physics GE uses the actual source ASC"), PhysicsExactSource);
+		Passed &= TestEqual(TEXT("Current native contact applies the real authored health delta"), PhysicsVictim->CurrentASC->GetNumericAttribute(UProject_JAttributeSet::GetHealthAttribute()), FMath::Max(0.f, PhysicsBefore + Delta));
+		PacketHit->ServerRequestSSRHit(PhysicsVictim, PhysicsTime, MissHint, MissHint + FVector(1, 0, 0), AttackTag, 6, Key);
+		Passed &= TestEqual(TEXT("Current-physics confirmed target remains deduplicated"), PhysicsEffects, 1);
+		PacketHit->EndAttack();
+		// Legacy history must use its selected owned origin, not the newest server
+		// trace origin. Visibility is current-world policy; this is not scene rewind.
+		auto* PhysicsBlocker = MakeBlocker(PhysicsCenter + FVector(-20, 0, 0));
+		if (!TestNotNull(TEXT("Legacy selected-origin visibility blocker"), PhysicsBlocker)) return false;
+		const auto PhysicsOccluder = [&](const FVector& Start)
+		{
+			FHitResult Hit; FCollisionQueryParams Query(SCENE_QUERY_STAT(ProjectJCurrentSSRLOS), false, Attacker);
+			Query.AddIgnoredActor(Attacker);
+			return PacketWorld->LineTraceSingleByChannel(Hit, Start, PhysicsVictim->GetActorLocation(), ECC_Visibility, Query) ? Hit.GetActor() : nullptr;
+		};
+		const FVector BlockedStart = PhysicsCenter + FVector(-40, 0, 0), BlockedEnd = PhysicsCenter + FVector(20, 0, 0);
+		const FVector ClearStart = PhysicsCenter + FVector(0, -40, 0), ClearEnd = PhysicsCenter + FVector(0, 20, 0);
+		auto* ClearOccluder = PhysicsOccluder(ClearStart);
+		if (!TestTrue(TEXT("Actual native contact exists for both legacy pieces; only one owned origin is obstructed"),
+			NativeContact(BlockedStart, BlockedEnd) && NativeContact(ClearStart, ClearEnd) && PhysicsOccluder(BlockedStart) == PhysicsBlocker
+			&& (!ClearOccluder || ClearOccluder == PhysicsVictim))) return false;
+		PacketHit->BeginAttackNode(AttackTag, Definition, Key); PacketHit->SetHitWindowOpen(true);
+		PacketHit->RecordAuthoritativeTrace(BlockedStart, BlockedEnd); const double BlockedTime = PacketWorld->GetTimeSeconds();
+		PacketWorld->Tick(LEVELTICK_All, .05f); PacketHit->RecordAuthoritativeTrace(ClearStart, ClearEnd);
+		FProject_JAuthoritativeSweepRecord SelectedLegacy;
+		Passed &= TestTrue(TEXT("Actual query selects the old non-atomic owned packet"), PacketHit->FindAuthoritativeTracePacketAtTime(BlockedTime, Key, AttackTag, SelectedLegacy)
+			&& !SelectedLegacy.bAtomicPath && SelectedLegacy.TraceStart.Equals(BlockedStart, 1.e-4));
+		PacketHit->ServerRequestSSRHit(PhysicsVictim, BlockedTime, ClearStart, ClearEnd, AttackTag, 7, Key);
+		Passed &= TestEqual(TEXT("A clear latest server origin cannot authorize a blocked selected legacy origin"), PhysicsEffects, 1);
+		PacketWorld->Tick(LEVELTICK_All, .05f); PacketHit->RecordAuthoritativeTrace(ClearStart, ClearEnd);
+		const double ClearTime = PacketWorld->GetTimeSeconds();
+		PacketWorld->Tick(LEVELTICK_All, .05f); PacketHit->RecordAuthoritativeTrace(BlockedStart, BlockedEnd);
+		PacketHit->ServerRequestSSRHit(PhysicsVictim, ClearTime, BlockedStart, BlockedEnd, AttackTag, 8, Key);
+		Passed &= TestEqual(TEXT("A blocked latest server origin cannot reject a clear selected legacy origin"), PhysicsEffects, 2);
+		Passed &= TestEqual(TEXT("Selected legacy contact applies exactly one further authored health delta"), PhysicsVictim->CurrentASC->GetNumericAttribute(UProject_JAttributeSet::GetHealthAttribute()), FMath::Max(0.f, PhysicsBefore + 2.f * Delta));
+		PacketHit->ServerRequestSSRHit(PhysicsVictim, ClearTime, BlockedStart, BlockedEnd, AttackTag, 9, Key);
+		Passed &= TestEqual(TEXT("Selected legacy contact retains exact target dedup"), PhysicsEffects, 2);
+		PacketHit->EndAttack(); PhysicsBlocker->Destroy();
+		return Passed;
+	};
+	TestTrue(TEXT("Standalone authority RPC consumes real multi-piece rewind and LOS"), VerifyPacketRPC());
 
 	World->DestroyWorld(false);
 	return true;
@@ -818,6 +1118,29 @@ bool FProjectJSSRHitWindowProductionTransitionTest::RunTest(const FString&)
 	TestEqual(TEXT("Production path: ValidateActiveAttack rejects with NoActiveAttack after EndAttack"),
 		HitVal->ValidateActiveAttack(Request), EProject_JCombatHitValidationFailure::NoActiveAttack);
 
+	// Exercise the actual producer clock, open/close transitions and spatial
+	// cutoff at a large absolute time, rather than only constructing records.
+	constexpr double LongClock = 1'048'576.0;
+	auto* AbsoluteClock = World->SpawnActor<AProject_JSpatialHistoryClock>(Params);
+	World->SetGameState(AbsoluteClock);
+	const auto SetClock = [&](double Time) { AbsoluteClock->TestServerTime = Time; };
+	SetClock(LongClock + .010); HitVal->BeginAttackNode(AttackTag, nullptr, Key); HitVal->SetHitWindowOpen(true);
+	HitVal->RecordAuthoritativeTrace(FVector::ZeroVector, FVector(100, 0, 0));
+	SetClock(LongClock + .030); HitVal->RecordAuthoritativeTrace(FVector(0, 100, 0), FVector(100, 100, 0));
+	SetClock(LongClock + .040); HitVal->SetHitWindowOpen(false);
+	TestTrue(TEXT("Large producer clock retains sub-frame sweep history"), HitVal->FindAuthoritativeTraceAtTime(LongClock + .020, Key, AttackTag, OutStart, OutEnd, bOutHitWindowOpen));
+	TestNearlyEqual(TEXT("Large producer clock interpolates the correct geometry"), OutStart.Y, 50.0, .001);
+	TestTrue(TEXT("Large producer clock keeps a 35 ms request before the close boundary"), HitVal->FindAuthoritativeTraceAtTime(LongClock + .035, Key, AttackTag, OutStart, OutEnd, bOutHitWindowOpen) && bOutHitWindowOpen);
+	TestTrue(TEXT("Large producer clock finds the exact close boundary"), HitVal->FindAuthoritativeTraceAtTime(LongClock + .040, Key, AttackTag, OutStart, OutEnd, bOutHitWindowOpen));
+	TestFalse(TEXT("Large producer clock closes at the exact authored time"), bOutHitWindowOpen);
+	TestTrue(TEXT("Large producer clock preserves the existing future endpoint tolerance"), HitVal->FindAuthoritativeTraceAtTime(LongClock + .089, Key, AttackTag, OutStart, OutEnd, bOutHitWindowOpen));
+	TestFalse(TEXT("Large producer clock rejects beyond the existing endpoint tolerance"), HitVal->FindAuthoritativeTraceAtTime(LongClock + .091, Key, AttackTag, OutStart, OutEnd, bOutHitWindowOpen));
+	SetClock(LongClock + .050); HitVal->ResetSpatialHistory();
+	SetClock(LongClock + .060); HitVal->SetHitWindowOpen(true); HitVal->RecordAuthoritativeTrace(FVector(200, 0, 0), FVector(210, 0, 0));
+	TestFalse(TEXT("Large clock cutoff rejects geometry from before the discontinuity"), HitVal->FindAuthoritativeTraceAtTime(LongClock + .049, Key, AttackTag, OutStart, OutEnd, bOutHitWindowOpen));
+	TestTrue(TEXT("Large clock cutoff permits the new physical epoch"), HitVal->FindAuthoritativeTraceAtTime(LongClock + .060, Key, AttackTag, OutStart, OutEnd, bOutHitWindowOpen) && bOutHitWindowOpen);
+	HitVal->EndAttack();
+
 	World->DestroyWorld(false);
 	return true;
 }
@@ -967,6 +1290,267 @@ bool FProjectJTwoHandIKTransitionAndCurveTest::RunTest(const FString&)
 
 	World->DestroyWorld(false);
 	return true;
+}
+
+namespace
+{
+class FProjectJSSRExecutionClockLatent : public IAutomationLatentCommand
+{
+    FAutomationTestBase* Test;
+    UWorld* W = nullptr;
+    TStrongObjectPtr<UWorld> KeepWorld;
+    AProject_JPlayerMaturityASCFixture *Source = nullptr, *A = nullptr, *B = nullptr;
+    AActor* EarlierOwner = nullptr;
+    UProject_JCombatHitValidationComponent *Hit = nullptr, *Earlier = nullptr;
+    UProject_JServerSideRewindComponent *HistoryA = nullptr, *HistoryB = nullptr;
+    TStrongObjectPtr<UProject_JAttackDefinition> Definition;
+    const UGameplayEffect* Effect = nullptr;
+    FGameplayTag Node;
+    static constexpr int32 Key = 167;
+    double EarlyStart = 0, TargetTime = 0, ServerStart = 0, PacketTime = 0, Start2 = 0, Time2 = 0, Start3 = 0, Time3 = 0;
+    double PreviousA = -1, PreviousB = -1, Started = FPlatformTime::Seconds();
+    int32 Visit1 = 0, Visit2 = 0, Visit3 = 0, EffectsA = 0, EffectsB = 0, Sequence = 0, Step = 0;
+    uint64 Window1 = 0, Window2 = 0, Window3 = 0, LastFrame = MAX_uint64;
+    float Delta = 0, BeforeA = 0, BeforeB = 0;
+    bool ExactSource = true;
+    FVector CapturedA = FVector::ZeroVector, CapturedB = FVector::ZeroVector;
+    TArray<FProject_JAuthoritativeTraceSegment> Pieces;
+    FProject_JAuthoritativeSweepRecord Packet;
+    FProject_JCombatHitRequest Request, Invalid, Second, Current;
+    FDelegateHandle HandleA, HandleB;
+    bool TestTrue(const TCHAR* Message, bool Value) { return Test->TestTrue(Message, Value); }
+    bool TestFalse(const TCHAR* Message, bool Value) { return Test->TestFalse(Message, Value); }
+    template<typename T> bool TestNotNull(const TCHAR* Message, T* Value) { return Test->TestNotNull(Message, Value); }
+    template<typename T> bool TestEqual(const TCHAR* Message, const T& Value, const T& Expected) { return Test->TestEqual(Message, Value, Expected); }
+    static float Health(const AProject_JPlayerMaturityASCFixture* Target) { return Target->CurrentASC->GetNumericAttribute(UProject_JAttributeSet::GetHealthAttribute()); }
+    void Send(FProject_JCombatHitRequest Value) { Value.RequestSequence = ++Sequence; Hit->ServerRequestPredictedHit(Value); }
+    void BindEffects()
+    {
+        HandleA = A->CurrentASC->OnGameplayEffectAppliedDelegateToSelf.AddLambda([this](UAbilitySystemComponent* ASC, const FGameplayEffectSpec& Spec, FActiveGameplayEffectHandle)
+        { if (Spec.Def == Effect) { ++EffectsA; ExactSource &= ASC == Source->CurrentASC.Get(); } });
+        HandleB = B->CurrentASC->OnGameplayEffectAppliedDelegateToSelf.AddLambda([this](UAbilitySystemComponent* ASC, const FGameplayEffectSpec& Spec, FActiveGameplayEffectHandle)
+        { if (Spec.Def == Effect) { ++EffectsB; ExactSource &= ASC == Source->CurrentASC.Get(); } });
+    }
+    bool ObserveHistory()
+    {
+        double OldA = 0, NewA = 0, OldB = 0, NewB = 0;
+        const bool HasA = HistoryA->TryGetHistoryTimeBounds(OldA, NewA), HasB = HistoryB->TryGetHistoryTimeBounds(OldB, NewB);
+        const auto* CapsuleA = A->GetCapsuleComponent(); const auto* CapsuleB = B->GetCapsuleComponent();
+        Test->AddInfo(FString::Printf(TEXT("CLOCK_HISTORY167 step=%d frame=%llu now=%.17g A(has=%d,begun=%d,tick=%d,old=%.17g,new=%.17g,advanced=%d,pos=%s,r=%.6f,hh=%.6f) B(has=%d,begun=%d,tick=%d,old=%.17g,new=%.17g,advanced=%d,pos=%s,r=%.6f,hh=%.6f)"),
+            Step, uint64(GFrameCounter), W->GetTimeSeconds(), HasA, HistoryA->HasBegunPlay(), HistoryA->IsComponentTickEnabled(), OldA, NewA, HasA && NewA > PreviousA,
+            *CapsuleA->GetComponentLocation().ToString(), CapsuleA->GetScaledCapsuleRadius(), CapsuleA->GetScaledCapsuleHalfHeight(),
+            HasB, HistoryB->HasBegunPlay(), HistoryB->IsComponentTickEnabled(), OldB, NewB, HasB && NewB > PreviousB,
+            *CapsuleB->GetComponentLocation().ToString(), CapsuleB->GetScaledCapsuleRadius(), CapsuleB->GetScaledCapsuleHalfHeight()));
+        const bool Ready = HasA && HasB && NewA > PreviousA && NewB > PreviousB && NewA == W->GetTimeSeconds() && NewB == W->GetTimeSeconds();
+        PreviousA = NewA; PreviousB = NewB;
+        return TestTrue(TEXT("Natural distinct-frame native captures advance both real history bounds"), Ready);
+    }
+    bool Setup()
+    {
+        // Native dispatch only: real authority actors and public execution clocks;
+        // autonomous input/socket delivery remains the separate wire proof.
+        W = UWorld::CreateWorld(EWorldType::Game, false); KeepWorld.Reset(W);
+        GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(W);
+        FActorSpawnParameters Spawn; Spawn.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        const auto Recipient = [&](const FVector& Position)
+        {
+            auto* Actor = W->SpawnActor<AProject_JPlayerMaturityASCFixture>(AProject_JPlayerMaturityASCFixture::StaticClass(), Position, FRotator::ZeroRotator, Spawn);
+            if (!Actor) return Actor;
+            auto* ASC = NewObject<UProject_JAbilitySystemComponent>(Actor); Actor->CurrentASC = ASC;
+            Actor->AddInstanceComponent(ASC); ASC->RegisterComponent(); ASC->InitAbilityActorInfo(Actor, Actor);
+            ASC->AddAttributeSetSubobject(NewObject<UProject_JAttributeSet>(Actor));
+            ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetMaxHealthAttribute(), 100.f);
+            ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetHealthAttribute(), 100.f);
+            return Actor;
+        };
+        Source = Recipient(FVector(0, 0, 100));
+        A = Recipient(FVector(120, 0, 100)); B = Recipient(FVector(120, 150, 100));
+        if (!TestNotNull(TEXT("Actual clock source"), Source) || !TestNotNull(TEXT("First history target"), A) || !TestNotNull(TEXT("Independent second target"), B)) return false;
+        Hit = NewObject<UProject_JCombatHitValidationComponent>(Source); Source->AddInstanceComponent(Hit); Hit->RegisterComponent();
+        EarlierOwner = W->SpawnActor<AActor>(Spawn);
+        if (!TestNotNull(TEXT("Independent earlier native clock owner"), EarlierOwner)) return false;
+        Earlier = NewObject<UProject_JCombatHitValidationComponent>(EarlierOwner); EarlierOwner->AddInstanceComponent(Earlier); Earlier->RegisterComponent();
+        HistoryA = NewObject<UProject_JServerSideRewindComponent>(A); A->AddInstanceComponent(HistoryA); HistoryA->RegisterComponent();
+        HistoryB = NewObject<UProject_JServerSideRewindComponent>(B); B->AddInstanceComponent(HistoryB); HistoryB->RegisterComponent();
+        Definition.Reset(LoadObject<UProject_JAttackDefinition>(nullptr,
+            TEXT("/Game/DataAssetSets/AttackDefinition/Spellblade/DA_Attack_Spellblade_LMB1_Canonical.DA_Attack_Spellblade_LMB1_Canonical")));
+        if (!TestTrue(TEXT("Unchanged selected canonical definition"), Definition.IsValid() && Definition->MeleeTrajectory.bEnabled && Definition->DamageEffect && Definition->AttackTag.IsValid())) return false;
+        Effect = Definition->DamageEffect->GetDefaultObject<UGameplayEffect>();
+        Delta = 0.f;
+        for (const auto& M : Effect->Modifiers)
+            if (M.Attribute == UProject_JAttributeSet::GetHealthAttribute() && M.ModifierOp == EGameplayModOp::Additive)
+            { float Magnitude = 0; if (M.ModifierMagnitude.GetStaticMagnitudeIfPossible(1.f, Magnitude)) Delta += Magnitude; }
+        if (!TestTrue(TEXT("Real instant authored health loss"), Effect->DurationPolicy == EGameplayEffectDurationType::Instant && Delta < 0.f)) return false;
+        W->InitializeActorsForPlay(FURL()); W->GetWorldSettings()->NotifyBeginPlay();
+        // Post-initialization/possession may restore the native default movement mode.
+        // Establish this stationary fixture after that lifecycle, before the first real tick.
+        for (auto* Actor : {Source, A, B})
+        {
+            Actor->GetCharacterMovement()->DisableMovement(); Actor->GetCharacterMovement()->StopMovementImmediately();
+        }
+        return true;
+
+    }
+public:
+    explicit FProjectJSSRExecutionClockLatent(FAutomationTestBase* InTest) : Test(InTest) {}
+    ~FProjectJSSRExecutionClockLatent() override
+    {
+        if (IsValid(A) && A->CurrentASC) A->CurrentASC->OnGameplayEffectAppliedDelegateToSelf.Remove(HandleA);
+        if (IsValid(B) && B->CurrentASC) B->CurrentASC->OnGameplayEffectAppliedDelegateToSelf.Remove(HandleB);
+        if (W) { if (W->GetBegunPlay()) W->EndPlay(EEndPlayReason::Quit); W->DestroyWorld(false); GEngine->DestroyWorldContext(W); }
+    }
+    bool Update() override
+    {
+        if (FPlatformTime::Seconds() - Started > 10.) { Test->AddError(TEXT("Natural-frame clock fixture timed out")); return true; }
+        if (LastFrame == GFrameCounter) return false; // Read only; never advance or replace the engine frame clock.
+        LastFrame = GFrameCounter;
+        switch (Step)
+        {
+        case 0:
+        {
+            if (!Setup()) return true;
+            W->Tick(LEVELTICK_All, .05f);
+            if (!ObserveHistory()) return true;
+
+            Node = Definition->AttackTag;
+            Earlier->BeginAttackNode(Node, Definition.Get(), Key);
+            EarlyStart = Earlier->GetActiveAttackStartTimestamp(); Visit1 = Earlier->GetActiveNodeVisitOrdinal();
+            ++Step; return false;
+        }
+        case 1:
+        {
+            W->Tick(LEVELTICK_All, .05f);
+            if (!ObserveHistory()) return true;
+            TargetTime = W->GetTimeSeconds();
+            CapturedA = A->GetCapsuleComponent()->GetComponentLocation();
+            CapturedB = B->GetCapsuleComponent()->GetComponentLocation();
+            ++Step; return false;
+        }
+        case 2:
+        {
+            W->Tick(LEVELTICK_All, .10f);
+            if (!ObserveHistory()) return true;
+            Hit->BeginAttackNode(Node, Definition.Get(), Key);
+            ServerStart = Hit->GetActiveAttackStartTimestamp(); Window1 = Hit->BeginHitWindow();
+            ++Step; return false;
+        }
+        case 3:
+        {
+            W->Tick(LEVELTICK_All, .05f);
+            if (!ObserveHistory()) return true;
+            PacketTime = W->GetTimeSeconds();
+            if (!TestTrue(TEXT("Stationary fixture capsules match their actual target-time samples"), A->GetCapsuleComponent()->GetComponentLocation().Equals(CapturedA) && B->GetCapsuleComponent()->GetComponentLocation().Equals(CapturedB))) return true;
+            for (auto* Target : {A, B})
+            {
+                const FVector P = Target->GetCapsuleComponent()->GetComponentLocation();
+                auto& Piece = Pieces.AddDefaulted_GetRef(); Piece.TraceStart = P + FVector(0, -10, 0); Piece.TraceEnd = P + FVector(0, 10, 0);
+            }
+            if (!TestTrue(TEXT("Actual Begin clocks map the same elapsed interval"), Visit1 == 1 && Hit->GetActiveNodeVisitOrdinal() == Visit1 && EarlyStart < TargetTime && TargetTime < ServerStart && FMath::IsNearlyEqual(ServerStart + TargetTime - EarlyStart, PacketTime, 1.e-8)) ||
+                !TestTrue(TEXT("Actual first history overlaps its server piece"), HistoryA->ServerVerifyHit(TargetTime, Pieces[0].TraceStart, Pieces[0].TraceEnd, Definition->HitSpec.TraceRadius)) ||
+                !TestTrue(TEXT("Actual second history overlaps its server piece"), HistoryB->ServerVerifyHit(TargetTime, Pieces[1].TraceStart, Pieces[1].TraceEnd, Definition->HitSpec.TraceRadius)) ||
+                !TestTrue(TEXT("Authority publishes actual current packet"), Hit->RecordAuthoritativeTracePacket(Pieces, Window1, Hit->GetSpatialRevision()) != 0)) return true;
+            TestFalse(TEXT("Legacy world time cannot find a packet before server node Begin"), Hit->FindAuthoritativeTracePacketAtTime(TargetTime, Key, Node, Packet));
+            if (!TestTrue(TEXT("Mapped source time selects current open atomic server packet"), Hit->FindAuthoritativeTracePacketAtTime(ServerStart + TargetTime - EarlyStart, Key, Node, Packet) && Packet.bAtomicPath && Packet.bHitWindowOpen && Packet.Segments.Num() == 2)) return true;
+            BindEffects();
+            BeforeA = Health(A); BeforeB = Health(B);
+            Request.Target = A; Request.ClientTimestamp = TargetTime; Request.TraceStart = Pieces[0].TraceStart; Request.TraceEnd = Pieces[0].TraceEnd;
+            Request.AttackNodeTag = Node; Request.PredictionKey = Key; Request.NodeClock.bPresent = true;
+            Request.NodeClock.ClientNodeStartTimestamp = EarlyStart; Request.NodeClock.NodeVisitOrdinal = Visit1;
+            Hit->ServerRequestSSRHit(A, TargetTime, Request.TraceStart, Request.TraceEnd, Node, ++Sequence, Key);
+            TestEqual(TEXT("Missing canonical clock cannot fall back to legacy RPC"), EffectsA, 0);
+            Invalid = Request; Invalid.NodeClock.ClientNodeStartTimestamp = TargetTime + .01; Send(Invalid);
+            Invalid = Request; Invalid.NodeClock.ClientNodeStartTimestamp = std::numeric_limits<double>::quiet_NaN(); Send(Invalid);
+            Invalid = Request; Invalid.ClientTimestamp = W->GetTimeSeconds() + 1.; Send(Invalid);
+            Invalid = Request; ++Invalid.NodeClock.NodeVisitOrdinal; Send(Invalid);
+            TestTrue(TEXT("Wrong/NaN/future contexts change no GE/health or first valid anchor"), EffectsA == 0 && EffectsB == 0 && Health(A) == BeforeA && Health(B) == BeforeB);
+            Send(Request);
+            TestTrue(TEXT("Mapped source packet and real target history apply the authored GE exactly once"), EffectsA == 1 && EffectsB == 0 && ExactSource && Health(A) == FMath::Max(0.f, BeforeA + Delta));
+            Second = Request; Second.Target = B; Second.TraceStart = Pieces[1].TraceStart; Second.TraceEnd = Pieces[1].TraceEnd;
+            Invalid = Second; Invalid.NodeClock.ClientNodeStartTimestamp += .01; Invalid.ClientTimestamp += .01; Send(Invalid);
+            TestTrue(TEXT("Changed bound anchor rejects on fresh target despite unchanged elapsed/matching packet"), EffectsB == 0 && Health(B) == BeforeB);
+            Send(Second);
+            TestTrue(TEXT("Original immutable anchor still admits the independent target"), EffectsB == 1 && Health(B) == FMath::Max(0.f, BeforeB + Delta));
+            Send(Request); TestEqual(TEXT("Clock mapping preserves per-attack dedup"), EffectsA, 1);
+            ++Step; return false;
+        }
+        case 4:
+        {
+            W->Tick(LEVELTICK_All, .05f);
+            if (!ObserveHistory()) return true;
+
+            Earlier->BeginAttackNode(Node, Definition.Get(), Key); Hit->BeginAttackNode(Node, Definition.Get(), Key);
+            Start2 = Earlier->GetActiveAttackStartTimestamp(); Visit2 = Earlier->GetActiveNodeVisitOrdinal();
+            Window2 = Hit->BeginHitWindow();
+            ++Step; return false;
+        }
+        case 5:
+        {
+            W->Tick(LEVELTICK_All, .05f);
+            if (!ObserveHistory()) return true;
+            Time2 = W->GetTimeSeconds();
+            if (!TestTrue(TEXT("Next actual node advances visit on the same activation key"), Visit2 == Visit1 + 1 && Hit->GetActiveNodeVisitOrdinal() == Visit2) ||
+                !TestTrue(TEXT("Next visit publishes complete native geometry"), Hit->RecordAuthoritativeTracePacket(Pieces, Window2, Hit->GetSpatialRevision()) != 0) ||
+                !TestTrue(TEXT("Old context would otherwise select the new packet"), Hit->FindAuthoritativeTracePacketAtTime(Hit->GetActiveAttackStartTimestamp() + TargetTime - EarlyStart, Key, Node, Packet))) return true;
+            Send(Second); TestEqual(TEXT("Old visit cannot bind the same-key replacement node"), EffectsB, 1);
+            Current = Request; Current.ClientTimestamp = Time2; Current.NodeClock.ClientNodeStartTimestamp = Start2; Current.NodeClock.NodeVisitOrdinal = Visit2;
+            Send(Current);
+            TestTrue(TEXT("Fresh visit remains usable after stale-context rejection"), EffectsA == 2 && Health(A) == FMath::Max(0.f, BeforeA + 2.f * Delta));
+            Hit->ResetSpatialHistory();
+            if (!TestTrue(TEXT("Spatial retirement permits native publication but does not restore clock"), Hit->RecordAuthoritativeTracePacket(Pieces, Window2, Hit->GetSpatialRevision()) != 0)) return true;
+            ++Step; return false;
+        }
+        case 6:
+        {
+            W->Tick(LEVELTICK_All, .05f);
+            if (!ObserveHistory()) return true;
+
+            if (!TestTrue(TEXT("Second actual post-spatial publication is available"), Hit->RecordAuthoritativeTracePacket(Pieces, Window2, Hit->GetSpatialRevision()) != 0)) return true;
+            Current.Target = B; Current.TraceStart = Pieces[1].TraceStart; Current.TraceEnd = Pieces[1].TraceEnd;
+            if (!TestTrue(TEXT("Stale same-node clock still has native packet and actual historical overlap"),
+            Hit->FindAuthoritativeTracePacketAtTime(Hit->GetActiveAttackStartTimestamp() + Current.ClientTimestamp - Current.NodeClock.ClientNodeStartTimestamp, Key, Node, Packet) &&
+            HistoryB->ServerVerifyHit(Current.ClientTimestamp, Current.TraceStart, Current.TraceEnd, Definition->HitSpec.TraceRadius))) return true;
+            Send(Current); TestEqual(TEXT("Spatially retired same-key clock cannot damage despite fresh packets"), EffectsB, 1);
+            Hit->EndAttack(); Earlier->EndAttack();
+            TestEqual(TEXT("End exposes no active node visit"), Hit->GetActiveNodeVisitOrdinal(), 0);
+            Send(Current); TestEqual(TEXT("Ended request cannot resurrect damage"), EffectsB, 1);
+            ++Step; return false;
+        }
+        case 7:
+        {
+            W->Tick(LEVELTICK_All, .05f);
+            if (!ObserveHistory()) return true;
+
+            Earlier->BeginAttackNode(Node, Definition.Get(), Key); Hit->BeginAttackNode(Node, Definition.Get(), Key);
+            Start3 = Earlier->GetActiveAttackStartTimestamp(); Visit3 = Earlier->GetActiveNodeVisitOrdinal();
+            Window3 = Hit->BeginHitWindow();
+            ++Step; return false;
+        }
+        case 8:
+        {
+            W->Tick(LEVELTICK_All, .05f);
+            if (!ObserveHistory()) return true;
+            Time3 = W->GetTimeSeconds();
+            if (!TestTrue(TEXT("Same-key restart after End preserves visit provenance"), Visit3 == Visit2 + 1 && Hit->GetActiveNodeVisitOrdinal() == Visit3) ||
+                !TestTrue(TEXT("Fresh restart owns actual geometry"), Hit->RecordAuthoritativeTracePacket(Pieces, Window3, Hit->GetSpatialRevision()) != 0) ||
+                !TestTrue(TEXT("Old ended clock would otherwise select new geometry"), Hit->FindAuthoritativeTracePacketAtTime(Hit->GetActiveAttackStartTimestamp() + Current.ClientTimestamp - Current.NodeClock.ClientNodeStartTimestamp, Key, Node, Packet))) return true;
+            Send(Current); TestEqual(TEXT("Old ended same-key clock cannot become the new immutable binding"), EffectsB, 1);
+            Current.ClientTimestamp = Time3; Current.NodeClock.ClientNodeStartTimestamp = Start3; Current.NodeClock.NodeVisitOrdinal = Visit3;
+            Send(Current);
+            TestTrue(TEXT("Actual fresh restart recovers without stale-clock damage or poisoned binding"), EffectsA == 2 && EffectsB == 2 && ExactSource && Health(B) == FMath::Max(0.f, BeforeB + 2.f * Delta));
+            Hit->EndAttack(); Earlier->EndAttack();
+            return true;
+        }
+        default: return true;
+        }
+    }
+};
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJSSRExecutionClockTest, "ProjectJ.Combat.SSRExecutionClockMapping",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJSSRExecutionClockTest::RunTest(const FString&)
+{
+    ADD_LATENT_AUTOMATION_COMMAND(FProjectJSSRExecutionClockLatent(this));
+    return true;
 }
 
 #endif

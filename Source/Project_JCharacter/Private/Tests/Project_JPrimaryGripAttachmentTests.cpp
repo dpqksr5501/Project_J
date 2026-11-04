@@ -20,7 +20,7 @@
 #include "Animation/ActiveMontageInstanceScope.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJPrimaryGripAttachmentTest,
-	"ProjectJ.Presentation.PrimaryGripAttachment", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+	"ProjectJ.Presentation.PrimaryGripAttachment", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter | EAutomationTestFlags::NonNullRHI)
 
 bool FProjectJPrimaryGripAttachmentTest::RunTest(const FString&)
 {

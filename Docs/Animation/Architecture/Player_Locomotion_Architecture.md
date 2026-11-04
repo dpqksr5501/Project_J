@@ -65,7 +65,7 @@ AnimGraph 노드는 엔진의 포즈 평가·스레드·디버깅·제작 경계
 Pivot의 속도 상한은 GT에서 게시한 실제 Mover gait 튜닝에 기존 overspeed 여유를 보존해 계산한다(Sprint +115cm/s, Run은 Run +225와 Sprint +15 중 큰 값). Run 전환/착지에 남은 Sprint 관성도 수용한다. 고정 700 때문에 750 Sprint에서 Pivot이 배제되지 않는다. 속도와 재생률 정책은 기존 immutable proxy snapshot으로 전달하며 worker에서 pawn/프로필을 조회하지 않는다. 각 노드의 실행 시점과 Chooser/PSD·애니메이션 원본은 유지한다.
 
 - **OTM / Strafe:** 두 모드를 유지한다. Strafe Sprint는 전방·좌전방·우전방만 승인하며 측후방 요청은 Run 정책과 일치시킨다.
-- **지상:** SmoothWalking 이동 모드와 native 이동 계산을 연결한다. BP 이동 모드는 엔진 override를 잇는 어댑터다. 퇴역한 CMC 전용 입력·TIP·독립 MM 경로를 복원하지 않는다.
+- **지상:** 기존 BP 경로와 이동 설정을 유지하고 `UProject_JGroundWalkingMode`가 공유 native 계산을 직접 호출한다. 프로젝트 Mover의 최소 API 공개로 SmoothWalking을 상속하며 엔진 solver·rollback spring은 유지한다. 현재 BP의 얇은 함수 override만 제거했고, 새 콘텐츠가 실제 BP override를 작성하면 표준 이벤트 dispatch가 이를 존중한다. 퇴역한 CMC 전용 입력·TIP·독립 MM 경로를 복원하지 않는다.2026-10-27의 설정/성능·진행 중 배포 검증은 [현재 작업](../../Architecture/Planning/Project_J_MMO_Architecture_Work_2026-10-26.md)을 따른다.
 - **공중:** 현재 입력·facing·승인 gait에 따라 점프 모션을 재선택한다. 같은 물리 점프의 foot과 실제 playhead 연속성을 보존하고, 새 후보가 재생 시각을 되감지 않도록 한다.
 - **관성:** 공중 제어율은 가속도에 적용한다. 입력 해제나 gait 변경만으로 수평 속도를 없애지 않으며, 역방향 입력은 물리적으로 궤도를 바꾼다.
 - **착지·큰 방향 전환:** Falling 회전과 착지 전환은 이동 상태·실제 재생 문맥을 사용한다. 카메라 각도 하나로 특정 클립을 강제하지 않는다.
@@ -133,7 +133,7 @@ UE5 호환 몸체에 추가 망토 뼈만 있다는 이유로 실시간 리타�
 | 공용 모션 | `/Game/Characters/Mannequins/Animations/Locomotion`, `ProjectJump` |
 | 발 보정 | `/Game/Animation_Logic/Rigs/CR_ProjectJ_Manny_FootPlacement` |
 | 원본→공용 모션 재제작 | `/Game/Animation_Logic/RTG_Player_UEFN_to_Manny` |
-| Manny→현재 대검 몸체 표현 | `/Game/Animation_Logic/ABPs/GreatSword/RTG_Greatsword_Manny` |
+| Manny→현재 대검 몸체 표현 | `/Game/Animation_Logic/ABPs/Spellblade/RTG_Spellblade_Manny` |
 | 골격·몸체 연결 | `/Game/DataAssetSets/Presentation/Retarget/DA_RetargetFamily_Mannequin_Bip01`, `DA_RetargetBody_Greatsword` |
 
 현재 생산 mirror metadata는 `MDT_Player_Manny`지만 검색·재생에 mirrored 후보를 활성화한 것은 아니다. 원본 비교 자산과 제작용 비활성 자산은 생산 후보와 구분하며, 직접 참조가 없다는 이유만으로 제거하지 않는다.

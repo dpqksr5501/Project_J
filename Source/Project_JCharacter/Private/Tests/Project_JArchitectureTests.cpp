@@ -163,6 +163,17 @@ bool FProjectJCombatHitValidationPolicyTest::RunTest(const FString& Parameters)
 			Request),
 		EProject_JCombatHitValidationFailure::TargetOutsideAttackArc);
 
+	constexpr double LongClock = 1'048'576.001;
+	Request.TraceStart = FVector::ZeroVector; Request.TraceEnd = FVector(100, 0, 0);
+	Request.ClientTimestamp = LongClock + .060;
+	TestEqual(TEXT("Large clock still rejects a request 60 ms in the future"), Policy.ValidateRequestData(Request, LongClock), EProject_JCombatHitValidationFailure::RequestFromFuture);
+	Request.ClientTimestamp = LongClock + .049;
+	TestEqual(TEXT("Large clock preserves the existing 50 ms future tolerance"), Policy.ValidateRequestData(Request, LongClock), EProject_JCombatHitValidationFailure::None);
+	Request.ClientTimestamp = LongClock - 1.001;
+	TestEqual(TEXT("Large clock rejects a request beyond the existing age limit"), Policy.ValidateRequestData(Request, LongClock), EProject_JCombatHitValidationFailure::RequestTooOld);
+	Request.ClientTimestamp = LongClock - .999;
+	TestEqual(TEXT("Large clock accepts a request within the existing age limit"), Policy.ValidateRequestData(Request, LongClock), EProject_JCombatHitValidationFailure::None);
+
 	return true;
 }
 

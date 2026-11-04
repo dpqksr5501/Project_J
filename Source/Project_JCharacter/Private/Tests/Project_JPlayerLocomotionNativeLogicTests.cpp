@@ -5,19 +5,22 @@
 #include "Movement/Project_JMoverPawn.h"
 #include "Movement/Project_JMoverInputs.h"
 #include "DefaultMovementSet/CharacterMoverSimulationTypes.h"
-#include "Project_JGreatswordCharacter.h"
+#include "Project_JSpellbladeCharacter.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
 #include <limits>
 #include "Animation/Project_JPlayerAnimInstance.h"
 #include "Movement/Project_JMoverLifecycle.h"
 #include "Movement/Project_JGroundMovement.h"
+#include "Movement/Project_JMoverComponent.h"
+#include "UObject/StrongObjectPtr.h"
 #include "Animation/Project_JPlayerAirTypes.h"
 #include "Animation/Project_JCharacterAnimInstanceProxy.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "UObject/UnrealType.h"
 #include "Serialization/MemoryReader.h"
 #include "Serialization/MemoryWriter.h"
+#include "MoverTypes.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJPlayerLocomotionNativeThresholds,"ProjectJ.PlayerLocomotion.NativeDecisionBoundaries",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
 bool FProjectJPlayerLocomotionNativeThresholds::RunTest(const FString&)
@@ -68,6 +71,83 @@ bool FProjectJPlayerLocomotionNativeThresholds::RunTest(const FString&)
 	TestTrue(TEXT("The original 179 degree bound chooses the same turn direction"),Facing.Rotator().Yaw<0.);
 	const FQuat NearFacing=UProject_JGroundMovementLibrary::ResolveGroundFacing(FQuat::Identity,FRotator(0.,179.9,0.).Quaternion(),0.f,Offset);
 	TestTrue(TEXT("A near 180 degree request retains its own side"),Offset<0.f && NearFacing.Rotator().Yaw>0.);
+    {
+        // This exercises the generated native event branch, without changing an authored BP or physics implementation.
+        const TStrongObjectPtr<UProject_JMoverComponent> Mover(NewObject<UProject_JMoverComponent>());
+        Mover->GroundMovementSettings.bSlopeRelativeVelocity = false;
+        const TStrongObjectPtr<UProject_JGroundWalkingMode> Native(NewObject<UProject_JGroundWalkingMode>(Mover.Get()));
+        const TStrongObjectPtr<USmoothWalkingMode> Direct(NewObject<USmoothWalkingMode>(Mover.Get()));
+        const auto* Hook = Native->FindFunction(TEXT("GenerateWalkMove"));
+        TestTrue(TEXT("Inherited walking event resolves to the generated native branch"),Hook && Hook->GetOwnerClass()->HasAnyClassFlags(CLASS_Native));
+        const auto* OldDefaults=GetDefault<USmoothWalkingMode>();
+        const auto* NewDefaults=GetDefault<UProject_JGroundWalkingMode>();
+        for(TFieldIterator<FProperty> It(USmoothWalkingMode::StaticClass(),EFieldIteratorFlags::ExcludeSuper);It;++It)
+            TestTrue(TEXT("Native parent retains every inherited SmoothWalking tuning default"),It->Identical_InContainer(OldDefaults,NewDefaults));
+        FMoverTickStartData Initial;
+        Initial.SyncState.SyncStateCollection.FindOrAddMutableDataByType<FMoverDefaultSyncState>().SetTransforms_WorldSpace(
+            FVector::ZeroVector,FRotator::ZeroRotator,FVector(100,0,0),FVector::ZeroVector,nullptr,NAME_None);
+        Initial.InputCmd.InputCollection.FindOrAddMutableDataByType<FCharacterDefaultInputs>().SetMoveInput(EMoveInputType::DirectionalIntent,FVector::ForwardVector);
+        FMoverTickStartData NativeState,DirectState; NativeState=Initial;DirectState=Initial;
+        FMoverSimContext Context;Context.SimulationOwner=Mover.Get();
+        FVector NativeVelocity(100,0,0),DirectVelocity=NativeVelocity,NativeAngular=FVector::ZeroVector,DirectAngular=FVector::ZeroVector;
+        const FQuat Desired=FRotator(0,90,0).Quaternion();
+        Native->GenerateWalkMove(NativeState,1.f/60.f,Context,FVector(500,0,0),Desired,FQuat::Identity,NativeAngular,NativeVelocity);
+        UProject_JGroundMovementLibrary::GenerateGroundMove(Direct.Get(),DirectState,1.f/60.f,Context,FVector(500,0,0),Desired,FQuat::Identity,DirectAngular,DirectVelocity);
+        TestTrue(TEXT("Native event delegates exactly to existing velocity and facing solver"),NativeVelocity==DirectVelocity && NativeAngular==DirectAngular);
+        TestTrue(TEXT("The real spring solver performed nontrivial work"),NativeVelocity!=FVector(100,0,0) || !NativeAngular.IsZero());
+        const auto& A=NativeState.SyncState.SyncStateCollection.GetDataArray();const auto& B=DirectState.SyncState.SyncStateCollection.GetDataArray();
+        bool Same=A.Num()==B.Num() && A.Num()>=2;
+        for(int32 I=0;Same && I<A.Num();++I)
+            Same=A[I] && B[I] && A[I]->GetScriptStruct()==B[I]->GetScriptStruct() && A[I]->GetScriptStruct()->CompareScriptStruct(A[I].Get(),B[I].Get(),PPF_None);
+        TestTrue(TEXT("Engine default and private reflected spring values are identical; no shallow collection equality"),Same);
+        TestEqual(TEXT("The existing native root-motion tag preserves the dictionary identity"),FGameplayTag(Mover_AnimRootMotion),FGameplayTag::RequestGameplayTag(TEXT("Mover.AnimRootMotion"),false));
+        const FFloatProperty* Fields[4];
+        int32 FieldIndex=0;
+        for (const TCHAR* Name : {TEXT("Acceleration"),TEXT("Deceleration"),TEXT("TurningStrength"),TEXT("FacingSmoothingTime")})
+        {
+            const auto* Field=FindFProperty<FFloatProperty>(USmoothWalkingMode::StaticClass(),Name);
+            if (!TestNotNull(TEXT("Generic SmoothWalking retains its original float schema"),Field)) return false;
+            Fields[FieldIndex++]=Field;
+            TestTrue(TEXT("Direct fields match the unchanged reflection fallback"),Field->Identical_InContainer(Native.Get(),Direct.Get()));
+        }
+        // Reuse the same positive-delta native solver for sprint, landing stop and NavMover's velocity bypass.
+        for (int32 Case=0;Case<3;++Case)
+        {
+            FMoverTickStartData NativeEdge,DirectEdge;
+            const FVector Prior=Case==0?FVector(Mover->GroundMovementSettings.RunSpeed+100.f,0,0):Case==1?FVector(200,0,0):FVector::ZeroVector;
+            const FVector DesiredMove=Case==1?FVector::ZeroVector:FVector(500,0,0);
+            for (auto* Edge : {&NativeEdge,&DirectEdge})
+            {
+                Edge->SyncState.SyncStateCollection.FindOrAddMutableDataByType<FMoverDefaultSyncState>().SetTransforms_WorldSpace(
+                    FVector::ZeroVector,FRotator::ZeroRotator,Prior,FVector::ZeroVector,nullptr,NAME_None);
+                Edge->InputCmd.InputCollection.FindOrAddMutableDataByType<FCharacterDefaultInputs>().SetMoveInput(
+                    Case==2?EMoveInputType::Velocity:EMoveInputType::DirectionalIntent,Case==1?FVector::ZeroVector:FVector::ForwardVector);
+                Edge->InputCmd.InputCollection.FindOrAddMutableDataByType<FProject_JMoverInputs>().bSprint=Case==0;
+                Edge->SyncState.SyncStateCollection.FindOrAddMutableDataByType<FProject_JMoverLifecycle>().LandingBrakingTimeMs=Case==1?100.f:0.f;
+            }
+            float Before[4]; for (int32 I=0;I<4;++I) Before[I]=Fields[I]->GetPropertyValue_InContainer(Native.Get());
+            const float BeforeLimit=Native->MaxSpeedOverride;
+            FVector EdgeVelocity=Prior,FallbackVelocity=Prior,EdgeAngular=FVector::ZeroVector,FallbackAngular=FVector::ZeroVector;
+            Native->GenerateWalkMove(NativeEdge,1.f/60.f,Context,DesiredMove,Desired,FQuat::Identity,EdgeAngular,EdgeVelocity);
+            UProject_JGroundMovementLibrary::GenerateGroundMove(Direct.Get(),DirectEdge,1.f/60.f,Context,DesiredMove,Desired,FQuat::Identity,FallbackAngular,FallbackVelocity);
+            TestTrue(TEXT("Dynamic gait/landing/velocity paths retain the same real solver output"),!EdgeVelocity.ContainsNaN() && !EdgeAngular.ContainsNaN() && EdgeVelocity==FallbackVelocity && EdgeAngular==FallbackAngular);
+            TestEqual(TEXT("Both paths retain the same dynamic speed limit"),Native->MaxSpeedOverride,Direct->MaxSpeedOverride);
+            for (int32 I=0;I<4;++I)
+            {
+                TestTrue(TEXT("Every per-step native field matches the generic fallback"),Fields[I]->Identical_InContainer(Native.Get(),Direct.Get()));
+                if (Case==2) TestEqual(TEXT("NavMover velocity input bypasses all four tuning writes"),Fields[I]->GetPropertyValue_InContainer(Native.Get()),Before[I]);
+            }
+            if (Case==1) TestEqual(TEXT("Actual landing-braking input preserves the existing stop policy"),Fields[1]->GetPropertyValue_InContainer(Native.Get()),20000.f);
+            if (Case==1) TestTrue(TEXT("Positive-delta landing braking reduces the existing planar speed"),!EdgeVelocity.ContainsNaN() && EdgeVelocity.SizeSquared2D()<Prior.SizeSquared2D());
+            if (Case==2) TestEqual(TEXT("NavMover velocity input preserves the existing speed override"),Native->MaxSpeedOverride,BeforeLimit);
+            const auto& NativeValues=NativeEdge.SyncState.SyncStateCollection.GetDataArray();
+            const auto& FallbackValues=DirectEdge.SyncState.SyncStateCollection.GetDataArray();
+            bool SameValues=NativeValues.Num()==FallbackValues.Num();
+            for (int32 I=0;SameValues && I<NativeValues.Num();++I)
+                SameValues=NativeValues[I] && FallbackValues[I] && NativeValues[I]->GetScriptStruct()==FallbackValues[I]->GetScriptStruct() && NativeValues[I]->GetScriptStruct()->CompareScriptStruct(NativeValues[I].Get(),FallbackValues[I].Get(),PPF_None);
+            TestTrue(TEXT("Each dynamic step preserves owned default/lifecycle/private spring values"),SameValues);
+        }
+    }
 	return true;
 }
 
@@ -206,7 +286,7 @@ bool FProjectJStrafeInputFamilyTest::RunTest(const FString&)
     TestTrue(TEXT("Strafe orientation still comes from the camera"),FMath::Abs(FMath::FindDeltaAngleDegrees(Input->OrientationIntent.Rotation().Yaw,View))<.001f);
    }
  }
- auto* Player=World->SpawnActor<AProject_JGreatswordCharacter>();
+ auto* Player=World->SpawnActor<AProject_JSpellbladeCharacter>();
  auto* Profile=NewObject<UProject_JLocomotionProfile>(Player);
  FindFProperty<FObjectPropertyBase>(Player->GetClass(),TEXT("CharacterAnimProfile"))->SetObjectPropertyValue_InContainer(Player,nullptr);
  FindFProperty<FObjectPropertyBase>(Player->GetClass(),TEXT("LocomotionProfile"))->SetObjectPropertyValue_InContainer(Player,Profile);

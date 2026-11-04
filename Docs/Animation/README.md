@@ -1,6 +1,12 @@
 # 애니메이션
 
-Project J는 **Mover 이동, C++ 상태·선택 계산, 데이터 기반 포즈 재생, 골격·몸체별 표현**을 분리한다. 공통 생산 마스터는 `ABP_Player_Master`, native 부모는 `UProject_JPlayerAnimInstance`, 공통 Skeleton은 Manny `SK_Mannequin`이다.
+Project J는 **Mover 이동, C++ 상태·선택 계산, 데이터 기반 포즈 재생, 골격·몸체별 표현**을 분리한다. 플레이어 생산 마스터는 `ABP_Player_Master`, native 부모는 `UProject_JPlayerAnimInstance`, 공통 Skeleton은 Manny `SK_Mannequin`이다.
+
+NPC는 모션매칭을 사용하지 않는다. 현재 `BP_NPC_Test`는 `ABP_NPC_Mover_Unarmed`를 사용하며 native 부모는 공통 `UProject_JCharacterAnimInstance`다. 게임 스레드가 Mover의 속도·방향·공중 상태를 수집하고, 애니메이션 갱신은 게시된 proxy 값만 읽는다. NPC는 APawn/Mover 기반이므로 ACharacter 캐스트나 CharacterMovement의 acceleration/falling 캐시를 재사용하지 않는다. 이동 pose는 실제 속도로 선택하고 simulated proxy에 로컬 입력이 있어야 한다고 가정하지 않는다.
+
+NPC 그래프는 기존 Unarmed의 동작·BlendSpace·전투 슬롯·Control Rig를 보존한 별도 자산이다. 원본 Unarmed와 플레이어 Master는 유지한다. 기존 `AssetMigrationLibrary.CreateNPCMoverUnarmed`는 이 선택한 템플릿을 새 경로에 복제하는 편집기 제작 도구이며 기본 dry-run이다. 다른 골격·보스·탈것 그래프를 일괄 변환하는 도구가 아니다. 새로운 NPC 표현도 같은 native snapshot 계약을 사용할 수 있지만 동작·골격·슬롯·접지·예산은 해당 콘텐츠에서 검증한다. [138차 실제 실행 범위](../Architecture/Planning/Project_J_MMO_Architecture_Work_2026-10-26.md#138차-npc-비모션매칭과-mover-실행-연결)를 따른다.
+
+공유 근접 판정의 기본 경로는 이전 실제 world socket/tip과 현재 finalized pose 사이 직선 구간을 authored hit window에 맞춰 소비한다. 별도 선택인 `AttackDefinition.MeleeTrajectory`는 편집기에서 만든 mesh 공간 gameplay 궤적을 실제 montage 시간과 두 물리 root 관측값으로 world에 매핑한다. 현재 blended/IK pose나 미관측 물리 곡선을 복원하는 기능은 아니다. 두 경로 모두 동일 mesh/anim/instance·frame/bone revision·공간 세대와 이벤트를 확인하고 순간이동·교체·취소 뒤 오래된 점을 연결하지 않는다. NPC의 모션매칭 사용 여부와 독립적인 판정 계약이며, [제작·지원 범위](Authoring/README.md#근접-gameplay-궤적-제작)와 [143차 실제 통합 근거](../Architecture/Planning/Project_J_MMO_Architecture_Work_2026-10-26.md#143차-선택-gameplay-궤적과-npc-데이터-실행)를 따른다.
 
 ## 현재 구조와 제작
 
@@ -14,6 +20,7 @@ Project J는 **Mover 이동, C++ 상태·선택 계산, 데이터 기반 포즈 
 | 새 이동 클립·Chooser·프로필·직업/탈것 콘텐츠 연결 | [이동 콘텐츠 확장](Authoring/DataDrivenLocomotionExtensionGuide.md) |
 | Manny 공용 모션·Quinn·비표준 골격·추가 망토 뼈 | [스켈레톤 제작 기준](Authoring/HumanoidSkeletonRetargetingStandards.md) |
 | 몸체별 손 보정·소켓·무기 부착·양손 파지 | [무기 파지와 손 접촉](Authoring/Weapon_Hand_Contact_System.md) |
+| Spellblade 이름·장비 이주, 독립 무기 본·스킨과 보존 ID | [Spellblade 제작·이주 기록](Authoring/Spellblade_Migration_2026-11-01.md) |
 | 메시·의상·장비의 기존 LOD 보존과 제작 | [LOD 제작](Authoring/Mesh_LOD_Authoring.md) |
 | 골격 Family와 몸체 Body 프로필의 역할·수명 | [리타깃 프로필](Architecture/Runtime_Retarget_Profiles_2026-10-13.md) |
 | 실제 원인·실패·복구·빌드·회귀·PIE | [로코모션 전환·검증 기록](Architecture/Player_Locomotion_Migration_2026-10-19.md) |

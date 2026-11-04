@@ -62,8 +62,9 @@ public:
 	TObjectPtr<UProject_JWeaponAnimProfile> WeaponAnimationProfile = nullptr;
 
 	/**
-	 * Client presentation selected by this combat style. It maps stable AttackTag
-	 * identities to cosmetic VFX profiles and is never consulted by authority.
+	 * Maps stable AttackTag identities to cosmetic cue metadata. Authority reads
+	 * cue existence and loop lifetime for notify/recovery replication; rendering
+	 * clients load and spawn the soft Niagara payloads.
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Presentation")
 	TObjectPtr<UProject_JCombatPresentationSet> CombatPresentationSet = nullptr;

@@ -1,5 +1,7 @@
 # 메인 오픈 월드 제작
 
+서버의 필드 이벤트 실행·준비/스폰 예산·UTC 입장 기간·취소/종료 계약은 [권위 월드 이벤트 실행](World_Event_Runtime.md)을 따른다. 현재 boss NPCClass 미연결과 실제 보스 전투 검증은 아래 제작 상태와 구분한다.
+
 약8×8km의 기존 제작 월드를 앞으로 확장할 메인 월드로 전환 중이다. 제작 맵은 `/Game/World/MainWorld/Maps/L_MainWorld`이며 manifest·검증 도구·AssetManager 스캔·Cook 설정도 MainWorld를 따른다. 제작 원본은 `MainWorld/Source`, 환경 라이브러리와 월드 전용 메시·재질·텍스처·지형 풀은 `Map_Resource`에 모았다. 이전 Legacy 월드는 내용·참조와 백업을 확인한 뒤 삭제했고 구 Starter 경로도 엔진에서 참조를 갱신해 정리했다. **전체20곳의 초기 공간 배치는 있지만 최종 환경 아트·도시·마을·물·성능은 미완이다.** 최신 정리·검증과 유지한 내부 식별자는 인수인계 첫 항목을 따른다.
 
 레벨 디자이너는 [제작 인계 가이드](LEVEL_DESIGNER_GUIDE.md)를 먼저 읽는다. 맵 선택, C++와 저작의 경계, 보존 ID·좌표, 편집 순서, 알려진 문제와 다음 제작 방향을 설명한다.
@@ -18,3 +20,11 @@
 현재 [구현 상태표](../WorldGen/03_IMPLEMENTATION_STATUS.md)는 Source 레지스트리 기준이다. 이전 [기반 감사](Build/01_AUDIT.md)와 [제작 구조](Build/02_ARCHITECTURE.md)는 당시 계약을 설명한다. 장문 초기 제작 일지는 최신 인수인계·상태표로 통합했다. 실제 Water 플러그인 구현은 보류 상태다.
 
 2026-10-18 소스 감사는 당시 상태 기록이다. 이후 사용자 요청으로 Source 파일명과 환경 경로를 MainWorld로 정리하고 Legacy와 옛 redirector를 퇴역했다. 안정 지역 ID `Starter.Lv1_30`와 기존 제작 소유 태그·자동 생성 HLOD 내부 이름/GUID는 보존한다. 기본 시작 맵 ThirdPerson은 변경하지 않았다. 과거 Cook/패키지 결과를 이번 정리 후의 신규 검증 결과로 사용하지 않는다.
+
+## C++ 기반 Nav 통합 검증
+
+`/Game/Tests/Combat/L_CanonicalNetwork`는 기존 메인/ThirdPerson 맵을 보존한 작은 non-WP 검증 맵이다. 기존 C++ NetworkLoadGameMode가 초기 캡슐 지면·Nav 슬롯, 실제 NavMover 경로, autonomous 입력·GAS/몽타주·정확한 종료를 소비한다. 바닥은 AOI0/20000 동선을 덮고 Nav XY halfextent5000은 기존 R/RMB의 실제 이동 범위를 수용한다. 환경 아트·고속 스트리밍·수용량 인증 맵은 아니다.
+
+`UProject_JWorldAuthoringLibrary::BuildEditorNavigation()`은 현재 Editor world에서 native 동기 빌드를 호출한다. 반환값은 전체 Nav freshness/physics/route 보증이 아니므로 실제 투영·경로·collision 검증과 저장은 호출자의 책임이다. 신규 world의 AsyncLoadLock은 정상 에디터 프레임에서 해제될 때까지 기다려야 하며 잠금 강제해제나 수동 tick으로 대체하지 않는다. 생성 도구는 해당 준비 후 실제 투영을 확인하고 새 대상만 저장했다.
+
+실행은 기존 `Scripts/Validation/Measure-Network.ps1`의 `-Animation -CombatInput -CanonicalMelee -CanonicalMeleeMovingRecipient`를 사용한다. 고유 RunName과2client가 필요하며 map은 opt-in에서만 선택된다.151의 strict선택/Cook·실제패키지 listen+원격2 검증은 [현재 아키텍처 작업](../Architecture/Planning/Project_J_MMO_Architecture_Work_2026-10-26.md)을 따른다. 기본 시작 맵과 NPC 비모션매칭 정책은 유지한다.

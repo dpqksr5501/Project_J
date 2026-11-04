@@ -9,7 +9,7 @@
 #include "Social/Project_JSocialSubsystem.h"
 #include "UI/Project_JPlayerUIComponent.h"
 #include "UI/Project_JPlayerHUDWidget.h"
-#include "Project_JGreatswordCharacter.h"
+#include "Project_JSpellbladeCharacter.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JGameplayTags.h"
 #include "Combat/Project_JGameplayAbility_Sprint.h"
@@ -89,8 +89,8 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAuthoredClassGrantOwnershipTest, "Proj
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJAuthoredClassGrantOwnershipTest::RunTest(const FString&)
 {
-    auto* Class = LoadObject<UProject_JCharacterClassDefinition>(nullptr, TEXT("/Game/DataAssetSets/Class/DA_Class_Greatsword.DA_Class_Greatsword"));
-    auto* Set = LoadObject<UProject_JAbilitySet>(nullptr, TEXT("/Game/AS/AS_Greatsword_Base.AS_Greatsword_Base"));
+    auto* Class = LoadObject<UProject_JCharacterClassDefinition>(nullptr, TEXT("/Game/DataAssetSets/Class/DA_Class_Spellblade.DA_Class_Spellblade"));
+    auto* Set = LoadObject<UProject_JAbilitySet>(nullptr, TEXT("/Game/AS/AS_Spellblade_Base.AS_Spellblade_Base"));
     if (!TestNotNull(TEXT("Actual class asset"), Class) || !TestNotNull(TEXT("Actual weapon set"), Set) ||
         !TestNotNull(TEXT("Default style remains the weapon grant owner"), Class->DefaultCombatStyle.Get())) return false;
     auto* Style = Class->DefaultCombatStyle.Get();
@@ -221,7 +221,7 @@ bool FProjectJSkillButtonOriginTest::RunTest(const FString&)
         ON_SCOPE_EXIT { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
         auto* State = World->SpawnActor<AProject_JPlayerState>();
         auto* Controller = World->SpawnActor<APlayerController>();
-        auto* Player = World->SpawnActor<AProject_JGreatswordCharacter>();
+        auto* Player = World->SpawnActor<AProject_JSpellbladeCharacter>();
         if (!State || !Controller || !Player) { AddError(TEXT("Input fixture spawn failed")); return false; }
         State->SetOwner(Controller); Controller->SetPlayerState(State); Player->SetPlayerState(State);
         Controller->SetAsLocalPlayerController(); Controller->Possess(Player);

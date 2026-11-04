@@ -72,7 +72,7 @@ bool FProjectJAuthoredRetargetSourceTest::RunTest(const FString&)
  const UClass* AvatarClass=LoadClass<AProject_JPlayerCharacter>(nullptr,TEXT("/Game/Character_BPs/BP_Player_Master.BP_Player_Master_C"));
  const auto* Avatar=AvatarClass?AvatarClass->GetDefaultObject<AProject_JPlayerCharacter>():nullptr;
  const auto* Source=Avatar && Avatar->GetMesh()?Avatar->GetMesh()->GetSkeletalMeshAsset():nullptr;
- auto* Body=LoadObject<UProject_JRetargetBodyProfile>(nullptr,TEXT("/Game/DataAssetSets/Presentation/Retarget/DA_RetargetBody_Greatsword.DA_RetargetBody_Greatsword"));
+ auto* Body=LoadObject<UProject_JRetargetBodyProfile>(nullptr,TEXT("/Game/DataAssetSets/Presentation/Retarget/DA_RetargetBody_Spellblade.DA_RetargetBody_Spellblade"));
  if(!TestNotNull(TEXT("Authored avatar pose source"),Source) || !TestNotNull(TEXT("Authored body profile"),Body) || !TestNotNull(TEXT("Authored source/target family"),Body->Family.Get())) return false;
  auto* Family=Body->Family.Get();
  TestTrue(TEXT("Body override owns the actual Mover source skeleton, not a silent graph fallback"),Family->Matches(Source->GetSkeleton(),Family->TargetSkeleton));

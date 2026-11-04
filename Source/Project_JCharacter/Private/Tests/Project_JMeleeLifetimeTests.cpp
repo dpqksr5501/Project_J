@@ -10,7 +10,7 @@
 #include "Components/Project_JEquipmentRuntimeComponent.h"
 #include "Components/Project_JEquipmentManagerComponent.h"
 #include "Equipment/Project_JEquipmentItemDefinition.h"
-#include "Project_JGreatswordCharacter.h"
+#include "Project_JSpellbladeCharacter.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JGameplayTags.h"
 #include "Animation/AnimInstance.h"
@@ -26,13 +26,13 @@ bool FProjectJMeleeLifetimeTest::RunTest(const FString& Parameters)
 {
  UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
  GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
- auto* Player = World->SpawnActor<AProject_JGreatswordCharacter>();
+ auto* Player = World->SpawnActor<AProject_JSpellbladeCharacter>();
  auto* ASC = NewObject<UProject_JAbilitySystemComponent>(Player);
  FindFProperty<FObjectPropertyBase>(AProject_JBaseCharacter::StaticClass(), TEXT("AbilitySystemComponent"))->SetObjectPropertyValue_InContainer(Player, ASC);
  ASC->RegisterComponent(); ASC->InitAbilityActorInfo(Player, Player);
- auto* Style = LoadObject<UProject_JCombatStyleDefinition>(nullptr, TEXT("/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword.DA_CombatStyle_Greatsword"));
+ auto* Style = LoadObject<UProject_JCombatStyleDefinition>(nullptr, TEXT("/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Spellblade.DA_CombatStyle_Spellblade"));
  auto* Mesh = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple.SKM_Quinn_Simple"));
- UClass* AbilityClass = LoadClass<UProject_JGameplayAbility_Melee>(nullptr, TEXT("/Game/GAs/GreatSword/GA_Greatsword.GA_Greatsword_C"));
+ UClass* AbilityClass = LoadClass<UProject_JGameplayAbility_Melee>(nullptr, TEXT("/Game/GAs/Spellblade/GA_Spellblade.GA_Spellblade_C"));
  if (!TestNotNull(TEXT("Existing combat style"), Style) || !TestNotNull(TEXT("Existing mesh"), Mesh) || !TestNotNull(TEXT("Existing melee Blueprint class"), AbilityClass))
  { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); return false; }
  FindFProperty<FObjectPropertyBase>(AProject_JPlayerCharacter::StaticClass(), TEXT("CurrentCombatStyle"))->SetObjectPropertyValue_InContainer(Player, Style);

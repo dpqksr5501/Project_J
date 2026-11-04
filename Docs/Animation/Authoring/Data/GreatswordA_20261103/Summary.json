@@ -1,0 +1,106 @@
+{
+  "schema": 1,
+  "files": 401,
+  "family_counts": {
+    "00_00": 49,
+    "00_01": 3,
+    "01_01": 146,
+    "01_02": 2,
+    "05_00": 63,
+    "05_01": 138
+  },
+  "category_counts": {
+    "기타": 7,
+    "커스터마이징": 20,
+    "이동": 139,
+    "탑승": 9,
+    "대기": 35,
+    "공격·스킬": 149,
+    "방어": 13,
+    "장착·수납": 9,
+    "복귀": 16,
+    "얼굴": 4
+  },
+  "key_rates_hz": {
+    "30.0": 400,
+    "none": 1
+  },
+  "bone_counts": {
+    "229": 401
+  },
+  "rest_signatures": 1,
+  "exact_file_duplicate_groups": [],
+  "converted_motion_duplicate_groups": [
+    [
+      "pdw_01_01_move_jump_f_a_00",
+      "pdw_05_01_move_jump_f_a_00"
+    ],
+    [
+      "pdw_01_01_move_jump_f_b_00",
+      "pdw_05_01_move_jump_f_b_00"
+    ],
+    [
+      "pdw_01_01_move_jump_f_c_00",
+      "pdw_05_01_move_jump_f_c_00"
+    ],
+    [
+      "pdw_01_01_move_jump_l_a_00",
+      "pdw_05_01_move_jump_l_a_00"
+    ],
+    [
+      "pdw_01_01_move_jump_l_c_00",
+      "pdw_05_01_move_jump_l_c_00"
+    ],
+    [
+      "pdw_01_01_move_jump_r_a_00",
+      "pdw_05_01_move_jump_r_a_00"
+    ],
+    [
+      "pdw_01_01_move_run_dash_f_end_01",
+      "pdw_05_01_move_run_dash_f_end_01"
+    ],
+    [
+      "pdw_01_01_move_run_dash_f_start_01",
+      "pdw_05_01_move_run_dash_f_start_01"
+    ],
+    [
+      "pdw_01_01_move_run_dash_fl_ing_00",
+      "pdw_05_01_move_run_dash_fl_ing_00"
+    ],
+    [
+      "pdw_01_01_move_run_dash_fr_ing_00",
+      "pdw_05_01_move_run_dash_fr_ing_00"
+    ]
+  ],
+  "ranked_connections": 892,
+  "refined_pairs": 4,
+  "receipt": {
+    "schema": 1,
+    "source": "C:\\Users\\I\\Desktop\\Greatsword_A",
+    "blender": "5.2.3 LTS",
+    "script_sha256": "d2ea071a4bed462ac81615f71038760797ce9ee34795c00f1e79929672210fae",
+    "files": 401,
+    "completed": 401,
+    "reused": 0,
+    "failures": [],
+    "elapsed_s": 261.544499874115,
+    "script_versions": {
+      "d2ea071a4bed462ac81615f71038760797ce9ee34795c00f1e79929672210fae": 400,
+      "43869bed6b39d2abc3649ffdeb0c5143b913f98f0bc7705e201f28e135870a30": 1
+    },
+    "repair_scope": [
+      "pdw_00_00_figure_00.fbx"
+    ],
+    "repair_script_sha256": "43869bed6b39d2abc3649ffdeb0c5143b913f98f0bc7705e201f28e135870a30",
+    "initial_receipt_sha256": "a052cd8dbeda4673df883835e6656bb82721daf62b969dd5bb79017cab4ae9b5",
+    "source_hashes_reverified": 401
+  },
+  "method": "15 body joints; pelvis XY removed; facing/height retained; endpoint windows <=0.30s at 10 samples; separate interior candidates from 17 sparse samples; score=cm + 0.15*deg + 5*m/s; same rest signature only",
+  "limitations": [
+    "No original gameplay combo/cancel/notify semantics in FBX.",
+    "Interior candidates use coarse 17-sample positions/velocity; not approved cut times.",
+    "Body score excludes fingers, weapon, cloth and face; visually check weapon tracks.",
+    "Viewer uses 17 evaluated samples, linear position interpolation, not source-rate playback.",
+    "Pelvis displacement is not UE extracted root motion. No runtime assets changed."
+  ]
+}

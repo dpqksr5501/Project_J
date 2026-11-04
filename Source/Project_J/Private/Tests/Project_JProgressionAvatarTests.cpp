@@ -1,7 +1,7 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
 #include "Game/Project_JPlayerState.h"
-#include "Project_JGreatswordCharacter.h"
+#include "Project_JSpellbladeCharacter.h"
 #include "CharacterClass/Project_JProgressionComponent.h"
 #include "CharacterClass/Project_JCharacterClassDefinition.h"
 #include "Combat/Project_JCombatStyleDefinition.h"
@@ -31,14 +31,14 @@ bool FProjectJProgressionAvatarTest::RunTest(const FString&)
 	World->GetWorldSettings()->NotifyMatchStarted();
 	auto* Owner = World->SpawnActor<AProject_JPlayerState>();
 	// Reuse the real locomotion contract without introducing combat/starting-equipment side effects.
-	auto* FixtureClass = LoadClass<AProject_JPlayerCharacter>(nullptr, TEXT("/Game/Character_BPs/GreatSword/BP_GreatSword.BP_GreatSword_C"));
+	auto* FixtureClass = LoadClass<AProject_JPlayerCharacter>(nullptr, TEXT("/Game/Character_BPs/Spellblade/BP_Spellblade.BP_Spellblade_C"));
 	auto* ProfileProperty = FindFProperty<FObjectPropertyBase>(AProject_JPlayerCharacter::StaticClass(), TEXT("CharacterAnimProfile"));
 	if (!TestNotNull(TEXT("Authored character fixture"), FixtureClass) || !TestNotNull(TEXT("Animation profile property"), ProfileProperty)) return false;
 	auto* AuthoredProfile = Cast<UProject_JCharacterAnimProfile>(ProfileProperty->GetObjectPropertyValue_InContainer(FixtureClass->GetDefaultObject()));
 	if (!TestNotNull(TEXT("Authored animation profile"), AuthoredProfile)) return false;
 	auto SpawnAvatar = [&]()
 	{
-		auto* Avatar = World->SpawnActorDeferred<AProject_JGreatswordCharacter>(AProject_JGreatswordCharacter::StaticClass(), FTransform::Identity,
+		auto* Avatar = World->SpawnActorDeferred<AProject_JSpellbladeCharacter>(AProject_JSpellbladeCharacter::StaticClass(), FTransform::Identity,
 			nullptr, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
 		auto* Profile = NewObject<UProject_JCharacterAnimProfile>(Avatar);
 		Profile->LocomotionProfile = AuthoredProfile->LocomotionProfile;

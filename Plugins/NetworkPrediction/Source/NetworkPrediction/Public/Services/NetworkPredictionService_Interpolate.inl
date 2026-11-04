@@ -8,6 +8,7 @@
 #include "NetworkPredictionTrace.h"
 #include "NetworkPredictionUtil.h"
 #include "Services/NetworkPredictionInstanceData.h"
+#include "Templates/UniquePtr.h"
 
 // Interpolation does generic linear interpolation on received replicated data.
 // Calls FinalizeFrame and DispatchCues every render frame for smooth motion and event dispatching.
@@ -82,10 +83,10 @@ public:
 		
 		
 		FSparseArrayAllocationInfo AllocInfo = Instances.InsertUninitialized(ClientRecvIdx);
-		new (AllocInfo.Pointer) FInstance(ID.GetTraceID(), InstanceDataIdx, DataStore->Frames.GetIndexChecked(ID));
+		new (AllocInfo.Pointer) TUniquePtr<FInstance>(MakeUnique<FInstance>(ID.GetTraceID(), InstanceDataIdx, DataStore->Frames.GetIndexChecked(ID)));
 
 		// Point the PresentationView to our managed state. Note this only has to be done once
-		FInstance* InternalInstance = (FInstance*)AllocInfo.Pointer;
+		FInstance* InternalInstance = Instances[ClientRecvIdx].Get();
 		InstanceData.Info.View->UpdatePresentationView(InternalInstance->SyncState, InternalInstance->AuxState);
 	}
 
@@ -97,7 +98,7 @@ public:
 		TInstanceData<ModelDef>& InstanceData = DataStore->Instances.GetByIndexChecked(ClientRecvData.InstanceIdx);
 		InstanceData.Info.View->ClearPresentationView();
 
-		FInstance& InterpolationData = Instances[ClientRecvIdx];
+		FInstance& InterpolationData = *Instances[ClientRecvIdx];
 		if (InterpolationData.bTwoValidFrames == false)
 		{
 			// We hid this but never got a chance to unhide it (can happen in possession cases)
@@ -136,7 +137,7 @@ public:
 			LocalFrameData.SyncState = ClientRecvData.SyncState;
 			LocalFrameData.AuxState = ClientRecvData.AuxState;
 
-			FInstance& InterpolationData = Instances[ClientRecvIdx];
+			FInstance& InterpolationData = *Instances[ClientRecvIdx];
 
 			if (InterpolationData.bTwoValidFrames == false)
 			{
@@ -224,7 +225,7 @@ public:
 
 		for (auto& It : Instances)
 		{
-			FInstance& Instance = It;
+			FInstance& Instance = *It;
 			UE_NP_TRACE_SIM(Instance.TraceID);
 
 			TInstanceFrameState<ModelDef>& Frames = DataStore->Frames.GetByIndexChecked(Instance.FramesIdx);
@@ -291,7 +292,9 @@ private:
 		TConditionalState<AuxType> AuxState;
 	};
 
-	TSparseArray<FInstance> Instances; // Indices are shared with DataStore->ClientRecv
+	// Presentation views outlive registration. Sparse-array growth relocates its
+	// elements, so keep the exposed Sync/Aux states at stable owned addresses.
+	TSparseArray<TUniquePtr<FInstance>> Instances; // Indices are shared with DataStore->ClientRecv
 	TBitArray<> ClientRecvBitMask; // Indices into DataStore->ClientRecv that we are managing
 	TBitArray<> PendingFixups; // Indices into DataStore->ClientRecv index that didn't have a valid ToFrame when reconciling
 
@@ -370,6 +373,13 @@ public:
 	TIndependentInterpolateService(TModelDataStore<ModelDef>* InDataStore)
 		: DataStore(InDataStore) { }
 
+	~TIndependentInterpolateService() override
+	{
+#if !NO_LOGGING
+		UE::Net::ReportIndependentGap(GapLogTotals,ModelDef::GetName(),0,0,0,0,true);
+#endif
+	}
+
 	void RegisterInstance(FNetworkPredictionID ID)
 	{
 		const int32 ClientRecvIdx = DataStore->ClientRecv.GetIndexChecked(ID);
@@ -378,10 +388,10 @@ public:
 		const int32 InstanceDataIdx = DataStore->ClientRecv.GetByIndexChecked(ClientRecvIdx).InstanceIdx;
 
 		FSparseArrayAllocationInfo AllocInfo = Instances.InsertUninitialized(ClientRecvIdx);
-		new (AllocInfo.Pointer) FInstance(ID.GetTraceID(), InstanceDataIdx);
+		new (AllocInfo.Pointer) TUniquePtr<FInstance>(MakeUnique<FInstance>(ID.GetTraceID(), InstanceDataIdx));
 
 		TInstanceData<ModelDef>& InstanceData = DataStore->Instances.GetByIndexChecked(InstanceDataIdx);
-		FInstance* InternalInstance = (FInstance*)AllocInfo.Pointer;
+		FInstance* InternalInstance = Instances[ClientRecvIdx].Get();
 
 		InstanceData.Info.View->UpdatePresentationView(InternalInstance->SyncState, InternalInstance->AuxState);
 	}
@@ -408,7 +418,7 @@ public:
 			const int32 ClientRecvIdx = BitIt.GetIndex();
 			TClientRecvData<ModelDef>& ClientRecvData = DataStore->ClientRecv.GetByIndexChecked(ClientRecvIdx);
 			TInstanceFrameState<ModelDef>& Frames = DataStore->Frames.GetByIndexChecked(ClientRecvData.FramesIdx);
-			FInstance& InterpolationData = Instances[ClientRecvIdx];
+			FInstance& InterpolationData = *Instances[ClientRecvIdx];
 
 			UE_NP_TRACE_SIM(ClientRecvData.TraceID);
 			const int32 LocalFrame = ++InterpolationData.LastWrittenFrame;
@@ -432,10 +442,14 @@ public:
 	{
 		const float fInterpolationTimeMS = TickState->Interpolation.fTimeMS;
 		const int32 InterpolationTimeMS = (int32)TickState->Interpolation.fTimeMS;
+#if !NO_LOGGING
+		uint32 GapCount=0, EarlyGapCount=0, LateGapCount=0;
+		int64 PeakAbsoluteGapMS=0;
+#endif
 
 		for (auto& It : Instances)
 		{
-			FInstance& Instance = It;
+			FInstance& Instance = *It;
 
 			if (Instance.LastWrittenFrame == INDEX_NONE)
 			{
@@ -538,11 +552,20 @@ public:
 
 				if (FMath::Abs(ActualTimeMS - InterpolationTimeMS) > 100)
 				{
-					UE_LOGF(LogNetworkPrediction, Display, "[Interpolate] Interpolation out of sync. We don't have valid frames for this time for this sim. Frame %d. TimeMS: %d. @ %d", FromFrame, ActualTimeMS, InterpolationTimeMS);
+#if !NO_LOGGING
+					const int64 SignedGapMS=int64(InterpolationTimeMS)-int64(ActualTimeMS);
+					++GapCount; SignedGapMS<0 ? ++EarlyGapCount : ++LateGapCount;
+					PeakAbsoluteGapMS=FMath::Max(PeakAbsoluteGapMS,FMath::Abs(SignedGapMS));
+#endif
 				}
 
 				typename FInstance::FFrame& FrameData = Instance.ClientRecvFrames[FromFrame];
-				FNetworkPredictionDriver<ModelDef>::FinalizeFrame(InstanceData.Info.Driver, FrameData.SyncState, FrameData.AuxState);
+				// Hold the selected endpoint in the same independent presentation
+				// storage as interpolation. Public presentation writes must not
+				// change received history, including before the second receive.
+				Instance.SyncState = FrameData.SyncState;
+				Instance.AuxState = FrameData.AuxState;
+				FNetworkPredictionDriver<ModelDef>::FinalizeFrame(InstanceData.Info.Driver, Instance.SyncState, Instance.AuxState);
 
 				InstanceData.Info.View->UpdateView(FromFrame, ActualTimeMS, nullptr, FrameData.SyncState, FrameData.AuxState);
 
@@ -555,10 +578,15 @@ public:
 				}
 			}
 		}
+#if !NO_LOGGING
+		UE::Net::ReportIndependentGap(GapLogTotals,ModelDef::GetName(),GapCount,EarlyGapCount,LateGapCount,PeakAbsoluteGapMS);
+#endif
 	}
 
 private:
-	
+#if !NO_LOGGING
+	UE::Net::FIndependentGapLogTotals GapLogTotals;
+#endif
 	struct FInstance
 	{
 		FInstance(int32 InTraceID, int32 InInstanceIdx)
@@ -596,7 +624,8 @@ private:
 	};
 
 	TBitArray<> ClientRecvBitMask; // Indices into DataStore->ClientRecv that we are managing
-	TSparseArray<FInstance> Instances; // Indices are shared with DataStore->ClientRecv
+	// As in fixed interpolation, additions must not retire exposed state pointers.
+	TSparseArray<TUniquePtr<FInstance>> Instances; // Indices are shared with DataStore->ClientRecv
 
 	TModelDataStore<ModelDef>* DataStore;
 };

@@ -30,7 +30,7 @@
 namespace
 {
 constexpr auto MeshLODAuthoringTestFlags=EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter;
-USkeletalMesh* SingleBody(const TCHAR* Path=TEXT("/Game/Characters/GreatSword/GreatSword_Woman.GreatSword_Woman"))
+USkeletalMesh* SingleBody(const TCHAR* Path=TEXT("/Game/Characters/Spellblade/Spellblade_Woman.Spellblade_Woman"))
 {
     auto* Source=LoadObject<USkeletalMesh>(nullptr,Path);
     if(!Source)return nullptr;
@@ -104,7 +104,7 @@ bool FProjectJMeshLODExceptions::RunTest(const FString&)
     Body->GetSkinWeightProfiles().AddDefaulted();
     TestTrue(TEXT("Alternate weight profiles require review"),Inspect(Body,*Policy,ERole::Surface).Status==EStatus::Review);
     Body->GetSkinWeightProfiles().Reset();
-    auto* Cloak=LoadObject<USkeletalMesh>(nullptr,TEXT("/Game/Characters/GreatSword/Clothes/cloak.cloak"));
+    auto* Cloak=LoadObject<USkeletalMesh>(nullptr,TEXT("/Game/Characters/Spellblade/Clothes/cloak.cloak"));
     if(TestNotNull(TEXT("Actual clothing-bound mesh"),Cloak))TestTrue(TEXT("Clothing bindings are preserved rather than regenerated"),Inspect(Cloak,*Policy,ERole::Surface).Status==EStatus::Review);
     TestTrue(TEXT("Non-mesh assets use their native workflow"),Inspect(Policy,*Policy,ERole::Surface).Status==EStatus::Review);
     return true;
@@ -165,8 +165,8 @@ bool FProjectJMeshLODLocalWeapon::RunTest(const FString&)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMeshLODValidator,"ProjectJ.Authoring.MeshLOD.AssetValidation",MeshLODAuthoringTestFlags)
 bool FProjectJMeshLODValidator::RunTest(const FString&)
 {
-    auto* Body=LoadObject<USkeletalMesh>(nullptr,TEXT("/Game/Characters/GreatSword/GreatSword_Woman.GreatSword_Woman"));
-    auto* Cloak=LoadObject<USkeletalMesh>(nullptr,TEXT("/Game/Characters/GreatSword/Clothes/cloak.cloak"));
+    auto* Body=LoadObject<USkeletalMesh>(nullptr,TEXT("/Game/Characters/Spellblade/Spellblade_Woman.Spellblade_Woman"));
+    auto* Cloak=LoadObject<USkeletalMesh>(nullptr,TEXT("/Game/Characters/Spellblade/Clothes/cloak.cloak"));
     if(!Body || !Cloak)return false;
     auto* Policy=ProjectJ::MeshLODAuthoring::LoadPolicy();
     if(!TestNotNull(TEXT("Existing shared authoring policy"),Policy))return false;

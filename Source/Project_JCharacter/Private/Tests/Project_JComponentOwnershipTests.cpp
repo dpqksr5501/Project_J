@@ -17,7 +17,7 @@
 #include "Project_JGameplayTags.h"
 #include "Project_JNPCCharacter.h"
 #include "Project_JPlayerCharacter.h"
-#include "Project_JGreatswordCharacter.h"
+#include "Project_JSpellbladeCharacter.h"
 #include "Project_JLocomotionAnimStateComponent.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
@@ -124,7 +124,7 @@ bool FProjectJMontageBudgetDrainTest::RunTest(const FString&)
 	auto* Owner = Scope.World->SpawnActor<AProject_JNPCCharacter>();
 	auto* Mesh = CastChecked<UProject_JBudgetedSkeletalMeshComponent>(Owner->GetMesh());
 	auto* MeshAsset = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple.SKM_Quinn_Simple"));
-	auto* Montage = LoadObject<UAnimMontage>(nullptr, TEXT("/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_UnEquip.AM_Greatsword_UnEquip"));
+	auto* Montage = LoadObject<UAnimMontage>(nullptr, TEXT("/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/AM_Spellblade_UnEquip.AM_Spellblade_UnEquip"));
 	if (!TestNotNull(TEXT("Fixture mesh"), MeshAsset) || !TestNotNull(TEXT("Fixture montage"), Montage)) { return false; }
 	Mesh->SetSkeletalMesh(MeshAsset);
 	Mesh->SetAnimInstanceClass(UAnimInstance::StaticClass());
@@ -225,7 +225,7 @@ bool FProjectJCombatTransitionOwnershipTest::RunTest(const FString&)
 	auto* Owner = Scope.World->SpawnActor<ACharacter>();
 	auto* Transition = NewObject<UProject_JCombatIntroComponent>(Owner); Transition->RegisterComponent();
 	auto* Mesh = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple.SKM_Quinn_Simple"));
-	auto* Montage = LoadObject<UAnimMontage>(nullptr, TEXT("/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LMB1.AM_Greatsword_LMB1"));
+	auto* Montage = LoadObject<UAnimMontage>(nullptr, TEXT("/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/AM_Spellblade_LMB1.AM_Spellblade_LMB1"));
 	if (!TestNotNull(TEXT("Existing mesh fixture"), Mesh) || !TestNotNull(TEXT("Existing montage fixture"), Montage)) { return false; }
 	Owner->GetMesh()->SetSkeletalMesh(Mesh); Owner->GetMesh()->SetAnimInstanceClass(UAnimInstance::StaticClass());
 	TestTrue(TEXT("Real montage starts a draw transition"), Transition->PlayIntro(*Owner, Montage, 1));
@@ -252,7 +252,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJLocomotionCadenceTest, "ProjectJ.Compo
 bool FProjectJLocomotionCadenceTest::RunTest(const FString&)
 {
 	FComponentOwnershipWorld Scope;
-	auto* Owner = Scope.World->SpawnActor<AProject_JGreatswordCharacter>();
+	auto* Owner = Scope.World->SpawnActor<AProject_JSpellbladeCharacter>();
 	if (!TestNotNull(TEXT("Concrete player fixture"), Owner)) { return false; }
 	Owner->SwapRoles();
 	auto* State = Owner->FindComponentByClass<UProject_JLocomotionAnimStateComponent>();

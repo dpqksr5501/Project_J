@@ -4,7 +4,7 @@
 #include "Animation/Project_JRetargetAnimInstance.h"
 #include "Animation/Project_JCharacterAnimInstance.h"
 #include "Animation/Project_JPlayerAnimInstance.h"
-#include "Project_JGreatswordCharacter.h"
+#include "Project_JSpellbladeCharacter.h"
 #include "Tests/Project_JMoverFrameFixture.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
@@ -51,8 +51,8 @@ bool FProjectJPlayerAnimationSourceLifetime::RunTest(const FString&)
  World->InitializeActorsForPlay(FURL());
  World->GetWorldSettings()->NotifyBeginPlay();World->GetWorldSettings()->NotifyMatchStarted();
  ON_SCOPE_EXIT { World->EndPlay(EEndPlayReason::Quit);World->DestroyWorld(false);GEngine->DestroyWorldContext(World); };
- auto* First=World->SpawnActor<AProject_JGreatswordCharacter>();
- auto* Next=World->SpawnActor<AProject_JGreatswordCharacter>();
+ auto* First=World->SpawnActor<AProject_JSpellbladeCharacter>();
+ auto* Next=World->SpawnActor<AProject_JSpellbladeCharacter>();
  Next->SetActorLocation(FVector(10000,0,0));
  if(!TestTrue(TEXT("First source publishes"),ProjectJ::Tests::PublishMoverFrame(First,MOVE_Walking,FVector(250,0,0))) ||
     !TestTrue(TEXT("Next source publishes"),ProjectJ::Tests::PublishMoverFrame(Next,MOVE_Walking,FVector(0,400,0)))) return false;

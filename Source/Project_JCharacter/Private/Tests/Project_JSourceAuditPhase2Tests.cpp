@@ -10,7 +10,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "TimerManager.h"
 #include "UObject/UnrealType.h"
-#include "Project_JGreatswordCharacter.h"
+#include "Project_JSpellbladeCharacter.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JGameplayTags.h"
 #include "Project_JLocomotionAnimStateComponent.h"
@@ -56,10 +56,10 @@ bool FProjectJAudit2RejectedStartTest::RunTest(const FString&)
     for (bool bTransitionOnly : {false, true})
     {
         FPhase2World Scope;
-        auto* Player = Scope.World->SpawnActor<AProject_JGreatswordCharacter>();
+        auto* Player = Scope.World->SpawnActor<AProject_JSpellbladeCharacter>();
         auto* ASC = NewObject<UProject_JAbilitySystemComponent>(Player); ASC->RegisterComponent(); ASC->InitAbilityActorInfo(Player, Player);
         FindFProperty<FObjectPropertyBase>(AProject_JBaseCharacter::StaticClass(), TEXT("AbilitySystemComponent"))->SetObjectPropertyValue_InContainer(Player, ASC);
-        auto* Source = LoadObject<UProject_JCombatStyleDefinition>(nullptr, TEXT("/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword.DA_CombatStyle_Greatsword"));
+        auto* Source = LoadObject<UProject_JCombatStyleDefinition>(nullptr, TEXT("/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Spellblade.DA_CombatStyle_Spellblade"));
         if (!TestNotNull(TEXT("Production style fixture"), Source)) return false;
         auto* Style = DuplicateObject(Source, Player); Style->AbilitySets.Reset(); Style->CommandSet = nullptr;
         Style->ComboDefinition = DuplicateObject(Source->ComboDefinition.Get(), Style);
@@ -104,7 +104,7 @@ bool FProjectJAudit2RemoteJumpTest::RunTest(const FString&)
     for (float Age : {0.f, .1f}) for (int32 Mode = 0; Mode < 3; ++Mode)
     {
         FPhase2World Scope(true);
-        auto* Player = Scope.World->SpawnActor<AProject_JGreatswordCharacter>();
+        auto* Player = Scope.World->SpawnActor<AProject_JSpellbladeCharacter>();
         auto* State = Player->FindComponentByClass<UProject_JLocomotionAnimStateComponent>();
         TestTrue(TEXT("Mover falling fixture published"),ProjectJ::Tests::PublishMoverFrame(Player,MOVE_Falling));
         State->RefreshCachedReferences();
@@ -126,7 +126,7 @@ bool FProjectJAudit2RemoteJumpTest::RunTest(const FString&)
         TestTrue(TEXT("Remote timeout preserves airborne presentation"), State->bIsInAir);
     }
     FPhase2World Scope;
-    auto* State = Scope.World->SpawnActor<AProject_JGreatswordCharacter>()->FindComponentByClass<UProject_JLocomotionAnimStateComponent>();
+    auto* State = Scope.World->SpawnActor<AProject_JSpellbladeCharacter>()->FindComponentByClass<UProject_JLocomotionAnimStateComponent>();
     State->BeginJumpStartState(); State->ScheduleJumpStartTimeout(State->JumpStartMaxDuration);
     State->AdvanceStateClocks(.4f); State->OnJumpTimerFinished();
     TestTrue(TEXT("Local watchdog retains its longer deadline"), State->bIsJumping);

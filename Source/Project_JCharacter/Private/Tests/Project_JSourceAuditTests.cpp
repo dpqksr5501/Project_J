@@ -14,6 +14,8 @@
 #include "Inventory/Project_JConsumableDefinition.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JAttributeSet.h"
+#include "UObject/StrongObjectPtr.h"
+#include "UObject/UObjectGlobals.h"
 
 UE_DEFINE_GAMEPLAY_TAG_STATIC(AuditAttackA, "ProjectJ.Tests.SourceAudit.AttackA");
 UE_DEFINE_GAMEPLAY_TAG_STATIC(AuditAttackB, "ProjectJ.Tests.SourceAudit.AttackB");
@@ -137,12 +139,13 @@ bool FProjectJAuditBagUnequipTest::RunTest(const FString&)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAuditConsumableContinuationTest, "ProjectJ.SourceAudit.ConsumableContinuation", AuditFlags)
 bool FProjectJAuditConsumableContinuationTest::RunTest(const FString&)
 {
-    for (int32 Count : {1, 2}) for (int32 Mode = 0; Mode < 6; ++Mode)
+    for (int32 Count : {1, 2}) for (int32 Mode = 0; Mode < 10; ++Mode)
     {
         FAuditWorld Scope;
         auto* Owner = Scope.World->SpawnActor<AProject_JPlayerMaturityASCFixture>();
-        const auto MakeASC = [Owner] {
-            auto* ASC = NewObject<UProject_JAbilitySystemComponent>(Owner); ASC->RegisterComponent(); ASC->InitAbilityActorInfo(Owner, Owner);
+        const auto MakeASC = [Owner, Mode] {
+            UAbilitySystemComponent* ASC = Mode == 9 ? NewObject<UAbilitySystemComponent>(Owner) : NewObject<UProject_JAbilitySystemComponent>(Owner);
+            ASC->RegisterComponent(); ASC->InitAbilityActorInfo(Owner, Owner);
             ASC->AddAttributeSetSubobject(NewObject<UProject_JAttributeSet>(Owner));
             ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetMaxHealthAttribute(), 100.f);
             ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetHealthAttribute(), 40.f);
@@ -150,6 +153,9 @@ bool FProjectJAuditConsumableContinuationTest::RunTest(const FString&)
             return ASC;
         };
         auto* ASC = MakeASC(); auto* Replacement = MakeASC(); Owner->CurrentASC = ASC;
+        const TStrongObjectPtr<UAbilitySystemComponent> KeepReplacement(Replacement);
+        const auto* ProjectASC = Cast<UProject_JAbilitySystemComponent>(ASC);
+        const uint64 OriginalRevision = ProjectASC ? ProjectASC->GetActorInfoRevision() : 0;
         auto* OtherActor = Scope.World->SpawnActor<AActor>();
         if (Mode == 4) ASC->InitAbilityActorInfo(Owner, OtherActor);
         if (Mode == 5) ASC->InitAbilityActorInfo(OtherActor, Owner);
@@ -157,29 +163,82 @@ bool FProjectJAuditConsumableContinuationTest::RunTest(const FString&)
         auto* Definition = NewObject<UProject_JConsumableDefinition>(); Definition->MaxStackCount = 10; Definition->RestoreHealth = 20.f;
         const auto Item = Inventory->AddItemDefinition(Definition, Count);
         auto* Receiver = NewObject<UProject_JInternalTestReceiver>(); Receiver->bMutate = false;
-        bool bCallbackRan = false;
+        const TStrongObjectPtr<UProject_JInternalTestReceiver> KeepReceiver(Receiver);
+        bool bCallbackRan = false, bRefreshedMetadata = false;
         const auto Callback = [&] {
             bCallbackRan = true;
             if (Mode == 0) Inventory->DestroyComponent();
             else if (Mode == 1) Owner->Destroy();
             else if (Mode == 2) Owner->CurrentASC = Replacement;
             else if (Mode == 3) ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetHealthAttribute(), 0.f);
-            else OtherActor->Destroy();
+            else if (Mode == 4 || Mode == 5) OtherActor->Destroy();
+            else if (Mode == 6 || Mode == 9) ASC->InitAbilityActorInfo(Owner, Owner);
+            else if (Mode == 7) { ASC->ClearActorInfo(); ASC->InitAbilityActorInfo(Owner, Owner); }
+            else if (Mode == 8) bRefreshedMetadata = CastChecked<UProject_JAbilitySystemComponent>(ASC)->RefreshActorInfoForCurrentActor(Owner);
+            if (Mode == 6 || Mode == 7) CollectGarbage(RF_NoFlags);
         };
         Receiver->OnInventoryChanged = Callback; Receiver->OnInventoryRemoved = Callback;
         Inventory->OnItemChanged.AddDynamic(Receiver, &UProject_JInternalTestReceiver::OnChanged);
         Inventory->OnItemRemoved.AddDynamic(Receiver, &UProject_JInternalTestReceiver::OnRemoved);
         int32 Applied = 0;
         ASC->OnGameplayEffectAppliedDelegateToSelf.AddLambda([&](UAbilitySystemComponent*, const FGameplayEffectSpec&, FActiveGameplayEffectHandle) { ++Applied; });
-        TestEqual(TEXT("Consumed item whose target retires returns Unavailable"), Inventory->TryUseItem(Item.InstanceId), EProject_JItemUseResult::Unavailable);
+        const bool bShouldSucceed = Mode == 8 || Mode == 9;
+        TestEqual(TEXT("Only same-epoch metadata refresh and legacy generic tuple continuation succeed"), Inventory->TryUseItem(Item.InstanceId),
+            bShouldSucceed ? EProject_JItemUseResult::Success : EProject_JItemUseResult::Unavailable);
         TestTrue(TEXT("Partial/final consumption notification ran"), bCallbackRan);
-        TestEqual(TEXT("Retired/replaced/dead target receives no consumable effect"), Applied, 0);
-        TestEqual(TEXT("Old ASC health is not restored"), ASC->GetNumericAttribute(UProject_JAttributeSet::GetHealthAttribute()), Mode == 3 ? 0.f : 40.f);
+        TestEqual(TEXT("Retired recipients get no effect; current recipients get exactly one"), Applied, bShouldSucceed ? 1 : 0);
+        TestEqual(TEXT("Only an admitted current recipient is restored"), ASC->GetNumericAttribute(UProject_JAttributeSet::GetHealthAttribute()),
+            bShouldSucceed ? 60.f : Mode == 3 ? 0.f : 40.f);
         TestEqual(TEXT("Replacement ASC remains unchanged"), Replacement->GetNumericAttribute(UProject_JAttributeSet::GetHealthAttribute()), 40.f);
-        TestEqual(TEXT("Aborted continuation creates no recovery cooldown"), Inventory->GetUseCooldownRemaining(), 0.f);
+        if (bShouldSucceed) TestTrue(TEXT("Current recipient retains its normal recovery cooldown"), Inventory->GetUseCooldownRemaining() > 0);
+        else TestEqual(TEXT("Aborted continuation creates no recovery cooldown"), Inventory->GetUseCooldownRemaining(), 0.f);
+        if (Mode == 6 || Mode == 7)
+        {
+            TestTrue(TEXT("Same-pair Init/Clear+Init advances the existing project epoch"), ProjectASC && ProjectASC->GetActorInfoRevision() > OriginalRevision);
+            TestTrue(TEXT("The failing epoch case deliberately preserves all three pointers"), Owner->CurrentASC == ASC && ASC->GetOwnerActor() == Owner && ASC->GetAvatarActor() == Owner);
+        }
+        if (Mode == 8)
+        {
+            TestTrue(TEXT("Actual metadata refresh succeeds"), bRefreshedMetadata);
+            TestEqual(TEXT("Metadata refresh preserves the current project epoch"), ProjectASC->GetActorInfoRevision(), OriginalRevision);
+        }
+        if (Mode == 9) TestNull(TEXT("Generic ASC compatibility does not invent a project epoch requirement"), ProjectASC);
         FProject_JItemInstanceData Remaining;
         TestEqual(TEXT("Published consumption is not rolled back or duplicated"), Inventory->FindItemInstance(Item.InstanceId, Remaining), Count == 2);
         if (Count == 2) TestEqual(TEXT("Partial consumption retains exactly one item"), Remaining.StackCount, 1);
+    }
+    for (int32 Count : {1, 2}) for (bool bClear : {false, true})
+    {
+        FAuditWorld Scope;
+        auto* Owner = Scope.World->SpawnActor<AProject_JPlayerMaturityASCFixture>();
+        auto* ASC = NewObject<UProject_JAbilitySystemComponent>(Owner); ASC->RegisterComponent(); ASC->InitAbilityActorInfo(Owner, Owner);
+        Owner->CurrentASC = ASC; ASC->AddAttributeSetSubobject(NewObject<UProject_JAttributeSet>(Owner));
+        ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetMaxHealthAttribute(), 100.f);
+        ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetHealthAttribute(), 40.f);
+        ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetMaxManaAttribute(), 100.f);
+        auto* Inventory = NewObject<UProject_JInventoryComponent>(Owner); Inventory->RegisterComponent();
+        auto* Definition = NewObject<UProject_JConsumableDefinition>(Owner); Definition->MaxStackCount = 10; Definition->RestoreHealth = 20;
+        const auto Item = Inventory->AddItemDefinition(Definition, Count);
+        TestTrue(TEXT("Current project recipient has normal persistent-use eligibility before transition"), Inventory->CanUsePersistentItem(Item.InstanceId));
+        bool bSawChanging = false, bSawOldTuple = false, bPersistentEligible = true;
+        EProject_JItemUseResult DuringChange = EProject_JItemUseResult::Success;
+        const auto Changing = ASC->OnActorInfoChanging.AddLambda([&](AActor*, AActor*)
+        {
+            bSawChanging = ASC->IsActorInfoChanging();
+            bSawOldTuple = ASC->GetOwnerActor() == Owner && ASC->GetAvatarActor() == Owner;
+            DuringChange = Inventory->TryUseItem(Item.InstanceId);
+            bPersistentEligible = Inventory->CanUsePersistentItem(Item.InstanceId);
+        });
+        if (bClear) ASC->ClearActorInfo(); else ASC->InitAbilityActorInfo(Owner, Owner);
+        ASC->OnActorInfoChanging.Remove(Changing);
+        TestTrue(TEXT("The real transition delegate exposes changing=true while the old tuple is still installed"), bSawChanging && bSawOldTuple);
+        TestEqual(TEXT("Transition rejects direct use before consuming"), DuringChange, EProject_JItemUseResult::Unavailable);
+        TestFalse(TEXT("The same transition closes durable-use admission"), bPersistentEligible);
+        FProject_JItemInstanceData Remaining;
+        TestTrue(TEXT("Transition admission leaves the item instance present"), Inventory->FindItemInstance(Item.InstanceId, Remaining));
+        TestEqual(TEXT("Transition admission preserves the complete stack"), Remaining.StackCount, Count);
+        TestEqual(TEXT("Transition admission applies no recovery"), ASC->GetNumericAttribute(UProject_JAttributeSet::GetHealthAttribute()), 40.f);
+        TestEqual(TEXT("Transition admission creates no cooldown"), Inventory->GetUseCooldownRemaining(), 0.f);
     }
     return true;
 }

@@ -3,7 +3,7 @@ import json
 import os
 import unreal
 
-combo = unreal.load_asset('/Game/DataAssetSets/Combo/DA_Combo_Greatsword')
+combo = unreal.load_asset('/Game/DataAssetSets/Combo/DA_Combo_Spellblade')
 rows = []
 for node in combo.get_editor_property('nodes'):
     attack = node.get_editor_property('attack_definition')

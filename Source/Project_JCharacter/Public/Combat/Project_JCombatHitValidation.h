@@ -25,7 +25,13 @@ enum class EProject_JCombatHitValidationFailure : uint8
 	HitWindowClosed,
 	DuplicateTarget,
 	RequestRateLimited,
-	AttackActivationMismatch
+	AttackActivationMismatch,
+	NodeClockRequired,
+	NodeClockUnexpected,
+	InvalidNodeClock,
+	NodeVisitMismatch,
+	NodeClockRetired,
+	NodeClockChanged
 };
 
 inline const TCHAR* LexToString(EProject_JCombatHitValidationFailure Failure)
@@ -51,9 +57,31 @@ inline const TCHAR* LexToString(EProject_JCombatHitValidationFailure Failure)
 	case EProject_JCombatHitValidationFailure::DuplicateTarget: return TEXT("DuplicateTarget");
 	case EProject_JCombatHitValidationFailure::RequestRateLimited: return TEXT("RequestRateLimited");
 	case EProject_JCombatHitValidationFailure::AttackActivationMismatch: return TEXT("AttackActivationMismatch");
+	case EProject_JCombatHitValidationFailure::NodeClockRequired: return TEXT("NodeClockRequired");
+	case EProject_JCombatHitValidationFailure::NodeClockUnexpected: return TEXT("NodeClockUnexpected");
+	case EProject_JCombatHitValidationFailure::InvalidNodeClock: return TEXT("InvalidNodeClock");
+	case EProject_JCombatHitValidationFailure::NodeVisitMismatch: return TEXT("NodeVisitMismatch");
+	case EProject_JCombatHitValidationFailure::NodeClockRetired: return TEXT("NodeClockRetired");
+	case EProject_JCombatHitValidationFailure::NodeClockChanged: return TEXT("NodeClockChanged");
 	default: return TEXT("Unknown");
 	}
 }
+
+/** Optional canonical execution clock. Target rewind still uses ClientTimestamp. */
+USTRUCT(BlueprintType)
+struct PROJECT_JCHARACTER_API FProject_JCombatNodeClockContext
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Hit Validation")
+	bool bPresent = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Hit Validation")
+	double ClientNodeStartTimestamp = 0.0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Hit Validation")
+	int32 NodeVisitOrdinal = 0;
+};
 
 USTRUCT(BlueprintType)
 struct PROJECT_JCHARACTER_API FProject_JCombatHitRequest
@@ -64,7 +92,7 @@ struct PROJECT_JCHARACTER_API FProject_JCombatHitRequest
 	TObjectPtr<AActor> Target = nullptr;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Hit Validation")
-	float ClientTimestamp = 0.0f;
+	double ClientTimestamp = 0.0;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Hit Validation")
 	FVector TraceStart = FVector::ZeroVector;
@@ -78,8 +106,12 @@ struct PROJECT_JCHARACTER_API FProject_JCombatHitRequest
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Hit Validation")
 	int32 RequestSequence = 0;
 
-	// GAS activation identity; prevents an old predicted swing hitting a new one.
+	// GAS activation identity must also survive the typed RPC serialization.
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Hit Validation")
 	int32 PredictionKey = 0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Hit Validation")
+	FProject_JCombatNodeClockContext NodeClock;
 };
 
 USTRUCT(BlueprintType)
@@ -92,6 +124,10 @@ struct PROJECT_JCHARACTER_API FProject_JCombatHitValidationPolicy
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Hit Validation", meta = (ClampMin = "0.0"))
 	float MaxFutureTolerance = 0.05f;
+
+	/** Hard ceiling for canonical prediction lead, not a latency/time correction. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Hit Validation", meta = (ClampMin = "0.0", ClampMax = "1.0", Units = "s"))
+	float MaxCanonicalPredictionLeadSeconds = 0.25f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Hit Validation", meta = (ClampMin = "0.0"))
 	float MaxTraceLength = 500.0f;
@@ -107,7 +143,7 @@ struct PROJECT_JCHARACTER_API FProject_JCombatHitValidationPolicy
 
 	EProject_JCombatHitValidationFailure ValidateRequestData(
 		const FProject_JCombatHitRequest& Request,
-		float ServerTimeSeconds) const;
+		double ServerTimeSeconds) const;
 
 	EProject_JCombatHitValidationFailure ValidateSpatialData(
 		const FVector& RequesterLocation,

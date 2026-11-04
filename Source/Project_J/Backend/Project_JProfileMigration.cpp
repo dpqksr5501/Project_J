@@ -1,4 +1,5 @@
 #include "Backend/Project_JProfileMigration.h"
+#include "Backend/Project_JQuestHistoryStorage.h"
 #include "Async/Async.h"
 #include "Backend/Project_JLocalProfileSubsystem.h"
 #include "Backend/Project_JProfileDatabase.h"
@@ -21,35 +22,6 @@
 
 namespace
 {
-bool KnownSnapshotFields(const TArray<uint8> &Bytes)
-{
-	FUTF8ToTCHAR Text(reinterpret_cast<const ANSICHAR *>(Bytes.GetData()), Bytes.Num());
-	TSharedPtr<FJsonObject> Root;
-	if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(FString(Text.Length(), Text.Get())), Root) ||
-		!Root.IsValid())
-		return false;
-	double Format = 0;
-	const TSharedPtr<FJsonObject> *P = nullptr, *Q = nullptr;
-	if (!Root->TryGetNumberField(TEXT("format"), Format) || Root->Values.Num() != (Format == 1 ? 6 : 7) ||
-		!Root->TryGetObjectField(TEXT("progression"), P) || !Root->TryGetObjectField(TEXT("quests"), Q) || !P || !Q ||
-		(*P)->Values.Num() != 5 || (*Q)->Values.Num() != 2)
-		return false;
-	const TArray<TSharedPtr<FJsonValue>> *Values = nullptr;
-	if (!(*Q)->TryGetArrayField(TEXT("states"), Values))
-		return false;
-	for (const auto &Value : *Values)
-		if (!Value.IsValid() || Value->Type != EJson::Object || Value->AsObject()->Values.Num() != 4)
-			return false;
-	if (Format == 2)
-	{
-		if (!Root->TryGetArrayField(TEXT("items"), Values))
-			return false;
-		for (const auto &Value : *Values)
-			if (!Value.IsValid() || Value->Type != EJson::Object || Value->AsObject()->Values.Num() != 8)
-				return false;
-	}
-	return true;
-}
 #if WITH_DEV_AUTOMATION_TESTS
 thread_local int32 MigrationFailAfterWrites = INDEX_NONE;
 #endif
@@ -133,6 +105,27 @@ bool HashOtherState(FProject_JProfileDatabase &DB, FString &Out)
 	Out = BytesToHex(Bytes, 20);
 	return true;
 }
+bool DecodeCapturedProfile(const FProject_JMigrationRecord& Record,
+    const TArray<FProject_JMigrationRecord>& Records, FProject_JLocalProfileSnapshot& Out)
+{
+    FProject_JStoredProfileCore Core;
+    if (Record.Id.Num() != 16 || Record.Deleted || Record.Schema != 1 ||
+        !FProject_JLocalProfileSnapshot::DecodeStoredCore(Record.Payload, Core)) return false;
+    FGuid Character; FMemory::Memcpy(&Character, Record.Id.GetData(), 16);
+    if (Core.HotValues.Character != Character) return false;
+    TArray<ProjectJ::MMO::FRecord> Pages;
+    const int32 Count = (Core.HotValues.Quests.HistoryCount + ProjectJ::QuestHistory::IdsPerPage - 1) / ProjectJ::QuestHistory::IdsPerPage;
+    for (int32 Index = 0; Index < Count; ++Index)
+    {
+        const auto Key = ProjectJ::LocalProfileHistory::PageKey(Character, Index);
+        const auto* Page = Records.FindByPredicate([&](const auto& R) { return R.Kind.Equals(Key.Kind.ToString(), ESearchCase::IgnoreCase) && R.Id == Record.Id; });
+        if (!Page) return false;
+        Pages.Add({Page->Revision, Page->Schema, Page->Payload, Page->Deleted != 0});
+    }
+    auto Values = ProjectJ::LocalProfileHistory::HydrateProfileValues(Character, Record.Payload, Pages);
+    if (!Values) return false;
+    Out = *Values; return true;
+}
 } // namespace
 
 FProject_JMigrationInspection FProject_JProfileMigration::Inspect(const FString &Source)
@@ -164,7 +157,7 @@ FProject_JMigrationInspection FProject_JProfileMigration::Inspect(const FString 
 			break;
 		FProject_JMigrationRecord R;
 		int32 Length = 0;
-		if (Step != ESQLitePreparedStatementStepResult::Row || Result.Records.Num() >= 1024 ||
+		if (Step != ESQLitePreparedStatementStepResult::Row || Result.Records.Num() >= ProjectJ::LocalProfileHistory::LocalProfileRecordLimit ||
 			!S.GetColumnValueByIndex(0, R.Kind) || !S.GetColumnValueByIndex(1, R.Id) || R.Id.Num() != 16 ||
 			!S.GetColumnValueByIndex(2, R.Revision) || R.Revision <= 0 || !S.GetColumnValueByIndex(3, R.Schema) ||
 			R.Schema < 1 || !S.GetColumnValueByIndex(5, R.Deleted) || R.Deleted < 0 || R.Deleted > 1 ||
@@ -173,17 +166,21 @@ FProject_JMigrationInspection FProject_JProfileMigration::Inspect(const FString 
 			return Result;
 		if (R.Kind == TEXT("localprofile") && !R.Deleted)
 		{
-			FProject_JLocalProfileSnapshot Snapshot;
+            FProject_JStoredProfileCore Core;
 			FGuid Id;
 			FMemory::Memcpy(&Id, R.Id.GetData(), 16);
-			if (R.Schema != 1 || !FProject_JLocalProfileSnapshot::Decode(R.Payload, Snapshot) ||
-				!KnownSnapshotFields(R.Payload) || Snapshot.Character != Id)
-				return Result;
-			if (Snapshot.Format == 1)
+            if (R.Schema != 1 || !FProject_JLocalProfileSnapshot::DecodeStoredCore(R.Payload, Core) || Core.HotValues.Character != Id) return Result;
+			if (Core.HotValues.Format == 1)
 				Result.MissingOwnership.Add(Id);
 		}
 		Result.Records.Add(MoveTemp(R));
 	}
+    // Validate all referenced page values after the coherent read-only record capture.
+    for (const auto& R : Result.Records) if (R.Kind == TEXT("localprofile") && !R.Deleted)
+    {
+        FProject_JLocalProfileSnapshot Snapshot;
+        if (!DecodeCapturedProfile(R, Result.Records, Snapshot)) return Result;
+    }
 	if (!HashOtherState(DB, Result.OtherStateHash))
 		return Result;
 	FString After;
@@ -197,13 +194,13 @@ bool FProject_JProfileMigration::Plan(const FProject_JMigrationInspection &Sourc
 									  TArray<FProject_JMigrationRecord> &Result, FString &Error)
 {
 	Result.Reset();
-	Error = TEXT("Missing/duplicate ownership or changed P/Q/rules/identity; explicit complete v2 snapshot required");
+	Error = TEXT("Missing/duplicate ownership or changed P/Q/rules/identity; explicit complete ownership checkpoint without jobs required");
 	if (!Source.IsValid() || Ownership.Num() != Source.MissingOwnership.Num())
 		return false;
 	TSet<FGuid> Seen, Instances;
 	for (const auto &Snapshot : Ownership)
 	{
-		if (Snapshot.Format != 2 || !Source.MissingOwnership.Contains(Snapshot.Character) ||
+		if ((Snapshot.Format != 2 && Snapshot.Format != 3) || !Snapshot.CraftingJobs.IsEmpty() || !Source.MissingOwnership.Contains(Snapshot.Character) ||
 			Seen.Contains(Snapshot.Character))
 			return false;
 		else
@@ -220,9 +217,9 @@ bool FProject_JProfileMigration::Plan(const FProject_JMigrationInspection &Sourc
 		if (R.Kind != TEXT("localprofile") || R.Deleted)
 			continue;
 		FProject_JLocalProfileSnapshot Existing;
-		if (!FProject_JLocalProfileSnapshot::Decode(R.Payload, Existing))
+		if (!DecodeCapturedProfile(R, Source.Records, Existing))
 			return false;
-		if (Existing.Format != 2)
+		if (Existing.Format == 1)
 			continue;
 		for (const auto &Item : Existing.Items)
 		{
@@ -230,6 +227,12 @@ bool FProject_JProfileMigration::Plan(const FProject_JMigrationInspection &Sourc
 				return false;
 			Instances.Add(Item.Instance);
 		}
+		for (const auto& Job : Existing.CraftingJobs)
+			for (const auto& Item : Job.Escrow)
+			{
+				if (Instances.Contains(Item.Instance)) return false;
+				Instances.Add(Item.Instance);
+			}
 	}
 	auto Planned = Source.Records;
 	for (auto &R : Planned)
@@ -237,9 +240,9 @@ bool FProject_JProfileMigration::Plan(const FProject_JMigrationInspection &Sourc
 		if (R.Kind != TEXT("localprofile") || R.Deleted)
 			continue;
 		FProject_JLocalProfileSnapshot Old;
-		if (!FProject_JLocalProfileSnapshot::Decode(R.Payload, Old))
+		if (!DecodeCapturedProfile(R, Source.Records, Old))
 			return false;
-		if (Old.Format == 2)
+		if (Old.Format != 1)
 			continue;
 		auto *Replacement = Ownership.FindByPredicate([&](const auto &V) { return V.Character == Old.Character; });
 		if (!Replacement || R.Revision == MAX_int64)
@@ -271,11 +274,12 @@ bool FProject_JProfileMigration::Create(const FString &Source, const FString &De
 #endif
 	if (FPaths::IsSamePath(Source, Destination) || !Inspection.IsValid() || Planned.Num() != Inspection.Records.Num())
 		return false;
+	Error = TEXT("Migration source changed or inspection failed");
 	const auto Current = Inspect(Source);
 	if (!Current.IsValid() || Current.SourceHash != Inspection.SourceHash ||
 		Current.OtherStateHash != Inspection.OtherStateHash || !SameRecords(Current.Records, Inspection.Records))
 		return false;
-	// Independently constrain the write port: only v1 -> v2 items may differ, never arbitrary records.
+	// Independently constrain the write port: only v1 ownership additions may differ, never existing jobs or arbitrary records.
 	TArray<FProject_JLocalProfileSnapshot> Ownership;
 	for (int32 I = 0; I < Planned.Num(); ++I)
 	{
@@ -288,6 +292,7 @@ bool FProject_JProfileMigration::Create(const FString &Source, const FString &De
 	}
 	TArray<FProject_JMigrationRecord> Checked;
 	FString PlanError;
+	Error = TEXT("Migration write plan differs from the independently validated plan");
 	if (!Plan(Inspection, Ownership, Checked, PlanError) || !SameRecords(Checked, Planned))
 		return false;
 	if (IFileManager::Get().FileExists(*Destination))
@@ -309,9 +314,13 @@ bool FProject_JProfileMigration::Create(const FString &Source, const FString &De
 		}
 		return false;
 	}
+	Error = TEXT("Migration destination directory cannot be prepared");
 	if (!IFileManager::Get().MakeDirectory(*FPaths::GetPath(Destination), true))
 		return false;
-	const FString Stage = Destination + TEXT(".migration-") + FGuid::NewGuid().ToString();
+	Error = TEXT("Migration SQLite staging copy failed");
+	// Keep staging beside the destination for publication, without repeating its
+	// potentially long filename before SQLite adds its rollback-journal suffix.
+	const FString Stage = FPaths::Combine(FPaths::GetPath(Destination), TEXT(".migration-") + FGuid::NewGuid().ToString());
 	ON_SCOPE_EXIT
 	{
 		IFileManager::Get().Delete(*Stage, false, true);
@@ -325,11 +334,13 @@ bool FProject_JProfileMigration::Create(const FString &Source, const FString &De
 		if (!S.IsValid() || !S.SetBindingValueByIndex(1, Stage) || !S.Execute())
 			return false;
 	}
+	Error = TEXT("Migration staging copy does not match the inspected source");
 	auto Copy = Inspect(Stage);
 	if (!Copy.IsValid() || !SameRecords(Copy.Records, Inspection.Records) ||
 		Copy.OtherStateHash != Inspection.OtherStateHash)
 		return false;
 	{
+		Error = TEXT("Migration staging transaction/provenance commit failed");
 		FProject_JProfileDatabase DB;
 		if (!DB.Open(*Stage, ESQLiteDatabaseOpenMode::ReadWrite) ||
 			!DB.Execute(TEXT("PRAGMA synchronous=EXTRA; BEGIN IMMEDIATE")))
@@ -373,8 +384,12 @@ bool FProject_JProfileMigration::Create(const FString &Source, const FString &De
 		const bool Ready = Staging.GetUsage(Usage);
 		Staging.Close();
 		if (!Ready)
+		{
+			Error = TEXT("Migration staged runtime writer rejected the copy: ") + Staging.DescribeFailure();
 			return false;
+		}
 	}
+	Error = TEXT("Migration final semantic/source-preservation verification failed");
 	auto Verified = Inspect(Stage);
 	auto Original = Inspect(Source);
 	if (!Verified.IsValid() || Verified.DatabaseVersion != 2 || !SameRecords(Verified.Records, Planned) ||
@@ -382,6 +397,7 @@ bool FProject_JProfileMigration::Create(const FString &Source, const FString &De
 		Original.SourceHash != Inspection.SourceHash)
 		return false;
 	// No overwrite. A failed/partial staging write never becomes the destination.
+	Error = TEXT("Migration destination publication failed; source preserved");
 	if (!IFileManager::Get().Move(*Destination, *Stage, false, false, false, true))
 		return false;
 	Error.Reset();
@@ -415,7 +431,7 @@ bool FProject_JProfileMigration::RollbackCopy(const FString &Original, const FSt
 			Hash != Source.SourceHash)
 			return false;
 	}
-	const FString Stage = Destination + TEXT(".rollback-") + FGuid::NewGuid().ToString();
+	const FString Stage = FPaths::Combine(FPaths::GetPath(Destination), TEXT(".rollback-") + FGuid::NewGuid().ToString());
 	ON_SCOPE_EXIT
 	{
 		IFileManager::Get().Delete(*Stage, false, true);
@@ -506,7 +522,7 @@ int32 UProject_JProfileMigrationCommandlet::Main(const FString &Params)
 			TArray<uint8> Raw;
 			Raw.Append(reinterpret_cast<const uint8 *>(Bytes.Get()), Bytes.Length());
 			FProject_JLocalProfileSnapshot Snapshot;
-			if (!FProject_JLocalProfileSnapshot::Decode(Raw, Snapshot) || !KnownSnapshotFields(Raw))
+			if (!FProject_JLocalProfileSnapshot::Decode(Raw, Snapshot))
 				return 4;
 			Ownership.Add(MoveTemp(Snapshot));
 		}
@@ -539,8 +555,7 @@ int32 UProject_JProfileMigrationCommandlet::Main(const FString &Params)
 		if (R.Kind != TEXT("localprofile") || R.Deleted)
 			continue;
 		FProject_JLocalProfileSnapshot Snapshot;
-		if (!FProject_JLocalProfileSnapshot::Decode(R.Payload, Snapshot))
-			return 6;
+        if (!DecodeCapturedProfile(R, Planned, Snapshot)) return 6;
 		auto *Player = World->SpawnActor<AProject_JPlayerState>();
 		const bool Valid = UProject_JLocalProfileSubsystem::ValidateMigrationSnapshot(Player, Snapshot, Error);
 		Player->Destroy();

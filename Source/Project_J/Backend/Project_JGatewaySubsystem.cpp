@@ -5,6 +5,7 @@
 #include "Interfaces/IHttpResponse.h"
 #include "TimerManager.h"
 #include "Engine/World.h"
+#include "Engine/GameInstance.h"
 #include "Dom/JsonObject.h"
 #include "JsonObjectConverter.h"
 #include "Serialization/JsonSerializer.h"
@@ -209,26 +210,22 @@ void UProject_JGatewaySubsystem::Initialize(FSubsystemCollectionBase& Collection
 {
 	Super::Initialize(Collection);
 	RequestTracker = MakeShared<ProjectJ::MMO::FRequestTracker, ESPMode::ThreadSafe>(FMath::Clamp(MaxInFlightRequests, 1, 4096));
-	
-	// Set up rate-limited flush timer (e.g. every 5 seconds)
-	if (UWorld* World = GetWorld())
-	{
-		World->GetTimerManager().SetTimer(LogFlushTimerHandle, this, &UProject_JGatewaySubsystem::FlushRemoteLogs, RemoteLogFlushInterval, true);
-	}
+	// Telemetry is opt-in. The first accepted log schedules the existing GI timer.
 }
 
 void UProject_JGatewaySubsystem::Deinitialize()
 {
 	check(IsInGameThread());
-	if (RequestTracker) { RequestTracker->Close(); }
+	// Withdraw admission before cancellation can reenter; old completions remain closed.
+	const auto ClosingTracker = MoveTemp(RequestTracker);
+	if (ClosingTracker) { ClosingTracker->Close(); }
+	if (UGameInstance* GameInstance = GetGameInstance())
+	{
+		GameInstance->GetTimerManager().ClearTimer(LogFlushTimerHandle);
+	}
 	// Close first so cancellation callbacks cannot mutate ActiveRequests during iteration.
 	for (auto& Pair : ActiveRequests) { Pair.Value->CancelRequest(); }
 	ActiveRequests.Reset();
-	RequestTracker.Reset();
-	if (UWorld* World = GetWorld())
-	{
-		World->GetTimerManager().ClearTimer(LogFlushTimerHandle);
-	}
 
 	LogQueue.Reset();
 	PendingLogFlushBatch.Reset();
@@ -278,10 +275,13 @@ void UProject_JGatewaySubsystem::EnqueueRemoteLog(const FString& Message, const 
 	Payload.Severity = Severity;
 	LogQueue.Add(Payload);
 	TrimRemoteLogQueue();
+	ScheduleRemoteLogFlush();
 }
 
 bool UProject_JGatewaySubsystem::IsRemoteTelemetryEnabled() const
 {
+	// Do not inspect GI/world state or arm timers from logging workers or retired APIs.
+	if (!IsInGameThread() || !RequestTracker) return false;
 	const UWorld* World = GetWorld();
 	return bEnableRemoteTelemetry &&
 		!GatewayUrl.IsEmpty() &&
@@ -290,9 +290,29 @@ bool UProject_JGatewaySubsystem::IsRemoteTelemetryEnabled() const
 		World->GetNetMode() != NM_Client;
 }
 
+void UProject_JGatewaySubsystem::ScheduleRemoteLogFlush()
+{
+	check(IsInGameThread());
+	if (!RequestTracker || LogQueue.IsEmpty() || bLogFlushInFlight) return;
+	if (UGameInstance* GameInstance = GetGameInstance())
+	{
+		FTimerManager& Timers = GameInstance->GetTimerManager();
+		if (!Timers.IsTimerActive(LogFlushTimerHandle))
+		{
+			// Preserve the first batch deadline; no recurring job while idle/in flight.
+			Timers.SetTimer(LogFlushTimerHandle, this, &UProject_JGatewaySubsystem::FlushRemoteLogs, RemoteLogFlushInterval, false);
+		}
+	}
+}
+
 void UProject_JGatewaySubsystem::FlushRemoteLogs()
 {
-	if (LogQueue.Num() == 0) return;
+	check(IsInGameThread());
+	if (UGameInstance* GameInstance = GetGameInstance())
+	{
+		GameInstance->GetTimerManager().ClearTimer(LogFlushTimerHandle);
+	}
+	if (!RequestTracker || LogQueue.Num() == 0) return;
 	if (bLogFlushInFlight) return;
 
 	Swap(PendingLogFlushBatch, LogQueue);
@@ -330,6 +350,7 @@ void UProject_JGatewaySubsystem::HandleRemoteLogFlushEnvelopeResponse(const FPro
 	if (Response.bSucceeded)
 	{
 		PendingLogFlushBatch.Reset();
+		ScheduleRemoteLogFlush();
 		return;
 	}
 
@@ -339,6 +360,7 @@ void UProject_JGatewaySubsystem::HandleRemoteLogFlushEnvelopeResponse(const FPro
 	}
 	PendingLogFlushBatch.Reset();
 	TrimRemoteLogQueue();
+	ScheduleRemoteLogFlush();
 }
 
 void UProject_JGatewaySubsystem::TrimRemoteLogQueue()

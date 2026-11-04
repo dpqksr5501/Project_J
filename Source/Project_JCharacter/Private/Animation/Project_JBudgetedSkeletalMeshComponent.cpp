@@ -9,6 +9,10 @@
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "HAL/IConsoleManager.h"
 #include "Animation/Project_JAnimationQualityPolicy.h"
+#include "Engine/SkeletalMesh.h"
+#include "PhysicsEngine/PhysicsAsset.h"
+#include "UObject/StrongObjectPtr.h"
+#include "UObject/GarbageCollection.h"
 
 namespace Project_J::Anim
 {
@@ -45,6 +49,68 @@ UProject_JBudgetedSkeletalMeshComponent::UProject_JBudgetedSkeletalMeshComponent
 	bBudgetTickWhenNotRendered = true;
 }
 
+
+bool UProject_JBudgetedSkeletalMeshComponent::IsSharedPhysicsBoundsAvailable() const
+{
+    const auto* World=GetWorld();const auto* Owner=GetOwner();
+    return IsInGameThread() && !IsGarbageCollecting() && !bEnding && !bChangingSharedBoundsSource && !IsTemplate() &&
+        IsRegistered() && AreBoneTransformsValid() && !IsBeingDestroyed() && IsValid(World) && !World->bIsTearingDown &&
+        IsValid(Owner) && !Owner->IsActorBeingDestroyed();
+}
+bool UProject_JBudgetedSkeletalMeshComponent::TryReadSharedPhysicsBounds(const Project_J::Bounds::FKey& Key,
+    TConstArrayView<Project_J::Bounds::FBodyValue> BodyValues,FBoxSphereBounds& OutLocal) const
+{
+    if(!IsSharedPhysicsBoundsAvailable() || Key.Frame!=GFrameCounter || Key.Source!=FObjectKey(this) ||
+        Key.Owner!=FObjectKey(GetOwner()) || Key.World!=FObjectKey(GetWorld()) ||
+        Key.SourceAsset!=FObjectKey(GetSkeletalMeshAsset()) || Key.PhysicsAsset!=FObjectKey(GetPhysicsAsset())) return false;
+    if(!SharedPhysicsBounds.bValid || !(Key==SharedPhysicsBounds.Key) ||
+        !Project_J::Bounds::SameBodies(BodyValues,SharedPhysicsBounds.Bodies)) return false;
+    OutLocal=SharedPhysicsBounds.LocalBounds;
+    return true;
+}
+void UProject_JBudgetedSkeletalMeshComponent::PublishSharedPhysicsBounds(const Project_J::Bounds::FKey& Key,
+    TConstArrayView<Project_J::Bounds::FBodyValue> BodyValues,const FBoxSphereBounds& Local) const
+{
+    if(!IsSharedPhysicsBoundsAvailable() || BodyValues.Num()>Project_J::Bounds::MaxSharedBodies || Key.Frame!=GFrameCounter ||
+        Key.Source!=FObjectKey(this) || Key.Owner!=FObjectKey(GetOwner()) || Key.World!=FObjectKey(GetWorld()) ||
+        Key.SourceAsset!=FObjectKey(GetSkeletalMeshAsset()) || Key.PhysicsAsset!=FObjectKey(GetPhysicsAsset())) return;
+    SharedPhysicsBounds.bValid=false;
+    SharedPhysicsBounds.Key=Key;
+    SharedPhysicsBounds.Bodies.Reset(); // Preserve steady-state allocation, never more than64 values.
+    SharedPhysicsBounds.Bodies.Append(BodyValues.GetData(),BodyValues.Num());
+    SharedPhysicsBounds.LocalBounds=Local;
+    SharedPhysicsBounds.bValid=true;
+}
+void UProject_JBudgetedSkeletalMeshComponent::RetireSharedPhysicsBounds()
+{
+    SharedPhysicsBounds.bValid=false;
+    SharedPhysicsBounds.Bodies.Empty(); // Lifecycle retirement releases the one-entry value allocation.
+}
+void UProject_JBudgetedSkeletalMeshComponent::OnRegister()
+{
+    const TStrongObjectPtr<UProject_JBudgetedSkeletalMeshComponent> Keep(IsGarbageCollecting()?nullptr:this);
+    RetireSharedPhysicsBounds();TGuardValue<bool> Changing(bChangingSharedBoundsSource,true);
+    Super::OnRegister();RetireSharedPhysicsBounds();
+}
+void UProject_JBudgetedSkeletalMeshComponent::OnUnregister()
+{
+    const TStrongObjectPtr<UProject_JBudgetedSkeletalMeshComponent> Keep(IsGarbageCollecting()?nullptr:this);
+    RetireSharedPhysicsBounds();TGuardValue<bool> Changing(bChangingSharedBoundsSource,true);
+    Super::OnUnregister();RetireSharedPhysicsBounds();
+}
+void UProject_JBudgetedSkeletalMeshComponent::SetSkeletalMesh(USkeletalMesh* NewMesh,bool bReinitPose)
+{
+    const TStrongObjectPtr<UProject_JBudgetedSkeletalMeshComponent> Keep(IsGarbageCollecting()?nullptr:this);
+    RetireSharedPhysicsBounds();TGuardValue<bool> Changing(bChangingSharedBoundsSource,true);
+    Super::SetSkeletalMesh(NewMesh,bReinitPose);RetireSharedPhysicsBounds();
+}
+void UProject_JBudgetedSkeletalMeshComponent::SetPhysicsAsset(UPhysicsAsset* NewAsset,bool bForceReInit)
+{
+    const TStrongObjectPtr<UProject_JBudgetedSkeletalMeshComponent> Keep(IsGarbageCollecting()?nullptr:this);
+    RetireSharedPhysicsBounds();TGuardValue<bool> Changing(bChangingSharedBoundsSource,true);
+    Super::SetPhysicsAsset(NewAsset,bForceReInit);RetireSharedPhysicsBounds();
+}
+
 void UProject_JBudgetedSkeletalMeshComponent::BeginPlay()
 {
 	bEnding = false;
@@ -64,6 +130,7 @@ void UProject_JBudgetedSkeletalMeshComponent::BeginPlay()
 
 void UProject_JBudgetedSkeletalMeshComponent::BindAnimationEvents()
 {
+    RetireSharedPhysicsBounds();
 	ObservedDistanceTier.Reset(); ObservedFullClothQuality.Reset();
 	LeaveBudget(); // Reinitialization cannot retain old external tick-rate state.
 	if (BoundAnimation.IsValid()) { BoundAnimation->OnMontageStarted.RemoveDynamic(this, &ThisClass::OnMontageStarted); }
@@ -222,6 +289,7 @@ void UProject_JBudgetedSkeletalMeshComponent::SetComponentTickEnabled(bool bEnab
 
 void UProject_JBudgetedSkeletalMeshComponent::DetachService()
 {
+    RetireSharedPhysicsBounds();
 	bEnding = true;
 	ObservedDistanceTier.Reset(); ObservedFullClothQuality.Reset();
 	LeaveBudget();

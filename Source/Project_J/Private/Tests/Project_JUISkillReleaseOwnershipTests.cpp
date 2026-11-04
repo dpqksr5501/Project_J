@@ -6,7 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "Game/Project_JPlayerState.h"
 #include "UI/Project_JPlayerUIComponent.h"
-#include "Project_JGreatswordCharacter.h"
+#include "Project_JSpellbladeCharacter.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JGameplayTags.h"
 #include "Combat/Project_JGameplayAbility_Sprint.h"
@@ -26,7 +26,7 @@ bool FProjectJUISkillReleaseOwnershipTest::RunTest(const FString&)
 		ON_SCOPE_EXIT { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
 		auto* State = World->SpawnActor<AProject_JPlayerState>();
 		auto* Controller = World->SpawnActor<APlayerController>();
-		auto* Player = World->SpawnActor<AProject_JGreatswordCharacter>();
+		auto* Player = World->SpawnActor<AProject_JSpellbladeCharacter>();
 		if (!State || !Controller || !Player) { AddError(TEXT("Fixture spawn failed")); return false; }
 		State->SetOwner(Controller); Controller->SetPlayerState(State); Player->SetPlayerState(State);
 		Controller->SetAsLocalPlayerController(); // LocalPredicted input; no LocalPlayer/settings session.

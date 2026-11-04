@@ -82,10 +82,16 @@ public:
 	void K2_OnRiderDismounted(APawn* PreviousRider);
 
 protected:
+	virtual void OnReplicationStartedForIris(const FOnReplicationStartedParams& Params) override;
+	virtual void OnStopReplicationForIris(const FOnStopReplicationParams& Params) override;
 	virtual void PawnClientRestart() override;
 	virtual void UnPossessed() override;
 	virtual void OnRep_Controller() override;
+	virtual void OnRep_PlayerState() override;
+	void NotifyRiderRuntimeOwnerPrerequisitesChanged(APawn* AffectedRider);
 	virtual void HandleDismount();
+	/** Resolve the currently possessed mount's PlayerState, not the detached rider's old session. */
+	bool AdmitClientMountCommand();
 	void RestoreDismountInputBindings(UInputComponent* PlayerInputComponent);
 	/** Optional authored action, in addition to the rider's existing interaction action. */
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
@@ -171,6 +177,7 @@ private:
 	FDelegateHandle MaxHealthChangedHandle;
 	bool bHandlingHealthDepletion = false;
 	bool bEndingPlay = false;
+	double NextClientMountCommandTime = 0;
 	bool bRestoreRiderOnEndPlay = false;
 	TWeakObjectPtr<AController> SessionController;
 	ECollisionEnabled::Type RiderCollisionBeforeMount = ECollisionEnabled::QueryAndPhysics;

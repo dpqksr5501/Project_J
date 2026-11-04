@@ -18,6 +18,9 @@
 #include "Project_JAbilitySystemOwnerInterface.h"
 #include "Animation/Project_JBudgetedSkeletalMeshComponent.h"
 #include "Components/Project_JFoleyComponent.h"
+#include "Components/Project_JCombatHitValidationComponent.h"
+#include "Combat/Project_JServerSideRewindComponent.h"
+#include "DefaultMovementSet/CharacterMoverComponent.h"
 #include "UObject/StrongObjectPtr.h"
 
 AProject_JBaseCharacter::AProject_JBaseCharacter(const FObjectInitializer &ObjectInitializer)
@@ -73,6 +76,7 @@ UProject_JAttributeSet *AProject_JBaseCharacter::GetAttributeSet() const
 void AProject_JBaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	GetMover()->OnTeleportSucceeded.AddUniqueDynamic(this, &ThisClass::OnMoverTeleportSucceeded);
 	InitializeAbilitySystem();
 	InitializeDefaultAttributes();
 	BindEquipmentRuntimeToResolvedEquipmentManager();
@@ -118,6 +122,7 @@ void AProject_JBaseCharacter::BeginPlay()
 
 void AProject_JBaseCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	GetMover()->OnTeleportSucceeded.RemoveAll(this);
 	if (BoundProgression.IsValid())
 		BoundProgression->OnChanged.RemoveAll(this);
 	BoundProgression.Reset();
@@ -127,6 +132,26 @@ void AProject_JBaseCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 
 	Super::EndPlay(EndPlayReason);
+}
+
+void AProject_JBaseCharacter::TeleportSucceeded(bool bIsATest)
+{
+	Super::TeleportSucceeded(bIsATest);
+	if (!bIsATest) { ResetCombatSpatialHistory(); }
+}
+
+void AProject_JBaseCharacter::OnMoverTeleportSucceeded(const FVector&, const FQuat&, const FVector&, const FQuat&)
+{
+	// Synchronous FTeleportEffect already calls Actor::TeleportTo, above. Async
+	// simulation reports its success on GT instead; consume exactly that boundary.
+	if (GetMover()->IsBackendAsync()) { ResetCombatSpatialHistory(); }
+}
+
+void AProject_JBaseCharacter::ResetCombatSpatialHistory()
+{
+	check(IsInGameThread());
+	if (auto* Rewind = FindComponentByClass<UProject_JServerSideRewindComponent>()) { Rewind->ResetHistory(); }
+	if (auto* Hit = FindComponentByClass<UProject_JCombatHitValidationComponent>()) { Hit->ResetSpatialHistory(); }
 }
 
 void AProject_JBaseCharacter::PossessedBy(AController *NewController)
@@ -159,6 +184,15 @@ void AProject_JBaseCharacter::OnRep_Controller()
 	{
 		ASC->RefreshActorInfoForCurrentActor(this);
 	}
+	// Ownership may resolve after the public Pawn snapshot or private PlayerState.
+	BindEquipmentRuntimeToResolvedEquipmentManager();
+}
+
+void AProject_JBaseCharacter::OnRep_Owner()
+{
+	Super::OnRep_Owner();
+	// Owner can resolve after Controller/PlayerState and the complete public delta.
+	BindEquipmentRuntimeToResolvedEquipmentManager();
 }
 
 int32 AProject_JBaseCharacter::GetCharacterLevel_Implementation() const
@@ -309,6 +343,7 @@ void AProject_JBaseCharacter::InitializeDefaultAttributes(bool bForceReset) cons
 	{
 		CurrentAttributeSet->InitDefense(FMath::Max(0.0f, DefaultDefense));
 	}
+	CurrentAttributeSet->PublishInitializedResources();
 }
 
 void AProject_JBaseCharacter::InitializeAbilitySystem()
@@ -323,7 +358,21 @@ void AProject_JBaseCharacter::InitializeAbilitySystem()
 		return;
 	}
 
-	ASC->InitAbilityActorInfo(GetAbilitySystemOwnerActor(), this);
+	// These lifecycle callers ensure the current runtime connection. Explicit
+	// ASC Init/Clear remains the API for starting a new recipient epoch.
+	AActor* RuntimeOwner = GetAbilitySystemOwnerActor();
+	auto* ProjectASC = Cast<UProject_JAbilitySystemComponent>(ASC);
+	const bool bRefreshedCurrentPair = ProjectASC && !ProjectASC->IsActorInfoChanging()
+		&& ProjectASC->GetOwnerActor() == RuntimeOwner && ProjectASC->GetAvatarActor() == this
+		&& ProjectASC->RefreshActorInfoForCurrentActor(this);
+	if (!bRefreshedCurrentPair)
+	{
+		// A replicated PlayerState ASC publishes its own owner/avatar through GAS.
+		// Pawn lifecycle callbacks consume that tuple; they cannot start a client
+		// recipient epoch or overwrite a replacement Avatar with a stale callback.
+		if (!HasAuthority() && Cast<APlayerState>(RuntimeOwner)) return;
+		ASC->InitAbilityActorInfo(RuntimeOwner, this);
+	}
 	auto *Progression = GetProgressionComponent();
 	if (!Progression && HasAuthority())
 	{
@@ -411,7 +460,7 @@ const UProject_JDefaultAttributeSetData *AProject_JBaseCharacter::GetEffectiveDe
 
 UProject_JEquipmentManagerComponent *AProject_JBaseCharacter::ResolveEquipmentManagerForRuntime() const
 {
-	if (APlayerState *OwningPlayerState = GetPlayerState())
+	if (APlayerState *OwningPlayerState = Cast<APlayerState>(GetAbilitySystemOwnerActor()))
 	{
 		if (UProject_JEquipmentManagerComponent *PlayerStateEquipmentManager =
 				OwningPlayerState->FindComponentByClass<UProject_JEquipmentManagerComponent>())

@@ -39,7 +39,7 @@ public:
 	void HandleInputTagReleasedFromSource(FGameplayTag InputTag, const UObject* Source, uint64 Receipt);
 
 	/** Validates/replays raw authority intent received through the ASC's ordered channel. */
-	void ReceiveAuthorityCombatInput(FGameplayTag InputTag, float ClientTimestamp, uint32 InputSequence);
+	void ReceiveAuthorityCombatInput(FGameplayTag InputTag, double ClientTimestamp, uint32 InputSequence);
 
 	/** Clears command history after weapon/state changes that invalidate a sequence. */
 	UFUNCTION(BlueprintCallable, Category = "Combat|Input")

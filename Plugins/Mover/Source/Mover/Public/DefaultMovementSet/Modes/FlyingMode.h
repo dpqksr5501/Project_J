@@ -9,6 +9,7 @@
 #define UE_API MOVER_API
 
 class UCommonLegacyMovementSettings;
+struct FFreeMoveParams;
 
 
 /**
@@ -40,6 +41,12 @@ protected:
 	UE_API void CaptureFinalState(USceneComponent* UpdatedComponent, FMovementRecord& Record, const FMoverDefaultSyncState& StartSyncState, const FVector& AngularVelocityDegrees, FMoverDefaultSyncState& OutputSyncState, const float DeltaSeconds) const;
 
 	TObjectPtr<const UCommonLegacyMovementSettings> CommonLegacySettings;
+
+private:
+	// One shared native parameter builder; prediction may reuse its value result only
+	// for this exact mode with fixed, world-space input during a synchronous query.
+	friend class UMoverComponent;
+	FFreeMoveParams BuildFreeMoveParams(const FMoverTickStartData& StartState, const FMoverTimeStep& TimeStep) const;
 };
 
 #undef UE_API

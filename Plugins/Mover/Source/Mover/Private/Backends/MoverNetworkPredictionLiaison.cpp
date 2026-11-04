@@ -8,6 +8,7 @@
 #include "InputContainerStruct.h"
 #include "KinematicActorSimulation.h"
 #include "MoverComponent.h"
+#include "MoverDataModelTypes.h"
 
 #if WITH_EDITOR
 #include "Misc/DataValidation.h"
@@ -32,6 +33,19 @@ public:
 	using StateTypes = KinematicMoverStateTypes;
 	using Driver = UMoverNetworkPredictionLiaisonComponent;
 
+#if !UE_BUILD_SHIPPING
+ // Decode-storage coordinates, not guessed world coordinates. Based movement
+ // serializes base-relative values; the base-use wire bit is not retained here.
+ static void CaptureModelWireScalars(const FMoverSyncState* State,float* Out)
+ {
+  const auto* Data=State?State->SyncStateCollection.FindDataByType<FMoverDefaultSyncState>():nullptr;
+  if(!Data) return;
+  const FVector Position=Data->GetLocation_BaseSpace(), Velocity=Data->GetVelocity_BaseSpace();
+  const float Values[4]={float(Position.X),float(Position.Y),float(Velocity.X),float(Velocity.Y)};
+  for(float Value:Values) if(!FMath::IsFinite(Value)) return;
+  for(int32 I=0;I<4;++I) Out[I]=Values[I];
+ }
+#endif
 	static const TCHAR* GetName() { return TEXT("MoverActor"); }
 	static constexpr int32 GetSortPriority() { return (int32)ENetworkPredictionSortPriority::PreKinematicMovers; }
 };

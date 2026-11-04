@@ -144,4 +144,53 @@ bool FTrackerTest::RunTest(const FString&)
     TestEqual(TEXT("No retained pending requests"), Tracker.Num(), 0);
     return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FServerSessionGateTest, "ProjectJ.MMO.Coordination.ServerSessionOwnership",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FServerSessionGateTest::RunTest(const FString&)
+{
+    FServerSessionGate Startup;
+    FServerSessionAttempt StartupFirst, StartupSecond;
+    const FGuid StartupAccount = FGuid::NewGuid(), StartupCharacter = FGuid::NewGuid();
+    TestTrue(TEXT("Empty open gate accepts startup capacity"), Startup.SetCapacity(1));
+    TestFalse(TEXT("Invalid startup capacity is rejected"), Startup.SetCapacity(0));
+    TestEqual(TEXT("Configured startup slot is admitted"), Startup.Begin(StartupAccount, StartupCharacter, StartupFirst), EAdmission::Accepted);
+    TestEqual(TEXT("Startup capacity actually controls admission"), Startup.Begin(FGuid::NewGuid(), FGuid::NewGuid(), StartupSecond), EAdmission::Capacity);
+    TestFalse(TEXT("Pending ownership prevents live capacity retuning"), Startup.SetCapacity(2));
+    FServerSessionLease StartupLease, StartupReplaced;
+    TestEqual(TEXT("Startup slot can become accepted"), Startup.Accept(StartupFirst, StartupLease, StartupReplaced), EAdmission::Accepted);
+    TestFalse(TEXT("Accepted ownership prevents live capacity retuning"), Startup.SetCapacity(2));
+    TestTrue(TEXT("Configured writer retires normally"), Startup.Release(StartupLease));
+    Startup.Close();
+    TestFalse(TEXT("Even an empty closed gate refuses retuning"), Startup.SetCapacity(2));
+    FServerSessionGate Gate(2);
+    const FGuid Account = FGuid::NewGuid(), OtherAccount = FGuid::NewGuid(), Character = FGuid::NewGuid(), OtherCharacter = FGuid::NewGuid();
+    FServerSessionAttempt Slow, Newer, Third, Foreign, Overflow;
+    FServerSessionLease First, Replacement, Ignored, Replaced;
+    TestEqual(TEXT("Begin before external verification"), Gate.Begin(Account, Character, Slow), EAdmission::Accepted);
+    TestEqual(TEXT("A newer server attempt supersedes slow authentication"), Gate.Begin(Account, Character, Newer), EAdmission::Accepted);
+    TestTrue(TEXT("Order is issued by the server"), Newer.Serial > Slow.Serial);
+    TestEqual(TEXT("Slow completion cannot win by arriving late"), Gate.Accept(Slow, Ignored, Replaced), EAdmission::Invalid);
+    TestEqual(TEXT("Verified current attempt acquires writer"), Gate.Accept(Newer, First, Replaced), EAdmission::Accepted);
+    TestFalse(TEXT("No previous writer"), Replaced.IsValid());
+    TestTrue(TEXT("Capture can fence command apply"), Gate.IsCurrent(First));
+    TestEqual(TEXT("Another account begins verification"), Gate.Begin(OtherAccount, Character, Foreign), EAdmission::Accepted);
+    TestEqual(TEXT("A character cannot have two account writers"), Gate.Accept(Foreign, Ignored, Replaced), EAdmission::Busy);
+    TestEqual(TEXT("Active/pending account capacity is bounded"), Gate.Begin(FGuid::NewGuid(), FGuid::NewGuid(), Overflow), EAdmission::Capacity);
+    TestTrue(TEXT("Failed verification releases its exact pending slot"), Gate.Cancel(Foreign));
+    TestEqual(TEXT("Character switch uses a fresh server attempt"), Gate.Begin(Account, OtherCharacter, Third), EAdmission::Accepted);
+    TestTrue(TEXT("Pending verification does not revoke accepted work"), Gate.IsCurrent(First));
+    TestEqual(TEXT("Verified replacement rotates epoch"), Gate.Accept(Third, Replacement, Replaced), EAdmission::Accepted);
+    TestTrue(TEXT("Caller receives exactly the old writer for retirement"), Replaced == First);
+    TestFalse(TEXT("Old captured command fails after reconnect"), Gate.IsCurrent(First));
+    TestFalse(TEXT("Old logout cannot revoke new session"), Gate.Release(First));
+    TestFalse(TEXT("Old auth cancellation cannot revoke replacement"), Gate.Cancel(Newer));
+    TestTrue(TEXT("Replacement remains current"), Gate.IsCurrent(Replacement));
+    TestTrue(TEXT("Exact current logout succeeds"), Gate.Release(Replacement));
+    TestFalse(TEXT("Logout is idempotent"), Gate.Release(Replacement));
+    TestEqual(TEXT("Capacity is reusable"), Gate.Begin(OtherAccount, Character, Foreign), EAdmission::Accepted);
+    Gate.Close();
+    TestEqual(TEXT("World closure rejects old completion"), Gate.Accept(Foreign, Ignored, Replaced), EAdmission::Closed);
+    TestEqual(TEXT("Closed issuer cannot start a new generation"), Gate.Begin(Account, Character, Slow), EAdmission::Closed);
+    return true;
+}
 #endif

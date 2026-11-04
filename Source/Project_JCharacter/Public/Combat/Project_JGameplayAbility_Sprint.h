@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Abilities/GameplayAbility.h"
+#include "Project_JGameplayAbility.h"
 #include "Project_JGameplayAbility_Sprint.generated.h"
 
 /**
@@ -12,7 +12,7 @@
  * 서버에서 이를 승인(Authority)하여 원격 프록시에 복제합니다.
  */
 UCLASS()
-class PROJECT_JCHARACTER_API UProject_JGameplayAbility_Sprint : public UGameplayAbility
+class PROJECT_JCHARACTER_API UProject_JGameplayAbility_Sprint : public UProject_JGameplayAbility
 {
 	GENERATED_BODY()
 

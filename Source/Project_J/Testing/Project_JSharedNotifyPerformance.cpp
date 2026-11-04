@@ -25,9 +25,14 @@
 #include "ProfilingDebugging/MiscTrace.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJSharedNotifyGCLifetime, "ProjectJ.Continuation.SharedNotifyGCLifetime",
-    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter | EAutomationTestFlags::NonNullRHI)
 bool FProjectJSharedNotifyGCLifetime::RunTest(const FString&)
 {
+    // These fixtures measure already-present visual notify ownership, not class loading.
+    // Keep the actual authored class resident across GC; cold loading/admission has its own focused fixture.
+    TStrongObjectPtr<UClass> WeaponClass(LoadClass<AActor>(nullptr,
+        TEXT("/Game/Character_BPs/GreatSword/BP_Greatsword_Basic.BP_Greatsword_Basic_C")));
+    if (!TestNotNull(TEXT("Authored weapon visual is explicitly warm for notify lifetime"), WeaponClass.Get())) return false;
     UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
     GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
     ON_SCOPE_EXIT { World->BeginTearingDown(); World->EndPlay(EEndPlayReason::Quit); World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
@@ -50,6 +55,8 @@ bool FProjectJSharedNotifyGCLifetime::RunTest(const FString&)
     for (int32 I = 0; I < 3; ++I) World->Tick(LEVELTICK_All, 1.f / 60.f);
     FAnimNotifyEventReference Ref; Ref.SetNotifyInstanceID(78001);
     for (auto* Player : Players) {
+        if (!TestNotNull(TEXT("Actual visual exists before acquiring its GC-tested motion lease"),
+            Player->FindComponentByClass<UProject_JWeaponPresentationComponent>()->GetSpawnedWeapon())) return false;
         Motion->NotifyBegin(Player->GetMesh(), nullptr, 1.f, Ref);
         Ground->NotifyBegin(Player->GetMesh(), nullptr, 1.f, Ref);
     }
@@ -76,13 +83,18 @@ bool FProjectJSharedNotifyGCLifetime::RunTest(const FString&)
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJSharedNotifyPerformance, "ProjectJ.Animation.SharedNotifyLifecycle",
-    EAutomationTestFlags::EditorContext | EAutomationTestFlags::PerfFilter)
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::PerfFilter | EAutomationTestFlags::NonNullRHI)
 bool FProjectJSharedNotifyPerformance::RunTest(const FString&)
 {
+    // These fixtures measure already-present visual notify ownership, not class loading.
+    // Keep the actual authored class resident across GC; cold loading/admission has its own focused fixture.
+    TStrongObjectPtr<UClass> WeaponClass(LoadClass<AActor>(nullptr,
+        TEXT("/Game/Character_BPs/GreatSword/BP_Greatsword_Basic.BP_Greatsword_Basic_C")));
+    if (!TestNotNull(TEXT("Authored weapon visual is explicitly warm for notify lifetime"), WeaponClass.Get())) return false;
     FString Output;
     FParse::Value(FCommandLine::Get(), TEXT("ProjectJNotifyOutput="), Output);
     TStrongObjectPtr<UAnimMontage> Montage(LoadObject<UAnimMontage>(nullptr,
-        TEXT("/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_R.AM_Greatsword_R")));
+        TEXT("/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/AM_Spellblade_R.AM_Spellblade_R")));
     if (!TestNotNull(TEXT("Authored motion montage"), Montage.Get())) return false;
     TArray<FAnimNotifyEvent> Events;
     UAnimationBlueprintLibrary::GetAnimationNotifyEvents(Montage.Get(), Events);
@@ -116,6 +128,9 @@ bool FProjectJSharedNotifyPerformance::RunTest(const FString&)
             Players.Add(Player);
         }
         for (int32 Tick = 0; Tick < 3; ++Tick) World->Tick(LEVELTICK_All, 1.f / 60.f);
+        for (auto* Player : Players)
+            if (!TestNotNull(TEXT("Actual visual exists before measured notify stages"),
+                Player->FindComponentByClass<UProject_JWeaponPresentationComponent>()->GetSpawnedWeapon())) return false;
         for (int32 Repeat = -1; Repeat < 4; ++Repeat)
         {
             FAnimNotifyEventReference Ref(Event, Montage.Get()); Ref.SetNotifyInstanceID(7000 + Repeat + 1);

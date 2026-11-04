@@ -51,7 +51,7 @@ Examples:
 
 빠른 단일 tap은 release 전에 held 상태에서 의미 tag를 결정하고, release 상태를 게시한 뒤 dispatch한다. dispatch callback이 같은 버튼을 다시 누르거나 취소하면 이전 completion은 새 입력을 해제하지 않는다. 버튼 revision이 이 수명을 구분한다. 입력 실행과 CombatState는 PlayerState ASC의 현재 Avatar가 자기 Pawn인지 검사한다. 과거 Pawn의 유효한 ASC 포인터를 새 Pawn의 입력·상태 권한으로 사용하지 않는다. 실제 R→RMB 데이터 및 실패/복구 근거는 [전체 감사](../../Review/Audits/Project_J_Whole_Project_Audit_2026-10-13.md)를 읽는다.
 
-The character still keeps compatibility wrappers, but new skill inputs should go through the router so class, weapon, and chord mappings can evolve without adding one method per skill to `AProject_JPlayerCharacter`. See [Greatsword Combat Authoring Guide](../../Combat/Authoring/GreatswordCombatAuthoringGuide.md) for the current data setup.
+The character still keeps compatibility wrappers, but new skill inputs should go through the router so class, weapon, and chord mappings can evolve without adding one method per skill to `AProject_JPlayerCharacter`. See [Greatsword Combat Authoring Guide](../../Combat/Authoring/SpellbladeCombatAuthoringGuide.md) for the current data setup.
 
 `UProject_JSkillInputRouterComponent` reads chords, direct skill bindings, and modifier bindings from `UProject_JSkillInputMappingData`. If no mapping data is assigned, it falls back to the component's local `Chords` array and then to the native LMB/RMB defaults. Production job Blueprints should assign mapping data.
 

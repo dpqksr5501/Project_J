@@ -24,9 +24,12 @@
 #include "Components/SphereComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/WorldSettings.h"
+#include "GameFramework/GameStateBase.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/PlayerState.h"
+#include "Components/Project_JCommandBudgetComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "Project_JGreatswordCharacter.h"
+#include "Project_JSpellbladeCharacter.h"
 #include "Project_JGameplayTags.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "Components/Project_JSkillInputExecutionComponent.h"
@@ -37,6 +40,11 @@
 
 namespace
 {
+class FInternalClockGameStateAccess : public AGameStateBase
+{
+public:
+	using AGameStateBase::ServerWorldTimeSecondsDelta;
+};
 struct FInternalTestWorld
 {
 	UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
@@ -53,6 +61,7 @@ bool FProjectJInventoryConsumeContractTest::RunTest(const FString&)
 	auto* Owner = Scope.World->SpawnActor<AActor>();
 	auto* Inventory = NewObject<UProject_JInventoryComponent>(Owner); Inventory->RegisterComponent();
 	auto* Definition = NewObject<UProject_JEquipmentItemDefinition>(); Definition->MaxStackCount = MAX_int32;
+	Definition->ItemId = TEXT("InventoryConsumeContract");
 	auto* Receiver = NewObject<UProject_JInternalTestReceiver>(); Receiver->Inventory = Inventory; Receiver->bMutate = false;
 	Inventory->OnItemAdded.AddDynamic(Receiver, &UProject_JInternalTestReceiver::OnAdded);
 	Inventory->OnItemChanged.AddDynamic(Receiver, &UProject_JInternalTestReceiver::OnChanged);
@@ -60,6 +69,34 @@ bool FProjectJInventoryConsumeContractTest::RunTest(const FString&)
 	const auto Item = Inventory->AddItemDefinition(Definition, 3);
 	const auto ResetCounts = [&] { Receiver->AddedCount = Receiver->ChangedCount = Receiver->RemovedCount = 0; };
 	ResetCounts();
+	const FString BeforeUnchanged = Inventory->GetReplicationDiagnosticSummary();
+	for (int32 Repeat = 0; Repeat < 64; ++Repeat)
+	{
+		TestTrue(TEXT("Matching count remains a successful checked no-op"), Inventory->SetItemStackCount(Item.InstanceId, 3));
+		TestTrue(TEXT("Normalized identical lock flags remain a checked no-op"), Inventory->SetItemInstanceLocked(Item.InstanceId, false, true));
+	}
+	TestEqual(TEXT("Unchanged stack/flags publish no inventory event"), Receiver->AddedCount + Receiver->ChangedCount + Receiver->RemovedCount, 0);
+	TestEqual(TEXT("Unchanged stack/flags preserve FastArray replication keys"), Inventory->GetReplicationDiagnosticSummary(), BeforeUnchanged);
+	int32 IssuedRequests = 0, SubmittedEdits = 0;
+	Inventory->CreatePersistentRequest = [&] { ++IssuedRequests; return FGuid::NewGuid(); };
+	Inventory->SubmitPersistentEdit = [&](const FProject_JPersistentEdit&, FProject_JPersistentCompletion) { ++SubmittedEdits; return false; };
+	TestTrue(TEXT("Matching persistent value needs no new command"), Inventory->SetItemStackCount(Item.InstanceId, 3));
+	TestFalse(TEXT("Persistent equipment admission is retained even for matching flags"), Inventory->SetItemInstanceLocked(Item.InstanceId, false, false));
+	TestEqual(TEXT("No-op issues no request identity"), IssuedRequests, 0);
+	TestEqual(TEXT("No-op submits no persistent edit"), SubmittedEdits, 0);
+	Definition->MaxStackCount = 2;
+	TestFalse(TEXT("Definition limits are checked before equal-count admission"), Inventory->SetItemStackCount(Item.InstanceId, 3));
+	Definition->MaxStackCount = MAX_int32;
+	Definition->SchemaVersion = 0;
+	TestFalse(TEXT("Invalid current definition stays on the adapter validation path"), Inventory->SetItemStackCount(Item.InstanceId, 3));
+	TestEqual(TEXT("Invalid metadata is not acknowledged by the no-op path"), SubmittedEdits, 1);
+	Definition->SchemaVersion = 1;
+	Inventory->PersistentAdmission = [] { return false; };
+	TestFalse(TEXT("Closed session cannot use equal-count admission"), Inventory->SetItemStackCount(Item.InstanceId, 3));
+	Inventory->SubmitPersistentEdit = {}; Inventory->CreatePersistentRequest = {};
+	TestFalse(TEXT("Closed owner admission also rejects matching lock flags"), Inventory->SetItemInstanceLocked(Item.InstanceId, false, false));
+	Inventory->PersistentAdmission = {};
+	TestFalse(TEXT("Unknown identity cannot become an equal-value success"), Inventory->SetItemStackCount(FGuid::NewGuid(), 3));
 	for (int32 Count : {0, -1, MIN_int32, 4, MAX_int32})
 	{
 		TestFalse(TEXT("Invalid or excessive consume rejected"), Inventory->ConsumeItemStack(Item.InstanceId, Count));
@@ -175,6 +212,24 @@ bool FProjectJRewindHistoryTest::RunTest(const FString&)
 	TestTrue(TEXT("Rewind hit uses historical standing capsule after current capsule shrinks"),
 		Rewind->ServerVerifyHit(Record.Timestamp, FVector(-100, 0, 80), FVector(100, 0, 80)));
 
+	// Twelve days of uptime must not merge distinct 30 Hz samples into one float time.
+	constexpr double LongClock = 1'048'576.0;
+	Rewind->ResetHistory(); Rewind->PoseHistory.SetNum(64);
+	for (int32 Index = 0; Index <= 30; ++Index)
+	{
+		Record.Timestamp = LongClock + Index / 30.0;
+		Record.CapsuleLocation = FVector(Index * 10.0, 0, 0);
+		Rewind->AppendPoseHistoryRecord(Record);
+	}
+	TestEqual(TEXT("Large absolute clock retains every actual 30 Hz sample"), Rewind->PoseHistoryCount, 31);
+	TestTrue(TEXT("Large-clock adjacent samples interpolate"), Rewind->GetPosesForTime(LongClock + 10.5 / 30.0, A, B, Alpha));
+	TestNearlyEqual(TEXT("Large-clock interpolation retains sub-frame alpha"), Alpha, .5f, .00001f);
+	TestTrue(TEXT("Large-clock interpolation uses the correct neighboring capsules"), A.CapsuleLocation.Equals(FVector(100, 0, 0)) && B.CapsuleLocation.Equals(FVector(110, 0, 0)));
+	Rewind->MaxRecordTime = 1.0f;
+	Rewind->DiscardExpiredPoseHistoryRecords(LongClock + 1.001);
+	TestEqual(TEXT("Large-clock expiry removes only the expired sample"), Rewind->PoseHistoryCount, 30);
+	TestFalse(TEXT("Expired large-clock sample cannot be queried"), Rewind->GetPosesForTime(LongClock, A, B, Alpha));
+
 	return true;
 }
 
@@ -182,7 +237,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJInputLifecycleTest, "ProjectJ.Internal
 bool FProjectJInputLifecycleTest::RunTest(const FString&)
 {
 	FInternalTestWorld Scope;
-	auto* Player = Scope.World->SpawnActor<AProject_JGreatswordCharacter>();
+	auto* Player = Scope.World->SpawnActor<AProject_JSpellbladeCharacter>();
 	auto* Binding = Player->FindComponentByClass<UProject_JPlayerInputBindingComponent>();
 	auto* Router = Player->FindComponentByClass<UProject_JSkillInputRouterComponent>();
 	const FGameplayTag Tag = FProject_JGameplayTags::Get().InputTag_Weapon_LMB;
@@ -268,6 +323,59 @@ bool FProjectJInteractionSelectionTest::RunTest(const FString&)
 	TestFalse(TEXT("Target-specific range is enforced"), Project_J::Interaction::IsEligible(*Interactor, Preferred, 300));
 	Policy->InteractionRange = std::numeric_limits<float>::quiet_NaN();
 	TestFalse(TEXT("Invalid authored range fails closed"), Project_J::Interaction::IsEligible(*Interactor, Preferred, 300));
+
+
+	// Exercise the real reflected production RPC with the existing target fixture.
+	// Base PlayerState + the production budget keeps this Character-module test
+	// below Project_J in the module DAG. The existing SharedCommandBudget test
+	// separately verifies Project_JPlayerState's default component/session lifetime.
+	FActorSpawnParameters Spawn;
+	Spawn.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	auto* Player = Scope.World->SpawnActor<AProject_JSpellbladeCharacter>(FVector(1000, 0, 0), FRotator::ZeroRotator, Spawn);
+	auto* Replacement = Scope.World->SpawnActor<AProject_JSpellbladeCharacter>(FVector(2000, 0, 0), FRotator::ZeroRotator, Spawn);
+	auto* Session = Scope.World->SpawnActor<APlayerState>();
+	auto* Controller = Scope.World->SpawnActor<APlayerController>();
+	if (!TestNotNull(TEXT("RPC avatar"), Player) || !TestNotNull(TEXT("Prepared replacement avatar"), Replacement) ||
+		!TestNotNull(TEXT("Actual PlayerState lifetime"), Session) || !TestNotNull(TEXT("Owning controller"), Controller)) return false;
+	auto* Budget = NewObject<UProject_JCommandBudgetComponent>(Session);
+	Session->AddInstanceComponent(Budget); Budget->RegisterComponent();
+	Controller->PlayerState = Session;
+	Controller->Possess(Player);
+	TestTrue(TEXT("Production admission resolves the possessed PlayerState"), Player->GetPlayerState() == Session);
+	auto* Request = Player->FindFunction(TEXT("ServerTryInteract"));
+	if (!TestNotNull(TEXT("Existing reflected interaction RPC"), Request)) return false;
+	TestTrue(TEXT("Fixture invokes the actual reliable server entry"), Request->HasAllFunctionFlags(FUNC_Net | FUNC_NetServer | FUNC_NetReliable));
+	int32 ApprovalCalls = 0;
+	Near->OnCanInteract = [&](APawn*) { ++ApprovalCalls; };
+	Near->SetActorLocation(Player->GetActorLocation() + FVector(100, 0, 0));
+	const int32 BeforeRequests = Near->Interactions;
+	Budget->CommandsPerSecond = 1;
+	Player->ProcessEvent(Request, nullptr);
+	TestEqual(TEXT("First admitted production request reaches Interact"), Near->Interactions, BeforeRequests + 1);
+	TestEqual(TEXT("Admitted request performs selection and final reflected approval"), ApprovalCalls, 2);
+	Player->ProcessEvent(Request, nullptr);
+	TestEqual(TEXT("Exhausted shared quota rejects before reflected approval"), ApprovalCalls, 2);
+	TestEqual(TEXT("Exhausted request cannot execute Interact"), Near->Interactions, BeforeRequests + 1);
+	Controller->UnPossess(); Controller->Possess(Replacement);
+	Near->SetActorLocation(Replacement->GetActorLocation() + FVector(100, 0, 0));
+	TestTrue(TEXT("Replacement keeps the same actual PlayerState"), Replacement->GetPlayerState() == Session);
+	Replacement->ProcessEvent(Request, nullptr);
+	TestEqual(TEXT("New avatar cannot reset the exhausted session quota"), Near->Interactions, BeforeRequests + 1);
+	TestEqual(TEXT("Rejected avatar request still performs no reflected approval"), ApprovalCalls, 2);
+	TestEqual(TEXT("Shared budget accounts both rejected client requests"), Budget->GetRejectedCount(), int64(2));
+	Replacement->TryInteract();
+	TestEqual(TEXT("Trusted direct server path bypasses client overload admission"), Near->Interactions, BeforeRequests + 2);
+	TestEqual(TEXT("Trusted server work does not consume/reject client quota"), Budget->GetRejectedCount(), int64(2));
+	// Leave shared capacity available and send a synchronous burst. The second
+	// request must be rejected by domain admission before target callbacks.
+	Budget->CommandsPerSecond = 8;
+	const int32 BeforeBurst = Near->Interactions, ApprovalsBeforeBurst = ApprovalCalls;
+	Replacement->ProcessEvent(Request, nullptr);
+	Replacement->ProcessEvent(Request, nullptr);
+	TestEqual(TEXT("Domain admission allows only one interaction in the burst"), Near->Interactions, BeforeBurst + 1);
+	TestEqual(TEXT("Domain-rejected request does no reflected approval"), ApprovalCalls, ApprovalsBeforeBurst + 2);
+	TestEqual(TEXT("Burst rejection came from the domain, with shared capacity available"), Budget->GetRejectedCount(), int64(2));
+	Near->OnCanInteract = nullptr;
 	return true;
 }
 
@@ -307,7 +415,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJCommandReleaseTest, "ProjectJ.Internal
 bool FProjectJCommandReleaseTest::RunTest(const FString&)
 {
 	FInternalTestWorld Scope;
-	auto* Player = Scope.World->SpawnActor<AProject_JGreatswordCharacter>();
+	auto* Player = Scope.World->SpawnActor<AProject_JSpellbladeCharacter>();
 	auto* ASC = NewObject<UProject_JAbilitySystemComponent>(Player); ASC->RegisterComponent();
 	FObjectPropertyBase* ASCProperty = FindFProperty<FObjectPropertyBase>(AProject_JBaseCharacter::StaticClass(), TEXT("AbilitySystemComponent"));
 	ASCProperty->SetObjectPropertyValue_InContainer(Player, ASC); ASC->InitAbilityActorInfo(Player, Player);
@@ -332,7 +440,7 @@ bool FProjectJCommandReleaseTest::RunTest(const FString&)
 	// A synchronous server callback may replace that receiver between the two.
 	Commands->Commands[0].bConsumeMatchedInput = false;
 	Player->SetCurrentCombatStyle(Style);
-	auto* Replacement = Scope.World->SpawnActor<AProject_JGreatswordCharacter>();
+	auto* Replacement = Scope.World->SpawnActor<AProject_JSpellbladeCharacter>();
 	auto* ReplacementASC = NewObject<UProject_JAbilitySystemComponent>(Replacement); ReplacementASC->RegisterComponent();
 	ASCProperty->SetObjectPropertyValue_InContainer(Replacement, ReplacementASC);
 	ReplacementASC->InitAbilityActorInfo(Replacement, Replacement);
@@ -345,6 +453,21 @@ bool FProjectJCommandReleaseTest::RunTest(const FString&)
 	TestEqual(TEXT("Authority command alias reaches the original receiver"), AliasEvents, 1);
 	TestEqual(TEXT("Authority alias callback cannot forward the old raw intent to a replacement avatar"), ReplacementRawEvents, 0);
 	ASC->GenericGameplayEventCallbacks.Empty(); ReplacementASC->GenericGameplayEventCallbacks.Empty();
+	// The native RPC implementation, interface forwarder and command receiver
+	// must all preserve the same absolute double time at long server uptime.
+	Commands->Commands[0].bClearHistoryOnMatch = false;
+	Player->SetCurrentCombatStyle(Style); Input->Initialize(Player);
+	auto* Clock = Scope.World->SpawnActor<AGameStateBase>(); Scope.World->SetGameState(Clock);
+	constexpr double LongClock = 1'048'576.0;
+	static_cast<FInternalClockGameStateAccess*>(Clock)->ServerWorldTimeSecondsDelta = LongClock + .100 - Scope.World->GetTimeSeconds();
+	ASC->ServerSendCombatInputEvent_Implementation(Player, Raw, LongClock + .010, 2);
+	ASC->ServerSendCombatInputEvent_Implementation(Player, Raw, LongClock + .030, 3);
+	if (TestEqual(TEXT("Authority input chain retains both long-clock command entries"), Input->CommandInputHistory.Num(), 2))
+	{
+		TestEqual(TEXT("Authority RPC chain preserves the first absolute timestamp"), Input->CommandInputHistory[0].TimestampSeconds, LongClock + .010);
+		TestEqual(TEXT("Authority RPC chain preserves the second absolute timestamp"), Input->CommandInputHistory[1].TimestampSeconds, LongClock + .030);
+		TestNearlyEqual(TEXT("Authority RPC chain preserves the real inter-input interval"), Input->CommandInputHistory[1].TimestampSeconds - Input->CommandInputHistory[0].TimestampSeconds, .020, .000001);
+	}
 	Input->Initialize(nullptr);
 	return true;
 }

@@ -4,14 +4,14 @@
 
 EProject_JCombatHitValidationFailure FProject_JCombatHitValidationPolicy::ValidateRequestData(
 	const FProject_JCombatHitRequest& Request,
-	float ServerTimeSeconds) const
+	double ServerTimeSeconds) const
 {
 	if (!FMath::IsFinite(Request.ClientTimestamp) || !FMath::IsFinite(ServerTimeSeconds))
 	{
 		return EProject_JCombatHitValidationFailure::InvalidTimestamp;
 	}
 
-	const float RequestAge = ServerTimeSeconds - Request.ClientTimestamp;
+	const double RequestAge = ServerTimeSeconds - Request.ClientTimestamp;
 	if (RequestAge < -FMath::Max(0.0f, MaxFutureTolerance))
 	{
 		return EProject_JCombatHitValidationFailure::RequestFromFuture;

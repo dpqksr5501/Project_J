@@ -223,7 +223,7 @@ bool FProjectJAuthoredFollowerRoleTest::RunTest(const FString&)
     auto* World=UWorld::CreateWorld(EWorldType::Game,false);
     GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
     ON_SCOPE_EXIT {World->DestroyWorld(false);GEngine->DestroyWorldContext(World);};
-    auto* Class=LoadClass<AProject_JPlayerCharacter>(nullptr,TEXT("/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C"));
+    auto* Class=LoadClass<AProject_JPlayerCharacter>(nullptr,TEXT("/Game/Character_BPs/Spellblade/BP_Spellblade.BP_Spellblade_C"));
     if(!TestNotNull(TEXT("Actual character Blueprint class loads"),Class)){return false;}
     FActorSpawnParameters Parameters;Parameters.SpawnCollisionHandlingOverride=ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
     auto* Character=World->SpawnActor<AProject_JPlayerCharacter>(Class,Parameters);
@@ -362,7 +362,7 @@ bool FProjectJPlayerInputPlayReuseTest::RunTest(const FString&)
     auto* World=UWorld::CreateWorld(EWorldType::Game,false);
     GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
     ON_SCOPE_EXIT {World->EndPlay(EEndPlayReason::Quit);World->DestroyWorld(false);GEngine->DestroyWorldContext(World);};
-    auto* Player=World->SpawnActor<AProject_JGreatswordCharacter>();
+    auto* Player=World->SpawnActor<AProject_JSpellbladeCharacter>();
     World->InitializeActorsForPlay(FURL());World->GetWorldSettings()->NotifyBeginPlay();World->GetWorldSettings()->NotifyMatchStarted();
     auto* ASC=NewObject<UProject_JAbilitySystemComponent>(Player);ASC->RegisterComponent();
     auto* ASCProperty=FindFProperty<FObjectPropertyBase>(AProject_JBaseCharacter::StaticClass(),TEXT("AbilitySystemComponent"));
@@ -406,7 +406,7 @@ bool FProjectJCombatIntroPlayReuseTest::RunTest(const FString&)
     auto* Owner=World->SpawnActor<ACharacter>();
     auto* Intro=NewObject<UProject_JCombatIntroComponent>(Owner);Owner->AddInstanceComponent(Intro);Intro->RegisterComponent();
     auto* Mesh=LoadObject<USkeletalMesh>(nullptr,TEXT("/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple.SKM_Quinn_Simple"));
-    auto* Montage=LoadObject<UAnimMontage>(nullptr,TEXT("/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LMB1.AM_Greatsword_LMB1"));
+    auto* Montage=LoadObject<UAnimMontage>(nullptr,TEXT("/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/AM_Spellblade_LMB1.AM_Spellblade_LMB1"));
     if(!TestNotNull(TEXT("Existing mesh loads"),Mesh)||!TestNotNull(TEXT("Existing montage loads"),Montage)){return false;}
     Owner->GetMesh()->SetSkeletalMesh(Mesh);Owner->GetMesh()->SetAnimInstanceClass(UAnimInstance::StaticClass());
     World->InitializeActorsForPlay(FURL());World->GetWorldSettings()->NotifyBeginPlay();World->GetWorldSettings()->NotifyMatchStarted();

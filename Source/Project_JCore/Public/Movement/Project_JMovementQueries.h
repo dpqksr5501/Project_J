@@ -4,6 +4,7 @@
 #include "Engine/EngineTypes.h"
 
 class AActor;
+class APlayerController;
 class UCharacterMoverComponent;
 class USkeletalMeshComponent;
 class UCapsuleComponent;
@@ -33,6 +34,8 @@ struct FPhysicalFrame
 };
 
 PROJECT_JCORE_API UCharacterMoverComponent* FindMover(const AActor* Owner);
+/** GT-only eligibility bridge; native camera rate/position/timeout gates still own sending. */
+PROJECT_JCORE_API void RequestMoverCameraUpdate(APlayerController* Controller);
 PROJECT_JCORE_API FPhysicalFrame ReadPhysicalFrame(const AActor* Owner);
 PROJECT_JCORE_API bool IsGrounded(const AActor* Owner);
 PROJECT_JCORE_API bool IsInAir(const AActor* Owner);

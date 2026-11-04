@@ -79,7 +79,7 @@ bool FProjectJRemoteJumpFreshnessTest::RunTest(const FString&)
     auto* World = UWorld::CreateWorld(EWorldType::Game, false);
     GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
     ON_SCOPE_EXIT { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
-    auto* Player = World->SpawnActor<AProject_JGreatswordCharacter>();
+    auto* Player = World->SpawnActor<AProject_JSpellbladeCharacter>();
     auto* State = Player->FindComponentByClass<UProject_JLocomotionAnimStateComponent>();
     State->HandleConfirmedRemoteJump(5, 0, FVector(0, 0, 400));
     if (!TestEqual(TEXT("Fresh confirmation carries actual upward speed"), State->LastFallSpeed, 400.f)) { return false; }

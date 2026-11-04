@@ -34,7 +34,7 @@ for asset in assets:
             'referencers':{kind:sorted(str(x) for x in registry.get_referencers(asset.package_name, opt)) for kind,opt in options.items()},
             'dependencies':{kind:sorted(str(x) for x in registry.get_dependencies(asset.package_name, opt)) for kind,opt in options.items()}})
 
-bp_path = '/Game/Character_BPs/GreatSword/BP_GreatSword'
+bp_path = '/Game/Character_BPs/Spellblade/BP_Spellblade'
 bp = unreal.load_asset(bp_path)
 assert bp, 'Saved production BP reload failed'
 assert unreal.BlueprintEditorLibrary.compile_blueprint(bp), 'Reloaded BP compile failed'

@@ -70,6 +70,16 @@ bool UProject_JNPCPathSubsystem::IsActiveServer() const
 	return bAccepting && IsInitialized() && GetWorld() && !GetWorld()->bIsTearingDown && GetWorld()->GetNetMode() != NM_Client;
 }
 
+bool UProject_JNPCPathSubsystem::IsPathUsable(const FNavPathSharedPtr& Path) const
+{
+	check(IsInGameThread());
+	if (!IsActiveServer() || !Path.IsValid() || !Path->IsValid() || Path->IsPartial()) return false;
+	const auto* Data = Path->GetNavigationDataUsed();
+	// IsValid/IsUpToDate on FNavigationPath only test path flags. NavData may
+	// unregister or unload while those flags and the point array remain intact.
+	return IsValid(Data) && !Data->IsActorBeingDestroyed() && Data->IsRegistered() && Data->GetWorld() == GetWorld();
+}
+
 uint64 UProject_JNPCPathSubsystem::Submit(UObject* Owner, APawn* Pawn, const FVector& Goal, uint64 Revision,
 	TFunction<void(const FProjectJNPCPathCompletion&)> Callback, EProjectJNPCPathPriority Priority)
 {
@@ -100,9 +110,36 @@ uint64 UProject_JNPCPathSubsystem::Submit(UObject* Owner, APawn* Pawn, const FVe
 	return Entry->Result.Token;
 }
 
+bool UProject_JNPCPathSubsystem::RefreshQueuedGoal(uint64 Token, UObject* Owner, uint64 Revision, const FVector& Goal)
+{
+	check(IsInGameThread());
+	if (!IsActiveServer() || !Token || !Revision || !IsValid(Owner) || Owner->GetWorld() != GetWorld() || !ValidPosition(Goal))
+	{
+		return false;
+	}
+	const double Now = FPlatformTime::Seconds();
+	for (const auto& R : Requests)
+	{
+		if (R->Result.Token != Token) { continue; }
+		const auto* Pawn = R->Pawn.Get();
+		if (R->Owner.Get() != Owner || R->Result.IntentRevision != Revision || R->bDispatched || R->bFinished
+			|| R->bCancelled || R->bDelivered || Now >= R->Deadline || !IsValid(Pawn) || Pawn->IsActorBeingDestroyed()
+			|| !Pawn->HasAuthority() || Pawn->GetWorld() != GetWorld() || !R->Controller.IsValid() || Pawn->GetController() != R->Controller.Get())
+		{
+			return false;
+		}
+		// This is the latest queued value for the SAME intent, not a new request.
+		// FindPathAsync receives a by-value query later, at the existing dispatch boundary.
+		if (R->Result.Goal != Goal) { R->Result.Goal = Goal; }
+		return true;
+	}
+	return false;
+}
+
 void UProject_JNPCPathSubsystem::Cancel(uint64 Token)
 {
 	check(IsInGameThread());
+	if (!Token) { return; }
 	for (int32 Index = 0; Index < Requests.Num(); ++Index)
 	{
 		const auto R = Requests[Index];
@@ -130,7 +167,7 @@ void UProject_JNPCPathSubsystem::Complete(uint64 Token, uint32 EngineId, ENaviga
 		++Stats.EngineCompleted; Stats.EngineMilliseconds += R->Result.EngineMilliseconds;
 		TRACE_COUNTER_SET(NPCPathEngineMs, R->Result.EngineMilliseconds);
 		if (R->bCancelled || R->bDelivered) { ++Stats.Discarded; return; }
-		if (Result == ENavigationQueryResult::Success && Path.IsValid() && Path->IsValid() && !Path->IsPartial())
+		if (Result == ENavigationQueryResult::Success && IsPathUsable(Path))
 		{
 			// No implicit synchronous re-path: the consumer explicitly requests a new async path.
 			Path->EnableRecalculationOnInvalidation(false);
@@ -181,6 +218,12 @@ void UProject_JNPCPathSubsystem::Tick(float DeltaTime)
 			{
 				R->Result.Status = EProjectJNPCPathStatus::Expired; R->Result.Path.Reset(); ++Stats.Expired;
 			}
+			else if (R->Result.Status == EProjectJNPCPathStatus::Success && !IsPathUsable(R->Result.Path))
+			{
+				// A finished query can wait behind the existing delivery budget while
+				// its NavData retires. Fail through the consumer's normal backoff.
+				R->Result.Status = EProjectJNPCPathStatus::Failed; R->Result.Path.Reset();
+			}
 			R->bDelivered = true;
 			if (!R->bDispatched || R->bFinished) { Requests.RemoveSingle(R); }
 			auto Callback = MoveTemp(R->Callback);
@@ -218,7 +261,7 @@ void UProject_JNPCPathSubsystem::Tick(float DeltaTime)
 		auto* Nav = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
 		const FVector Start = Pawn->GetNavAgentLocation();
 		const ANavigationData* Data = Nav && ValidPosition(Start) ? Nav->GetNavDataForProps(Pawn->GetNavAgentPropertiesRef(), Start) : nullptr;
-		if (!Data) { R->bFinished = true; R->FinishedAt = FPlatformTime::Seconds(); continue; }
+		if (!IsValid(Data) || Data->IsActorBeingDestroyed() || !Data->IsRegistered() || Data->GetWorld() != GetWorld()) { R->bFinished = true; R->FinishedAt = FPlatformTime::Seconds(); continue; }
 		R->Navigation = Nav; R->Result.Start = Start;
 		FPathFindingQuery Query(Pawn, *Data, Start, R->Result.Goal, Data->GetDefaultQueryFilter());
 		Query.SetAllowPartialPaths(false);
@@ -288,9 +331,13 @@ bool UProject_JNPCPathSubsystem::IsTickable() const { return !IsTemplate() && Is
 TStatId UProject_JNPCPathSubsystem::GetStatId() const { RETURN_QUICK_DECLARE_CYCLE_STAT(ProjectJNPCPathSubsystem, STATGROUP_Tickables); }
 
 #if WITH_DEV_AUTOMATION_TESTS
-void UProject_JNPCPathSubsystem::AgeForTest(uint64 Token, double Seconds)
+void UProject_JNPCPathSubsystem::AgeForTest(uint64 Token, double Seconds, bool bIncludeDeadline)
 {
-	for (const auto& R : Requests) { if (R->Result.Token == Token) { R->Submitted -= Seconds; } }
+	for (const auto& R : Requests) { if (R->Result.Token == Token)
+		{
+			R->Submitted -= Seconds;
+			if (bIncludeDeadline) { R->Deadline -= Seconds; }
+		} }
 }
 void UProject_JNPCPathSubsystem::SimulateDispatchForTest(uint64 Token, bool bExpired)
 {

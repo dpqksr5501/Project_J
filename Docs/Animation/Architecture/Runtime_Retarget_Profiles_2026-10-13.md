@@ -45,9 +45,9 @@ MCP로 생성·설정·저장한 에셋:
 
 | 에셋 | 연결 |
 | --- | --- |
-| `/Game/DataAssetSets/Presentation/Retarget/DA_RetargetFamily_Mannequin_Bip01` | Source `/Game/Characters/Mannequins/Meshes/SK_Mannequin`, Target `/Game/Characters/GreatSword/GreatSword_Woman_Skeleton`, 기존 `RTG_Greatsword_UE5` |
-| `/Game/DataAssetSets/Presentation/Retarget/DA_RetargetBody_Greatsword` | 위 Family와 기존 `DA_HGP_Greatsword`, override sets 비활성 |
-| `/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme` | 새 Body를 클래스 기본값에 할당하고 중복된 기존 직접 HandGripProfile 할당을 None으로 이행 |
+| `/Game/DataAssetSets/Presentation/Retarget/DA_RetargetFamily_Mannequin_Bip01` | Source `/Game/Characters/Mannequins/Meshes/SK_Mannequin`, Target `/Game/Characters/Spellblade/Spellblade_Woman_Skeleton`, 기존 `RTG_Greatsword_UE5` |
+| `/Game/DataAssetSets/Presentation/Retarget/DA_RetargetBody_Spellblade` | 위 Family와 기존 `DA_HGP_Greatsword`, override sets 비활성 |
+| `/Game/Animation_Logic/ABPs/Spellblade/ABP_Spellblade_Woman_RunTIme` | 새 Body를 클래스 기본값에 할당하고 중복된 기존 직접 HandGripProfile 할당을 None으로 이행 |
 
 Body ABP의 포즈 그래프를 다시 만들지 않았다. 기존 Retargeter와 HGP 내용, 물리 에셋·노드 값도 변경하지 않았다. `Master`, 전방 PSS/PSD, 기본 플레이어 프로필과 CMC/GAS/네트워크 payload는 이번 변경 대상이 아니다.
 

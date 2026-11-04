@@ -3,6 +3,8 @@
 #include "NetworkPredictionReplicationProxy.h"
 #include "NetworkPredictionLog.h"
 #include "NetworkPredictionProxy.h"
+#include "HAL/IConsoleManager.h"
+#include "HAL/ThreadSafeCounter.h"
 #include "Iris/ReplicationState/PropertyNetSerializerInfoRegistry.h"
 #include "Iris/ReplicationSystem/ReplicationSystem.h"
 #include "Net/Iris/ReplicationSystem/EngineReplicationBridge.h"
@@ -15,10 +17,87 @@
 //	FReplicationProxy
 // -------------------------------------------------------------------------------------------------------------------------------
 
+#if !UE_BUILD_SHIPPING
+namespace
+{
+ TAutoConsoleVariable<int32> CVarModelWireObservation(TEXT("np.Diagnostics.ModelWireObservation"),0,
+  TEXT("0 off;1 bounded GT model metadata;2 also optional decoded scalars. NOT per-connection sends or packets."),ECVF_RenderThreadSafe);
+ // Separate from FReplicationProxy: a non-copyable atomic member would break Iris shadow/copy.
+ FThreadSafeCounter UnsupportedModelWireThread;
+}
+bool FReplicationProxy::IsModelWireObservationEnabled() { return CVarModelWireObservation.GetValueOnAnyThread()!=0; }
+bool FReplicationProxy::IsModelWireScalarObservationEnabled() { return CVarModelWireObservation.GetValueOnAnyThread()==2; }
+void FReplicationProxy::SetModelWireObservationEnabled(bool bEnabled,bool bScalars)
+{
+ ExchangeModelWireObservationLevel(bEnabled?(bScalars?2:1):0);
+}
+int32 FReplicationProxy::ExchangeModelWireObservationLevel(int32 Level)
+{
+ check(IsInGameThread());
+ const int32 Previous=CVarModelWireObservation.GetValueOnGameThread();
+ CVarModelWireObservation->Set(Level,EConsoleVariableFlags(ECVF_SetByCode|ECVF_Set_SetOnly_Unsafe));
+ return Previous;
+}
+void FReplicationProxy::ResetModelWireThreadStatus() { check(IsInGameThread()); UnsupportedModelWireThread.Reset(); }
+void FReplicationProxy::ReportUnsupportedModelWireThread() { UnsupportedModelWireThread.Set(1); }
+bool FReplicationProxy::HasUnsupportedModelWireThread() { return UnsupportedModelWireThread.GetValue()!=0; }
+void FReplicationProxy::ResetModelWireObservation(int32 SimID,uint8 Role)
+{
+ check(IsInGameThread());
+ const uint64 Epoch=ModelWireObservation.BindingEpoch;
+ ModelWireObservation=FNPModelWireSnapshot{};
+ ModelWireObservation.BindingEpoch=Epoch==MAX_uint64?Epoch:Epoch+1;
+ ModelWireObservation.SimID=SimID; ModelWireObservation.Role=Role;
+ ModelWireObservation.Status=Epoch==MAX_uint64?ENPModelWireStatus::Overflow:(Role==ROLE_Authority?ENPModelWireStatus::AwaitingEncode:ENPModelWireStatus::AwaitingReceive);
+}
+void FReplicationProxy::SetModelWireStatus(uint64 Epoch,ENPModelWireStatus Status)
+{
+ check(IsInGameThread());
+ if(ModelWireObservation.BindingEpoch==Epoch && ModelWireObservation.Status!=ENPModelWireStatus::Overflow)
+  ModelWireObservation.Status=Status;
+}
+void FReplicationProxy::RecordModelWireReceive(uint64 Epoch,ENPModelWireFrameKind FrameKind,int32 FrameValue,ENPModelWireTimeKind TimeKind,int32 TimeMS,const float* InScalars)
+{
+ check(IsInGameThread());
+ if(ModelWireObservation.Role!=ROLE_AutonomousProxy && ModelWireObservation.Role!=ROLE_SimulatedProxy) return;
+ RecordModelWireEvent(Epoch,ENPModelWireStatus::ReceiveApplied,FrameKind,FrameValue,TimeKind,TimeMS,InScalars);
+}
+void FReplicationProxy::RecordAuthorityModelEncode(uint64 Epoch,int32 ServerTimeMS)
+{
+ check(IsInGameThread());
+ if(ModelWireObservation.Role!=ROLE_Authority || ReplicationTarget!=EReplicationProxyTarget::SimulatedProxy) return;
+ RecordModelWireEvent(Epoch,ENPModelWireStatus::AuthorityEncoded,ENPModelWireFrameKind::None,INDEX_NONE,ENPModelWireTimeKind::ServerVariableMS,ServerTimeMS);
+}
+void FReplicationProxy::RecordModelWireEvent(uint64 Epoch,ENPModelWireStatus Status,ENPModelWireFrameKind FrameKind,int32 FrameValue,ENPModelWireTimeKind TimeKind,int32 TimeMS,const float* InScalars)
+{
+ check(IsInGameThread());
+ if(ModelWireObservation.BindingEpoch!=Epoch || ModelWireObservation.Status==ENPModelWireStatus::Overflow) return;
+ if(ModelWireObservation.EventSerial==MAX_uint64) { ModelWireObservation.Status=ENPModelWireStatus::Overflow; return; }
+ ++ModelWireObservation.EventSerial;
+ ModelWireObservation.EventSeconds=FPlatformTime::Seconds(); ModelWireObservation.EventEngineFrame=GFrameCounter;
+ ModelWireObservation.FrameKind=FrameKind; ModelWireObservation.FrameValue=FrameKind==ENPModelWireFrameKind::None?INDEX_NONE:FrameValue;
+ ModelWireObservation.TimeKind=TimeKind; ModelWireObservation.TimeMS=TimeKind==ENPModelWireTimeKind::None?INDEX_NONE:TimeMS;
+ for(int32 I=0;I<4;++I)
+  ModelWireObservation.ModelScalars[I]=InScalars?InScalars[I]:std::numeric_limits<float>::quiet_NaN();
+ ModelWireObservation.Status=Status;
+}
+FNPModelWireSnapshot FReplicationProxy::GetModelWireObservation() const
+{
+ check(IsInGameThread());
+ FNPModelWireSnapshot Result=ModelWireObservation;
+ if(!NetSimProxy || int32(NetSimProxy->GetID())!=Result.SimID || uint8(NetSimProxy->GetCachedNetRole())!=Result.Role)
+  Result.Status=ENPModelWireStatus::StaleBinding;
+ return Result;
+}
+#endif
+
 void FReplicationProxy::Init(FNetworkPredictionProxy* InNetSimProxy, EReplicationProxyTarget InReplicationTarget)
 {
 	NetSimProxy = InNetSimProxy;
 	ReplicationTarget = InReplicationTarget;
+#if !UE_BUILD_SHIPPING
+ ResetModelWireObservation(InNetSimProxy?int32(InNetSimProxy->GetID()):INDEX_NONE,InNetSimProxy?uint8(InNetSimProxy->GetCachedNetRole()):0);
+#endif
 }
 
 bool FReplicationProxy::NetSerialize(FArchive& Ar, class UPackageMap* Map, bool& bOutSuccess)

@@ -44,8 +44,8 @@
 실제 변경 에셋은 다음 세 개다.
 
 - `/Game/DataAssetSets/Presentation/Retarget/DA_RetargetFamily_Mannequin_Bip01`
-- `/Game/DataAssetSets/Presentation/Retarget/DA_RetargetBody_Greatsword`
-- `/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme`
+- `/Game/DataAssetSets/Presentation/Retarget/DA_RetargetBody_Spellblade`
+- `/Game/Animation_Logic/ABPs/Spellblade/ABP_Spellblade_Woman_RunTIme`
 
 외형 ABP의 기존 직접 HandGrip 할당을 Body로 이행했다. 기존 Retargeter/HGP·물리 값, Master·전방 PSS/PSD·기본 플레이어 프로필은 유지했다. 별도 의상 Copy Pose 구성, 새 FBIK, 독립 의상 평가 주기, 모든 몸체 자동 이행, Cook/package 검증은 완료한 범위가 아니다.
 
@@ -60,7 +60,7 @@
 | 전체 문맥 | [문서 시작점](../../README.md), [프로젝트 개요](../../Overview/ProjectOverview.md), [현재 문맥](../../Overview/ProjectContext.md) | 제품 범위·상태 소유자·실서비스와 개발용 기반의 구분 |
 | 이전 결함과 검사 누락 | [검토 기록](../../Review/README.md), [10월 8일 수명 감사](../../Review/Audits/Project_J_Runtime_Ownership_Audit_2026-10-08.md) | 재현·실패·수정·후속 기록, 과거 감사 제외 영역 |
 | 모듈·확장·서비스 | [아키텍처](../../Architecture/README.md), [MMO 기반](../../Architecture/Extensions/MMO_Foundation_2026-09-12.md), [직업·전직 기반](../../Architecture/Extensions/Extension_Foundation_2026-09-19.md) | DAG·공용 계약·상태 소유 단위·구현된 기능과 계획 |
-| R스킬·입력·콤보 | [전투](../../Combat/README.md), [스킬 구조](../../Gameplay/Architecture/SkillSystemArchitecture.md), [전투 애니메이션](../../Combat/Architecture/Combat_Animation_System.md), [대검 제작](../../Combat/Authoring/GreatswordCombatAuthoringGuide.md) | 실제 입력 태그·능력·콤보·몽타주·Notify·장비 데이터 |
+| R스킬·입력·콤보 | [전투](../../Combat/README.md), [스킬 구조](../../Gameplay/Architecture/SkillSystemArchitecture.md), [전투 애니메이션](../../Combat/Architecture/Combat_Animation_System.md), [대검 제작](../../Combat/Authoring/SpellbladeCombatAuthoringGuide.md) | 실제 입력 태그·능력·콤보·몽타주·Notify·장비 데이터 |
 | 애니메이션 재설계 | [애니메이션](../../Animation/README.md), [파이프라인 리팩토링](../../Animation/Architecture/Animation_Pipeline_Refactor_2026-10-13.md), [최적화 인계](../../Animation/Planning/Animation_Optimization_Handoff_2026-10-13.md) | 의미 상태·단발·검색·복귀·보호·시각 평가의 경계 |
 | 최신 성능·리타깃 | [MM 캐시 후속](../../Animation/Planning/Animation_Runtime_Optimization_2026-10-13.md), [리타깃 프로필](../../Animation/Architecture/Runtime_Retarget_Profiles_2026-10-13.md), [시각 예산](../../Animation/Planning/Crowd_Visual_Presentation_Budget_2026-10-12.md) | 각 비교의 기준 바이너리·조건·측정 범위·미해결 증가 |
 | 네트워크 | [네트워크](../../Networking/README.md) | 실제 NetDriver/Iris·원격 단발·FastArray·SavedMove·SSR |

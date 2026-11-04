@@ -9,8 +9,8 @@ from pathlib import Path
 import unreal
 
 MAP = '/Game/Developers/LODReview/L_MeshLODReview'
-BODY = '/Game/Characters/GreatSword/GreatSword_Woman'
-CLOTHES = '/Game/Characters/GreatSword/Clothes/'
+BODY = '/Game/Characters/Spellblade/Spellblade_Woman'
+CLOTHES = '/Game/Characters/Spellblade/Clothes/'
 PARTS = ('cloak', 'foot', 'hand', 'hel', 'inner', 'lower', 'sho', 'upper')
 SWORD = '/Game/Anim_Assets/Great_Sword/Weapon/SM_Sword'
 ROOT = Path(unreal.Paths.project_dir())

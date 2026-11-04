@@ -16,6 +16,8 @@ class APawn;
 class AProject_JPlayerCharacter;
 class AProject_JPlayerState;
 class UProject_JStatusEffectModel;
+class UProject_JCraftingJobsComponent;
+enum class EProject_JCraftingJobAction : uint8;
 struct FOnAttributeChangeData;
 
 /** Transient press identity. Only the matching source may return an acquired input. */
@@ -35,6 +37,12 @@ class PROJECT_J_API UProject_JPlayerUIComponent : public UActorComponent
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 	void RefreshSources();
+	int32 GetPresentedPartyMemberCount() const;
+	int32 GetPresentedCraftingJobCount() const;
+	/** Only the local current character and exact bound owner component may supply job rows/actions. */
+	UProject_JCraftingJobsComponent* GetCraftingJobsComponent() const;
+	void RequestCraftingJobAction(UProject_JCraftingJobsComponent* ExpectedSource, FGuid ExpectedCharacterId, uint64 ExpectedGeneration, FGuid JobId, EProject_JCraftingJobAction Action);
+	void ReleaseCraftingScreen(const UProject_JPlayerHUDWidget* ExpectedScreen);
 	void BindMenuInput(class UInputComponent *Input);
 	UFUNCTION(BlueprintCallable) void ToggleMenu();
 	UFUNCTION(BlueprintCallable) void SetMenuOpen(bool bOpen);
@@ -89,6 +97,8 @@ class PROJECT_J_API UProject_JPlayerUIComponent : public UActorComponent
 	friend class FProjectJUISkillReleaseOwnershipTest;
 	friend class FProjectJAudit2SharedSkillHoldTest;
 	friend class FProjectJSkillButtonOriginTest;
+	friend class FProjectJUISkillSnapshotTest;
+	friend class FProjectJUIQuestProjectionTest;
 	friend class UProject_JSkillButton;
 	void PressSkillWithReceipt(int32 Index, uint64* OutReceipt);
 	void ReleaseSkillReceipt(int32 Index, uint64 ExpectedReceipt);
@@ -110,6 +120,12 @@ class PROJECT_J_API UProject_JPlayerUIComponent : public UActorComponent
 	FTimerHandle DynamicProfileTimer;
 	int32 DynamicProfileSteps = 0;
 	void OnQuestsChanged();
+	void OnPartyRosterChanged();
+	void BindCraftingSource(UProject_JCraftingJobsComponent* Source);
+	void ClearCraftingSource();
+	TWeakObjectPtr<UProject_JCraftingJobsComponent> BoundCraftingJobs;
+	FDelegateHandle CraftingJobsHandle, CraftingRequestHandle;
+	uint64 CraftingBindingRevision = 0;
 	void LoadPreferences();
 	void StorePreferences();
 	FProject_JHUDPreferences HUDPreferences;
@@ -138,6 +154,9 @@ class PROJECT_J_API UProject_JPlayerUIComponent : public UActorComponent
 	TMap<int32, FProject_JUIPressedSkill> PressedSkills;
 	uint64 NextSkillReceipt = 0;
 	uint64 KeyBindingRevision = 0;
+	uint64 SkillsPresentationRevision = 0;
+	bool bUpdatingSkills = false;
+	int32 LastSkillSpecVisits = 0, LastSkillAbilityEvaluations = 0;
 	UPROPERTY(Transient) TObjectPtr<UProject_JCharacterUIProfile> ActiveProfile;
 	UPROPERTY(Transient) TArray<FProject_JUISkillSlot> PresentedSkills;
 	TArray<FProject_JUIResourceDefinition> PresentedResources;

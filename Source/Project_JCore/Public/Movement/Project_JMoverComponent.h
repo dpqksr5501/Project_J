@@ -62,7 +62,9 @@ class PROJECT_JCORE_API UProject_JMoverComponent : public UCharacterMoverCompone
 	GENERATED_BODY()
 public:
 	UProject_JMoverComponent();
-	virtual void PostInitProperties() override;
+	virtual void PostLoad() override;
+	/** Owned mode archetypes must be importable by actors in other packages. */
+	int32 NormalizeTemplateModeExports();
  virtual void OnRegister() override;
  /** Authored node adapter around the native solver. Native commands are the only simulation input. */
  UPROPERTY(EditDefaultsOnly,Category="Movement|Player Locomotion") TSoftClassPtr<UBaseMovementMode> GroundWalkingMode;
@@ -79,6 +81,14 @@ public:
  void StopGameplayMontageRootMotion(class UAnimMontage* ExpectedMontage=nullptr);
  /** Synchronous authority handover: writes the backend's pending state before acknowledging a pose. */
  bool ApplyAuthorityHandoverTransform(const FTransform& Transform);
+ /** GT-only capture for a same-frame value consumer. Success admits an owned
+  * packet; it does not claim that any worker has consumed or calculated it. */
+ bool TryPrepareGroundTrajectory(const FMoverPredictTrajectoryParams& Query,
+  FProject_JGroundTrajectoryPrediction& OutPrediction);
+protected:
+ virtual bool TryGetPreparedPrediction(const UBaseMovementMode& Mode, const FMoverSimContext& SimContext,
+  const FMoverTickStartData& StartState, const FMoverTimeStep& FirstStep,
+  const FMoverPredictTrajectoryParams& PredictionParams, TArray<FTrajectorySampleInfo>& OutSamples) override;
 private:
  UFUNCTION() void GameplayMontageSectionChanged(class UAnimMontage* Montage,FName Section,bool bLooped);
  UFUNCTION() void GameplayMontageEnded(class UAnimMontage* Montage,bool bInterrupted);

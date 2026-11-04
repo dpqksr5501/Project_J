@@ -1,11 +1,56 @@
 #include "Combat/Project_JAttackDefinition.h"
+#include "Animation/Skeleton.h"
 #include "GameplayEffect.h"
 #include "GameplayEffectComponents/AdditionalEffectsGameplayEffectComponent.h"
 #include "Animation/AnimMontage.h"
+#include "Animation/AnimSequence.h"
+#include "Animation/Project_JAnimNotifyState_MeleeHit.h"
+#include "Engine/SkeletalMesh.h"
 
 #if WITH_EDITOR
 #include "Validation/Project_JDataValidation.h"
 #endif
+
+FString UProject_JAttackDefinition::GetMeleeTrajectoryFailure(const USkeletalMesh* SourceMesh) const
+{
+    const auto& Path=MeleeTrajectory;
+    if (!Path.bEnabled) return {};
+    if (const FString Failure=Path.GetValidationFailure(); !Failure.IsEmpty()) return Failure;
+    if (!bMontageDriven || !Montage || MovementPolicy==EProject_JAttackMovementPolicy::RootMotionWarped || !FMath::IsFinite(PlayRate) || PlayRate<=0 ||
+        !SourceMesh || Path.SourceMesh.ToSoftObjectPath()!=FSoftObjectPath(SourceMesh) || Path.SourceMontage.ToSoftObjectPath()!=FSoftObjectPath(Montage.Get()))
+        return TEXT("Enabled melee path requires its selected mesh, montage and forward unwarped execution.");
+    if (!Montage->Notifies.IsValidIndex(Path.NotifyIndex) || Montage->Notifies.Num()>64 || Montage->SlotAnimTracks.Num()!=1)
+        return TEXT("Enabled melee path has an unsupported montage or missing notify.");
+    const auto& Event=Montage->Notifies[Path.NotifyIndex];
+    const auto* Notify=Cast<UProject_JAnimNotifyState_MeleeHit>(Event.NotifyStateClass.Get());
+    const auto& Segments=Montage->SlotAnimTracks[0].AnimTrack.AnimSegments;
+    if (Event.IsBranchingPoint() || Event.GetLinkedMontage()!=Montage.Get() || !Notify || Notify->GetTraceSocketName()!=Path.SocketName ||
+        Event.GetTriggerTime()!=Path.WindowStart || Event.GetEndTriggerTime()!=Path.WindowEnd ||
+        Path.bUseBladeTipOffset!=HitSpec.bUseCanonicalBladeTipOffset || Path.BladeTipOffset!=(HitSpec.bUseCanonicalBladeTipOffset?HitSpec.CanonicalBladeTipOffset:FVector::ZeroVector) ||
+        Segments.Num()!=1 || Segments[0].LoopingCount!=1 || Segments[0].AnimPlayRate<=0 ||
+        Path.WindowStart<Segments[0].StartPos || Path.WindowEnd>Segments[0].GetEndPos())
+        return TEXT("Enabled melee path no longer matches its queued source window, segment, socket or tip.");
+    const auto* Sequence=Cast<UAnimSequence>(Segments[0].GetAnimReference());
+    if (!Sequence || Sequence->IsValidAdditive() || !IsValid(Sequence->GetSkeleton()) ||
+        Sequence->GetSkeleton()!=Montage->GetSkeleton() || !IsValid(SourceMesh->GetSkeleton()))
+        return TEXT("Enabled melee path requires one non-additive sequence on its montage skeleton and a valid selected mesh skeleton.");
+    const USkeleton* SourceSkeleton=Sequence->GetSkeleton();
+    const USkeleton* TargetSkeleton=SourceMesh->GetSkeleton();
+    if (SourceSkeleton!=TargetSkeleton)
+    {
+        // Admission only: no soft loads or pose evaluation. The offline builder
+        // validates RAW index layout and stamps both skeletons' retarget inputs.
+        const auto Declares=[](const USkeleton* A,const USkeleton* B)
+        {
+            const FSoftObjectPath Path(B);
+            return A->GetCompatibleSkeletons().ContainsByPredicate([&](const TSoftObjectPtr<USkeleton>& Other)
+                { return Other.ToSoftObjectPath()==Path; });
+        };
+        if (!Declares(TargetSkeleton,SourceSkeleton) && !Declares(SourceSkeleton,TargetSkeleton))
+            return TEXT("Enabled melee path selected skeletons no longer declare native compatibility.");
+    }
+    return {};
+}
 
 const UProject_JAttackDefinition* UProject_JAttackSet::FindAttack(const FGameplayTag AttackTag) const
 {
@@ -29,6 +74,8 @@ EDataValidationResult UProject_JAttackDefinition::IsDataValid(FDataValidationCon
 {
 	EDataValidationResult Result = Super::IsDataValid(Context);
 	bool bHasError = Result == EDataValidationResult::Invalid;
+	if (const FString Failure=MeleeTrajectory.GetValidationFailure(); !Failure.IsEmpty())
+	{ Project_J::DataValidation::AddError(Context,bHasError,FText::FromString(Failure)); }
 	if (!AttackTag.IsValid())
 	{
 		Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJAttackDefinition", "MissingTag", "AttackTag is required."));
@@ -62,6 +109,11 @@ EDataValidationResult UProject_JAttackDefinition::IsDataValid(FDataValidationCon
 		!FMath::IsFinite(HitSpec.TraceRadius) || HitSpec.TraceRadius < 0.0f)
 	{
 		Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJAttackDefinition", "InvalidTraceDimensions", "TraceDistance must be positive and TraceRadius must be non-negative; TraceDistance bounds submitted root travel per frame, not blade reach."));
+	}
+	if (NPCMaxMeleeTargets < 1 || NPCMaxMeleeTargets > MaxNPCMeleeTargets)
+	{
+		Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJAttackDefinition", "InvalidNPCTargetLimit",
+			"NPCMaxMeleeTargets must be between 1 and 32; 1 retains the locked-target NPC attack."));
 	}
 	if (HitSpec.bUseCanonicalBladeTipOffset &&
 		(HitSpec.CanonicalBladeTipOffset.IsNearlyZero() || HitSpec.CanonicalBladeTipOffset.ContainsNaN()))

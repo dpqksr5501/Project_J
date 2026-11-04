@@ -2,7 +2,7 @@
 
 이 문서는 캐릭터/장비의 포즈 공유·독립 변형·물리 소유권을 정하고, 기존 GreatSword 의상 임포트 사례를 참고하는 제작 가이드다. 원본 리깅·임포트 검수는 [리깅·UE5 후처리 가이드](../../Animation/Authoring/Character_Rigging_And_UE5_Postprocess_Playbook.md)의 원인 분리·통과 조건을 따른다.
 
-현재 캐릭터 제작 계층은 `BP_Player_Master → BP_GreatSword`, 공통 모션은 `ABP_Player_Master`다. 시험 브랜치의 UE5 Complete 몸체는 직접 재생하고, 보존한 비호환 Bip01 몸체는 별도 Family 리타깃을 사용한다. 상속·프로필·native 의상 연결의 기준은 [플레이어 마스터](../../Architecture/Runtime/Player_Character_Master.md)를 따릅니다. 아래 머티리얼·임포트 수치는 해당 에셋의 제작 기록이며 모든 신규 몸체의 공통 설정값을 뜻하지 않습니다.
+현재 캐릭터 제작 계층은 `BP_Player_Master → BP_Spellblade`, 공통 모션은 `ABP_Player_Master`다. 시험 브랜치의 UE5 Complete 몸체는 직접 재생하고, 보존한 비호환 Bip01 몸체는 별도 Family 리타깃을 사용한다. 상속·프로필·native 의상 연결의 기준은 [플레이어 마스터](../../Architecture/Runtime/Player_Character_Master.md)를 따릅니다. 아래 머티리얼·임포트 수치는 해당 에셋의 제작 기록이며 모든 신규 몸체의 공통 설정값을 뜻하지 않습니다.
 
 ---
 
@@ -22,12 +22,12 @@
 
 ### 1.2. 이전 Bip01 에셋의 참고 계층
 
-다음은 `GreatSword_Woman`/`Clothes`를 사용하던 이전 계층 기록이다. 신규 파츠의 본 이름/개수나 현재 UE5 Complete의 필수 구조가 아니다.
+다음은 `Spellblade_Woman`/`Clothes`를 사용하던 이전 계층 기록이다. 신규 파츠의 본 이름/개수나 현재 UE5 Complete의 필수 구조가 아니다.
 
 
 ```text
-[GreatSword_Woman (SkeletalMesh: Head + Body)] 
-  └── Skeleton: GreatSword_Woman_Skeleton
+[Spellblade_Woman (SkeletalMesh: Head + Body)]
+  └── Skeleton: Spellblade_Woman_Skeleton
         ├── Bip01 Body Hierarchy (Pelvis -> Spine -> Neck -> Head / Limbs)
         ├── phy_anchor_Hair_*  -> phy_cloth_Hair_* (헤어 물리 뼈대 체인)
         ├── phy_anchor_cape_*  -> phy_cloth_cape_* (망토 물리 뼈대 체인)
@@ -41,7 +41,7 @@
   └── hel (투구)   / inner (속옷)
 ```
 
-1. **이전 자산의 Skeleton 공유**: 아래 예시의 Bip01 의상은 `GreatSword_Woman_Skeleton`을 사용했다. 신규 자산은 실제 producer와 검증한 골격/pose 계약을 사용하고, 모든 장비를 이 Skeleton으로 강제 변환하지 않는다.
+1. **이전 자산의 Skeleton 공유**: 아래 예시의 Bip01 의상은 `Spellblade_Woman_Skeleton`을 사용했다. 신규 자산은 실제 producer와 검증한 골격/pose 계약을 사용하고, 모든 장비를 이 Skeleton으로 강제 변환하지 않는다.
 2. **리더 포즈 컴포넌트 (`SetLeaderPoseComponent`)**:
    * 의상 파츠 컴포넌트들은 메인 캐릭터 메시를 Leader(부모)로 설정하여 애니메이션 본 트랜스폼을 실시간 동기화합니다.
    * 대검의 authored 의상 8개는 `UProject_JModularMeshComponent`의 **Follow Attach Parent Pose**를 켜고 실제 최종 pose producer의 자식으로 배치합니다(현재 UE5 구성에서는 숨은 Complete 포함). 등록·재등록·부모 교체 때 native 연결이 적용되므로 Construction Script에서 `Attach and Set Leader`를 반복 호출하지 않습니다. 런타임 장비는 기존 EquipmentRuntime이 명시적으로 연결합니다.
@@ -79,11 +79,11 @@ flowchart LR
 
 ---
 
-## 3. 이전 `GreatSword_Woman`의 머티리얼 제작 기록
+## 3. 이전 `Spellblade_Woman`의 머티리얼 제작 기록
 
 이 절의 슬롯·alpha 수치와 텍스처 이름은 이전 자산 사례다. 새로운 메시의 슬롯/UV·alpha·의도한 shading과 실제 화면으로 결정하며 아래 수치를 승인 체크리스트로 복사하지 않는다.
 
-`GreatSword_Woman.uasset` (헤드 + 바디 통합 스켈레탈 메시)은 총 **6개의 머티리얼 슬롯**으로 구성됩니다.
+`Spellblade_Woman.uasset` (헤드 + 바디 통합 스켈레탈 메시)은 총 **6개의 머티리얼 슬롯**으로 구성됩니다.
 
 | 슬롯 인덱스 | 머티리얼 이름 | 원본 텍스처 | 권장 블렌드 모드 | 핵심 역할 및 설정 |
 | :--- | :--- | :--- | :--- | :--- |
@@ -140,7 +140,7 @@ flowchart LR
 
 ## 5. 본 기반 2차 물리 시뮬레이션 (`RigidBody` / Physics Asset)
 
-현재 UE5 몸체의 구성은 1.1절을 따른다. **이전 Bip01 경로**는 `ABP_Greatsword_Woman_RunTIme`의 RigidBody 3개(망토 24·헤어 4·치마 2 dynamic bone)로 검수한 이력이 있다. 당시 실험 Cloth 3개를 백업 후 제거한 기록은 현재 UE5 망토 Cloth를 삭제하라는 지침이 아니다. Physics Asset, bone RigidBody와 vertex Cloth는 서로 다른 자원/소유권이다.
+현재 UE5 몸체의 구성은 1.1절을 따른다. **이전 Bip01 경로**는 `ABP_Spellblade_Woman_RunTIme`의 RigidBody 3개(망토 24·헤어 4·치마 2 dynamic bone)로 검수한 이력이 있다. 당시 실험 Cloth 3개를 백업 후 제거한 기록은 현재 UE5 망토 Cloth를 삭제하라는 지침이 아니다. Physics Asset, bone RigidBody와 vertex Cloth는 서로 다른 자원/소유권이다.
 
 향후 독립 Chaos Cloth 장비는 bone 평가를 공유해도 component Tick을 유지합니다. 기존 modular component가 활성 cloth metadata/resources로 구분합니다. 추가 본을 가진 장비의 CopyPose/Post Process 물리는 별도 그래프가 필요합니다. 등록 전 source 연결, 같은 source의 강제 재연결 금지, 교체·비동기 취소·해제에 대한 계약은 [플레이어 마스터](../../Architecture/Runtime/Player_Character_Master.md)를 따릅니다.
 

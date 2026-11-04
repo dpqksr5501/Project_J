@@ -11,6 +11,11 @@
 #include "Components/SceneComponent.h"
 #include "GameFramework/WorldSettings.h"
 #include "HAL/PlatformTime.h"
+#include "Components/SkeletalMeshComponent.h"
+#include <limits>
+#if WITH_EDITOR
+#include "Misc/DataValidation.h"
+#endif
 
 namespace
 {
@@ -244,8 +249,80 @@ bool FNPCSpatialImportanceTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("Outside margin demotes to mid"), NPC->GetDecisionTierForDistance(2800, EProject_JNPCUpdateBudgetTier::Near) == EProject_JNPCUpdateBudgetTier::Mid);
 	TestTrue(TEXT("Mid does not oscillate back inside demotion margin"), NPC->GetDecisionTierForDistance(2600, EProject_JNPCUpdateBudgetTier::Mid) == EProject_JNPCUpdateBudgetTier::Mid);
 	TestTrue(TEXT("Promotion uses the base boundary"), NPC->GetDecisionTierForDistance(2400, EProject_JNPCUpdateBudgetTier::Mid) == EProject_JNPCUpdateBudgetTier::Near);
+	// The same authored NPC is consumed by the scheduler and BeginPlay policy.
+	// Exercise the actual setter boundary, not a duplicate numeric predicate.
+	NPC->NPCNetCullDistance = 123.5f;
+	NPC->NPCNetUpdateFrequency = 17.0f;
+	NPC->NPCMinNetUpdateFrequency = 3.0f;
+	NPC->ApplyDefaultNPCOptimizationPolicy();
+	TestEqual(TEXT("Valid authored cull square is unchanged"), NPC->GetNetCullDistanceSquared(), FMath::Square(123.5f));
+	TestEqual(TEXT("Valid authored update frequency is unchanged"), NPC->GetNetUpdateFrequency(), 17.0f);
+	TestEqual(TEXT("Valid authored minimum frequency is unchanged"), NPC->GetMinNetUpdateFrequency(), 3.0f);
+	const float NotFinite = std::numeric_limits<float>::quiet_NaN();
+	const float Infinite = std::numeric_limits<float>::infinity();
+	struct FInvalidNetworkPolicy { float Cull, Update, Minimum; };
+	const FInvalidNetworkPolicy InvalidPolicies[] = {
+		{NotFinite, 10, 2}, {MAX_flt, 10, 2}, {8000, NotFinite, 2},
+		{8000, Infinite, 2}, {8000, 0, 1}, {8000, 10, NotFinite}, {8000, 10, 11}
+	};
+	for (const auto& InvalidPolicy : InvalidPolicies)
+	{
+		NPC->SetNetCullDistanceSquared(12345.0f);
+		NPC->SetNetUpdateFrequency(17.0f);
+		NPC->SetMinNetUpdateFrequency(3.0f);
+		NPC->NPCNetCullDistance = InvalidPolicy.Cull;
+		NPC->NPCNetUpdateFrequency = InvalidPolicy.Update;
+		NPC->NPCMinNetUpdateFrequency = InvalidPolicy.Minimum;
+		NPC->GetMesh()->bEnableUpdateRateOptimizations = false;
+		NPC->ApplyDefaultNPCOptimizationPolicy();
+		TestEqual(TEXT("Invalid tuple preserves the existing cull writer"), NPC->GetNetCullDistanceSquared(), 12345.0f);
+		TestEqual(TEXT("Invalid tuple preserves the existing frequency writer"), NPC->GetNetUpdateFrequency(), 17.0f);
+		TestEqual(TEXT("Invalid tuple cannot partially change minimum frequency"), NPC->GetMinNetUpdateFrequency(), 3.0f);
+		TestTrue(TEXT("Invalid network input does not suppress independent mesh policy"), NPC->GetMesh()->bEnableUpdateRateOptimizations);
+#if WITH_EDITOR
+		FDataValidationContext InvalidContext;
+		TestEqual(TEXT("Enabled authored NPC validation rejects the same invalid tuple"), NPC->IsDataValid(InvalidContext), EDataValidationResult::Invalid);
+#endif
+	}
+#if WITH_EDITOR
+	NPC->bApplyDefaultNPCOptimizationPolicy = false;
+	FDataValidationContext OptOutContext;
+	TestTrue(TEXT("Disabled default policy does not validate unused network fields"), NPC->IsDataValid(OptOutContext) != EDataValidationResult::Invalid);
+	NPC->bApplyDefaultNPCOptimizationPolicy = true;
+#endif
+	NPC->NPCNetCullDistance = 0.0f; // Existing authoring metadata permits zero distance.
+	NPC->NPCNetUpdateFrequency = NPC->NPCMinNetUpdateFrequency = 1.0f;
+	NPC->ApplyDefaultNPCOptimizationPolicy();
+	TestEqual(TEXT("Existing zero-cull authoring meaning is preserved"), NPC->GetNetCullDistanceSquared(), 0.0f);
+#if WITH_EDITOR
+	FDataValidationContext ValidContext;
+	TestTrue(TEXT("Finite authored boundary tuple validates"), NPC->IsDataValid(ValidContext) != EDataValidationResult::Invalid);
+#endif
 	Fixture.World->BeginTearingDown();
 	TestFalse(TEXT("Teardown rejects observer registration"), Fixture.Scheduler->RegisterObserver(Observer));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FNPCMembershipTest, "ProjectJ.NPCDecision.MembershipInvalidation",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FNPCMembershipTest::RunTest(const FString&)
+{
+	FDecisionFixture Fixture;
+	auto* Agent = Fixture.Agent();
+	auto* Target = Fixture.Target(200, 2);
+	TestTrue(TEXT("Registered enemy is actionable"), Fixture.Scheduler->CanActOnTarget(Agent, Target));
+	Fixture.Scheduler->RegisterTarget(Target, 1);
+	TestFalse(TEXT("Cached membership cannot preserve an enemy after team change"), Fixture.Scheduler->CanActOnTarget(Agent, Target));
+	Fixture.Scheduler->RegisterTarget(Target, 2);
+	TestTrue(TEXT("Current enemy team replaces the cached friendly"), Fixture.Scheduler->CanActOnTarget(Agent, Target));
+	Fixture.Scheduler->UnregisterTarget(Target);
+	TestFalse(TEXT("Unregister invalidates membership before the next action"), Fixture.Scheduler->CanActOnTarget(Agent, Target));
+	Fixture.Scheduler->RegisterTarget(Target, 2);
+	TestTrue(TEXT("Re-registration is visible immediately"), Fixture.Scheduler->CanActOnTarget(Agent, Target));
+	Target->Destroy();
+	TestFalse(TEXT("Cached weak key cannot revive a destroyed target"), Fixture.Scheduler->CanActOnTarget(Agent, Target));
+	Fixture.World->BeginTearingDown();
+	TestFalse(TEXT("Retired world cannot consume cached membership"), Fixture.Scheduler->CanActOnTarget(Agent, Target));
 	return true;
 }
 #endif

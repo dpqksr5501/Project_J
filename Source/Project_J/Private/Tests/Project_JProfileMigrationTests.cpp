@@ -98,6 +98,7 @@ class FMigrationCases : public IAutomationLatentCommand
 			if (!Read.IsReady())
 				return false;
 			auto Owned = Read.Get();
+			Owned.Format = 2; // Keep the genuine v1 -> v2 ownership fixture unchanged.
 			auto *Potion = LoadObject<UProject_JConsumableDefinition>(
 				nullptr, TEXT("/Game/UI/Gameplay/DA_ProjectJHealthPotion.DA_ProjectJHealthPotion"));
 			if (!Test->TestTrue(TEXT("Actual saved rules and authored consumable are available"),
@@ -136,7 +137,7 @@ class FMigrationCases : public IAutomationLatentCommand
 			Second.Character = FGuid::NewGuid();
 			Second.Account = FGuid::NewGuid();
 			Second.Items[0].Instance = FGuid::NewGuid();
-			Write = Async(EAsyncExecution::ThreadPool, [Directory = Directory, Owned, Second] {
+			Write = Async(EAsyncExecution::ThreadPool, [Directory = Directory, Owned, Second, MaxStack = Potion->MaxStackCount] {
 				TArray<FString> Errors;
 				auto Check = [&](bool V, const TCHAR *M) {
 					if (!V)
@@ -165,6 +166,20 @@ class FMigrationCases : public IAutomationLatentCommand
 				OwnershipJSON += TEXT("]");
 				Check(FFileHelper::SaveStringToFile(OwnershipJSON, *(Directory / TEXT("Ownership.json"))),
 					  TEXT("Save explicit CLI ownership input"));
+				// An already-current character is carried unchanged through an unrelated
+				// legacy migration, including its escrow ownership and agreed job terms.
+				auto Current = Owned; Current.Format = 3;
+				Current.Character = FGuid::NewGuid(); Current.Account = FGuid::NewGuid(); Current.Items[0].Instance = FGuid::NewGuid();
+				ProjectJ::Crafting::FJobValues ExistingJob;
+				ExistingJob.Id = FGuid::NewGuid(); ExistingJob.RecipeId = TEXT("Migration.FrozenRecipe");
+				ExistingJob.RulesDigest = FString::ChrN(40, 'a'); ExistingJob.StartedUtcTicks = 638000000000000001ll;
+				ExistingJob.DueUtcTicks = ExistingJob.StartedUtcTicks + 10 * ETimespan::TicksPerSecond;
+				auto Escrow = Current.Items[0]; Escrow.Instance = FGuid::NewGuid(); ExistingJob.Escrow.Add(Escrow);
+				ProjectJ::Crafting::FResolvedLine Output;
+				Output.Definition = Escrow.Definition; Output.DefinitionVersion = Escrow.DefinitionVersion; Output.Level = Escrow.Level; Output.MaxStackCount = MaxStack;
+				ExistingJob.Outputs.Add(Output); Current.CraftingJobs.Add(ExistingJob);
+				TArray<uint8> CurrentBytes; Check(Current.Encode(CurrentBytes), TEXT("Existing Format3 escrow checkpoint serializes"));
+				Request.Mutations.Add({{TEXT("LocalProfile"), Current.Character}, 0, 1, CurrentBytes, false});
 				FProject_JSQLiteRepository DB(Source);
 				Check(DB.Commit(Request).Status == ECommitStatus::Committed,
 					  TEXT("Real native v1 source and legacy receipt created"));
@@ -197,6 +212,19 @@ class FMigrationCases : public IAutomationLatentCommand
 					  TEXT("Cross-character duplicate item ownership rejected"));
 				Check(FProject_JProfileMigration::Plan(Inspection, Ownership, Plan, Error),
 					  TEXT("Dry-run plans exact v1 to v2 ownership addition"));
+				const auto* PreservedCurrent = Plan.FindByPredicate([&](const FProject_JMigrationRecord& Record) {
+					FGuid Id; if (Record.Id.Num() != 16) return false; FMemory::Memcpy(&Id, Record.Id.GetData(), 16); return Id == Current.Character;
+				});
+				Check(PreservedCurrent && PreservedCurrent->Payload == CurrentBytes && PreservedCurrent->Revision == 1,
+					TEXT("Existing Format3 job payload and revision remain byte-identical"));
+				{
+					auto BadEscrow = Ownership; BadEscrow[0].Items[0].Instance = Escrow.Instance;
+					TArray<FProject_JMigrationRecord> Rejected;
+					Check(!FProject_JProfileMigration::Plan(Inspection, BadEscrow, Rejected, Error), TEXT("New ownership cannot duplicate another character's persisted escrow UUID"));
+					auto InventedJobs = Ownership; InventedJobs[0].Format = 3; InventedJobs[0].CraftingJobs.Add(ExistingJob);
+					Check(!FProject_JProfileMigration::Plan(Inspection, InventedJobs, Rejected, Error), TEXT("A v1 ownership migration cannot invent pending jobs or escrow"));
+				}
+
 				{
 					auto Mixed = Inspection;
 					auto Existing = Owned;
@@ -249,9 +277,11 @@ class FMigrationCases : public IAutomationLatentCommand
 					Check(Storage.IsValid() && Storage.DatabaseVersion == 1 && Storage.MissingOwnership.IsEmpty() &&
 							  FProject_JProfileMigration::Plan(Storage, {}, Upgrade, Error),
 						  TEXT("Container-only upgrade never asks to recreate known item ownership"));
-					Check(FProject_JProfileMigration::Create(StorageSource, StorageResult, Storage, Upgrade, Error) &&
-							  FProject_JProfileMigration::Inspect(StorageResult).DatabaseVersion == 2,
-						  TEXT("New file upgrades writer policy while preserving complete existing profiles"));
+					const bool StorageCreated = FProject_JProfileMigration::Create(StorageSource, StorageResult, Storage, Upgrade, Error);
+					const auto StorageVerified = StorageCreated ? FProject_JProfileMigration::Inspect(StorageResult) : FProject_JMigrationInspection{};
+					Check(StorageCreated && StorageVerified.IsValid() && StorageVerified.DatabaseVersion == 2,
+						*FString::Printf(TEXT("New file upgrades writer policy while preserving complete existing profiles: created=%d version=%d error=%s inspection=%s"),
+							StorageCreated, StorageVerified.DatabaseVersion, *Error, *StorageVerified.Error));
 				}
 				const FString Conflict = Directory / TEXT("Conflict.sqlite");
 				FFileHelper::SaveStringToFile(TEXT("preserve me"), *Conflict);

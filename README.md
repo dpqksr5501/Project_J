@@ -25,7 +25,9 @@ Project J는 온라인 액션 게임의 이동·전투·네트워크 시스템�
 | 이동·애니메이션 | Mover/NetworkPrediction, PoseSearch, Chooser, BlendStack | C++ 이동 상태·포즈 후보 계산, 공용 ABP 재생, 몸체별 직접 재생/리타깃, 손 접촉 IK와 원격 표현. [로코모션 구조](Docs/Animation/Architecture/Player_Locomotion_Architecture.md) |
 | NPC·병렬 처리 | UE::Tasks, ParallelFor, Mass, 비동기 Navigation | 판단 주기 분산, 값 스냅샷과 작업 상한, 늦은 결과의 취소·세대 검사, Mass 이동 인계와 Character 복귀. [설계·측정](Docs/Benchmarks/SystemsModernization.md) |
 | 표현 비용 관리 | Animation Budget, Chaos Cloth, Niagara, LOD, PSO precache | 원격 표현 생성 분산, 전투 포즈 보호, 원격 Cloth 예산, 이펙트 생성 풀과 PSO 구성 보완. [성능 자료](Docs/Performance/README.md) |
-| MMORPG 확장 | SQLiteCore, AssetManager, 네트워크 복제 | 요청 ID·handover 계약, 개발 단독 실행의 성장·퀘스트·소유물 저장, 커밋·복구·구버전 이관. [현재 범위](Docs/Review/Architecture/Project_J_MMO_Remaining_2026-10-19.md) |
+| MMORPG 확장 | SQLiteCore, AssetManager, 네트워크 복제 | 요청 ID·handover 계약, 개발 단독 실행의 성장·퀘스트·소유물 저장, 커밋·복구·구버전 이관. [현재 범위](Docs/Review/Audits/Project_J_MMO_Architecture_Readiness_2026-11-04.md) |
+
+현재 전용 캐릭터·리깅 자원의 이름은 **Spellblade**입니다. [이름·독립 무기 이주](Docs/Animation/Authoring/Spellblade_Migration_2026-11-01.md)에 기존 장비와 저장 ID의 유지 관계를 설명했습니다.
 
 ## 기술 스택과 구조
 
@@ -70,7 +72,7 @@ Cloth 실험은 D3D12 1280×720 Epic, producer 200개·표시 파츠 2,000개·N
 | 월드 제작 보류 | 시작 권역 8×8km 공간 블록아웃. 시각 품질과 실제 게임플레이 연결은 [월드 인수인계](Docs/World/WORLD_HANDOFF_2026-10-18.md)·[상태표](Docs/WorldGen/03_IMPLEMENTATION_STATUS.md) 참고 |
 | 후속 목표 | 운영 인증/Gateway, 실제 존·채널 이전, 지속적인 사회·경제 서비스, 실제 연결 수·장시간 부하 검증 |
 
-구체적인 구현·보류 범위는 [프로젝트 맥락](Docs/Overview/ProjectContext.md)과 [MMORPG 잔여 작업](Docs/Review/Architecture/Project_J_MMO_Remaining_2026-10-19.md)을 따릅니다.
+구체적인 구현·보류 범위는 [프로젝트 맥락](Docs/Overview/ProjectContext.md)과 [현재 아키텍처 범위](Docs/Review/Audits/Project_J_MMO_Architecture_Readiness_2026-11-04.md)를 따릅니다. 현재 합의한 필수 기반 작업은 마감했으며, 실제 운영 서비스 연동과 콘텐츠 규모의 성능·품질 검증은 후속 범위입니다. [구현·검증 기록](Docs/Architecture/Planning/Project_J_MMO_Architecture_Work_2026-10-26.md)에서 실제 실행 결과와 보류 항목을 구분합니다.
 
 ## 빌드와 실행
 

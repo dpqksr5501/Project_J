@@ -35,10 +35,10 @@ Python/JSON은 **오프라인 제작 입력과 도구**다. 게임은 이미 저
 | 코드 / 위치 | 실제 역할 | 디자이너가 지킬 연결 |
 |---|---|---|
 | [WorldDefinition](../../Source/Project_J/World/Project_JWorldDefinition.h) | `UPrimaryDataAsset`. RegionId, Places, Connections, 저작 범위·seed·SourcePlanHash, 시간·스트리밍 튜닝을 보관한다. | 장소 좌표·반경·레벨·경계와 저장된 공간을 함께 유지한다. 변동 킬 수·보상·퀘스트 진행을 DA에 저장하지 않는다. |
-| [WorldState](../../Source/Project_J/World/Project_JWorldState.cpp) | 서버가 시간 기준과 강우 전환 상태를 소유·복제한다. 항상 로드되는 월드 상태 액터다. | 해당 월드의 Definition 연결을 유지한다. 같은 상태를 쓰는 두 번째 관리자나 Level Blueprint 타이머를 추가하지 않는다. |
+| [WorldState](../../Source/Project_J/World/Project_JWorldState.cpp) | 서버가 시간 기준·하루 길이/초기 시각의 값과 강우 전환 상태를 소유·복제한다. 항상 로드되는 월드 상태 액터다. | 서버 Definition 연결을 유지한다. 클라이언트 시간 표시는 복제된 값을 사용한다. 같은 상태를 쓰는 두 번째 관리자나 Level Blueprint 타이머를 추가하지 않는다. |
 | [WorldEnvironment](../../Source/Project_J/World/Project_JWorldEnvironment.cpp) | WorldState를 읽어 태양 방향·밝기, 안개, MPC의 Rain/WorldHour를 갱신한다. Dedicated Server에서는 표현 Tick을 끈다. | State/Sun/Fog/Parameters와 ClearSunIntensity를 확인한다. PIE에서 조명이 달라지면 수동 조명값 외에 이 writer도 조사한다. 강우 상태 구현이 비·번개 이펙트 완성을 의미하지 않는다. |
-| [WorldStreamingComponent](../../Source/Project_J/World/Project_JWorldStreamingComponent.cpp) | PlayerController에 추가된 로컬 WP 소스. 현재 위치와 이동 예측 위치를 준비하며 기존 Controller 소스를 끄지 않는다. DA가 없으면 추가 소스가 활성화되지 않는다. | 기본 코드값은 예측 3초·준비 반경 600m·예측 최대 600m다. 실제 DA override를 확인한다. 이 수치를 수목 표시 거리나 HLOD 거리로 사용하지 않는다. |
-| [WorldEncounter](../../Source/Project_J/World/Project_JWorldEncounter.h) | 항상 로드되는 서버 보스 이벤트 소유자. NPCClass 비동기 로드·스폰과 단계·종료 정리를 담당한다. | 같은 EncounterId 소유자를 복제 배치하지 않는다. 보스 전투 자체는 NPC의 기존 GAS/AI가 담당한다. |
+| [WorldStreamingComponent](../../Source/Project_J/World/Project_JWorldStreamingComponent.cpp) | PlayerController에 추가된 로컬 WP 소스. 현재/예측 위치 사이를 겹치는 sphere 최대8개로 준비하며 정지 시1개만 사용한다. 늦은 WorldState/DA 연결을 다시 해석하고 기존 Controller 소스는 유지한다. | 기본값은 예측3초·반경600m·예측 최대600m다. 유한한 예측0–10초·반경10–2000m·최대 거리0–2000m이고 최대 거리가 반경의7배 이하여야 한다. Data Validation과 실제 DA override를 확인한다. source 생성은 collision/Nav/GPU 도착 준비나 수목/HLOD 표시 거리 보증이 아니다. |
+| [WorldEncounter](../../Source/Project_J/World/Project_JWorldEncounter.h) | 항상 로드되는 서버 보스 이벤트 소유자. NPC·단계·종료 정리를 소유하며 class 준비와 실행 예산은 Registry를 소비한다. | 같은 EncounterId 소유자를 복제 배치하지 않는다. 선택 UTC 기간과 실행 계약은 [권위 월드 이벤트](World_Event_Runtime.md)를 따른다. 보스 전투 자체는 NPC의 기존 GAS/AI가 담당한다. |
 | [WorldAuthoringLibrary](../../Source/Project_JCharacterEditor/Public/Project_JWorldAuthoringLibrary.h) | 에디터 전용 Landscape 가져오기·높이 재가져오기·visibility patch·스플라인 리본 제작 보조다. | 게임 중 지형 생성기가 아니다. `ReimportRegionHeightmap`은 base edit layer 교체이므로 독립 레이어 편집으로 오인하지 않는다. |
 
 보스 두 곳은 기존 인계 기준 NPCClass 미지정 상태이며 활성 전투·보상 완료가 아니다. 사냥터의 스폰·순찰 후보와 NoCollision 미리보기 경계도 실제 AI/리스폰/전투 봉쇄벽이 아니다. 연결 세부 사항은 [게임플레이 공간 통합](../WorldGen/07_GAMEPLAY_SPATIAL_INTEGRATION.md)을 따른다. 이번 폴더 정리에서는 게임 동작을 바꾸지 않았고, 이동한 Door Blueprint의 C++ 테스트 경로와 기존 테스트의 누락 include만 갱신해 에디터 빌드·집중 회귀를 통과했다.
@@ -122,6 +122,43 @@ Content Browser의 공유 컬렉션 `Env_All`은 후속 통합을 반영한 환�
 ### Elderboom 원본 대조 — 2026-10-19
 
 `Content/Map_Resource/ElderboomVillage`의 기존 자산을 원본 ElderBoomHollowMassiveMed와 대조했다. 환경 제작 자산380개는 모두 기존 반입분과 속성·필수 참조가 일치하며, 신규 반입0·신규 변형0·환경 누락0이다. 메시56개의 렌더/원본 LOD·충돌 형상과 전체 텍스처205개(환경192+효과13)의 원본 픽셀도 일치했다. 원본과 실제 프로젝트 파일은 변경하지 않았다. `Env_Elderboom`에서 환경380개를 찾으며 `Env_All`에도 기존 항목을 보존해 추가했다. 기존 효과29개와 데모 맵2개도 보존했지만 이번 환경 제작 범위의 합격 집계에는 넣지 않는다. 에셋 동등성 검사가 전체 셰이더·Niagara 동작·PIE·Cook·성능 합격을 의미하지는 않는다. 이전 세 원본의7,556개 반입 집계와 이번 기존380개 재사용을 구분한다.
+
+### 식생 라이브러리 중복 점검 — 2026-10-29
+
+사용자 요청에 따라 현재 Project J의 로컬 Unreal MCP를 연결해 `/Game/Map_Resource`의 `FoliageType_InstancedStaticMesh` 258개와 `LandscapeGrassType` 43개의 목록·hard/soft package 참조·의존성을 읽었다. FoliageType에는 바위·잔가지 배치 설정도 포함된다. 이 수를 나무/풀 메시 수나 실제 월드 인스턴스 수로 해석하지 않는다. 원본 반입 당시 254개 집계와도 시점·범위가 다르다.
+
+**판정:** 제작 프리셋을 좁혀 보여줄 필요는 있지만, 이번에 비교한 후보에서 즉시 삭제할 완전 중복은 확인하지 못했다. 에셋·소스·Config 수정/저장·삭제와 Cook/빌드/PCG 재생성은 하지 않았다. 점검 결과만 이 가이드에 추가했다.
+
+| 확인 항목 | 결과와 판단 |
+| --- | --- |
+| 등록된 package 참조가 없는 FoliageType | 178개. Megascans 103, UnrealNormandy 23, ProceduralNaturePack 22, MedievalVillage 18, AncientTempleRuins 6, VillageScan 5, Brushify 1. **미확정 정리 후보**이며 제작용 원본으로 보존한다. |
+| 위 178개의 파일 크기 | `.uasset` 자체의 논리 크기 합 549,765바이트(약0.52MiB). 메시·텍스처 용량을 포함하지 않으며 실제 회수 가능 공간도 아니다. 프리셋만 지우는 용량 이득은 작다. |
+| package 참조 없는 LandscapeGrassType | Brushify의 `Materials/Landscape/GrassTypes/LG_ShortGrass`, `LG_FlatRocks` 2개. 공급자 제작 프리셋으로 보존하고 기본 제작 목록에서 제외할 우선 후보로 둔다. |
+| 같은 비스크립트 의존성을 가진 FoliageType | 9쌍/18개를 상세 비교했다. 공개 속성96개에서 모두 차이가 있어 완전 동일 프리셋이 아니다. 아래 표의 책임을 유지한다. |
+| 실제 산림 PCG | `/Game/World/MainWorld/PCG/PCG_MainWorldForest`의 현재 의존성에서 BlackAlder Field02/Field04/Forest01과 Bush Type1 Small1/3/5를 확인했다. 나무3개는 동일 수종의 형상 변형이며 생물학적 수종3개가 아니다. |
+| 실제 월드 지피 | MainWorld의 Understory/Forest/Riparian/Alpine 4개 GrassType은 각각 terrain material1개와 MainWorld 외부 Actor256개에서 참조된다. 총17개 variety 행이 고유 메시12개를 공유한다. 같은 `S_Grass`의 밀도115/65/95/35는 바이옴별 튜닝으로 유지한다. 참조만으로 현재 화면의 인스턴스 생성·표시를 입증하지 않는다. |
+
+다음 경로는 `/Game/Map_Resource/` 기준이다. 같은 메시를 쓰는 두 프리셋이라는 것과 같은 책임의 불필요한 복제라는 것을 구분한다.
+
+| 후보 쌍 | 실제 차이 / 유지 이유 |
+| --- | --- |
+| `ProceduralNaturePack/Foliage/rocks_small/rock_group_small_a4` / `a3` | 둘 다 메시 `rock_group_small_a3`를 사용한다. uniform scaleX가1.2–2.0 / 1.0–1.5인 크기 프리셋이다. a4가 별도 형상이라는 뜻은 아니다. |
+| 같은 팩 `leaves/leaves_fern_b_large` / `leaves_fern_b` | 같은 fern02 메시, scale0.65–1.35 / 0.4–0.9. |
+| 같은 팩 `leaves/leaves_fern_a_large` / `leaves_fern_a` | 같은 fern01 메시, scale0.7–2.0 / 0.4–1.0. |
+| 같은 팩 `grass/grass_a_small_flattened` / `grass_a_medium_flattened` | 같은 grass_small02 메시, scale0.25–1.25 / 0.5–2.0. |
+| 같은 팩 `grass/grass_a_small` / `grass_a_medium` | 같은 grass_small01 메시, 밀도700/1000, scale0.25–1.5 / 0.5–2.2. |
+| `Megascans/3D_Plants/DryPlantSetB/F_DryPlantSetB_05` / `_01` | 둘 다 `SM_DryPlantSet01_V13`. scale0.4–0.8 / 1, cull10m/20m와 procedural 성장·분포·WPO 설정 등이 다르다. |
+| `Megascans/3D_Assets/WoodBranchC/F_WoodBranchC` / `WoodBranchA/F_WoodBranchA` | 둘 다 WoodBranchA 메시. 밀도100/30, scale0.6–0.7 / 0.7–1.0, 성장·그늘·분포 등이 다르다. C는 ForestScatter 생성기에서 참조된다. **이름만 보면 다른 가지 형상으로 오인하기 쉽지만 오연결 결함으로 확정하지 않는다.** |
+| `Brushify/Procedural/Grasslands/Cliffs_Small/FoliageTypes/FT_Rock_05` / `Cliffs/FoliageTypes/FT_Rock_05` | 같은 메시를 작은/큰 절벽 생성기에서 사용한다. procedural scale0.25–0.6 / 0.5–3.5, 경사·분포 등이 다르다. |
+| 같은 두 경로의 `FT_Rock_04` | 위와 같은 크기·생성 규칙 차이. 서로 다른 생성기 참조를 유지한다. |
+
+추천 순서는 **실제 MainWorld용 팔레트 → 선택 가능한 공급자 원형 → 크기/밀도 프리셋**으로 제작 모음을 구분하는 것이다. 위 fern/grass의 small/medium/large 쌍은 기본 모음에서 대표 하나만 노출하고 다른 크기는 보조 모음에 남길 수 있다. 이는 정리 제안이며 이번에 컬렉션을 변경하지 않았다. underlying 메시·재질·텍스처는 다른 GrassType/PCG/배치 Actor에서도 공유하므로 프리셋의 미참조를 그 의존 자원의 삭제 근거로 사용하지 않는다.
+
+검증 범위: MCP의 AssetTools와 ObjectTools를 통한 읽기 전용 조회 및24개 후보의 공개 속성 비교, Source/Config/Scripts/MainWorld 제작 JSON의178개 전체 경로 리터럴 검색(일치0), AssetManager/Cook 설정 확인이다. `/Game`의 PrimaryAssetLabel 조회는0개였고 Map_Resource 전체를 AlwaysCook하는 설정은 확인되지 않았다. MCP 참조 API의 기본값은 hard/soft package reference를 포함하지만 management/searchable-name reference는 포함하지 않는다. 동적 문자열 조립·제작 의도까지 미사용으로 증명한 것은 아니다. 샘플2개에서 dirty=false를 확인했으며 저장 도구를 호출하지 않았다.
+
+미검증: 전체 식생 메시/텍스처의 형상·픽셀 동등성, 다른 이름의 유사 외형 전수 비교, 실제 레벨의 겹침/이중 인스턴스·화면 품질·프레임 비용, Cook 도달 집합과 underlying 자원의 독점 사용/삭제 가능 용량. 현재 terrain 제작 스크립트는 바이옴 가중치로 지피를 혼합하지만 저장된 material graph 전체를 이번에 검증하지 않았다. 미참조 수를 삭제 승인이나 성능 개선 보장으로 바꾸지 않는다.
+
+로컬 원자료는 Git 제외 `Saved/VegetationAudit_20261029/`의 `inventory.json`, `comparison.json`, `context.json`, `summary.json`에 있다. 해당 파일이 없는 다른 PC에서는 MCP 목록·참조·속성 조회를 다시 해야 한다. SHA-256은 각각 inventory=`784bb86d323f7bdcf31e9ea47c9447d5ccae58938f041aa812ba93e516510fd7`, comparison=`607b6e052fe008902db721a1640acd52dc536ae0959c3972e240160aab3cabf8`, context=`d75cd0e1808f8459f3b8237285a5b6062ffe4e0d30bdd5f7c6b6215f6665dd73`이다. 기존 환경 이관·동등성 검사 근거는 재사용하되 이번 신규 시각 검증으로 세지 않는다.
 
 ## 8. 디자이너의 완료 확인과 기술 담당 인계
 

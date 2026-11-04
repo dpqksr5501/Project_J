@@ -18,7 +18,7 @@
 
 공유 DA 정의에 플레이 중 진행 상태·부여 핸들을 저장하지 않는다. 내부 능력과 자동 공격 카탈로그는 해당 계약의 transient 실행 데이터다. 데이터 옵션이 새로운 투사체·채널링·소환 실행기를 자동 구현하는 것은 아니다.
 
-공격·콤보의 무기별 작성 예시는 [대검 작성](../../Combat/Authoring/GreatswordCombatAuthoringGuide.md), 현재 손 접촉·무기 부착은 [파지 통합](../../Animation/Authoring/Weapon_Hand_Contact_System.md), 스킬·탈것 실행 구조는 [게임플레이 목차](../README.md)를 함께 읽는다. 각 원문의 기준 시점과 구현·보류 범위를 유지한다.
+공격·콤보의 무기별 작성 예시는 [대검 작성](../../Combat/Authoring/SpellbladeCombatAuthoringGuide.md), 현재 손 접촉·무기 부착은 [파지 통합](../../Animation/Authoring/Weapon_Hand_Contact_System.md), 스킬·탈것 실행 구조는 [게임플레이 목차](../README.md)를 함께 읽는다. 각 원문의 기준 시점과 구현·보류 범위를 유지한다.
 
 ---
 
@@ -321,7 +321,7 @@ AbilitySets           = [AS_Warrior_Base]
 
 `AS_Warrior_Base`에는 직업이 기본으로 소유할 Ability와 Effect를 넣는다.
 
-DefaultCombatStyle이 같은 AbilitySet을 제공한다면 Class.AbilitySets에 다시 넣지 않는다. Class와 CombatStyle은 서로 다른 grant source이며, 동일 스킬이 각각 생길 수 있다. 같은 CombatStyle을 성장/장비가 함께 제공할 때만 기존 style source lease를 공유한다. 실제 Greatsword는 Class에 `AS_Humanoid_Core`, 기본 Style에 `AS_Greatsword_Base`를 두어 총8개 스킬을 한 번씩 제공한다. [실제 중복 재현·수정·회귀](../../Review/Audits/Project_J_PC_Structure_Cleanup_2026-10-15.md)를 확인한다.
+DefaultCombatStyle이 같은 AbilitySet을 제공한다면 Class.AbilitySets에 다시 넣지 않는다. Class와 CombatStyle은 서로 다른 grant source이며, 동일 스킬이 각각 생길 수 있다. 같은 CombatStyle을 성장/장비가 함께 제공할 때만 기존 style source lease를 공유한다. 실제 Greatsword는 Class에 `AS_Humanoid_Core`, 기본 Style에 `AS_Spellblade_Base`를 두어 총8개 스킬을 한 번씩 제공한다. [실제 중복 재현·수정·회귀](../../Review/Audits/Project_J_PC_Structure_Cleanup_2026-10-15.md)를 확인한다.
 
 ```text
 GrantedAbilityEntries
@@ -814,6 +814,20 @@ flowchart LR
 ### 2026-10-15 기본 속성 제작 진단
 
 MaxHealth/MaxMana는 finite·strictly positive 검사 한 곳이 승인 권위다. Health/Mana/AttackPower/Defense의 finite·nonnegative 검사와 Health/Mana 초과 clamp warning은 유지한다. 잘못된 Max 값에 같은 원인의 positive/nonnegative 오류를 중복 발행하지 않는다. 허용 데이터 집합이나 런타임 초기화/보정 정책은 바꾸지 않았다. 생성 MMO 카탈로그는 JSON 수정 후 기존 generator/validator 절차를 사용하며 generated inl/MD를 독립 수정하지 않는다.
+
+### 2026-10-28 NPC의 선택적 피해 위협도
+
+`UProject_JNPCActivationDefinition`은 기존 능력 부여·decision/action lease 위에 다음 선택 정책을 제공한다. 기본값은 OFF이며 기존 DA의 행동을 바꾸지 않는다.
+
+| 필드 | 기본값 | 계약 |
+| --- | --- | --- |
+| `bUseDamageThreat` | false | 실제 GE 실행으로 확정된 Health 감소를 현재 공격자별로 누적하고, 최고 값의 후보 안에서 기존 거리·방향 worker 판단을 사용한다. |
+| `MaxDamageThreatSources` | 128 | 허용 범위1–2048. 해당 Encounter의 참가자·자원 예산에 맞게 정하며 동시 접속 수용량을 뜻하지 않는다. |
+| `MaxDamageThreatPerSource` | 1e12 | 허용 범위1–1e15. 유한한 누적값의 상한이다. |
+
+직접 Health 초기화·치유·최대치 축소를 공격 기여로 세지 않는다. source의 현재 ASC owner/avatar/epoch와 생존·적대·공간 자격을 확인하며, 매 피해마다 worker를 취소하거나 새로 제출하지 않는다. 정상 탑승은 같은 persistent owner를 유지하지만 명시 Init/Clear·실제 Avatar 교체는 새 세대다. 출처 수·누적값 포화 또는 완전한 GE 관측이 불가능한 경우에는 해당 activation 동안 기존 거리·방향 정책으로 명시적으로 복귀하고, 관측 구독을 해제한다. 생산 레이드 어그로 품질을 보장하는 자동 근사/퇴출 정책은 아니다.
+
+현재는 native 회귀와 두 실제 소유자의 GE→선택→실제 NPC 공격·원격 몽타주/Health·새 lease 취소를 검증한 기반이다. 치유 위협도·도발·감쇠·evade/reset·투사체의 최초 Avatar 증명·기여도/보상은 별도 규칙과 소비가 필요하다. Health 관측을 보상 원장으로 직접 재사용하지 않는다. [구현](../../../Source/Project_JCharacter/Public/Components/Project_JNPCActivationComponent.h)과 [현재 검증·미완료 범위](../../Architecture/Planning/Project_J_MMO_Architecture_Work_2026-10-26.md)를 함께 확인한다.
 
 ### 2026-10-15 프로토타입 Door 제작 계약
 

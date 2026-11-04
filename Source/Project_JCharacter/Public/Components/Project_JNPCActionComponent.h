@@ -22,6 +22,8 @@ struct FProjectJNPCActionSuspension
 	FGameplayAbilitySpecHandle Attack;
 	uint64 Revision = 0;
 	uint64 OwnershipToken = 0;
+	TWeakObjectPtr<UAbilitySystemComponent> AbilitySystem;
+	uint64 ActorInfoRevision = 0;
 	bool IsValid() const { return Revision != 0; }
 };
 enum class EProjectJNPCActionResume : uint8 { Resumed, Deferred, Superseded };
@@ -49,6 +51,12 @@ public:
 	 * Its targeting code can read GetIntentTarget(), and must validate hits/cancellation itself. */
 	UFUNCTION(BlueprintCallable, Category="NPC|Action")
 	bool StartActions(UProject_JTargetScoringComponent* Scoring, FGameplayAbilitySpecHandle AttackAbility);
+	/** Pure follow intent: no hostile scoring, attack grant or hit authority. The captured ASC may belong to a mounted rider. */
+	bool StartFollowing(AActor* FollowOwner, UAbilitySystemComponent* OwnerASC, double FollowDistance, TFunction<void()> OnStopped = {});
+	/** One finite nav-feet-space destination. Admission only; the existing scheduler
+	 * reports real native reach=true or retirement=false after releasing this lease.
+	 * Failure to admit never calls OnStopped. An enabled action is not replaced. */
+	bool StartNavigationTo(FVector Destination, double AcceptanceRadius, TFunction<void(bool)> OnStopped = {});
 	static bool SupportsAttackAbility(const UGameplayAbility* Ability);
 	UFUNCTION(BlueprintCallable, Category="NPC|Action")
 	void StopActions();
@@ -59,16 +67,22 @@ public:
 	AActor* GetIntentTarget() const { return IntentTarget.Get(); }
 	/** Current registry, authority, life, range and decision age, rechecked at ability/hit commit. */
 	bool CanCommitToTarget(AActor* Target) const;
+	/** Additional authored melee contacts never replace the current primary intent or grant follow owners attack authority. */
+	bool CanCommitSweepHit(AActor* PrimaryTarget, AActor* HitTarget) const;
 	/** Stops only this consumer's pursuit before the ability commits. Rejects another system's movement. */
 	bool PrepareForAttack(AActor* Target);
 	void UpdateAction();
 	UFUNCTION(BlueprintPure, Category="NPC|Action")
 	EProjectJNPCActionState GetActionState() const { return State; }
 	const FProjectJNPCActionStats& GetStats() const { return Stats; }
+#if WITH_DEV_AUTOMATION_TESTS
+	/** Identity observation only; never changes admission, cadence or navigation. */
+	uint64 GetPendingPathTokenForTest() const { return PathToken; }
+#endif
 	/** GT representation handoff reads the start contract before StopActions releases it. */
 	UProject_JTargetScoringComponent* GetScoringSource() const { return ScoringComponent.Get(); }
 	FGameplayAbilitySpecHandle GetAttackAbilityHandle() const { return AttackHandle; }
-	bool CanSuspendMovement() const { return IsContextValid() && !HasForeignMovement(); }
+	bool CanSuspendMovement() const { return !bFollowingOwner && !bNavigatingLocation && IsContextValid() && !HasForeignMovement(); }
 	bool SuspendActions(FProjectJNPCActionSuspension& OutSuspension);
 	EProjectJNPCActionResume ResumeSuspendedActions(const FProjectJNPCActionSuspension& Suspension);
 	bool HasPendingResume() const { return PendingResume.IsValid(); }
@@ -86,10 +100,16 @@ protected:
 	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 private:
 	friend class FProjectJNPCPathPressureTest;
+	bool StartContext(UProject_JTargetScoringComponent* Scoring, FGameplayAbilitySpecHandle AttackAbility, AActor* FollowOwner, UAbilitySystemComponent* OwnerASC, double FollowDistance, const FVector* FixedDestination = nullptr, double AcceptanceRadius = 0);
 	void BackoffPath();
+	void StopActionState();
+	void FinishNavigation(bool bArrived);
+	bool HasReachedNavigationGoal() const;
 	uint32 PathFailures = 0;
 	UFUNCTION()
 	void OnScored(AActor* Target, double Score);
+	/** Only a new completion advances LastDecision; post-attack catch-up retains its original age. */
+	void ApplyScoredTarget(AActor* Target, bool bFreshDecision);
 	void ClearIntent();
 	void CancelPathAndMove();
 	void CancelMove();
@@ -98,6 +118,8 @@ private:
 	void OnMoveFinished(FAIRequestID RequestId, const FPathFollowingResult& Result);
 	void OnAbilityEnded(const FAbilityEndedData& Data);
 	void OnTearDown(UWorld* World);
+	void OnActorInfoChanging(AActor* NextOwner, AActor* NextAvatar);
+	void OnFollowActorInfoChanging(AActor* NextOwner, AActor* NextAvatar);
 	void RetrySuspendedActions();
 	void ClearPendingResume();
 	bool IsContextValid() const;
@@ -110,11 +132,25 @@ private:
 	TWeakObjectPtr<AAIController> Controller;
 	TWeakObjectPtr<UAbilitySystemComponent> AbilitySystem;
 	TWeakObjectPtr<AActor> IntentTarget;
+	TWeakObjectPtr<AActor> FollowOwnerActor, FollowASCOwner;
+	TWeakObjectPtr<UAbilitySystemComponent> FollowOwnerASC;
+	TFunction<void()> FollowStopped;
+	TFunction<void(bool)> NavigationStopped;
+	FVector NavigationDestination = FVector::ZeroVector;
+	double NavigationAcceptanceRadius = 0;
+	bool bNavigatingLocation = false;
+	double FollowStopDistance = 0;
+	bool bFollowingOwner = false;
 	FGameplayAbilitySpecHandle AttackHandle;
 	FAIRequestID MoveId = FAIRequestID::InvalidRequest;
 	FAIRequestID ReplacingMoveId = FAIRequestID::InvalidRequest;
 	FDelegateHandle ContextHandle, MoveHandle, AbilityEndedHandle, TearDownHandle;
+	FDelegateHandle ActorInfoChangingHandle, FollowActorInfoChangingHandle;
+	uint64 AbilitySystemActorInfoRevision = 0;
 	uint64 IntentRevision = 0, PathToken = 0;
+	/** Last value owned by the pending token; independent of the currently followed path. */
+	FVector QueuedGoal = FVector::ZeroVector;
+	bool bCanRefreshQueuedPath = false;
 	FVector FollowingGoal = FVector::ZeroVector;
 	double LastDecision = 0, NextPathTime = 0, NextAttackTime = 0;
 	EProjectJNPCActionState State = EProjectJNPCActionState::Disabled;

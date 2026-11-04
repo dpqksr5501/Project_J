@@ -15,7 +15,13 @@ AProject_JWorldState::AProject_JWorldState()
 void AProject_JWorldState::BeginPlay()
 {
     Super::BeginPlay();
-    if (HasAuthority()) { ClockStart = GetSynchronizedSeconds(); ForceNetUpdate(); }
+    if (HasAuthority())
+    {
+        ClockStart = GetSynchronizedSeconds();
+        if (Definition && Definition->IsClockTuningValid())
+        { ClockSettings.DayLengthSeconds = Definition->DayLengthSeconds; ClockSettings.InitialHour = Definition->InitialHour; }
+        ForceNetUpdate();
+    }
 }
 double AProject_JWorldState::GetSynchronizedSeconds() const
 {
@@ -42,8 +48,16 @@ bool AProject_JWorldState::SetRain(float Target, float Duration)
 float AProject_JWorldState::GetRain() const { return EvaluateRain(Environment, GetSynchronizedSeconds()); }
 float AProject_JWorldState::GetHour() const
 {
-    const float Duration = Definition ? FMath::Max(60.f, Definition->DayLengthSeconds) : 2400.f;
-    const double Hour = (Definition ? Definition->InitialHour : 10.f) + FMath::Max(0.0, GetSynchronizedSeconds()-ClockStart)*24.0/Duration;
+    return EvaluateHour(ClockSettings, ClockStart, GetSynchronizedSeconds());
+}
+float AProject_JWorldState::EvaluateHour(const FProject_JWorldClockSettings& Settings, double Start, double Now)
+{
+    if (!FMath::IsFinite(Settings.DayLengthSeconds) || Settings.DayLengthSeconds < 60 ||
+        !FMath::IsFinite(Settings.InitialHour) || Settings.InitialHour < 0 || Settings.InitialHour > 24 ||
+        !FMath::IsFinite(Start) || !FMath::IsFinite(Now)) return 10.f;
+    const double Elapsed = FMath::Max(0.0, Now-Start);
+    if (!FMath::IsFinite(Elapsed)) return FMath::Fmod(Settings.InitialHour, 24.f);
+    const double Hour = Settings.InitialHour + FMath::Fmod(Elapsed, double(Settings.DayLengthSeconds))*24.0/Settings.DayLengthSeconds;
     return static_cast<float>(FMath::Fmod(Hour, 24.0));
 }
 void AProject_JWorldState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -51,4 +65,5 @@ void AProject_JWorldState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AProject_JWorldState, Environment);
     DOREPLIFETIME(AProject_JWorldState, ClockStart);
+    DOREPLIFETIME(AProject_JWorldState, ClockSettings);
 }

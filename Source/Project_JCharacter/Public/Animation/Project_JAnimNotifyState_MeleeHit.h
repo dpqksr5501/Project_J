@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Animation/AnimNotifies/AnimNotifyState.h"
 #include "GameplayTagContainer.h"
+#include "Combat/Project_JMeleeTrajectory.h"
 #include "Project_JAnimNotifyState_MeleeHit.generated.h"
 
 class USkeletalMeshComponent;
@@ -15,14 +16,19 @@ class PROJECT_JCHARACTER_API UProject_JAnimNotifyState_MeleeHit : public UAnimNo
 
 public:
 	UProject_JAnimNotifyState_MeleeHit();
+	virtual void BeginDestroy() override;
 
 	virtual void NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference) override;
 	virtual void NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float FrameDeltaTime, const FAnimNotifyEventReference& EventReference) override;
 	virtual void NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override;
+	/** Native active-attack pose capture uses the same canonical point formula. */
+	FName GetTraceSocketName() const { return SocketName; }
+	FVector ResolveTraceLocation(USkeletalMeshComponent* MeshComp, const UProject_JAttackDefinition* AttackDefinition) const;
 
 protected:
 	friend class FProjectJCanonicalMeleeTraceTest;
 	friend class FProjectJCanonicalBladeTrajectoryTest;
+	friend class FProjectJSpatialDiscontinuityTraceTest;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Hit Trace")
 	FName SocketName = FName("WeaponSocket_R");
 
@@ -51,9 +57,18 @@ protected:
 		FVector PreviousLocation = FVector::ZeroVector;
 		TWeakObjectPtr<class UProject_JCombatHitValidationComponent> Validation;
 		uint64 WindowToken = 0;
+		uint64 SpatialRevision = 0;
+		float ConsumedMontageTime = 0;
+		bool bTemporalPose = false;
+		bool bAuthoredPath = false;
+		TWeakObjectPtr<const UProject_JAttackDefinition> AuthoredAttack;
+		FProject_JMeleeTrajectory AuthoredPath;
 	};
 	TMap<TWeakObjectPtr<USkeletalMeshComponent>, TMap<int32, FTraceState>> TraceStates;
+	void PruneCollectedMeshes();
+	void TickAuthoredPath(USkeletalMeshComponent* Mesh,const FAnimNotifyEventReference& Reference,FTraceState& State,
+		class UProject_JCombatHitValidationComponent* Validation,const UProject_JAttackDefinition* Attack);
+	FDelegateHandle PostGCHandle;
 
 	FVector ResolveTraceLocation(USkeletalMeshComponent* MeshComp) const;
-	FVector ResolveTraceLocation(USkeletalMeshComponent* MeshComp, const UProject_JAttackDefinition* AttackDefinition) const;
 };

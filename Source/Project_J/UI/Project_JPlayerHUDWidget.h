@@ -9,6 +9,7 @@
 #include "UI/Project_JCharacterUIProfile.h"
 #include "UI/Project_JInventoryViewModel.h"
 #include "UI/Project_JUIModels.h"
+#include "Social/Project_JPartyRoster.h"
 #include "UI/Project_JStatusEffects.h"
 #include "Project_JPlayerHUDWidget.generated.h"
 
@@ -26,6 +27,8 @@ class UProject_JMinimapWidget;
 class UEditableTextBox;
 class UScrollBox;
 class UWrapBox;
+class UProject_JQuestComponent;
+class UProject_JUICommandButton;
 
 UCLASS()
 class PROJECT_J_API UProject_JSkillButton : public UUserWidget
@@ -66,6 +69,7 @@ class PROJECT_J_API UProject_JSkillButton : public UUserWidget
 	FProject_JUIIconRequest IconRequest;
 	friend class FProjectJUIIconRequestLifetimeTest;
 	friend class FProjectJSkillButtonOriginTest;
+	friend class FProjectJUISkillSnapshotTest;
 };
 
 UCLASS()
@@ -148,11 +152,23 @@ class PROJECT_J_API UProject_JInventoryTileView : public UTileView
 	void HandleItemDoubleClicked(UObject *Item);
 };
 
+/** Current journal widgets only. Removed quest identities are not retained as history. */
+USTRUCT()
+struct FProject_JQuestJournalRow
+{
+    GENERATED_BODY()
+    UPROPERTY() TObjectPtr<UVerticalBox> Column;
+    UPROPERTY() TObjectPtr<UTextBlock> Label;
+    UPROPERTY() TObjectPtr<UProject_JUICommandButton> Action;
+};
+
 /** Native usable screen plus BP skin contract. Gameplay requests remain in the model. */
 UCLASS()
 class PROJECT_J_API UProject_JPlayerHUDWidget : public UUserWidget
 {
 	GENERATED_BODY()
+	friend class FProjectJUISkillSnapshotTest;
+	friend class FProjectJUIQuestProjectionTest;
   public:
 	void InitializeScreen(UProject_JPlayerUIComponent *Owner);
 	void UpdateAttributes(const FText &Text);
@@ -165,6 +181,8 @@ class PROJECT_J_API UProject_JPlayerHUDWidget : public UUserWidget
 	void UpdateQuickSlots(const TArray<FProject_JQuickSlotState> &States);
 	void UpdateExperience(int64 Current, int64 Required);
 	void RefreshQuests();
+	/** Retire exact row commands before changing the character/source or removing this view. */
+	void ClearQuestPresentation(const UProject_JPlayerUIComponent* ExpectedOwner = nullptr);
 	void ToggleWindow(FName Id);
 	void CloseWindow(FName Id);
 	void RaiseWindow(FName Id);
@@ -179,6 +197,11 @@ class PROJECT_J_API UProject_JPlayerHUDWidget : public UUserWidget
 	void ResetTransientInteraction();
 	void PresentStatusEffects(const TArray<FProject_JStatusEffectState> &States);
 	void PresentTarget(const FText &Name, float Current, float Maximum);
+	void PresentPartyRoster(const TArray<FProject_JPartyMemberSummary>& Members);
+	int32 GetPresentedPartyMemberCount() const { return PresentedPartyMemberCount; }
+	void PresentCraftingJobs(class UProject_JCraftingJobsComponent* Source);
+	void RefreshCraftingRequest(class UProject_JCraftingJobsComponent* Source);
+	int32 GetPresentedCraftingJobCount() const;
 	bool ValidateRuntimeLayout() const;
 	UFUNCTION(BlueprintCallable) void RefreshInventory();
 	UPROPERTY(EditDefaultsOnly, Category = "UI|Skin") TSubclassOf<UProject_JItemWidget> ItemWidgetClass;
@@ -206,14 +229,19 @@ class PROJECT_J_API UProject_JPlayerHUDWidget : public UUserWidget
 	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UListView> EquipmentList;
 	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UTextBlock> CharacterDetailsLabel;
 	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UVerticalBox> ResourcesBox;
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UVerticalBox> PartyBox;
 	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UVerticalBox> CharacterModuleHost;
 	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UBorder> MenuPanel;
 	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UTextBlock> MenuTitle;
 	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UButton> CloseButton;
 	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UCanvasPanel> ScreenCanvas;
 	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UHorizontalBox> ActionBar;
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<class UProject_JCraftingJobsWidget> CraftingJobsView;
 
   private:
+	UPROPERTY() TArray<TObjectPtr<UTextBlock>> PartyLabels;
+	UPROPERTY() TArray<TObjectPtr<UProgressBar>> PartyHealthBars;
+	int32 PresentedPartyMemberCount = 0;
 	UPROPERTY() TObjectPtr<UWrapBox> StatusEffectBox;
 	UPROPERTY() TObjectPtr<UTextBlock> StatusOverflow;
 	UPROPERTY() TArray<TObjectPtr<UProject_JSkillButton>> StatusIcons;
@@ -240,12 +268,28 @@ class PROJECT_J_API UProject_JPlayerHUDWidget : public UUserWidget
 	UPROPERTY() TObjectPtr<UTextBlock> ExperienceLabel;
 	UPROPERTY() TObjectPtr<UEditableTextBox> SearchBox;
 	UPROPERTY() TObjectPtr<UScrollBox> QuestJournal;
+    UPROPERTY(Transient) TMap<FName, FProject_JQuestJournalRow> QuestJournalRows;
+    TWeakObjectPtr<UProject_JQuestComponent> QuestRowSource;
+    uint64 QuestPresentationRevision = 0;
+    bool bQuestPresentationRetired = false;
+    void RetireQuestRow(const FProject_JQuestJournalRow& Row);
+    UPROPERTY() TObjectPtr<UHorizontalBox> QuestHistoryCommands;
+    UPROPERTY() TObjectPtr<UScrollBox> QuestHistoryList;
+    UPROPERTY() TObjectPtr<UTextBlock> QuestHistoryStatus;
+    UPROPERTY(Transient) TArray<TObjectPtr<UProject_JUICommandButton>> QuestHistoryButtons;
+    UPROPERTY(Transient) TArray<TObjectPtr<UTextBlock>> QuestHistoryRows;
+    bool bShowingQuestHistory = false;
+    FGuid QuestHistoryRequest;
+    uint64 QuestHistorySourceRevision = 0;
+    void RefreshQuestHistory();
+    void RequestQuestHistoryPage(int32 Ordinal);
 	UPROPERTY() TObjectPtr<UTextBlock> BagSummary;
 	UPROPERTY() TObjectPtr<UTextBlock> SettingsSummary;
 	UPROPERTY() TObjectPtr<UTextBlock> SaveStatus;
 	UPROPERTY() TObjectPtr<UTextBlock> ProfileSaveStatus;
 	FText LastProfileSaveStatus;
 	float ProfileStatusElapsed=0.f;
+	float CraftingClockElapsed = 0.f;
 	UPROPERTY() TObjectPtr<class UProject_JUICommandButton> SaveRetry;
 	TWeakObjectPtr<class UProject_JUILayoutSettings> LayoutSettings;
 	void RefreshSaveStatus();

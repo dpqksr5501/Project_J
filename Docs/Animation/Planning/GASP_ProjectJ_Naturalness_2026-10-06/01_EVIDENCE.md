@@ -77,10 +77,10 @@ Project_J Source 근거는 모두 `Source/Project_JCharacter/Private` 또는 `Pu
 
 ### Project_J
 
-- `/Game/Character_BPs/GreatSword/BP_GreatSword`
+- `/Game/Character_BPs/Spellblade/BP_Spellblade`
 - `/Game/Animation_Logic/ABPs/ABP_Humanoid_Master`
 - `/Game/Animation_Logic/ABPs/ABP_Player`: 별도 테스트 경로
-- `/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_GreatSword_AnimProfile`
+- `/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_Spellblade_AnimProfile`
 - `/Game/DataAssetSets/Animation_Profiles/LocomotionProfiles/DA_Player_Profile`
 - `/Game/DataAssetSets/Animation_Profiles/MMProfiles/DA_Player_Locomotion`
 - `/Game/DataAssetSets/Animation_Profiles/Combat_MMProfile/DA_Player_Combat_Strafe`

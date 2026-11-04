@@ -1,5 +1,6 @@
 #include "UI/Project_JPlayerHUDWidget.h"
 #include "UI/Project_JPlayerUIComponent.h"
+#include "UI/Project_JCraftingJobsWidget.h"
 #include "UI/Project_JUILayoutSettings.h"
 #include "UI/Project_JHUDWindow.h"
 #include "UI/Project_JMinimapWidget.h"
@@ -35,6 +36,7 @@
 #include "Engine/AssetManager.h"
 #include "Engine/Texture2D.h"
 #include "InputCoreTypes.h"
+#include "UObject/StrongObjectPtr.h"
 #include "Inventory/Project_JItemDefinition.h"
 
 #include "UI/Project_JWidgetPresentationHelpers.h"
@@ -151,6 +153,11 @@ void UProject_JPlayerHUDWidget::BuildDefaultScreen()
 	TargetHealth->SetFillColorAndOpacity(FLinearColor(.75f, .12f, .15f));
 	TargetBox->AddChildToVerticalBox(TargetSize);
 	TargetBox->SetVisibility(ESlateVisibility::Collapsed);
+	PartyBox = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("PartyBox"));
+	auto* PartySlot = ScreenCanvas->AddChildToCanvas(PartyBox);
+	PartySlot->SetPosition(FVector2D(16, 230));
+	PartySlot->SetSize(FVector2D(220, 220));
+	PartyBox->SetVisibility(ESlateVisibility::Collapsed);
 	CharacterModuleHost =
 		WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("CharacterModuleHost"));
 	auto *ModuleSlot = ScreenCanvas->AddChildToCanvas(CharacterModuleHost);
@@ -185,6 +192,8 @@ void UProject_JPlayerHUDWidget::BuildDefaultScreen()
 	Menu->AddChildToHorizontalBox(Command(TEXT("Equipment"), NSLOCTEXT("ProjectJUI", "GearButton", "장비")))
 		->SetPadding(FMargin(2, 0));
 	Menu->AddChildToHorizontalBox(Command(TEXT("Quests"), NSLOCTEXT("ProjectJUI", "QuestButton", "의뢰")))
+		->SetPadding(FMargin(2, 0));
+	Menu->AddChildToHorizontalBox(Command(TEXT("Crafting"), NSLOCTEXT("ProjectJUI", "CraftingButton", "제작")))
 		->SetPadding(FMargin(2, 0));
 	Menu->AddChildToHorizontalBox(Command(TEXT("Settings"), NSLOCTEXT("ProjectJUI", "SettingsButton", "설정")))
 		->SetPadding(FMargin(2, 0));
@@ -248,8 +257,22 @@ void UProject_JPlayerHUDWidget::BuildDefaultScreen()
 	CharacterDetailsLabel->SetAutoWrapText(true);
 	Gear->BodyBox->AddChildToVerticalBox(CharacterDetailsLabel);
 	auto *Journal = AddWindow(TEXT("Quests"), NSLOCTEXT("ProjectJUI", "QuestTitle", "의뢰"), FVector2D(340, 400));
+    QuestHistoryCommands = WidgetTree->ConstructWidget<UHorizontalBox>();
+    Journal->BodyBox->AddChildToVerticalBox(QuestHistoryCommands);
+    QuestHistoryStatus = Text(FText::GetEmpty(), 11);
+    Journal->BodyBox->AddChildToVerticalBox(QuestHistoryStatus);
 	QuestJournal = WidgetTree->ConstructWidget<UScrollBox>();
 	Journal->BodyBox->AddChildToVerticalBox(QuestJournal)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    QuestHistoryList = WidgetTree->ConstructWidget<UScrollBox>();
+    Journal->BodyBox->AddChildToVerticalBox(QuestHistoryList)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    QuestHistoryList->SetVisibility(ESlateVisibility::Collapsed);
+	auto* Crafting = AddWindow(TEXT("Crafting"), NSLOCTEXT("ProjectJUI", "CraftingTitle", "제작 작업"), FVector2D(360, 420));
+	CraftingJobsView = CreateWidget<UProject_JCraftingJobsWidget>(GetOwningPlayer());
+	if (CraftingJobsView)
+	{
+		CraftingJobsView->TakeWidget();
+		Crafting->BodyBox->AddChildToVerticalBox(CraftingJobsView)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+	}
 	auto *Skills = AddWindow(TEXT("Skills"), NSLOCTEXT("ProjectJUI", "SkillLibraryTitle", "스킬"), FVector2D(310, 220));
 	auto *SkillScroll = WidgetTree->ConstructWidget<UScrollBox>();
 	Skills->BodyBox->AddChildToVerticalBox(SkillScroll)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
@@ -301,6 +324,12 @@ void UProject_JPlayerHUDWidget::BuildDefaultScreen()
 
 void UProject_JPlayerHUDWidget::InitializeScreen(UProject_JPlayerUIComponent *Owner)
 {
+    if (ScreenOwner.Get() != Owner)
+    {
+        const uint64 Before = QuestPresentationRevision;
+        ClearQuestPresentation();
+        if (Before == MAX_uint64 || QuestPresentationRevision != Before + 1) return;
+    }
 	if (LayoutSettings.IsValid()) LayoutSettings->OnSaveStateChanged.RemoveAll(this);
 	if (InventoryModel) InventoryModel->OnSplitRequested.RemoveAll(this);
 	ScreenOwner = Owner;
@@ -317,6 +346,7 @@ void UProject_JPlayerHUDWidget::InitializeScreen(UProject_JPlayerUIComponent *Ow
 }
 void UProject_JPlayerHUDWidget::NativeConstruct()
 {
+    bQuestPresentationRetired = false;
 	Super::NativeConstruct();
 	if (CloseButton)
 		CloseButton->OnClicked.AddUniqueDynamic(this, &ThisClass::CloseMenu);
@@ -325,6 +355,11 @@ void UProject_JPlayerHUDWidget::NativeConstruct()
 }
 void UProject_JPlayerHUDWidget::NativeDestruct()
 {
+    bQuestPresentationRetired = true;
+    ClearQuestPresentation();
+	if (ScreenOwner.IsValid()) ScreenOwner->ReleaseCraftingScreen(this);
+	if (CraftingJobsView) CraftingJobsView->Present(nullptr, nullptr);
+	PresentPartyRoster({});
 	if (LayoutSettings.IsValid()) LayoutSettings->OnSaveStateChanged.RemoveAll(this);
 	if (InventoryModel) InventoryModel->OnSplitRequested.RemoveAll(this);
 	if (CloseButton)
@@ -489,6 +524,13 @@ void UProject_JPlayerHUDWidget::NativeTick(const FGeometry &Geometry, float Delt
 		const FText Current=Profiles?Profiles->GetStatusText(PC?PC->GetPlayerState<AProject_JPlayerState>():nullptr):FText::GetEmpty();
 		if(!Current.EqualTo(LastProfileSaveStatus)){LastProfileSaveStatus=Current;ProfileSaveStatus->SetText(Current);}
 	}
+	const auto* Crafting = Windows.FindRef(TEXT("Crafting")).Get();
+	if (CraftingJobsView && Crafting && Crafting->IsVisible() && CraftingJobsView->NeedsClockRefresh())
+	{
+		CraftingClockElapsed += DeltaTime;
+		if (CraftingClockElapsed >= 1.f) { CraftingClockElapsed = 0.f; CraftingJobsView->RefreshClock(); }
+	}
+	else CraftingClockElapsed = 0.f;
 	// Geometry/DPI only; gameplay presentation stays delegate driven.
 	if (ScreenCanvas && !ScreenCanvas->GetCachedGeometry().GetLocalSize().Equals(LastCanvasExtent))
 		ApplyMenuLayout();
@@ -801,6 +843,11 @@ void UProject_JPlayerHUDWidget::ToggleWindow(FName Id)
 		ScreenOwner->SetMenuOpen(true);
 	ApplyMenuLayout();
 	RefreshQuests();
+	if (Id == TEXT("Crafting") && CraftingJobsView)
+	{
+		CraftingClockElapsed = 0.f;
+		CraftingJobsView->RefreshClock();
+	}
 	FocusTopWindow();
 }
 void UProject_JPlayerHUDWidget::CloseWindow(FName Id)
@@ -944,7 +991,7 @@ void UProject_JPlayerHUDWidget::ExecuteCommand(FName Command)
 		return;
 	}
 	if (Command == TEXT("Bag") || Command == TEXT("Equipment") || Command == TEXT("Quests") ||
-		Command == TEXT("Skills") || Command == TEXT("Settings") || Command == TEXT("Keys"))
+		Command == TEXT("Skills") || Command == TEXT("Settings") || Command == TEXT("Keys") || Command == TEXT("Crafting"))
 	{
 		ToggleWindow(Command);
 		return;
@@ -969,6 +1016,29 @@ void UProject_JPlayerHUDWidget::ExecuteCommand(FName Command)
 		ApplySearch();
 		return;
 	}
+    if (Command == TEXT("QuestCurrent") || Command == TEXT("QuestHistory") || Command == TEXT("HistoryPrevious") ||
+        Command == TEXT("HistoryNext") || Command == TEXT("HistoryRefresh"))
+    {
+        if (bQuestPresentationRetired || !ScreenOwner.IsValid() || !WindowStack.Contains(TEXT("Quests"))) return;
+        const TStrongObjectPtr<UProject_JQuestComponent> Quests(ScreenOwner->GetQuestComponent());
+        if (!Quests.IsValid() || QuestRowSource.Get() != Quests.Get()) return;
+        if (Command == TEXT("QuestCurrent")) { bShowingQuestHistory = false; RefreshQuests(); return; }
+        if (Command == TEXT("QuestHistory"))
+        {
+            const bool bEnter = !bShowingQuestHistory;
+            bShowingQuestHistory = true;
+            if (bEnter) RequestQuestHistoryPage(0); else RefreshQuests();
+            return;
+        }
+        if (!bShowingQuestHistory) return;
+        if (Command == TEXT("HistoryRefresh")) { RequestQuestHistoryPage(0); return; }
+        const auto Summary = Quests->GetHistorySummary();
+        const auto Page = Quests->GetHistoryPage();
+        if (!Page.bHasPage || !Summary.Revision.IsValid() || Page.Summary.Revision != Summary.Revision || Page.Summary.Count != Summary.Count) return;
+        const int32 Ordinal = Page.Ordinal + (Command == TEXT("HistoryPrevious") ? -1 : 1);
+        if (Ordinal >= 0 && static_cast<int64>(Ordinal) * 32 < Summary.Count) RequestQuestHistoryPage(Ordinal);
+        return;
+    }
 	if (Command == TEXT("CollapseQuests"))
 	{
 		bQuestsCollapsed = !bQuestsCollapsed;
@@ -994,25 +1064,154 @@ void UProject_JPlayerHUDWidget::ExecuteCommand(FName Command)
 	if (ScreenOwner.IsValid())
 		ScreenOwner->ChangePreferences(Command);
 }
+void UProject_JPlayerHUDWidget::RetireQuestRow(const FProject_JQuestJournalRow& Row)
+{
+    const TStrongObjectPtr<UProject_JUICommandButton> Action(Row.Action);
+    const TStrongObjectPtr<UVerticalBox> Column(Row.Column);
+    // Clear the actual command target before disabling a focused button can run focus callbacks.
+    if (IsValid(Action.Get()))
+    {
+        Action->InitializeCommand(nullptr, NAME_None, FText::GetEmpty());
+        Action->SetIsEnabled(false);
+    }
+    if (IsValid(Column.Get())) Column->RemoveFromParent();
+}
+
+void UProject_JPlayerHUDWidget::ClearQuestPresentation(const UProject_JPlayerUIComponent* ExpectedOwner)
+{
+    // A previous controller can retain this screen after public InitializeScreen hands it to another live owner.
+    // An expired owner does not prevent cleanup of its orphaned rows.
+    if (ExpectedOwner && ScreenOwner.IsValid() && ScreenOwner.Get() != ExpectedOwner) return;
+    const TStrongObjectPtr<ThisClass> KeepSelf(this);
+    if (QuestPresentationRevision == MAX_uint64) bQuestPresentationRetired = true;
+    else ++QuestPresentationRevision;
+    const uint64 Revision = QuestPresentationRevision;
+    const TStrongObjectPtr<UProject_JQuestComponent> PreviousSource(QuestRowSource.Get());
+    const FGuid PreviousRequest = QuestHistoryRequest;
+    if (QuestHistorySourceRevision == MAX_uint64) bQuestPresentationRetired = true;
+    else ++QuestHistorySourceRevision;
+    auto PreviousButtons = MoveTemp(QuestHistoryButtons);
+    auto PreviousLabels = MoveTemp(QuestHistoryRows);
+    QuestHistoryButtons.Reset(); QuestHistoryRows.Reset(); QuestHistoryRequest.Invalidate(); bShowingQuestHistory = false;
+    auto Previous = MoveTemp(QuestJournalRows);
+    QuestJournalRows.Reset(); QuestRowSource.Reset();
+    // A focus callback may collect garbage after the map was detached. Pin every old widget first.
+    TArray<TStrongObjectPtr<UWidget>> Pins;
+    for (const auto& Pair : Previous)
+    {
+        if (IsValid(Pair.Value.Column)) Pins.Emplace(Pair.Value.Column.Get());
+        if (IsValid(Pair.Value.Label)) Pins.Emplace(Pair.Value.Label.Get());
+        if (IsValid(Pair.Value.Action)) Pins.Emplace(Pair.Value.Action.Get());
+    }
+    for (const auto& Button : PreviousButtons) if (IsValid(Button)) Pins.Emplace(Button.Get());
+    for (const auto& Label : PreviousLabels) if (IsValid(Label)) Pins.Emplace(Label.Get());
+    if (PreviousSource.IsValid() && PreviousRequest.IsValid()) PreviousSource->CancelHistoryPageRequest(PreviousRequest);
+    for (const auto& Button : PreviousButtons) if (IsValid(Button))
+    {
+        Button->InitializeCommand(nullptr, NAME_None, FText::GetEmpty());
+        Button->SetIsEnabled(false); Button->RemoveFromParent();
+    }
+    for (const auto& Label : PreviousLabels) if (IsValid(Label)) Label->RemoveFromParent();
+    for (const auto& Pair : Previous) RetireQuestRow(Pair.Value);
+    if (QuestPresentationRevision != Revision) return; // A newer source/refresh owns its output.
+    if (QuestHistoryStatus) QuestHistoryStatus->SetText(FText::GetEmpty());
+    if (QuestPresentationRevision != Revision) return;
+    if (QuestHistoryList) QuestHistoryList->SetVisibility(ESlateVisibility::Collapsed);
+    if (QuestPresentationRevision != Revision) return;
+    if (QuestJournal) QuestJournal->SetVisibility(ESlateVisibility::Visible);
+    if (QuestPresentationRevision != Revision) return;
+    if (QuestTracker) QuestTracker->SetText(FText::GetEmpty());
+    if (QuestPresentationRevision != Revision) return;
+    if (Minimap) Minimap->SetQuestMarkers({});
+}
+
 void UProject_JPlayerHUDWidget::RefreshQuests()
 {
-	if (!ScreenOwner.IsValid())
-		return;
-	const auto *Quests = ScreenOwner->GetQuestComponent();
+    if (bQuestPresentationRetired) return;
+    const TStrongObjectPtr<ThisClass> KeepSelf(this);
+    const TStrongObjectPtr<UProject_JPlayerUIComponent> Owner(ScreenOwner.Get());
+    const TStrongObjectPtr<UProject_JQuestComponent> Quests(Owner.IsValid() ? Owner->GetQuestComponent() : nullptr);
+    if (!Owner.IsValid() || !IsValid(Quests.Get()) || Quests->IsBeingDestroyed()) { ClearQuestPresentation(); return; }
+    if (QuestRowSource.Get() != Quests.Get())
+    {
+        const uint64 Before = QuestPresentationRevision;
+        ClearQuestPresentation();
+        if (Before == MAX_uint64 || QuestPresentationRevision != Before + 1 || ScreenOwner.Get() != Owner.Get()
+            || Owner->GetQuestComponent() != Quests.Get()) return;
+        QuestRowSource = Quests.Get();
+    }
+    if (QuestPresentationRevision == MAX_uint64) { ClearQuestPresentation(); return; }
+    const uint64 Revision = ++QuestPresentationRevision;
+    const auto IsCurrent = [&]
+    {
+        return !bQuestPresentationRetired && QuestPresentationRevision == Revision && ScreenOwner.Get() == Owner.Get()
+            && IsValid(Owner.Get()) && !Owner->IsBeingDestroyed() && Owner->GetQuestComponent() == Quests.Get()
+            && IsValid(Quests.Get()) && !Quests->IsBeingDestroyed() && QuestRowSource.Get() == Quests.Get();
+    };
+    // The authoritative quest-state contract is bounded128; never retain an ever-seen quest history in the view.
+    const auto States = Quests->States;
+    if (States.Num() > 128) { ClearQuestPresentation(); return; }
+    TSet<FName> Desired;
+    for (const auto& State : States)
+    {
+        if (State.bClaimed) continue; // Legacy claimed details belong to paged history, not current rows.
+        if (State.QuestId.IsNone() || Desired.Contains(State.QuestId)) { ClearQuestPresentation(); return; }
+        Desired.Add(State.QuestId);
+    }
+    TArray<FProject_JQuestJournalRow> Removed;
+    for (auto It = QuestJournalRows.CreateIterator(); It; ++It)
+        if (!Desired.Contains(It.Key())) { Removed.Add(It.Value()); It.RemoveCurrent(); }
+    TArray<TStrongObjectPtr<UWidget>> RemovedPins;
+    for (const auto& Row : Removed)
+    {
+        if (IsValid(Row.Column)) RemovedPins.Emplace(Row.Column.Get());
+        if (IsValid(Row.Label)) RemovedPins.Emplace(Row.Label.Get());
+        if (IsValid(Row.Action)) RemovedPins.Emplace(Row.Action.Get());
+    }
+    for (const auto& Row : Removed) { RetireQuestRow(Row); if (!IsCurrent()) return; }
+    TArray<TObjectPtr<UVerticalBox>> OrderedColumns;
 	TArray<FText> Tracked;
 	TArray<FProject_JMapMarker> Markers;
-	const bool bJournalVisible = WindowStack.Contains(TEXT("Quests"));
+	const bool bJournalVisible = WindowStack.Contains(TEXT("Quests")) && !bShowingQuestHistory;
 	const float OldScroll = QuestJournal ? QuestJournal->GetScrollOffset() : 0;
-	if (bJournalVisible && QuestJournal)
-		QuestJournal->ClearChildren();
-	if (Quests)
-		for (const auto &State : Quests->States)
+	if (Quests.IsValid())
+		for (const auto &State : States)
 		{
-			const auto *Def = Quests->FindDefinition(State.QuestId);
-			if (!Def)
-				continue;
-			const auto Progress = FText::Format(NSLOCTEXT("ProjectJUI", "QuestProgress", "{0} · {1}/{2}"), Def->Title,
-												FText::AsNumber(State.Count), FText::AsNumber(Def->RequiredCount));
+            if (State.bClaimed) continue;
+            const TStrongObjectPtr<UProject_JQuestDefinition> Def(Quests->FindDefinition(State.QuestId));
+            if (!IsCurrent()) return;
+            if (!Def.IsValid())
+            {
+                if (const auto* Existing = QuestJournalRows.Find(State.QuestId))
+                {
+                    const auto Row = *Existing; QuestJournalRows.Remove(State.QuestId); RetireQuestRow(Row);
+                    if (!IsCurrent()) return;
+                }
+                continue;
+            }
+			const bool bComplete = Def->IsComplete(State);
+			FText Progress, JournalProgress;
+			if (Def->Objectives.IsEmpty())
+			{
+				Progress = FText::Format(NSLOCTEXT("ProjectJUI", "QuestProgress", "{0} · {1}/{2}"), Def->Title,
+					FText::AsNumber(State.Count), FText::AsNumber(Def->RequiredCount));
+				JournalProgress = Progress;
+			}
+			else
+			{
+				int32 CompleteObjectives = 0;
+				TArray<FText> Lines{Def->Title};
+				for (const auto& O : Def->Objectives)
+				{
+					const int32 Count = State.GetObjectiveCount(O.ObjectiveId);
+					CompleteObjectives += Count == O.RequiredCount;
+					Lines.Add(FText::Format(NSLOCTEXT("ProjectJUI", "QuestObjectiveProgress", "{0} · {1}/{2}"),
+						O.Title.IsEmpty() ? FText::FromName(O.ObjectiveId) : O.Title, FText::AsNumber(Count), FText::AsNumber(O.RequiredCount)));
+				}
+				Progress = FText::Format(NSLOCTEXT("ProjectJUI", "CompoundQuestProgress", "{0} · {1}/{2} 목표"),
+					Def->Title, FText::AsNumber(CompleteObjectives), FText::AsNumber(Def->Objectives.Num()));
+				JournalProgress = FText::Join(FText::FromString(TEXT("\n")), Lines);
+			}
 			if (State.bTracked && !State.bClaimed)
 			{
 				if (Tracked.Num() < 3)
@@ -1027,38 +1226,165 @@ void UProject_JPlayerHUDWidget::RefreshQuests()
 			}
 			if (bJournalVisible && QuestJournal)
 			{
-				auto *Column = WidgetTree->ConstructWidget<UVerticalBox>();
-				QuestJournal->AddChild(Column);
-				auto *Label = WidgetTree->ConstructWidget<UTextBlock>();
-				auto Font = Label->GetFont();
-				Font.Size = 12;
-				Label->SetFont(Font);
-				Label->SetText(Progress);
-				Label->SetAutoWrapText(true);
-				Label->SetToolTipText(Def->Description);
-				Column->AddChildToVerticalBox(Label)->SetPadding(FMargin(0, 0, 0, 6));
-				auto *Action = WidgetTree->ConstructWidget<UProject_JUICommandButton>();
-				const bool bComplete = State.Count >= Def->RequiredCount;
-				Action->InitializeCommand(
+                if (!WidgetTree) return; // Preserve a skin without native journal controls.
+                FProject_JQuestJournalRow Row = QuestJournalRows.FindRef(State.QuestId);
+                if (!IsValid(Row.Column) || !IsValid(Row.Label) || !IsValid(Row.Action))
+                {
+                    RetireQuestRow(Row);
+                    if (!IsCurrent()) return;
+                    Row.Column = WidgetTree->ConstructWidget<UVerticalBox>();
+                    Row.Label = WidgetTree->ConstructWidget<UTextBlock>();
+                    auto Font = Row.Label->GetFont(); Font.Size = 12; Row.Label->SetFont(Font);
+                    Row.Label->SetAutoWrapText(true);
+                    Row.Column->AddChildToVerticalBox(Row.Label)->SetPadding(FMargin(0, 0, 0, 6));
+                    Row.Action = WidgetTree->ConstructWidget<UProject_JUICommandButton>();
+                    Row.Column->AddChildToVerticalBox(Row.Action)->SetPadding(FMargin(0, 0, 0, 14));
+                    QuestJournalRows.Add(State.QuestId, Row);
+                }
+                const TStrongObjectPtr<UVerticalBox> Column(Row.Column);
+                const TStrongObjectPtr<UTextBlock> Label(Row.Label);
+                const TStrongObjectPtr<UProject_JUICommandButton> Action(Row.Action);
+                Label->SetText(JournalProgress); Label->SetToolTipText(Def->Description);
+                if (!IsCurrent()) return;
+                Action->InitializeCommand(
 					this, FName(*((bComplete ? TEXT("Claim.") : TEXT("Track.")) + State.QuestId.ToString())),
 					State.bClaimed	 ? NSLOCTEXT("ProjectJUI", "Claimed", "완료")
 					: bComplete		 ? NSLOCTEXT("ProjectJUI", "ClaimReward", "보상 받기")
 					: State.bTracked ? NSLOCTEXT("ProjectJUI", "Untrack", "추적 해제")
 									 : NSLOCTEXT("ProjectJUI", "Track", "추적"));
-				Action->SetIsEnabled(!State.bClaimed);
-				Column->AddChildToVerticalBox(Action)->SetPadding(FMargin(0, 0, 0, 14));
+                if (!IsCurrent()) return;
+                Action->SetIsEnabled(!State.bClaimed);
+                if (!IsCurrent()) return;
+                OrderedColumns.Add(Column.Get());
 			}
 		}
+    if (!IsCurrent()) return;
+    if (bJournalVisible && QuestJournal)
+    {
+        bool SameOrder = QuestJournal->GetChildrenCount() == OrderedColumns.Num();
+        for (int32 Index = 0; SameOrder && Index < OrderedColumns.Num(); ++Index)
+            SameOrder = QuestJournal->GetChildAt(Index) == OrderedColumns[Index];
+        if (!SameOrder)
+        {
+            QuestJournal->ClearChildren();
+            if (!IsCurrent()) return;
+            for (const auto& Column : OrderedColumns)
+            {
+                QuestJournal->AddChild(Column.Get());
+                if (!IsCurrent()) return;
+            }
+        }
+    }
 	if (QuestTracker)
 	{
 		QuestTracker->SetText(FText::Join(FText::FromString(TEXT("\n")), Tracked));
 		QuestTracker->SetVisibility(bQuestsCollapsed ? ESlateVisibility::Collapsed
 													 : ESlateVisibility::HitTestInvisible);
 	}
+    if (!IsCurrent()) return;
 	if (Minimap)
 		Minimap->SetQuestMarkers(MoveTemp(Markers));
+    if (!IsCurrent()) return;
 	if (bJournalVisible && QuestJournal)
 		QuestJournal->SetScrollOffset(OldScroll);
+    if (IsCurrent()) RefreshQuestHistory();
+}
+
+
+void UProject_JPlayerHUDWidget::RequestQuestHistoryPage(int32 Ordinal)
+{
+    const TStrongObjectPtr<ThisClass> KeepSelf(this);
+    const TStrongObjectPtr<UProject_JPlayerUIComponent> Owner(ScreenOwner.Get());
+    const TStrongObjectPtr<UProject_JQuestComponent> Quests(Owner.IsValid() ? Owner->GetQuestComponent() : nullptr);
+    const uint64 SourceRevision = QuestHistorySourceRevision;
+    if (bQuestPresentationRetired || !bShowingQuestHistory || !Owner.IsValid() || !Quests.IsValid() || QuestRowSource.Get() != Quests.Get()) return;
+    const FGuid Request = Quests->RequestCompletedPage(Ordinal);
+    if (bQuestPresentationRetired || QuestHistorySourceRevision != SourceRevision || ScreenOwner.Get() != Owner.Get() ||
+        Owner->GetQuestComponent() != Quests.Get() || QuestRowSource.Get() != Quests.Get())
+    {
+        if (Request.IsValid()) Quests->CancelHistoryPageRequest(Request);
+        return;
+    }
+    // A nested request may supersede this one while local reply/UI callbacks run.
+    if (Request.IsValid() && Quests->GetHistoryPage().Request == Request) QuestHistoryRequest = Request;
+    RefreshQuests();
+}
+
+void UProject_JPlayerHUDWidget::RefreshQuestHistory()
+{
+    if (!QuestHistoryCommands || !QuestHistoryList || !QuestHistoryStatus || !WidgetTree) return; // Optional skin controls.
+    const TStrongObjectPtr<ThisClass> KeepSelf(this);
+    const TStrongObjectPtr<UProject_JPlayerUIComponent> Owner(ScreenOwner.Get());
+    const TStrongObjectPtr<UProject_JQuestComponent> Quests(Owner.IsValid() ? Owner->GetQuestComponent() : nullptr);
+    const uint64 Revision = QuestPresentationRevision;
+    const auto IsCurrent = [&]
+    {
+        return !bQuestPresentationRetired && QuestPresentationRevision == Revision && ScreenOwner.Get() == Owner.Get() &&
+            Owner.IsValid() && !Owner->IsBeingDestroyed() && Quests.IsValid() && !Quests->IsBeingDestroyed() &&
+            Owner->GetQuestComponent() == Quests.Get() && QuestRowSource.Get() == Quests.Get();
+    };
+    if (!IsCurrent()) return;
+    if (QuestHistoryButtons.IsEmpty())
+    {
+        const FName Commands[] = {TEXT("QuestCurrent"), TEXT("QuestHistory"), TEXT("HistoryPrevious"), TEXT("HistoryNext"), TEXT("HistoryRefresh")};
+        const FText Labels[] = {NSLOCTEXT("ProjectJUI", "QuestCurrent", "진행"), NSLOCTEXT("ProjectJUI", "QuestHistory", "완료"),
+            NSLOCTEXT("ProjectJUI", "HistoryPrevious", "이전"), NSLOCTEXT("ProjectJUI", "HistoryNext", "다음"), NSLOCTEXT("ProjectJUI", "HistoryRefresh", "새로고침")};
+        for (int32 Index = 0; Index < UE_ARRAY_COUNT(Commands); ++Index)
+        {
+            auto* Button = WidgetTree->ConstructWidget<UProject_JUICommandButton>();
+            QuestHistoryButtons.Add(Button);
+            Button->InitializeCommand(this, Commands[Index], Labels[Index]);
+            if (!IsCurrent()) return;
+            QuestHistoryCommands->AddChildToHorizontalBox(Button);
+            if (!IsCurrent()) return;
+        }
+    }
+    const auto Summary = Quests->GetHistorySummary();
+    const auto Page = Quests->GetHistoryPage();
+    if (Page.Ids.Num() > 32 || QuestHistoryRows.Num() > 32 || QuestHistoryButtons.Num() != 5) return;
+    const bool bConfirmed = Page.bHasPage && Summary.Revision.IsValid() && Page.Summary.Revision == Summary.Revision && Page.Summary.Count == Summary.Count;
+    FText State = NSLOCTEXT("ProjectJUI", "HistoryUnknown", "아직 조회하지 않았습니다.");
+    if (Page.bHasPage) State = bConfirmed ? NSLOCTEXT("ProjectJUI", "HistoryConfirmed", "확인한 페이지") : NSLOCTEXT("ProjectJUI", "HistoryStale", "이전 확인 페이지 · 새로고침 필요");
+    if (Page.Status == EProject_JQuestHistoryPageStatus::Pending) State = NSLOCTEXT("ProjectJUI", "HistoryRequested", "조회 요청됨 · 응답이 없으면 다시 조회하세요.");
+    else if (Page.Status == EProject_JQuestHistoryPageStatus::Rejected || Page.Status == EProject_JQuestHistoryPageStatus::Unknown)
+        State = NSLOCTEXT("ProjectJUI", "HistoryUnavailable", "조회가 확인되지 않았습니다 · 다시 조회할 수 있습니다.");
+    const FText Count = Summary.Revision.IsValid() ? FText::AsNumber(Summary.Count) : NSLOCTEXT("ProjectJUI", "HistoryCountUnknown", "미확인");
+    const FText PageNumber = Page.bHasPage ? FText::Format(NSLOCTEXT("ProjectJUI", "HistoryPageNumber", "{0}/{1}쪽"),
+        FText::AsNumber(Page.Ordinal + 1), FText::AsNumber(FMath::Max(1, (Page.Summary.Count + 31) / 32))) : FText::GetEmpty();
+    QuestHistoryStatus->SetText(FText::Format(NSLOCTEXT("ProjectJUI", "HistorySummary", "완료 {0} · {1} · {2}"), Count, PageNumber, State));
+    if (!IsCurrent()) return;
+    QuestHistoryButtons[0]->SetIsEnabled(bShowingQuestHistory);
+    if (!IsCurrent()) return;
+    QuestHistoryButtons[1]->SetIsEnabled(true);
+    if (!IsCurrent()) return;
+    QuestHistoryButtons[2]->SetIsEnabled(bShowingQuestHistory && bConfirmed && Page.Ordinal > 0);
+    if (!IsCurrent()) return;
+    QuestHistoryButtons[3]->SetIsEnabled(bShowingQuestHistory && bConfirmed && static_cast<int64>(Page.Ordinal + 1) * 32 < Summary.Count);
+    if (!IsCurrent()) return;
+    QuestHistoryButtons[4]->SetIsEnabled(bShowingQuestHistory); // Never disabled by Pending/silent admission rejection.
+    if (!IsCurrent()) return;
+    if (QuestJournal) QuestJournal->SetVisibility(bShowingQuestHistory ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
+    if (!IsCurrent()) return;
+    QuestHistoryList->SetVisibility(bShowingQuestHistory ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+    if (!IsCurrent() || !bShowingQuestHistory) return;
+    while (QuestHistoryRows.Num() < Page.Ids.Num())
+    {
+        auto* Label = WidgetTree->ConstructWidget<UTextBlock>();
+        QuestHistoryRows.Add(Label); Label->SetAutoWrapText(true);
+        QuestHistoryList->AddChild(Label);
+        if (!IsCurrent()) return;
+    }
+    for (int32 Index = 0; Index < QuestHistoryRows.Num(); ++Index)
+    {
+        const TStrongObjectPtr<UTextBlock> Label(QuestHistoryRows[Index]);
+        const FName Id = Page.Ids.IsValidIndex(Index) ? Page.Ids[Index] : NAME_None;
+        const TStrongObjectPtr<UProject_JQuestDefinition> Definition(Id.IsNone() ? nullptr : Quests->FindDefinition(Id));
+        if (!IsCurrent()) return;
+        Label->SetText(Definition.IsValid() && !Definition->Title.IsEmpty() ? Definition->Title : (Id.IsNone() ? FText::GetEmpty() : FText::FromName(Id)));
+        if (!IsCurrent()) return;
+        Label->SetVisibility(Page.Ids.IsValidIndex(Index) ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+        if (!IsCurrent()) return;
+    }
 }
 
 void UProject_JPlayerHUDWidget::RefreshKeySettings()
@@ -1164,4 +1490,79 @@ bool UProject_JPlayerHUDWidget::ValidateRuntimeLayout() const
 		if (Position.X < -.1 || Position.Y < -.1 || Size.X <= 0 || Size.Y <= 0 || Position.X + Size.X > Extent.X + .1 || Position.Y + Size.Y > Extent.Y + .1) return false;
 	}
 	return true;
+}
+
+
+void UProject_JPlayerHUDWidget::PresentPartyRoster(const TArray<FProject_JPartyMemberSummary>& Members)
+{
+    if (!PartyBox || !WidgetTree) { PresentedPartyMemberCount = 0; return; }
+    if (Members.Num() > ProjectJMaxPartyRosterMembers) { PresentPartyRoster({}); return; }
+    // Validate a single coherent post-delta view. Never resolve a remote Pawn/ASC.
+    TSet<FGuid> Ids;
+    FName Group;
+    for (int32 Index = 0; Index < Members.Num(); ++Index)
+    {
+        const auto& Member = Members[Index];
+        if (!Member.CharacterId.IsValid() || Member.PartyId.IsNone() || Member.Order != Index
+            || Ids.Contains(Member.CharacterId) || (!Group.IsNone() && Group != Member.PartyId)
+            || Member.HealthPermille < 0 || Member.HealthPermille > 1000 || Member.DisplayName.Len() > 64)
+        {
+            PresentPartyRoster({}); return;
+        }
+        Group = Member.PartyId; Ids.Add(Member.CharacterId);
+    }
+    while (PartyLabels.Num() < Members.Num())
+    {
+        auto* Row = WidgetTree->ConstructWidget<UVerticalBox>();
+        PartyBox->AddChildToVerticalBox(Row)->SetPadding(FMargin(0, 0, 0, 4));
+        auto* Label = WidgetTree->ConstructWidget<UTextBlock>();
+        auto Font = Label->GetFont(); Font.Size = 11; Label->SetFont(Font);
+        Row->AddChildToVerticalBox(Label);
+        auto* Health = WidgetTree->ConstructWidget<UProgressBar>();
+        auto* Size = WidgetTree->ConstructWidget<USizeBox>();
+        Size->SetHeightOverride(4); Size->SetContent(Health); Row->AddChildToVerticalBox(Size);
+        PartyLabels.Add(Label); PartyHealthBars.Add(Health);
+    }
+    for (int32 Index = 0; Index < PartyLabels.Num(); ++Index)
+    {
+        auto* Label = PartyLabels[Index].Get(); auto* Health = PartyHealthBars[Index].Get();
+        auto* Row = Label ? Label->GetParent() : nullptr;
+        if (Index >= Members.Num())
+        {
+            Label->SetText(FText::GetEmpty()); Health->SetPercent(0);
+            if (Row) Row->SetVisibility(ESlateVisibility::Collapsed);
+            continue;
+        }
+        const auto& Member = Members[Index];
+        const FText Name = Member.DisplayName.IsEmpty()
+            ? FText::Format(NSLOCTEXT("ProjectJUI", "PartyMemberNumber", "파티원 {0}"), FText::AsNumber(Index + 1))
+            : FText::FromString(Member.DisplayName);
+        const FText Leader = Member.bLeader ? NSLOCTEXT("ProjectJUI", "PartyLeaderBadge", " · 파티장") : FText::GetEmpty();
+        const FText Presence = !Member.bAvailableHere ? NSLOCTEXT("ProjectJUI", "PartyUnavailable", "연결 정보 없음")
+            : !Member.bHealthKnown ? NSLOCTEXT("ProjectJUI", "PartyResourcesPending", "연결 중")
+            : FText::Format(NSLOCTEXT("ProjectJUI", "PartyHealthPercent", "체력 {0}"), FText::AsPercent(Member.HealthPermille / 1000.f));
+        Label->SetText(Member.bAvailableHere
+            ? FText::Format(NSLOCTEXT("ProjectJUI", "PartyOnlineRow", "{0} · Lv.{1}{2} · {3}"), Name, FText::AsNumber(Member.Level), Leader, Presence)
+            : FText::Format(NSLOCTEXT("ProjectJUI", "PartyUnavailableRow", "{0}{1} · {2}"), Name, Leader, Presence));
+        Health->SetPercent(Member.bHealthKnown ? Member.HealthPermille / 1000.f : 0);
+        Health->SetFillColorAndOpacity(Member.bAvailableHere ? FLinearColor(.18f, .68f, .28f) : FLinearColor(.25f, .25f, .25f));
+        if (Row) Row->SetVisibility(ESlateVisibility::HitTestInvisible);
+    }
+    PresentedPartyMemberCount = Members.Num();
+    PartyBox->SetVisibility(Members.IsEmpty() ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
+}
+
+void UProject_JPlayerHUDWidget::PresentCraftingJobs(UProject_JCraftingJobsComponent* Source)
+{
+	if (CraftingJobsView) CraftingJobsView->Present(ScreenOwner.Get(), Source);
+}
+void UProject_JPlayerHUDWidget::RefreshCraftingRequest(UProject_JCraftingJobsComponent* Source)
+{
+	if (!CraftingJobsView) return;
+	if (!Source) CraftingJobsView->Present(ScreenOwner.Get(), nullptr);
+	else CraftingJobsView->RefreshClock();
+}
+int32 UProject_JPlayerHUDWidget::GetPresentedCraftingJobCount() const
+{
+	return CraftingJobsView ? CraftingJobsView->GetPresentedJobCount() : 0;
 }

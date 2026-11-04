@@ -13,6 +13,7 @@ class USkeletalMesh;
 class UProject_JAttackDefinition;
 class UProject_JCombatStyleDefinition;
 class UAnimInstance;
+class UProject_JVisualAssetSubsystem;
 
 /** Resolved cosmetic mount. The same endpoint is used for draw, motion return and recovery. */
 struct FProject_JResolvedWeaponAttachment
@@ -255,6 +256,15 @@ private:
 	friend class FProjectJCanonicalMeleeTraceTest;
 	friend class FProjectJPrimaryGripAttachmentTest;
 	bool ShouldBudgetPresentation() const;
+	void QueueBudgetedPresentation();
+	void SchedulePresentationRetry();
+	UClass* ResolveWeaponActorClass(const UProject_JWeaponPresentationProfile* Profile);
+	void ReleaseWeaponClassLease();
+	// Only a cold current class needs a loader lease; a resident actor owns its class directly.
+	uint64 WeaponClassLease = 0, WeaponClassRevision = 0;
+	FSoftObjectPath WeaponClassPath;
+	TWeakObjectPtr<const UProject_JWeaponPresentationProfile> WeaponClassProfile;
+	TWeakObjectPtr<UProject_JVisualAssetSubsystem> WeaponClassLoader;
 	void CancelBudgetedPresentation();
 	uint64 PresentationRevision = 0;
 	bool bApplyingBudget = false, bRetryBudget = false;

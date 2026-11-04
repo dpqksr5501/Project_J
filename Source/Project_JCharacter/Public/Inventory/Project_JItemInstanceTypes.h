@@ -36,4 +36,9 @@ struct FProject_JItemInstanceData
 	{
 		return ItemDef != nullptr && InstanceId.IsValid() && StackCount > 0;
 	}
+	bool operator==(const FProject_JItemInstanceData& Other) const
+	{
+		return InstanceId == Other.InstanceId && ItemDef == Other.ItemDef && ItemLevel == Other.ItemLevel &&
+			StackCount == Other.StackCount && bIsLocked == Other.bIsLocked && bIsEquipped == Other.bIsEquipped && BagOrder == Other.BagOrder;
+	}
 };

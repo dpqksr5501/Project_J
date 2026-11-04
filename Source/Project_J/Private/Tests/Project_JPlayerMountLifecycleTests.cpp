@@ -4,7 +4,7 @@
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "Game/Project_JPlayerState.h"
-#include "Project_JGreatswordCharacter.h"
+#include "Project_JSpellbladeCharacter.h"
 #include "Project_JGameplayTags.h"
 #include "AbilitySystemComponent.h"
 #include "GameFramework/PlayerController.h"
@@ -30,7 +30,7 @@ bool FProjectJPlayerMountLifecycleTest::RunTest(const FString&)
 	FActorSpawnParameters Params; Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	auto* Controller = World->SpawnActor<APlayerController>(Params);
 	auto* State = World->SpawnActor<AProject_JPlayerState>(Params);
-	auto* Player = World->SpawnActor<AProject_JGreatswordCharacter>(Params);
+	auto* Player = World->SpawnActor<AProject_JSpellbladeCharacter>(Params);
 	auto* Mount = World->SpawnActor<AProject_JMountLifecycleFixture>(Params);
 	if (!TestNotNull(TEXT("Concrete mount fixture spawns"), Mount)
 		|| !TestNotNull(TEXT("Player fixture spawns"), Player)

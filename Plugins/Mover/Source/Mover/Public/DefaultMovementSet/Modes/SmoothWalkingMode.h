@@ -9,10 +9,13 @@
 
 #define UE_API MOVER_API
 
+struct FSmoothWalkingMoveParams;
+struct FSmoothWalkingStateValues;
+
 /**
  * A walking mode that provides a simplified version of the default walking mode model with additional options for smoothing.
  */
-UCLASS(BlueprintType, Experimental)
+UCLASS(MinimalAPI, BlueprintType, Experimental)
 class USmoothWalkingMode : public USimpleWalkingMode
 {
 	GENERATED_BODY()
@@ -22,6 +25,16 @@ public:
 	UE_API virtual void GenerateWalkMove_Implementation(FMoverTickStartData& StartState, float DeltaSeconds, const FMoverSimContext& SimContext, const FVector& DesiredVelocity,
 									 const FQuat& DesiredFacing, const FQuat& CurrentFacing, FVector& InOutAngularVelocityDegrees, FVector& InOutVelocity) override;
 
+	/** Capture only the fourteen scalar settings and double-spring policy; leaves step/intent/reset fields unchanged. */
+	UE_API void CaptureSmoothWalkingSettings(FSmoothWalkingMoveParams& OutParams) const;
+
+	/** GT-only read of the current native prediction seed. Never adds live state, sets the blackboard or changes outputs on failure.
+	 * Caller captures the initial reset before priming the prediction receipt; the closed calculation has no live callbacks. */
+	UE_API bool CapturePredictionState(const FMoverSyncState& StartSync, const FMoverSimContext& SimContext,
+		FSmoothWalkingStateValues& OutState, bool& bOutInitializeSpring) const;
+
+	/** Prime the real predictive receipt and capture its readable stale-state policy for subsequent pure steps. */
+	UE_API void MarkPredictionGenerated(const FMoverSimContext& SimContext, bool& bOutInitializeSubsequentSpring) const;
 
 protected: // Velocity Controls
 

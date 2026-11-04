@@ -7,6 +7,8 @@
 #include "Iris/Serialization/IrisObjectReferencePackageMap.h"
 
 
+#include <type_traits>
+#include <limits>
 #include "NetworkPredictionReplicationProxy.generated.h"
 
 #define UE_API NETWORKPREDICTION_API
@@ -38,6 +40,29 @@ struct FNetSerializeParams
 };
 
 
+#if !UE_BUILD_SHIPPING
+// Native diagnostic values only: never serialized, reflected, or used by simulation.
+// EventSerial counts this role's codec events, NOT packets. Independent SP has no wire frame.
+enum class ENPModelWireStatus : uint8 { Unbound, AwaitingReceive, ReceiveApplied, UnsupportedDriver, Retired, ArchiveError, Overflow, StaleBinding, BeforeCapture, NotClient, Disabled, AwaitingEncode, AuthorityEncoded, UnsupportedMode };
+enum class ENPModelWireFrameKind : uint8 { None, ServerFrame, ClientInputAck };
+enum class ENPModelWireTimeKind : uint8 { None, ServerVariableMS, IndependentSimulationMS };
+struct FNPModelWireSnapshot
+{
+ uint64 BindingEpoch=0, EventSerial=0, EventEngineFrame=0;
+ double EventSeconds=0.;
+ int32 SimID=INDEX_NONE, FrameValue=INDEX_NONE, TimeMS=INDEX_NONE;
+ // Optional model-owned scalar projection, not serialized. NaN means unavailable.
+ // Mover's opt-in contract is decoded stored-basis PositionXY / VelocityXY, float32.
+ float ModelScalars[4]={std::numeric_limits<float>::quiet_NaN(),std::numeric_limits<float>::quiet_NaN(),
+  std::numeric_limits<float>::quiet_NaN(),std::numeric_limits<float>::quiet_NaN()};
+ uint8 Role=0;
+ ENPModelWireStatus Status=ENPModelWireStatus::Unbound;
+ ENPModelWireFrameKind FrameKind=ENPModelWireFrameKind::None;
+ ENPModelWireTimeKind TimeKind=ENPModelWireTimeKind::None;
+};
+static_assert(sizeof(FNPModelWireSnapshot)<=64 && std::is_trivially_copyable_v<FNPModelWireSnapshot>);
+#endif
+
 // Redirects NetSerialize to a dynamically set NetSerializeFunc.
 // This is how we hook into the replication systems role-based serialization
 USTRUCT()
@@ -54,6 +79,26 @@ struct FReplicationProxy
 	{ 
 		return CachedPendingFrame; 
 	}
+
+#if !UE_BUILD_SHIPPING
+ // GT-only copied value API. Copying this USTRUCT (including Iris shadow state) remains legal.
+ UE_API void ResetModelWireObservation(int32 SimID, uint8 Role);
+ UE_API void SetModelWireStatus(uint64 Epoch, ENPModelWireStatus Status);
+ UE_API void RecordModelWireReceive(uint64 Epoch, ENPModelWireFrameKind FrameKind, int32 FrameValue, ENPModelWireTimeKind TimeKind, int32 TimeMS, const float* InScalars=nullptr);
+ UE_API void RecordAuthorityModelEncode(uint64 Epoch, int32 ServerTimeMS);
+ UE_API FNPModelWireSnapshot GetModelWireObservation() const;
+ uint64 GetModelWireObservationEpoch() const { return ModelWireObservation.BindingEpoch; }
+ UE_API static bool IsModelWireObservationEnabled();
+ UE_API static void SetModelWireObservationEnabled(bool bEnabled,bool bScalars=false);
+ UE_API static bool IsModelWireScalarObservationEnabled();
+ // GT-only exact save/restore for the existing diagnostic CVar, not simulation state.
+ UE_API static int32 ExchangeModelWireObservationLevel(int32 Level);
+ UE_API static void ResetModelWireThreadStatus();
+ UE_API static void ReportUnsupportedModelWireThread();
+ UE_API static bool HasUnsupportedModelWireThread();
+ // Process-wide empty HasData=false decode evidence; no reset/consume or model state.
+ UE_API static uint64 GetProcessEmptyDecodeCount();
+#endif
 
 	TFunction<void(const FNetSerializeParams& P)> NetSerializeFunc;
 
@@ -76,11 +121,19 @@ public:
 	// This is managed by the use of a custom packagemap.
 	UE::Net::FIrisPackageMapExports PackageMapExports;
 
+	// Borrowed only by dequantized receive state until its immediate Iris Apply.
+	// Not reflected/serialized or copied to the live target by the custom Apply.
+	UE::Net::FNetTokenResolveContext PackageMapTokenResolveContext;
+
 	// Iris support: Since we capturing data outside of the normal serialization path we also need to store exports to inject when actually sending the data.
 	UE::Net::FNetTokenExportContext::FNetTokenExports NetTokensPendingExport;
 
 private:
 
+#if !UE_BUILD_SHIPPING
+ void RecordModelWireEvent(uint64 Epoch, ENPModelWireStatus Status, ENPModelWireFrameKind FrameKind, int32 FrameValue, ENPModelWireTimeKind TimeKind, int32 TimeMS, const float* InScalars=nullptr);
+ FNPModelWireSnapshot ModelWireObservation;
+#endif
 	EReplicationProxyTarget ReplicationTarget;
 	int32 CachedPendingFrame = INDEX_NONE;
 };

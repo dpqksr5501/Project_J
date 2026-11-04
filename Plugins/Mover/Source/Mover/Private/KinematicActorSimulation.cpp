@@ -14,7 +14,11 @@ UKinematicActorSimulation::UKinematicActorSimulation()
 
 void UKinematicActorSimulation::BeginDestroy()
 {
-	Uninit();
+	// Runtime deactivation belongs to the liaison's EndPlay/UninitializeComponent.
+	// GC may already have destroyed ModeFSM (and its queued transition). Calling
+	// Uninit here also constructs default modes while the object graph is dying.
+	ModeFSM = nullptr;
+	MoverComp = nullptr;
 	Super::BeginDestroy();
 }
 
@@ -49,7 +53,7 @@ void UKinematicActorSimulation::Init(const FInitParams& InInitParams)
 
 void UKinematicActorSimulation::Uninit()
 {
-	if (ModeFSM)
+	if (IsValid(ModeFSM) && !ModeFSM->HasAnyFlags(RF_BeginDestroyed | RF_FinishDestroyed))
 	{
 		ModeFSM->ClearAllMovementModes();
 		ModeFSM->ClearAllGlobalTransitions();

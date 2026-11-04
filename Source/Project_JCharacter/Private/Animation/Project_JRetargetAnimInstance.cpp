@@ -8,9 +8,13 @@
 #include "Animation/Project_JRetargetBodyProfile.h"
 #include "Animation/Project_JRetargetAnimInstanceProxy.h"
 #include "Animation/Project_JHandContact.h"
+#include "Animation/Project_JAnimationQualityPolicy.h"
+#include "Animation/Project_JBudgetedSkeletalMeshComponent.h"
+#include "HAL/IConsoleManager.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/Project_JWeaponPresentationComponent.h"
+#include "Components/Project_JAnimationUpdateCoordinatorComponent.h"
 #include "GameFramework/Character.h"
 #include "Project_JPlayerCharacter.h"
 #include "AbilitySystemGlobals.h"
@@ -19,6 +23,12 @@
 #include "Engine/World.h"
 #include "Engine/SkeletalMesh.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
+
+namespace
+{
+TAutoConsoleVariable<int32> SecondaryMotionBudget(TEXT("ProjectJ.AnimationQuality.SecondaryMotionBudget.Enabled"), 1,
+	TEXT("Accessory-only BoolAlpha policy for explicitly opted-in body graphs. 0 restores their previous policy; source gameplay pose/contact/cadence is unchanged."));
+}
 
 void UProject_JRetargetAnimInstance::BeginDestroy()
 {
@@ -232,6 +242,29 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	// Early out if tier forbids Follower Retarget / Hand IK or if character is off-screen/hidden
 	const bool bDirectBody = GetOwningComponent() == Project_J::Movement::FindPoseSource(OwnerPawn);
 	bEnableSecondaryMotion = CurrentQualityTier != EProject_JAnimBudgetTier::Hidden && (bDirectBody || bEnableFollowerRetarget);
+	if (bAllowSecondaryMotionBudget)
+	{
+	ProjectJ::Animation::FSecondaryMotionObservation Secondary;
+	Secondary.bRouteAllows = bEnableSecondaryMotion;
+	Secondary.bEnabled = SecondaryMotionBudget.GetValueOnGameThread() != 0;
+	Secondary.bAssetOptIn = bAllowSecondaryMotionBudget;
+	Secondary.bLocal = ProjectJ::Animation::IsLocalPlayerAvatar(OwnerPawn);
+	const auto* PoseSource = Project_J::Movement::FindPoseSource(OwnerPawn);
+	const auto* BodyMesh = GetOwningComponent();
+	Secondary.bOptOut = (PoseSource && PoseSource->ComponentTags.Contains(TEXT("NoVisualBudget"))) ||
+		(BodyMesh && BodyMesh->ComponentTags.Contains(TEXT("NoVisualBudget")));
+	if (Secondary.bEnabled && !Secondary.bLocal)
+	{
+		const auto* Coordinator = OwnerPawn->FindComponentByClass<UProject_JAnimationUpdateCoordinatorComponent>();
+		Secondary.bOptOut |= !Coordinator || !Coordinator->IsVisualBudgetEnabled();
+	}
+	if (const auto* Budgeted = Cast<UProject_JBudgetedSkeletalMeshComponent>(PoseSource))
+	{
+		Secondary.bOptOut |= !Budgeted->bAllowProjectBudget;
+		Secondary.DistanceTier = Budgeted->GetObservedAnimationDistanceTier();
+	}
+	bEnableSecondaryMotion = ProjectJ::Animation::ResolveSecondaryMotionQuality(Secondary);
+	}
 	if ((!bDirectBody && !bEnableFollowerRetarget) || !bTierAllowsHandIK || CurrentQualityTier == EProject_JAnimBudgetTier::Hidden)
 	{
 		return;

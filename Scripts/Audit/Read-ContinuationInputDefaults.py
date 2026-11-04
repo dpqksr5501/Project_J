@@ -42,7 +42,7 @@ controller_class = gm.get_editor_property('player_controller_class')
 pawn_class = gm.get_editor_property('default_pawn_class')
 controller = unreal.get_default_object(controller_class) if controller_class else None
 pawn = unreal.get_default_object(pawn_class) if pawn_class else None
-greatsword_class = unreal.EditorAssetLibrary.load_blueprint_class('/Game/Character_BPs/GreatSword/BP_GreatSword')
+greatsword_class = unreal.EditorAssetLibrary.load_blueprint_class('/Game/Character_BPs/Spellblade/BP_Spellblade')
 greatsword = unreal.get_default_object(greatsword_class) if greatsword_class else None
 actions = ['jump_action','move_action','move_intent_forward_action','move_intent_backward_action',
            'move_intent_left_action','move_intent_right_action','look_action','mouse_look_action',
@@ -50,7 +50,7 @@ actions = ['jump_action','move_action','move_intent_forward_action','move_intent
            'interact_action','prototype_starting_weapon','sprint_ability_tag']
 registry = json.loads((root / 'Saved/Validation/Continuation_20261014/AssetRegistry1/registry.json').read_text(encoding='utf-8-sig'))
 packages = sorted({row['package'] for row in registry['assets']
-                   if row['package'].startswith('/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/')
+                   if row['package'].startswith('/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/')
                    and 'AnimMontage' in row['asset_class_path']})
 montages = []
 for package in packages:

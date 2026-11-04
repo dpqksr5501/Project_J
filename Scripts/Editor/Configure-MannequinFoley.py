@@ -11,7 +11,7 @@ import unreal
 
 APPLY = bool(globals().get('FOLEY_SETUP_APPLY', False))
 PROFILE_PATH = '/Game/DataAssetSets/Audio/DA_Mannequin_Foley'
-CHARACTER_PATH = '/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_GreatSword_AnimProfile'
+CHARACTER_PATH = '/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_Spellblade_AnimProfile'
 PRESETS = '/Game/Audio/Foley/MetaSounds/Presets/'
 REPORT_PATH = Path(unreal.Paths.project_saved_dir()) / 'Validation/FoleyExtension_20261008/AudioSetup.json'
 

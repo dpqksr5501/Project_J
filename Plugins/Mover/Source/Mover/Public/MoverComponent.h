@@ -17,10 +17,12 @@
 #include "DefaultMovementSet/MoverMontageSimulationTypes.h"
 #include "UObject/WeakInterfacePtr.h"
 #include "Templates/SharedPointer.h"
+#include "Templates/Function.h"
 
 #include "MoverComponent.generated.h"
 
 struct FMoverTimeStep;
+struct FMoverNativeFlyingTrajectory;
 struct FInstantMovementEffect;
 struct FMoverSimulationEventData;
 struct FMovementBaseTransformDelta;
@@ -542,6 +544,10 @@ public:	// Queries
 	 * The first sample info of the returned array corresponds to the current state of the mover. */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = Mover)
 	MOVER_API virtual TArray<FTrajectorySampleInfo> GetPredictedTrajectory(FMoverPredictTrajectoryParams PredictionParams);
+    /** GT-only capture for the exact native Flying subset already admitted by
+     * synchronous prediction. Success owns values, not a completed forecast. */
+    MOVER_API bool TryPrepareNativeFlyingTrajectory(const FMoverPredictTrajectoryParams& Query,
+        FMoverNativeFlyingTrajectory& OutPrediction);
 
 	// Get the current movement mode name
 	UFUNCTION(BlueprintPure, Category = Mover)
@@ -763,6 +769,23 @@ public:
 	MOVER_API void OnSimulationRollback(const FMoverSyncState* SyncState, const FMoverAuxStateContext* AuxState, const FMoverTimeStep& NewBaseTimeStep);
 
 protected:
+    /** Shared admission for the existing GT fast path and owned capture. */
+    bool TryCaptureNativeFlyingTrajectory(const UBaseMovementMode& Mode,
+        const FMoverTickStartData& StartState, const FMoverTimeStep& FirstStep,
+        const FMoverPredictTrajectoryParams& Query, FMoverNativeFlyingTrajectory& OutPrediction) const;
+    /** Synchronous borrowed native query context; never retain the callback or
+     * references. Consumer opens/advances prediction; this scope restores the
+     * original gravity override, then closes prediction before returning. */
+    MOVER_API bool WithPredictionContext(const FMoverPredictTrajectoryParams& PredictionParams,
+        TFunctionRef<bool(const UBaseMovementMode&, const FMoverSimContext&, FMoverTickStartData&,
+            const FMoverTimeStep&, URollbackBlackboard&)> Consumer);
+	/** Synchronous query extension inside the existing prediction-blackboard lifetime.
+	 * Return false without changing state or output to retain ordinary mode/BP prediction.
+	 * Successful implementations must fill every sample while keeping forecast-only state local to the query. */
+	MOVER_API virtual bool TryGetPreparedPrediction(const UBaseMovementMode& Mode, const FMoverSimContext& SimContext,
+		const FMoverTickStartData& StartState, const FMoverTimeStep& FirstStep,
+		const FMoverPredictTrajectoryParams& PredictionParams, TArray<FTrajectorySampleInfo>& OutSamples);
+
 	/** Makes this component and owner actor reflect the state of a particular frame snapshot. This occurs after simulation ticking, as well as during a rollback before we resimulate forward.
 	 * @param bDueToRollback	Signifies if this is a forward-advancing frame or rollback. Affects how transform changes are applied.
 	 */
@@ -814,6 +837,8 @@ protected:
 	
 	/** internal function to ensure SharedSettings array matches what's needed by the list of Movement Modes */
 	MOVER_API void RefreshSharedSettings();
+	/** Constructor bootstrap for a stable native default subobject. RefreshSharedSettings owns the runtime list. */
+	MOVER_API void RegisterDefaultSharedSettings(UObject* Settings);
 
 	/** This is the component that's actually being moved. Typically it is the Actor's root component and often a collidable primitive. */
 	UPROPERTY(Transient)

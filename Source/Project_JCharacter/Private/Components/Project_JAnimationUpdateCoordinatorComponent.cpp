@@ -36,6 +36,18 @@ void UProject_JAnimationUpdateCoordinatorComponent::OnComponentDestroyed(bool bD
 	Super::OnComponentDestroyed(bDestroyingHierarchy);
 }
 
+void UProject_JAnimationUpdateCoordinatorComponent::Deactivate()
+{
+	RestoreVisualBudget();
+	Super::Deactivate();
+}
+
+void UProject_JAnimationUpdateCoordinatorComponent::SetComponentTickEnabled(bool bEnabled)
+{
+	if (!bEnabled) RestoreVisualBudget();
+	Super::SetComponentTickEnabled(bEnabled);
+}
+
 void UProject_JAnimationUpdateCoordinatorComponent::RequestUrgentRemoteAnimationUpdate(
 	float DurationSeconds)
 {
@@ -270,7 +282,7 @@ void UProject_JAnimationUpdateCoordinatorComponent::RefreshVisualBudget(float De
 	DiscoveryElapsed += FMath::Max(0.f, DeltaTime);
 	if (DiscoveryElapsed >= .5f) { DiscoverVisualMeshes(); DiscoveryElapsed = 0; }
 	const bool bLocal = ProjectJ::Animation::IsLocalPlayerAvatar(Character);
-	RefreshClothBudget(Source, bLocal);
+	RefreshClothBudget(Source, bLocal, DeltaTime);
 	const bool bAuthored = Native->NeedsFullRateVisualUpdate();
 	if (bSawAuthoredPresentation && !bAuthored) AuthoredReturnUntil = Now + .2;
 	bSawAuthoredPresentation = bAuthored;

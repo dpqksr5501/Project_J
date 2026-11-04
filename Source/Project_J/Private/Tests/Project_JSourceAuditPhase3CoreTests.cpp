@@ -7,7 +7,7 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/WorldSettings.h"
 #include "Game/Project_JPlayerState.h"
-#include "Project_JGreatswordCharacter.h"
+#include "Project_JSpellbladeCharacter.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JAttributeSet.h"
 #include "Components/Project_JInventoryComponent.h"
@@ -64,7 +64,7 @@ bool FProjectJAudit3RetainedEquipmentTest::RunTest(const FString&) {
     ON_SCOPE_EXIT {if(W->HasBegunPlay())W->EndPlay(EEndPlayReason::Quit);W->DestroyWorld(false);GEngine->DestroyWorldContext(W);};
     W->InitializeActorsForPlay(FURL());W->GetWorldSettings()->NotifyBeginPlay();W->GetWorldSettings()->NotifyMatchStarted();
     auto* State=W->SpawnActor<AProject_JPlayerState>();auto* PC=W->SpawnActor<APlayerController>();
-    auto* Old=W->SpawnActor<AProject_JGreatswordCharacter>();auto* Next=W->SpawnActor<AProject_JGreatswordCharacter>();
+    auto* Old=W->SpawnActor<AProject_JSpellbladeCharacter>();auto* Next=W->SpawnActor<AProject_JSpellbladeCharacter>();
     State->SetOwner(PC);PC->SetPlayerState(State);Old->SetPlayerState(State);PC->Possess(Old);
     auto* ASC=State->GetProjectJAbilitySystemComponent();ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetAttackPowerAttribute(),100.f);
     auto* Definition=NewObject<UProject_JEquipmentItemDefinition>(State);Definition->ItemId=TEXT("Audit3Head");Definition->EquipmentSlot=EProject_JEquipmentSlot::Head;
@@ -92,7 +92,7 @@ bool FProjectJAudit3PrepareMontageTest::RunTest(const FString&) {
     if(!TestTrue(TEXT("Only a disposable source-audit package can be created"),Path.StartsWith(TEXT("/Game/__SourceAuditTests__/"))))return false;
     const FString File=FPackageName::LongPackageNameToFilename(Path,FPackageName::GetAssetPackageExtension());
     if(!TestFalse(TEXT("Never overwrite an existing test or user asset"),IFileManager::Get().FileExists(*File)))return false;
-    auto* Style=LoadObject<UProject_JCombatStyleDefinition>(nullptr,TEXT("/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword.DA_CombatStyle_Greatsword"));
+    auto* Style=LoadObject<UProject_JCombatStyleDefinition>(nullptr,TEXT("/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Spellblade.DA_CombatStyle_Spellblade"));
     if(!TestNotNull(TEXT("Read-only production style"),Style)||!Style->ComboDefinition||Style->ComboDefinition->Nodes.IsEmpty())return false;
     auto* Source=Style->ComboDefinition->Nodes[0].AttackDefinition->Montage.Get();
     if(!TestNotNull(TEXT("Source montage"),Source))return false;

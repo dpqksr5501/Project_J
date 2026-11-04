@@ -55,6 +55,18 @@ void UProject_JServerSideRewindComponent::ResetHistory()
 	PoseHistoryStartIndex = PoseHistoryCount = 0;
 }
 
+bool UProject_JServerSideRewindComponent::TryGetHistoryTimeBounds(double& OutOldest, double& OutNewest) const
+{
+	check(IsInGameThread());
+	if (PoseHistoryCount <= 0) return false;
+	const double Oldest = GetPoseHistoryRecord(0).Timestamp;
+	const double Newest = GetPoseHistoryRecord(PoseHistoryCount - 1).Timestamp;
+	if (!FMath::IsFinite(Oldest) || !FMath::IsFinite(Newest) || Newest < Oldest) return false;
+	OutOldest = Oldest;
+	OutNewest = Newest;
+	return true;
+}
+
 void UProject_JServerSideRewindComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_ServerSideRewindTick);
@@ -86,7 +98,7 @@ void UProject_JServerSideRewindComponent::TickComponent(float DeltaTime, ELevelT
 	DiscardExpiredPoseHistoryRecords(NewRecord.Timestamp);
 }
 
-bool UProject_JServerSideRewindComponent::ServerVerifyHit(float ClientTimestamp, const FVector& TraceStart, const FVector& TraceEnd, float TraceRadius)
+bool UProject_JServerSideRewindComponent::ServerVerifyHit(double ClientTimestamp, const FVector& TraceStart, const FVector& TraceEnd, float TraceRadius)
 {
 	check(IsInGameThread());
 	if (!GetOwner() || !GetOwner()->HasAuthority() || !GetWorld() ||
@@ -104,7 +116,7 @@ bool UProject_JServerSideRewindComponent::ServerVerifyHit(float ClientTimestamp,
 		FMath::Lerp(Pose1.CapsuleHalfHeight, Pose2.CapsuleHalfHeight, Alpha), TraceRadius);
 }
 
-bool UProject_JServerSideRewindComponent::GetPosesForTime(float Time, FProject_JPoseHistoryBuffer& OutPose1, FProject_JPoseHistoryBuffer& OutPose2, float& OutAlpha) const
+bool UProject_JServerSideRewindComponent::GetPosesForTime(double Time, FProject_JPoseHistoryBuffer& OutPose1, FProject_JPoseHistoryBuffer& OutPose2, float& OutAlpha) const
 {
 	OutPose1 = OutPose2 = FProject_JPoseHistoryBuffer();
 	OutAlpha = 0.0f;
@@ -151,14 +163,14 @@ bool UProject_JServerSideRewindComponent::GetPosesForTime(float Time, FProject_J
 	OutPose2 = GetPoseHistoryRecord(FoundIndex);
 	OutPose1 = GetPoseHistoryRecord(FoundIndex - 1);
 
-	const float TimeDiff = OutPose2.Timestamp - OutPose1.Timestamp;
+	const double TimeDiff = OutPose2.Timestamp - OutPose1.Timestamp;
 	if (FMath::IsNearlyZero(TimeDiff))
 	{
 		OutAlpha = 0.0f;
 	}
 	else
 	{
-		OutAlpha = (Time - OutPose1.Timestamp) / TimeDiff;
+		OutAlpha = static_cast<float>((Time - OutPose1.Timestamp) / TimeDiff);
 	}
 
 	return true;
@@ -179,7 +191,7 @@ void UProject_JServerSideRewindComponent::AppendPoseHistoryRecord(const FProject
 		!FMath::IsFinite(Record.CapsuleRadius) || !FMath::IsFinite(Record.CapsuleHalfHeight)) return;
 	if (PoseHistoryCount > 0)
 	{
-		const float LastTime = GetPoseHistoryRecord(PoseHistoryCount - 1).Timestamp;
+		const double LastTime = GetPoseHistoryRecord(PoseHistoryCount - 1).Timestamp;
 		if (Record.Timestamp < LastTime) ResetHistory();
 		else if (Record.Timestamp == LastTime)
 		{
@@ -200,7 +212,7 @@ void UProject_JServerSideRewindComponent::AppendPoseHistoryRecord(const FProject
 	++PoseHistoryCount;
 }
 
-void UProject_JServerSideRewindComponent::DiscardExpiredPoseHistoryRecords(float CurrentTime)
+void UProject_JServerSideRewindComponent::DiscardExpiredPoseHistoryRecords(double CurrentTime)
 {
 	while (PoseHistoryCount > 0 && (CurrentTime - GetPoseHistoryRecord(0).Timestamp) > MaxRecordTime)
 	{

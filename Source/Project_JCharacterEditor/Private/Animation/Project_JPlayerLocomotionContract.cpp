@@ -30,6 +30,7 @@
 #include "Retargeter/IKRetargeter.h"
 #include "Retargeter/IKRetargetProcessor.h"
 #include "Engine/MemberReference.h"
+#include "DefaultMovementSet/Modes/SmoothWalkingMode.h"
 
 FString UProject_JPlayerLocomotionLibrary::ExportNativeLocomotionContract(UBlueprint* Target)
 {
@@ -80,6 +81,15 @@ FString UProject_JPlayerLocomotionLibrary::ExportNativeLocomotionContract(UBluep
  if(Target->GeneratedClass->IsChildOf(UProject_JPlayerAnimInstance::StaticClass()))
   for(TFieldIterator<FProperty> P(UProject_JPlayerAnimInstance::StaticClass(),EFieldIteratorFlags::ExcludeSuper);P;++P)
    NativeVariables.Add(MakeShared<FJsonValueObject>(Describe(*P,P->ContainerPtrToValuePtr<void>(Target->GeneratedClass->GetDefaultObject()))));
+ // Walking reparent validation needs inherited protected tuning too. Reuse the existing public exporter;
+ // no Python private-property bypass and no extra authoring state/API.
+ if(Target->GeneratedClass->IsChildOf(USmoothWalkingMode::StaticClass()))
+  for(TFieldIterator<FProperty> P(USmoothWalkingMode::StaticClass(),EFieldIteratorFlags::IncludeSuper);P;++P)
+  {
+   auto Row=MakeShared<FJsonObject>();Row->SetStringField(TEXT("name"),P->GetName());Row->SetStringField(TEXT("cpp"),P->GetCPPType());Row->SetStringField(TEXT("kind"),P->GetClass()->GetName());
+   FString Value;P->ExportTextItem_Direct(Value,P->ContainerPtrToValuePtr<void>(Target->GeneratedClass->GetDefaultObject()),nullptr,nullptr,PPF_None);Row->SetStringField(TEXT("default"),Value);
+   NativeVariables.Add(MakeShared<FJsonValueObject>(Row)); // Do not change the retained graph's enum/struct catalogs.
+  }
  Root->SetArrayField(TEXT("native_variables"),NativeVariables);
  TArray<UEdGraph*> Graphs;Target->GetAllGraphs(Graphs);TArray<TSharedPtr<FJsonValue>> GraphRows;
  for(auto* Graph:Graphs)

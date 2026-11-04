@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Abilities/GameplayAbility.h"
+#include "Project_JGameplayAbility.h"
 #include "Project_JGameplayAbility_CombatToggle.generated.h"
 
 /**
@@ -11,7 +11,7 @@
  * 전투/비전투 모드를 전환합니다. 클라이언트에서 즉각 반응하며, 서버에서 승인/복제합니다.
  */
 UCLASS()
-class PROJECT_JCHARACTER_API UProject_JGameplayAbility_CombatToggle : public UGameplayAbility
+class PROJECT_JCHARACTER_API UProject_JGameplayAbility_CombatToggle : public UProject_JGameplayAbility
 {
 	GENERATED_BODY()
 

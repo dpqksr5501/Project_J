@@ -19,4 +19,4 @@
 - [탈것 구조](Architecture/MountSystemArchitecture.md).
 - [직업·전직 확장 계약](../Architecture/Extensions/README.md).
 
-공격·콤보는 [전투 제작](../Combat/Authoring/GreatswordCombatAuthoringGuide.md), 몸체별 손 접촉은 [애니메이션 제작](../Animation/Authoring/README.md)을 따른다. 저장과 런타임 등록은 각 가이드의 별도 단계를 유지한다.
+공격·콤보는 [전투 제작](../Combat/Authoring/SpellbladeCombatAuthoringGuide.md), 몸체별 손 접촉은 [애니메이션 제작](../Animation/Authoring/README.md)을 따른다. 저장과 런타임 등록은 각 가이드의 별도 단계를 유지한다.

@@ -148,8 +148,12 @@ class PROJECT_JCHARACTER_API UProject_JInventoryComponent : public UActorCompone
 	TArray<FProject_JItemInstanceData> GetItemInstances() const;
 	/** Trusted persistence adapter: validate the whole batch before any replacement. */
 	bool ValidatePersistentItems(const TArray<FProject_JItemInstanceData> &Items, bool bTrustedApply = false) const;
+	/** Native reward preflight only: unchanged existing transient locks remain owned. */
+	bool ValidateNativeRewardItems(const TArray<FProject_JItemInstanceData>& Items, const TArray<FProject_JItemInstanceData>& Before) const;
 	void InstallPersistentItems(const TArray<FProject_JItemInstanceData> &Items);
 	void PublishPersistentItems(const TArray<FProject_JItemInstanceData> &Before);
+	/** Caller-scoped output admission is rechecked before every actual row notification. */
+	void PublishPersistentItems(const TArray<FProject_JItemInstanceData>& Before, TFunctionRef<bool()> Current);
 	bool CanUsePersistentItem(FGuid Instance) const;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty> &OutLifetimeProps) const override;
@@ -212,7 +216,13 @@ class PROJECT_JCHARACTER_API UProject_JInventoryComponent : public UActorCompone
 	virtual void BeginPlay() override;
 
   private:
+	friend struct FProject_JNativeQuestRewardCommit;
+	bool ValidateItemValues(const TArray<FProject_JItemInstanceData>& Items, bool bTrustedApply, const TArray<FProject_JItemInstanceData>* PreservedLocks) const;
+	void InstallPreparedItems(const TArray<FProject_JItemInstanceData>& Items);
+	void PublishPreparedItems(const TArray<FProject_JItemInstanceData>& Before, TFunctionRef<bool()> IsCurrent);
 	friend class FProjectJCommandReplayTest;
+	friend class FProjectJCommandReplyAdmissionTest;
+	friend class FProjectJCommittedDeltaTest;
 	bool bEnding = false;
 	EProject_JBagResult SubmitPersistentBag(FGuid RequestId, const FProject_JBagRequest &Request);
 	EProject_JItemUseResult SubmitPersistentUse(FGuid RequestId, FGuid InstanceId);

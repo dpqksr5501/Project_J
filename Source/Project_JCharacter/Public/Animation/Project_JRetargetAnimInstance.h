@@ -166,6 +166,10 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Quality")
 	bool bEnableFollowerRetarget = true;
 
+	/** Opt in only after accessory-only PA writes and BoolAlpha bindings have been inspected. Default preserves existing/custom graphs. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Project_J|IK|Quality")
+	bool bAllowSecondaryMotionBudget = false;
+
 	/** Cosmetic body physics in either pose route; inherited quality, never gameplay pose ownership. */
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Quality")
 	bool bEnableSecondaryMotion = true;

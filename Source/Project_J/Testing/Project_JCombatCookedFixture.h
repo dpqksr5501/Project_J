@@ -3,7 +3,7 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "Containers/Ticker.h"
 #include "Project_JCombatCookedFixture.generated.h"
-class AProject_JGreatswordCharacter;
+class AProject_JSpellbladeCharacter;
 class AProject_JPlayerState;
 class AAIController;
 class UProject_JEquipmentItemDefinition;
@@ -21,7 +21,7 @@ private:
 	bool CreateCharacter();
 	void Finish(bool bSuccess, const TCHAR* Reason);
 	FTSTicker::FDelegateHandle Handle;
-	UPROPERTY() TObjectPtr<AProject_JGreatswordCharacter> Character;
+	UPROPERTY() TObjectPtr<AProject_JSpellbladeCharacter> Character;
 	UPROPERTY() TObjectPtr<AProject_JPlayerState> State;
 	UPROPERTY() TObjectPtr<AAIController> Controller;
 	UPROPERTY() TObjectPtr<UProject_JEquipmentItemDefinition> Item;

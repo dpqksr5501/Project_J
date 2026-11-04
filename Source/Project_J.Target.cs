@@ -10,6 +10,9 @@ public class Project_JTarget : TargetRules
 		Type = TargetType.Game;
 		DefaultBuildSettings = BuildSettingsVersion.V7;
 		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_8;
+		// Match the installed engine's Default dependency-cache partition
+		// while retaining non-unity compilation without -DisableUnity.
+		bUseUnityBuild = false;
 		ExtraModuleNames.AddRange(new string[] { "Project_J", "Project_JCore", "Project_JGAS", "Project_JCharacter" });
 	}
 }

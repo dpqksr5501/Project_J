@@ -248,7 +248,7 @@ void UProject_JTargetScoringSubsystem::Tick(float DeltaTime)
 		Completion.ContextRevision = Job->Revision;
 		Completion.Result = MoveTemp(Result);
 		Completion.DeliveryMilliseconds = (FPlatformTime::Seconds() - Job->Submitted) * 1000.0;
-		Ready.Add({Job, Completion});
+		Ready.Add({Job, MoveTemp(Completion)});
 		++Index;
 	}
 	// Remove before invoking user code: callbacks may submit/cancel work or destroy this world.

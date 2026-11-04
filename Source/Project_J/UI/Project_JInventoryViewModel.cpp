@@ -4,6 +4,10 @@
 #include "Equipment/Project_JEquipmentItemDefinition.h"
 #include "Engine/World.h"
 #include "Inventory/Project_JConsumableDefinition.h"
+#include "Companion/Project_JCompanionItemDefinition.h"
+#include "Companion/Project_JCompanionComponent.h"
+#include "GameFramework/Actor.h"
+#include "UObject/StrongObjectPtr.h"
 #include "TimerManager.h"
 #include "ProfilingDebugging/CsvProfiler.h"
 CSV_DECLARE_CATEGORY_EXTERN(ProjectJUI);
@@ -196,7 +200,7 @@ bool UProject_JInventoryViewModel::Activate(const UProject_JInventoryEntry *Entr
 		return false;
 	if (Entry->bEquipmentEntry)
 		return CanDrop(Entry, EProject_JEquipmentSlot::None, true) && Unequip(Entry->Item.InstanceId, Entry->Slot);
-	if (Cast<UProject_JConsumableDefinition>(Entry->Item.ItemDef))
+	if (Cast<UProject_JConsumableDefinition>(Entry->Item.ItemDef) || Cast<UProject_JCompanionItemDefinition>(Entry->Item.ItemDef))
 		return Use(Entry->Item.InstanceId);
 	return CanDrop(Entry, Entry->Slot, false) && Equip(Entry->Item.InstanceId, Entry->Slot);
 }
@@ -376,6 +380,23 @@ bool UProject_JInventoryViewModel::Use(FGuid InstanceId)
 {
 	if (bPending || !Inventory.IsValid() || !InstanceId.IsValid())
 		return false;
+	FProject_JItemInstanceData SelectedItem;
+	if (Inventory->FindItemInstance(InstanceId, SelectedItem) && Cast<UProject_JCompanionItemDefinition>(SelectedItem.ItemDef))
+	{
+		if (SelectedItem.bIsLocked || SelectedItem.bIsEquipped) return false;
+		const TStrongObjectPtr<ThisClass> KeepSelf(this);
+		const TStrongObjectPtr<UProject_JInventoryComponent> Source(Inventory.Get());
+		const TStrongObjectPtr<AActor> Owner(Source->GetOwner());
+		const TStrongObjectPtr<UProject_JCompanionComponent> Companion(Owner ? Owner->FindComponentByClass<UProject_JCompanionComponent>() : nullptr);
+		if (!IsValid(Companion.Get()) || Companion->IsBeingDestroyed()) return false;
+		const uint32 Revision = SourceRevision;
+		Status = NSLOCTEXT("ProjectJUI", "CompanionRequestSent", "동료 소환 요청을 보냈습니다.");
+		OnChanged.Broadcast();
+		if (SourceRevision != Revision || Inventory.Get() != Source.Get() || bPending || !IsValid(Owner.Get()) || Owner->IsActorBeingDestroyed()
+			|| !IsValid(Source.Get()) || Source->IsBeingDestroyed() || !IsValid(Companion.Get()) || Companion->IsBeingDestroyed() || Companion->GetOwner() != Owner.Get()) return false;
+		Companion->RequestCompanion(InstanceId); // Runtime summon, no item consumption/save receipt.
+		return true;
+	}
 	PendingRequest = Inventory->NewRequestId();
 	if (!PendingRequest.IsValid())
 	{

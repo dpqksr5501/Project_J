@@ -23,7 +23,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJPlayerMasterHierarchy,
 bool FProjectJPlayerMasterHierarchy::RunTest(const FString&)
 {
 	auto* Master = LoadObject<UBlueprint>(nullptr, TEXT("/Game/Character_BPs/BP_Player_Master.BP_Player_Master"));
-	auto* Child = LoadObject<UBlueprint>(nullptr, TEXT("/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword"));
+	auto* Child = LoadObject<UBlueprint>(nullptr, TEXT("/Game/Character_BPs/Spellblade/BP_Spellblade.BP_Spellblade"));
 	auto* Anim = LoadObject<UAnimBlueprint>(nullptr, TEXT("/Game/Animation_Logic/ABPs/ABP_Player_Master.ABP_Player_Master"));
 	if (!TestNotNull(TEXT("Shared player authoring base"), Master) ||
 		!TestNotNull(TEXT("Existing production child identity"), Child) ||
@@ -62,7 +62,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJPlayerMasterAssembly,
 bool FProjectJPlayerMasterAssembly::RunTest(const FString&)
 {
 	auto* Class = LoadClass<AProject_JPlayerCharacter>(nullptr,
-		TEXT("/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C"));
+		TEXT("/Game/Character_BPs/Spellblade/BP_Spellblade.BP_Spellblade_C"));
 	if (!TestNotNull(TEXT("Production child class"), Class)) return false;
 	auto* World = UWorld::CreateWorld(EWorldType::Game, false);
 	GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);

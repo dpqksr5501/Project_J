@@ -97,6 +97,9 @@ public:
  /** Read final secondary-bone poses and completed cloth particle samples. No CVar, asset or simulation reset. */
  UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Diagnostics")
  static FString InspectSecondaryPhysics(USkeletalMeshComponent* Mesh);
+ /** Bounded asset-only proof of accessory RigidBody output and actual BoolAlpha bindings. No spawn, compile, tick, parallel wait, mutation or save. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Diagnostics")
+ static FString InspectSecondaryMotionAsset(UAnimBlueprint* Blueprint, USkeletalMesh* Mesh, const TArray<FName>& ProtectedBones);
  /** Read actual Nanite render-object selection and existing render LODs without changing resources or pose. Intended for before/after profiling; no save. */
  UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Diagnostics")
  static FString InspectSkinnedMeshRendering(USkeletalMeshComponent* Mesh);

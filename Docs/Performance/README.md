@@ -1,5 +1,7 @@
 # 성능 설계·수집·결과
 
+**2026-10-28 서버 실행·표현 자원:** [전용 서버 병렬 평가와 headless 의상 생성](Architecture/PerformanceOptimizationFoundation.md#2026-10-28-서버-병렬-평가와-headless-의상-생성). 같은 바이너리에서 지원 startup 정책과 실제 task 실행을 확인했고, 서버 Frame82→39ms와 RHI 품질을 보존한 headless cloth 생성 방지를 검증했다. client FPS·운영 CCU 보장과 구분한다.
+
 **직접 ABP 후속 분석:** [200명 Cloth 병목과 품질 예산](Reports/ProjectJ_Cloth_Budget_200_2026-10-25.md). GT 대기 구간·Cloth OFF/내부 직렬화 진단을 분리하고, 로컬 품질을 유지하는 변경의 실제 검증 상태를 기록한다.
 
 **2026-10-25 전환 직후 비용:** [200명 직접 ABP와 이전 리타깃 비교](Reports/ProjectJ_DirectRig_200_2026-10-25.md). 당시 새 몸체·머리는 LOD0만 있었고 리타깃 제거 뒤에도 Cloth 대기가 남았다. 현재 피부 body LOD와 원격 Cloth 예산의 비교는 위 후속 보고서를 따른다. 아래 10월 22일 이전의 리타깃·LOD0–2 결과는 당시 에셋의 기록이며 worker CPU 합계와 전체 프레임을 구분한다.

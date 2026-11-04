@@ -9,7 +9,7 @@
 #include "UObject/UnrealType.h"
 #include "Animation/Project_JAnimationProfileValidation.h"
 #include "Animation/Project_JLocomotionProfile.h"
-#include "Project_JGreatswordCharacter.h"
+#include "Project_JSpellbladeCharacter.h"
 #include "Misc/DataValidation.h"
 #include "UI/Project_JInventoryViewModel.h"
 #include "UI/Project_JUILayoutSettings.h"
@@ -21,6 +21,7 @@
 #include "UObject/StrongObjectPtr.h"
 #include "Equipment/Project_JWeaponPresentationProfile.h"
 #include "Equipment/Project_JWeaponPresentationActor.h"
+#include "Engine/StaticMeshActor.h"
 #include "Game/Project_JQuestComponent.h"
 #include "UI/Project_JPlayerUIComponent.h"
 #include "Engine/GameInstance.h"
@@ -78,7 +79,7 @@ bool FProjectJMovementDataValidationTest::RunTest(const FString&)
     TestEqual(TEXT("The authored data validator rejects a nonfinite movement speed"),Profile->IsDataValid(Context),EDataValidationResult::Invalid);
     TArray<FString> Warnings;
     Project_J::AnimationProfileValidation::ValidatePlayerAnimationConfiguration(
-        *GetDefault<AProject_JGreatswordCharacter>(),Profile,nullptr,nullptr,nullptr,Warnings);
+        *GetDefault<AProject_JSpellbladeCharacter>(),Profile,nullptr,nullptr,nullptr,Warnings);
     TestTrue(TEXT("Runtime configuration diagnostics identify the invalid WalkSpeed"),Warnings.ContainsByPredicate([](const FString& W){return W.Contains(TEXT("WalkSpeed"));}));
     return true;
 }
@@ -170,7 +171,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJGroundContactDataValidationTest,
     "ProjectJ.Reaudit.GroundContactDataValidation", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJGroundContactDataValidationTest::RunTest(const FString&)
 {
-    auto* Profile=NewObject<UProject_JWeaponPresentationProfile>();Profile->WeaponActorClass=AProject_JWeaponPresentationActor::StaticClass();
+    auto* Profile=NewObject<UProject_JWeaponPresentationProfile>();Profile->WeaponActorClass=AStaticMeshActor::StaticClass();
     Profile->MotionPresentation.bSupportsIndependentMotion=true;
     Profile->MotionPresentation.GroundContact.bEnableGroundContact=true;
     FDataValidationContext ValidContext;

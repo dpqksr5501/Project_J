@@ -3,6 +3,7 @@
 #include "Animation/Project_JCharacterAnimInstance.h"
 #include "Animation/Project_JAnimationQualityPolicy.h"
 #include "Components/Project_JAnimationUpdateCoordinatorComponent.h"
+#include "Components/Project_JModularMeshComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/Pawn.h"
 #include "Engine/World.h"
@@ -34,6 +35,10 @@ FAutoConsoleCommandWithWorld StatusCommand(TEXT("ProjectJ.AnimationBudget.Status
 TRACE_DECLARE_INT_COUNTER(CharacterABAManaged, TEXT("ProjectJ/CharacterABA/Managed"));
 TRACE_DECLARE_INT_COUNTER(CharacterABAProtected, TEXT("ProjectJ/CharacterABA/CombatProtected"));
 TRACE_DECLARE_INT_COUNTER(AnimationObserverViews, TEXT("ProjectJ/Animation/LocalObserverViews"));
+TRACE_DECLARE_INT_COUNTER(ClothExecutionReserved, TEXT("ProjectJ/ClothExecution/ReservedVertices"));
+TRACE_DECLARE_INT_COUNTER(ClothExecutionProtected, TEXT("ProjectJ/ClothExecution/ProtectedVertices"));
+TRACE_DECLARE_INT_COUNTER(ClothExecutionDebt, TEXT("ProjectJ/ClothExecution/DebtVertices"));
+TRACE_DECLARE_INT_COUNTER(ClothExecutionUnknown, TEXT("ProjectJ/ClothExecution/UnknownParts"));
 
 bool UProject_JCharacterAnimationBudgetSubsystem::DoesSupportWorldType(EWorldType::Type Type) const
 { return Type == EWorldType::Game || Type == EWorldType::PIE; }
@@ -62,6 +67,9 @@ void UProject_JCharacterAnimationBudgetSubsystem::RegisterMesh(UProject_JBudgete
 }
 void UProject_JCharacterAnimationBudgetSubsystem::UnregisterMesh(UProject_JBudgetedSkeletalMeshComponent* Mesh)
 {
+	if (Mesh && IsValid(Mesh->GetOwner()))
+		if (auto* Coordinator=Mesh->GetOwner()->FindComponentByClass<UProject_JAnimationUpdateCoordinatorComponent>())
+			Coordinator->ReleaseClothExecution();
 	if (Mesh) { Mesh->ObservedDistanceTier.Reset(); Mesh->ObservedFullClothQuality.Reset(); Mesh->LeaveBudget(); }
 	Meshes.RemoveAllSwap([Mesh](const auto& Entry) { return !Entry.IsValid() || Entry.Get() == Mesh; });
 }
@@ -71,8 +79,13 @@ int32 UProject_JCharacterAnimationBudgetSubsystem::GetManagedCount() const
 	for (const auto& Entry : Meshes) { Count += Entry.IsValid() && Entry->IsManagedByBudget(); }
 	return Count;
 }
-void UProject_JCharacterAnimationBudgetSubsystem::OnPostActorTick(UWorld* World, ELevelTick, float)
-{ if (World == GetWorld()) { Refresh(); } }
+void UProject_JCharacterAnimationBudgetSubsystem::OnPostActorTick(UWorld* World, ELevelTick TickType, float DeltaSeconds)
+{
+	if(World!=GetWorld()) return;
+	const TGuardValue<bool> ObserveGuard(bObserveNativeClothFrame,TickType==LEVELTICK_All &&
+		FMath::IsFinite(DeltaSeconds) && DeltaSeconds>0 && UProject_JModularMeshComponent::IsClothExecutionObservationEnabled());
+	Refresh();
+}
 void UProject_JCharacterAnimationBudgetSubsystem::Refresh()
 {
 	check(IsInGameThread());
@@ -98,17 +111,33 @@ void UProject_JCharacterAnimationBudgetSubsystem::Refresh()
 	int32 Managed = 0, Protected = 0;
 	struct FClothCandidate { UProject_JBudgetedSkeletalMeshComponent* Mesh; double Score; int32 Parts; uint32 Id; };
 	TArray<FClothCandidate,TInlineAllocator<16>> ClothCandidates;
+	struct FExecutionCandidate
+	{
+		TWeakObjectPtr<UProject_JAnimationUpdateCoordinatorComponent> Coordinator;
+		TWeakObjectPtr<UProject_JBudgetedSkeletalMeshComponent> Source;
+		FProjectJClothExecutionDemand Demand;
+		double Score=0;
+		uint32 Id=0;
+		bool bProtected=true, bDesired=false;
+	};
+	TArray<FExecutionCandidate,TInlineAllocator<16>> ExecutionCandidates;
+	const int64 ExecutionCap=UProject_JAnimationUpdateCoordinatorComponent::GetClothExecutionVertexCap();
+	const bool bExecutionEnabled=ExecutionCap>0 && GetWorld() && !bEnding &&
+		!GetWorld()->bIsTearingDown && GetWorld()->GetNetMode()!=NM_DedicatedServer;
 	for (int32 Index = Meshes.Num() - 1; Index >= 0; --Index)
 	{
 		auto* Mesh = Meshes[Index].Get();
 		if (!Mesh) { Meshes.RemoveAtSwap(Index); continue; }
+		auto* Coordinator=(bObserveNativeClothFrame || !Views.IsEmpty()) && IsValid(Mesh->GetOwner())
+			? Mesh->GetOwner()->FindComponentByClass<UProject_JAnimationUpdateCoordinatorComponent>() : nullptr;
+		if(bObserveNativeClothFrame && Coordinator) Coordinator->ObserveClothNativeFrameCompletions();
 		const bool bPreviouslyFull=Mesh->ObservedFullClothQuality.Get(false);
 		Mesh->ObservedFullClothQuality.Reset();
 		Mesh->ObservedDistanceTier.Reset();
+		double NearestSquared = TNumericLimits<double>::Max();
 		if (!Views.IsEmpty() && IsValid(Mesh->GetOwner()))
 		{
 			const FVector Position = Mesh->GetOwner()->GetActorLocation();
-			double NearestSquared = TNumericLimits<double>::Max();
 			bool bHasFiniteDistance = false;
 			for (const FVector& View : Views)
 			{
@@ -118,7 +147,6 @@ void UProject_JCharacterAnimationBudgetSubsystem::Refresh()
 			const auto* Native = Cast<UProject_JCharacterAnimInstance>(Mesh->GetAnimInstance());
 			const auto Settings = Native ? Native->GetEffectiveAnimationBudgetSettings() : FProject_JAnimationBudgetSettings();
 			Mesh->ObservedDistanceTier = !bHasFiniteDistance ? 0.f : ProjectJ::Animation::ResolveAnimationDistanceTier(NearestSquared, Settings);
-			const auto* Coordinator=Mesh->GetOwner()->FindComponentByClass<UProject_JAnimationUpdateCoordinatorComponent>();
 			if(Coordinator && Coordinator->IsVisualBudgetEnabled() && Mesh->bAllowProjectBudget && Coordinator->GetManagedClothCount()>0)
 			{
 				const bool bValidSettings=FMath::IsFinite(Settings.NearDistance) && FMath::IsFinite(Settings.MidDistance) &&
@@ -132,6 +160,17 @@ void UProject_JCharacterAnimationBudgetSubsystem::Refresh()
 						ClothCandidates.Add({Mesh,NearestSquared*(bPreviouslyFull?.81:1.),Coordinator->GetManagedClothCount(),Mesh->GetUniqueID()});
 				}
 			}
+		}
+		if(Coordinator && bExecutionEnabled && Coordinator->IsClothExecutionSource(Mesh))
+		{
+			FExecutionCandidate Candidate;
+			Candidate.Coordinator=Coordinator; Candidate.Source=Mesh; Candidate.Id=Mesh->GetUniqueID();
+			// A missing/invalid observer observation preserves execution. Ordinary
+			// SP/AI identity is decided separately, not inferred from an absent PC.
+			Candidate.bProtected=!Mesh->ObservedDistanceTier.IsSet();
+			Candidate.Score=NearestSquared;
+			Candidate.bProtected|=!FMath::IsFinite(Candidate.Score);
+			ExecutionCandidates.Add(Candidate);
 		}
 		Mesh->RefreshAnimationUpdateRequirements();
 		Mesh->RefreshMontageUpdateRequirement();
@@ -155,6 +194,44 @@ void UProject_JCharacterAnimationBudgetSubsystem::Refresh()
 	int32 Remaining=FMath::Clamp(CVarFullRemoteCloths.GetValueOnGameThread(),0,32);
 	for(const auto& Candidate:ClothCandidates) if(Candidate.Parts<=Remaining)
 	{ Candidate.Mesh->ObservedFullClothQuality=true;Remaining-=Candidate.Parts; }
+	// Existing world registry/camera pass owns both desired work and actual
+	// admission. Do not reuse a fading-out slot before its native drain closes.
+	int64 ReservedCost=0, ProtectedCost=0; int32 UnknownParts=0;
+	const auto SumCost=[](int64 A,int64 B) { return A>MAX_int64-B?MAX_int64:A+B; };
+	for(auto& Candidate:ExecutionCandidates)
+	{
+		auto* Coordinator=Candidate.Coordinator.Get(); auto* Source=Candidate.Source.Get();
+		if(!Coordinator || !Source) continue;
+		Candidate.bProtected|=Source->HasFullClothQualityGrant() ||
+			ProjectJ::Animation::IsClothExecutionProtected(Cast<APawn>(Source->GetOwner()));
+		Candidate.Demand=Coordinator->PrepareClothExecutionDemand(bExecutionEnabled && Source->bAllowProjectBudget,Candidate.bProtected);
+		ProtectedCost=SumCost(ProtectedCost,Candidate.Demand.Protected);
+		ReservedCost=SumCost(ReservedCost,SumCost(Candidate.Demand.Reserved,Candidate.Demand.Protected));
+		UnknownParts+=Candidate.Demand.Unknown;
+		Candidate.Score*=Candidate.Demand.bPreviouslyDesired?.81:1.;
+	}
+	ExecutionCandidates.Sort([](const FExecutionCandidate& A,const FExecutionCandidate& B)
+	{ return A.Score==B.Score?A.Id<B.Id:A.Score<B.Score; });
+	int64 DesiredRemaining=FMath::Max(int64(0),ExecutionCap-FMath::Min(ExecutionCap,ProtectedCost));
+	int64 ResumeRemaining=FMath::Max(int64(0),ExecutionCap-FMath::Min(ExecutionCap,ReservedCost));
+	for(auto& Candidate:ExecutionCandidates)
+	{
+		auto* Coordinator=Candidate.Coordinator.Get();
+		if(!Coordinator) continue;
+		Candidate.bDesired=Candidate.bProtected || (Candidate.Demand.Eligible>0 && Candidate.Demand.Eligible<=DesiredRemaining);
+		if(!Candidate.bProtected && Candidate.bDesired) DesiredRemaining-=Candidate.Demand.Eligible;
+		const bool bMayResume=Candidate.bProtected || (Candidate.bDesired && UnknownParts==0 && Candidate.Demand.Resume<=ResumeRemaining);
+		if(!Candidate.bProtected && bMayResume)
+		{
+			ResumeRemaining-=Candidate.Demand.Resume;
+			ReservedCost=SumCost(ReservedCost,Candidate.Demand.Resume);
+		}
+		Coordinator->SetClothExecutionGrant(Candidate.bDesired,bMayResume,Candidate.bProtected);
+	}
+	TRACE_COUNTER_SET(ClothExecutionReserved,bExecutionEnabled?ReservedCost:0);
+	TRACE_COUNTER_SET(ClothExecutionProtected,bExecutionEnabled?ProtectedCost:0);
+	TRACE_COUNTER_SET(ClothExecutionDebt,bExecutionEnabled?FMath::Max(int64(0),ReservedCost-ExecutionCap):0);
+	TRACE_COUNTER_SET(ClothExecutionUnknown,bExecutionEnabled?UnknownParts:0);
 	// Counters describe the last processed world; PIE worlds are distinguished by CPU scope context.
 	TRACE_COUNTER_SET(CharacterABAManaged, Managed);
 	TRACE_COUNTER_SET(CharacterABAProtected, Protected);
@@ -178,6 +255,10 @@ void UProject_JCharacterAnimationBudgetSubsystem::OnWorldCleanup(UWorld* World, 
 {
 	if (World != GetWorld() || bEnding) { return; }
 	bEnding = true;
+	for (const auto& Entry:Meshes)
+		if (Entry.IsValid() && IsValid(Entry->GetOwner()))
+			if (auto* Coordinator=Entry->GetOwner()->FindComponentByClass<UProject_JAnimationUpdateCoordinatorComponent>())
+				Coordinator->ReleaseClothExecution();
 	for (const auto& Entry : Meshes) { if (Entry.IsValid()) { Entry->ObservedDistanceTier.Reset(); Entry->ObservedFullClothQuality.Reset(); Entry->LeaveBudget(); } }
 	RestoreAllocatorIfUnused();
 	Meshes.Reset();

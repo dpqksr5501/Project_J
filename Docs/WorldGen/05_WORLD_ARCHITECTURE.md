@@ -56,7 +56,7 @@ H07의 암벽은 일반 환경 소품의 선택적 vertical_anchor(kind=top,heig
 
 ### 보스 공간과 서버 이벤트 소유권
 
-Manifest.boss_profiles→MainWorld.bosses.json은 Arena/접근·우회/SafeStaging/Encounter/QuestHook의 제작 원천이다. 공간 builder는 기존 AProject_JWorldEncounter를 한 번만 배치하며 동일 EncounterId 소유자가 있으면 중복 생성하지 않는다. 단일 NPC/비동기 class 로드/서버 단계/종료 취소·레지스트리 해제는 기존 C++ 클래스가 소유한다. 리셋 반경과 NPC/퀘스트 후보는 실제 AI 바인딩과 구분한다. Source상의 활성 반경과 전투/추적/리셋 원은 서로 다른 역할이다.
+Manifest.boss_profiles→MainWorld.bosses.json은 Arena/접근·우회/SafeStaging/Encounter/QuestHook의 제작 원천이다. 공간 builder는 기존 AProject_JWorldEncounter를 한 번만 배치하며 동일 EncounterId 소유자가 있으면 중복 생성하지 않는다. 단일 NPC·서버 단계·종료 정리는 Encounter가 소유하고, 비동기 class 준비·중앙 갱신/스폰 예산·고유 ID는 기존 Registry가 관리한다. 현재 실행 계약은 [권위 월드 이벤트](../World/World_Event_Runtime.md)를 따른다. 리셋 반경과 NPC/퀘스트 후보는 실제 AI 바인딩과 구분한다. Source상의 활성 반경과 전투/추적/리셋 원은 서로 다른 역할이다.
 
 이벤트 ID는 WorldBoss.<RegionID>.<StableBossID>로 지역을 포함해 월드 공용 Registry의 FName 키와 다음 Region의 지역 B01 이름이 충돌하지 않게 한다. 지역 StableID/마커는 B01로 유지한다. 신규 B01의 이전 비지역 ID만 Source/Actor 패키지 백업 뒤 정리했으며 실제 PIE에서 현재 ID의 한 owner/Disabled(NPC 미지정) 상태를 확인했다. 활성 보스/리스폰·보상/멀티플레이 구현을 의미하지 않는다. 바닥/공간 이동 검증과 네이티브 이벤트 인터페이스 검증을 별도 기록한다.
 

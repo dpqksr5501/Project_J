@@ -1,0 +1,184 @@
+{
+  "schema": 1,
+  "status": "complete",
+  "script_sha256": "00d308c9c4216e2e4e12e2c7d9b471f99f702c7fe40f286bde4415debbeed9ea",
+  "plan_sha256": "fb0ddab9dd3eec75b1aa6e844f35134b1792becd4733c1d6e64902348fcfa131",
+  "rows": [
+    {
+      "source": "pdw_05_01_att_skill_comboatt_01",
+      "target": "pdw_05_01_att_skill_comboatt_02",
+      "from_s": 1.3666667,
+      "to_s": 0.0,
+      "coarse_from_s": 1.3625,
+      "coarse_to_s": 0.1,
+      "score": 0.83,
+      "position_cm": 0.135,
+      "rotation_deg": 0.344,
+      "velocity_m_s": 0.129,
+      "kind": "정밀 재검토 후보 · 원본 키 간격",
+      "rank": 1,
+      "weapon": {
+        "Bip_Weapon_R": {
+          "position_cm": 0.0769,
+          "rotation_deg": 0.3474
+        },
+        "Bip_Weapon_L": {
+          "position_cm": 0.1309,
+          "rotation_deg": 0.2308
+        }
+      },
+      "inputs": [
+        {
+          "name": "pdw_05_01_att_skill_comboatt_01",
+          "sha256": "4f0af2ecfb83b8829d3a6604e77f44267cdef12e2d5b550b23743061d0642ba6",
+          "rate_hz": 30.0,
+          "range_s": [
+            1.0125000000000002,
+            1.7125
+          ]
+        },
+        {
+          "name": "pdw_05_01_att_skill_comboatt_02",
+          "sha256": "da9003ecb48e0f9ae804da28e4ebd8fcf09f4d3bc71bcf1b688c606b467ba45e",
+          "rate_hz": 30.0,
+          "range_s": [
+            0,
+            0.44999999999999996
+          ]
+        }
+      ]
+    },
+    {
+      "source": "pdw_05_01_att_skill_comboatt_02",
+      "target": "pdw_05_01_att_skill_comboatt_03",
+      "from_s": 1.0666667,
+      "to_s": 0.0,
+      "coarse_from_s": 1.21875,
+      "coarse_to_s": 0.0,
+      "score": 2.098,
+      "position_cm": 1.066,
+      "rotation_deg": 2.376,
+      "velocity_m_s": 0.135,
+      "kind": "정밀 재검토 후보 · 원본 키 간격",
+      "rank": 1,
+      "weapon": {
+        "Bip_Weapon_R": {
+          "position_cm": 1.204,
+          "rotation_deg": 0.7501
+        },
+        "Bip_Weapon_L": {
+          "position_cm": 2.6399,
+          "rotation_deg": 2.5974
+        }
+      },
+      "inputs": [
+        {
+          "name": "pdw_05_01_att_skill_comboatt_02",
+          "sha256": "da9003ecb48e0f9ae804da28e4ebd8fcf09f4d3bc71bcf1b688c606b467ba45e",
+          "rate_hz": 30.0,
+          "range_s": [
+            0.86875,
+            1.56875
+          ]
+        },
+        {
+          "name": "pdw_05_01_att_skill_comboatt_03",
+          "sha256": "a6417948f80102b8247aba4d8abbf85c7f6c040c399121fd464745c6cacc0b54",
+          "rate_hz": 30.0,
+          "range_s": [
+            0,
+            0.35
+          ]
+        }
+      ]
+    },
+    {
+      "source": "pdw_05_01_att_skill_comboatt_03",
+      "target": "pdw_05_01_att_skill_comboatt_04",
+      "from_s": 1.0666667,
+      "to_s": 0.0,
+      "coarse_from_s": 1.0791667,
+      "coarse_to_s": 0.0,
+      "score": 6.454,
+      "position_cm": 4.086,
+      "rotation_deg": 12.488,
+      "velocity_m_s": 0.099,
+      "kind": "정밀 재검토 후보 · 원본 키 간격",
+      "rank": 1,
+      "weapon": {
+        "Bip_Weapon_R": {
+          "position_cm": 10.6315,
+          "rotation_deg": 35.8633
+        },
+        "Bip_Weapon_L": {
+          "position_cm": 6.0804,
+          "rotation_deg": 5.8318
+        }
+      },
+      "inputs": [
+        {
+          "name": "pdw_05_01_att_skill_comboatt_03",
+          "sha256": "a6417948f80102b8247aba4d8abbf85c7f6c040c399121fd464745c6cacc0b54",
+          "rate_hz": 30.0,
+          "range_s": [
+            0.7291667000000001,
+            1.4291667000000001
+          ]
+        },
+        {
+          "name": "pdw_05_01_att_skill_comboatt_04",
+          "sha256": "1917783906b91aa6df04d20e6b2f39123d5c1cc2638754505f2400a971f1385b",
+          "rate_hz": 30.0,
+          "range_s": [
+            0,
+            0.35
+          ]
+        }
+      ]
+    },
+    {
+      "source": "pdw_05_01_att_skill_comboatt_04",
+      "target": "pdw_05_01_att_skill_comboatt_04_return",
+      "from_s": 1.0,
+      "to_s": 0.0,
+      "coarse_from_s": 0.9833334,
+      "coarse_to_s": 0.0,
+      "score": 0.557,
+      "position_cm": 0.022,
+      "rotation_deg": 0.091,
+      "velocity_m_s": 0.104,
+      "kind": "정밀 재검토 후보 · 원본 키 간격",
+      "rank": 1,
+      "weapon": {
+        "Bip_Weapon_R": {
+          "position_cm": 0.0563,
+          "rotation_deg": 0.2968
+        },
+        "Bip_Weapon_L": {
+          "position_cm": 0.0607,
+          "rotation_deg": 0.0766
+        }
+      },
+      "inputs": [
+        {
+          "name": "pdw_05_01_att_skill_comboatt_04",
+          "sha256": "1917783906b91aa6df04d20e6b2f39123d5c1cc2638754505f2400a971f1385b",
+          "rate_hz": 30.0,
+          "range_s": [
+            0.6333334,
+            1.3333334
+          ]
+        },
+        {
+          "name": "pdw_05_01_att_skill_comboatt_04_return",
+          "sha256": "0f32312a9bf5fdc180d76a38686810e33f41d289c06b64033427c6aa33aa83ef",
+          "rate_hz": 30.0,
+          "range_s": [
+            0,
+            0.35
+          ]
+        }
+      ]
+    }
+  ]
+}

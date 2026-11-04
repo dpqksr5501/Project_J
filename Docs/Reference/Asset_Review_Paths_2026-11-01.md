@@ -1,6 +1,6 @@
 # 에셋 권리 검토의 실제 경로 — 2026-11-01
 
-`에셋 현황과 판단 근거` · [문서 목차](../README.md)
+[에셋 현황과 판단 근거](../../THIRD_PARTY_ASSETS.md) · [문서 목차](../README.md)
 
 이 부록은 조사 시점의 경로 목록이다. 라이선스 승인·침해 판정·전체 공개 실물 수신 목록이 아니다. 실제 파일을 다운로드하거나 바이너리를 수정하지 않고 파일명 목록과 Git 인덱스 메타데이터로 작성했다. 현재 Spellblade 이주 작업과 기존 사용자 변경을 보존했다.
 
@@ -15,100 +15,100 @@
 
 | 정확한 현재 경로 | Git 인덱스 경로와의 관계 |
 | --- | --- |
-| `Content/Characters/Spellblade/Ch_MT/MT_Body.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Ch_MT/MT_Eye.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Ch_MT/MT_Eyedeco.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Ch_MT/MT_Eyeline.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Ch_MT/MT_Hair.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Ch_MT/MT_Head.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Ch_Texture/pdw_00_eye_0001_shadow.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Ch_Texture/pdw_00_hair_0007_shadow_hair.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Ch_Texture/pdw_00_head_0003_n.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Ch_Texture/pdw_00_head_0003_shadow.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Ch_Texture/pdw_00_head_0003_sp.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Ch_Texture/pdw_00_nude_0001.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Ch_Texture/pdw_00_nude_0001_m.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Ch_Texture/pdw_00_nude_0001_n.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Ch_Texture/pdw_00_nude_0001_sp.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Ch_Texture/pdw_00_nude_0001_w.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Ch_Texture/phw_00_eyedeco_0001_shadow_hair.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Ch_Texture/phw_00_eyeline_0001_dec.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Ch_Texture/phw_00_eyeline_0001_dec_n.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Ch_Texture/phw_00_eyeline_0001_dec_sp.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/MTs/MT_Cloak.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/MTs/MT_Cloak1.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/MTs/MT_Cloak2.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/MTs/MT_Foot.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/MTs/MT_Hand.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/MTs/MT_Hel.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/MTs/MT_Hel_Hair.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/MTs/MT_Inner_Down.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/MTs/MT_Inner_Up.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/MTs/MT_Lower.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/MTs/MT_Lower_Side.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/MTs/MT_Sho.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/MTs/MT_Sho_Hair.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/MTs/MT_Upper.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/MTs/MT_Upper_Side.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_cloak_0001.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_cloak_0001_d.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_cloak_0001_dm_hair.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_cloak_0001_hair.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_cloak_0001_hair_m.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_cloak_0001_m.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_cloak_0001_n.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_cloak_0001_sp.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_foot_0001.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_foot_0001_m.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_foot_0001_n.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_foot_0001_sp.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_hand_0001.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_hand_0001_d.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_hand_0001_m.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_hand_0001_n.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_hand_0001_sp.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_hel_0001.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_hel_0001_hair.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_hel_0001_hair_m.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_hel_0001_m.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_hel_0001_n.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_hel_0001_sp.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_lb_0001.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_lb_0001_dec.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_lb_0001_dec_m.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_lb_0001_dec_n.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_lb_0001_dec_sp.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_lb_0001_dm_dec.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_lb_0001_dm_hair.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_lb_0001_hair.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_lb_0001_hair_m.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_sho_0001.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_sho_0001_dm.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_sho_0001_m.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_sho_0001_n.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_sho_0001_sp.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_ub_0001.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_ub_0001_m.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_ub_0001_n.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_ub_0001_sp.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_uw_0001_ao.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/pdw_00_uw_0001_dec.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/phw_99_ub_0001_02.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/Textures/phw_99_ub_0001_02_sp.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/cloak.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/cloak_Physics.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/foot.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/hand.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/hel.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/inner.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/lower.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/sho.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/sho_Physics.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Clothes/upper.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/IK_Spellblade_Woman.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Spellblade_Woman.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Spellblade_Woman_Physics.uasset` | 현재 작업본 |
-| `Content/Characters/Spellblade/Spellblade_Woman_Skeleton.uasset` | 현재 작업본 |
+| [Content/Characters/Spellblade/Ch_MT/MT_Body.uasset](../../Content/Characters/Spellblade/Ch_MT/MT_Body.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Ch_MT/MT_Eye.uasset](../../Content/Characters/Spellblade/Ch_MT/MT_Eye.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Ch_MT/MT_Eyedeco.uasset](../../Content/Characters/Spellblade/Ch_MT/MT_Eyedeco.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Ch_MT/MT_Eyeline.uasset](../../Content/Characters/Spellblade/Ch_MT/MT_Eyeline.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Ch_MT/MT_Hair.uasset](../../Content/Characters/Spellblade/Ch_MT/MT_Hair.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Ch_MT/MT_Head.uasset](../../Content/Characters/Spellblade/Ch_MT/MT_Head.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Ch_Texture/pdw_00_eye_0001_shadow.uasset](../../Content/Characters/Spellblade/Ch_Texture/pdw_00_eye_0001_shadow.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Ch_Texture/pdw_00_hair_0007_shadow_hair.uasset](../../Content/Characters/Spellblade/Ch_Texture/pdw_00_hair_0007_shadow_hair.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Ch_Texture/pdw_00_head_0003_n.uasset](../../Content/Characters/Spellblade/Ch_Texture/pdw_00_head_0003_n.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Ch_Texture/pdw_00_head_0003_shadow.uasset](../../Content/Characters/Spellblade/Ch_Texture/pdw_00_head_0003_shadow.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Ch_Texture/pdw_00_head_0003_sp.uasset](../../Content/Characters/Spellblade/Ch_Texture/pdw_00_head_0003_sp.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Ch_Texture/pdw_00_nude_0001.uasset](../../Content/Characters/Spellblade/Ch_Texture/pdw_00_nude_0001.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Ch_Texture/pdw_00_nude_0001_m.uasset](../../Content/Characters/Spellblade/Ch_Texture/pdw_00_nude_0001_m.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Ch_Texture/pdw_00_nude_0001_n.uasset](../../Content/Characters/Spellblade/Ch_Texture/pdw_00_nude_0001_n.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Ch_Texture/pdw_00_nude_0001_sp.uasset](../../Content/Characters/Spellblade/Ch_Texture/pdw_00_nude_0001_sp.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Ch_Texture/pdw_00_nude_0001_w.uasset](../../Content/Characters/Spellblade/Ch_Texture/pdw_00_nude_0001_w.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Ch_Texture/phw_00_eyedeco_0001_shadow_hair.uasset](../../Content/Characters/Spellblade/Ch_Texture/phw_00_eyedeco_0001_shadow_hair.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Ch_Texture/phw_00_eyeline_0001_dec.uasset](../../Content/Characters/Spellblade/Ch_Texture/phw_00_eyeline_0001_dec.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Ch_Texture/phw_00_eyeline_0001_dec_n.uasset](../../Content/Characters/Spellblade/Ch_Texture/phw_00_eyeline_0001_dec_n.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Ch_Texture/phw_00_eyeline_0001_dec_sp.uasset](../../Content/Characters/Spellblade/Ch_Texture/phw_00_eyeline_0001_dec_sp.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/MTs/MT_Cloak.uasset](../../Content/Characters/Spellblade/Clothes/MTs/MT_Cloak.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/MTs/MT_Cloak1.uasset](../../Content/Characters/Spellblade/Clothes/MTs/MT_Cloak1.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/MTs/MT_Cloak2.uasset](../../Content/Characters/Spellblade/Clothes/MTs/MT_Cloak2.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/MTs/MT_Foot.uasset](../../Content/Characters/Spellblade/Clothes/MTs/MT_Foot.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/MTs/MT_Hand.uasset](../../Content/Characters/Spellblade/Clothes/MTs/MT_Hand.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/MTs/MT_Hel.uasset](../../Content/Characters/Spellblade/Clothes/MTs/MT_Hel.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/MTs/MT_Hel_Hair.uasset](../../Content/Characters/Spellblade/Clothes/MTs/MT_Hel_Hair.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/MTs/MT_Inner_Down.uasset](../../Content/Characters/Spellblade/Clothes/MTs/MT_Inner_Down.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/MTs/MT_Inner_Up.uasset](../../Content/Characters/Spellblade/Clothes/MTs/MT_Inner_Up.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/MTs/MT_Lower.uasset](../../Content/Characters/Spellblade/Clothes/MTs/MT_Lower.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/MTs/MT_Lower_Side.uasset](../../Content/Characters/Spellblade/Clothes/MTs/MT_Lower_Side.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/MTs/MT_Sho.uasset](../../Content/Characters/Spellblade/Clothes/MTs/MT_Sho.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/MTs/MT_Sho_Hair.uasset](../../Content/Characters/Spellblade/Clothes/MTs/MT_Sho_Hair.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/MTs/MT_Upper.uasset](../../Content/Characters/Spellblade/Clothes/MTs/MT_Upper.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/MTs/MT_Upper_Side.uasset](../../Content/Characters/Spellblade/Clothes/MTs/MT_Upper_Side.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_cloak_0001.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_cloak_0001.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_cloak_0001_d.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_cloak_0001_d.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_cloak_0001_dm_hair.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_cloak_0001_dm_hair.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_cloak_0001_hair.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_cloak_0001_hair.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_cloak_0001_hair_m.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_cloak_0001_hair_m.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_cloak_0001_m.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_cloak_0001_m.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_cloak_0001_n.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_cloak_0001_n.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_cloak_0001_sp.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_cloak_0001_sp.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_foot_0001.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_foot_0001.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_foot_0001_m.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_foot_0001_m.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_foot_0001_n.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_foot_0001_n.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_foot_0001_sp.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_foot_0001_sp.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_hand_0001.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_hand_0001.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_hand_0001_d.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_hand_0001_d.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_hand_0001_m.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_hand_0001_m.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_hand_0001_n.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_hand_0001_n.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_hand_0001_sp.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_hand_0001_sp.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_hel_0001.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_hel_0001.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_hel_0001_hair.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_hel_0001_hair.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_hel_0001_hair_m.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_hel_0001_hair_m.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_hel_0001_m.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_hel_0001_m.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_hel_0001_n.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_hel_0001_n.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_hel_0001_sp.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_hel_0001_sp.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_lb_0001.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_lb_0001.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_lb_0001_dec.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_lb_0001_dec.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_lb_0001_dec_m.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_lb_0001_dec_m.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_lb_0001_dec_n.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_lb_0001_dec_n.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_lb_0001_dec_sp.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_lb_0001_dec_sp.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_lb_0001_dm_dec.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_lb_0001_dm_dec.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_lb_0001_dm_hair.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_lb_0001_dm_hair.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_lb_0001_hair.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_lb_0001_hair.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_lb_0001_hair_m.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_lb_0001_hair_m.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_sho_0001.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_sho_0001.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_sho_0001_dm.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_sho_0001_dm.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_sho_0001_m.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_sho_0001_m.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_sho_0001_n.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_sho_0001_n.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_sho_0001_sp.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_sho_0001_sp.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_ub_0001.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_ub_0001.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_ub_0001_m.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_ub_0001_m.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_ub_0001_n.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_ub_0001_n.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_ub_0001_sp.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_ub_0001_sp.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_uw_0001_ao.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_uw_0001_ao.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/pdw_00_uw_0001_dec.uasset](../../Content/Characters/Spellblade/Clothes/Textures/pdw_00_uw_0001_dec.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/phw_99_ub_0001_02.uasset](../../Content/Characters/Spellblade/Clothes/Textures/phw_99_ub_0001_02.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/Textures/phw_99_ub_0001_02_sp.uasset](../../Content/Characters/Spellblade/Clothes/Textures/phw_99_ub_0001_02_sp.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/cloak.uasset](../../Content/Characters/Spellblade/Clothes/cloak.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/cloak_Physics.uasset](../../Content/Characters/Spellblade/Clothes/cloak_Physics.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/foot.uasset](../../Content/Characters/Spellblade/Clothes/foot.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/hand.uasset](../../Content/Characters/Spellblade/Clothes/hand.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/hel.uasset](../../Content/Characters/Spellblade/Clothes/hel.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/inner.uasset](../../Content/Characters/Spellblade/Clothes/inner.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/lower.uasset](../../Content/Characters/Spellblade/Clothes/lower.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/sho.uasset](../../Content/Characters/Spellblade/Clothes/sho.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/sho_Physics.uasset](../../Content/Characters/Spellblade/Clothes/sho_Physics.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Clothes/upper.uasset](../../Content/Characters/Spellblade/Clothes/upper.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/IK_Spellblade_Woman.uasset](../../Content/Characters/Spellblade/IK_Spellblade_Woman.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Spellblade_Woman.uasset](../../Content/Characters/Spellblade/Spellblade_Woman.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Spellblade_Woman_Physics.uasset](../../Content/Characters/Spellblade/Spellblade_Woman_Physics.uasset) | 현재 작업본 |
+| [Content/Characters/Spellblade/Spellblade_Woman_Skeleton.uasset](../../Content/Characters/Spellblade/Spellblade_Woman_Skeleton.uasset) | 현재 작업본 |
 
 </details>
 
@@ -117,48 +117,48 @@
 
 | 정확한 현재 경로 | Git 인덱스 경로와의 관계 |
 | --- | --- |
-| `Content/Spellblade/Animation/ABP_Spellblade_Body.uasset` | 현재 작업본 |
-| `Content/Spellblade/Animation/ABP_Spellblade_Retarget.uasset` | 현재 작업본 |
-| `Content/Spellblade/Animation/ABP_Spellblade_Secondary.uasset` | 현재 작업본 |
-| `Content/Spellblade/Animation/IK_Spellblade_Contact.uasset` | 현재 작업본 |
-| `Content/Spellblade/Animation/IK_Spellblade_UE5.uasset` | 현재 작업본 |
-| `Content/Spellblade/Animation/RTG_Spellblade_UE5.uasset` | 현재 작업본 |
-| `Content/Spellblade/Materials/MT_Cloak1_pdw_00_cloak_0001_dm_hair.uasset` | 현재 작업본 |
-| `Content/Spellblade/Materials/MT_Cloak_pdw_00_sho_0001_dm.uasset` | 현재 작업본 |
-| `Content/Spellblade/Materials/MT_Lower_pdw_00_lb_0001_dm_dec.uasset` | 현재 작업본 |
-| `Content/Spellblade/Materials/MT_Sho_Hair_pdw_00_lb_0001_dm_hair.uasset` | 현재 작업본 |
-| `Content/Spellblade/Materials/MT_Sho_pdw_00_sho_0001_dm.uasset` | 현재 작업본 |
-| `Content/Spellblade/Meshes/SK_Spellblade_Complete.uasset` | 현재 작업본 |
-| `Content/Spellblade/Meshes/SK_Spellblade_Complete_Skeleton.uasset` | 현재 작업본 |
-| `Content/Spellblade/Meshes/SK_Spellblade_body.uasset` | 현재 작업본 |
-| `Content/Spellblade/Meshes/SK_Spellblade_cloak.uasset` | 현재 작업본 |
-| `Content/Spellblade/Meshes/SK_Spellblade_cloak_damage.uasset` | 현재 작업본 |
-| `Content/Spellblade/Meshes/SK_Spellblade_foot.uasset` | 현재 작업본 |
-| `Content/Spellblade/Meshes/SK_Spellblade_hand.uasset` | 현재 작업본 |
-| `Content/Spellblade/Meshes/SK_Spellblade_head.uasset` | 현재 작업본 |
-| `Content/Spellblade/Meshes/SK_Spellblade_hel.uasset` | 현재 작업본 |
-| `Content/Spellblade/Meshes/SK_Spellblade_inner.uasset` | 현재 작업본 |
-| `Content/Spellblade/Meshes/SK_Spellblade_lower.uasset` | 현재 작업본 |
-| `Content/Spellblade/Meshes/SK_Spellblade_lower_damage.uasset` | 현재 작업본 |
-| `Content/Spellblade/Meshes/SK_Spellblade_sho.uasset` | 현재 작업본 |
-| `Content/Spellblade/Meshes/SK_Spellblade_sho_damage.uasset` | 현재 작업본 |
-| `Content/Spellblade/Meshes/SK_Spellblade_upper.uasset` | 현재 작업본 |
-| `Content/Spellblade/Meshes/SK_Spellblade_upper_damage.uasset` | 현재 작업본 |
-| `Content/Spellblade/Meshes/SK_Spellblade_weapon_aiguillette.uasset` | 현재 작업본 |
-| `Content/Spellblade/Meshes/SK_Spellblade_weapon_aiguillette_in.uasset` | 현재 작업본 |
-| `Content/Spellblade/Meshes/SK_Spellblade_weapon_longblade.uasset` | 현재 작업본 |
-| `Content/Spellblade/Meshes/SK_Spellblade_weapon_longblade_in.uasset` | 현재 작업본 |
-| `Content/Spellblade/Physics/PA_Spellblade_ClothCollision.uasset` | 현재 작업본 |
-| `Content/Spellblade/Physics/PA_Spellblade_Hair.uasset` | 현재 작업본 |
-| `Content/Spellblade/Physics/PA_Spellblade_Skirt.uasset` | 현재 작업본 |
-| `Content/Spellblade/Profiles/DA_HGP_Spellblade_UE5.uasset` | 현재 작업본 |
-| `Content/Spellblade/Profiles/DA_RTB_Spellblade_UE5.uasset` | 현재 작업본 |
-| `Content/Spellblade/Profiles/DA_RTF_Spellblade_UE5.uasset` | 현재 작업본 |
-| `Content/Spellblade/Profiles/DA_Spellblade_UE5_AnimProfile.uasset` | 현재 작업본 |
-| `Content/Spellblade/Rigs/CR_Spellblade_Body.uasset` | 현재 작업본 |
-| `Content/Spellblade/Rigs/IK_Quinn_Source.uasset` | 현재 작업본 |
-| `Content/Spellblade/Rigs/IK_Spellblade.uasset` | 현재 작업본 |
-| `Content/Spellblade/Rigs/RTG_Quinn_to_Spellblade.uasset` | 현재 작업본 |
+| [Content/Spellblade/Animation/ABP_Spellblade_Body.uasset](../../Content/Spellblade/Animation/ABP_Spellblade_Body.uasset) | 현재 작업본 |
+| [Content/Spellblade/Animation/ABP_Spellblade_Retarget.uasset](../../Content/Spellblade/Animation/ABP_Spellblade_Retarget.uasset) | 현재 작업본 |
+| [Content/Spellblade/Animation/ABP_Spellblade_Secondary.uasset](../../Content/Spellblade/Animation/ABP_Spellblade_Secondary.uasset) | 현재 작업본 |
+| [Content/Spellblade/Animation/IK_Spellblade_Contact.uasset](../../Content/Spellblade/Animation/IK_Spellblade_Contact.uasset) | 현재 작업본 |
+| [Content/Spellblade/Animation/IK_Spellblade_UE5.uasset](../../Content/Spellblade/Animation/IK_Spellblade_UE5.uasset) | 현재 작업본 |
+| [Content/Spellblade/Animation/RTG_Spellblade_UE5.uasset](../../Content/Spellblade/Animation/RTG_Spellblade_UE5.uasset) | 현재 작업본 |
+| [Content/Spellblade/Materials/MT_Cloak1_pdw_00_cloak_0001_dm_hair.uasset](../../Content/Spellblade/Materials/MT_Cloak1_pdw_00_cloak_0001_dm_hair.uasset) | 현재 작업본 |
+| [Content/Spellblade/Materials/MT_Cloak_pdw_00_sho_0001_dm.uasset](../../Content/Spellblade/Materials/MT_Cloak_pdw_00_sho_0001_dm.uasset) | 현재 작업본 |
+| [Content/Spellblade/Materials/MT_Lower_pdw_00_lb_0001_dm_dec.uasset](../../Content/Spellblade/Materials/MT_Lower_pdw_00_lb_0001_dm_dec.uasset) | 현재 작업본 |
+| [Content/Spellblade/Materials/MT_Sho_Hair_pdw_00_lb_0001_dm_hair.uasset](../../Content/Spellblade/Materials/MT_Sho_Hair_pdw_00_lb_0001_dm_hair.uasset) | 현재 작업본 |
+| [Content/Spellblade/Materials/MT_Sho_pdw_00_sho_0001_dm.uasset](../../Content/Spellblade/Materials/MT_Sho_pdw_00_sho_0001_dm.uasset) | 현재 작업본 |
+| [Content/Spellblade/Meshes/SK_Spellblade_Complete.uasset](../../Content/Spellblade/Meshes/SK_Spellblade_Complete.uasset) | 현재 작업본 |
+| [Content/Spellblade/Meshes/SK_Spellblade_Complete_Skeleton.uasset](../../Content/Spellblade/Meshes/SK_Spellblade_Complete_Skeleton.uasset) | 현재 작업본 |
+| [Content/Spellblade/Meshes/SK_Spellblade_body.uasset](../../Content/Spellblade/Meshes/SK_Spellblade_body.uasset) | 현재 작업본 |
+| [Content/Spellblade/Meshes/SK_Spellblade_cloak.uasset](../../Content/Spellblade/Meshes/SK_Spellblade_cloak.uasset) | 현재 작업본 |
+| [Content/Spellblade/Meshes/SK_Spellblade_cloak_damage.uasset](../../Content/Spellblade/Meshes/SK_Spellblade_cloak_damage.uasset) | 현재 작업본 |
+| [Content/Spellblade/Meshes/SK_Spellblade_foot.uasset](../../Content/Spellblade/Meshes/SK_Spellblade_foot.uasset) | 현재 작업본 |
+| [Content/Spellblade/Meshes/SK_Spellblade_hand.uasset](../../Content/Spellblade/Meshes/SK_Spellblade_hand.uasset) | 현재 작업본 |
+| [Content/Spellblade/Meshes/SK_Spellblade_head.uasset](../../Content/Spellblade/Meshes/SK_Spellblade_head.uasset) | 현재 작업본 |
+| [Content/Spellblade/Meshes/SK_Spellblade_hel.uasset](../../Content/Spellblade/Meshes/SK_Spellblade_hel.uasset) | 현재 작업본 |
+| [Content/Spellblade/Meshes/SK_Spellblade_inner.uasset](../../Content/Spellblade/Meshes/SK_Spellblade_inner.uasset) | 현재 작업본 |
+| [Content/Spellblade/Meshes/SK_Spellblade_lower.uasset](../../Content/Spellblade/Meshes/SK_Spellblade_lower.uasset) | 현재 작업본 |
+| [Content/Spellblade/Meshes/SK_Spellblade_lower_damage.uasset](../../Content/Spellblade/Meshes/SK_Spellblade_lower_damage.uasset) | 현재 작업본 |
+| [Content/Spellblade/Meshes/SK_Spellblade_sho.uasset](../../Content/Spellblade/Meshes/SK_Spellblade_sho.uasset) | 현재 작업본 |
+| [Content/Spellblade/Meshes/SK_Spellblade_sho_damage.uasset](../../Content/Spellblade/Meshes/SK_Spellblade_sho_damage.uasset) | 현재 작업본 |
+| [Content/Spellblade/Meshes/SK_Spellblade_upper.uasset](../../Content/Spellblade/Meshes/SK_Spellblade_upper.uasset) | 현재 작업본 |
+| [Content/Spellblade/Meshes/SK_Spellblade_upper_damage.uasset](../../Content/Spellblade/Meshes/SK_Spellblade_upper_damage.uasset) | 현재 작업본 |
+| [Content/Spellblade/Meshes/SK_Spellblade_weapon_aiguillette.uasset](../../Content/Spellblade/Meshes/SK_Spellblade_weapon_aiguillette.uasset) | 현재 작업본 |
+| [Content/Spellblade/Meshes/SK_Spellblade_weapon_aiguillette_in.uasset](../../Content/Spellblade/Meshes/SK_Spellblade_weapon_aiguillette_in.uasset) | 현재 작업본 |
+| [Content/Spellblade/Meshes/SK_Spellblade_weapon_longblade.uasset](../../Content/Spellblade/Meshes/SK_Spellblade_weapon_longblade.uasset) | 현재 작업본 |
+| [Content/Spellblade/Meshes/SK_Spellblade_weapon_longblade_in.uasset](../../Content/Spellblade/Meshes/SK_Spellblade_weapon_longblade_in.uasset) | 현재 작업본 |
+| [Content/Spellblade/Physics/PA_Spellblade_ClothCollision.uasset](../../Content/Spellblade/Physics/PA_Spellblade_ClothCollision.uasset) | 현재 작업본 |
+| [Content/Spellblade/Physics/PA_Spellblade_Hair.uasset](../../Content/Spellblade/Physics/PA_Spellblade_Hair.uasset) | 현재 작업본 |
+| [Content/Spellblade/Physics/PA_Spellblade_Skirt.uasset](../../Content/Spellblade/Physics/PA_Spellblade_Skirt.uasset) | 현재 작업본 |
+| [Content/Spellblade/Profiles/DA_HGP_Spellblade_UE5.uasset](../../Content/Spellblade/Profiles/DA_HGP_Spellblade_UE5.uasset) | 현재 작업본 |
+| [Content/Spellblade/Profiles/DA_RTB_Spellblade_UE5.uasset](../../Content/Spellblade/Profiles/DA_RTB_Spellblade_UE5.uasset) | 현재 작업본 |
+| [Content/Spellblade/Profiles/DA_RTF_Spellblade_UE5.uasset](../../Content/Spellblade/Profiles/DA_RTF_Spellblade_UE5.uasset) | 현재 작업본 |
+| [Content/Spellblade/Profiles/DA_Spellblade_UE5_AnimProfile.uasset](../../Content/Spellblade/Profiles/DA_Spellblade_UE5_AnimProfile.uasset) | 현재 작업본 |
+| [Content/Spellblade/Rigs/CR_Spellblade_Body.uasset](../../Content/Spellblade/Rigs/CR_Spellblade_Body.uasset) | 현재 작업본 |
+| [Content/Spellblade/Rigs/IK_Quinn_Source.uasset](../../Content/Spellblade/Rigs/IK_Quinn_Source.uasset) | 현재 작업본 |
+| [Content/Spellblade/Rigs/IK_Spellblade.uasset](../../Content/Spellblade/Rigs/IK_Spellblade.uasset) | 현재 작업본 |
+| [Content/Spellblade/Rigs/RTG_Quinn_to_Spellblade.uasset](../../Content/Spellblade/Rigs/RTG_Quinn_to_Spellblade.uasset) | 현재 작업본 |
 
 </details>
 
@@ -167,14 +167,14 @@
 
 | 정확한 현재 경로 | Git 인덱스 경로와의 관계 |
 | --- | --- |
-| `Content/Weapons/Spellblade/M_Spellblade_Weapon.uasset` | 현재 작업본 |
-| `Content/Weapons/Spellblade/SK_Spellblade_Weapon_Skeleton.uasset` | 현재 작업본 |
-| `Content/Weapons/Spellblade/SK_Spellblade_aiguillette.uasset` | 현재 작업본 |
-| `Content/Weapons/Spellblade/SK_Spellblade_aiguillette_in.uasset` | 현재 작업본 |
-| `Content/Weapons/Spellblade/SK_Spellblade_longblade.uasset` | 현재 작업본 |
-| `Content/Weapons/Spellblade/SK_Spellblade_longblade_in.uasset` | 현재 작업본 |
-| `Content/Weapons/Spellblade/Textures/pdw_00_lbd_0001.uasset` | 현재 작업본 |
-| `Content/Weapons/Spellblade/Textures/pdw_00_lbd_0001_n.uasset` | 현재 작업본 |
+| [Content/Weapons/Spellblade/M_Spellblade_Weapon.uasset](../../Content/Weapons/Spellblade/M_Spellblade_Weapon.uasset) | 현재 작업본 |
+| [Content/Weapons/Spellblade/SK_Spellblade_Weapon_Skeleton.uasset](../../Content/Weapons/Spellblade/SK_Spellblade_Weapon_Skeleton.uasset) | 현재 작업본 |
+| [Content/Weapons/Spellblade/SK_Spellblade_aiguillette.uasset](../../Content/Weapons/Spellblade/SK_Spellblade_aiguillette.uasset) | 현재 작업본 |
+| [Content/Weapons/Spellblade/SK_Spellblade_aiguillette_in.uasset](../../Content/Weapons/Spellblade/SK_Spellblade_aiguillette_in.uasset) | 현재 작업본 |
+| [Content/Weapons/Spellblade/SK_Spellblade_longblade.uasset](../../Content/Weapons/Spellblade/SK_Spellblade_longblade.uasset) | 현재 작업본 |
+| [Content/Weapons/Spellblade/SK_Spellblade_longblade_in.uasset](../../Content/Weapons/Spellblade/SK_Spellblade_longblade_in.uasset) | 현재 작업본 |
+| [Content/Weapons/Spellblade/Textures/pdw_00_lbd_0001.uasset](../../Content/Weapons/Spellblade/Textures/pdw_00_lbd_0001.uasset) | 현재 작업본 |
+| [Content/Weapons/Spellblade/Textures/pdw_00_lbd_0001_n.uasset](../../Content/Weapons/Spellblade/Textures/pdw_00_lbd_0001_n.uasset) | 현재 작업본 |
 
 </details>
 
@@ -183,34 +183,34 @@
 
 | 정확한 현재 경로 | Git 인덱스 경로와의 관계 |
 | --- | --- |
-| `SourceArt/Characters/Spellblade/UE5/Comparison/BlenderDirectComparison.json` | 현재 작업본 |
-| `SourceArt/Characters/Spellblade/UE5/Comparison/BlenderRoundTrip.json` | 현재 작업본 |
-| `SourceArt/Characters/Spellblade/UE5/Comparison/UE5_Blender_Comparison.png` | 현재 작업본 |
-| `SourceArt/Characters/Spellblade/UE5/Comparison/UE5_Spellblade_Comparison.blend` | 현재 작업본 |
-| `SourceArt/Characters/Spellblade/UE5/ExportMeshes.py` | 현재 작업본 |
-| `SourceArt/Characters/Spellblade/UE5/ExportWeaponRig.py` | 현재 작업본 |
-| `SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_Complete.fbx` | 현재 작업본 |
-| `SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_body.fbx` | 현재 작업본 |
-| `SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_cloak.fbx` | 현재 작업본 |
-| `SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_cloak_damage.fbx` | 현재 작업본 |
-| `SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_foot.fbx` | 현재 작업본 |
-| `SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_hand.fbx` | 현재 작업본 |
-| `SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_head.fbx` | 현재 작업본 |
-| `SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_hel.fbx` | 현재 작업본 |
-| `SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_inner.fbx` | 현재 작업본 |
-| `SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_lower.fbx` | 현재 작업본 |
-| `SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_lower_damage.fbx` | 현재 작업본 |
-| `SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_sho.fbx` | 현재 작업본 |
-| `SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_sho_damage.fbx` | 현재 작업본 |
-| `SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_upper.fbx` | 현재 작업본 |
-| `SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_upper_damage.fbx` | 현재 작업본 |
-| `SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_weapon_aiguillette.fbx` | 현재 작업본 |
-| `SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_weapon_aiguillette_in.fbx` | 현재 작업본 |
-| `SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_weapon_longblade.fbx` | 현재 작업본 |
-| `SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_weapon_longblade_in.fbx` | 현재 작업본 |
-| `SourceArt/Characters/Spellblade/UE5/README.md` | 현재 작업본 |
-| `SourceArt/Characters/Spellblade/UE5/Spellblade_Rig_UI.py` | 현재 작업본 |
-| `SourceArt/Characters/Spellblade/UE5/Spellblade_UE5_Rig.blend` | 현재 작업본 |
+| [SourceArt/Characters/Spellblade/UE5/Comparison/BlenderDirectComparison.json](../../SourceArt/Characters/Spellblade/UE5/Comparison/BlenderDirectComparison.json) | 현재 작업본 |
+| [SourceArt/Characters/Spellblade/UE5/Comparison/BlenderRoundTrip.json](../../SourceArt/Characters/Spellblade/UE5/Comparison/BlenderRoundTrip.json) | 현재 작업본 |
+| [SourceArt/Characters/Spellblade/UE5/Comparison/UE5_Blender_Comparison.png](../../SourceArt/Characters/Spellblade/UE5/Comparison/UE5_Blender_Comparison.png) | 현재 작업본 |
+| [SourceArt/Characters/Spellblade/UE5/Comparison/UE5_Spellblade_Comparison.blend](../../SourceArt/Characters/Spellblade/UE5/Comparison/UE5_Spellblade_Comparison.blend) | 현재 작업본 |
+| [SourceArt/Characters/Spellblade/UE5/ExportMeshes.py](../../SourceArt/Characters/Spellblade/UE5/ExportMeshes.py) | 현재 작업본 |
+| [SourceArt/Characters/Spellblade/UE5/ExportWeaponRig.py](../../SourceArt/Characters/Spellblade/UE5/ExportWeaponRig.py) | 현재 작업본 |
+| [SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_Complete.fbx](../../SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_Complete.fbx) | 현재 작업본 |
+| [SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_body.fbx](../../SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_body.fbx) | 현재 작업본 |
+| [SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_cloak.fbx](../../SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_cloak.fbx) | 현재 작업본 |
+| [SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_cloak_damage.fbx](../../SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_cloak_damage.fbx) | 현재 작업본 |
+| [SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_foot.fbx](../../SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_foot.fbx) | 현재 작업본 |
+| [SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_hand.fbx](../../SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_hand.fbx) | 현재 작업본 |
+| [SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_head.fbx](../../SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_head.fbx) | 현재 작업본 |
+| [SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_hel.fbx](../../SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_hel.fbx) | 현재 작업본 |
+| [SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_inner.fbx](../../SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_inner.fbx) | 현재 작업본 |
+| [SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_lower.fbx](../../SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_lower.fbx) | 현재 작업본 |
+| [SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_lower_damage.fbx](../../SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_lower_damage.fbx) | 현재 작업본 |
+| [SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_sho.fbx](../../SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_sho.fbx) | 현재 작업본 |
+| [SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_sho_damage.fbx](../../SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_sho_damage.fbx) | 현재 작업본 |
+| [SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_upper.fbx](../../SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_upper.fbx) | 현재 작업본 |
+| [SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_upper_damage.fbx](../../SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_upper_damage.fbx) | 현재 작업본 |
+| [SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_weapon_aiguillette.fbx](../../SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_weapon_aiguillette.fbx) | 현재 작업본 |
+| [SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_weapon_aiguillette_in.fbx](../../SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_weapon_aiguillette_in.fbx) | 현재 작업본 |
+| [SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_weapon_longblade.fbx](../../SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_weapon_longblade.fbx) | 현재 작업본 |
+| [SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_weapon_longblade_in.fbx](../../SourceArt/Characters/Spellblade/UE5/FBX/SK_Spellblade_weapon_longblade_in.fbx) | 현재 작업본 |
+| [SourceArt/Characters/Spellblade/UE5/README.md](../../SourceArt/Characters/Spellblade/UE5/README.md) | 현재 작업본 |
+| [SourceArt/Characters/Spellblade/UE5/Spellblade_Rig_UI.py](../../SourceArt/Characters/Spellblade/UE5/Spellblade_Rig_UI.py) | 현재 작업본 |
+| [SourceArt/Characters/Spellblade/UE5/Spellblade_UE5_Rig.blend](../../SourceArt/Characters/Spellblade/UE5/Spellblade_UE5_Rig.blend) | 현재 작업본 |
 
 </details>
 
@@ -219,15 +219,15 @@
 
 | 정확한 현재 경로 | Git 인덱스 경로와의 관계 |
 | --- | --- |
-| `SourceArt/Weapons/Spellblade/FBX/ExportManifest.json` | 현재 작업본 |
-| `SourceArt/Weapons/Spellblade/FBX/SK_Spellblade_aiguillette.fbx` | 현재 작업본 |
-| `SourceArt/Weapons/Spellblade/FBX/SK_Spellblade_aiguillette_in.fbx` | 현재 작업본 |
-| `SourceArt/Weapons/Spellblade/FBX/SK_Spellblade_longblade.fbx` | 현재 작업본 |
-| `SourceArt/Weapons/Spellblade/FBX/SK_Spellblade_longblade_in.fbx` | 현재 작업본 |
-| `SourceArt/Weapons/Spellblade/Textures/pdw_00_lbd_0001.png` | 현재 작업본 |
-| `SourceArt/Weapons/Spellblade/Textures/pdw_00_lbd_0001_m.png` | 현재 작업본 |
-| `SourceArt/Weapons/Spellblade/Textures/pdw_00_lbd_0001_n.png` | 현재 작업본 |
-| `SourceArt/Weapons/Spellblade/Textures/pdw_00_lbd_0001_sp.png` | 현재 작업본 |
+| [SourceArt/Weapons/Spellblade/FBX/ExportManifest.json](../../SourceArt/Weapons/Spellblade/FBX/ExportManifest.json) | 현재 작업본 |
+| [SourceArt/Weapons/Spellblade/FBX/SK_Spellblade_aiguillette.fbx](../../SourceArt/Weapons/Spellblade/FBX/SK_Spellblade_aiguillette.fbx) | 현재 작업본 |
+| [SourceArt/Weapons/Spellblade/FBX/SK_Spellblade_aiguillette_in.fbx](../../SourceArt/Weapons/Spellblade/FBX/SK_Spellblade_aiguillette_in.fbx) | 현재 작업본 |
+| [SourceArt/Weapons/Spellblade/FBX/SK_Spellblade_longblade.fbx](../../SourceArt/Weapons/Spellblade/FBX/SK_Spellblade_longblade.fbx) | 현재 작업본 |
+| [SourceArt/Weapons/Spellblade/FBX/SK_Spellblade_longblade_in.fbx](../../SourceArt/Weapons/Spellblade/FBX/SK_Spellblade_longblade_in.fbx) | 현재 작업본 |
+| [SourceArt/Weapons/Spellblade/Textures/pdw_00_lbd_0001.png](../../SourceArt/Weapons/Spellblade/Textures/pdw_00_lbd_0001.png) | 현재 작업본 |
+| [SourceArt/Weapons/Spellblade/Textures/pdw_00_lbd_0001_m.png](../../SourceArt/Weapons/Spellblade/Textures/pdw_00_lbd_0001_m.png) | 현재 작업본 |
+| [SourceArt/Weapons/Spellblade/Textures/pdw_00_lbd_0001_n.png](../../SourceArt/Weapons/Spellblade/Textures/pdw_00_lbd_0001_n.png) | 현재 작업본 |
+| [SourceArt/Weapons/Spellblade/Textures/pdw_00_lbd_0001_sp.png](../../SourceArt/Weapons/Spellblade/Textures/pdw_00_lbd_0001_sp.png) | 현재 작업본 |
 
 </details>
 
@@ -260,7 +260,7 @@
 | A03 · UEFN 변환 | [Content/Animation_Logic/RTG_Player_UEFN_to_Manny.uasset](../../Content/Animation_Logic/RTG_Player_UEFN_to_Manny.uasset) |
 | A04 · 원본 ZIP | [Archives/AnimationSources/UEFN_2026-10-21/Originals.zip](../../Archives/AnimationSources/UEFN_2026-10-21/Originals.zip) |
 | A04 · Neutral ZIP | [Archives/AnimationSources/Neutral_2026-10-22/Originals.zip](../../Archives/AnimationSources/Neutral_2026-10-22/Originals.zip) |
-| A06 · 전투 모션 | `Content/Anim_Assets/Spellblade/Animations/Sword/Sword_Walk_Seq_Start.uasset` |
+| A06 · 전투 모션 | [Content/Anim_Assets/Spellblade/Animations/Sword/Sword_Walk_Seq_Start.uasset](../../Content/Anim_Assets/Spellblade/Animations/Sword/Sword_Walk_Seq_Start.uasset) |
 | A07 · Basic 원본 | [SourceArt/Weapons/Greatsword/Basic/SM_GothicGreatsword_MMO.fbx](../../SourceArt/Weapons/Greatsword/Basic/SM_GothicGreatsword_MMO.fbx) |
 | A07 · Basic texture | [SourceArt/Weapons/Greatsword/Basic/Textures/T_GothicGreatsword_MMO_BaseColor.png](../../SourceArt/Weapons/Greatsword/Basic/Textures/T_GothicGreatsword_MMO_BaseColor.png) |
 | A07 · Basic runtime | [Content/Weapons/Greatsword/Basic/SM_Greatsword_Basic.uasset](../../Content/Weapons/Greatsword/Basic/SM_Greatsword_Basic.uasset) |

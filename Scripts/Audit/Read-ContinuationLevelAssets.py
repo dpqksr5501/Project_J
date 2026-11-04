@@ -33,8 +33,8 @@ def read_properties(obj, properties):
             result['unverified'].append({'property': name, 'error': str(error), 'meaning_ko': '공개 조회 실패; property명/접근/환경 원인을 원문으로 구분하며 우회 없음'})
     return result
 
-asset_paths = (['/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword'] if repair_style_only else
-               ['/Game/DataAssetSets/Class/DA_Class_Greatsword', '/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword'])
+asset_paths = (['/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Spellblade'] if repair_style_only else
+               ['/Game/DataAssetSets/Class/DA_Class_Spellblade', '/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Spellblade'])
 for path in asset_paths:
     obj = unreal.load_asset(path)
     if not obj:

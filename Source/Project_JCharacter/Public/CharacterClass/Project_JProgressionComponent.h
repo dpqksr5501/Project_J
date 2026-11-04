@@ -49,6 +49,7 @@ class PROJECT_JCHARACTER_API UProject_JProgressionComponent : public UActorCompo
 	bool ValidateCommittedExperience(const FProject_JProgressionSnapshot &Snapshot, bool bTrustedApply = false) const;
 	void InstallCommittedExperience(const FProject_JProgressionSnapshot &Snapshot);
 	void PublishCommittedExperience();
+	void PublishCommittedExperience(TFunctionRef<bool()> Current);
 	bool PlanClass(UProject_JCharacterClassDefinition *Class, FProject_JProgressionSnapshot &Out) const;
 	bool PlanAdvancement(UProject_JCharacterAdvancementDefinition *Advancement,
 						 FProject_JProgressionSnapshot &Out) const;
@@ -56,9 +57,15 @@ class PROJECT_JCHARACTER_API UProject_JProgressionComponent : public UActorCompo
 									  UProject_JCharacterClassDefinition *Class,
 									  const TArray<UProject_JCharacterAdvancementDefinition *> &History,
 									  bool Trusted = false, bool AllowUninitialized = false) const;
-	void InstallCommittedProgression(const FProject_JProgressionSnapshot &Snapshot,
+	/** Returns whether values or resolved definition/grant identities require publication. */
+	bool InstallCommittedProgression(const FProject_JProgressionSnapshot &Snapshot,
 									 UProject_JCharacterClassDefinition *Class,
 									 const TArray<UProject_JCharacterAdvancementDefinition *> &History);
+    /** Fully validates the existing installer, then asks the caller immediately before the first write.
+     * False preserves both component values/bookkeeping and OutChanged. */
+    bool TryInstallCommittedProgression(const FProject_JProgressionSnapshot& Snapshot,
+        UProject_JCharacterClassDefinition* Class, const TArray<UProject_JCharacterAdvancementDefinition*>& History,
+        TFunctionRef<bool()> CanInstall, bool& OutChanged);
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
@@ -99,6 +106,9 @@ class PROJECT_JCHARACTER_API UProject_JProgressionComponent : public UActorCompo
 	FOnChanged OnChanged;
 
   private:
+	friend struct FProject_JNativeQuestRewardCommit;
+	void InstallPreparedExperience(const FProject_JProgressionSnapshot& Snapshot);
+	void PublishPreparedExperience(TFunctionRef<bool()> IsCurrent);
 	UPROPERTY(ReplicatedUsing = OnRep_Experience) int64 Experience = 0;
 	UFUNCTION() void OnRep_Experience();
 	UPROPERTY(ReplicatedUsing = OnRep_State) FProject_JProgressionState State;

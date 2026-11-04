@@ -1,0 +1,49 @@
+name: MMO foundation contracts
+
+on:
+  pull_request:
+    paths:
+      - 'Source/**'
+      - 'Config/**'
+      - 'Plugins/**'
+      - 'Scripts/**'
+      - 'Docs/**'
+      - 'Project_J.uproject'
+      - '.github/workflows/mmo-foundation.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'Source/**'
+      - 'Config/**'
+      - 'Plugins/**'
+      - 'Scripts/**'
+      - 'Docs/**'
+      - 'Project_J.uproject'
+      - '.github/workflows/mmo-foundation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          lfs: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: '3.14'
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Module and MMO contract validation
+        run: python Scripts/Validation/Validate-MMOArchitecture.py
+      - name: Existing tool regressions
+        run: python -m unittest discover -s Scripts/Tests -p "test_*.py"
+      - name: Documentation links
+        run: node Scripts/Validation/Validate-DocLinks.mjs

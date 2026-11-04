@@ -1,6 +1,8 @@
 #pragma once
 #include "Animation/AnimInstanceProxy.h"
 #include "Animation/Project_JAnimationSnapshot.h"
+#include "Animation/Project_JPreparedAnimTrajectory.h"
+#include "MoveLibrary/MovementUtils.h"
 
 /** Immutable common inputs; the generated GASP graph is the only locomotion pose provider. */
 struct FProject_JCharacterAnimInstanceProxy : public FAnimInstanceProxy
@@ -8,6 +10,13 @@ struct FProject_JCharacterAnimInstanceProxy : public FAnimInstanceProxy
  FProject_JCharacterAnimInstanceProxy()=default;
  explicit FProject_JCharacterAnimInstanceProxy(UAnimInstance* Instance):FAnimInstanceProxy(Instance) {}
  void QueueGameThreadData(const FProject_JAnimThreadSafeData& Data);
+ /** Transfer a complete GT snapshot at its producer's last use. */
+ void QueueGameThreadData(FProject_JAnimThreadSafeData&& Data);
+ void QueueGameThreadData(FProject_JAnimThreadSafeData&& Data,FProject_JPreparedAnimTrajectory&& Prediction);
+ /** Called in the existing native thread-safe phase, before player logic/graph. */
+ bool CompletePreparedTrajectory();
+ /** GT source retirement; never lets an old completion populate a new source. */
+ void RetirePreparedTrajectory();
  const FProject_JAnimThreadSafeData& GetThreadSafeData() const { return ThreadSafeData; }
  /** GT-only observation of the last completed traversal; scans nodes only on demand. */
  const FProject_JAnimPlaybackSnapshot& GetLatestPostSelection() const;
@@ -15,6 +24,7 @@ protected:
  virtual void Initialize(UAnimInstance* Instance) override;
  virtual void AddReferencedObjects(UAnimInstance* Instance,FReferenceCollector& Collector) override;
  virtual void PreUpdate(UAnimInstance* Instance,float DeltaSeconds) override;
+ virtual void PostUpdate(UAnimInstance* Instance) const override;
  virtual void UpdateAnimationNode_WithRoot(const FAnimationUpdateContext& Context,FAnimNode_Base* Root,FName Layer) override;
 private:
  friend class UProject_JCharacterAnimInstance;
@@ -25,6 +35,11 @@ private:
  void CapturePlayerLocomotionPostSelection() const;
  FProject_JAnimThreadSafeData PendingGameThreadData;
  FProject_JAnimThreadSafeData ThreadSafeData;
+ TOptional<FProject_JPreparedAnimTrajectory> PendingPreparedTrajectory;
+ TOptional<FProject_JPreparedAnimTrajectory> PreparedTrajectory;
+ TArray<FTrajectorySampleInfo> PreparedTrajectoryScratch;
+ uint64 CompletedPreparedRevision=0;
+ uint64 CompletedPreparedSourceGeneration=0;
  mutable FProject_JAnimPlaybackSnapshot LatestPostSelection;
  uint64 PlaybackUpdateRevision=0;
  mutable uint64 CapturedPlaybackRevision=0;

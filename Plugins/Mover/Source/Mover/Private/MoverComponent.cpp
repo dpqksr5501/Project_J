@@ -2,6 +2,8 @@
 
 
 #include "MoverComponent.h"
+#include "MoverNativeFlyingTrajectory.h"
+#include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "MoverGameplayTagLog.h"
 #include "MoverSimulationTypes.h"
 #include "MovementModeStateMachine.h"
@@ -10,6 +12,8 @@
 #include "DefaultMovementSet/Modes/WalkingMode.h"
 #include "DefaultMovementSet/Modes/FallingMode.h"
 #include "DefaultMovementSet/Modes/FlyingMode.h"
+#include "DefaultMovementSet/Settings/CommonLegacyMovementSettings.h"
+#include "MoveLibrary/AirMovementUtils.h"
 #include "MoveLibrary/MovementMixer.h"
 #include "MoveLibrary/MovementUtils.h"
 #include "MoveLibrary/FloorQueryUtils.h"
@@ -63,6 +67,20 @@ namespace MoverCVars
 
 namespace MoverComponentCVars
 {
+	static int32 ReuseNativeFlyingPredictionParams = 0;
+	FAutoConsoleVariableRef CVarReuseNativeFlyingPredictionParams(
+		TEXT("mover.Prediction.ReuseFlyingParams"), ReuseNativeFlyingPredictionParams,
+		TEXT("Reuse native Flying parameters within one synchronous default trajectory query. 0: original path (default), 1: explicit-facing inputs only, 2: also zero-intent evolving sync facing. BP/custom/based/optional-input queries retain ordinary GenerateMove."),
+		ECVF_Default);
+#if !UE_BUILD_SHIPPING
+	// Diagnostic only, saturated rather than wrapping; never limits game work.
+	static int32 NativeFlyingPredictionQueries = 0;
+	FAutoConsoleVariableRef CVarNativeFlyingPredictionQueries(
+		TEXT("mover.Prediction.NativeFlyingParamsQueries"), NativeFlyingPredictionQueries,
+		TEXT("Read-only saturated count of trajectory queries that actually used the opt-in native Flying parameter path."),
+		ECVF_ReadOnly);
+#endif
+
 	static int32 WarnOnPostSimDifference = 0;
 	FAutoConsoleVariableRef CVarMoverWarnOnPostSimDifference(
 		TEXT("mover.debug.WarnOnPostSimDifference"),
@@ -1433,6 +1451,13 @@ void UMoverComponent::PhysicsVolumeChanged(APhysicsVolume* NewVolume)
 }
 
 
+void UMoverComponent::RegisterDefaultSharedSettings(UObject* Settings)
+{
+	check(Settings && Settings->GetOuter() == this && Settings->HasAnyFlags(RF_DefaultSubObject));
+	check(Cast<IMovementSettingsInterface>(Settings));
+	SharedSettings.AddUnique(Settings);
+}
+
 void UMoverComponent::RefreshSharedSettings()
 {
 	TArray<TObjectPtr<UObject>> UnreferencedSettingsObjs = SharedSettings;
@@ -2340,146 +2365,416 @@ TArray<FTrajectorySampleInfo> UMoverComponent::GetFutureTrajectory(float FutureS
 	return GetPredictedTrajectory(PredictionParams);
 }
 
-TArray<FTrajectorySampleInfo> UMoverComponent::GetPredictedTrajectory(FMoverPredictTrajectoryParams PredictionParams)
+bool UMoverComponent::TryGetPreparedPrediction(const UBaseMovementMode&, const FMoverSimContext&,
+	const FMoverTickStartData&, const FMoverTimeStep&, const FMoverPredictTrajectoryParams&,
+	TArray<FTrajectorySampleInfo>&)
 {
-	if (Simulation)
+	return false;
+}
+
+bool UMoverComponent::WithPredictionContext(const FMoverPredictTrajectoryParams& PredictionParams,
+    TFunctionRef<bool(const UBaseMovementMode&, const FMoverSimContext&, FMoverTickStartData&,
+        const FMoverTimeStep&, URollbackBlackboard&)> Consumer)
+{
+    if (!Simulation) return false;
+	FMoverSimContext SimContext;
+	SimContext.Simulation = Simulation;
+	SimContext.Blackboard = Simulation->GetRollbackBlackboardPredictionWrapper();
+	SimContext.SimulationOwner = this;
+
+	FMoverTickStartData StepState;
+
+	// Use the last-known input if none are specified.
+	if (PredictionParams.OptionalInputCmds.IsEmpty())
 	{
-		FMoverSimContext SimContext;
-		SimContext.Simulation = Simulation;
-		SimContext.Blackboard = Simulation->GetRollbackBlackboardPredictionWrapper();
-		SimContext.SimulationOwner = this;
-
-		FMoverTickStartData StepState;
-
-		// Use the last-known input if none are specified.
-		if (PredictionParams.OptionalInputCmds.IsEmpty())
-		{
-			StepState.InputCmd = GetLastInputCmd();
-		}
-
-		// Use preferred starting sync/aux state. Fall back to last-known state if not set.
-		if (PredictionParams.OptionalStartSyncState.IsSet())
-		{
-			StepState.SyncState = PredictionParams.OptionalStartSyncState.GetValue();
-		}
-		else
-		{
-			StepState.SyncState = MoverSyncStateDoubleBuffer.GetReadable();
-		}
-
-		if (PredictionParams.OptionalStartAuxState.IsSet())
-		{
-			StepState.AuxState = PredictionParams.OptionalStartAuxState.GetValue();
-		}
-		else
-		{
-			StepState.AuxState = CachedLastAuxState;
-		}
-
-
-		FMoverTimeStep FutureTimeStep;
-		FutureTimeStep.StepMs = (PredictionParams.SecondsPerSample * 1000.f);
-
-		if (PredictionParams.OptionalStartTime.IsSet())
-		{
-			FutureTimeStep.BaseSimTimeMs = FMath::Max(0.0, PredictionParams.OptionalStartTime.GetValue().TimeMs);
-			FutureTimeStep.ServerFrame   = FMath::Max(0, PredictionParams.OptionalStartTime.GetValue().FrameCount);
-		}
-		else
-		{
-			FutureTimeStep.BaseSimTimeMs = FMath::Max(0.0, CachedLastSimTickTimeStep.BaseSimTimeMs);
-			FutureTimeStep.ServerFrame   = FMath::Max(0, CachedLastSimTickTimeStep.ServerFrame);
-		}
-
-		if (const UBaseMovementMode* CurrentMovementMode = GetMovementMode())
-		{
-			if (FMoverDefaultSyncState* StepSyncState = StepState.SyncState.SyncStateCollection.FindMutableDataByType<FMoverDefaultSyncState>())
-			{
-				const bool bOrigHasGravityOverride = bHasGravityOverride;
-				const FVector OrigGravityAccelOverride = GravityAccelOverride;
-
-				if (PredictionParams.bDisableGravity)
-				{
-					SetGravityOverride(true, FVector::ZeroVector);
-				}
-
-				TArray<FTrajectorySampleInfo> OutSamples;
-				OutSamples.SetNumUninitialized(PredictionParams.NumPredictionSamples);
-
-				FVector PriorLocation = StepSyncState->GetLocation_WorldSpace();
-				FRotator PriorOrientation = StepSyncState->GetOrientation_WorldSpace();
-				FVector PriorVelocity = StepSyncState->GetVelocity_WorldSpace();
-
-				for (int32 i = 0; i < PredictionParams.NumPredictionSamples; ++i)
-				{
-					Simulation->RollbackBlackboard->BeginPredictionFrame(FutureTimeStep);
-
-					// If no further inputs are specified, the previous input cmd will continue to be used
-					if (i < PredictionParams.OptionalInputCmds.Num())
-					{
-						StepState.InputCmd = PredictionParams.OptionalInputCmds[i];
-					}
-
-					// Capture sample from current step state
-					FTrajectorySampleInfo& Sample = OutSamples[i];
-
-					Sample.Transform.SetTranslationAndScale3D(StepSyncState->GetLocation_WorldSpace(), FVector::OneVector);
-					Sample.Transform.SetRotation(StepSyncState->GetOrientation_WorldSpace().Quaternion());
-					Sample.LinearVelocity = StepSyncState->GetVelocity_WorldSpace();
-					Sample.InstantaneousAcceleration = (StepSyncState->GetVelocity_WorldSpace() - PriorVelocity) / PredictionParams.SecondsPerSample;
-					Sample.AngularVelocity = (StepSyncState->GetOrientation_WorldSpace() - PriorOrientation) * (1.f / PredictionParams.SecondsPerSample);
-
-					Sample.SimTimeMs = FutureTimeStep.BaseSimTimeMs;
-
-					// Cache prior values
-					PriorLocation = StepSyncState->GetLocation_WorldSpace();
-					PriorOrientation = StepSyncState->GetOrientation_WorldSpace();
-					PriorVelocity = StepSyncState->GetVelocity_WorldSpace();
-
-					// Generate next move from current step state
-					FProposedMove StepMove;
-					CurrentMovementMode->GenerateMove(SimContext, StepState, FutureTimeStep, StepMove);
-
-					// Advance state based on move
-					StepSyncState->SetTransforms_WorldSpace(StepSyncState->GetLocation_WorldSpace() + (StepMove.LinearVelocity * PredictionParams.SecondsPerSample),
-						UMovementUtils::ApplyAngularVelocityToRotator(StepSyncState->GetOrientation_WorldSpace(),StepMove.AngularVelocityDegrees, PredictionParams.SecondsPerSample),
-						StepMove.LinearVelocity,
-						StepMove.AngularVelocityDegrees,
-						StepSyncState->GetMovementBase(),
-						StepSyncState->GetMovementBaseBoneName());
-
-					FutureTimeStep.BaseSimTimeMs += FutureTimeStep.StepMs;
-					++FutureTimeStep.ServerFrame;
-				}
-
-				// Put sample locations at visual root location if requested
-				if (PredictionParams.bUseVisualComponentRoot)
-				{
-					if (const USceneComponent* VisualComp = GetPrimaryVisualComponent())
-					{
-						const FVector VisualCompOffset = VisualComp->GetRelativeLocation();
-						const FTransform VisualCompRelativeTransform = VisualComp->GetRelativeTransform();
-
-						for (int32 i=0; i < PredictionParams.NumPredictionSamples; ++i)
-						{
-							OutSamples[i].Transform = VisualCompRelativeTransform * OutSamples[i].Transform;
-						}
-					}
-				}
-				
-				if (PredictionParams.bDisableGravity)
-				{
-					SetGravityOverride(bOrigHasGravityOverride, OrigGravityAccelOverride);
-				}
-
-				Simulation->RollbackBlackboard->EndPrediction();
-
-				return OutSamples;
-			}
-		}
+		StepState.InputCmd = GetLastInputCmd();
 	}
 
-	
+	// Use preferred starting sync/aux state. Fall back to last-known state if not set.
+	if (PredictionParams.OptionalStartSyncState.IsSet())
+	{
+		StepState.SyncState = PredictionParams.OptionalStartSyncState.GetValue();
+	}
+	else
+	{
+		StepState.SyncState = MoverSyncStateDoubleBuffer.GetReadable();
+	}
+
+	if (PredictionParams.OptionalStartAuxState.IsSet())
+	{
+		StepState.AuxState = PredictionParams.OptionalStartAuxState.GetValue();
+	}
+	else
+	{
+		StepState.AuxState = CachedLastAuxState;
+	}
+
+
+	FMoverTimeStep FutureTimeStep;
+	FutureTimeStep.StepMs = (PredictionParams.SecondsPerSample * 1000.f);
+
+	if (PredictionParams.OptionalStartTime.IsSet())
+	{
+		FutureTimeStep.BaseSimTimeMs = FMath::Max(0.0, PredictionParams.OptionalStartTime.GetValue().TimeMs);
+		FutureTimeStep.ServerFrame   = FMath::Max(0, PredictionParams.OptionalStartTime.GetValue().FrameCount);
+	}
+	else
+	{
+		FutureTimeStep.BaseSimTimeMs = FMath::Max(0.0, CachedLastSimTickTimeStep.BaseSimTimeMs);
+		FutureTimeStep.ServerFrame   = FMath::Max(0, CachedLastSimTickTimeStep.ServerFrame);
+	}
+
+
+    const UBaseMovementMode* CurrentMovementMode = GetMovementMode();
+    FMoverDefaultSyncState* StepSyncState = StepState.SyncState.SyncStateCollection.FindMutableDataByType<FMoverDefaultSyncState>();
+    if (!CurrentMovementMode || !StepSyncState) return false;
+    const bool bOrigHasGravityOverride = bHasGravityOverride;
+    const FVector OrigGravityAccelOverride = GravityAccelOverride;
+    if (PredictionParams.bDisableGravity)
+    {
+        SetGravityOverride(true, FVector::ZeroVector);
+    }
+    const bool bResult = Consumer(*CurrentMovementMode, SimContext, StepState, FutureTimeStep, *Simulation->RollbackBlackboard);
+    if (PredictionParams.bDisableGravity)
+    {
+        SetGravityOverride(bOrigHasGravityOverride, OrigGravityAccelOverride);
+    }
+    // Consumer owns the original BeginPredictionFrame positions. Close only
+    // after gravity restoration, matching synchronous query completion.
+    Simulation->RollbackBlackboard->EndPrediction();
+    return bResult;
+}
+
+namespace
+{
+// Stronger value/output validation belongs only to owning capture/compute.
+// The existing synchronous fast path retains its original fallback admission.
+bool AreNativeFlyingParamsFinite(const FFreeMoveParams& Params)
+{
+    return (Params.MoveInputType == EMoveInputType::DirectionalIntent ||
+            Params.MoveInputType == EMoveInputType::Velocity || Params.MoveInputType == EMoveInputType::None) &&
+        !Params.MoveInput.ContainsNaN() && !Params.OrientationIntent.ContainsNaN() &&
+        !Params.PriorVelocity.ContainsNaN() && !Params.PriorOrientation.ContainsNaN() &&
+        !Params.WorldToGravityQuat.ContainsNaN() && Params.WorldToGravityQuat.IsNormalized() &&
+        FMath::IsFinite(Params.MaxSpeed) && Params.MaxSpeed > UE_SMALL_NUMBER &&
+        FMath::IsFinite(Params.Acceleration) && FMath::IsFinite(Params.Deceleration) &&
+        FMath::IsFinite(Params.TurningBoost) && FMath::IsFinite(Params.TurningRate) &&
+        FMath::IsFinite(Params.Friction) && FMath::IsFinite(Params.DeltaSeconds) && Params.DeltaSeconds > 0.f;
+}
+
+bool IsNativeFlyingSampleFinite(const FTrajectorySampleInfo& Sample)
+{
+    return !Sample.Transform.ContainsNaN() && Sample.Transform.GetRotation().IsNormalized() &&
+        !Sample.LinearVelocity.ContainsNaN() && !Sample.InstantaneousAcceleration.ContainsNaN() &&
+        !Sample.AngularVelocity.ContainsNaN() && FMath::IsFinite(Sample.SimTimeMs);
+}
+
+// Shared by synchronous prediction and the owning native Flying calculation.
+void WritePredictionSample(FTrajectorySampleInfo& Sample, const FVector& Location,
+    const FRotator& Orientation, const FVector& Velocity, FRotator& PriorOrientation,
+    FVector& PriorVelocity, const FMoverTimeStep& Step, float SecondsPerSample)
+{
+    Sample.Transform.SetTranslationAndScale3D(Location, FVector::OneVector);
+    Sample.Transform.SetRotation(Orientation.Quaternion());
+    Sample.LinearVelocity = Velocity;
+    Sample.InstantaneousAcceleration = (Velocity - PriorVelocity) / SecondsPerSample;
+    Sample.AngularVelocity = (Orientation - PriorOrientation) * (1.f / SecondsPerSample);
+    Sample.SimTimeMs = Step.BaseSimTimeMs;
+    PriorOrientation = Orientation;
+    PriorVelocity = Velocity;
+}
+
+bool ComputeNativeFlyingMove(FFreeMoveParams& Params, bool bUsesSyncFacing, bool bRemainVertical,
+    const FVector& Velocity, const FRotator& Orientation, const FMoverTimeStep& Step, FProposedMove& OutMove)
+{
+    Params.PriorVelocity = Velocity;
+    Params.PriorOrientation = Orientation;
+    Params.DeltaSeconds = Step.StepMs * 0.001f;
+    if (Params.PriorVelocity.ContainsNaN() || Params.PriorOrientation.ContainsNaN()) return false;
+    if (bUsesSyncFacing)
+    {
+        Params.OrientationIntent = UMovementUtils::ApplyGravityToOrientationIntent(
+            Params.PriorOrientation, Params.WorldToGravityQuat, bRemainVertical);
+    }
+    OutMove = UAirMovementUtils::ComputeControlledFreeMove(Params);
+    return true;
+}
+
+void AdvancePredictionValues(const FVector& Location, const FRotator& Orientation,
+    const FProposedMove& Move, float SecondsPerSample, FVector& OutLocation, FRotator& OutOrientation)
+{
+    OutLocation = Location + (Move.LinearVelocity * SecondsPerSample);
+    OutOrientation = UMovementUtils::ApplyAngularVelocityToRotator(
+        Orientation, Move.AngularVelocityDegrees, SecondsPerSample);
+}
+}
+
+bool UE::MoverUtils::ComputeNativeFlyingTrajectory(const FMoverNativeFlyingTrajectory& Prediction,
+    TArray<FTrajectorySampleInfo>& OutSamples)
+{
+    if (Prediction.NumPredictionSamples <= 0 || !FMath::IsFinite(Prediction.SecondsPerSample) ||
+        Prediction.SecondsPerSample <= 0.f || !FMath::IsFinite(Prediction.FirstStep.StepMs) ||
+        Prediction.FirstStep.StepMs <= UE_SMALL_NUMBER || !FMath::IsFinite(Prediction.FirstStep.BaseSimTimeMs) ||
+        !AreNativeFlyingParamsFinite(Prediction.MoveParams) ||
+        (Prediction.bUseVisualRoot && (Prediction.VisualRootTransform.ContainsNaN() ||
+            !Prediction.VisualRootTransform.GetRotation().IsNormalized())))
+    {
+        OutSamples.Reset();
+        return false;
+    }
+    FFreeMoveParams Params = Prediction.MoveParams;
+    FVector Location = Prediction.Location;
+    FRotator Orientation = Prediction.Orientation;
+    FVector Velocity = Prediction.Velocity;
+    FVector PriorVelocity = Velocity;
+    FRotator PriorOrientation = Orientation;
+    FMoverTimeStep Step = Prediction.FirstStep;
+    OutSamples.SetNumUninitialized(Prediction.NumPredictionSamples);
+    for (int32 Index = 0; Index < OutSamples.Num(); ++Index)
+    {
+        if (Location.ContainsNaN() || Orientation.ContainsNaN() || Velocity.ContainsNaN())
+        {
+            OutSamples.Reset();
+            return false;
+        }
+        WritePredictionSample(OutSamples[Index], Location, Orientation, Velocity,
+            PriorOrientation, PriorVelocity, Step, Prediction.SecondsPerSample);
+        FProposedMove Move;
+        if (!ComputeNativeFlyingMove(Params, Prediction.bUsesSyncFacing, Prediction.bRemainVertical,
+            Velocity, Orientation, Step, Move))
+        {
+            OutSamples.Reset();
+            return false;
+        }
+        // No-base SetTransforms_WorldSpace stores these rotator/vector values
+        // directly; do not add a quaternion roundtrip or componentwise Euler step.
+        FVector NextLocation;
+        FRotator NextOrientation;
+        AdvancePredictionValues(Location, Orientation, Move, Prediction.SecondsPerSample, NextLocation, NextOrientation);
+        Location = NextLocation;
+        Orientation = NextOrientation;
+        Velocity = Move.LinearVelocity;
+        Step.BaseSimTimeMs += Step.StepMs;
+        ++Step.ServerFrame;
+    }
+    // Validate each final sample once, after its optional visual transform.
+    // The final advance is not an output sample, matching the native query.
+    for (FTrajectorySampleInfo& Sample : OutSamples)
+    {
+        if (Prediction.bUseVisualRoot)
+            Sample.Transform = Prediction.VisualRootTransform * Sample.Transform;
+        if (!IsNativeFlyingSampleFinite(Sample))
+        {
+            OutSamples.Reset();
+            return false;
+        }
+    }
+    return true;
+}
+
+bool UMoverComponent::TryCaptureNativeFlyingTrajectory(const UBaseMovementMode& Mode,
+    const FMoverTickStartData& StartState, const FMoverTimeStep& FirstStep,
+    const FMoverPredictTrajectoryParams& Query, FMoverNativeFlyingTrajectory& OutPrediction) const
+{
+    const auto* Sync = StartState.SyncState.SyncStateCollection.FindDataByType<FMoverDefaultSyncState>();
+    if (!Sync) return false;
+    const FVector InitialLocation = Sync->GetLocation_WorldSpace();
+    const FRotator PriorOrientation = Sync->GetOrientation_WorldSpace();
+    const FVector PriorVelocity = Sync->GetVelocity_WorldSpace();
+    FMoverNativeFlyingTrajectory Captured;
+    if (IsInGameThread() && MoverComponentCVars::ReuseNativeFlyingPredictionParams > 0 && !IsBackendAsync() &&
+        Mode.GetClass() == UFlyingMode::StaticClass() &&
+        Query.OptionalInputCmds.IsEmpty() && !Query.OptionalStartTime.IsSet() &&
+        !Query.OptionalStartSyncState.IsSet() && !Query.OptionalStartAuxState.IsSet() &&
+        !Query.bDisableGravity && Query.NumPredictionSamples > 0 &&
+        FMath::IsFinite(FirstStep.StepMs) && FirstStep.StepMs > UE_SMALL_NUMBER &&
+        Sync->GetScriptStruct() == FMoverDefaultSyncState::StaticStruct() && !Sync->GetMovementBase())
+    {
+        const auto* FlyingMode = static_cast<const UFlyingMode*>(&Mode);
+        const auto* Settings = FlyingMode->CommonLegacySettings.Get();
+        const auto* Input = StartState.InputCmd.InputCollection.FindDataByType<FCharacterDefaultInputs>();
+        const FQuat GravityFrame = GetWorldToGravityTransform();
+        const FPlanarConstraint& Constraint = GetPlanarConstraint();
+        if (Settings && Input && Input->GetScriptStruct() == FCharacterDefaultInputs::StaticStruct() &&
+            !Input->bUsingMovementBase && !Input->MovementBase && !Input->GetMoveInput().ContainsNaN() &&
+            !Input->OrientationIntent.ContainsNaN() &&
+            (MoverComponentCVars::ReuseNativeFlyingPredictionParams >= 2 || !Input->OrientationIntent.IsNearlyZero()) &&
+            (Input->GetMoveInputType() == EMoveInputType::DirectionalIntent || Input->GetMoveInputType() == EMoveInputType::Velocity || Input->GetMoveInputType() == EMoveInputType::None) &&
+            !InitialLocation.ContainsNaN() && !PriorOrientation.ContainsNaN() && !PriorVelocity.ContainsNaN() &&
+            !GravityFrame.ContainsNaN() && GravityFrame.IsNormalized() &&
+            (!Constraint.bConstrainToPlane || !Constraint.PlaneConstraintNormal.ContainsNaN()) &&
+            FMath::IsFinite(Settings->MaxSpeed) && Settings->MaxSpeed > UE_SMALL_NUMBER &&
+            FMath::IsFinite(Settings->Acceleration) && FMath::IsFinite(Settings->Deceleration) &&
+            FMath::IsFinite(Settings->TurningBoost) && FMath::IsFinite(Settings->TurningRate))
+        {
+            Captured.MoveParams = FlyingMode->BuildFreeMoveParams(StartState, FirstStep);
+            Captured.bUsesSyncFacing = Input->OrientationIntent.IsNearlyZero();
+            Captured.bRemainVertical = Settings->bShouldRemainVertical;
+            Captured.Location = InitialLocation;
+            Captured.Orientation = PriorOrientation;
+            Captured.Velocity = PriorVelocity;
+            Captured.FirstStep = FirstStep;
+            Captured.NumPredictionSamples = Query.NumPredictionSamples;
+            Captured.SecondsPerSample = Query.SecondsPerSample;
+            OutPrediction = MoveTemp(Captured);
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool UMoverComponent::TryPrepareNativeFlyingTrajectory(const FMoverPredictTrajectoryParams& Query,
+    FMoverNativeFlyingTrajectory& OutPrediction)
+{
+    if (!IsInGameThread() || IsBackendAsync() || Query.NumPredictionSamples <= 0 ||
+        !FMath::IsFinite(Query.SecondsPerSample) || Query.SecondsPerSample <= 0.f) return false;
+    FMoverNativeFlyingTrajectory Captured;
+    const bool bCaptured = WithPredictionContext(Query,
+        [&](const UBaseMovementMode& Mode, const FMoverSimContext&, FMoverTickStartData& StartState,
+            const FMoverTimeStep& FirstStep, URollbackBlackboard& Blackboard)
+        {
+            Blackboard.BeginPredictionFrame(FirstStep);
+            if (!TryCaptureNativeFlyingTrajectory(Mode, StartState, FirstStep, Query, Captured) ||
+                !AreNativeFlyingParamsFinite(Captured.MoveParams) || !FMath::IsFinite(FirstStep.BaseSimTimeMs)) return false;
+            if (Query.bUseVisualComponentRoot)
+            {
+                if (const USceneComponent* Visual = GetPrimaryVisualComponent())
+                {
+                    Captured.VisualRootTransform = Visual->GetRelativeTransform();
+                    if (Captured.VisualRootTransform.ContainsNaN() ||
+                        !Captured.VisualRootTransform.GetRotation().IsNormalized()) return false;
+                    Captured.bUseVisualRoot = true;
+                }
+            }
+            return true;
+        });
+    if (!bCaptured) return false;
+    OutPrediction = MoveTemp(Captured);
+    return true;
+}
+
+TArray<FTrajectorySampleInfo> UMoverComponent::GetPredictedTrajectory(FMoverPredictTrajectoryParams PredictionParams)
+{
+    TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_Trajectory_GetPredictedTrajectory);
+    TArray<FTrajectorySampleInfo> OutSamples;
+    const bool bPredicted = WithPredictionContext(PredictionParams,
+        [&](const UBaseMovementMode& Mode, const FMoverSimContext& SimContext, FMoverTickStartData& StepState,
+            const FMoverTimeStep& FirstStep, URollbackBlackboard&)
+        {
+            const UBaseMovementMode* CurrentMovementMode = &Mode;
+            FMoverDefaultSyncState* StepSyncState = StepState.SyncState.SyncStateCollection.FindMutableDataByType<FMoverDefaultSyncState>();
+            FMoverTimeStep FutureTimeStep = FirstStep;
+		OutSamples.SetNumUninitialized(PredictionParams.NumPredictionSamples);
+
+		FRotator PriorOrientation = StepSyncState->GetOrientation_WorldSpace();
+		FVector PriorVelocity = StepSyncState->GetVelocity_WorldSpace();
+
+		// Rebuild for every query. No state/input is borrowed as writable and no
+		// BP or custom mode is bypassed. Zero facing follows evolving sync state.
+        FMoverNativeFlyingTrajectory NativeFlying;
+        TOptional<FFreeMoveParams> NativeFlyingParams;
+        if (TryCaptureNativeFlyingTrajectory(Mode, StepState, FutureTimeStep, PredictionParams, NativeFlying))
+            NativeFlyingParams.Emplace(NativeFlying.MoveParams);
+
+		bool bPreparedPrediction = false;
+		if (IsInGameThread() && !IsBackendAsync() && PredictionParams.NumPredictionSamples > 0)
+		{
+			// The extension reads the same predictive state as ordinary GenerateMove.
+			// BeginPredictionFrame may be repeated before the one existing EndPrediction.
+			Simulation->RollbackBlackboard->BeginPredictionFrame(FutureTimeStep);
+			bPreparedPrediction = TryGetPreparedPrediction(*CurrentMovementMode, SimContext,
+				StepState, FutureTimeStep, PredictionParams, OutSamples);
+		}
+
+		if (!bPreparedPrediction)
+		{
+			// This label describes admission before the loop; the existing native
+			// candidate may still fall back if an evolving state becomes invalid.
+			TRACE_CPUPROFILER_EVENT_SCOPE_TEXT(NativeFlyingParams.IsSet() ?
+				TEXT("ProjectJ_Trajectory_NativeFlyingCandidateLoop") : TEXT("ProjectJ_Trajectory_GenericLoop"));
+			for (int32 i = 0; i < PredictionParams.NumPredictionSamples; ++i)
+			{
+				Simulation->RollbackBlackboard->BeginPredictionFrame(FutureTimeStep);
+
+				// If no further inputs are specified, the previous input cmd will continue to be used
+				if (i < PredictionParams.OptionalInputCmds.Num())
+				{
+					StepState.InputCmd = PredictionParams.OptionalInputCmds[i];
+				}
+
+				// Capture sample from current step state
+				FTrajectorySampleInfo& Sample = OutSamples[i];
+
+				const FVector SampleLocation = StepSyncState->GetLocation_WorldSpace();
+				const FRotator SampleOrientation = StepSyncState->GetOrientation_WorldSpace();
+				const FVector SampleVelocity = StepSyncState->GetVelocity_WorldSpace();
+                WritePredictionSample(Sample, SampleLocation, SampleOrientation, SampleVelocity,
+                    PriorOrientation, PriorVelocity, FutureTimeStep, PredictionParams.SecondsPerSample);
+
+				// Generate next move from current step state
+				FProposedMove StepMove;
+				if (NativeFlyingParams.IsSet())
+				{
+                    FFreeMoveParams& Params = NativeFlyingParams.GetValue();
+                    if (ComputeNativeFlyingMove(Params, NativeFlying.bUsesSyncFacing, NativeFlying.bRemainVertical,
+                        SampleVelocity, SampleOrientation, FutureTimeStep, StepMove))
+                    {
+	#if !UE_BUILD_SHIPPING
+						if (i == 0 && MoverComponentCVars::NativeFlyingPredictionQueries < MAX_int32)
+						{
+							// Keep the CVar's main value and referenced value in sync, without sinks/callbacks.
+							MoverComponentCVars::CVarNativeFlyingPredictionQueries->Set(
+								MoverComponentCVars::NativeFlyingPredictionQueries + 1,
+								EConsoleVariableFlags(ECVF_SetByCode | ECVF_Set_SetOnly_Unsafe));
+						}
+	#endif
+                    }
+					else
+					{
+						NativeFlyingParams.Reset();
+						CurrentMovementMode->GenerateMove(SimContext, StepState, FutureTimeStep, StepMove);
+					}
+				}
+				else
+				{
+					CurrentMovementMode->GenerateMove(SimContext, StepState, FutureTimeStep, StepMove);
+				}
+
+				// Advance state based on move
+                FVector NextLocation;
+                FRotator NextOrientation;
+                AdvancePredictionValues(StepSyncState->GetLocation_WorldSpace(), StepSyncState->GetOrientation_WorldSpace(),
+                    StepMove, PredictionParams.SecondsPerSample, NextLocation, NextOrientation);
+                StepSyncState->SetTransforms_WorldSpace(NextLocation, NextOrientation,
+					StepMove.LinearVelocity,
+					StepMove.AngularVelocityDegrees,
+					StepSyncState->GetMovementBase(),
+					StepSyncState->GetMovementBaseBoneName());
+
+				FutureTimeStep.BaseSimTimeMs += FutureTimeStep.StepMs;
+				++FutureTimeStep.ServerFrame;
+			}
+		}
+
+		// Put sample locations at visual root location if requested
+		if (PredictionParams.bUseVisualComponentRoot)
+		{
+			if (const USceneComponent* VisualComp = GetPrimaryVisualComponent())
+			{
+				const FVector VisualCompOffset = VisualComp->GetRelativeLocation();
+				const FTransform VisualCompRelativeTransform = VisualComp->GetRelativeTransform();
+
+				for (int32 i=0; i < PredictionParams.NumPredictionSamples; ++i)
+				{
+					OutSamples[i].Transform = VisualCompRelativeTransform * OutSamples[i].Transform;
+				}
+			}
+		}
+            return true;
+        });
+    if (bPredicted) return OutSamples;
+
 	// Editor/editor preview worlds i.e. thumbnails/blueprint actor previews have undefined init orders. We can skip warning in those cases.
 	// TODO Revisit if we expect/need trajectory to work in an editor preview world.
 	const UWorld* World = GetWorld();

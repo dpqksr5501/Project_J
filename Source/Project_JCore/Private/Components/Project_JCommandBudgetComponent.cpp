@@ -3,6 +3,7 @@
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerState.h"
 #include "GameFramework/Controller.h"
+#include "UObject/StrongObjectPtr.h"
 
 UProject_JCommandBudgetComponent::UProject_JCommandBudgetComponent()
 {
@@ -25,9 +26,24 @@ bool UProject_JCommandBudgetComponent::AdmitClientCommand(AActor* Source)
 	return !Cast<APlayerState>(BudgetOwner);
 }
 
+bool UProject_JCommandBudgetComponent::AdmitClientCommand(AActor* Source, double& NextAllowedTime, double MinimumIntervalSeconds)
+{
+	if (!FMath::IsFinite(MinimumIntervalSeconds) || MinimumIntervalSeconds <= 0 || !AdmitClientCommand(Source)) return false;
+	const double Now = FPlatformTime::Seconds();
+	if (Now < NextAllowedTime) return false;
+	NextAllowedTime = Now + MinimumIntervalSeconds;
+	return true;
+}
+
 bool UProject_JCommandBudgetComponent::TryConsume()
 {
 	check(IsInGameThread());
+	if (bClosed || IsBeingDestroyed() || !IsValid(GetOwner()) || GetOwner()->IsActorBeingDestroyed() ||
+		!GetOwner()->HasAuthority() || !GetWorld() || GetWorld()->bIsTearingDown) return false;
+	const TStrongObjectPtr<ThisClass> KeepSelf(this);
+	const TStrongObjectPtr<AActor> KeepOwner(GetOwner());
+	if (CommandAuthority.IsBound() && !CommandAuthority.Execute()) return false;
+	// The owner callback can synchronously retire this component/world.
 	if (bClosed || IsBeingDestroyed() || !IsValid(GetOwner()) || GetOwner()->IsActorBeingDestroyed() ||
 		!GetOwner()->HasAuthority() || !GetWorld() || GetWorld()->bIsTearingDown) return false;
 	const double Now = FPlatformTime::Seconds();

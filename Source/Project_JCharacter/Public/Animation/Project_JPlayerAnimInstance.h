@@ -9,6 +9,18 @@
 #include "BoneControllers/AnimNode_OrientationWarping.h"
 #include "Project_JPlayerAnimInstance.generated.h"
 
+struct FProject_JPreparedAnimTrajectory;
+
+#if !UE_BUILD_SHIPPING
+/** GT-only diagnostic counters. Elapsed scope time can include waits; this is not worker CPU. */
+struct FProject_JTrajectoryDiagnosticCounters
+{
+ uint64 Calls = 0;
+ uint64 Cycles = 0;
+ uint64 LastUpdateFrame = MAX_uint64;
+};
+#endif
+
 /** Completed movement snapshot consumed by the migrated GASP 5.8 animation graph. */
 UCLASS(Blueprintable, BlueprintType)
 class PROJECT_JCHARACTER_API UProject_JPlayerAnimInstance : public UProject_JCharacterAnimInstance
@@ -16,6 +28,10 @@ class PROJECT_JCHARACTER_API UProject_JPlayerAnimInstance : public UProject_JCha
 	GENERATED_BODY()
 	bool bNeedsLocomotionHistorySeed = true;
 	void SeedLocomotionHistory();
+ friend struct FProject_JCharacterAnimInstanceProxy;
+ bool TryPrepareNativeTrajectory(float DeltaSeconds,int32 PredictionHz,FProject_JAnimThreadSafeData& Data,FProject_JPreparedAnimTrajectory& Out);
+ void CommitPreparedTrajectorySnapshot(const FProject_JAnimThreadSafeData& Data,uint64 SourceGeneration);
+ uint64 LocomotionSourceGeneration=0;
 public:
  UFUNCTION(BlueprintCallable, Category="Player Locomotion", meta=(BlueprintThreadSafe))
  void SetNativeInteractionTransform(FTransform Value) { PlayerInteractionTransform=Value; }
@@ -40,6 +56,11 @@ public:
 	FString InspectFoundationPlayback() const;
  FName GetFoundationStateName() const;
  int32 GetTrajectoryPredictionRate() const;
+#if !UE_BUILD_SHIPPING
+ /** Explicit command-line diagnostics only; cumulative values avoid ticker/update ordering assumptions. */
+ FProject_JTrajectoryDiagnosticCounters GetTrajectoryDiagnosticCounters() const
+ { check(IsInGameThread()); return TrajectoryDiagnosticCounters; }
+#endif
 	UFUNCTION(BlueprintPure, Category="Project J|Player Locomotion", meta=(BlueprintThreadSafe))
 	FTransformTrajectory GetFoundationTrajectory() const;
  UPROPERTY(EditDefaultsOnly, Category="Project J|Player Locomotion") TObjectPtr<UChooserTable> AirAnimationChooser;
@@ -264,6 +285,9 @@ public:
 protected:
 	void PublishPlayerLocomotionSourceFrame(const FProject_JAnimThreadSafeData& Data);
 private:
+#if !UE_BUILD_SHIPPING
+ FProject_JTrajectoryDiagnosticCounters TrajectoryDiagnosticCounters;
+#endif
  // A ground recovery belongs to uninterrupted locomotion or a physical fall,
  // never to displacement/history hidden by a full-body action.
  bool bGroundRecoveryEligible=true;

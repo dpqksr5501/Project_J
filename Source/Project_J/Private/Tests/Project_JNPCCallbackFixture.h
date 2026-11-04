@@ -10,12 +10,20 @@ class AProject_JNPCCallbackFixture : public AProject_JNPCCharacter
     GENERATED_BODY()
 public:
     mutable TFunction<void()> OnLifeQuery;
+    mutable TFunction<void()> OnASCQuery;
+    bool bReportedDead = false;
     TFunction<void()> OnGrant;
+    virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override
+    {
+        auto Callback = MoveTemp(OnASCQuery);
+        if (Callback) { Callback(); }
+        return Super::GetAbilitySystemComponent();
+    }
     virtual bool IsDead_Implementation() const override
     {
         auto Callback = MoveTemp(OnLifeQuery);
         if (Callback) { Callback(); }
-        return false;
+        return bReportedDead;
     }
 };
 

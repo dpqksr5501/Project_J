@@ -9,13 +9,13 @@ DECLARE_LOG_CATEGORY_EXTERN(LogProject_JRemote, Log, All);
 /**
  * Custom Macro for Remote Logging.
  * It behaves like UE_LOG and can enqueue Error logs only when explicitly enabled
- * on an authoritative world. Fatal logs are intentionally excluded: process
+ * on the game thread in an authoritative world. Fatal logs are intentionally excluded: process
  * termination is not a reliable time to schedule an asynchronous request.
  */
 #define UE_LOG_REMOTE(CategoryName, Verbosity, Format, ...) \
 { \
 	UE_LOG(CategoryName, Verbosity, Format, ##__VA_ARGS__); \
-	if (Verbosity == ELogVerbosity::Error) \
+	if (ELogVerbosity::Verbosity == ELogVerbosity::Error && IsInGameThread()) \
 	{ \
 		if (GEngine && GEngine->GetWorldContexts().Num() > 0) \
 		{ \

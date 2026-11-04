@@ -5,6 +5,12 @@
 #include "NetworkPredictionLog.h"
 #include "NetworkPredictionProxy.h"
 #include "NetworkPredictionReplicationProxy.h"
+#include "HAL/IConsoleManager.h"
+#include "ProfilingDebugging/CsvProfiler.h"
+#include "ProjectJNPBlobWordDelta.inl"
+#if !UE_BUILD_SHIPPING
+#include <atomic>
+#endif
 #include "Engine/NetConnection.h"
 #include "Iris/ReplicationState/PropertyNetSerializerInfoRegistry.h"
 #include "Iris/Serialization/IrisObjectReferencePackageMap.h"
@@ -382,18 +388,51 @@ bool FServerReplicationRPCParameterNetSerializer::IsEqual(FNetSerializationConte
 		const QuantizedType& Value0 = *reinterpret_cast<const QuantizedType*>(Args.Source0);
 		const QuantizedType& Value1 = *reinterpret_cast<const QuantizedType*>(Args.Source1);
 
-		if (Value0.NumDataBits != Value1.NumDataBits)
+		const ConfigType& Config = *static_cast<const ConfigType*>(Args.NetSerializerConfig);
+		if (Value0.NumDataBits != Value1.NumDataBits || Value0.NumDataBits > Config.MaxQuantizedSizeBits)
 		{
 			return false;
 		}
 
-		// Compare references and exports
-		if (!FIrisPackageMapExportsUtil::IsEqual(Context, Value0.QuantizedExports, Value1.QuantizedExports))
+		// Captured exports are arrays of serializer storage, not arrays of
+		// FName/FNetObjectReference. Compare every element using its public
+		// serializer, and include pending token obligations even at equal counts.
+		const auto& Exports0 = Value0.QuantizedExports;
+		const auto& Exports1 = Value1.QuantizedExports;
+		const uint32 ReferenceCount = Exports0.ObjectReferenceStorage.Num();
+		const uint32 NameCount = Exports0.NameStorage.Num();
+		const uint32 TokenCount = Exports0.NetTokenStorage.Num();
+		if (ReferenceCount > FIrisPackageMapExportsUtil::MaxExports || NameCount > FIrisPackageMapExportsUtil::MaxExports
+			|| TokenCount > FIrisPackageMapExportsUtil::MaxExports
+			|| ReferenceCount != Exports1.ObjectReferenceStorage.Num() || NameCount != Exports1.NameStorage.Num()
+			|| TokenCount != Exports1.NetTokenStorage.Num()) return false;
+		const FNetSerializer& ObjectSerializer = UE_NET_GET_SERIALIZER(FObjectNetSerializer);
+		const FObjectNetSerializerConfig ObjectConfig;
+		FNetIsEqualArgs ElementArgs{};
+		ElementArgs.bStateIsQuantized = true;
+		ElementArgs.Version = ObjectSerializer.Version;
+		ElementArgs.NetSerializerConfig = &ObjectConfig;
+		for (uint32 ReferenceIndex = 0; ReferenceIndex < ReferenceCount; ++ReferenceIndex)
 		{
-			return false;
+			ElementArgs.Source0 = NetSerializerValuePointer(Exports0.ObjectReferenceStorage.GetData() + ReferenceIndex);
+			ElementArgs.Source1 = NetSerializerValuePointer(Exports1.ObjectReferenceStorage.GetData() + ReferenceIndex);
+			if (!ObjectSerializer.IsEqual(Context, ElementArgs)) return false;
 		}
+		const FNetSerializer& NameSerializer = UE_NET_GET_SERIALIZER(FNameAsNetTokenNetSerializer);
+		const FNameAsNetTokenNetSerializerConfig NameConfig;
+		ElementArgs.Version = NameSerializer.Version;
+		ElementArgs.NetSerializerConfig = &NameConfig;
+		for (uint32 NameIndex = 0; NameIndex < NameCount; ++NameIndex)
+		{
+			ElementArgs.Source0 = NetSerializerValuePointer(&Exports0.NameStorage.GetData()[NameIndex]);
+			ElementArgs.Source1 = NetSerializerValuePointer(&Exports1.NameStorage.GetData()[NameIndex]);
+			if (!NameSerializer.IsEqual(Context, ElementArgs)) return false;
+		}
+		for (uint32 TokenIndex = 0; TokenIndex < TokenCount; ++TokenIndex)
+			if (!(Exports0.NetTokenStorage.GetData()[TokenIndex] == Exports1.NetTokenStorage.GetData()[TokenIndex])) return false;
 
 		const uint32 RequiredWords = Private::CalculateRequiredWordCount(Value0.NumDataBits);
+		if (RequiredWords > Value0.DataBitsStorage.Num() || RequiredWords > Value1.DataBitsStorage.Num()) return false;
 		if (RequiredWords > 0 && FMemory::Memcmp(Value0.DataBitsStorage.GetData(), Value1.DataBitsStorage.GetData(), sizeof(WordType) * RequiredWords) != 0)
 		{
 			return false;
@@ -401,9 +440,23 @@ bool FServerReplicationRPCParameterNetSerializer::IsEqual(FNetSerializationConte
 	}
 	else
 	{
-		const SourceType& Value0 = *reinterpret_cast<SourceType*>(Args.Source0);
-		const SourceType& Value1 = *reinterpret_cast<SourceType*>(Args.Source1);
-		return Value0.DataBits == Value1.DataBits;
+		const SourceType& Value0 = *reinterpret_cast<const SourceType*>(Args.Source0);
+		const SourceType& Value1 = *reinterpret_cast<const SourceType*>(Args.Source1);
+		const ConfigType& Config = *static_cast<const ConfigType*>(Args.NetSerializerConfig);
+		const auto IsWithinBounds = [&Config](const SourceType& Value)
+		{
+			return uint32(Value.DataBits.Num()) <= Config.MaxQuantizedSizeBits
+				&& uint32(Value.PackageMapExports.References.Num()) <= FIrisPackageMapExportsUtil::MaxExports
+				&& uint32(Value.PackageMapExports.Names.Num()) <= FIrisPackageMapExportsUtil::MaxExports
+				&& uint32(Value.NetTokensPendingExport.Num()) <= FIrisPackageMapExportsUtil::MaxExports;
+		};
+		if (!IsWithinBounds(Value0) || !IsWithinBounds(Value1)) return false;
+		// The legacy body contains export indices. Its typed source metadata and
+		// pending export obligations are part of the same comparison contract.
+		return Value0.DataBits == Value1.DataBits
+			&& Value0.PackageMapExports.References == Value1.PackageMapExports.References
+			&& Value0.PackageMapExports.Names == Value1.PackageMapExports.Names
+			&& Value0.NetTokensPendingExport == Value1.NetTokensPendingExport;
 	}
 
 	return true;
@@ -499,10 +552,74 @@ template <> struct TIsPODType<UE::Net::FFReplicationProxyNetSerializerQuantizedT
 namespace UE::Net
 {
 
+static TAutoConsoleVariable<int32> CVarProjectJReplicationBlobDelta(
+	TEXT("np.ProjectJ.ReplicationBlobDelta"), 0,
+	TEXT("Encode lossless word deltas for NP Iris blobs when strictly smaller. Decoder always supports both modes."),
+	ECVF_Default);
+
+CSV_DEFINE_CATEGORY(ProjectJNPBlobDelta, false);
+
+#if !UE_BUILD_SHIPPING
+static std::atomic<uint64> GProjectJNPBlobEmptyDecodeCount{0};
+static void RecordProjectJNPBlobEmptyDecode()
+{
+	// Process-wide, monotonic read-only evidence. Never part of a model or baseline.
+	GProjectJNPBlobEmptyDecodeCount.fetch_add(1U, std::memory_order_relaxed);
+	CSV_CUSTOM_STAT(ProjectJNPBlobDelta, EmptyDecodeCount, 1, ECsvCustomStatOp::Accumulate);
+}
+#endif
+
+// Attempts are codec work, not sent/acked bytes: Iris may retry or roll back.
+struct FProjectJNPBlobWriteScope
+{
+#if CSV_PROFILER && !CSV_PROFILER_MINIMAL
+	FNetSerializationContext& Context;
+	const uint32 Begin;
+	const bool bDeltaEntry;
+#endif
+	uint32 InlineExportBits = 0U;
+	uint32 PayloadBits = 0U;
+	FProjectJNPBlobWriteScope(FNetSerializationContext& InContext, bool bInDeltaEntry)
+#if CSV_PROFILER && !CSV_PROFILER_MINIMAL
+		: Context(InContext), Begin(InContext.GetBitStreamWriter()->GetPosBits()), bDeltaEntry(bInDeltaEntry)
+#endif
+	{
+		// Iris may serialize on workers. Native CSV recording supplies its own
+		// capture/category gating and per-thread storage; IsCapturing is GT-only.
+		CSV_CUSTOM_STAT(ProjectJNPBlobDelta, SerializerAttemptCount, 1, ECsvCustomStatOp::Accumulate);
+		if (bInDeltaEntry) { CSV_CUSTOM_STAT(ProjectJNPBlobDelta, DeltaAttemptCount, 1, ECsvCustomStatOp::Accumulate); }
+	}
+	~FProjectJNPBlobWriteScope()
+	{
+#if CSV_PROFILER && !CSV_PROFILER_MINIMAL
+		if (Context.HasErrorOrOverflow())
+		{
+			CSV_CUSTOM_STAT(ProjectJNPBlobDelta, SerializerErrorOrOverflowCount, 1, ECsvCustomStatOp::Accumulate);
+			// Iris can retry/split a valid object after running out of packet space.
+			// Explicit context errors remain a separate failure class.
+			if (Context.HasError())
+			{
+				CSV_CUSTOM_STAT(ProjectJNPBlobDelta, SerializerContextErrorCount, 1, ECsvCustomStatOp::Accumulate);
+			}
+			else
+			{
+				CSV_CUSTOM_STAT(ProjectJNPBlobDelta, SerializerWriterOverflowAttemptCount, 1, ECsvCustomStatOp::Accumulate);
+			}
+			return;
+		}
+		const int32 Written = int32(Context.GetBitStreamWriter()->GetPosBits() - Begin);
+		CSV_CUSTOM_STAT(ProjectJNPBlobDelta, SerializerSuccessfulAttemptBits, Written, ECsvCustomStatOp::Accumulate);
+		CSV_CUSTOM_STAT(ProjectJNPBlobDelta, WrapperWrittenBits, Written - int32(InlineExportBits) - int32(PayloadBits), ECsvCustomStatOp::Accumulate);
+		if (bDeltaEntry) { CSV_CUSTOM_STAT(ProjectJNPBlobDelta, DeltaSuccessfulAttemptBits, Written, ECsvCustomStatOp::Accumulate); }
+		else { CSV_CUSTOM_STAT(ProjectJNPBlobDelta, FullSerializeSuccessfulAttemptBits, Written, ECsvCustomStatOp::Accumulate); }
+#endif
+	}
+};
+
 struct FReplicationProxyNetSerializer
 {
 	// Version
-	static const uint32 Version = 0;
+	static const uint32 Version = 1;
 
 	// Traits
 	static constexpr bool bHasDynamicState = true;
@@ -518,6 +635,8 @@ struct FReplicationProxyNetSerializer
 
 	static void Serialize(FNetSerializationContext&, const FNetSerializeArgs& Args);
 	static void Deserialize(FNetSerializationContext&, const FNetDeserializeArgs& Args);
+	static void SerializeDelta(FNetSerializationContext&, const FNetSerializeDeltaArgs& Args);
+	static void DeserializeDelta(FNetSerializationContext&, const FNetDeserializeDeltaArgs& Args);
 
 	static void Quantize(FNetSerializationContext&, const FNetQuantizeArgs& Args);
 	static void Dequantize(FNetSerializationContext&, const FNetDequantizeArgs& Args);
@@ -533,6 +652,9 @@ struct FReplicationProxyNetSerializer
 
 private:
 	static constexpr uint32 AllocationAlignment = 4U;
+	static uint32 GetWordCount(uint32 Bits) { return Bits / 32U + uint32((Bits % 32U) != 0U); }
+	static uint32 SerializeCurrentExports(FNetSerializationContext&, const QuantizedType&);
+	static void DeserializeCurrentExports(FNetSerializationContext&, QuantizedType&);
 
 	static void FreeDynamicStateInternal(FNetSerializationContext&, QuantizedType& Value);
 	static void GrowDynamicStateInternal(FNetSerializationContext&, QuantizedType& Value, uint32 NewBitCount);
@@ -569,15 +691,18 @@ void FReplicationProxyNetSerializer::Serialize(FNetSerializationContext& Context
 	const QuantizedType& Value = *reinterpret_cast<const QuantizedType*>(Args.Source);
 	FNetBitStreamWriter* Writer = Context.GetBitStreamWriter();
 
-	// If we have any captured exports, serialize them.
-	FIrisPackageMapExportsUtil::Serialize(Context, Value.QuantizedExports);
+	FProjectJNPBlobWriteScope WriteScope(Context, false);
+	// Current exports preserve their existing reference/net-token semantics.
+	WriteScope.InlineExportBits = SerializeCurrentExports(Context, Value);
 
 	// Write data.
 	const uint32 NumDataBits = Value.NumDataBits;
 	if (Writer->WriteBool(NumDataBits > 0))
 	{
 		UE::Net::WritePackedUint32(Writer, NumDataBits);
+		const uint32 BodyBegin = Writer->GetPosBits();
 		Writer->WriteBitStream(Value.DataBitsStorage.GetData(), 0, NumDataBits);
+		WriteScope.PayloadBits = Writer->GetPosBits() - BodyBegin;
 	}
 }
 
@@ -595,15 +720,26 @@ void FReplicationProxyNetSerializer::Deserialize(FNetSerializationContext& Conte
 
 	FNetBitStreamReader* Reader = Context.GetBitStreamReader();
 
-	// Read exports for packagemap.
-	FIrisPackageMapExportsUtil::Deserialize(Context, Value.QuantizedExports);
+	// Read current exports using the same ownership path as delta.
+	DeserializeCurrentExports(Context, Value);
+	if (Context.HasErrorOrOverflow()) return;
 
 	const bool bHasDataBits = Reader->ReadBool();
+	if (Reader->IsOverflown())
+	{
+		Context.SetError(GNetError_BitStreamOverflow);
+		return;
+	}
 
 	if (bHasDataBits)
 	{
 		// Read the data
 		const uint32 NewBitCount = ReadPackedUint32(Reader);
+		if (Reader->IsOverflown() || NewBitCount == 0U)
+		{
+			Context.SetError(Reader->IsOverflown() ? GNetError_BitStreamOverflow : GNetError_InvalidValue);
+			return;
+		}
 
 		if (!ensureMsgf(NewBitCount <= Config->MaxQuantizedSizeBits,
 			TEXT("FReplicationProxyNetSerializer::Deserialize data size of %u bits exceeds maximum of %u bits."),
@@ -613,6 +749,11 @@ void FReplicationProxyNetSerializer::Deserialize(FNetSerializationContext& Conte
 			return;
 		}
 
+		if (NewBitCount > Reader->GetBitsLeft())
+		{
+			Context.SetError(GNetError_BitStreamOverflow);
+			return;
+		}
 		AdjustStorageSize(Context, Value, NewBitCount);
 
 		Reader->ReadBitStream(static_cast<uint32*>(Value.DataBitsStorage.GetData()), NewBitCount);
@@ -621,12 +762,221 @@ void FReplicationProxyNetSerializer::Deserialize(FNetSerializationContext& Conte
 	{
 		Value.DataBitsStorage.Free(Context);
 		Value.NumDataBits = 0U;
+		Value.ByteCapacity = 0U;
+#if !UE_BUILD_SHIPPING
+		RecordProjectJNPBlobEmptyDecode();
+#endif
 	}
 }
 
+uint32 FReplicationProxyNetSerializer::SerializeCurrentExports(FNetSerializationContext& Context, const QuantizedType& Value)
+{
+	FNetBitStreamWriter* Writer = Context.GetBitStreamWriter();
+	const uint32 Before = Writer->GetPosBits();
+	// Keep the current refs/names and pending net-token export side effects.
+	FIrisPackageMapExportsUtil::Serialize(Context, Value.QuantizedExports);
+	if (!Context.HasErrorOrOverflow())
+	{
+		CSV_CUSTOM_STAT(ProjectJNPBlobDelta, CurrentExportInlineAttemptBits, int32(Writer->GetPosBits() - Before), ECsvCustomStatOp::Accumulate);
+	}
+	return Writer->GetPosBits() - Before;
+}
+
+void FReplicationProxyNetSerializer::DeserializeCurrentExports(FNetSerializationContext& Context, QuantizedType& Value)
+{
+	FIrisPackageMapExportsUtil::Deserialize(Context, Value.QuantizedExports);
+}
+
+void FReplicationProxyNetSerializer::SerializeDelta(FNetSerializationContext& Context, const FNetSerializeDeltaArgs& Args)
+{
+	if (Context.IsInitializingDefaultState()) return;
+	CSV_SCOPED_TIMING_STAT(ProjectJNPBlobDelta, DeltaEncodeCPU);
+	FProjectJNPBlobWriteScope WriteScope(Context, true);
+	const ConfigType& Config = *static_cast<const ConfigType*>(Args.NetSerializerConfig);
+	const QuantizedType& Value = *reinterpret_cast<const QuantizedType*>(Args.Source);
+	if (!Args.Prev)
+	{
+		Context.SetError(GNetError_InvalidValue);
+		return;
+	}
+	const QuantizedType& Prev = *reinterpret_cast<const QuantizedType*>(Args.Prev);
+	FNetBitStreamWriter* Writer = Context.GetBitStreamWriter();
+	FNetIsEqualArgs EqualArgs{};
+	EqualArgs.Version = Args.Version;
+	EqualArgs.NetSerializerConfig = Args.NetSerializerConfig;
+	EqualArgs.Source0 = Args.Source;
+	EqualArgs.Source1 = Args.Prev;
+	EqualArgs.bStateIsQuantized = true;
+	if (Writer->WriteBool(IsEqual(Context, EqualArgs)))
+	{
+		CSV_CUSTOM_STAT(ProjectJNPBlobDelta, SameValueCount, 1, ECsvCustomStatOp::Accumulate);
+		return;
+	}
+
+	const uint32 NumBits = Value.NumDataBits;
+	if (NumBits > Config.MaxQuantizedSizeBits)
+	{
+		Context.SetError(GNetError_ArraySizeTooLarge);
+		return;
+	}
+	const uint32 WordCount = GetWordCount(NumBits);
+	if (WordCount > Value.DataBitsStorage.Num())
+	{
+		Context.SetError(GNetError_InvalidValue);
+		return;
+	}
+	WriteScope.InlineExportBits = SerializeCurrentExports(Context, Value);
+	if (Context.HasErrorOrOverflow()) return;
+	if (!Writer->WriteBool(NumBits != 0U)) return;
+	WritePackedUint32(Writer, NumBits);
+
+	ProjectJNPBlobDelta::FPlan Plan;
+	bool bWordDelta = false;
+	const bool bEncodeEnabled = CVarProjectJReplicationBlobDelta.GetValueOnAnyThread() != 0;
+	if (bEncodeEnabled &&
+		NumBits <= ProjectJNPBlobDelta::MaxBlobBits && NumBits == Prev.NumDataBits &&
+		WordCount <= Prev.DataBitsStorage.Num())
+	{
+		CSV_SCOPED_TIMING_STAT(ProjectJNPBlobDelta, WordPlanCPU);
+		bWordDelta = ProjectJNPBlobDelta::BuildPlan(Value.DataBitsStorage.GetData(), Prev.DataBitsStorage.GetData(), NumBits, Plan) && Plan.EncodedBits < NumBits;
+	}
+	if (!bEncodeEnabled) { CSV_CUSTOM_STAT(ProjectJNPBlobDelta, EncoderOffFullCount, 1, ECsvCustomStatOp::Accumulate); }
+	else if (NumBits != Prev.NumDataBits) { CSV_CUSTOM_STAT(ProjectJNPBlobDelta, SizeChangeFullCount, 1, ECsvCustomStatOp::Accumulate); }
+	else if (!bWordDelta) { CSV_CUSTOM_STAT(ProjectJNPBlobDelta, NoSavingsOrUnavailableFullCount, 1, ECsvCustomStatOp::Accumulate); }
+	Writer->WriteBool(bWordDelta);
+	const uint32 PayloadBegin = Writer->GetPosBits();
+	if (bWordDelta)
+	{
+		ProjectJNPBlobDelta::Write(*Writer, Value.DataBitsStorage.GetData(), Prev.DataBitsStorage.GetData(), NumBits, Plan);
+	}
+	else
+	{
+		Writer->WriteBitStream(Value.DataBitsStorage.GetData(), 0U, NumBits);
+	}
+	if (!Context.HasErrorOrOverflow())
+	{
+		WriteScope.PayloadBits = Writer->GetPosBits() - PayloadBegin;
+		CSV_CUSTOM_STAT(ProjectJNPBlobDelta, ChangedRawEquivalentBits, int32(NumBits), ECsvCustomStatOp::Accumulate);
+		if (bWordDelta)
+		{
+			CSV_CUSTOM_STAT(ProjectJNPBlobDelta, WordDeltaCount, 1, ECsvCustomStatOp::Accumulate);
+			CSV_CUSTOM_STAT(ProjectJNPBlobDelta, WordDeltaBodyBits, int32(Writer->GetPosBits() - PayloadBegin), ECsvCustomStatOp::Accumulate);
+		}
+		else
+		{
+			CSV_CUSTOM_STAT(ProjectJNPBlobDelta, FullChangedCount, 1, ECsvCustomStatOp::Accumulate);
+			CSV_CUSTOM_STAT(ProjectJNPBlobDelta, FullChangedBodyBits, int32(Writer->GetPosBits() - PayloadBegin), ECsvCustomStatOp::Accumulate);
+		}
+	}
+}
+
+void FReplicationProxyNetSerializer::DeserializeDelta(FNetSerializationContext& Context, const FNetDeserializeDeltaArgs& Args)
+{
+	if (Context.IsInitializingDefaultState()) return;
+	CSV_SCOPED_TIMING_STAT(ProjectJNPBlobDelta, DeltaDecodeCPU);
+	// Iris owns the acked baseline separately from the receive-state target.
+	if (!Args.Prev || Args.Target == Args.Prev)
+	{
+		Context.SetError(GNetError_InvalidValue);
+		return;
+	}
+	const ConfigType& Config = *static_cast<const ConfigType*>(Args.NetSerializerConfig);
+	const QuantizedType& Prev = *reinterpret_cast<const QuantizedType*>(Args.Prev);
+	QuantizedType& Value = *reinterpret_cast<QuantizedType*>(Args.Target);
+	FNetBitStreamReader* Reader = Context.GetBitStreamReader();
+	const bool bSameValue = Reader->ReadBool();
+	if (Reader->IsOverflown())
+	{
+		Context.SetError(GNetError_BitStreamOverflow);
+		return;
+	}
+	if (bSameValue)
+	{
+		// Match the engine default deep-clone path; never alias Prev's allocation.
+		FreeDynamicStateInternal(Context, Value);
+		FMemory::Memcpy(&Value, &Prev, sizeof(QuantizedType));
+		FNetCloneDynamicStateArgs CloneArgs{};
+		CloneArgs.Version = Args.Version;
+		CloneArgs.NetSerializerConfig = Args.NetSerializerConfig;
+		CloneArgs.Source = Args.Prev;
+		CloneArgs.Target = Args.Target;
+		CloneDynamicState(Context, CloneArgs);
+		return;
+	}
+	DeserializeCurrentExports(Context, Value);
+	if (Context.HasErrorOrOverflow()) return;
+	const bool bHasData = Reader->ReadBool();
+	if (Reader->IsOverflown())
+	{
+		Context.SetError(GNetError_BitStreamOverflow);
+		return;
+	}
+	if (!bHasData)
+	{
+		Value.DataBitsStorage.Free(Context);
+		Value.NumDataBits = 0U;
+		Value.ByteCapacity = 0U;
+#if !UE_BUILD_SHIPPING
+		RecordProjectJNPBlobEmptyDecode();
+#endif
+		return;
+	}
+	const uint32 NumBits = ReadPackedUint32(Reader);
+	if (Reader->IsOverflown())
+	{
+		Context.SetError(GNetError_BitStreamOverflow);
+		return;
+	}
+	if (NumBits == 0U || NumBits > Config.MaxQuantizedSizeBits)
+	{
+		Context.SetError(NumBits == 0U ? GNetError_InvalidValue : GNetError_ArraySizeTooLarge);
+		return;
+	}
+	const bool bWordDelta = Reader->ReadBool();
+	if (Reader->IsOverflown())
+	{
+		Context.SetError(GNetError_BitStreamOverflow);
+		return;
+	}
+	const uint32 WordCount = GetWordCount(NumBits);
+	if (bWordDelta)
+	{
+		if (NumBits > ProjectJNPBlobDelta::MaxBlobBits || NumBits != Prev.NumDataBits || WordCount > Prev.DataBitsStorage.Num())
+		{
+			Context.SetError(GNetError_InvalidValue);
+			return;
+		}
+		uint32 Decoded[ProjectJNPBlobDelta::MaxWords];
+		if (!ProjectJNPBlobDelta::Read(*Reader, Prev.DataBitsStorage.GetData(), NumBits, Decoded))
+		{
+			Context.SetError(Reader->IsOverflown() ? GNetError_BitStreamOverflow : GNetError_InvalidValue);
+			return;
+		}
+		AdjustStorageSize(Context, Value, NumBits);
+		FMemory::Memcpy(Value.DataBitsStorage.GetData(), Decoded, WordCount * sizeof(uint32));
+		if (!Context.HasErrorOrOverflow())
+		{
+			// Successful quantized reconstruction; model Apply is verified separately.
+			CSV_CUSTOM_STAT(ProjectJNPBlobDelta, WordDeltaDecodeCount, 1, ECsvCustomStatOp::Accumulate);
+		}
+	}
+	else
+	{
+		if (NumBits > Reader->GetBitsLeft())
+		{
+			Context.SetError(GNetError_BitStreamOverflow);
+			return;
+		}
+		AdjustStorageSize(Context, Value, NumBits);
+		Reader->ReadBitStream(Value.DataBitsStorage.GetData(), NumBits);
+		const uint32 TailBits = NumBits % 32U;
+		if (TailBits) Value.DataBitsStorage.GetData()[WordCount - 1U] &= (1U << TailBits) - 1U;
+	}
+}
 
 void FReplicationProxyNetSerializer::Quantize(FNetSerializationContext& Context, const FNetQuantizeArgs& Args)
 {
+	CSV_SCOPED_TIMING_STAT(ProjectJNPBlobDelta, QuantizeCPU);
 	const ConfigType* Config = static_cast<const ConfigType*>(Args.NetSerializerConfig);
 	SourceType& Source = *reinterpret_cast<SourceType*>(Args.Source);
 	QuantizedType& Value = *reinterpret_cast<QuantizedType*>(Args.Target);
@@ -678,6 +1028,13 @@ void FReplicationProxyNetSerializer::Quantize(FNetSerializationContext& Context,
 		return;
 	}
 
+	if (!Context.IsInitializingDefaultState())
+	{
+		CSV_CUSTOM_STAT(ProjectJNPBlobDelta, QuantizeBlobCount, 1, ECsvCustomStatOp::Accumulate);
+		CSV_CUSTOM_STAT(ProjectJNPBlobDelta, QuantizeBlobBits, int32(BitCount), ECsvCustomStatOp::Accumulate);
+		CSV_CUSTOM_STAT(ProjectJNPBlobDelta, QuantizeBlobBitsMin, int32(BitCount), ECsvCustomStatOp::Min);
+		CSV_CUSTOM_STAT(ProjectJNPBlobDelta, QuantizeBlobBitsMax, int32(BitCount), ECsvCustomStatOp::Max);
+	}
 	// Quantize captured exports
 	FIrisPackageMapExportsUtil::Quantize(Context, PackageMapExports, NetTokensPendingExport, Value.QuantizedExports);
 
@@ -693,6 +1050,15 @@ void FReplicationProxyNetSerializer::Dequantize(FNetSerializationContext& Contex
 {
 	const QuantizedType& Source = *reinterpret_cast<const QuantizedType*>(Args.Source);
 	SourceType& Target = *reinterpret_cast<SourceType*>(Args.Target);
+
+	// Property Apply is invoked with a fresh empty context by Iris. Carry the
+	// actual receive context with this temporary external state, never globally.
+	Target.PackageMapTokenResolveContext = {};
+	if (!Context.IsInitializingDefaultState())
+	{
+		Target.PackageMapTokenResolveContext.NetTokenStore = Context.GetNetTokenStore();
+		Target.PackageMapTokenResolveContext.RemoteNetTokenStoreState = Context.GetRemoteNetTokenStoreState();
+	}
 
 	// Dequantize captured references and exports and inject into target
 	FIrisPackageMapExportsUtil::Dequantize(Context, Source.QuantizedExports, Target.PackageMapExports);
@@ -734,15 +1100,10 @@ void FReplicationProxyNetSerializer::Apply(FNetSerializationContext& Context, co
 		}
 	}
 
-	// Setup resolve context for call into NetSerialize
-	UE::Net::FNetTokenResolveContext ResolveContext;
-	ResolveContext.RemoteNetTokenStoreState = Context.GetRemoteNetTokenStoreState();
-	ResolveContext.NetTokenStore = Context.GetNetTokenStore();
-
-	if (PackageMap)
-	{
-		PackageMap->InitForRead(&Source.PackageMapExports, ResolveContext);
-	}
+	// The public scope sets the actual source exports/resolve context for this
+	// Apply and invalidates the current read exports on exit. It does not
+	// restore an outer nested read. Do not retain this context on live Target.
+	FIrisObjectReferencePackageMapReadScope ReadScope(PackageMap, &Source.PackageMapExports, &Source.PackageMapTokenResolveContext);
 
 	uint32 NumDataBits = Source.DataBits.Num();
 
@@ -781,15 +1142,16 @@ void FReplicationProxyNetSerializer::FreeDynamicStateInternal(FNetSerializationC
 
 	Value.DataBitsStorage.Free(Context);
 	Value.NumDataBits = 0;
+	Value.ByteCapacity = 0;
 }
 
 void FReplicationProxyNetSerializer::GrowDynamicStateInternal(FNetSerializationContext& Context, QuantizedType& Value, uint32 NewBitCount)
 {
 	checkSlow(NewBitCount > Value.NumDataBits);
 
-	const uint32 ByteCount = Align((NewBitCount + 7U) / 8U, AllocationAlignment);
+	const uint32 ByteCount = GetWordCount(NewBitCount) * sizeof(uint32);
 
-	const uint32 RequiredWordCount = Private::CalculateRequiredWordCount(NewBitCount);
+	const uint32 RequiredWordCount = GetWordCount(NewBitCount);
 	Value.DataBitsStorage.AdjustSize(Context, RequiredWordCount);
 
 	// Clear the last word to support IsEqual Memcmp optimization.
@@ -803,7 +1165,7 @@ void FReplicationProxyNetSerializer::GrowDynamicStateInternal(FNetSerializationC
 
 void FReplicationProxyNetSerializer::AdjustStorageSize(FNetSerializationContext& Context, QuantizedType& Value, uint32 NewBitCount)
 {
-	const uint32 NewByteCapacity = Align((NewBitCount + 7U) / 8U, AllocationAlignment);
+	const uint32 NewByteCapacity = GetWordCount(NewBitCount) * sizeof(uint32);
 	if (NewByteCapacity == 0)
 	{
 		// Free everything
@@ -855,3 +1217,12 @@ void FReplicationProxyNetSerializer::FNetSerializerRegistryDelegates::OnPreFreez
 
 
 
+
+#if !UE_BUILD_SHIPPING
+uint64 FReplicationProxy::GetProcessEmptyDecodeCount()
+{
+    return UE::Net::GProjectJNPBlobEmptyDecodeCount.load(std::memory_order_relaxed);
+}
+#endif
+
+#include "Tests/ProjectJNPBlobDeltaTests.inl"

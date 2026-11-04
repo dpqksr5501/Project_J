@@ -381,5 +381,5 @@ flowchart TD
 ## 7. 관련 참고 문서 링크
 * [모듈러 캐릭터 및 의상 파이프라인 가이드](file:///c:/Users/I/Documents/GitHub/Project_J/Docs/Gameplay/Authoring/ModularCharacterEquipmentGuide.md)
 * [런타임 리타기팅 & 무기 손 IK 아키텍처 명세서](file:///c:/Users/I/Documents/GitHub/Project_J/Docs/Animation/Architecture/Runtime_Retarget_HandIK_Architecture.md)
-* [대검 전투 애니메이션 오더링 가이드](file:///c:/Users/I/Documents/GitHub/Project_J/Docs/Combat/Authoring/GreatswordCombatAuthoringGuide.md)
+* [대검 전투 애니메이션 오더링 가이드](file:///c:/Users/I/Documents/GitHub/Project_J/Docs/Combat/Authoring/SpellbladeCombatAuthoringGuide.md)
 * [전투 애니메이션 합성 구조 명세서](file:///c:/Users/I/Documents/GitHub/Project_J/Docs/Combat/Architecture/CombatAnimationComposition.md)

@@ -11,8 +11,8 @@
 ## 시작 상태와 조사 이후 확인
 
 - 시작 시 git 변경 목록과 Source/Config/관련 기존 에셋을 `Saved/Validation/Naturalness_20261006/Baseline`에 보존했다. 기존 MovingTurn/Strafe 수정, Combat 프로필, 새 Combat Turn PSD, 진단용 Config는 사용자 작업이었다. 이번 변경으로 간주하거나 되돌리지 않았다.
-- 운영 pawn은 `/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C`, source는 `CharacterMesh0`, 운영 AnimClass는 `/Game/Animation_Logic/ABPs/ABP_Humanoid_Master.ABP_Humanoid_Master_C`다.
-- 보이는 follower는 `Greatsword`, AnimClass는 `/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme.ABP_Greatsword_Woman_RunTIme_C`다. headless 실제 평가에서 source 89 bones/Visible=0, follower 338 bones/Visible=1을 확인했다. `ABP_Player`를 운영 그래프로 취급하지 않았다.
+- 운영 pawn은 `/Game/Character_BPs/Spellblade/BP_Spellblade.BP_Greatsword_C`, source는 `CharacterMesh0`, 운영 AnimClass는 `/Game/Animation_Logic/ABPs/ABP_Humanoid_Master.ABP_Humanoid_Master_C`다.
+- 보이는 follower는 `Greatsword`, AnimClass는 `/Game/Animation_Logic/ABPs/Spellblade/ABP_Spellblade_Woman_RunTIme.ABP_Greatsword_Woman_RunTIme_C`다. headless 실제 평가에서 source 89 bones/Visible=0, follower 338 bones/Visible=1을 확인했다. `ABP_Player`를 운영 그래프로 취급하지 않았다.
 - Master는 로드 직후 dirty=false, Status=3이었다. 최초 read-only audit에서 이미 로드된 `/Game` dirty package도 기록했다. 당시 실행 중인 에디터가 없었으며, 다른 실행 세션의 저장되지 않은 메모리 변경을 덮어쓰지 않았다.
 - 일반/Combat Run Cycle·Turn·Sprint Cycle의 실제 참조와 엔트리 수는 각각 15/16/5, 76/4/7이다. 새 후보 확대나 데이터 삭제는 하지 않았다. 단일 PSD 선행 선택과 MM 내부 Input→Result는 유지됐다.
 - 수정 전 Master SHA256은 `3126F64F1227447B42D09F3C06BD060934652814469304E3A440988AFD4A7893`으로 기존 조사 지문과 일치했다. 외부 OW 오연결과 InAirLoop override 불일치, active Turn의 최소 속도 재검사는 현재 소스/그래프에도 남아 있었다.

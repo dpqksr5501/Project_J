@@ -21,7 +21,7 @@ JSON과 Python은 오프라인 제작 원천이다. 현재 게임이 이 JSON을
 - NPCClass를 연결한 경우에만 1초 갱신이 가까운 플레이어를 확인하고 기존 AssetManager 비동기 로드를 시작한다. 활성 반경 1,500m는 이 준비 예산이다. Source의 추적/리셋 후보 48m와 역할이 다르다.
 - 로드 완료 뒤 실제 지면 충돌을 확인하고 기존 NPCCharacter를 deferred spawn한다. 네트워크 관련성 예산은 별도로 제한한다. 에셋 로드 성공이 WP 충돌 준비 완료를 뜻하지 않는다.
 - 사망 확인은 기존 전투 인터페이스를 소비한다. 기존 Cooldown이 NPC/핸들을 정리하며, 처치 시 `OnResolved(EncounterId, SpawnRevision)`를 전달한다. 이 delegate를 아직 퀘스트나 보상에 연결하지 않았다. 별도 자동 보상 writer는 없다.
-- EndPlay는 타이머·비동기 요청·NPC·Registry 등록을 정리한다. 이 수명 위에 두 번째 스폰/상태/리스폰 관리자를 만들지 않는다.
+- 현재 실행은 [권위 월드 이벤트](../World/World_Event_Runtime.md)의 중앙 Registry 순회·공통 observer snapshot·준비/스폰 예산을 따른다. EndPlay는 consumer token·NPC·Registry 등록을 정리하고, 취소된 native load 예약은 실제 완료까지 보존한다. 이 수명 위에 두 번째 스폰/상태/리스폰 관리자를 만들지 않는다.
 
 현재 PIE 근거는 각 `B0x-boss-runtime-verification.json`의 단일 지역 ID·NPC 미지정·실제 Disabled 전이다. 활성 전투·처치·리스폰/재접속·Dedicated Server/다중 클라이언트 검증은 아니다. 실험적 MassMonsterSpawner의 기본 자동100체 설정을 공간 후보의 대체물로 배치하지 않았다.
 

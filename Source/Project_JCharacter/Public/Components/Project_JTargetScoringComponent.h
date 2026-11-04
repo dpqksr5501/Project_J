@@ -6,12 +6,23 @@
 #include "Optimization/Project_JGameplayAsyncTypes.h"
 #include "Project_JTargetScoringComponent.generated.h"
 
+class UAbilitySystemComponent;
+class UProject_JNPCActivationComponent;
+/** GT-only source proof for opt-in damage threat. Worker candidate layout remains unchanged. */
+struct FProject_JNPCTargetThreat
+{
+    TWeakObjectPtr<UAbilitySystemComponent> ASC;
+    TWeakObjectPtr<AActor> Owner;
+    uint64 Epoch = 0;
+    double Value = 0;
+};
+
 class UProject_JEquipmentManagerComponent;
 class UProject_JEquipmentItemDefinition;
 class UProject_JTargetScoringSubsystem;
 class UProject_JNPCDecisionSubsystem;
 struct FProjectJTargetScoringCompletion;
-namespace ProjectJ::TargetScoring { struct FSnapshot; }
+namespace ProjectJ::TargetScoring { struct FSnapshot; class FTargetSpatialSnapshot; }
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FProjectJTargetScored, AActor*, Target, double, Score);
 DECLARE_MULTICAST_DELEGATE(FProjectJTargetContextInvalidated);
@@ -62,13 +73,26 @@ protected:
 	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 private:
 	friend class UProject_JNPCDecisionSubsystem;
+	friend class UProject_JNPCActivationComponent;
+	friend class FProjectJNPCDamageThreatTest;
+	bool BindDamageThreatProvider(UProject_JNPCActivationComponent* Provider, uint64 Registration);
+	void UnbindDamageThreatProvider(UProject_JNPCActivationComponent* Provider, uint64 Registration);
+	TWeakObjectPtr<UProject_JNPCActivationComponent> DamageThreatProvider;
+	uint64 DamageThreatRegistration = 0;
+	TArray<FProject_JNPCTargetThreat> RequestedThreatSources;
+	bool bRequestedDamageThreat = false;
+	friend class FProjectJTargetScoringComponentTest;
 	void ResetPendingQuery();
-	/** Optional positions were captured on GT in the current scheduling pass, in candidate order. */
-	bool PrepareSnapshot(const TArray<AActor*>& Candidates, ProjectJ::TargetScoring::FSnapshot& Snapshot,
-		const TArray<FVector>* CapturedPositions = nullptr);
+	bool BeginSnapshot(int32 CandidateCount, ProjectJ::TargetScoring::FSnapshot& Snapshot);
+	bool PrepareSnapshot(const TArray<AActor*>& Candidates, ProjectJ::TargetScoring::FSnapshot& Snapshot);
+	/** GT-only gather from the existing immutable shared spatial snapshot, without temporary actor/position arrays. */
+	bool PrepareSpatialSnapshot(const ProjectJ::TargetScoring::FTargetSpatialSnapshot& Spatial,
+		TConstArrayView<int32> Indices, TConstArrayView<TWeakObjectPtr<AActor>> Actors,
+		ProjectJ::TargetScoring::FSnapshot& Snapshot);
 	UProject_JEquipmentManagerComponent* ResolveEquipmentManager() const;
 	void BindEquipment(UProject_JEquipmentManagerComponent* Manager);
-	void ApplyResult(const FProjectJTargetScoringCompletion& Completion);
+	/** Optional batch deadline; standalone requests keep their Core admission deadline. */
+	void ApplyResult(const FProjectJTargetScoringCompletion& Completion, double DeadlineSeconds = 0.0);
 	UFUNCTION()
 	void OnEquipmentChanged(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* Item);
 	TWeakObjectPtr<UProject_JEquipmentManagerComponent> BoundEquipment;

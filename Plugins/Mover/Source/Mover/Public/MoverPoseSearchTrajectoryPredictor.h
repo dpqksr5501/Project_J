@@ -11,6 +11,7 @@
 
 class UMoverComponent;
 struct FTransformTrajectory;
+struct FTrajectorySampleInfo;
 
 /**
  * Trajectory predictor that can query from a Mover-driven actor, for use with Pose Search
@@ -39,6 +40,14 @@ public:
 	static UE_API void Predict(UMoverComponent& Mover, FTransformTrajectory& InOutTrajectory, int32 NumPredictionSamples, float SecondsPerPredictionSample, int32 NumHistorySamples, float MoverSamplingInterval, bool bDisableGravity = true);
 	static UE_API void GetCurrentState(UMoverComponent& Mover, FVector& OutPosition, FQuat& OutFacing, FVector& OutVelocity);
 
+    /** Shared value-only interpolation used by synchronous and owned-packet prediction. */
+    static UE_API bool ResamplePredictionSamples(const TArray<FTrajectorySampleInfo>& MoverPredictionSamples,
+        FTransformTrajectory& InOutTrajectory, int32 NumPredictionSamples,
+        float SecondsPerPredictionSample, int32 NumHistorySamples);
+
+
+    bool IsPredictionGravityDisabled() const { return bDisableGravity; }
+    const FFrameRate& GetPredictionSamplingFrameRate() const { return MoverSamplingFrameRate; }
 
 protected:
 	TObjectPtr<UMoverComponent> MoverComponent;

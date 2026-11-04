@@ -7,7 +7,7 @@ public class Project_JCharacter : ModuleRules
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
 		// Generates Iris replication fragments for this module's FFastArraySerializer types.
-		SetupIrisSupport(Target);
+		SetupIrisSupport(Target, true);
 
 		PublicDependencyModuleNames.AddRange(new string[] {
 			"Core",
@@ -41,6 +41,8 @@ public class Project_JCharacter : ModuleRules
 			"ModelViewViewModel"
 		});
 		PrivateDependencyModuleNames.AddRange(new string[] {
+            "RenderCore",
+            "RHI",
 			"PhysicsCore",
 			"ChaosCloth",
 			"ClothingSystemRuntimeCommon",

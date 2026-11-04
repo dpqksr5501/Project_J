@@ -5,6 +5,7 @@
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 #include "AbilitySystemComponent.h"
+#include "GameplayEffect.h"
 #include "UI/Project_JStatusEffects.h"
 #include "UObject/StrongObjectPtr.h"
 #include "UObject/GarbageCollection.h"
@@ -33,11 +34,34 @@ bool FProjectJStatusBindingReentryTest::RunTest(const FString&)
     Model->Unbind();
     for (auto* ASC : {Previous, Outer, Nested})
     { TestFalse(TEXT("All acquired effect subscriptions retire"), ASC->OnActiveGameplayEffectAddedDelegateToSelf.IsBoundToObject(Model.Get())); }
+    TStrongObjectPtr<UGameplayEffect> Observed(NewObject<UGameplayEffect>());
+    Observed->DurationPolicy = EGameplayEffectDurationType::Infinite;
+    Observed->FindOrAddComponent<UProject_JStatusEffectUIData>().DisplayName = FText::FromString(TEXT("Observed status"));
+    auto ObservedHandle = Previous->ApplyGameplayEffectToSelf(Observed.Get(), 1, Previous->MakeEffectContext());
+    Model->Bind(Previous);
+    bool bEffectRebound = false;
+    const auto EffectDelegate = Model->OnChanged.AddLambda([&] {
+        if (!bEffectRebound) { bEffectRebound = true; Model->Bind(Nested); }
+    });
+    ObservedHandle = Previous->SetActiveGameplayEffectInhibit(MoveTemp(ObservedHandle), true, true);
+    Model->OnChanged.Remove(EffectDelegate);
+    TestTrue(TEXT("Native per-effect publication can replace the binding"), bEffectRebound && Model->ASC.Get() == Nested);
+    TestTrue(TEXT("Retired per-effect subscriptions are detached before nested publication"), Model->ObservedEffects.IsEmpty());
+    if (auto* OldDelegate = Previous->OnGameplayEffectInhibitionChangedDelegate(ObservedHandle))
+        TestFalse(TEXT("Old in-progress effect delegate does not retain its model subscription"), OldDelegate->IsBoundToObject(Model.Get()));
+    Model->Unbind();
     TStrongObjectPtr<UProject_JStatusEffectModel> GCModel(NewObject<UProject_JStatusEffectModel>());
     TWeakObjectPtr<UProject_JStatusEffectModel> WeakModel(GCModel.Get());
+    GCModel->Bind(Previous);
+    // The fixture deliberately collects during normal GAS application. Keep its
+    // transient definition and source alive, as production authored data is.
+    const TStrongObjectPtr<UAbilitySystemComponent> KeepPrevious(Previous);
+    TStrongObjectPtr<UGameplayEffect> Effect(NewObject<UGameplayEffect>());
+    Effect->DurationPolicy = EGameplayEffectDurationType::Infinite;
+    Effect->FindOrAddComponent<UProject_JStatusEffectUIData>().DisplayName = FText::FromString(TEXT("GC status"));
     bool bAliveDuringCallback = false;
     GCModel->OnChanged.AddLambda([&] { GCModel.Reset(); CollectGarbage(RF_NoFlags); bAliveDuringCallback = WeakModel.IsValid(); });
-    GCModel->Refresh();
+    Previous->ApplyGameplayEffectToSelf(Effect.Get(), 1, Previous->MakeEffectContext());
     TestTrue(TEXT("Status model survives collection during its own publication"), bAliveDuringCallback);
     CollectGarbage(RF_NoFlags);
     TestFalse(TEXT("Publication does not retain the model after completion"), WeakModel.IsValid());

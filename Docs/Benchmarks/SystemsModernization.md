@@ -92,6 +92,8 @@ UE5.8 rough-refraction의 기존2 render target PSO에 빠진 variance/coverage 
 
 근거: [A/B 집계](Data/pso-comparison.json) · [보완 코드](../../Source/Project_J/Rendering/Project_JDistortionPSOPrecache.cpp)
 
+2026-10-27 MainWorld 후속은 위9월 실험과 별도다. 동일 Game12/Stage8 바이너리와 머티리얼로 sky capture 보완 OFF/ON을 실행해 상세 SkyPass 누락1→0, RHI 신규 PSO73→72를 확인했다. 기존6개 MI의 인스턴싱 usage 누락도 선택 저장·재Cook 뒤 GT 전환 메시지0건으로 확인했다. 각 실제 exit0·초기 WP/충돌 snapshot은 통과했지만 hitch/FPS·driver cold·GPU 준비나 이동/HLOD 품질의 증거는 아니다. [현재 조건·원인·검증 경계](../Architecture/Planning/Project_J_MMO_Architecture_Work_2026-10-26.md#19차-콘텐츠-규칙-호환과-실행-수명-비용--로컬-통합-범위-검증)와 기존 검증 요약19차를 따른다. 과거 표와 공개 집계는 덮어쓰지 않았다.
+
 ## 5. 컬링과 갱신 분산: 비용을 줄이는 위치
 
 `GroupE_20260910/CullBaseline02`, `CullAfter03`: Editor-game, offscreen 실제 RHI1280×720. near20/far80으로 같은100개를 배치하고 distance2500cm + component bounds±350cm를 임시 적용했다.

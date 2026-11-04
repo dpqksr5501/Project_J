@@ -12,6 +12,9 @@ class PROJECT_JCHARACTEREDITOR_API UProject_JWorldAuthoringLibrary : public UBlu
 {
     GENERATED_BODY()
 public:
+    /** Synchronously invokes the current Editor world's native Nav build. Caller validates projections and owns saving. */
+    UFUNCTION(BlueprintCallable, Category="Project J|World Authoring")
+    static bool BuildEditorNavigation();
     UFUNCTION(BlueprintCallable, Category="Project J|World Authoring")
     static ALandscape* ImportRegionLandscape(const FString& HeightmapFile, int32 Resolution, float XYScale, float ZScale, UMaterialInterface* Material);
     /** Uses the public engine setter, including its editor streaming state update. */

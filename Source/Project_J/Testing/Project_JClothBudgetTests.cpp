@@ -57,6 +57,15 @@ bool FProjectJClothAllocationTest::RunTest(const FString&)
         auto* Coordinator=Player->FindComponentByClass<UProject_JAnimationUpdateCoordinatorComponent>();
         // Allocation is a value/demand test, independent of a GPU simulation.
         Coordinator->RestoreClothBudget();Coordinator->ClothMeshes.AddDefaulted();
+        int32 UnknownParts=0;
+        TestEqual(TEXT("An incomplete demand has no known physics vertex cost"),Coordinator->GetManagedClothVertexCost(UnknownParts),int64(0));
+        TestEqual(TEXT("Unknown demand is distinct from an empty zero-cost set"),UnknownParts,1);
+        const auto ReadOnlyStats=Coordinator->GetClothExecutionStats();
+        TestEqual(TEXT("Read-only execution stats preserve unknown demand"),ReadOnlyStats.Unknown,1);
+        TestEqual(TEXT("Read-only stats do not acquire an execution lease"),ReadOnlyStats.Active,0);
+        const auto Demand=Coordinator->PrepareClothExecutionDemand(true,false);
+        TestEqual(TEXT("Incomplete geometry is not eligible zero-cost work"),Demand.Eligible,int64(0));
+        TestEqual(TEXT("Execution admission retains unknown geometry"),Demand.Unknown,1);
         Players.Add(Player);
     }
     Viewer->Possess(Players[2]);Viewer->SetViewTarget(Camera);Viewer->PlayerCameraManager->UpdateCamera(0);
@@ -92,6 +101,42 @@ bool FProjectJClothLifecycleTest::RunTest(const FString&)
     auto* Coordinator=Player->FindComponentByClass<UProject_JAnimationUpdateCoordinatorComponent>();
     Coordinator->DiscoverVisualMeshes();
     if(!TestEqual(TEXT("Actual garment supports an instance binding"),Coordinator->GetManagedClothCount(),1))return false;
+    TestFalse(TEXT("Execution actuation needs separate explicit garment permission"),Cape->IsClothExecutionBudgetAllowed());
+    Cape->SetClothExecutionBudgetAllowed(true);
+    Coordinator->PrepareClothExecutionDemand(false,false);
+    TestTrue(TEXT("Execution policy disabled leaves the original simulation running"),!Cape->IsClothingSimulationSuspended());
+    Cape->SuspendClothingSimulation();
+    Coordinator->PrepareClothExecutionDemand(true,false);
+    Coordinator->SetClothExecutionGrant(true,true,false);
+    Coordinator->RefreshClothExecution(CastChecked<UProject_JBudgetedSkeletalMeshComponent>(Player->GetMesh()),.25f);
+    TestTrue(TEXT("An authored suspended garment is not resumed by an execution grant"),Cape->IsClothingSimulationSuspended());
+    Cape->SetClothExecutionBudgetAllowed(false);
+    TestTrue(TEXT("Opting out preserves an authored suspension"),Cape->IsClothingSimulationSuspended());
+    Cape->ResumeClothingSimulation();
+    int32 UnknownParts=0;
+    const int64 BoundVertexCost=Coordinator->GetManagedClothVertexCost(UnknownParts);
+    TestTrue(TEXT("Actual garment has a positive cached physics-vertex cost"),BoundVertexCost>0);
+    TestEqual(TEXT("Actual garment cost is known"),UnknownParts,0);
+    // Value/lifecycle regression for component-owned scalar restoration. This
+    // does not fabricate a qualified native frame or claim actual admission.
+    const float OriginalBlend=Cape->ClothBlendWeight;
+    auto StageOwnedScalars=[&]()
+    {
+        auto& Entry=Coordinator->ClothMeshes[0];
+        Entry.bExecutionOwned=Entry.bExecutionReserved=true;
+        Entry.SavedBlend=OriginalBlend; Entry.LastBlend=OriginalBlend*.25f;
+        Entry.bSavedSuspended=false; Entry.bLastSuspended=true;
+        Cape->ClothBlendWeight=Entry.LastBlend; Cape->SuspendClothingSimulation();
+    };
+    StageOwnedScalars();
+    Cape->SetClothExecutionBudgetAllowed(false);
+    TestEqual(TEXT("Explicit opt-out restores our component blend"),Cape->ClothBlendWeight,OriginalBlend);
+    TestFalse(TEXT("Explicit opt-out releases only our suspension"),Cape->IsClothingSimulationSuspended());
+    StageOwnedScalars(); Cape->ClothBlendWeight=OriginalBlend*.5f; // Different external writer.
+    Cape->SetClothExecutionBudgetAllowed(false);
+    TestEqual(TEXT("Opt-out preserves a foreign blend write"),Cape->ClothBlendWeight,OriginalBlend*.5f);
+    TestFalse(TEXT("A foreign blend does not strand our suspension"),Cape->IsClothingSimulationSuspended());
+    Cape->ClothBlendWeight=OriginalBlend;
     auto* Source=CastChecked<UProject_JBudgetedSkeletalMeshComponent>(Player->GetMesh());
     auto* Limit=IConsoleManager::Get().FindConsoleVariable(TEXT("ProjectJ.ClothBudget.MaxFullRemoteParts"));
     const int32 Previous=Limit->GetInt();Limit->Set(0,ECVF_SetByCode);
@@ -103,6 +148,7 @@ bool FProjectJClothLifecycleTest::RunTest(const FString&)
     Coordinator->ClothDowngradeSince=World->GetTimeSeconds()-.3;
     Coordinator->RefreshClothBudget(Source,false);
     TestEqual(TEXT("Reduced instance command accepted"),Coordinator->GetReducedClothCount(),1);
+    TestEqual(TEXT("Solver quality commands do not relabel physical geometry cost"),Coordinator->GetManagedClothVertexCost(UnknownParts),BoundVertexCost);
     // This transient world exercises command/identity ownership. The rendered
     // crowd fixture records applied solver values after actual visible ticks.
     Coordinator->RefreshClothBudget(Source,true);
@@ -110,12 +156,18 @@ bool FProjectJClothLifecycleTest::RunTest(const FString&)
     auto* Original=Cape->GetSkeletalMeshAsset();
     Coordinator->ClothDowngradeSince=World->GetTimeSeconds()-.3;
     Coordinator->RefreshClothBudget(Source,false);
+    StageOwnedScalars();
     Cape->SetSkeletalMeshAsset(Player->GetMesh()->GetSkeletalMeshAsset());
+    TestEqual(TEXT("Virtual mesh replacement releases component blend before changing resources"),Cape->ClothBlendWeight,OriginalBlend);
+    TestFalse(TEXT("Virtual mesh replacement cannot retain the old lease suspension"),Cape->IsClothingSimulationSuspended());
     Coordinator->RefreshClothBudget(Source,false);
     TestEqual(TEXT("Mesh replacement releases the old simulation binding"),Coordinator->GetManagedClothCount(),0);
+    TestEqual(TEXT("Old garment geometry cost is not retained by its replacement"),Coordinator->GetManagedClothVertexCost(UnknownParts),int64(0));
+    TestEqual(TEXT("No binding is distinct from unknown cost"),UnknownParts,0);
     Cape->SetSkeletalMeshAsset(Original);
     Coordinator->DiscoverVisualMeshes();
     TestEqual(TEXT("Garment can bind after replacement"),Coordinator->GetManagedClothCount(),1);
+    TestEqual(TEXT("Rebinding re-establishes the current garment's cost"),Coordinator->GetManagedClothVertexCost(UnknownParts),BoundVertexCost);
     Cape->bAllowClothQualityBudget=false;
     Coordinator->RefreshClothBudget(Source,false);
     TestEqual(TEXT("Garment opt-out releases ownership"),Coordinator->GetManagedClothCount(),0);
@@ -126,6 +178,7 @@ bool FProjectJClothLifecycleTest::RunTest(const FString&)
     TestEqual(TEXT("Actual local possession retains full cloth"),Coordinator->GetReducedClothCount(),0);
     Coordinator->RestoreClothBudget();
     TestEqual(TEXT("Teardown releases bindings"),Coordinator->GetManagedClothCount(),0);
+    TestEqual(TEXT("Teardown releases cached resource cost"),Coordinator->GetManagedClothVertexCost(UnknownParts),int64(0));
     return true;
 }
 #endif
