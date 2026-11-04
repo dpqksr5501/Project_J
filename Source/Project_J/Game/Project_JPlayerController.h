@@ -54,6 +54,7 @@ protected:
 	/** Gameplay initialization */
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void PawnLeavingGame() override;
 	virtual void OnRep_PlayerState() override;
 	virtual void ReceivedPlayer() override;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="UI")

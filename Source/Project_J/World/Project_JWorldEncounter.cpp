@@ -1,10 +1,16 @@
 #include "World/Project_JWorldEncounter.h"
 #include "World/Project_JWorldEventRegistry.h"
 #include "Project_JNPCCharacter.h"
+#include "Project_JAttributeSet.h"
+#include "Project_JAbilitySystemComponent.h"
+#include "Game/Project_JPlayerState.h"
+#include "Backend/Project_JLocalProfileSubsystem.h"
+#include "Engine/GameInstance.h"
 #include "Components/Project_JNPCActivationComponent.h"
 #include "Project_JCombatInterface.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/GameStateBase.h"
 #include "Components/SceneComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "UObject/StrongObjectPtr.h"
@@ -58,6 +64,8 @@ bool AProject_JWorldEncounter::HasActivationDemand(bool& bKnown) const
 void AProject_JWorldEncounter::UpdateEncounter()
 {
     if (bStopping || !HasAuthority()) { return; }
+    RetryDevelopmentClaims();
+    if (bStopping || IsActorBeingDestroyed()) return;
     if (Phase == EProject_JEncounterPhase::Active)
     {
         const TStrongObjectPtr<ThisClass> KeepSelf(this);
@@ -173,6 +181,21 @@ void AProject_JWorldEncounter::CompletePreparation(uint64 Token)
     }
     // The project's Iris grid supports at most 1.5 km; activation and network relevance are separate budgets.
     Spawned->SetNetCullDistanceSquared(FMath::Square(FMath::Clamp(ActivationRadius, 50000.f, 150000.f)));
+    if (bTrackContributions)
+    {
+        auto* ASC = Cast<UProject_JAbilitySystemComponent>(Spawned->GetAbilitySystemComponent());
+        auto* Attributes = ASC ? const_cast<UProject_JAttributeSet*>(ASC->GetSet<UProject_JAttributeSet>()) : nullptr;
+        const FGuid Round = FGuid::NewGuid();
+        if (!Attributes || !Attributes->CanBeginHealthGEObservation() || !Contributions.Begin(Round))
+        { RetireCandidate(Spawned, CandidateNPC); return; }
+        ContributionRound = Round;
+        if (DevelopmentRewardExperience > 0 && DevelopmentRewardExperience <= 1000000000
+            && UProject_JLocalProfileSubsystem::IsTrustedDevelopmentEnabled())
+            FrozenDevelopmentRewardXP.Add(Round, DevelopmentRewardExperience);
+        ContributionAttributes = Attributes;
+        ContributionLossHandle = Attributes->OnConfirmedHealthGELoss.AddUObject(this, &ThisClass::OnContributionLoss);
+        ContributionFailureHandle = Attributes->OnHealthGEObservationFailed.AddUObject(this, &ThisClass::OnContributionObservationFailed);
+    }
     Phase = EProject_JEncounterPhase::Active;
     ++SpawnRevision;
     PreparationToken = 0; // Registry releases the completed load after this bounded application.
@@ -188,6 +211,12 @@ void AProject_JWorldEncounter::EnterCooldown(bool bDefeated)
     const FName ResolvedId = EncounterId;
     const int32 ResolvedRevision = SpawnRevision;
     const uint64 OldPreparation = PreparationToken;
+    // A prior loss observer may synchronously destroy the NPC before our listener
+    // sees the killing hit. Never freeze a partial participant list as complete.
+    if (auto* Attributes = ContributionAttributes.Get(); Attributes && !Attributes->CanBeginHealthGEObservation())
+        Contributions.Invalidate(ContributionRound);
+    if (ContributionRound.IsValid()) Contributions.Close(ContributionRound, bDefeated && bWasActive);
+    DetachContributionObservation();
     // Detach this spawn before actor/ability destruction can run arbitrary callbacks.
     NPC.Reset(); PreparationToken = 0;
     Phase = EProject_JEncounterPhase::Cooldown;
@@ -200,7 +229,11 @@ void AProject_JWorldEncounter::EnterCooldown(bool bDefeated)
     }
     if (bStopping || IsActorBeingDestroyed() || !GetWorld() || GetWorld()->bIsTearingDown) return;
     ForceNetUpdate();
-    if (bDefeated && bWasActive) { OnResolved.Broadcast(ResolvedId, ResolvedRevision); }
+    if (bDefeated && bWasActive)
+    {
+        OnResolved.Broadcast(ResolvedId, ResolvedRevision);
+        RetryDevelopmentClaims();
+    }
 }
 void AProject_JWorldEncounter::OnNPCDestroyed(AActor* Actor)
 {
@@ -220,6 +253,8 @@ void AProject_JWorldEncounter::OnNPCDestroyed(AActor* Actor)
 void AProject_JWorldEncounter::EndPlay(EEndPlayReason::Type Reason)
 {
     bStopping = true;
+    if (ContributionRound.IsValid()) Contributions.Close(ContributionRound, false);
+    DetachContributionObservation();
     if (auto* Registry = GetWorld()->GetSubsystem<UProject_JWorldEventRegistry>()) Registry->ReleasePreparation(PreparationToken, this);
     PreparationToken = 0;
     if (NPC.IsValid()) { NPC->OnDestroyed.RemoveDynamic(this, &ThisClass::OnNPCDestroyed); NPC->Destroy(); }
@@ -227,6 +262,41 @@ void AProject_JWorldEncounter::EndPlay(EEndPlayReason::Type Reason)
     if (bRegistered) { if (auto* Registry = GetWorld()->GetSubsystem<UProject_JWorldEventRegistry>()) { Registry->Unregister(EncounterId, this); } }
     Super::EndPlay(Reason);
 }
+
+void AProject_JWorldEncounter::DetachContributionObservation()
+{
+    if (auto* Attributes = ContributionAttributes.Get())
+    {
+        Attributes->OnConfirmedHealthGELoss.Remove(ContributionLossHandle);
+        Attributes->OnHealthGEObservationFailed.Remove(ContributionFailureHandle);
+    }
+    ContributionAttributes.Reset(); ContributionLossHandle.Reset(); ContributionFailureHandle.Reset();
+}
+void AProject_JWorldEncounter::OnContributionObservationFailed(const FProject_JHealthGEExecutionProof&, EProject_JHealthGEObservationFailure)
+{
+    if (HasAuthority() && Phase == EProject_JEncounterPhase::Active) Contributions.Invalidate(ContributionRound);
+}
+void AProject_JWorldEncounter::OnContributionLoss(const FProject_JConfirmedHealthGELoss& Loss)
+{
+    if (!HasAuthority() || bStopping || IsActorBeingDestroyed() || Phase != EProject_JEncounterPhase::Active) return;
+    const auto& Proof = Loss.Proof;
+    auto* Target = NPC.Get();
+    auto* TargetASC = Target ? Cast<UProject_JAbilitySystemComponent>(Target->GetAbilitySystemComponent()) : nullptr;
+    auto* SourceASC = Cast<UProject_JAbilitySystemComponent>(Proof.SourceASC.Get());
+    auto* State = Cast<AProject_JPlayerState>(Proof.SourceOwner.Get());
+    auto* Avatar = Proof.SourceAvatar.Get();
+    const double EffectiveDamage = double(Loss.OldValue) - Loss.NewValue;
+    if (!TargetASC || Proof.TargetASC.Get() != TargetASC || Proof.TargetOwner.Get() != Target || Proof.TargetAvatar.Get() != Target
+        || Proof.TargetEpoch != TargetASC->GetActorInfoRevision() || !SourceASC || !State || !Avatar
+        || SourceASC->GetOwnerActor() != State || SourceASC->GetAvatarActor() != Avatar
+        || SourceASC->GetActorInfoRevision() != Proof.SourceEpoch || State->GetAbilitySystemComponent() != SourceASC
+        || !State->CanAcceptSessionCommand() || !State->GetCharacterId().Value.IsValid()
+        || (Proof.Instigator.Get() != Avatar && !(Proof.Instigator.Get() == State && Proof.EffectCauser.Get() == Avatar))
+        || !FMath::IsFinite(EffectiveDamage) || EffectiveDamage <= 0 || Loss.OldValue <= 0 || Loss.NewValue < 0) return;
+    // Includes the killing hit. No actor/controller pointer is retained by the ledger.
+    Contributions.Record(ContributionRound, State->GetCharacterId().Value, EffectiveDamage);
+}
+
 void AProject_JWorldEncounter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -247,6 +317,84 @@ EDataValidationResult AProject_JWorldEncounter::IsDataValid(FDataValidationConte
     { Context.AddError(FText::FromString(TEXT("Enabled initial navigation requires a finite world-space destination (absolute coordinates <= 1e9) and acceptance radius 1..2000."))); bValid = false; }
     if (!HasValidCombatConfiguration())
     { Context.AddError(FText::FromString(TEXT("Selected encounter combat requires a valid definition path, a nonnegative authoritative team, and initial navigation disabled."))); bValid = false; }
+    if (DevelopmentRewardExperience < 0 || DevelopmentRewardExperience > 1000000000
+        || (DevelopmentRewardExperience > 0 && !bTrackContributions))
+    { Context.AddError(FText::FromString(TEXT("Development event XP must be 0..1000000000; positive XP requires contribution tracking. Runtime payout additionally requires trusted development profiles."))); bValid = false; }
     return bValid ? EDataValidationResult::Valid : EDataValidationResult::Invalid;
 }
 #endif
+
+
+bool AProject_JWorldEncounter::GetDevelopmentRewardTerms(FGuid Round, FGuid Character, int64& OutXP) const
+{
+    OutXP = 0;
+    if (!HasAuthority() || bStopping || IsActorBeingDestroyed() || !GetWorld() || GetWorld()->bIsTearingDown
+        || !Contributions.IsEligible(Round, Character) || !UProject_JLocalProfileSubsystem::IsTrustedDevelopmentEnabled()) return false;
+    const auto* XP = FrozenDevelopmentRewardXP.Find(Round);
+    if (!XP || *XP <= 0 || *XP > 1000000000) return false;
+    OutXP = *XP; return true;
+}
+bool AProject_JWorldEncounter::TryClaimDevelopmentReward(AProject_JPlayerState* Player, FGuid Round)
+{
+    if (!IsValid(Player) || Player->GetWorld() != GetWorld() || !Player->CanAcceptSessionCommand()) return false;
+    const FGuid Character = Player->GetCharacterId().Value;
+    int64 XP;
+    if (!GetDevelopmentRewardTerms(Round, Character, XP) || PendingDevelopmentClaims.Contains(Character)) return false;
+    if (const auto* Claimed = ConfirmedDevelopmentClaims.Find(Round); Claimed && Claimed->Contains(Character)) return true;
+    auto* GI = GetGameInstance();
+    auto* Profiles = GI ? GI->GetSubsystem<UProject_JLocalProfileSubsystem>() : nullptr;
+    if (!Profiles || !Profiles->IsReady(Player) || Profiles->IsCheckpointPending(Player)) return false;
+    const FGuid Token = FGuid::NewGuid();
+    PendingDevelopmentClaims.Add(Character, Token);
+    const TWeakObjectPtr<ThisClass> WeakThis(this);
+    const TWeakObjectPtr<AProject_JPlayerState> WeakPlayer(Player);
+    const auto Session = Player->CaptureServerSession();
+    const bool Accepted = Profiles->SubmitWorldEventReward(Player, this, Round,
+        [WeakThis, WeakPlayer, Session](bool Succeeded, bool)
+        {
+            auto* Self = WeakThis.Get(); auto* Current = WeakPlayer.Get();
+            if (!Succeeded || !IsValid(Self) || Self->bStopping || !IsValid(Current) || !Current->IsServerSessionCurrent(Session)
+                || Current->GetWorld() != Self->GetWorld() || !Self->GetWorld() || Self->GetWorld()->bIsTearingDown) return;
+            if (auto* Registry = Self->GetWorld()->GetSubsystem<UProject_JWorldEventRegistry>()) Registry->NotifyTrustedProfileReady(Current);
+        },
+        [WeakThis, Character, Round, Token](const FProject_JProfileDurableResult& Result)
+        {
+            auto* Self = WeakThis.Get();
+            if (!IsValid(Self) || Self->bStopping || Self->IsActorBeingDestroyed() || !Self->GetWorld() || Self->GetWorld()->bIsTearingDown) return;
+            if (Self->PendingDevelopmentClaims.FindRef(Character) != Token) return;
+            Self->PendingDevelopmentClaims.Remove(Character);
+            if (Result.Outcome == EProject_JProfileDurableOutcome::Committed)
+                Self->ConfirmedDevelopmentClaims.FindOrAdd(Round).Add(Character);
+        });
+    if (!Accepted && PendingDevelopmentClaims.FindRef(Character) == Token) PendingDevelopmentClaims.Remove(Character);
+    return Accepted;
+}
+void AProject_JWorldEncounter::TryClaimDevelopmentRewards(AProject_JPlayerState* Player)
+{
+    if (!IsValid(Player)) return;
+    TArray<FGuid> Rounds;
+    FrozenDevelopmentRewardXP.GetKeys(Rounds);
+    for (const FGuid Round : Rounds)
+    {
+        if (PendingDevelopmentClaims.Contains(Player->GetCharacterId().Value)) break;
+        TryClaimDevelopmentReward(Player, Round);
+    }
+}
+
+void AProject_JWorldEncounter::RetryDevelopmentClaims()
+{
+    if (bStopping || !HasAuthority() || IsActorBeingDestroyed() || FrozenDevelopmentRewardXP.IsEmpty()
+        || !GetWorld() || GetWorld()->bIsTearingDown || !UProject_JLocalProfileSubsystem::IsTrustedDevelopmentEnabled()) return;
+    auto* State = GetWorld()->GetGameState();
+    if (!State || State->PlayerArray.IsEmpty()) return;
+    // Reuse registry's bounded encounter cadence; no extra timer or per-frame full-player scan.
+    // At most four online candidates per visit. Closed-round scans are bounded by ledger capacity.
+    const int32 Visits = FMath::Min(4, State->PlayerArray.Num());
+    for (int32 Index = 0; Index < Visits; ++Index)
+    {
+        if (State->PlayerArray.IsEmpty()) break;
+        DevelopmentClaimCursor %= State->PlayerArray.Num();
+        const TWeakObjectPtr<APlayerState> Candidate(State->PlayerArray[DevelopmentClaimCursor++]);
+        if (auto* Player = Cast<AProject_JPlayerState>(Candidate.Get())) TryClaimDevelopmentRewards(Player);
+    }
+}

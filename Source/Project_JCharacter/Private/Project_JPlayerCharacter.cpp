@@ -173,6 +173,7 @@ void AProject_JPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AProject_JPlayerCharacter, SummonedMount);
+	DOREPLIFETIME(AProject_JPlayerCharacter, bPlayerDead);
 	DOREPLIFETIME(AProject_JPlayerCharacter, CurrentCombatStyle);
 	DOREPLIFETIME(AProject_JPlayerCharacter, CurrentWeaponPresentationProfile);
 	DOREPLIFETIME_CONDITION(AProject_JPlayerCharacter, bReplicatedCombatModePresentation, COND_SkipOwner);
@@ -314,6 +315,7 @@ void AProject_JPlayerCharacter::BeginPlay()
 void AProject_JPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	bCreationDependencyEnding = true;
+	StopPlayerLifeBinding();
 	UProject_JOwnedPawnScopeComponent::WithdrawFor(this);
 	StopObservingPlayerStateAbilitySystem();
 	if (IsValid(MountComponent)) MountComponent->OnRuntimeOwnerPrerequisitesChanged().Remove(MountRuntimeOwnerPrerequisitesChangedHandle);
@@ -832,6 +834,7 @@ void AProject_JPlayerCharacter::CancelAbilitiesByTag(const FGameplayTag& Ability
 
 void AProject_JPlayerCharacter::RefreshAbilitySystemDependentComponents()
 {
+	RefreshPlayerLifeBinding();
 	if (CharacterUIBindingComponent)
 	{
 		CharacterUIBindingComponent->InitializeFromAttributes(Cast<UProject_JAbilitySystemComponent>(GetAbilitySystemComponent()), GetAttributeSet(), GetCharacterLevelForInterfaceObject(this));

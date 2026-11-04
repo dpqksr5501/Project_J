@@ -2,6 +2,9 @@
 
 
 #include "Project_JPlayerController.h"
+#include "Project_JAbilitySystemComponent.h"
+#include "Game/Project_JPlayerRetirement.h"
+#include "Mount/Project_JMountCharacter.h"
 #include "Game/Project_JInputLeaseSubsystem.h"
 #include "Testing/Project_JEquipmentClientTestComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -124,6 +127,44 @@ void AProject_JPlayerController::BeginPlay()
 		}
 
 	}
+}
+
+void AProject_JPlayerController::PawnLeavingGame()
+{
+    // Socket teardown precedes Logout. Every fallback belongs to the captured
+    // connection generation and pawn, never whatever a callback publishes next.
+    const TWeakObjectPtr<APlayerState> CapturedState(PlayerState);
+    const TWeakObjectPtr<APawn> CapturedPawn(GetPawn());
+    auto* State = Cast<AProject_JPlayerState>(PlayerState);
+    const auto Lease = State ? State->CaptureServerSession() : ProjectJ::MMO::FServerSessionLease{};
+    const TWeakObjectPtr<UProject_JAbilitySystemComponent> ASC(State ? State->GetProjectJAbilitySystemComponent() : nullptr);
+    const bool bHadASC = ASC.IsValid();
+    const TWeakObjectPtr<AActor> Avatar(ASC.IsValid() ? ASC->GetAvatarActor() : nullptr);
+    const uint64 Revision = ASC.IsValid() ? ASC->GetActorInfoRevision() : 0;
+    const auto SameConnection = [&]
+    {
+        return PlayerState == CapturedState.Get()
+            && (!State || (IsValid(State) && State->GetOwner() == this && State->CaptureServerSession() == Lease));
+    };
+    const auto SameTuple = [&]
+    {
+        return SameConnection() && GetPawn() == CapturedPawn.Get()
+            && (!bHadASC || (ASC.IsValid() && !ASC->IsBeingDestroyed() && !ASC->IsActorInfoChanging()
+                && ASC->GetActorInfoRevision() == Revision && ASC->GetAvatarActor() == Avatar.Get()));
+    };
+    if (ProjectJ::Lifecycle::RetireConnectionAvatar(this, SameConnection)) return;
+    if (!SameTuple()) return;
+    if (auto* Mount = Cast<AProject_JMountCharacter>(CapturedPawn.Get()))
+    {
+        Mount->DismountRider(true, false);
+        if (SameTuple() && GetPawn() == Mount && Mount->GetController() == this) UnPossess();
+        return; // The engine must never destroy a borrowed mount.
+    }
+    // A failed player retirement is uncertain ownership, not permission for a
+    // less-specific fallback to destroy the player. Keep native fallback only
+    // for unrelated pawn classes whose exact tuple is unchanged.
+    if (Cast<AProject_JPlayerCharacter>(CapturedPawn.Get()) || Cast<AProject_JPlayerCharacter>(Avatar.Get())) return;
+    if (SameTuple()) Super::PawnLeavingGame();
 }
 
 void AProject_JPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -672,7 +713,6 @@ void AProject_JPlayerController::EquipmentClientTest(const FString& Action)
 #include "Game/Project_JQuestComponent.h"
 #include "CharacterClass/Project_JProgressionComponent.h"
 #include "Project_JAttributeSet.h"
-#include "Project_JAbilitySystemComponent.h"
 void AProject_JPlayerController::SprintInputTest()
 {
 	if (!IsLocalPlayerController() || !GetWorld() || GetWorld()->WorldType != EWorldType::PIE ||

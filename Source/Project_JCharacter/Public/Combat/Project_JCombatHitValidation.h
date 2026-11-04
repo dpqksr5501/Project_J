@@ -31,7 +31,9 @@ enum class EProject_JCombatHitValidationFailure : uint8
 	InvalidNodeClock,
 	NodeVisitMismatch,
 	NodeClockRetired,
-	NodeClockChanged
+	NodeClockChanged,
+	AttackerIneligible,
+	FriendlyPlayerTarget
 };
 
 inline const TCHAR* LexToString(EProject_JCombatHitValidationFailure Failure)
@@ -63,6 +65,8 @@ inline const TCHAR* LexToString(EProject_JCombatHitValidationFailure Failure)
 	case EProject_JCombatHitValidationFailure::NodeVisitMismatch: return TEXT("NodeVisitMismatch");
 	case EProject_JCombatHitValidationFailure::NodeClockRetired: return TEXT("NodeClockRetired");
 	case EProject_JCombatHitValidationFailure::NodeClockChanged: return TEXT("NodeClockChanged");
+	case EProject_JCombatHitValidationFailure::AttackerIneligible: return TEXT("AttackerIneligible");
+	case EProject_JCombatHitValidationFailure::FriendlyPlayerTarget: return TEXT("FriendlyPlayerTarget");
 	default: return TEXT("Unknown");
 	}
 }
@@ -182,3 +186,10 @@ struct PROJECT_JCHARACTER_API FProject_JCombatHitValidationResult
 		return Result;
 	}
 };
+
+namespace Project_J::Combat
+{
+// Current player melee eligibility, not a general NPC/team or PvP policy.
+PROJECT_JCHARACTER_API bool CanPlayerMeleeAttack(const AActor* Attacker);
+PROJECT_JCHARACTER_API EProject_JCombatHitValidationFailure ValidatePlayerMeleeTarget(const AActor* Attacker, const AActor* Target);
+}

@@ -2,10 +2,23 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
+#include "MMO/Coordination.h"
 #include "Project_JSocialSubsystem.generated.h"
 
 class AProject_JPlayerState;
 struct FProject_JPartyMemberSummary;
+
+/** Server-captured execution fence, never accepted as client authorization.
+ * Consumers must revalidate immediately before mutation, without callbacks between.
+ */
+struct FProject_JPartyAuthorityFence
+{
+    TWeakObjectPtr<AProject_JPlayerState> Requester;
+    ProjectJ::MMO::FServerSessionLease Session;
+    FGuid CharacterId;
+    FName PartyId;
+    int64 Revision = 0;
+};
 
 UENUM(BlueprintType)
 enum class EProject_JSocialGroupKind : uint8 { Party, Guild };
@@ -34,7 +47,9 @@ enum class EProject_JSocialOperationFailure : uint8
 	GroupFull,
 	RevisionExhausted,
 	StaleSession,
-	HistoryCapacity
+	HistoryCapacity,
+	StaleAuthority,
+	NotLeader
 };
 
 USTRUCT(BlueprintType)
@@ -84,6 +99,10 @@ class PROJECT_J_API UProject_JSocialSubsystem : public UGameInstanceSubsystem
 	GENERATED_BODY()
 
 public:
+    bool CapturePartyAuthority(AProject_JPlayerState* Requester, FProject_JPartyAuthorityFence& Out) const;
+    bool IsPartyAuthorityCurrent(const FProject_JPartyAuthorityFence& Fence) const;
+    FProject_JSocialOperationResult TransferPartyLeadership(const FProject_JPartyAuthorityFence& Fence, FGuid NewLeader);
+    FProject_JSocialOperationResult RemovePartyMember(const FProject_JPartyAuthorityFence& Fence, FGuid Member);
 	virtual void Deinitialize() override;
 	void BindPlayerState(AProject_JPlayerState* PlayerState);
 	void UnbindPlayerState(AProject_JPlayerState* PlayerState);

@@ -199,7 +199,6 @@ private:
 		const FProject_JCombatHitRequest& Request, double& OutTimestamp) const;
 	bool bRequiresWeapon = false;
 	UAbilitySystemComponent* ResolveOwnerAbilitySystemComponent() const;
-	bool ApplyConfirmedHit(AActor* HitActor);
 	bool ApplyConfirmedHit(AActor* HitActor, TFunctionRef<bool()> IsCurrent);
 	EProject_JCombatHitValidationFailure ValidateActiveAttack(const FProject_JCombatHitRequest& Request, bool bCheckLiveTraceLOS = true);
 	bool IsTargetObstructed(const AActor* HitActor) const;

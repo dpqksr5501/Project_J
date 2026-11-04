@@ -37,6 +37,7 @@ AProject_JBaseCharacter::AProject_JBaseCharacter(const FObjectInitializer &Objec
 	AttributeSet = nullptr;
 	EquipmentManager = nullptr;
 
+	CreateDefaultSubobject<UProject_JServerSideRewindComponent>(TEXT("ServerSideRewind"));
 	EquipmentRuntime = CreateDefaultSubobject<UProject_JEquipmentRuntimeComponent>(TEXT("EquipmentRuntime"));
 	FoleyComponent = CreateDefaultSubobject<UProject_JFoleyComponent>(TEXT("Foley"));
 }

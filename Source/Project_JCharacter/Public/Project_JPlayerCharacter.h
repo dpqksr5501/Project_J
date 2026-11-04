@@ -49,6 +49,7 @@ class UProject_JSkillInputRouterComponent;
 class UProject_JMountComponent;
 class UAbilitySystemComponent;
 struct FGameplayTag;
+struct FOnAttributeChangeData;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogProjectJPlayer, Log, All);
 
@@ -80,6 +81,10 @@ class PROJECT_JCHARACTER_API AProject_JPlayerCharacter : public AProject_JBaseCh
 	GENERATED_BODY()
 
 public:
+	/** Explicit authority-only revive; never reset attributes as a side effect of possession. */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="Combat|Life")
+	bool ReviveAuthority(float HealthFraction = 1.0f);
+	bool IsPlayerLifeActive() const;
 	virtual void ReceiveAuthorityCombatInput(const FGameplayTag& InputTag, double ClientTimestamp, uint32 InputSequence) override;
 	virtual void ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdContext& InputCmd) override;
 	virtual FProject_JMoverPolicy ResolveMoverPolicy(const FProject_JMoverInputs& Requested,const FCharacterDefaultInputs* Input=nullptr) const override;
@@ -299,6 +304,17 @@ protected:
 	void CancelCombatOutroMontage();
 	void SetCombatTransitionState(bool bTransitionActive);
 	void RefreshAbilitySystemDependentComponents();
+	void RefreshPlayerLifeBinding();
+	void StopPlayerLifeBinding();
+	void RefreshPlayerLifeState();
+	void OnPlayerLifeHealthChanged(const FOnAttributeChangeData& Data);
+	void OnPlayerLifeActorInfoSettled(UProject_JAbilitySystemComponent* Source);
+	TWeakObjectPtr<UProject_JAbilitySystemComponent> LifeASC;
+	FDelegateHandle LifeHealthHandle, LifeActorInfoHandle;
+	bool bOwnsDeadTag = false;
+	bool bApplyingDeath = false;
+	UPROPERTY(Replicated)
+	bool bPlayerDead = false;
 
 	UFUNCTION()
 	void OnMountChangedForAnimation(AProject_JMountCharacter* PreviousMount, AProject_JMountCharacter* NewMount);

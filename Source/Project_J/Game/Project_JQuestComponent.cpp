@@ -653,15 +653,15 @@ bool UProject_JQuestComponent::InstallCommittedQuests(const FProject_JQuestSnaps
     RefreshHistorySummary();
     return Changed;
 }
-bool UProject_JQuestComponent::CanRestoreSnapshot(const FProject_JQuestSnapshot& Snapshot, bool bReplacePristineDefaults) const
+bool UProject_JQuestComponent::CanRestoreSnapshot(const FProject_JQuestSnapshot& Snapshot, bool bReplacePristineDefaults, bool bTrustedValidation) const
 {
     const auto* StateOwner = Cast<APlayerState>(GetOwner());
     const bool Pristine = bReplacePristineDefaults && StateOwner && !StateOwner->GetPawn()
         && ProjectJ::QuestHistory::Count(History) == 0
         && !States.ContainsByPredicate([](const auto& State) { return State.Count != 0 || State.bClaimed || !State.bTracked
             || State.Objectives.ContainsByPredicate([](const auto& Objective) { return Objective.Count != 0; }); });
-    return CanMutate() && (States.IsEmpty() || Pristine) && ProjectJ::QuestHistory::Count(History) == 0
-        && ValidateCommittedQuests(Snapshot);
+    return (bTrustedValidation ? CanPublish() && GetOwner()->HasAuthority() && !bChanging : CanMutate()) && (States.IsEmpty() || Pristine) && ProjectJ::QuestHistory::Count(History) == 0
+        && ValidateCommittedQuests(Snapshot, bTrustedValidation);
 }
 bool UProject_JQuestComponent::RestoreSnapshot(const FProject_JQuestSnapshot& Snapshot, bool bReplacePristineDefaults)
 {

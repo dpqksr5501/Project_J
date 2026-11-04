@@ -68,7 +68,7 @@ private:
 		TWeakObjectPtr<APlayerController> Controller;
 		TWeakObjectPtr<AProject_JPlayerState> State;
 	};
-	void RetireSession(const FBoundSession& Binding);
+	void RetireSession(const FBoundSession& Binding, bool bTerminateConnection = false, bool bPreserveProfileForRenewal = false);
 	bool IsSessionPlayer(const APlayerController* Player, const AProject_JPlayerState* State) const;
 	bool CanBindSessionIdentity(const APlayerController* Player, const AProject_JPlayerState* State,
 		const FGuid& Account, const FGuid& Character) const;

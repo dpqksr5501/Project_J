@@ -49,6 +49,19 @@ void UProject_JServerSideRewindComponent::BeginPlay()
 	ResetHistory();
 }
 
+void UProject_JServerSideRewindComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	SetComponentTickEnabled(false);
+	ResetHistory();
+	Super::EndPlay(EndPlayReason);
+}
+
+void UProject_JServerSideRewindComponent::OnUnregister()
+{
+	ResetHistory();
+	Super::OnUnregister();
+}
+
 void UProject_JServerSideRewindComponent::ResetHistory()
 {
 	check(IsInGameThread());
@@ -73,7 +86,8 @@ void UProject_JServerSideRewindComponent::TickComponent(float DeltaTime, ELevelT
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	AActor* Owner = GetOwner();
-	if (!Owner || !Owner->HasAuthority() || !GetWorld() || PoseHistory.IsEmpty() ||
+	if (!IsRegistered() || IsBeingDestroyed() || !IsValid(Owner) || Owner->IsActorBeingDestroyed() ||
+		!Owner->HasAuthority() || !GetWorld() || GetWorld()->bIsTearingDown || PoseHistory.IsEmpty() ||
 		!FMath::IsFinite(DeltaTime) || DeltaTime <= 0.0f)
 	{
 		return;
@@ -101,7 +115,8 @@ void UProject_JServerSideRewindComponent::TickComponent(float DeltaTime, ELevelT
 bool UProject_JServerSideRewindComponent::ServerVerifyHit(double ClientTimestamp, const FVector& TraceStart, const FVector& TraceEnd, float TraceRadius)
 {
 	check(IsInGameThread());
-	if (!GetOwner() || !GetOwner()->HasAuthority() || !GetWorld() ||
+	if (!IsRegistered() || IsBeingDestroyed() || !IsValid(GetOwner()) || GetOwner()->IsActorBeingDestroyed() ||
+		!GetOwner()->HasAuthority() || !GetWorld() || GetWorld()->bIsTearingDown ||
 		!FMath::IsFinite(ClientTimestamp) || !FMath::IsFinite(TraceRadius) || TraceRadius < 0.0f ||
 		TraceStart.ContainsNaN() || TraceEnd.ContainsNaN() ||
 		GetWorld()->GetTimeSeconds() - ClientTimestamp > MaxRecordTime) return false;

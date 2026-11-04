@@ -472,7 +472,7 @@ void AProject_JAuditNetworkPlayer::BeginPlay(){
  GetMesh()->VisibilityBasedAnimTickOption=EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
  GetMesh()->bEnableUpdateRateOptimizations=false;
 }
-AProject_JAuditNetworkTarget::AProject_JAuditNetworkTarget(){CreateDefaultSubobject<UProject_JServerSideRewindComponent>(TEXT("AuditRewind"));bAlwaysRelevant=true;}
+AProject_JAuditNetworkTarget::AProject_JAuditNetworkTarget(){bAlwaysRelevant=true;}
 void AProject_JAuditNetworkTarget::BeginPlay(){Super::BeginPlay();if(AuditEnabled()){FreezeAuditKinematics(this);SetNetUpdateFrequency(30.f);}}
 AProject_JAuditCueProbe::AProject_JAuditCueProbe(){Presentation=CreateDefaultSubobject<UProject_JCombatPresentationComponent>(TEXT("AuditPresentation"));bAlwaysRelevant=true;}
 void AProject_JAuditCueProbe::BeginPlay(){

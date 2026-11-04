@@ -210,7 +210,9 @@ class PROJECT_J_API UProject_JQuestComponent : public UActorComponent
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly) bool Claim(FName Id);
 	/** Full native capture is authority-only. Clients receive an explicitly unhydrated value; UI uses States/Summary/Page. */
 	FProject_JQuestSnapshot CaptureSnapshot() const;
-	bool CanRestoreSnapshot(const FProject_JQuestSnapshot &Snapshot, bool bReplacePristineDefaults = false) const;
+	/** Trusted read-only preflight bypasses command admission, never pristine/default or value checks. */
+    bool CanRestoreSnapshot(const FProject_JQuestSnapshot &Snapshot, bool bReplacePristineDefaults = false,
+        bool bTrustedValidation = false) const;
 	/** Replacement is restricted to fresh, unpossessed owners with untouched automatic defaults. */
 	bool RestoreSnapshot(const FProject_JQuestSnapshot &Snapshot, bool bReplacePristineDefaults = false);
 	DECLARE_MULTICAST_DELEGATE(FChanged);

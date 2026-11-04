@@ -7,6 +7,9 @@
 #include "Backend/Project_JProfileRules.h"
 #include "Backend/Project_JQuestHistoryStorage.h"
 #include "Backend/Project_JSQLiteRepository.h"
+#include "Backend/Project_JWorldEventClaimStorage.h"
+#include "World/Project_JWorldEncounter.h"
+#include "World/Project_JWorldEventRegistry.h"
 #include "CharacterClass/Project_JCharacterClassDefinition.h"
 #include "CharacterClass/Project_JCharacterDataSubsystem.h"
 #include "Components/Project_JEquipmentManagerComponent.h"
@@ -21,6 +24,8 @@
 #include "HAL/IConsoleManager.h"
 #include "Inventory/Project_JConsumableDefinition.h"
 #include "Misc/Paths.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
 #include "HAL/FileManager.h"
 #include "Misc/ScopeLock.h"
 #include "Misc/SecureHash.h"
@@ -369,7 +374,7 @@ struct FProject_JLocalProfileBinding
 	bool bLoaded = false, bLoadSucceeded = false, bReady = false, bRetired = false;
 	bool bCommandPending = false, bCommandObserved = false;
 	int64 AppliedRevision = 0;
-	uint32 NextRequest = 0;
+	uint32 NextRequest = 0, RetiredRequestThrough = 0;
 	// GT-owned session observation: rejected admissions are not retained or automatically replayed.
 	uint64 RejectedProgressAdmissions = 0;
 	FProject_JPersistentCompletion CommandComplete;
@@ -394,6 +399,33 @@ bool RequireQuestRules(const TSharedPtr<FProject_JLocalProfileBinding, ESPMode::
 }
 }
 
+/** GT-only transient open, retaining the original authority epoch and completion. */
+struct FProject_JPendingTrustedProfileOpen
+{
+    TWeakObjectPtr<AProject_JPlayerState> Player;
+    FServerSessionLease Lease;
+    TFunction<void(bool)> OnReady;
+};
+void UProject_JLocalProfileSubsystem::RetryPendingTrustedOpens()
+{
+    check(IsInGameThread());
+    if (bClosing || PendingTrustedOpens.IsEmpty()) return;
+    const TStrongObjectPtr<ThisClass> KeepSelf(this);
+    // Remove each exact request before retry: failed authority never migrates to a new lease,
+    // and another busy writer may requeue it without an immediate retry loop.
+    TArray<TSharedPtr<FProject_JPendingTrustedProfileOpen>> Pending;
+    PendingTrustedOpens.GenerateValueArray(Pending);
+    for (const auto& Open : Pending)
+    {
+        if (bClosing) break;
+        const auto* Current = PendingTrustedOpens.Find(Open->Player);
+        if (!Current || *Current != Open) continue;
+        PendingTrustedOpens.Remove(Open->Player);
+        auto* Player = Open->Player.Get();
+        OpenResolvedProfile(Player, Open->Lease.AccountId, Open->Lease.CharacterId, Open->Lease, true, MoveTemp(Open->OnReady));
+    }
+}
+
 void UProject_JLocalProfileSubsystem::Initialize(FSubsystemCollectionBase &Collection)
 {
 	Super::Initialize(Collection);
@@ -405,6 +437,7 @@ void UProject_JLocalProfileSubsystem::Initialize(FSubsystemCollectionBase &Colle
 void UProject_JLocalProfileSubsystem::Deinitialize()
 {
 	bClosing = true;
+    PendingTrustedOpens.Reset(); // Retire callbacks; shutdown must not create new gameplay work.
 	for (const auto &Pair : Bindings)
 	{
 		Pair.Value->bRetired = true;
@@ -452,22 +485,59 @@ bool UProject_JLocalProfileSubsystem::IsCurrent(
 		   !Player->GetWorld()->bIsTearingDown && Player->GetAccountId().Value == B->Account &&
 		   Player->GetCharacterId().Value == B->Character && Player->IsServerSessionCurrent(B->PlayerSession) && Found && *Found == B;
 }
-void UProject_JLocalProfileSubsystem::OpenProfile(AProject_JPlayerState *Player, const FString &Profile,
-												  TFunction<void(bool)> OnReady)
+bool UProject_JLocalProfileSubsystem::IsTrustedDevelopmentEnabled()
+{
+#if UE_BUILD_SHIPPING
+	return false;
+#else
+	return FParse::Param(FCommandLine::Get(), TEXT("ProjectJDevelopmentServerProfiles"));
+#endif
+}
+void UProject_JLocalProfileSubsystem::OpenTrustedDevelopmentProfile(AProject_JPlayerState* Player,
+	TFunction<void(bool)> OnReady)
+{
+	check(IsInGameThread());
+	const auto Lease = IsValid(Player) ? Player->CaptureServerSession() : FServerSessionLease{};
+	if (!IsTrustedDevelopmentEnabled() || !Lease.IsValid() || !Player->IsServerSessionCurrent(Lease))
+	{ if (OnReady) OnReady(false); return; }
+	// A replaced native session must not leave an inert binding that blocks its
+	// successor forever. Accepted I/O still owns its gate until it drains.
+	TArray<TWeakObjectPtr<AProject_JPlayerState>> Retired;
+	for (const auto& Pair : Bindings)
+		if (Pair.Value->Character == Lease.CharacterId && !IsCurrent(Pair.Value)) Retired.Add(Pair.Key);
+	for (const auto& Old : Retired) Detach(Old.Get());
+	OpenResolvedProfile(Player, Lease.AccountId, Lease.CharacterId, Lease, true, MoveTemp(OnReady));
+}
+void UProject_JLocalProfileSubsystem::OpenProfile(AProject_JPlayerState* Player, const FString& Profile,
+	TFunction<void(bool)> OnReady)
 {
 	check(IsInGameThread());
 	FGuid Account, Character;
-	if (bClosing || !IOGate || !IsValid(Player) || !Player->HasAuthority() || Player->IsActorBeingDestroyed() ||
-		!Player->GetWorld() || Player->GetWorld()->GetNetMode() != NM_Standalone ||
+	if (!ResolveLocalIdentity(Profile, Account, Character)) { if (OnReady) OnReady(false); return; }
+	OpenResolvedProfile(Player, Account, Character, IsValid(Player) ? Player->CaptureServerSession() : FServerSessionLease{},
+		false, MoveTemp(OnReady));
+}
+void UProject_JLocalProfileSubsystem::OpenResolvedProfile(AProject_JPlayerState* Player, FGuid Account, FGuid Character,
+	const FServerSessionLease& ExpectedSession, bool bTrustedDevelopment, TFunction<void(bool)> OnReady)
+{
+	check(IsInGameThread());
+	const auto IdentityCurrent = [&]
+	{
+		return IsValid(Player) && Player->GetWorld() &&
+			(bTrustedDevelopment
+				? IsTrustedDevelopmentEnabled() && ExpectedSession.IsValid() && Player->IsServerSessionCurrent(ExpectedSession)
+					&& Player->GetAccountId().Value == Account && Player->GetCharacterId().Value == Character
+				: Player->GetWorld()->GetNetMode() == NM_Standalone && !ExpectedSession.IsValid()
+					&& Player->IsServerSessionCurrent(ExpectedSession));
+	};
+	if (!OnReady) return;
+	if (bClosing || !IOGate || !IdentityCurrent() || !Player->HasAuthority() || Player->IsActorBeingDestroyed() ||
 		Player->GetGameInstance() != GetGameInstance() || Player->GetPawn() ||
 		!Player->FindComponentByClass<UProject_JProgressionComponent>() ||
 		Player->FindComponentByClass<UProject_JProgressionComponent>()->GetState().Revision != 0 ||
-		Bindings.Num() >= 32 || Bindings.Num() >= 32 || Bindings.Contains(Player) ||
-		!ResolveLocalIdentity(Profile, Account, Character))
-	{
-		OnReady(false);
-		return;
-	}
+		Bindings.Num() + PendingTrustedOpens.Num() >= 32 || Bindings.Contains(Player) || PendingTrustedOpens.Contains(Player))
+	{ OnReady(false); return; }
+
 	for (const auto &Pair : Bindings)
 		if (Pair.Value->Character == Character)
 		{
@@ -489,12 +559,12 @@ void UProject_JLocalProfileSubsystem::OpenProfile(AProject_JPlayerState *Player,
 	if (!PreparingQuests || !PreparingQuests->PrepareForProfile() || bClosing || !IOGate || !IsValid(Player) ||
 		!Player->HasAuthority() || Player->IsActorBeingDestroyed() || !IsValid(PreparingWorld.Get()) ||
 		PreparingWorld->bIsTearingDown || Player->GetWorld() != PreparingWorld.Get() ||
-		Player->GetWorld()->GetNetMode() != NM_Standalone || GetGameInstance() != PreparingInstance.Get() ||
+		!IdentityCurrent() || GetGameInstance() != PreparingInstance.Get() ||
 		Player->GetGameInstance() != PreparingInstance.Get() || Player->GetPawn() ||
 		Player->FindComponentByClass<UProject_JQuestComponent>() != PreparingQuests ||
 		!Player->FindComponentByClass<UProject_JProgressionComponent>() ||
 		Player->FindComponentByClass<UProject_JProgressionComponent>()->GetState().Revision != 0 ||
-		Bindings.Num() >= 32 || Bindings.Contains(Player))
+		Bindings.Num() + PendingTrustedOpens.Num() >= 32 || Bindings.Contains(Player) || PendingTrustedOpens.Contains(Player))
 	{
 		OnReady(false); return;
 	}
@@ -503,33 +573,53 @@ void UProject_JLocalProfileSubsystem::OpenProfile(AProject_JPlayerState *Player,
 	for (const auto& Pair : Bindings)
 		if (Pair.Value->Character == Character) { OnReady(false); return; }
 	FGuid Ticket;
-	if (IOGate->TryAcquire({ProfileKey(Character)}, Ticket) != EAdmission::Accepted)
-	{
-		OnReady(false);
-		return;
-	}
+    const auto Admission = IOGate->TryAcquire({ProfileKey(Character)}, Ticket);
+    if (Admission != EAdmission::Accepted)
+    {
+        if (bTrustedDevelopment && Admission == EAdmission::Busy)
+        {
+            auto Pending = MakeShared<FProject_JPendingTrustedProfileOpen>();
+            Pending->Player = Player; Pending->Lease = ExpectedSession; Pending->OnReady = MoveTemp(OnReady);
+            PendingTrustedOpens.Add(Player, MoveTemp(Pending));
+            // Reuse the normal command wiring with an intentionally retired capability.
+            // Its weak delegates deny all edits/progress until a real binding replaces them;
+            // retirement keeps denial installed rather than reopening prototype mutation.
+            auto Fence = MakeShared<FProject_JLocalProfileBinding, ESPMode::ThreadSafe>();
+            Fence->Player = Player; Fence->bRetired = true;
+            BindPersistentCommands(Fence);
+            // Every profile writer posts a GT drain notification after releasing its gate.
+            // No callback failure, default spawn, timer, or fresh authority is inferred here.
+            return;
+        }
+        OnReady(false); return;
+    }
 	auto B = MakeShared<FProject_JLocalProfileBinding, ESPMode::ThreadSafe>();
 	B->Player = Player;
-	B->PlayerSession = Player->CaptureServerSession();
+	B->PlayerSession = ExpectedSession;
 	B->Account = Account;
 	B->Character = Character;
 	B->OnReady = MoveTemp(OnReady);
 	auto Work = MakeShared<FProject_JLocalProfileWork, ESPMode::ThreadSafe>();
 	// Developer profile storage can hold a complete 1024-page quest archive plus
 	// its core/lease. This record budget is not a production player capacity.
-	Work->Repository = MakeShared<FProject_JSQLiteRepository, ESPMode::ThreadSafe>(DatabasePath, 4096);
+	const FString StorePath = bTrustedDevelopment
+		? FPaths::Combine(FPaths::GetPath(DatabasePath), TEXT("DevelopmentServerProfiles.sqlite")) : DatabasePath;
+	Work->Repository = MakeShared<FProject_JSQLiteRepository, ESPMode::ThreadSafe>(StorePath, 4096);
 	Work->Gate = IOGate;
 	Work->Character = Character;
 	Work->Session = FGuid::NewGuid();
 	B->Work = Work;
 	Bindings.Add(Player, B);
-	Player->SetIdentity(FProject_JAccountId{Account}, FProject_JCharacterId{Character});
+	if (!bTrustedDevelopment) Player->SetIdentity(FProject_JAccountId{Account}, FProject_JCharacterId{Character});
 	if (!IsCurrent(B))
 	{
 		Detach(Player);
 		IOGate->Release(Ticket);
 		return;
 	}
+	// Close network mutations while the worker loads. The current ready flag gates
+	// existing live writers; no parallel server-only inventory/progression exists.
+	if (bTrustedDevelopment) BindPersistentCommands(B);
 	TWeakObjectPtr<UProject_JLocalProfileSubsystem> WeakThis(this);
 	B->IdentityChanged = Player->OnCharacterIdentityChanged.AddWeakLambda(this, [WeakThis, WeakPlayer = B->Player]() {
 		if (auto *Self = WeakThis.Get())
@@ -607,6 +697,7 @@ void UProject_JLocalProfileSubsystem::OpenProfile(AProject_JPlayerState *Player,
 		Work->Gate->Release(Ticket);
 		AsyncTask(ENamedThreads::GameThread,
 				  [WeakThis, B, Success, Values, Error = MoveTemp(Error), Payload = MoveTemp(Record.Payload)]() mutable {
+                      if (auto* Self = WeakThis.Get()) Self->RetryPendingTrustedOpens();
 					  if (auto *Self = WeakThis.Get(); Self && Self->IsCurrent(B))
 					  {
 						  B->bLoaded = true;
@@ -643,7 +734,9 @@ void UProject_JLocalProfileSubsystem::CompleteOpen(
 	FProject_JQuestDefinitionIndex QuestIndex;
 	const bool QuestsPrepared = Q && Q->PrepareForProfile();
 	if (QuestsPrepared) Q->BuildDefinitionIndex(QuestIndex);
-	bool Success = B->bLoadSucceeded && P && Q && QuestsPrepared && !Player->GetPawn() && P->GetState().Revision == 0;
+	const TCHAR* RestoreStage = TEXT("InitialOwnerAndLoad");
+    const auto Preflight = [&](bool Passed, const TCHAR* Stage) { if (!Passed) RestoreStage = Stage; return Passed; };
+    bool Success = B->bLoadSucceeded && P && Q && QuestsPrepared && !Player->GetPawn() && P->GetState().Revision == 0;
 	if (Success && !B->LoadedPayload.IsEmpty() && !B->LoadedValues)
 	{
 		Success = false;
@@ -658,13 +751,15 @@ void UProject_JLocalProfileSubsystem::CompleteOpen(
 		TArray<FProject_JItemInstanceData> Bag;
 		TArray<FProject_JEquipmentArrayItem> Slots;
 		ProjectJ::LocalProfileRules::FQuestGuard LoadedRules;
-		Success = Snapshot.Account == B->Account && Snapshot.Character == B->Character &&
-				  ResolveDefinitions(GetGameInstance(), Snapshot.Progression, Class, History) &&
-				  Matches(Snapshot, *P, QuestIndex, Class, History) &&
-				  P->CanRestoreSnapshot(Snapshot.Progression, Class, History) &&
-				  Q->CanRestoreSnapshot(Snapshot.Quests, true) &&
-				  ResolveItems(Player, Snapshot, Bag, Slots, false, &B->LastAdmissionReason) &&
-				  LoadedRules.Capture(QuestIndex, Snapshot.Quests, GetGameInstance()->GetSubsystem<UProject_JCharacterDataSubsystem>());
+        // Trusted profiles were fenced before async loading. Read-only restore preflight
+        // must not ask ordinary command admission to reopen; pristine/value checks still apply.
+        Success = Preflight(Snapshot.Account == B->Account && Snapshot.Character == B->Character, TEXT("Identity")) &&
+            Preflight(ResolveDefinitions(GetGameInstance(), Snapshot.Progression, Class, History), TEXT("Definitions")) &&
+            Preflight(Matches(Snapshot, *P, QuestIndex, Class, History), TEXT("RulesFingerprint")) &&
+            Preflight(P->CanRestoreSnapshot(Snapshot.Progression, Class, History, true), TEXT("PristineProgression")) &&
+            Preflight(Q->CanRestoreSnapshot(Snapshot.Quests, true, true), TEXT("PristineQuests")) &&
+            Preflight(ResolveItems(Player, Snapshot, Bag, Slots, true, &B->LastAdmissionReason), TEXT("OwnedItems")) &&
+            Preflight(LoadedRules.Capture(QuestIndex, Snapshot.Quests, GetGameInstance()->GetSubsystem<UProject_JCharacterDataSubsystem>()), TEXT("QuestRules"));
 		if (!Success && B->LastAdmissionReason.IsEmpty())
 			B->LastAdmissionReason =
 				Snapshot.Format == 1
@@ -672,6 +767,7 @@ void UProject_JLocalProfileSubsystem::CompleteOpen(
 					: TEXT("프로필의 정의·규칙 버전·범위·소유권 검증 실패: 기존 저장을 보존했습니다");
 		if (Success)
 		{
+            RestoreStage = TEXT("InstallAndPublish");
 			const auto ParticipantsCurrent = [&]
 			{
 				const auto Live = [&](const UActorComponent* Component)
@@ -755,21 +851,13 @@ void UProject_JLocalProfileSubsystem::CompleteOpen(
 	}
 	if (Success)
 	{
-		TWeakObjectPtr<UProject_JLocalProfileSubsystem> WeakThis(this);
-		TWeakPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe> WeakB(B);
-		auto Changed = [WeakThis, WeakB]() {
-			if (auto *Self = WeakThis.Get())
-				if (auto Current = WeakB.Pin(); Self->IsCurrent(Current))
-					Self->RequestCheckpoint(Current->Player.Get());
-		};
-		B->ProgressionChanged = P->OnChanged.AddWeakLambda(this, Changed);
-		B->QuestChanged = Q->OnChanged.AddWeakLambda(this, Changed);
+		ObserveProfileChanges(B);
 	}
 	else
 	{
 		B->Work->Seal();
 		UE_LOG(LogProjectJLocalProfile, Error,
-			   TEXT("Local profile load rejected; no new default state will overwrite it."));
+			   TEXT("Local profile load rejected at %s: %s; no new default state will overwrite it."), RestoreStage, *B->LastAdmissionReason);
 	}
 	auto Callback = MoveTemp(B->OnReady);
 	if (!Success && IsCurrent(B))
@@ -783,6 +871,63 @@ void UProject_JLocalProfileSubsystem::CompleteOpen(
 		BindPersistentCommands(B);
 	if (Success && IsCurrent(B))
 		RequestCheckpoint(Player);
+    if (Success && IsCurrent(B) && B->PlayerSession.IsValid())
+        if (auto* Registry = Player->GetWorld()->GetSubsystem<UProject_JWorldEventRegistry>())
+            Registry->NotifyTrustedProfileReady(Player);
+}
+void UProject_JLocalProfileSubsystem::ObserveProfileChanges(const TSharedPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe>& B)
+{
+	TWeakObjectPtr<UProject_JLocalProfileSubsystem> WeakThis(this);
+	TWeakPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe> WeakB(B);
+	auto Changed = [WeakThis, WeakB]() {
+		if (auto* Self = WeakThis.Get())
+			if (auto Current = WeakB.Pin(); Self->IsCurrent(Current)) Self->RequestCheckpoint(Current->Player.Get());
+	};
+	B->ProgressionChanged = B->Player->FindComponentByClass<UProject_JProgressionComponent>()->OnChanged.AddWeakLambda(this, Changed);
+	B->QuestChanged = B->Player->FindComponentByClass<UProject_JQuestComponent>()->OnChanged.AddWeakLambda(this, Changed);
+}
+bool UProject_JLocalProfileSubsystem::CanRenewTrustedProfile(AProject_JPlayerState* Player) const
+{
+	check(IsInGameThread());
+	const auto* Found = Bindings.Find(Player);
+	if (!Found) return true;
+	const auto B = *Found;
+	return IsCurrent(B) && B->PlayerSession.IsValid() && B->bReady && !B->OnReady &&
+		B->Work->Healthy() && !IsCheckpointPending(Player) && B->AppliedRevision > 0;
+}
+bool UProject_JLocalProfileSubsystem::RenewTrustedProfile(AProject_JPlayerState* Player,
+	const FServerSessionLease& Previous, const FServerSessionLease& Current)
+{
+	check(IsInGameThread());
+	const auto* Found = Bindings.Find(Player);
+	if (!Found) return true;
+	const auto Old = *Found;
+	auto* Progression = IsValid(Player) ? Player->FindComponentByClass<UProject_JProgressionComponent>() : nullptr;
+	auto* Quests = IsValid(Player) ? Player->FindComponentByClass<UProject_JQuestComponent>() : nullptr;
+	if (!IsValid(Progression) || !IsValid(Quests) || Progression->IsBeingDestroyed() || Quests->IsBeingDestroyed()) return false;
+	if (bClosing || !IsValid(Player) || Player->IsActorBeingDestroyed() || !Player->HasAuthority() ||
+		Player->GetGameInstance() != GetGameInstance() || !Player->GetWorld() || Player->GetWorld()->bIsTearingDown ||
+		!Previous.IsValid() || !Current.IsValid() || Previous == Current ||
+		Previous.AccountId != Current.AccountId || Previous.CharacterId != Current.CharacterId ||
+		!(Old->PlayerSession == Previous) || Old->bRetired || !Old->bReady || Old->OnReady ||
+		!Player->IsServerSessionCurrent(Current) || Player->GetAccountId().Value != Old->Account ||
+		Player->GetCharacterId().Value != Old->Character || !Old->Work->Healthy() || IsCheckpointPending(Player) ||
+		Old->AppliedRevision <= 0) return false;
+	// Nothing is copied into gameplay. The previous binding can never become current
+	// again, even if a delayed native delegate retained its weak binding pointer.
+	auto B = MakeShared<FProject_JLocalProfileBinding, ESPMode::ThreadSafe>();
+	B->Player = Player; B->PlayerSession = Current; B->Account = Old->Account; B->Character = Old->Character;
+	B->Work = Old->Work; B->bLoaded = B->bLoadSucceeded = B->bReady = true;
+	B->AppliedRevision = Old->AppliedRevision; B->NextRequest = Old->NextRequest;
+	B->RetiredRequestThrough = Old->NextRequest; B->QuestRules = Old->QuestRules;
+	B->IdentityChanged = Old->IdentityChanged;
+	Old->bRetired = true;
+	Player->FindComponentByClass<UProject_JProgressionComponent>()->OnChanged.Remove(Old->ProgressionChanged);
+	Player->FindComponentByClass<UProject_JQuestComponent>()->OnChanged.Remove(Old->QuestChanged);
+	Bindings.Add(Player, B);
+	BindPersistentCommands(B);
+	ObserveProfileChanges(B);
+	return IsCurrent(B);
 }
 void UProject_JLocalProfileSubsystem::RequestCheckpoint(AProject_JPlayerState *Player)
 {
@@ -847,6 +992,7 @@ void UProject_JLocalProfileSubsystem::RequestCheckpoint(AProject_JPlayerState *P
 	Jobs.Add(Async(EAsyncExecution::ThreadPool, [Work, Ticket, WeakThis, WeakB] {
 		auto Projection = Work->Drain(Ticket);
 		AsyncTask(ENamedThreads::GameThread, [WeakThis, WeakB, Projection = MoveTemp(Projection)] {
+            if (auto* Self = WeakThis.Get()) Self->RetryPendingTrustedOpens();
 			if (auto* Self = WeakThis.Get())
 				if (auto Current = WeakB.Pin(); Self->IsCurrent(Current))
 					Self->CompleteProgress(Current, Projection.Values, Projection.Revision);
@@ -888,6 +1034,7 @@ void UProject_JLocalProfileSubsystem::RequestBackup(TFunction<void(bool, FString
 void UProject_JLocalProfileSubsystem::Detach(AProject_JPlayerState *Player)
 {
 	check(IsInGameThread());
+    PendingTrustedOpens.Remove(Player); // A disconnected/replaced owner cannot resume its deferred open.
 	auto *Found = Bindings.Find(Player);
 	if (!Found)
 		return;
@@ -912,6 +1059,7 @@ bool UProject_JLocalProfileSubsystem::IsReady(const AProject_JPlayerState *Playe
 }
 bool UProject_JLocalProfileSubsystem::IsCheckpointPending(const AProject_JPlayerState *Player) const
 {
+    if (PendingTrustedOpens.Contains(const_cast<AProject_JPlayerState*>(Player))) return true;
 	const auto *Found = Bindings.Find(const_cast<AProject_JPlayerState *>(Player));
 	return Found && ((*Found)->bCommandPending || (*Found)->Work->PendingIO() ||
 		((*Found)->Work->Healthy() && (*Found)->Work->Revision() != (*Found)->AppliedRevision));
@@ -921,8 +1069,22 @@ int64 UProject_JLocalProfileSubsystem::GetCommittedRevision(const AProject_JPlay
 	const auto *Found = Bindings.Find(const_cast<AProject_JPlayerState *>(Player));
 	return Found ? (*Found)->Work->Revision() : 0;
 }
+bool UProject_JLocalProfileSubsystem::QueryCommittedQuest(AProject_JPlayerState* Player, FName Quest, int64& OutRevision) const
+{
+	check(IsInGameThread());
+	OutRevision = 0;
+	const auto* Found = Bindings.Find(Player);
+	if (Quest.IsNone() || !Found || !IsReady(Player) || IsCheckpointPending(Player)) return false;
+	const auto B = *Found;
+	const auto* Quests = Player->FindComponentByClass<UProject_JQuestComponent>();
+	if (!Quests || !Quests->HasCompleted(Quest) || B->AppliedRevision <= 0) return false;
+	OutRevision = B->AppliedRevision;
+	return true;
+}
 FText UProject_JLocalProfileSubsystem::GetStatusText(const AProject_JPlayerState *Player) const
 {
+    if (PendingTrustedOpens.Contains(const_cast<AProject_JPlayerState*>(Player)))
+        return FText::FromString(TEXT("이전 세션 저장 완료 대기 · 완료 후 현재 세션의 프로필을 자동으로 읽습니다"));
 	const auto *Found = Bindings.Find(const_cast<AProject_JPlayerState *>(Player));
 	if (!Found)
 		return FText::GetEmpty();
@@ -1017,11 +1179,35 @@ FGuid UProject_JLocalProfileSubsystem::NewRequestId(AProject_JPlayerState *Playe
 	Session.D = ++(*B)->NextRequest;
 	return Session;
 }
+bool UProject_JLocalProfileSubsystem::SubmitWorldEventReward(AProject_JPlayerState* Player,
+    const AProject_JWorldEncounter* Encounter, FGuid Round, FProject_JPersistentCompletion Complete,
+    FProject_JProfileDurableCompletion OnDurable)
+{
+    check(IsInGameThread());
+    int64 Experience = 0;
+    if (!IsTrustedDevelopmentEnabled() || !IsValid(Player) || !IsValid(Encounter) || !Encounter->HasAuthority() ||
+        !Player->HasAuthority() || Player->GetWorld() != Encounter->GetWorld() ||
+        !Player->CaptureServerSession().IsValid() ||
+        !Encounter->GetDevelopmentRewardTerms(Round, Player->CaptureServerSession().CharacterId, Experience)) return false;
+    FProject_JPersistentEdit Edit;
+    Edit.Kind = EProject_JPersistentEdit::WorldEventExperience; Edit.Instance = Round; Edit.Amount = Experience;
+    Edit.Request = NewRequestId(Player);
+    return SubmitEditInternal(Player, Edit, MoveTemp(Complete), MoveTemp(OnDurable), true);
+}
 bool UProject_JLocalProfileSubsystem::SubmitEdit(AProject_JPlayerState *Player, const FProject_JPersistentEdit &Edit,
 												 FProject_JPersistentCompletion Complete, FProject_JProfileDurableCompletion OnDurable)
 {
+    return SubmitEditInternal(Player, Edit, MoveTemp(Complete), MoveTemp(OnDurable), false);
+}
+bool UProject_JLocalProfileSubsystem::SubmitEditInternal(AProject_JPlayerState* Player,
+    const FProject_JPersistentEdit& Edit, FProject_JPersistentCompletion Complete,
+    FProject_JProfileDurableCompletion OnDurable, bool bAuthorizedWorldEvent)
+{
 	check(IsInGameThread());
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_ProfileCommandCapture);
+    const bool bWorldEvent = Edit.Kind == EProject_JPersistentEdit::WorldEventExperience;
+    if (bWorldEvent && (!bAuthorizedWorldEvent || !IsTrustedDevelopmentEnabled() || !Player || !Player->CaptureServerSession().IsValid() ||
+        !Edit.Instance.IsValid() || Edit.Amount <= 0)) return false;
 	if (Edit.Kind == EProject_JPersistentEdit::Craft || Edit.Kind == EProject_JPersistentEdit::StartCraftJob)
 	{
 		if (Edit.CraftingRecipe.IsNone() || Edit.CraftingRecipe.ToString().Len() > 64 ||
@@ -1042,7 +1228,7 @@ bool UProject_JLocalProfileSubsystem::SubmitEdit(AProject_JPlayerState *Player, 
 	auto B = *Found;
 	auto Work = B->Work;
 	if (Edit.Request.A != Work->Session.A || Edit.Request.B != Work->Session.B || Edit.Request.C != Work->Session.C ||
-		Edit.Request.D == 0 || Edit.Request.D > B->NextRequest)
+		Edit.Request.D == 0 || Edit.Request.D <= B->RetiredRequestThrough || Edit.Request.D > B->NextRequest)
 	{
 		B->LastAdmissionReason = TEXT("만료되었거나 발급되지 않은 요청: 현재 상태를 재동기화하세요");
 		return false;
@@ -1129,7 +1315,7 @@ bool UProject_JLocalProfileSubsystem::SubmitEdit(AProject_JPlayerState *Player, 
 					   : P->PlanAdvancement(Data->GetAdvancementDefinition(Edit.ProgressionDefinition),
 											Proposed.Progression);
 		}
-		if (Edit.Kind == K::Experience)
+		if (Edit.Kind == K::Experience || Edit.Kind == K::WorldEventExperience)
 			return P->PlanExperience(Edit.Amount, Proposed.Progression);
 		if (Edit.Kind == K::AcceptCompoundQuest)
 			return Q->PlanAcceptance(Edit.Quest, Proposed.Quests);
@@ -1357,6 +1543,7 @@ bool UProject_JLocalProfileSubsystem::SubmitEdit(AProject_JPlayerState *Player, 
 	Jobs.Add(Async(EAsyncExecution::ThreadPool, [WeakThis, B, Work, Request = MoveTemp(Request),
 												 Intent = MoveTemp(Intent), Before = MoveTemp(Before), Proposed = MoveTemp(Proposed),
 												 bCraftPlan, CraftKind, CraftJobId, CraftRulesDigest, CraftBatches,
+                                                 bWorldEvent, EventRound = Edit.Instance, EventExperience = Edit.Amount,
 												 CraftRecipe = MoveTemp(CraftRecipe), LockedInstances = MoveTemp(LockedInstances),
                                                  ClaimRewards = MoveTemp(ClaimRewards), Valid, Ticket, OnDurable = MoveTemp(OnDurable)]() mutable {
 		check(!IsInGameThread());
@@ -1371,9 +1558,29 @@ bool UProject_JLocalProfileSubsystem::SubmitEdit(AProject_JPlayerState *Player, 
 		}
 		const FProject_JProfileStream Stream{Work->Character, Work->Session, Request.IdempotencyKey.D};
 		FCommitResult Result;
+        bool bEventClaimCapacity = false;
 		// Validate the captured baseline before looking up receipts, as the GT path
 		// did. A known receipt remains replayable when the new plan is no longer valid.
 		if (BaseValid) Result = Work->Repository->FindProfileReceipt(Request.IdempotencyKey, Request.Operation, Stream, Intent);
+        // Epoch receipts may be gone after reconnect. The durable claim ledger never is.
+        // Read under this character's writer gate; revision CAS still guards external writers.
+        if (bWorldEvent && BaseValid && Result.Status == ECommitStatus::Invalid)
+        {
+            FRecord ClaimsRecord; TArray<ProjectJ::WorldEventClaims::FClaim> Claims;
+            const auto Read = Work->Repository->ReadChecked(ProjectJ::WorldEventClaims::Key(Work->Character), ClaimsRecord);
+            if (Read == EProject_JRecordRead::Unavailable || !ProjectJ::WorldEventClaims::Decode(ClaimsRecord, Claims))
+                Result.Status = ECommitStatus::Unavailable;
+            else if (const auto* Existing = Claims.FindByPredicate([&](const auto& C) { return C.Round == EventRound; }))
+                Result.Status = Existing->Experience == EventExperience ? ECommitStatus::Replayed : ECommitStatus::KeyReused;
+            else if (Claims.Num() >= ProjectJ::WorldEventClaims::MaxClaims)
+            { Result.Status = ECommitStatus::Capacity; bEventClaimCapacity = true; }
+            else
+            {
+                Claims.Add({EventRound, EventExperience}); TArray<uint8> Bytes;
+                if (!ProjectJ::WorldEventClaims::Encode(Claims, Bytes)) Result.Status = ECommitStatus::Unavailable;
+                else Request.Mutations.Add({ProjectJ::WorldEventClaims::Key(Work->Character), ClaimsRecord.Revision, 1, MoveTemp(Bytes), false});
+            }
+        }
 		// A known receipt must not rerun a plan, allocate output GUIDs or encode a
 		// replacement payload. Replay remains valid after recipe removal/change.
 		if (Result.Status == ECommitStatus::Invalid && BaseValid && Valid)
@@ -1457,6 +1664,15 @@ bool UProject_JLocalProfileSubsystem::SubmitEdit(AProject_JPlayerState *Player, 
 				Durable.ReceiptStatus = Work->Repository->FindProfileReceipt(Request.IdempotencyKey, Request.Operation, Stream, Intent).Status;
 				if (Accepted(Durable.ReceiptStatus)) Durable.Outcome = EProject_JProfileDurableOutcome::Committed;
 				else if (Durable.ReceiptStatus == ECommitStatus::Invalid) Durable.Outcome = EProject_JProfileDurableOutcome::ProvenAbsent;
+                if (bWorldEvent && Durable.Outcome != EProject_JProfileDurableOutcome::Committed)
+                {
+                    FRecord Marker; TArray<ProjectJ::WorldEventClaims::FClaim> Claims;
+                    const auto Read = Work->Repository->ReadChecked(ProjectJ::WorldEventClaims::Key(Work->Character), Marker);
+                    if (Read == EProject_JRecordRead::Unavailable || !ProjectJ::WorldEventClaims::Decode(Marker, Claims))
+                        Durable.Outcome = EProject_JProfileDurableOutcome::Unknown;
+                    else if (const auto* Claim = Claims.FindByPredicate([&](const auto& C) { return C.Round == EventRound; }))
+                        Durable.Outcome = Claim->Experience == EventExperience ? EProject_JProfileDurableOutcome::Committed : EProject_JProfileDurableOutcome::Unknown;
+                }
 				// Expired/Unavailable/KeyReused are never proof of non-payment. Keep Unknown.
 			}
 		}
@@ -1487,11 +1703,12 @@ bool UProject_JLocalProfileSubsystem::SubmitEdit(AProject_JPlayerState *Player, 
 			}
 		}
 		if (Confirmed && !Values) Work->Fault(ECommitStatus::Conflict);
-		if (!Confirmed && Result.Status != ECommitStatus::Invalid && Result.Status != ECommitStatus::KeyReused && Result.Status != ECommitStatus::Expired)
+		if (!Confirmed && !bEventClaimCapacity && Result.Status != ECommitStatus::Invalid && Result.Status != ECommitStatus::KeyReused && Result.Status != ECommitStatus::Expired)
 			Work->Fault(Result.Status);
 		auto Projection = Work->FinishWriter(Ticket);
 		AsyncTask(ENamedThreads::GameThread, [WeakThis, B, Confirmed, FirstApplication = IssuedNewCommit && Confirmed,
-			Status = Result.Status, Projection = MoveTemp(Projection), Durable, OnDurable = MoveTemp(OnDurable)]() mutable {
+			Status = Result.Status, bEventClaimCapacity, Projection = MoveTemp(Projection), Durable, OnDurable = MoveTemp(OnDurable)]() mutable {
+            if (auto* Self = WeakThis.Get()) Self->RetryPendingTrustedOpens();
 			if (auto* Self = WeakThis.Get(); Self && Self->IsCurrent(B)) B->bCommandObserved = true;
 			if (OnDurable)
 			{
@@ -1501,7 +1718,7 @@ bool UProject_JLocalProfileSubsystem::SubmitEdit(AProject_JPlayerState *Player, 
 			// Observer may reenter, end the world or collect garbage. Resolve the weak subsystem afterwards.
 			if (auto *Self = WeakThis.Get())
 			{
-				Self->CompleteEdit(B, Confirmed, FirstApplication, Status, Projection.Values, Projection.Revision);
+				Self->CompleteEdit(B, Confirmed, FirstApplication, Status, Projection.Values, Projection.Revision, bEventClaimCapacity);
 			}
 		});
 	}));
@@ -1643,6 +1860,7 @@ bool UProject_JLocalProfileSubsystem::QueueQuestProgress(
 		Jobs.Add(Async(EAsyncExecution::ThreadPool, [WeakThis, B, Work, Ticket] {
 			auto Projection = Work->Drain(Ticket);
 			AsyncTask(ENamedThreads::GameThread, [WeakThis, B, Projection = MoveTemp(Projection)] {
+                if (auto* Self = WeakThis.Get()) Self->RetryPendingTrustedOpens();
 				if (auto* Self = WeakThis.Get()) Self->CompleteProgress(B, Projection.Values, Projection.Revision);
 			});
 		}));
@@ -1664,7 +1882,7 @@ void UProject_JLocalProfileSubsystem::CompleteProgress(
 
 void UProject_JLocalProfileSubsystem::CompleteEdit(
 	const TSharedPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe> &B, bool Confirmed, bool FirstApplication,
-	ECommitStatus Status, FProfileValues Values, int64 ProjectionRevision)
+	ECommitStatus Status, FProfileValues Values, int64 ProjectionRevision, bool bEventClaimCapacity)
 {
 	check(IsInGameThread());
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_ProfileCommandApply);
@@ -1673,9 +1891,9 @@ void UProject_JLocalProfileSubsystem::CompleteEdit(
 	{
 		TWeakObjectPtr<UProject_JLocalProfileSubsystem> WeakThis(this);
 		HeldCompletionsForTest.Add(
-			[WeakThis, B, Confirmed, FirstApplication, Status, Values = MoveTemp(Values), ProjectionRevision]() mutable {
+			[WeakThis, B, Confirmed, FirstApplication, Status, Values = MoveTemp(Values), ProjectionRevision, bEventClaimCapacity]() mutable {
 				if (auto *Self = WeakThis.Get())
-					Self->CompleteEdit(B, Confirmed, FirstApplication, Status, MoveTemp(Values), ProjectionRevision);
+					Self->CompleteEdit(B, Confirmed, FirstApplication, Status, MoveTemp(Values), ProjectionRevision, bEventClaimCapacity);
 			});
 		return;
 	}
@@ -1691,11 +1909,12 @@ void UProject_JLocalProfileSubsystem::CompleteEdit(
 	B->bCommandPending = false;
 	B->bCommandObserved = false;
 	B->LastAdmissionReason = OK									  ? FString()
+							 : bEventClaimCapacity ? TEXT("개발 이벤트 보상 기록 한도에 도달함: 기존 지급 기록은 보존됨")
 							 : Status == ECommitStatus::KeyReused ? TEXT("같은 요청 키의 다른 payload를 거부함")
 							 : Status == ECommitStatus::Expired
 								 ? TEXT("요청 유효 범위 만료: 현재 상태 재동기화 필요")
 								 : TEXT("요청 검증/저장 실패: 소유권·수량·정의·버전·64KiB 한도 확인 필요");
-	if (!ProjectionOK || !B->Work->Healthy() || (!OK && Status != ECommitStatus::Invalid && Status != ECommitStatus::KeyReused &&
+	if (!ProjectionOK || !B->Work->Healthy() || (!OK && !bEventClaimCapacity && Status != ECommitStatus::Invalid && Status != ECommitStatus::KeyReused &&
 		Status != ECommitStatus::Expired))
 	{
 		B->bReady = false;

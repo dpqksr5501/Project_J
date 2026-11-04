@@ -1,8 +1,14 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "GameFramework/Info.h"
+#include "MMO/WorldEventContributions.h"
 #include "Project_JWorldEncounter.generated.h"
 class AProject_JNPCCharacter;
+class AProject_JPlayerState;
+class UProject_JAttributeSet;
+struct FProject_JConfirmedHealthGELoss;
+struct FProject_JHealthGEExecutionProof;
+enum class EProject_JHealthGEObservationFailure : uint8;
 class UProject_JWorldEventRegistry;
 class UProject_JNPCActivationDefinition;
 
@@ -11,13 +17,24 @@ enum class EProject_JEncounterPhase : uint8 { Dormant, Preparing, Active, Cooldo
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FProject_JEncounterResolved, FName, EncounterId, int32, SpawnRevision);
 
-/** Always-loaded server event owner. Boss gameplay lives on the NPC; no client-driven spawn or automatic rewards. */
+/** Always-loaded server event owner. Boss gameplay lives on the NPC; no client-driven spawn. Optional development XP uses the trusted profile transaction. */
 UCLASS()
 class PROJECT_J_API AProject_JWorldEncounter : public AInfo
 {
     GENERATED_BODY()
 public:
     AProject_JWorldEncounter();
+    /** Opt-in until the event reward definition/durable consumer is configured.
+     * Evidence survives disconnect, not process/world/owner destruction. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Encounter|Contribution") bool bTrackContributions = false;
+    /** Explicit development-only test reward. Zero disables payout; frozen for each new round. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Encounter|Development", meta=(ClampMin="0", ClampMax="1000000000")) int64 DevelopmentRewardExperience = 0;
+    bool GetDevelopmentRewardTerms(FGuid Round, FGuid Character, int64& OutXP) const;
+    bool TryClaimDevelopmentReward(AProject_JPlayerState* Player, FGuid Round);
+    void TryClaimDevelopmentRewards(AProject_JPlayerState* Player);
+    FGuid GetContributionRound() const { return ContributionRound; }
+    bool IsContributionEligible(FGuid Round, FGuid Character) const { return Contributions.IsEligible(Round, Character); }
+    double GetContributionDamage(FGuid Round, FGuid Character) const { return Contributions.GetDamage(Round, Character); }
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Encounter") FName EncounterId;
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Encounter") TSoftClassPtr<AProject_JNPCCharacter> NPCClass;
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Encounter", meta=(ClampMin="1000")) float ActivationRadius = 150000;
@@ -51,6 +68,8 @@ protected:
     virtual void EndPlay(EEndPlayReason::Type Reason) override;
 private:
     friend class UProject_JWorldEventRegistry;
+    friend struct FProjectJQuestRewardProfileTestAccess;
+    friend class FProjectJWorldEventRewardTermsTest;
     bool HasActivationDemand(bool& bKnown) const;
     bool HasValidInitialNavigation() const;
     bool HasValidCombatConfiguration() const;
@@ -62,4 +81,17 @@ private:
     uint64 PreparationToken = 0;
     bool bRegistered = false;
     bool bStopping = false;
+    void DetachContributionObservation();
+    void OnContributionLoss(const FProject_JConfirmedHealthGELoss& Loss);
+    void OnContributionObservationFailed(const FProject_JHealthGEExecutionProof&, EProject_JHealthGEObservationFailure);
+    TWeakObjectPtr<UProject_JAttributeSet> ContributionAttributes;
+    FDelegateHandle ContributionLossHandle, ContributionFailureHandle;
+    FGuid ContributionRound;
+    ProjectJ::MMO::FWorldEventContributions Contributions;
+    void RetryDevelopmentClaims();
+    int32 DevelopmentClaimCursor = 0;
+    TMap<FGuid, int64> FrozenDevelopmentRewardXP;
+    TMap<FGuid, TSet<FGuid>> ConfirmedDevelopmentClaims;
+    TMap<FGuid, FGuid> PendingDevelopmentClaims; // Character -> attempt token, cleared by durable result.
+
 };

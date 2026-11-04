@@ -25,7 +25,9 @@ enum class EProject_JPersistentEdit : uint8
 	SetQuestTracking,
 	StartCraftJob,
 	CollectCraftJob,
-	CancelCraftJob
+	CancelCraftJob,
+	/** Native trusted development event only. Instance is the immutable round, Amount is frozen XP. */
+	WorldEventExperience
 };
 struct FProject_JPersistentEdit
 {
