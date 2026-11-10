@@ -147,6 +147,8 @@ GreatSword는 38개 메시의 정점·웨이트 SHA-256이 수정 전후 같았�
 - 직접 몸체의 RetargetBodyProfile은 비워 두고, 비호환 follower는 명시적 Family/Body를 쓴다. follower가 접촉/물리를 소유하면 같은 mesh의 중복 Post Process를 끈다.
 - 일반 모듈러 파츠는 LeaderPose를 공유한다. 독립 추가 본은 명시적 CopyPose/해당 Post Process, 표면 Cloth는 별도 cloth 소유권을 사용한다.
 
+전신 공격에서 무릎이 앞뒤로 튀면 같은 플레이헤드에서 원본·변환본의 굽힘, 실제 몸체의 발목 위치와 밑창 보정량을 함께 확인한다. 평지에서 발은 거의 고정된 채 무릎만 움직이면, 에디터의 임시 후처리 A/B로 증폭이 시작된 단계를 좁힌다. 공용 Skeleton을 공유해도 다리 길이와 밑창이 다르면 전신 클립의 접지가 달라질 수 있다. Spellblade에서는 지상 공격을 실제 레퍼런스 몸체로 다시 베이크하고, 공중 검 동작은 기존 상체 슬롯을 사용해 Mover의 점프·착지에 합성했다. [Spellblade 검증 기록](Spellblade_CombatKit.md)
+
 초기에 helper 복사를 공통 master 끝에 넣었던 경로는 직접 몸체 입력으로 옮겼다. 공유 기능과 몸체 설정의 책임을 분리한 결과다. 공통 그래프의 기존 발 CopyBone 네 개는 이번 조회에서 translation/rotation/scale 복사가 모두 꺼진 placeholder였다. 노드 개수만 보고 활성 writer 네 개라고 해석하거나, 기존 BlendStack/래그돌 경로를 조사하지 않고 삭제하지 않는다.
 
 ### 직접 호환도 실제 translation 정책을 확인한다

@@ -4,6 +4,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Animation/Project_JCharacterAnimInstance.h"
+#include "Animation/AnimMontage.h"
 #include "Animation/Project_JCharacterAnimProfile.h"
 #include "Animation/Project_JRetargetBodyProfile.h"
 #include "Animation/Project_JRetargetAnimInstanceProxy.h"
@@ -15,6 +16,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/Project_JWeaponPresentationComponent.h"
 #include "Components/Project_JAnimationUpdateCoordinatorComponent.h"
+#include "Combat/Project_JCombatStyleDefinition.h"
 #include "GameFramework/Character.h"
 #include "Project_JPlayerCharacter.h"
 #include "AbilitySystemGlobals.h"
@@ -52,8 +54,21 @@ void UProject_JRetargetAnimInstance::NativeInitializeAnimation()
 	bHasValidRightSnapshot = bHasValidLeftSnapshot = bHasPrimaryHandSpaceGripSnapshot = false;
 	bUsePrimaryHandSpaceGrip = false;
 	RightGripAlpha = LeftGripAlpha = GripIKAlpha = 0.f;
+	SmoothedLeftContactAlpha = LeftCarryAlphaSnapshot = 0.f;
+	bUseAuthoredCarryRotation = false;
 	bHasActiveHandContact = false;
 	bEnableSecondaryMotion = true;
+
+#if WITH_EDITOR
+	if (USkeletalMeshComponent* Mesh = GetOwningComponent(); Mesh && !Mesh->GetOwner()
+		&& Mesh->GetPostProcessInstance() == this && Mesh->GetWorld()
+		&& Mesh->GetWorld()->WorldType == EWorldType::EditorPreview)
+	{
+		// Persona's asset tooltip sets the mesh on an actorless component.
+		// The engine IK Rig node queries goal components through an owning actor.
+		Mesh->SetDisablePostProcessBlueprint(true);
+	}
+#endif
 
 	// Dedicated server: completely disable tick on follower visual mesh to avoid any wasted evaluation
 	if (const UWorld* World = GetWorld())
@@ -111,6 +126,8 @@ void UProject_JRetargetAnimInstance::NativeUninitializeAnimation()
 	bEnableSecondaryMotion = false;
 	bRightContactTargetValid = bLeftContactTargetValid = bUsePrimaryHandSpaceGrip = false;
 	RightGripAlpha = LeftGripAlpha = GripIKAlpha = 0.f;
+	SmoothedLeftContactAlpha = LeftCarryAlphaSnapshot = 0.f;
+	bUseAuthoredCarryRotation = false;
 	bHasActiveHandContact = false;
 	GripTargetSnapshotFrame = GripPoseEvaluationFrame = MAX_uint64;
 	Super::NativeUninitializeAnimation();
@@ -193,11 +210,15 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	bHasValidLeftSnapshot = false;
 	TargetRightAlphaSnapshot = 0.0f;
 	TargetLeftAlphaSnapshot = 0.0f;
+	LeftCarryAlphaSnapshot = 0.0f;
 	SnapshotRightElbowTarget = FVector::ZeroVector;
 	SnapshotLeftElbowTarget = FVector::ZeroVector;
 	SnapshotLeftGripInPrimaryHandSpace = FTransform::Identity;
 	SnapshotPrimaryHandBoneName = NAME_None;
 	bHasPrimaryHandSpaceGripSnapshot = false;
+	bAuthoredCarryRotationSnapshot = false;
+	bCarryOverlapsActionSnapshot = false;
+	bPassiveLeftActionBlendSnapshot = false;
 
 	// Dedicated server early-out: visual IK and retargeting evaluation are client-only concerns.
 	if (const UWorld* World = GetWorld())
@@ -224,12 +245,11 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	// Capture one complete policy each update. A missing/replaced source returns
 	// to the standalone contract instead of retaining another source's Hidden tier.
 	FProject_JAnimOptimizationPolicy Policy;
-	if (const USkeletalMeshComponent* LeaderMesh = Project_J::Movement::FindPoseSource(OwnerPawn))
+	const USkeletalMeshComponent* LeaderMesh = Project_J::Movement::FindPoseSource(OwnerPawn);
+	const UAnimInstance* LeaderAnim = LeaderMesh ? LeaderMesh->GetAnimInstance() : nullptr;
+	if (const auto* CharacterAnim = Cast<UProject_JCharacterAnimInstance>(LeaderAnim))
 	{
-		if (const UProject_JCharacterAnimInstance* LeaderAnim = Cast<UProject_JCharacterAnimInstance>(LeaderMesh->GetAnimInstance()))
-		{
-			Policy = LeaderAnim->GetCurrentOptimizationPolicy();
-		}
+		Policy = CharacterAnim->GetCurrentOptimizationPolicy();
 	}
 	CurrentQualityTier = Policy.Tier;
 	bEnableFollowerRetarget = Policy.bEnableFollowerRetarget;
@@ -240,7 +260,7 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	RetargetLODThreshold = Policy.RetargetLODThreshold;
 
 	// Early out if tier forbids Follower Retarget / Hand IK or if character is off-screen/hidden
-	const bool bDirectBody = GetOwningComponent() == Project_J::Movement::FindPoseSource(OwnerPawn);
+	const bool bDirectBody = GetOwningComponent() == LeaderMesh;
 	bEnableSecondaryMotion = CurrentQualityTier != EProject_JAnimBudgetTier::Hidden && (bDirectBody || bEnableFollowerRetarget);
 	if (bAllowSecondaryMotionBudget)
 	{
@@ -249,16 +269,15 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	Secondary.bEnabled = SecondaryMotionBudget.GetValueOnGameThread() != 0;
 	Secondary.bAssetOptIn = bAllowSecondaryMotionBudget;
 	Secondary.bLocal = ProjectJ::Animation::IsLocalPlayerAvatar(OwnerPawn);
-	const auto* PoseSource = Project_J::Movement::FindPoseSource(OwnerPawn);
 	const auto* BodyMesh = GetOwningComponent();
-	Secondary.bOptOut = (PoseSource && PoseSource->ComponentTags.Contains(TEXT("NoVisualBudget"))) ||
+	Secondary.bOptOut = (LeaderMesh && LeaderMesh->ComponentTags.Contains(TEXT("NoVisualBudget"))) ||
 		(BodyMesh && BodyMesh->ComponentTags.Contains(TEXT("NoVisualBudget")));
 	if (Secondary.bEnabled && !Secondary.bLocal)
 	{
 		const auto* Coordinator = OwnerPawn->FindComponentByClass<UProject_JAnimationUpdateCoordinatorComponent>();
 		Secondary.bOptOut |= !Coordinator || !Coordinator->IsVisualBudgetEnabled();
 	}
-	if (const auto* Budgeted = Cast<UProject_JBudgetedSkeletalMeshComponent>(PoseSource))
+	if (const auto* Budgeted = Cast<UProject_JBudgetedSkeletalMeshComponent>(LeaderMesh))
 	{
 		Secondary.bOptOut |= !Budgeted->bAllowProjectBudget;
 		Secondary.DistanceTier = Budgeted->GetObservedAnimationDistanceTier();
@@ -271,7 +290,8 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	}
 
 	// 2. Synchronize combat state deterministically from local gameplay authority / ASC
-	if (const AProject_JPlayerCharacter* PlayerChar = Cast<AProject_JPlayerCharacter>(OwnerPawn))
+	const auto* PlayerChar = Cast<AProject_JPlayerCharacter>(OwnerPawn);
+	if (PlayerChar)
 	{
 		bIsCombatMode = PlayerChar->IsCombatModeActive();
 	}
@@ -291,46 +311,60 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	// 3. Check Leader AnimInstance curves (supports authored high-precision Float Curves on attack montages)
 	float LeaderLeftCurveValue = -1.0f;
 	float LeaderRightCurveValue = -1.0f;
-	if (const APawn* OwnerChar = Cast<APawn>(OwnerPawn))
+	float LeftCarryAlpha = 0.0f;
+	float ActionWeight = 0.f;
+	bool bActionPlaying = false;
+	bool bAuthoredCarryRotation = false;
+	if (LeaderAnim)
 	{
-		if (const USkeletalMeshComponent* LeaderMesh = Project_J::Movement::FindPoseSource(OwnerChar))
+		if (!LeftHandIKCurveName.IsNone())
 		{
-			if (const UAnimInstance* LeaderAnim = LeaderMesh->GetAnimInstance())
+			float Val = 0.0f;
+			if (LeaderAnim->GetCurveValue(LeftHandIKCurveName, Val))
 			{
-				if (!LeftHandIKCurveName.IsNone())
-				{
-					float Val = 0.0f;
-					if (LeaderAnim->GetCurveValue(LeftHandIKCurveName, Val))
-					{
-						LeaderLeftCurveValue = FMath::Clamp(Val, 0.0f, 1.0f);
-					}
-				}
-				if (!RightHandIKCurveName.IsNone())
-				{
-					float Val = 0.0f;
-					if (LeaderAnim->GetCurveValue(RightHandIKCurveName, Val))
-					{
-						LeaderRightCurveValue = FMath::Clamp(Val, 0.0f, 1.0f);
-					}
-				}
+				LeaderLeftCurveValue = FMath::Clamp(Val, 0.0f, 1.0f);
 			}
+		}
+		if (!RightHandIKCurveName.IsNone())
+		{
+			float Val = 0.0f;
+			if (LeaderAnim->GetCurveValue(RightHandIKCurveName, Val))
+			{
+				LeaderRightCurveValue = FMath::Clamp(Val, 0.0f, 1.0f);
+			}
+		}
+		if (bDirectBody)
+		{
+			const auto* ContactStyle = PlayerChar ? PlayerChar->GetCombatConfiguration().PassiveLeftGripStyle.Get() : nullptr;
+			const auto& ReleaseSlots = (ContactStyle ? ContactStyle : GetDefault<UProject_JCombatStyleDefinition>())
+				->PassiveLeftGripReleaseSlots;
+			const auto* Montage = ReleaseSlots.IsEmpty() ? nullptr : LeaderAnim->GetCurrentActiveMontage();
+			for (const FName Slot : ReleaseSlots)
+			{
+				bActionPlaying |= Montage && Montage->IsValidSlot(Slot);
+				ActionWeight = FMath::Max(ActionWeight, LeaderAnim->GetSlotMontageGlobalWeight(Slot));
+			}
+			ActionWeight = FMath::Clamp(ActionWeight, 0.f, 1.f);
+			bCarryOverlapsActionSnapshot = bActionPlaying || ActionWeight > UE_SMALL_NUMBER;
+			float Carry = 0.f;
+			if (bIsCombatMode && !bActionPlaying && LeaderAnim->GetCurveValue(Project_J::Animation::LeftHandCarryIKCurve, Carry))
+				LeftCarryAlpha = FMath::Min(FMath::Clamp(Carry, 0.f, 1.f), 1.f - ActionWeight);
+			float AuthoredRotation = 0.f;
+			bAuthoredCarryRotation = LeaderAnim->GetCurveValue(Project_J::Animation::LeftHandCarryAuthoredRotationCurve, AuthoredRotation)
+				&& AuthoredRotation > UE_SMALL_NUMBER;
 		}
 	}
 
-	// 4. Try consuming from UProject_JWeaponPresentationComponent if present
+	// The presentation component owns grip availability, including disabled contact.
 	if (!CachedPresentationComp.IsValid())
 	{
 		CachedPresentationComp = OwnerPawn->FindComponentByClass<UProject_JWeaponPresentationComponent>();
 		if (CachedPresentationComp.IsValid()) CachedPresentationComp->RegisterRetargetAnimInstance(this);
 	}
 
-	bool bResolvedFromPresentation = false;
-	if (CachedPresentationComp.IsValid())
+	if (auto* Presentation = CachedPresentationComp.Get())
 	{
-		const FProject_JWeaponGripTargets GripTargets = CachedPresentationComp->GetWeaponGripTargetsForAnimation(DeltaSeconds);
-		// Presentation owns availability, including an explicitly disabled secondary
-		// contact or missing equipment. Legacy component tracking must not resurrect it.
-		bResolvedFromPresentation = true;
+		const FProject_JWeaponGripTargets GripTargets = Presentation->GetWeaponGripTargetsForAnimation(DeltaSeconds);
 		bContactRecoverySnapshot = GripTargets.bContactRecovery;
 		if (bDirectBody && !GripTargets.SourcePoseBone.IsNone())
 		{
@@ -350,14 +384,25 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			TargetRightAlphaSnapshot = bIsCombatMode
 				? (bEnableCombatGripIK ? PrimaryBaseAlpha : 0.0f)
 				: PrimaryBaseAlpha;
-			bResolvedFromPresentation = true;
 		}
 		if (GripTargets.bHasSecondaryGrip)
 		{
 			SnapshotLeftGripWorldTransform = GripTargets.SecondaryGripWorldTransform;
 			bHasValidLeftSnapshot = true;
-			const float SecondaryBaseAlpha = (!GripTargets.bContactRecovery && LeaderLeftCurveValue >= 0.0f)
+			float SecondaryBaseAlpha = (!GripTargets.bContactRecovery && LeaderLeftCurveValue >= 0.0f)
 				? LeaderLeftCurveValue : GripTargets.SecondaryIKAlpha;
+			const bool bPassiveHandCarry = LeaderLeftCurveValue < 0.f &&
+				GripTargets.DriveMode == EProject_JWeaponGripDriveMode::PrimaryHand &&
+				GripTargets.bHasPrimaryHandSpaceGrip && !Presentation->IsTwoHandGripActive();
+			if (bPassiveHandCarry && bEnableCombatGripIK)
+			{
+				LeftCarryAlphaSnapshot = LeftCarryAlpha;
+				bAuthoredCarryRotationSnapshot = bAuthoredCarryRotation;
+				// An action owns the hand from its first frame. Explicit curves and
+				// notify windows still opt into contact; passive carry returns with the fade.
+				bPassiveLeftActionBlendSnapshot = bCarryOverlapsActionSnapshot;
+				SecondaryBaseAlpha *= bActionPlaying ? 0.f : 1.f - ActionWeight;
+			}
 			TargetLeftAlphaSnapshot = bIsCombatMode
 				? (bEnableCombatGripIK ? SecondaryBaseAlpha : 0.0f)
 				: SecondaryBaseAlpha;
@@ -367,12 +412,10 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 				SnapshotPrimaryHandBoneName = GripTargets.PrimaryHandBoneName;
 				bHasPrimaryHandSpaceGripSnapshot = true;
 			}
-			bResolvedFromPresentation = true;
 		}
 	}
 
-	// 3. Fallback: Component tracking if not resolved via WeaponPresentationComponent
-	if (!bResolvedFromPresentation)
+	else
 	{
 		// Auto-detect fallback only when enabled explicitly
 		if (bAutoDetectWeaponIfNull && !CachedWeaponComponent.IsValid())
@@ -444,6 +487,16 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			bHasValidLeftSnapshot = false;
 			TargetLeftAlphaSnapshot = 0.0f;
 		}
+	}
+
+	// A weapon can expose a left grip while the current pose releases the hand.
+	// Only prepare a target for an active contact or a release still being interpolated.
+	const bool bLeftReleaseInProgress = !bContactRecoverySnapshot && !bPassiveLeftActionBlendSnapshot &&
+		SmoothedLeftContactAlpha > UE_SMALL_NUMBER;
+	if (TargetLeftAlphaSnapshot <= UE_SMALL_NUMBER && LeftCarryAlphaSnapshot <= UE_SMALL_NUMBER && !bLeftReleaseInProgress)
+	{
+		bHasValidLeftSnapshot = false;
+		SnapshotLeftInputPoseContact = {};
 	}
 
 	// Resolve authored body anchors once per animation update, on the game thread.
@@ -542,9 +595,14 @@ void UProject_JRetargetAnimInstance::NativeThreadSafeUpdateAnimation(float Delta
 	RightGripAlpha = bHasValidRightSnapshot && !bPrimaryIKSuppressedSnapshot
 		? (bContactRecoverySnapshot ? TargetRightAlphaSnapshot
 			: FMath::FInterpTo(RightGripAlpha, TargetRightAlphaSnapshot, DeltaSeconds, GripInterpSpeed)) : 0.0f;
-	LeftGripAlpha = bHasValidLeftSnapshot
-		? (bContactRecoverySnapshot ? TargetLeftAlphaSnapshot
-			: FMath::FInterpTo(LeftGripAlpha, TargetLeftAlphaSnapshot, DeltaSeconds, GripInterpSpeed)) : 0.0f;
+	SmoothedLeftContactAlpha = bHasValidLeftSnapshot
+		? ((bContactRecoverySnapshot || bPassiveLeftActionBlendSnapshot) ? TargetLeftAlphaSnapshot
+			: FMath::FInterpTo(SmoothedLeftContactAlpha, TargetLeftAlphaSnapshot, DeltaSeconds, GripInterpSpeed)) : 0.0f;
+	// Carry already follows the pose blend. Filtering it a second time lets
+	// locomotion pull on the arm after an action has taken full pose ownership.
+	LeftGripAlpha = bHasValidLeftSnapshot ? FMath::Max(SmoothedLeftContactAlpha, LeftCarryAlphaSnapshot) : 0.0f;
+	bUseAuthoredCarryRotation = bHasValidLeftSnapshot && bAuthoredCarryRotationSnapshot && LeftCarryAlphaSnapshot > UE_SMALL_NUMBER
+		&& LeftCarryAlphaSnapshot >= SmoothedLeftContactAlpha;
 	GripIKAlpha = RightGripAlpha;
 	bHasActiveHandContact = RightGripAlpha > UE_SMALL_NUMBER || LeftGripAlpha > UE_SMALL_NUMBER;
 }

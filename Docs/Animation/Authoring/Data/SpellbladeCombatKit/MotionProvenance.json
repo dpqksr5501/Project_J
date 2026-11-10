@@ -1,0 +1,512 @@
+{
+  "retargeter": "/Game/Spellblade/Animation/CombatKit/RTG_SpellbladeLegacy_to_Manny_CombatKit.RTG_SpellbladeLegacy_to_Manny_CombatKit",
+  "candidates": [
+    {
+      "role": "AirLight",
+      "source": "pdw_05_00_att_jumpatt_00.fbx",
+      "group": "Aerial",
+      "sha256": "069f8fc82d91cb607d8b85ea89449addad005ed16adda033958034b720198ac7",
+      "duration_s": 5.666667,
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Aerial/AS_SpellbladeKit_AirLight.AS_SpellbladeKit_AirLight",
+      "skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "sampled_keys": 171,
+      "length": 5.666666507720947
+    },
+    {
+      "role": "AirHeavy",
+      "source": "pdw_05_01_att_skill_explosion_2jump_00.fbx",
+      "group": "Aerial",
+      "sha256": "cc99de3f132e7b88282c5c0f62e240396a7d2cb9e769607751b226babf7ee4fb",
+      "duration_s": 3.233333,
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Aerial/AS_SpellbladeKit_AirHeavy.AS_SpellbladeKit_AirHeavy",
+      "skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "sampled_keys": 98,
+      "length": 3.2333333492279053
+    },
+    {
+      "role": "Draw",
+      "source": "pdw_01_01_stand_weapon_out_00.fbx",
+      "group": "Equipment",
+      "sha256": "45cc13b82b49fb7fa7c3cab3978cc5b9034dbf5ec648d279cba9fd9e114abd75",
+      "duration_s": 2.266667,
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Equipment/AS_SpellbladeKit_Draw.AS_SpellbladeKit_Draw",
+      "skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "sampled_keys": 69,
+      "length": 2.2666666507720947
+    },
+    {
+      "role": "Sheathe",
+      "source": "pdw_01_01_stand_weapon_in_00.fbx",
+      "group": "Equipment",
+      "sha256": "12e1961435b02686799ac751e3dfacec472ddb29a30a090b92e5ffe69ac333d4",
+      "duration_s": 2.133333,
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Equipment/AS_SpellbladeKit_Sheathe.AS_SpellbladeKit_Sheathe",
+      "skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "sampled_keys": 65,
+      "length": 2.133333444595337
+    },
+    {
+      "role": "ReadyIdle",
+      "source": "pdw_05_01_stand_idle_00.fbx",
+      "group": "Locomotion",
+      "sha256": "bfaa50f7fbad68ab268b0aa674b23ec53be1a672236864df9cd8a11dd98d6d9b",
+      "duration_s": 1.466667,
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Locomotion/AS_SpellbladeKit_ReadyIdle.AS_SpellbladeKit_ReadyIdle",
+      "skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "sampled_keys": 45,
+      "length": 1.4666666984558105
+    },
+    {
+      "role": "ReadyForward",
+      "source": "pdw_05_01_move_run_f_00.fbx",
+      "group": "Locomotion",
+      "sha256": "a4b39ca17603f7f5258f83e3718fdb6b8833cb2592178e4af2ca9dd2c061cfad",
+      "duration_s": 0.9,
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Locomotion/AS_SpellbladeKit_ReadyForward.AS_SpellbladeKit_ReadyForward",
+      "skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "sampled_keys": 28,
+      "length": 0.8999999761581421
+    },
+    {
+      "role": "ReadyBackward",
+      "source": "pdw_05_01_move_run_b_00.fbx",
+      "group": "Locomotion",
+      "sha256": "27836d95ad4481aa811e411c4b11a747a3fc8633661df73b552d819a519f7289",
+      "duration_s": 1.466667,
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Locomotion/AS_SpellbladeKit_ReadyBackward.AS_SpellbladeKit_ReadyBackward",
+      "skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "sampled_keys": 45,
+      "length": 1.4666666984558105
+    },
+    {
+      "role": "ReadyLeft",
+      "source": "pdw_05_01_move_run_l_00.fbx",
+      "group": "Locomotion",
+      "sha256": "574ea73bfeda90a1ddcd7b9ff4549dc9659e0f3dfe6e3515a6fe8322d9aa9e5a",
+      "duration_s": 0.9,
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Locomotion/AS_SpellbladeKit_ReadyLeft.AS_SpellbladeKit_ReadyLeft",
+      "skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "sampled_keys": 28,
+      "length": 0.8999999761581421
+    },
+    {
+      "role": "ReadyRight",
+      "source": "pdw_05_01_move_run_r_00.fbx",
+      "group": "Locomotion",
+      "sha256": "3c9ddb9a6f1395ad2ac7097a204b7835cd3944c107f71cbc0208667173d70c2f",
+      "duration_s": 0.9,
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Locomotion/AS_SpellbladeKit_ReadyRight.AS_SpellbladeKit_ReadyRight",
+      "skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "sampled_keys": 28,
+      "length": 0.8999999761581421
+    },
+    {
+      "role": "JumpUp",
+      "source": "pdw_05_01_move_jump_f_a_00.fbx",
+      "group": "Locomotion",
+      "sha256": "7d2c0226c9f47b6734acfb38fa321770d589cecefd7ea8ac754aaae801791ace",
+      "duration_s": 0.566667,
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Locomotion/AS_SpellbladeKit_JumpUp.AS_SpellbladeKit_JumpUp",
+      "skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "sampled_keys": 18,
+      "length": 0.5666666626930237
+    },
+    {
+      "role": "JumpLoop",
+      "source": "pdw_05_01_move_jump_f_b_00.fbx",
+      "group": "Locomotion",
+      "sha256": "82ccb69275da92ff622a00a5a869752978b66426124da06a45854d9e0848bfe9",
+      "duration_s": 0.466667,
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Locomotion/AS_SpellbladeKit_JumpLoop.AS_SpellbladeKit_JumpLoop",
+      "skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "sampled_keys": 15,
+      "length": 0.46666666865348816
+    },
+    {
+      "role": "JumpLand",
+      "source": "pdw_05_01_move_jump_f_c_00.fbx",
+      "group": "Locomotion",
+      "sha256": "b0525398e45da1107bff2ef347dfa299fd69a0e8add724acc7c8c912795795d6",
+      "duration_s": 0.5,
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Locomotion/AS_SpellbladeKit_JumpLand.AS_SpellbladeKit_JumpLand",
+      "skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "sampled_keys": 16,
+      "length": 0.5
+    },
+    {
+      "role": "Light01",
+      "source": "pdw_05_01_att_skill_comboatt_01.fbx",
+      "group": "Melee",
+      "sha256": "4f0af2ecfb83b8829d3a6604e77f44267cdef12e2d5b550b23743061d0642ba6",
+      "duration_s": 3.633333,
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Melee/AS_SpellbladeKit_Light01.AS_SpellbladeKit_Light01",
+      "skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "sampled_keys": 110,
+      "length": 3.633333444595337
+    },
+    {
+      "role": "Light02",
+      "source": "pdw_05_01_att_skill_comboatt_02.fbx",
+      "group": "Melee",
+      "sha256": "da9003ecb48e0f9ae804da28e4ebd8fcf09f4d3bc71bcf1b688c606b467ba45e",
+      "duration_s": 6.5,
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Melee/AS_SpellbladeKit_Light02.AS_SpellbladeKit_Light02",
+      "skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "sampled_keys": 196,
+      "length": 6.5
+    },
+    {
+      "role": "Light03",
+      "source": "pdw_05_01_att_skill_comboatt_03.fbx",
+      "group": "Melee",
+      "sha256": "a6417948f80102b8247aba4d8abbf85c7f6c040c399121fd464745c6cacc0b54",
+      "duration_s": 2.466667,
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Melee/AS_SpellbladeKit_Light03.AS_SpellbladeKit_Light03",
+      "skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "sampled_keys": 75,
+      "length": 2.4666666984558105
+    },
+    {
+      "role": "Light04",
+      "source": "pdw_05_01_att_skill_comboatt_04.fbx",
+      "group": "Melee",
+      "sha256": "1917783906b91aa6df04d20e6b2f39123d5c1cc2638754505f2400a971f1385b",
+      "duration_s": 3.933333,
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Melee/AS_SpellbladeKit_Light04.AS_SpellbladeKit_Light04",
+      "skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "sampled_keys": 119,
+      "length": 3.933333396911621
+    },
+    {
+      "role": "RightAttack",
+      "source": "pdw_01_01_att_normal_stand_01.fbx",
+      "group": "Melee",
+      "sha256": "d7e00809e430cf0738ad24a307f06b5de9f644c0b7f00759cfe8c9556b31b71b",
+      "duration_s": 3.733333,
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Melee/AS_SpellbladeKit_RightAttack.AS_SpellbladeKit_RightAttack",
+      "skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "sampled_keys": 113,
+      "length": 3.7333333492279053
+    },
+    {
+      "role": "Kick",
+      "source": "pdw_01_01_att_kick_01.fbx",
+      "group": "Melee",
+      "sha256": "dba6717f3d225a17d35363283e5065c6bb6036c3c1b6304f4ac6a12bf637914d",
+      "duration_s": 0.966667,
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Melee/AS_SpellbladeKit_Kick.AS_SpellbladeKit_Kick",
+      "skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "sampled_keys": 30,
+      "length": 0.9666666388511658
+    },
+    {
+      "role": "SprintAttack",
+      "source": "pdw_01_01_att_rundash_00.fbx",
+      "group": "Melee",
+      "sha256": "8cd5ce681a32aabfc173df7819c5e799b8af2335b1fb18c153d70a871dfe8291",
+      "duration_s": 3.933333,
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Melee/AS_SpellbladeKit_SprintAttack.AS_SpellbladeKit_SprintAttack",
+      "skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "sampled_keys": 119,
+      "length": 3.933333396911621
+    },
+    {
+      "role": "ShortDash",
+      "source": "pdw_01_01_att_shotdash_elbow_00.fbx",
+      "group": "Melee",
+      "sha256": "41045a9781275f481fae0f8719d4f2fee6448aeebe342e745420863828d2323e",
+      "duration_s": 3.3,
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Melee/AS_SpellbladeKit_ShortDash.AS_SpellbladeKit_ShortDash",
+      "skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "sampled_keys": 100,
+      "length": 3.299999952316284
+    },
+    {
+      "role": "Light04Recovery",
+      "source": "pdw_05_01_att_skill_comboatt_04_return.fbx",
+      "group": "Recovery",
+      "sha256": "0f32312a9bf5fdc180d76a38686810e33f41d289c06b64033427c6aa33aa83ef",
+      "duration_s": 3.666667,
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Recovery/AS_SpellbladeKit_Light04Recovery.AS_SpellbladeKit_Light04Recovery",
+      "skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "sampled_keys": 111,
+      "length": 3.6666667461395264
+    },
+    {
+      "role": "QuickSkill",
+      "source": "pdw_01_01_att_skill_crossatt_01.fbx",
+      "group": "Skill",
+      "sha256": "d21059699b901289359c2239938e66d08af38ab60407002eb01fb7fada24cb1a",
+      "duration_s": 3.466667,
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Skill/AS_SpellbladeKit_QuickSkill.AS_SpellbladeKit_QuickSkill",
+      "skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "sampled_keys": 105,
+      "length": 3.4666666984558105
+    },
+    {
+      "role": "GroundSkill",
+      "source": "pdw_01_01_att_skill_ground_att_01.fbx",
+      "group": "Skill",
+      "sha256": "b01e2c69d6e795ead7c8338173bf29a12bf3447a0d388afc985855a1a66b84e1",
+      "duration_s": 4.4,
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Skill/AS_SpellbladeKit_GroundSkill.AS_SpellbladeKit_GroundSkill",
+      "skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "sampled_keys": 133,
+      "length": 4.400000095367432
+    },
+    {
+      "role": "ChargeStart",
+      "source": "pdw_01_01_att_skill_charging_start_00.fbx",
+      "group": "Skill",
+      "sha256": "0f1d8bb7adbc90b0af392f3bd7d78b594c1b3b56325172a06378091c8e0f4122",
+      "duration_s": 0.833333,
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Skill/AS_SpellbladeKit_ChargeStart.AS_SpellbladeKit_ChargeStart",
+      "skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "sampled_keys": 26,
+      "length": 0.8333333134651184
+    },
+    {
+      "role": "ChargeLoop",
+      "source": "pdw_01_01_att_skill_charging_ing_00.fbx",
+      "group": "Skill",
+      "sha256": "6304b13b0a3355d939127c21c689bd65bd3618e9a264c802028430bf8e89a112",
+      "duration_s": 1.966667,
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Skill/AS_SpellbladeKit_ChargeLoop.AS_SpellbladeKit_ChargeLoop",
+      "skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "sampled_keys": 60,
+      "length": 1.9666666984558105
+    },
+    {
+      "role": "ChargeRelease",
+      "source": "pdw_01_01_att_skill_charging_att_00.fbx",
+      "group": "Skill",
+      "sha256": "6e92976f5a2f2d6a48aba25e03b0ca7b1ce3e5a4f96e962f3ae7983ead44e752",
+      "duration_s": 3.8,
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Skill/AS_SpellbladeKit_ChargeRelease.AS_SpellbladeKit_ChargeRelease",
+      "skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "sampled_keys": 115,
+      "length": 3.799999952316284
+    },
+    {
+      "role": "Buff",
+      "source": "pdw_01_01_att_skill_buff_00.fbx",
+      "group": "Skill",
+      "sha256": "2dba4b463c988d720f6fd4f60b6d92af48fce4d868ded99d38ad0b69645a72ee",
+      "duration_s": 3.4,
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Skill/AS_SpellbladeKit_Buff.AS_SpellbladeKit_Buff",
+      "skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "sampled_keys": 103,
+      "length": 3.4000000953674316
+    },
+    {
+      "role": "CastLeft",
+      "source": "pdw_05_00_att_skill_stand_magic_l_00.fbx",
+      "group": "Skill",
+      "sha256": "91f94c65b0a303afc7744763a995c9e1a6d6256479b485d50ee545619bfbd8a3",
+      "duration_s": 5.366667,
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Skill/AS_SpellbladeKit_CastLeft.AS_SpellbladeKit_CastLeft",
+      "skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "sampled_keys": 162,
+      "length": 5.366666793823242
+    },
+    {
+      "role": "CastRight",
+      "source": "pdw_05_00_att_skill_stand_magic_r_00.fbx",
+      "group": "Skill",
+      "sha256": "0d367a67614166914f620ef8cf4df08eae021a8277a71b13b44c1089c5240d2e",
+      "duration_s": 5.466667,
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Skill/AS_SpellbladeKit_CastRight.AS_SpellbladeKit_CastRight",
+      "skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "sampled_keys": 165,
+      "length": 5.4666666984558105
+    },
+    {
+      "role": "Finisher",
+      "source": "pdw_01_01_att_skill_finish_00.fbx",
+      "group": "Skill",
+      "sha256": "35bd8c540f6076dec6d875e1b4c89e958ec9c3a79653cfc99a3b5aa92de61f79",
+      "duration_s": 8.0,
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Skill/AS_SpellbladeKit_Finisher.AS_SpellbladeKit_Finisher",
+      "skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "sampled_keys": 241,
+      "length": 8.0
+    }
+  ],
+  "connected_to_gameplay": false,
+  "source_folder": "Greatsword_A",
+  "status": "review",
+  "montages": [
+    "/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit/Aerial/AM_SpellbladeKit_AirLight.AM_SpellbladeKit_AirLight",
+    "/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit/Aerial/AM_SpellbladeKit_AirHeavy.AM_SpellbladeKit_AirHeavy",
+    "/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit/Equipment/AM_SpellbladeKit_Draw.AM_SpellbladeKit_Draw",
+    "/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit/Equipment/AM_SpellbladeKit_Sheathe.AM_SpellbladeKit_Sheathe",
+    "/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit/Melee/AM_SpellbladeKit_Light01.AM_SpellbladeKit_Light01",
+    "/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit/Melee/AM_SpellbladeKit_Light02.AM_SpellbladeKit_Light02",
+    "/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit/Melee/AM_SpellbladeKit_Light03.AM_SpellbladeKit_Light03",
+    "/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit/Melee/AM_SpellbladeKit_Light04.AM_SpellbladeKit_Light04",
+    "/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit/Melee/AM_SpellbladeKit_RightAttack.AM_SpellbladeKit_RightAttack",
+    "/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit/Melee/AM_SpellbladeKit_Kick.AM_SpellbladeKit_Kick",
+    "/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit/Melee/AM_SpellbladeKit_SprintAttack.AM_SpellbladeKit_SprintAttack",
+    "/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit/Melee/AM_SpellbladeKit_ShortDash.AM_SpellbladeKit_ShortDash",
+    "/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit/Recovery/AM_SpellbladeKit_Light04Recovery.AM_SpellbladeKit_Light04Recovery",
+    "/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit/Skill/AM_SpellbladeKit_QuickSkill.AM_SpellbladeKit_QuickSkill",
+    "/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit/Skill/AM_SpellbladeKit_GroundSkill.AM_SpellbladeKit_GroundSkill",
+    "/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit/Skill/AM_SpellbladeKit_ChargeStart.AM_SpellbladeKit_ChargeStart",
+    "/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit/Skill/AM_SpellbladeKit_ChargeLoop.AM_SpellbladeKit_ChargeLoop",
+    "/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit/Skill/AM_SpellbladeKit_ChargeRelease.AM_SpellbladeKit_ChargeRelease",
+    "/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit/Skill/AM_SpellbladeKit_Buff.AM_SpellbladeKit_Buff",
+    "/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit/Skill/AM_SpellbladeKit_CastLeft.AM_SpellbladeKit_CastLeft",
+    "/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit/Skill/AM_SpellbladeKit_CastRight.AM_SpellbladeKit_CastRight",
+    "/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit/Skill/AM_SpellbladeKit_Finisher.AM_SpellbladeKit_Finisher"
+  ],
+  "blend_space": {
+    "asset": "/Game/Animation_Logic/BSs/Spellblade/CombatKit/BS_Spellblade.BS_Spellblade",
+    "axes": [
+      {
+        "name": "Direction",
+        "min": -180.0,
+        "max": 180.0
+      },
+      {
+        "name": "Speed",
+        "min": 0.0,
+        "max": 700.0
+      }
+    ],
+    "sample_count": 10,
+    "status": "connected",
+    "connected_to_gameplay": true,
+    "consumer": "/Game/Animation_Logic/ABPs/Spellblade/ABP_Spellblade"
+  },
+  "direct_ground_sequences": {
+    "target_mesh": "/Game/Spellblade/Meshes/SK_Spellblade_Complete.SK_Spellblade_Complete",
+    "retargeter": "/Game/Spellblade/Animation/CombatKit/RTG_SpellbladeLegacy_to_DirectKit.RTG_SpellbladeLegacy_to_DirectKit",
+    "root_policy": "Bake planar translation to zero, preserve authored height and rotation, disable root-motion extraction and Force Root Lock.",
+    "clips": [
+      {
+        "role": "Light01",
+        "source": "pdw_05_01_att_skill_comboatt_01.fbx",
+        "sha256": "4f0af2ecfb83b8829d3a6604e77f44267cdef12e2d5b550b23743061d0642ba6",
+        "sequence": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/DirectBody/Melee/AS_SpellbladeDirect_Light01.AS_SpellbladeDirect_Light01",
+        "montage": "/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit/Melee/AM_SpellbladeKit_Light01.AM_SpellbladeKit_Light01",
+        "lowest_ball_cm": -7.184
+      },
+      {
+        "role": "Light02",
+        "source": "pdw_05_01_att_skill_comboatt_02.fbx",
+        "sha256": "da9003ecb48e0f9ae804da28e4ebd8fcf09f4d3bc71bcf1b688c606b467ba45e",
+        "sequence": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/DirectBody/Melee/AS_SpellbladeDirect_Light02.AS_SpellbladeDirect_Light02",
+        "montage": "/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit/Melee/AM_SpellbladeKit_Light02.AM_SpellbladeKit_Light02",
+        "lowest_ball_cm": -1.538
+      },
+      {
+        "role": "Light03",
+        "source": "pdw_05_01_att_skill_comboatt_03.fbx",
+        "sha256": "a6417948f80102b8247aba4d8abbf85c7f6c040c399121fd464745c6cacc0b54",
+        "sequence": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/DirectBody/Melee/AS_SpellbladeDirect_Light03.AS_SpellbladeDirect_Light03",
+        "montage": "/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit/Melee/AM_SpellbladeKit_Light03.AM_SpellbladeKit_Light03",
+        "lowest_ball_cm": -1.9
+      },
+      {
+        "role": "RightAttack",
+        "source": "pdw_01_01_att_normal_stand_01.fbx",
+        "sha256": "d7e00809e430cf0738ad24a307f06b5de9f644c0b7f00759cfe8c9556b31b71b",
+        "sequence": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/DirectBody/Melee/AS_SpellbladeDirect_RightAttack.AS_SpellbladeDirect_RightAttack",
+        "montage": "/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit/Melee/AM_SpellbladeKit_RightAttack.AM_SpellbladeKit_RightAttack",
+        "lowest_ball_cm": -2.182
+      },
+      {
+        "role": "QuickSkill",
+        "source": "pdw_01_01_att_skill_crossatt_01.fbx",
+        "sha256": "d21059699b901289359c2239938e66d08af38ab60407002eb01fb7fada24cb1a",
+        "sequence": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/DirectBody/Skill/AS_SpellbladeDirect_QuickSkill.AS_SpellbladeDirect_QuickSkill",
+        "montage": "/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit/Skill/AM_SpellbladeKit_QuickSkill.AM_SpellbladeKit_QuickSkill",
+        "lowest_ball_cm": -2.08
+      },
+      {
+        "role": "ChargeRelease",
+        "source": "pdw_01_01_att_skill_charging_att_00.fbx",
+        "sha256": "6e92976f5a2f2d6a48aba25e03b0ca7b1ce3e5a4f96e962f3ae7983ead44e752",
+        "sequence": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/DirectBody/Skill/AS_SpellbladeDirect_ChargeRelease.AS_SpellbladeDirect_ChargeRelease",
+        "montage": "/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit/Skill/AM_SpellbladeKit_ChargeRelease.AM_SpellbladeKit_ChargeRelease",
+        "lowest_ball_cm": -3.52
+      },
+      {
+        "role": "Finisher",
+        "source": "pdw_01_01_att_skill_finish_00.fbx",
+        "sha256": "35bd8c540f6076dec6d875e1b4c89e958ec9c3a79653cfc99a3b5aa92de61f79",
+        "sequence": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/DirectBody/Skill/AS_SpellbladeDirect_Finisher.AS_SpellbladeDirect_Finisher",
+        "montage": "/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit/Skill/AM_SpellbladeKit_Finisher.AM_SpellbladeKit_Finisher",
+        "lowest_ball_cm": -1.674
+      }
+    ]
+  },
+  "longblade_active_additions": [
+    {
+      "role": "ReadyIdle",
+      "source": "pdw_01_01_stand_idle_02.fbx",
+      "sha256": "9fb90b63a3edde867107ca67462b5646e2d6a20cc5bd54ee91e5f301795edb8b",
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Locomotion/Longblade/AS_LongbladeArmedIdle02.AS_LongbladeArmedIdle02"
+    },
+    {
+      "role": "ReadyForward",
+      "source": "pdw_01_01_move_run_f_00.fbx",
+      "sha256": "fb4f78b1c9996e1cd2dced940f7ff592a336d1bd02eccfd35925ab07dc3ad97c",
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Locomotion/Longblade/AS_LongbladeReadyForward.AS_LongbladeReadyForward"
+    },
+    {
+      "role": "ReadyBackward",
+      "source": "pdw_01_01_move_run_b_00.fbx",
+      "sha256": "f30901d9c747ddb406fe22d3b247c3ddc57884a3ca1fbcf8772812fbc9c5b52f",
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Locomotion/Longblade/AS_LongbladeReadyBackward.AS_LongbladeReadyBackward"
+    },
+    {
+      "role": "ReadyLeft",
+      "source": "pdw_01_01_move_run_l_00.fbx",
+      "sha256": "7951e213c99453d85c7e52866b500f8f172e83ebae4ebf90ac61faa181424c5d",
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Locomotion/Longblade/AS_LongbladeReadyLeft.AS_LongbladeReadyLeft"
+    },
+    {
+      "role": "ReadyRight",
+      "source": "pdw_01_01_move_run_r_00.fbx",
+      "sha256": "6db224570efbf112777be43c3b68caccaab69cb5cdd3191a4340366408a6fdbb",
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/Locomotion/Longblade/AS_LongbladeReadyRight.AS_LongbladeReadyRight"
+    },
+    {
+      "role": "BasicCut01",
+      "source": "pdw_01_01_att_normal_01.fbx",
+      "sha256": "fa0e237a8f7b5b2b0d7bf90515e26de6cf3e0978949ed3d52d1c7add59b19c68",
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/DirectBody/CombatRevision/AS_SpellbladeDirect_BasicCut01.AS_SpellbladeDirect_BasicCut01"
+    },
+    {
+      "role": "BasicCut02",
+      "source": "pdw_01_01_att_normal_02.fbx",
+      "sha256": "8941039e3f7aafa535be3a83681af224910ba86e3cfa1d5261164f75a5fc2f3a",
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/DirectBody/CombatRevision/AS_SpellbladeDirect_BasicCut02.AS_SpellbladeDirect_BasicCut02"
+    },
+    {
+      "role": "BasicCut03Ground",
+      "source": "pdw_01_01_att_normal_r_02.fbx",
+      "sha256": "4814dc02d547cda26c02ae52141968f40c2f4862df1d7038ccc6c5761791bc32",
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/DirectBody/CombatRevision/AS_SpellbladeDirect_BasicCut03Ground.AS_SpellbladeDirect_BasicCut03Ground"
+    },
+    {
+      "role": "QuickFollow",
+      "source": "pdw_01_01_att_skill_crossatt_02.fbx",
+      "sha256": "548193660c29feaaf48e48faefe50643834ff7c8e8922e0b6246c2c05996d38d",
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/DirectBody/CombatRevision/AS_SpellbladeDirect_QuickFollow.AS_SpellbladeDirect_QuickFollow"
+    },
+    {
+      "role": "ChordLunge",
+      "source": "pdw_01_01_att_skill_lunge_00.fbx",
+      "sha256": "656a1f57ef4150cb146d20d58332366978d7c821fae9757a292e40e580255d59",
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/DirectBody/CombatRevision/AS_SpellbladeDirect_ChordLunge.AS_SpellbladeDirect_ChordLunge"
+    },
+    {
+      "role": "MovementDash",
+      "source": "pdw_01_01_att_move_dash_ing_01.fbx",
+      "sha256": "53296b655dc5bc0b347fbc90e8c4e6820a58f215290dbb4d2d0d1bca54c3f9f7",
+      "asset": "/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/DirectBody/CombatRevision/AS_SpellbladeDirect_MovementDash.AS_SpellbladeDirect_MovementDash"
+    }
+  ]
+}

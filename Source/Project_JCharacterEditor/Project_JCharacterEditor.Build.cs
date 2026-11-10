@@ -18,6 +18,7 @@ public class Project_JCharacterEditor : ModuleRules
 			"Project_JCore", "Mover", "IKRig", "IKRigEditor", "IKRigDeveloper", "ControlRig", "ControlRigDeveloper",
 			"DataValidation",
 			"Landscape",
+			"MeshDescription", "StaticMeshDescription", "SkeletalMeshDescription",
 			"Foliage", // LandscapeEdit's public editing interface includes foliage snapping types.
 			"Project_JAnimationNodes",
 			"Json",
@@ -47,6 +48,7 @@ public class Project_JCharacterEditor : ModuleRules
 			"AnimationWarpingEditor",
 			"EditorFramework",
 			"InputCore",
+			"EnhancedInput",
 			"Slate",
 			"SlateCore",
 			"UnrealEd",

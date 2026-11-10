@@ -14,6 +14,9 @@
 #include "EditorModeRegistry.h"
 #include "EditorModeManager.h"
 #include "Framework/Application/SlateApplication.h"
+#include "Misc/CoreDelegates.h"
+#include "Misc/EngineVersion.h"
+#include "Misc/OutputDeviceRedirector.h"
 #include "PersonaModule.h"
 #include "Rendering/DrawElements.h"
 #include "SAnimNotifyNode.h"
@@ -27,11 +30,28 @@
 #include "Misc/AutomationTest.h"
 #include "Misc/ScopeExit.h"
 #include "Internationalization/Internationalization.h"
-#include "Misc/EngineVersion.h"
 class FProjectJWeaponMotionCancelContractTest;
 #endif
 
 #define LOCTEXT_NAMESPACE "ProjectJWeaponMotionEditor"
+
+#if PLATFORM_WINDOWS
+namespace
+{
+	class FLateEditorTickerDrain final : public FOutputDevice
+	{
+	public:
+		void Serialize(const TCHAR*, ELogVerbosity::Type, const FName&) override {}
+
+		void TearDown() override
+		{
+			// AppExit tears down GLog after editor workers stop and before ICU.
+			// The redirector has detached its output devices before calling TearDown.
+			if (IsInGameThread()) { FTSTicker::GetCoreTicker().Reset(); }
+		}
+	};
+}
+#endif
 
 namespace Project_J::WeaponMotionEditor
 {
@@ -461,6 +481,21 @@ class FProject_JCharacterEditorModule final : public IModuleInterface
 public:
 	virtual void StartupModule() override
 	{
+#if PLATFORM_WINDOWS
+		const FEngineVersion& Version = FEngineVersion::Current();
+		if (!IsRunningCommandlet() && Version.GetMajor() == 5 && Version.GetMinor() == 8 && Version.GetPatch() == 4)
+		{
+			EditorExitHandle = FCoreDelegates::OnExit.AddLambda([]()
+			{
+				if (!IsInGameThread() || FSlateApplication::IsInitialized() || !GLog) { return; }
+				// Shutdown tasks can enqueue widget-owning tickers after OnExit.
+				// Process shutdown retains the module DLL until these final callbacks run.
+				static FLateEditorTickerDrain Drain;
+				GLog->AddOutputDevice(&Drain);
+				UE_LOG(LogTemp, Display, TEXT("Project J editor exit registered the pre-ICU Core Ticker drain."));
+			});
+		}
+#endif
 #if WITH_DEV_AUTOMATION_TESTS
 		// UE 5.8.3/5.8.4's three Core formatting tests compare localized FText output
 		// with English literals. Run their source-language contract in isolation;
@@ -489,6 +524,7 @@ public:
 
 	virtual void ShutdownModule() override
 	{
+		if (EditorExitHandle.IsValid()) { FCoreDelegates::OnExit.Remove(EditorExitHandle); }
 #if WITH_DEV_AUTOMATION_TESTS
 		FAutomationTestFramework::Get().OnTestStartEvent.Remove(TestCultureStartHandle);
 		FAutomationTestFramework::Get().OnTestEndEvent.Remove(TestCultureEndHandle);
@@ -607,6 +643,7 @@ private:
 	}
 
 	FDelegateHandle NotifyNodeFactoryHandle;
+	FDelegateHandle EditorExitHandle;
 	FDelegateHandle ContentMenuHandle;
 	FTSTicker::FDelegateHandle PreviewTickerHandle;
 	TMap<TWeakObjectPtr<UDebugSkelMeshComponent>, Project_J::WeaponMotionEditor::FPreviewBinding> PreviewBindings;

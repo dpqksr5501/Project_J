@@ -6,6 +6,7 @@
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
 #include "Game/Project_JPlayerState.h"
+#include "Game/Project_JGameMode.h"
 #include "Social/Project_JSocialSubsystem.h"
 #include "UI/Project_JPlayerUIComponent.h"
 #include "UI/Project_JPlayerHUDWidget.h"
@@ -28,6 +29,57 @@
 #include "UObject/GarbageCollection.h"
 #include "UObject/Script.h"
 #include "Blueprint/BlueprintExceptionInfo.h"
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJJobPawnSelectionTest, "ProjectJ.PCStructure.JobPawnSelection",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJJobPawnSelectionTest::RunTest(const FString&)
+{
+    auto* ModeClass = LoadClass<AProject_JGameMode>(nullptr, TEXT("/Game/ThirdPerson/Blueprints/BP_Project_JGameMode.BP_Project_JGameMode_C"));
+    if (!TestNotNull(TEXT("Authored game mode"), ModeClass)) return false;
+    auto* World = UWorld::CreateWorld(EWorldType::Game, false);
+    GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
+    ON_SCOPE_EXIT { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
+    auto* Mode = World->SpawnActor<AProject_JGameMode>(ModeClass);
+    auto* Greatsword = LoadObject<UProject_JCharacterClassDefinition>(nullptr, TEXT("/Game/DataAssetSets/Class/DA_Class_Greatsword.DA_Class_Greatsword"));
+    auto* Spellblade = LoadObject<UProject_JCharacterClassDefinition>(nullptr, TEXT("/Game/DataAssetSets/Class/Spellblade/DA_Class_Spellblade_Player.DA_Class_Spellblade_Player"));
+    if (!TestNotNull(TEXT("Game mode instance"), Mode) || !TestNotNull(TEXT("Greatsword job"), Greatsword)
+        || !TestNotNull(TEXT("Spellblade job"), Spellblade)) return false;
+
+    const auto CheckJob = [&](UProject_JCharacterClassDefinition* Job, const TCHAR* PawnPath)
+    {
+        auto* Controller = World->SpawnActor<APlayerController>();
+        auto* State = World->SpawnActor<AProject_JPlayerState>();
+        State->SetOwner(Controller);
+        Controller->SetPlayerState(State);
+        auto* Progression = State->FindComponentByClass<UProject_JProgressionComponent>();
+        Progression->InitializeDefaults(Job, nullptr, 1);
+        auto* Expected = LoadClass<APawn>(nullptr, PawnPath);
+        if (!TestNotNull(TEXT("Expected playable pawn"), Expected)) return;
+        TestEqual(TEXT("Committed job selects its own pawn"), Mode->GetDefaultPawnClassForController(Controller), Expected);
+        auto* First = Mode->SpawnDefaultPawnAtTransform(Controller, FTransform(FVector(0, 0, 400)));
+        if (TestNotNull(TEXT("Initial pawn spawned"), First))
+        {
+            TestEqual(TEXT("Initial pawn class"), First->GetClass(), Expected);
+            First->Destroy();
+        }
+        auto* Respawn = Mode->SpawnDefaultPawnAtTransform(Controller, FTransform(FVector(1000, 0, 400)));
+        if (TestNotNull(TEXT("Replacement pawn spawned"), Respawn))
+            TestEqual(TEXT("Replacement retains the committed job pawn"), Respawn->GetClass(), Expected);
+    };
+    CheckJob(Greatsword, TEXT("/Game/Character_BPs/GreatSword/BP_Greatsword.BP_Greatsword_C"));
+    CheckJob(Spellblade, TEXT("/Game/Character_BPs/Spellblade/BP_Spellblade.BP_Spellblade_C"));
+
+    auto* UnmappedJob = NewObject<UProject_JCharacterClassDefinition>(World);
+    UnmappedJob->ClassId = TEXT("UnmappedJobFixture");
+    auto* Controller = World->SpawnActor<APlayerController>();
+    auto* State = World->SpawnActor<AProject_JPlayerState>();
+    State->SetOwner(Controller);
+    Controller->SetPlayerState(State);
+    State->FindComponentByClass<UProject_JProgressionComponent>()->InitializeDefaults(UnmappedJob, nullptr, 1);
+    AddExpectedError(TEXT("Missing or invalid player pawn mapping for job UnmappedJobFixture"), EAutomationExpectedErrorFlags::Contains, 1);
+    TestNull(TEXT("Unmapped job does not spawn another job's pawn"), Mode->GetDefaultPawnClassForController(Controller));
+    return true;
+}
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAuthoredDoorOptionsTest, "ProjectJ.PCStructure.AuthoredDoorOptions",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -89,7 +141,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAuthoredClassGrantOwnershipTest, "Proj
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJAuthoredClassGrantOwnershipTest::RunTest(const FString&)
 {
-    auto* Class = LoadObject<UProject_JCharacterClassDefinition>(nullptr, TEXT("/Game/DataAssetSets/Class/DA_Class_Spellblade.DA_Class_Spellblade"));
+    auto* Class = LoadObject<UProject_JCharacterClassDefinition>(nullptr, TEXT("/Game/DataAssetSets/Class/DA_Class_Greatsword.DA_Class_Greatsword"));
     auto* Set = LoadObject<UProject_JAbilitySet>(nullptr, TEXT("/Game/AS/AS_Spellblade_Base.AS_Spellblade_Base"));
     if (!TestNotNull(TEXT("Actual class asset"), Class) || !TestNotNull(TEXT("Actual weapon set"), Set) ||
         !TestNotNull(TEXT("Default style remains the weapon grant owner"), Class->DefaultCombatStyle.Get())) return false;

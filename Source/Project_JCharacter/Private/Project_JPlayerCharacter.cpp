@@ -870,6 +870,8 @@ void AProject_JPlayerCharacter::OnCombatStateTagChanged(const FGameplayTag Callb
 
 	if (CallbackTag == FProject_JGameplayTags::Get().State_CombatMode)
 	{
+		const bool bListenObserver = HasAuthority() && GetNetMode() == NM_ListenServer && !IsLocallyControlled();
+		const bool bNeedsFallbackDraw = bListenObserver && bIsCombatModeActive && !bHasReceivedRemoteCombatIntroPresentation;
 		if (HasAuthority())
 		{
 			bReplicatedCombatModePresentation = bIsCombatModeActive;
@@ -884,7 +886,8 @@ void AProject_JPlayerCharacter::OnCombatStateTagChanged(const FGameplayTag Callb
 			LogCombatPresentationTrace(*this, TEXT("ServerCombatStateReplicated"));
 		}
 
-		ApplyCombatPresentationState(bIsCombatModeActive, false);
+		ApplyCombatPresentationState(bIsCombatModeActive, bNeedsFallbackDraw);
+		if (bListenObserver) { bHasReceivedRemoteCombatIntroPresentation = false; }
 	}
 
 	UpdateMaxWalkSpeed();
@@ -924,6 +927,12 @@ void AProject_JPlayerCharacter::OnRep_ReplicatedCombatIntroPresentation()
 			WeaponPresentationComponent->EnterCombatPresentation();
 		}
 		PlayCosmeticCombatIntroMontage();
+	}
+	else if (!bReplicatedCombatModePresentation && bHasReceivedRemoteCombatIntroPresentation)
+	{
+		bHasReceivedRemoteCombatIntroPresentation = false;
+		if (UAnimMontage* Intro = GetEffectiveCombatIntroMontage()) { StopAnimMontage(Intro); }
+		if (WeaponPresentationComponent) { WeaponPresentationComponent->ExitCombatPresentation(); }
 	}
 
 	if (CombatAnimationLayerComponent)
@@ -1385,10 +1394,17 @@ void AProject_JPlayerCharacter::ServerSetCombatIntroPresentation_Implementation(
 	// This RPC controls only remote visuals. Do not duplicate CanToggleCombatMode
 	// here: its stricter airborne/action checks belong to authoritative gameplay
 	// activation and would unnecessarily delay a confirmed draw presentation.
+	const bool bPreviouslyShowingIntro = bReplicatedCombatIntroPresentation;
 	bReplicatedCombatIntroPresentation = bShouldShowIntro &&
 		!bReplicatedCombatModePresentation &&
 		!(MountComponent && MountComponent->IsMounted());
 	SetCombatTransitionState(bReplicatedCombatIntroPresentation);
+	if (bPreviouslyShowingIntro != bReplicatedCombatIntroPresentation &&
+		GetNetMode() == NM_ListenServer && !IsLocallyControlled())
+	{
+		// The host sees the remote pawn's authority instance, which does not receive its own OnRep.
+		OnRep_ReplicatedCombatIntroPresentation();
+	}
 	ForceNetUpdate();
 	LogCombatPresentationTrace(
 		*this,
@@ -1429,6 +1445,11 @@ void AProject_JPlayerCharacter::RefreshCombatTransitionViews()
 {
 	bIsPlayingCombatIntro = CombatIntroComponent && CombatIntroComponent->IsPlayingIntro();
 	bPendingCombatModeFromIntro = CombatIntroComponent && CombatIntroComponent->IsPendingCombatMode();
+	if (CombatAnimationLayerComponent && (IsCombatOutroBlendingIn() ||
+		CombatAnimationLayerComponent->GetPresentationState() == EProject_JCombatAnimationLayerState::BlendingOutOfCombat))
+	{
+		CombatAnimationLayerComponent->RefreshLayer();
+	}
 }
 
 bool AProject_JPlayerCharacter::IsCombatIntroPlaying() const
@@ -1439,6 +1460,17 @@ bool AProject_JPlayerCharacter::IsCombatIntroPlaying() const
 bool AProject_JPlayerCharacter::IsCombatOutroPlaying() const
 {
 	return CombatIntroComponent && CombatIntroComponent->IsPlayingOutro();
+}
+
+bool AProject_JPlayerCharacter::IsCombatOutroBlendingIn() const
+{
+	return CombatIntroComponent && CombatIntroComponent->IsBlendingIntoOutro();
+}
+
+float AProject_JPlayerCharacter::GetCombatWeaponLayerWeight() const
+{
+	return CombatIntroComponent && CombatIntroComponent->IsPlayingOutro()
+		? CombatIntroComponent->GetOutgoingPoseWeight() : 1.f;
 }
 
 bool AProject_JPlayerCharacter::CanToggleCombatMode() const
@@ -1486,8 +1518,7 @@ void AProject_JPlayerCharacter::PlayCombatIntroMontage()
 		}
 		if (CombatAnimationLayerComponent)
 		{
-			// Keep the weapon layer alive beneath the montage so its blend-out
-			// resolves directly into armed idle rather than a one-frame base locomotion pose.
+			// Keep the weapon layer alive beneath the draw montage so it can blend to armed idle.
 			CombatAnimationLayerComponent->RefreshLayer();
 		}
 	}
@@ -1543,11 +1574,6 @@ void AProject_JPlayerCharacter::CancelCombatIntroMontage()
 	{
 		CombatIntroComponent->CancelIntro(*this, GetEffectiveCombatIntroMontage());
 	}
-
-	if (CombatAnimationLayerComponent)
-	{
-		CombatAnimationLayerComponent->RefreshLayer();
-	}
 }
 
 void AProject_JPlayerCharacter::CancelCombatOutroMontage()
@@ -1566,6 +1592,8 @@ void AProject_JPlayerCharacter::OnCombatIntroMontageEnded(UAnimMontage* Montage,
 	}
 	else if (!IsCombatModeActive())
 	{
+		// The handoff can already have run before the draw was interrupted.
+		MoveWeaponToSheathedSocket();
 		if (IsLocallyControlled())
 		{
 			ServerSetCombatIntroPresentation(false);

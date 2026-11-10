@@ -1,10 +1,10 @@
 # Spellblade Combat Authoring Guide
 
-2026-11-01 현재 전용 BP·ABP·전투 DA와 캐릭터는 Spellblade 이름을 사용한다. `GreatSword` ClassId와 기존 전투 태그, Basic 대검의 `Greatsword.Starter`는 안정 식별자로 보존한다. 새 무기는 별도 `Spellblade.Starter` 장비다. [이름·리그·장비의 정확한 이주 경계](../../Animation/Authoring/Spellblade_Migration_2026-11-01.md)를 따른다.
+Basic 대검은 `BP_Greatsword`, `ABP_Greatsword_Basic`, `GreatSword` 직업 ID와 `Greatsword.Starter`를 사용한다. Spellblade는 별도의 캐릭터·전투 레이어와 `Spellblade.Starter`를 사용한다. Basic 대검의 일부 공유 실행 에셋은 기존 파일명을 유지한다. [현재 직업별 연결](../../Animation/Authoring/Spellblade_Skill_Handoff.md#직업별-실행-경로), [이름·리그·장비 이주 기록](../../Animation/Authoring/Spellblade_Migration_2026-11-01.md)을 따른다.
 
 2026-10-15 제작 계약: `BP_Spellblade`의 사망/레벨/전투 소켓 조회는 부모 native CombatInterface 구현을 상속한다. 신규 override를 작성할 때 PS의 현재 Health·Progression과 primary mesh socket/actor fallback 권위를 보존하는지 확인한다. 별도 bool/레벨 상수/원점 반환으로 같은 상태를 다시 만들지 않는다. BP와 프로필·시험용 자산은 유지하며 [실제 에셋 정리·검증 범위](../../Review/Audits/Project_J_Asset_Architecture_Cleanup_2026-10-15.md)를 기준으로 판단한다.
 
-This guide is the current authoring contract for Greatsword attacks, combo branches, direct skills, modifiers, and aerial root-motion attacks. It describes the data setup; gameplay selection remains in the shared `GA_Spellblade` (`UProject_JGameplayAbility_Melee`).
+This guide covers the Basic Greatsword assets and their combo, skill, and aerial attack setup. The [Longblade combat kit](../../Animation/Authoring/Spellblade_CombatKit.md) documents the Longblade command set, attack and transition montages, and VFX. Both sets use the shared `GA_Spellblade` (`UProject_JGameplayAbility_Melee`).
 
 ## Ownership
 

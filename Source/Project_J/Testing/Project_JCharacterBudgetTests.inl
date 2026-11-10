@@ -45,7 +45,7 @@ public:
 			World->GetWorldSettings()->NotifyBeginPlay(); World->GetWorldSettings()->NotifyMatchStarted();
 			World->GetSubsystem<UProject_JCharacterAnimationBudgetSubsystem>()->SetEnabledOverride(Mode == 1);
 			MeshAsset.Reset(LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple.SKM_Quinn_Simple")));
-			Montage.Reset(LoadObject<UAnimMontage>(nullptr, TEXT("/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/AM_Spellblade_LMB1.AM_Spellblade_LMB1")));
+			Montage.Reset(LoadObject<UAnimMontage>(nullptr, TEXT("/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LMB1.AM_Greatsword_LMB1")));
 			if (!MeshAsset || !Montage || Montage->SlotAnimTracks.IsEmpty() || Montage->SlotAnimTracks[0].AnimTrack.AnimSegments.IsEmpty())
 			{ Test->AddError(TEXT("Missing Character workload assets")); Cleanup(); return true; }
 			Frames = 0; Deadline = FPlatformTime::Seconds() + 90;

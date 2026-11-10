@@ -75,6 +75,8 @@ public:
  float GraphCombatSpeed=0.f;
  UPROPERTY(Transient, BlueprintReadOnly, Category="Animation|Graph Snapshot")
  float GraphCombatDirection=0.f;
+ UPROPERTY(Transient, BlueprintReadOnly, Category="Animation|Graph Snapshot")
+ float GraphCombatWeaponLayerWeight=1.f;
  UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Animation|Presentation", meta=(ClampMin="0.0"))
  float MaxAimYaw=90.f;
  UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Animation|Presentation", meta=(ClampMin="0.0"))

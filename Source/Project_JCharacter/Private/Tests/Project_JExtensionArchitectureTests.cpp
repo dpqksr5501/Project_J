@@ -173,6 +173,25 @@ bool FProjectJConfigurationTest::RunTest(const FString&)
 	TestTrue(TEXT("Unequip restores advancement animation"), Unequipped.AnimationStyle == AdvancementStyle);
 	auto Base = FProject_JCombatConfiguration::Resolve(ClassStyle, nullptr, nullptr);
 	TestTrue(TEXT("Class fallback preserved"), Base.GameplayStyle == ClassStyle);
+	TestNull(TEXT("Unmodified styles use the compatibility contact slots"), Base.PassiveLeftGripStyle.Get());
+
+	ClassStyle->bOverridePassiveLeftGripReleaseSlots = true;
+	ClassStyle->PassiveLeftGripReleaseSlots = {FName(TEXT("ClassAction"))};
+	TestTrue(TEXT("Equipping a style without contact data inherits the class slots"),
+		FProject_JCombatConfiguration::Resolve(ClassStyle, Advancement, WeaponStyle).PassiveLeftGripStyle == ClassStyle);
+
+	AdvancementStyle->bOverridePassiveLeftGripReleaseSlots = true;
+	AdvancementStyle->PassiveLeftGripReleaseSlots.Reset();
+	auto NoRelease = FProject_JCombatConfiguration::Resolve(ClassStyle, Advancement, WeaponStyle);
+	TestTrue(TEXT("An explicit empty advancement override does not inherit release slots"),
+		NoRelease.PassiveLeftGripStyle == AdvancementStyle && NoRelease.PassiveLeftGripStyle->PassiveLeftGripReleaseSlots.IsEmpty());
+
+	WeaponStyle->bOverridePassiveLeftGripReleaseSlots = true;
+	TestTrue(TEXT("Gameplay advancement can override contact without replacing the linked animation style"),
+		FProject_JCombatConfiguration::Resolve(ClassStyle, Advancement, WeaponStyle).PassiveLeftGripStyle == AdvancementStyle);
+	Advancement->bOverrideEquippedGameplay = false;
+	TestTrue(TEXT("Equipment can author contact when it owns gameplay"),
+		FProject_JCombatConfiguration::Resolve(ClassStyle, Advancement, WeaponStyle).PassiveLeftGripStyle == WeaponStyle);
 	return true;
 }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJInvalidStyleEquipTest, "ProjectJ.Extension.Authoring.InvalidEquipPreservesState", ExtensionTestFlags)

@@ -4,6 +4,7 @@
 #include "Components/ActorComponent.h"
 #include "Engine/DataAsset.h"
 #include "GameplayTagContainer.h"
+#include "InputCoreTypes.h"
 #if WITH_EDITOR
 #include "Misc/DataValidation.h"
 #endif
@@ -47,6 +48,14 @@ struct FProject_JSkillInputChord
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	FGameplayTag InputTag;
+
+	/** Restricts this chord to styles that explicitly author this command. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	FGameplayTag RequiredStyleCommand;
+
+	/** Let the ordinary mouse input win unless this chord can continue the current combo node. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	bool bRequiresComboTransition = false;
 };
 
 /** One held modifier key/action represented as a gameplay tag. */
@@ -60,6 +69,10 @@ struct FProject_JSkillModifierBinding
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input|Modifiers")
 	FGameplayTag ModifierTag;
+
+	/** Suppress this semantic modifier when the physical key is held at the action press. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input|Modifiers")
+	FKey BlockedHeldKey;
 };
 
 /** A direct Enhanced Input action mapped to a gameplay skill input tag. */
@@ -85,6 +98,10 @@ struct FProject_JDirectSkillInputBinding
 	/** Any held modifier tag here prevents this direct skill from being dispatched. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input|Modifiers")
 	FGameplayTagContainer BlockedModifierTags;
+
+	/** Optional physical key sampled once when this skill button is pressed. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input|Modifiers")
+	FKey RequiredHeldKey;
 };
 
 UCLASS(BlueprintType)
@@ -175,6 +192,7 @@ private:
 	void DispatchButtonInputTag(EProject_JSkillInputButton Button, FGameplayTag InputTag);
 	void ReleaseActiveChordIfReady();
 	bool DoesChordMatchButton(const FProject_JSkillInputChord& Chord, EProject_JSkillInputButton Button) const;
+	bool IsChordAvailableForStyle(const FProject_JSkillInputChord& Chord) const;
 	void ReleaseActiveTagForButton(EProject_JSkillInputButton Button);
 
 	UPROPERTY(Transient)

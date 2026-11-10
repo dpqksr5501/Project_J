@@ -406,7 +406,7 @@ bool FProjectJCombatIntroPlayReuseTest::RunTest(const FString&)
     auto* Owner=World->SpawnActor<ACharacter>();
     auto* Intro=NewObject<UProject_JCombatIntroComponent>(Owner);Owner->AddInstanceComponent(Intro);Intro->RegisterComponent();
     auto* Mesh=LoadObject<USkeletalMesh>(nullptr,TEXT("/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple.SKM_Quinn_Simple"));
-    auto* Montage=LoadObject<UAnimMontage>(nullptr,TEXT("/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/AM_Spellblade_LMB1.AM_Spellblade_LMB1"));
+    auto* Montage=LoadObject<UAnimMontage>(nullptr,TEXT("/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LMB1.AM_Greatsword_LMB1"));
     if(!TestNotNull(TEXT("Existing mesh loads"),Mesh)||!TestNotNull(TEXT("Existing montage loads"),Montage)){return false;}
     Owner->GetMesh()->SetSkeletalMesh(Mesh);Owner->GetMesh()->SetAnimInstanceClass(UAnimInstance::StaticClass());
     World->InitializeActorsForPlay(FURL());World->GetWorldSettings()->NotifyBeginPlay();World->GetWorldSettings()->NotifyMatchStarted();

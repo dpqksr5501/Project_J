@@ -62,6 +62,14 @@
 - **WeaponAnimProfile**: 한 전투 스타일의 무기 자세, 발도 몽타주, Linked Anim Layer를 가진다. 외형·콤보·피해는 넣지 않는다.
 - **WeaponPresentationProfile**: 전투 중 표시할 무기 Actor와 손 소켓을 가진다. 스킨 교체는 이 에셋만 바꿔도 된다.
 
+#### 무기 외형 추가와 장착 기준
+
+- 캐릭터 리그의 `PalmGrip_R`은 손바닥 접점이다. 캐릭터 공통 각도는 실제 몸체 메시의 이 소켓에서 조정한다. 발도한 무기의 장착은 `WeaponPresentationProfile`의 `Primary Grip to Body Palm`과 `PrimaryGripSocketName`을 사용한다. `Project_JWeaponPresentationComponent`가 무기 그립을 손바닥에 정렬하고, 납도는 프로필의 별도 소켓을 사용한다. 소켓을 조정한 경우 같은 값을 `PrimaryHandOffset`에 한 번 더 입력하면 보정이 합성된다. `PrimaryHandOffset`은 별도의 몸체 보정이 필요한 경우에만 사용한다.
+- 신규 외형은 무기군마다 그립 원점·축·단위를 통일한 DCC 템플릿에서 제작한다. 메시나 컴포넌트의 기본 회전은 Identity로 두고, 기존 `WeaponGrip_R` 같은 표준 이름의 접점을 템플릿에 포함한다. 임포트 결과에서 소켓의 위치와 축을 확인한다. 스태틱 메시 FBX의 경우 Unreal의 `SOCKET_` 헬퍼 임포트 규칙을 사용할 수 있다. 스켈레탈 무기의 고정 장착 그립은 루트 본에 둔다.
+- 같은 그립과 동작을 공유하는 스킨은 기존 `WeaponAnimProfile`과 Linked Anim Layer를 재사용한다. 손잡이 길이 또는 배치가 다르면 외형에 맞는 보조 손 그립을 지정하고 양손 도달 범위를 확인한다. 무기 사용법이 달라지는 경우에 무기군의 애니메이션 프로필을 분리한다. 비표준 원본의 장착 각도는 메시의 그립 좌표에서 한 번 보정한다. Spellblade의 `WeaponGrip_R_Aligned`가 이 경로를 사용한다.
+- 장착 검토는 발도·납도, 양손 접촉, 칼끝·판정 기준을 함께 본다. 외형 변경과 별도로 공격 데이터의 기존 판정 기준을 검증한다.
+- 에디터에서 `PalmGrip_R` 방향을 잡을 때는 소켓에 프리뷰 에셋을 붙여 확인할 수 있다. 프리뷰 에셋은 원점이 그립에 맞춰진 메시를 사용한다. 게임에서 표시 무기의 생성과 장착은 장비의 무기 표시 경로가 담당한다.
+
 <a id="data-장비"></a>
 ### 장비
 

@@ -38,12 +38,19 @@
 #include "InputCoreTypes.h"
 #include "UObject/StrongObjectPtr.h"
 #include "Inventory/Project_JItemDefinition.h"
+#include "Camera/Project_JCameraComponent.h"
+#include "HAL/IConsoleManager.h"
+#include "Project_JPlayerCharacter.h"
+#include "Rendering/DrawElements.h"
 
 #include "UI/Project_JWidgetPresentationHelpers.h"
 using namespace ProjectJ::UI;
 
 namespace
 {
+TAutoConsoleVariable<float> DashEdgeIntensity(TEXT("ProjectJ.UI.DashEdgeIntensity"), 1.f,
+	TEXT("Local dash vignette intensity from 0 (off) to 1."));
+
 void ConfigureList(UListView* List, TSubclassOf<UProject_JItemWidget> RowClass)
 {
 	if (auto* Tile = Cast<UProject_JInventoryTileView>(List)) { Tile->ConfigureEntryClass(RowClass); }
@@ -515,6 +522,16 @@ void UProject_JPlayerHUDWidget::ApplyMenuLayout()
 void UProject_JPlayerHUDWidget::NativeTick(const FGeometry &Geometry, float DeltaTime)
 {
 	Super::NativeTick(Geometry, DeltaTime);
+
+	const float Intensity = FMath::Clamp(DashEdgeIntensity.GetValueOnGameThread(), 0.f, 1.f);
+	const auto* Player = Cast<AProject_JPlayerCharacter>(GetOwningPlayerPawn());
+	const auto* Camera = Player ? Player->GetCameraComponent() : nullptr;
+	const float Opacity = Camera ? Intensity * 0.25f * Camera->GetDashMotionAlpha() : 0.f;
+	if (Opacity != DashEdgeOpacity)
+	{
+		DashEdgeOpacity = Opacity;
+		if (const TSharedPtr<SWidget> Widget = GetCachedWidget()) { Widget->Invalidate(EInvalidateWidgetReason::Paint); }
+	}
 	ProfileStatusElapsed+=DeltaTime;
 	if(ProfileSaveStatus&&ProfileStatusElapsed>=.25f)
 	{
@@ -534,6 +551,38 @@ void UProject_JPlayerHUDWidget::NativeTick(const FGeometry &Geometry, float Delt
 	// Geometry/DPI only; gameplay presentation stays delegate driven.
 	if (ScreenCanvas && !ScreenCanvas->GetCachedGeometry().GetLocalSize().Equals(LastCanvasExtent))
 		ApplyMenuLayout();
+}
+
+int32 UProject_JPlayerHUDWidget::NativePaint(const FPaintArgs& Args, const FGeometry& Geometry, const FSlateRect& CullingRect,
+	FSlateWindowElementList& Elements, int32 Layer, const FWidgetStyle& Style, bool bParentEnabled) const
+{
+	const FVector2f Size(Geometry.GetLocalSize());
+	const float Opacity = DashEdgeOpacity * Style.GetColorAndOpacityTint().A;
+	if (Opacity > UE_KINDA_SMALL_NUMBER && Size.X > 0.0f && Size.Y > 0.0f)
+	{
+		const FPaintGeometry Paint = Geometry.ToPaintGeometry();
+		// Perpendicular gradients keep the center clear and deepen the corners.
+		const auto DrawEdgeGradient = [&](FVector2f Axis, EOrientation Orientation, float Depth, float EdgeOpacity)
+		{
+			const FLinearColor Edge(0.0f, 0.0f, 0.0f, EdgeOpacity);
+			const FLinearColor Shoulder(0.0f, 0.0f, 0.0f, EdgeOpacity * 0.5f);
+			const FLinearColor Inner(0.0f, 0.0f, 0.0f, EdgeOpacity * 0.14f);
+			FSlateDrawElement::MakeGradient(Elements, Layer, Paint, {
+				{FVector2f::ZeroVector, Edge},
+				{Axis * (Depth * 0.25f), Shoulder},
+				{Axis * (Depth * 0.6f), Inner},
+				{Axis * Depth, FLinearColor::Transparent},
+				{Axis * (1.0f - Depth), FLinearColor::Transparent},
+				{Axis * (1.0f - Depth * 0.6f), Inner},
+				{Axis * (1.0f - Depth * 0.25f), Shoulder},
+				{Axis, Edge},
+			}, Orientation);
+		};
+		DrawEdgeGradient(FVector2f(Size.X, 0.0f), Orient_Vertical, 0.29f, Opacity);
+		DrawEdgeGradient(FVector2f(0.0f, Size.Y), Orient_Horizontal, 0.25f, Opacity * 0.72f);
+		++Layer;
+	}
+	return Super::NativePaint(Args, Geometry, CullingRect, Elements, Layer, Style, bParentEnabled);
 }
 void UProject_JPlayerHUDWidget::StoreMenuLayout()
 {

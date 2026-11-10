@@ -5,7 +5,9 @@
 #include "Animation/Project_JCombatAnimProfile.h"
 #include "Animation/Project_JLocomotionProfile.h"
 #include "Animation/AnimSequence.h"
+#include "AbilitySystemComponent.h"
 #include "Combat/Project_JCombatMovementPolicy.h"
+#include "Combat/Project_JGameplayAbility_Dash.h"
 #include "Components/Project_JCombatStateComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -44,7 +46,15 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 
 bool AProject_JPlayerCharacter::IsCombatActionBlockingSprint() const
 {
-	return BuildCombatMovementPolicy(*this).IsSprintBlocked();
+	auto Policy = BuildCombatMovementPolicy(*this);
+	const auto* ASC = Policy.bDodging ? GetAbilitySystemComponent() : nullptr;
+	const auto* Dash = ASC ? Cast<UProject_JGameplayAbility_Dash>(ASC->GetAnimatingAbility()) : nullptr;
+	if (Dash && Dash->PreservesSprintDuringDash())
+	{
+		// Dash owns displacement. Keep the underlying sprint gait available at its handoff.
+		Policy.bDodging = false;
+	}
+	return Policy.IsSprintBlocked();
 }
 
 void AProject_JPlayerCharacter::UpdateMaxWalkSpeed()

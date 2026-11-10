@@ -34,7 +34,7 @@ def read_properties(obj, properties):
     return result
 
 asset_paths = (['/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Spellblade'] if repair_style_only else
-               ['/Game/DataAssetSets/Class/DA_Class_Spellblade', '/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Spellblade'])
+               ['/Game/DataAssetSets/Class/DA_Class_Greatsword', '/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Spellblade'])
 for path in asset_paths:
     obj = unreal.load_asset(path)
     if not obj:

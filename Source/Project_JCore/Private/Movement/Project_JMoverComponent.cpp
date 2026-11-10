@@ -3,10 +3,14 @@
 #include "DefaultMovementSet/Settings/CommonLegacyMovementSettings.h"
 #include "DefaultMovementSet/CharacterMoverSimulationTypes.h"
 #include "DefaultMovementSet/LayeredMoves/AnimRootMotionLayeredMove.h"
+#include "Movement/Project_JAirborneMontageMove.h"
+#include "Movement/Project_JMontageDashMove.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Movement/Project_JMoverLifecycle.h"
+#include "Movement/Project_JMontageVerticalMotion.h"
+#include "Movement/Project_JMontageLocomotionHandoff.h"
 #include "MoveLibrary/FloorQueryUtils.h"
 #include "Movement/Project_JMoverInputs.h"
 #include "Movement/Project_JMoverPolicy.h"
@@ -137,7 +141,17 @@ void UProject_JMoverComponent::OnPostSimulate(const FMoverTimeStep& Step,const F
  const auto* Previous=Start.SyncState.SyncStateCollection.FindDataByType<FProject_JMoverLifecycle>();
  Life.AdvanceLandingBraking(Previous,Step.StepMs);
  if(End.SyncState.MovementMode==DefaultModeNames::Walking)
+ {
   End.SyncState.SyncStateCollection.FindOrAddMutableDataByType<FProject_JMoverLifecycle>().bJumpEpisode=false;
+  if (Start.SyncState.LayeredMoves.FindActiveMove<FProject_JMontageDashMove>() &&
+      !End.SyncState.LayeredMoves.FindActiveMove<FProject_JMontageDashMove>())
+  {
+   // Walking's internal spring tracked a proposed move that the dash overrode.
+   // Let SmoothWalking recreate it from the collision-resolved locomotion state.
+   static const UScriptStruct* SpringState=FindObject<UScriptStruct>(nullptr,TEXT("/Script/Mover.SmoothWalkingState"));
+   if (SpringState) End.SyncState.SyncStateCollection.RemoveDataByType(SpringState);
+  }
+ }
  Super::OnPostSimulate(Step,Start,End);
 }
 
@@ -314,11 +328,14 @@ bool UProject_JMoverComponent::Jump()
  return false;
 }
 
-bool FProject_JFacingEffect::ApplyMovementEffect(FApplyMovementEffectParams&, FMoverSyncState& Output)
+bool FProject_JFacingEffect::ApplyMovementEffect(FApplyMovementEffectParams& Params, FMoverSyncState& Output)
 {
  auto* State=Output.SyncStateCollection.FindMutableDataByType<FMoverDefaultSyncState>();
- if (!State) return false;
- State->SetTransforms_WorldSpace(State->GetLocation_WorldSpace(),Facing,State->GetVelocity_WorldSpace(),FVector::ZeroVector,State->GetMovementBase(),State->GetMovementBaseBoneName());
+ if (!State || !Params.UpdatedComponent) return false;
+ // A stationary simulation substep may read the component back without moving
+ // it. Commit the yaw to both representations before root motion is evaluated.
+ Params.UpdatedComponent->MoveComponent(FVector::ZeroVector,Facing.Quaternion(),false);
+ State->SetTransforms_WorldSpace(State->GetLocation_WorldSpace(),Params.UpdatedComponent->GetComponentRotation(),State->GetVelocity_WorldSpace(),FVector::ZeroVector,State->GetMovementBase(),State->GetMovementBaseBoneName());
  return true;
 }
 
@@ -332,6 +349,11 @@ void UProject_JMoverComponent::StopGameplayMontageRootMotion(UAnimMontage* Expec
 {
  if (ExpectedMontage && RootMotionMontage!=ExpectedMontage) return;
  CancelFeaturesWithTag(Mover_AnimRootMotion_Montage,false);
+ ReleaseGameplayMontageTracking();
+}
+
+void UProject_JMoverComponent::ReleaseGameplayMontageTracking()
+{
  if(auto* Anim=RootMotionAnim.Get())
  {
   Anim->OnMontageSectionChanged.RemoveAll(this);
@@ -339,6 +361,7 @@ void UProject_JMoverComponent::StopGameplayMontageRootMotion(UAnimMontage* Expec
   if(auto* Instance=Anim->GetMontageInstanceForID(RootMotionMontageInstance)) Instance->PopDisableRootMotion();
  }
  RootMotionAnim.Reset();
+ bRootMotionDash=false;
  RootMotionMontage.Reset(); RootMotionMontageInstance=INDEX_NONE;
 }
 
@@ -350,14 +373,25 @@ void UProject_JMoverComponent::GameplayMontageSectionChanged(UAnimMontage* Monta
  if (Instance && Instance->GetInstanceID()==RootMotionMontageInstance) FollowGameplayMontage(Montage);
 }
 
-void UProject_JMoverComponent::GameplayMontageEnded(UAnimMontage* Montage,bool)
+void UProject_JMoverComponent::GameplayMontageEnded(UAnimMontage* Montage,bool bInterrupted)
 {
  if(RootMotionMontage!=Montage) return;
  // An older instance of the same asset can finish after its replacement starts.
  // Its queued multicast event must not cancel the replacement's movement.
  if(auto* Anim=RootMotionAnim.Get())
   if(const auto* Current=Anim->GetMontageInstanceForID(RootMotionMontageInstance);Current && Current->IsPlaying()) return;
- StopGameplayMontageRootMotion(Montage);
+ // Natural dash expiry belongs to the rollback-owned move clock. A cosmetic
+ // montage end can arrive while the client is replaying an earlier move frame.
+ if (bRootMotionDash && !bInterrupted) ReleaseGameplayMontageTracking();
+ else StopGameplayMontageRootMotion(Montage);
+}
+
+void UProject_JMoverComponent::StartGameplayDashMontage(UAnimMontage* Montage, FVector Direction,
+ float TravelEndPosition, TFunctionRef<void()> StartMontage)
+{
+ const FDashMontageStart Settings{Montage, Direction, TravelEndPosition};
+ const TGuardValue<const FDashMontageStart*> Guard(DashMontageStart, &Settings);
+ StartMontage();
 }
 
 void UProject_JMoverComponent::FollowGameplayMontage(UAnimMontage* Montage)
@@ -372,7 +406,23 @@ void UProject_JMoverComponent::FollowGameplayMontage(UAnimMontage* Montage)
  auto* Instance=Anim && Montage?Anim->GetActiveInstanceForMontage(Montage):nullptr;
  if (!Instance || !Montage->HasRootMotion() || FMath::IsNearlyZero(Instance->GetPlayRate()) || FMath::IsNearlyZero(Montage->RateScale))
  { StopGameplayMontageRootMotion(); return; }
+ const float Start=Instance->GetPosition(), Rate=Instance->GetPlayRate();
+ const float EffectiveRate=Rate*Montage->RateScale;
  const bool bSameInstance=RootMotionMontage==Montage && RootMotionMontageInstance==Instance->GetInstanceID();
+ if (bSameInstance && bRootMotionDash) return;
+ const auto* DashSettings=DashMontageStart && DashMontageStart->Montage==Montage ? DashMontageStart : nullptr;
+ if (DashSettings && (EffectiveRate<=0.f || Start>=DashSettings->TravelEndPosition))
+ { StopGameplayMontageRootMotion(); return; }
+ const auto* Vertical=DashSettings ? nullptr : Montage->FindMetaDataByClass<UProject_JMontageVerticalMotion>();
+ const float VerticalEnd=Vertical?FMath::Min(Vertical->EndTime,Montage->GetPlayLength()):0.f;
+ if (Vertical && (EffectiveRate<=0.f || !FMath::IsFinite(VerticalEnd) || Start>=VerticalEnd))
+ { StopGameplayMontageRootMotion(); return; }
+ const auto* Handoff = !DashSettings && !Vertical && EffectiveRate > 0.f
+  ? Montage->FindMetaDataByClass<UProject_JMontageLocomotionHandoff>() : nullptr;
+ const float RecoveryStart = Handoff ? Handoff->RecoveryStart : -1.f;
+ const bool bReleaseForRecovery = RecoveryStart >= 0.f && RecoveryStart < Montage->GetPlayLength();
+ if (bReleaseForRecovery && Start >= RecoveryStart)
+ { StopGameplayMontageRootMotion(); return; }
  if (!bSameInstance)
  {
   StopGameplayMontageRootMotion();
@@ -383,16 +433,36 @@ void UProject_JMoverComponent::FollowGameplayMontage(UAnimMontage* Montage)
  }
  else CancelFeaturesWithTag(Mover_AnimRootMotion_Montage,false);
  RootMotionMontage=Montage; RootMotionMontageInstance=Instance->GetInstanceID();
- const float Start=Instance->GetPosition(), Rate=Instance->GetPlayRate();
- TSharedPtr<FLayeredMove_AnimRootMotion> Move=MakeShared<FLayeredMove_AnimRootMotion>();
+ TSharedPtr<FLayeredMove_AnimRootMotion> Move;
+ if (DashSettings)
+ {
+  auto Dash=MakeShared<FProject_JMontageDashMove>();
+  Dash->TravelDirection=DashSettings->Direction;
+  Dash->DurationMs=(DashSettings->TravelEndPosition-Start)/EffectiveRate*1000.f;
+  Move=Dash;
+  bRootMotionDash=true;
+ }
+ else if (Vertical && Vertical->bAirborneOnly) Move=MakeShared<FProject_JAirborneMontageMove>();
+ else Move=MakeShared<FLayeredMove_AnimRootMotion>();
  Move->MontageState.Montage=Montage;
  Move->MontageState.PlayRate=Rate;
  Move->MontageState.StartingMontagePosition=Start;
  Move->MontageState.CurrentPosition=Start;
  Move->MontageState.BlendOutTimeSeconds=Montage->GetDefaultBlendOutTime();
  Move->MontageState.bEnableAutoBlendOut=Montage->CompositeSections.IsEmpty() || Montage->CompositeSections.Last().NextSectionName==NAME_None;
- Move->DurationMs=(Rate>0.f?Montage->GetPlayLength()-Start:Start)/FMath::Abs(Rate*Montage->RateScale)*1000.f;
- Move->MixMode=EMoveMixMode::OverrideAll;
+ if (Vertical)
+ {
+  // Keep Falling's collision and landing. Override its velocity only while the
+  // authored vertical motion runs, then let the mode resume from that velocity.
+  Move->DurationMs=(VerticalEnd-Start)/EffectiveRate*1000.f;
+  Move->MixMode=EMoveMixMode::OverrideVelocity;
+ }
+ else if (!DashSettings)
+ {
+  const float End = bReleaseForRecovery ? RecoveryStart : Montage->GetPlayLength();
+  Move->DurationMs=(Rate>0.f?End-Start:Start)/FMath::Abs(EffectiveRate)*1000.f;
+  Move->MixMode=EMoveMixMode::OverrideAll;
+ }
  QueueLayeredMove(Move);
 }
 

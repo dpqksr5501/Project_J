@@ -209,6 +209,23 @@ void UProject_JWeaponPresentationComponent::SampleGripTrace()
 	const USkeletalMeshComponent* Source = Project_J::Movement::FindPoseSource(Character);
 	const USkeletalMeshComponent* Visible = Project_J::Animation::FindVisualFollower(*Character);
 	if (!Visible) { Visible = Source; }
+	if (Visible && Project_J::WeaponPresentation::CVarGripTrace.GetValueOnGameThread() > 1)
+	{
+		static const FName Bones[] = {TEXT("root"), TEXT("pelvis"), TEXT("spine_01"), TEXT("spine_02"),
+			TEXT("spine_03"), TEXT("spine_04"), TEXT("spine_05"), TEXT("clavicle_r"), TEXT("upperarm_r"),
+			TEXT("lowerarm_r"), TEXT("hand_r"), TEXT("middle_01_r"), TEXT("clavicle_l"), TEXT("upperarm_l"),
+			TEXT("lowerarm_l"), TEXT("hand_l"), TEXT("middle_01_l")};
+		for (const FName Bone : Bones)
+		{
+			if (Visible->GetBoneIndex(Bone) == INDEX_NONE) { continue; }
+			const FTransform CS = Visible->GetSocketTransform(Bone, RTS_Component);
+			const FName Parent = Visible->GetParentBone(Bone);
+			const FTransform Local = Parent.IsNone() ? CS : CS.GetRelativeTransform(Visible->GetSocketTransform(Parent, RTS_Component));
+			UE_LOG(LogProjectJWeaponPresentation, Display, TEXT("GuardRuntime f=%llu bone=%s parent=%s pos={%s} q={%s} localQ={%s}"),
+				GFrameCounter, *Bone.ToString(), *Parent.ToString(), *CS.GetLocation().ToString(),
+				*CS.GetRotation().ToString(), *Local.GetRotation().ToString());
+		}
+	}
 	const UProject_JRetargetAnimInstance* FollowerAnim = Visible
 		? Cast<UProject_JRetargetAnimInstance>(Visible->GetAnimInstance()) : nullptr;
 	if (!FollowerAnim && Visible) { FollowerAnim = Cast<UProject_JRetargetAnimInstance>(Visible->GetPostProcessInstance()); }

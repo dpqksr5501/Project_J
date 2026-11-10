@@ -82,6 +82,13 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
 	EProject_JAttackMovementPolicy MovementPolicy = EProject_JAttackMovementPolicy::InPlace;
 
+	/** Leave facing and strafe direction selection with locomotion during this action. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
+	bool bUseLocomotionFacing = false;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
+	bool bFaceMoveInput = false;
+
 	/**
 	 * Temporarily uses Flying while this root-motion attack is active, allowing
 	 * authored vertical root motion to lift the character off the floor.
@@ -112,6 +119,10 @@ public:
 	/** The server selects this effect from the active attack; clients never choose it. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Damage")
 	TSubclassOf<UGameplayEffect> DamageEffect;
+
+	/** Applied to the casting avatar by the server when this node's montage completes normally. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Execution")
+	TSubclassOf<UGameplayEffect> SelfEffectOnCompletion;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Conditions")
 	FGameplayTagContainer RequiredOwnerTags;

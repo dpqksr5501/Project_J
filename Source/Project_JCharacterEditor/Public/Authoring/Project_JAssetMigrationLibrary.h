@@ -2,8 +2,11 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Project_JAssetMigrationLibrary.generated.h"
 class USkeletalMesh;
+class USkeletalMeshComponent;
 class USkeleton;
 class UAnimBlueprint;
+class UAnimSequence;
+class UBlendSpace;
 class UProject_JAttackDefinition;
 
 /** Bounded authoring operations used by reviewed asset migrations. */
@@ -12,6 +15,11 @@ class PROJECT_JCHARACTEREDITOR_API UProject_JAssetMigrationLibrary : public UBlu
 {
     GENERATED_BODY()
 public:
+    /** Read-only preview mount for a standalone skeletal weapon mesh. */
+    UFUNCTION(BlueprintCallable, Category="Project J|Authoring|Combat")
+    static bool ResolveSkeletalWeaponGripPreview(USkeletalMeshComponent* Body, USkeletalMesh* Weapon,
+        FName GripSocket, FTransform& OutWorldMount);
+
     /** Bake one forward, non-looping native melee window from RAW sequence poses.
      * Mesh-component gameplay geometry; excludes blended poses, IK and cloth.
      * Dry-run never edits. Execute replaces only the selected attack's path;
@@ -36,4 +44,12 @@ public:
     /** Mesh-only socket; shared skeleton users are unaffected. Refuse conflicting sockets. */
     UFUNCTION(BlueprintCallable, Category="Project J|Authoring|Migration")
     static bool AddMeshSocket(USkeletalMesh* Mesh, FName Name, FName Bone, FTransform Relative);
+
+    /** Rebuild the runtime interpolation data after a scripted sample edit. */
+    UFUNCTION(BlueprintCallable, Category="Project J|Authoring|Animation")
+    static bool RebuildBlendSpaceInterpolation(UBlendSpace* BlendSpace);
+
+    /** Match the default compression sample rate to the authored sequence rate. Refuses conflicting platform overrides and never saves. */
+    UFUNCTION(BlueprintCallable, Category="Project J|Authoring|Animation")
+    static bool MatchAnimationPlaybackToAuthoredRate(UAnimSequence* Sequence);
 };

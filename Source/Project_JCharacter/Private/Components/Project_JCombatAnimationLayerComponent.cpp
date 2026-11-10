@@ -12,6 +12,16 @@
 
 DEFINE_LOG_CATEGORY_STATIC(LogProjectJCombatAnimationLayer, Log, All);
 
+namespace
+{
+bool UsesWeaponLayer(EProject_JCombatAnimationLayerState State)
+{
+	return State == EProject_JCombatAnimationLayerState::PreparingCombat ||
+		State == EProject_JCombatAnimationLayerState::CombatActive ||
+		State == EProject_JCombatAnimationLayerState::BlendingOutOfCombat;
+}
+}
+
 UProject_JCombatAnimationLayerComponent::UProject_JCombatAnimationLayerComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
@@ -51,10 +61,7 @@ void UProject_JCombatAnimationLayerComponent::RefreshLayer()
 
 	const UProject_JWeaponAnimProfile* WeaponProfile = Player->GetWeaponAnimProfile();
 	PresentationState = CalculatePresentationState(*Player);
-	const bool bShouldLinkLayer =
-		(PresentationState == EProject_JCombatAnimationLayerState::PreparingCombat ||
-			PresentationState == EProject_JCombatAnimationLayerState::CombatActive) &&
-		WeaponProfile &&
+	const bool bShouldLinkLayer = UsesWeaponLayer(PresentationState) && WeaponProfile &&
 		!WeaponProfile->CombatAnimationLayerClass.IsNull();
 	UE_LOG(LogProjectJCombatAnimationLayer, Verbose, TEXT("RefreshLayer Owner=%s State=%d WeaponProfile=%s ExistingLayer=%s ShouldLink=%s"), *GetNameSafe(Player), static_cast<int32>(PresentationState), *GetNameSafe(WeaponProfile), *GetNameSafe(Layer.LinkedClass.Get()), bShouldLinkLayer ? TEXT("true") : TEXT("false"));
 	if (!bShouldLinkLayer)
@@ -123,9 +130,7 @@ void UProject_JCombatAnimationLayerComponent::PreloadLayerForCurrentWeapon()
 	}
 
 	const EProject_JCombatAnimationLayerState DesiredState = CalculatePresentationState(*Player);
-	const bool bShouldPreloadNow = Player->IsLocallyControlled() ||
-		DesiredState == EProject_JCombatAnimationLayerState::PreparingCombat ||
-		DesiredState == EProject_JCombatAnimationLayerState::CombatActive;
+	const bool bShouldPreloadNow = Player->IsLocallyControlled() || UsesWeaponLayer(DesiredState);
 	if (!bShouldPreloadNow)
 	{
 		// In a crowded MMO scene, do not stream every inactive simulated proxy's
@@ -158,8 +163,10 @@ EProject_JCombatAnimationLayerState UProject_JCombatAnimationLayerComponent::Cal
 		return EProject_JCombatAnimationLayerState::PreparingCombat;
 	}
 
-	return Player.IsCombatModeActive()
-		? EProject_JCombatAnimationLayerState::CombatActive
+	if (Player.IsCombatModeActive()) { return EProject_JCombatAnimationLayerState::CombatActive; }
+	// Sheathe blends from the armed pose even after gameplay combat ends. Once
+	// the slot reaches full weight, its recovery can blend toward unarmed locomotion.
+	return Player.IsCombatOutroBlendingIn() ? EProject_JCombatAnimationLayerState::BlendingOutOfCombat
 		: EProject_JCombatAnimationLayerState::Inactive;
 }
 

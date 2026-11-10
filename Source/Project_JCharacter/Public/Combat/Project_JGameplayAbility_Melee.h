@@ -6,7 +6,9 @@
 #include "Project_JGameplayAbility_Melee.generated.h"
 
 class UAnimMontage;
+class USkeletalMeshComponent;
 class UProject_JComboDefinition;
+struct FAnimNotifyEventReference;
 struct FProject_JComboNode;
 
 /**
@@ -22,10 +24,15 @@ public:
 	UProject_JGameplayAbility_Melee();
 	/** Notify leases survive overlap but are invalidated by node/activation boundaries. */
 	uint64 BeginComboWindow();
+	bool MatchesAttackMontageSource(const USkeletalMeshComponent* Mesh, const FAnimNotifyEventReference& EventReference) const;
+	/** Validate queued montage events when GAS owns a player melee attack. Other producers keep their own admission rules. */
+	static bool CanDispatchAttackNotify(const USkeletalMeshComponent& Mesh, const FAnimNotifyEventReference& EventReference);
 	bool EndComboWindow(uint64 Token);
 	bool IsComboWindowCurrent(uint64 Token) const { return ComboWindows.Contains(Token); }
 	const class UProject_JCombatStyleDefinition* GetExecutingCombatStyle() const { return ActiveGameplayStyle; }
+	bool LocksFacingDuringSwing() const;
 	bool AcceptsComboInput(FGameplayTag InputTag) const;
+	bool HasComboTransition(FGameplayTag InputTag) const;
 	void ReconcileCombatConfiguration();
 	virtual bool CanActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 		const FGameplayTagContainer* SourceTags = nullptr, const FGameplayTagContainer* TargetTags = nullptr,
@@ -97,6 +104,7 @@ private:
 	FGameplayTag QueuedInputTag;
 	TObjectPtr<UProject_JComboDefinition> ActiveComboDefinition = nullptr;
 	TObjectPtr<UAnimMontage> ActiveComboMontage = nullptr;
+	int32 ActiveComboMontageInstanceID = INDEX_NONE;
 	TObjectPtr<UProject_JAttackDefinition> ActiveAttackDefinition = nullptr;
 	TWeakObjectPtr<AActor> RootMotionMovementOwner;
 	EProject_JRootMotionEndMovementPolicy RootMotionEndMovementPolicy = EProject_JRootMotionEndMovementPolicy::Land;

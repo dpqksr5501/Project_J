@@ -37,6 +37,8 @@ public:
 	bool IsPlayingIntro() const { return Phase == EProject_JCombatTransitionPhase::Drawing; }
 	UFUNCTION(BlueprintPure, Category = "Combat|Intro")
 	bool IsPlayingOutro() const { return Phase == EProject_JCombatTransitionPhase::Sheathing; }
+	bool IsBlendingIntoOutro() const { return IsPlayingOutro() && bOutroNeedsSourcePose; }
+	float GetOutgoingPoseWeight() const;
 
 	UFUNCTION(BlueprintPure, Category = "Combat|Intro")
 	bool IsPendingCombatMode() const { return bPendingCombatMode; }
@@ -47,12 +49,14 @@ private:
 	friend class FProjectJCombatTransitionOwnershipTest;
 	bool PlayTransition(APawn& CharacterOwner, UAnimMontage* Montage, float PlayRate, EProject_JCombatTransitionPhase NewPhase);
 	void CancelTransition(APawn& CharacterOwner, EProject_JCombatTransitionPhase ExpectedPhase);
+	void ReleaseOutroSourcePose(UAnimMontage* Montage, uint64 ExpectedRevision);
 	void HandleMontageEnded(UAnimMontage* Montage, bool bInterrupted, uint64 ExpectedRevision);
 	void StopTransitions();
 	void PublishState();
 	EProject_JCombatTransitionPhase Phase = EProject_JCombatTransitionPhase::Idle;
 	uint64 TransitionRevision = 0;
 	bool bEndingPlay = false;
+	bool bOutroNeedsSourcePose = false;
 	TWeakObjectPtr<APawn> MontageOwner;
 
 	UPROPERTY(Transient)

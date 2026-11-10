@@ -744,7 +744,9 @@ bool FProjectJStableGripTargetsTest::RunTest(const FString&)
 	Profile->MotionPresentation.PrimaryGripSocketName = Replacement->SocketName;
 	Presentation->UpdateGripTargets();
 	Targets = Presentation->GetWeaponGripTargets();
-	TestEqual(TEXT("Profile socket change refreshes primary grip"), Targets.PrimaryGripWorldTransform.GetLocation().X, 42.0);
+	const FVector ExpectedGrip = MeshComp->GetComponentTransform().TransformPosition(Replacement->RelativeLocation);
+	TestTrue(TEXT("Profile socket change refreshes primary grip in the current weapon pose"),
+		Targets.PrimaryGripWorldTransform.GetLocation().Equals(ExpectedGrip, UE_KINDA_SMALL_NUMBER));
 	TestEqual(TEXT("VFX socket shares the component cache"), Presentation->GetWeaponVFXAttachmentComponent(Replacement->SocketName), static_cast<USceneComponent*>(MeshComp));
 
 	// 7. Test Weapon Destroy / Teardown

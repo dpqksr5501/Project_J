@@ -167,7 +167,7 @@ $cleaveAssetFiles=@(
     'Content/GAs/GA_NPC_PrototypeCleave.uasset',
     'Content/NPCs/BP_NPC_Test.uasset',
     'Content/GAs/GA_NPC_TestAttack.uasset',
-    'Content/Anim_Assets/Spellblade/Animations/Sword/Montage/AM_Spellblade_LMB1.uasset',
+    'Content/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LMB1.uasset',
     'Content/Animation_Logic/ABPs/ABP_Player_Master.uasset')
 $cleaveAssetsBefore=@()
 if($Cleave){

@@ -99,6 +99,8 @@ private:
 	void HandleSecondarySkillReleased();
 	void HandleSkillModifierPressed();
 	void HandleSkillModifierReleased();
+	void HandleMappedSkillModifierPressed(FGameplayTag ModifierTag, FKey BlockedHeldKey, const UInputAction* InputAction);
+	bool WasSkillKeyHeldAtPress(const FKey& Key, const UInputAction* InputAction) const;
 	void HandleDirectSkillActionPressed(UInputAction* InputAction);
 	void HandleDirectSkillActionReleased(UInputAction* InputAction);
 	void HandleInteract();

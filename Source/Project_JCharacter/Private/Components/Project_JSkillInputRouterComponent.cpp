@@ -1,4 +1,9 @@
 #include "Components/Project_JSkillInputRouterComponent.h"
+#include "AbilitySystemComponent.h"
+#include "Combat/Project_JCombatCommandSet.h"
+#include "Combat/Project_JCombatInputTags.h"
+#include "Combat/Project_JCombatStyleDefinition.h"
+#include "Combat/Project_JGameplayAbility_Melee.h"
 #include "Engine/World.h"
 
 #include "Project_JGameplayTags.h"
@@ -389,6 +394,7 @@ FGameplayTag UProject_JSkillInputRouterComponent::ResolveCombinedInputTag()
 	for (const FProject_JSkillInputChord& Chord : GetEffectiveChords())
 	{
 		if (!Chord.InputTag.IsValid() || !Chord.bRequiresLMB || !Chord.bRequiresRMB ||
+			!IsChordAvailableForStyle(Chord) ||
 			!bLMBHeld || !bRMBHeld ||
 			(Chord.bRequiresModifier && !(bModifierHeld || !ActiveModifierTags.IsEmpty())) ||
 			!AreModifierTagsMatched(Chord.RequiredModifierTags, Chord.BlockedModifierTags))
@@ -410,6 +416,7 @@ bool UProject_JSkillInputRouterComponent::HasCombinedChordForButton(const EProje
 	for (const FProject_JSkillInputChord& Chord : GetEffectiveChords())
 	{
 		if (!Chord.InputTag.IsValid() || !Chord.bRequiresLMB || !Chord.bRequiresRMB ||
+			!IsChordAvailableForStyle(Chord) ||
 			(Button == EProject_JSkillInputButton::LMB && !Chord.bRequiresLMB) ||
 			(Button == EProject_JSkillInputButton::RMB && !Chord.bRequiresRMB) ||
 			(Chord.bRequiresModifier && !(bModifierHeld || !ActiveModifierTags.IsEmpty())) ||
@@ -489,6 +496,7 @@ void UProject_JSkillInputRouterComponent::ReleaseActiveChordIfReady()
 
 bool UProject_JSkillInputRouterComponent::DoesChordMatchButton(const FProject_JSkillInputChord& Chord, EProject_JSkillInputButton Button) const
 {
+	if (!IsChordAvailableForStyle(Chord)) { return false; }
 	if (Button == EProject_JSkillInputButton::LMB && !Chord.bRequiresLMB)
 	{
 		return false;
@@ -506,6 +514,26 @@ bool UProject_JSkillInputRouterComponent::DoesChordMatchButton(const FProject_JS
 		(!Chord.bRequiresRMB || bRMBHeld) &&
 		(!Chord.bRequiresModifier || bHasAnyModifier) &&
 		AreModifierTagsMatched(Chord.RequiredModifierTags, Chord.BlockedModifierTags);
+}
+
+bool UProject_JSkillInputRouterComponent::IsChordAvailableForStyle(const FProject_JSkillInputChord& Chord) const
+{
+	if (!Chord.RequiredStyleCommand.IsValid()) { return true; }
+	const auto* Style = BoundPlayerCharacter ? BoundPlayerCharacter->GetCurrentCombatStyle() : nullptr;
+	const auto* ASC = BoundPlayerCharacter ? BoundPlayerCharacter->GetAbilitySystemComponent() : nullptr;
+	if (!Style || !Style->CommandSet || !ASC) { return false; }
+	const auto OwnerTags = Project_J::Combat::ReadInputOwnerTags(ASC, BoundPlayerCharacter);
+	return Style->CommandSet->Commands.ContainsByPredicate([&Chord, ASC, &OwnerTags](const auto& Command)
+	{
+		if (Command.CommandTag != Chord.RequiredStyleCommand || !Command.OrderedInputSequence.Contains(Chord.InputTag) ||
+			!OwnerTags.HasAll(Command.RequiredOwnerTags) || OwnerTags.HasAny(Command.BlockedOwnerTags))
+		{
+			return false;
+		}
+		if (!Chord.bRequiresComboTransition) { return true; }
+		const auto* Combo = Cast<UProject_JGameplayAbility_Melee>(ASC->GetAnimatingAbility());
+		return Combo && Combo->HasComboTransition(Command.ResultInputTag);
+	});
 }
 
 void UProject_JSkillInputRouterComponent::ReleaseActiveTagForButton(EProject_JSkillInputButton Button)

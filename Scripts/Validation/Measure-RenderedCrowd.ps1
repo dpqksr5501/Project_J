@@ -64,8 +64,8 @@ if($Trace){$arguments+=@('-trace=cpu,frame,gpu,bookmark,region,counters,task',"-
 $files=@('Project_J.uproject','Content/Character_BPs/Spellblade/BP_Spellblade.uasset',
  'Content/Animation_Logic/ABPs/Spellblade/ABP_Spellblade_Woman_RunTIme.uasset','Content/Animation_Logic/ABPs/ABP_Player_Master.uasset')
 # Current compatible body route and its contact/physics assets are part of the measured workload.
-if (Test-Path -LiteralPath "$root/Content/Spellblade") {
- $files += @(Get-ChildItem -LiteralPath "$root/Content/Spellblade" -Recurse -Filter '*.uasset' -File | Sort-Object FullName | ForEach-Object { $_.FullName.Substring($root.Length+1).Replace('\','/') })
+foreach ($folder in @('Animation','Materials','Meshes','Physics','Profiles','Rigs')) {
+ $files += @(Get-ChildItem -LiteralPath "$root/Content/Characters/Spellblade/$folder" -Recurse -Filter '*.uasset' -File | Sort-Object FullName | ForEach-Object { $_.FullName.Substring($root.Length+1).Replace('\','/') })
 }
 if (!$Executable) { $files += @('Binaries/Win64/UnrealEditor-Project_J.dll','Binaries/Win64/UnrealEditor-Project_JCharacter.dll') }
 if ($NaniteMode -ge 0) {

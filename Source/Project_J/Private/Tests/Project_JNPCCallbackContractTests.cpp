@@ -581,7 +581,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJNPCAttackIntentRetentionTest, "Project
 bool FProjectJNPCAttackIntentRetentionTest::RunTest(const FString&)
 {
     const TStrongObjectPtr<USkeletalMesh> MeshAsset(LoadObject<USkeletalMesh>(nullptr,TEXT("/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple.SKM_Quinn_Simple")));
-    const TStrongObjectPtr<UAnimMontage> Montage(LoadObject<UAnimMontage>(nullptr,TEXT("/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/AM_Spellblade_LMB1.AM_Spellblade_LMB1")));
+    const TStrongObjectPtr<UAnimMontage> Montage(LoadObject<UAnimMontage>(nullptr,TEXT("/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LMB1.AM_Greatsword_LMB1")));
     if(!TestNotNull(TEXT("Existing attack mesh"),MeshAsset.Get()) || !TestNotNull(TEXT("Existing attack montage"),Montage.Get())) return false;
     for(int32 Case=0;Case<5;++Case)
     {

@@ -3,12 +3,18 @@
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "AbilitySystemComponent.h"
+#include "Animation/ActiveMontageInstanceScope.h"
+#include "Animation/AnimInstance.h"
+#include "Animation/AnimMontage.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Combat/Project_JComboDefinition.h"
+#include "Combat/Project_JCombatInputTags.h"
 #include "Combat/Project_JCombatStyleDefinition.h"
 #include "Combat/Project_JAttackDefinition.h"
 #include "GameFramework/Character.h"
 #include "Movement/Project_JMovementQueries.h"
 #include "Movement/Project_JMoverComponent.h"
+#include "MoverDataModelTypes.h"
 #include "GameFramework/PlayerController.h"
 #include "Project_JGameplayTags.h"
 #include "Project_JPlayerCharacter.h"
@@ -64,11 +70,18 @@ bool UProject_JGameplayAbility_Melee::CanActivateAbility(FGameplayAbilitySpecHan
 	const auto* Equipment = Avatar ? Avatar->FindComponentByClass<UProject_JEquipmentRuntimeComponent>() : nullptr;
 	if (!Equipment || Equipment->GetWeaponRevision() == 0) { return false; }
 	if (bEndingAttack || (ActorInfo && ActorInfo->AbilitySystemComponent.IsValid()
-		&& ActorInfo->AbilitySystemComponent->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_Attacking)))
+		&& (ActorInfo->AbilitySystemComponent->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_Attacking) ||
+			ActorInfo->AbilitySystemComponent->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_Dodging))))
 	{
 		return false;
 	}
 	return Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags);
+}
+
+bool UProject_JGameplayAbility_Melee::LocksFacingDuringSwing() const
+{
+	return IsActive() && ActiveAttackDefinition && !ActiveAttackDefinition->bUseLocomotionFacing
+		&& ActiveGameplayStyle && ActiveGameplayStyle->bLockFacingDuringSwing;
 }
 
 void UProject_JGameplayAbility_Melee::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
@@ -89,8 +102,6 @@ void UProject_JGameplayAbility_Melee::ActivateAbility(const FGameplayAbilitySpec
 	}
 	// Commit hooks may revoke equipment and synchronously end this activation.
 	if (!IsActive() || !HasActiveWeapon()) { return; }
-
-	ApplyCameraDirectionRotation();
 
 	ActiveComboDefinition = nullptr;
 	ActiveAttackDefinition = nullptr;
@@ -115,7 +126,6 @@ void UProject_JGameplayAbility_Melee::ActivateAbility(const FGameplayAbilitySpec
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
-
 	if (IsComboDebugEnabled())
 	{
 		UE_LOG(LogProjectJCombatCombo, Log, TEXT("Activate Owner=%s Combo=%s Trigger=%s"),
@@ -188,6 +198,7 @@ void UProject_JGameplayAbility_Melee::EndAbility(const FGameplayAbilitySpecHandl
 	ActiveComboDefinition = nullptr;
 	ActiveAttackDefinition = nullptr;
 	ActiveComboMontage = nullptr;
+	ActiveComboMontageInstanceID = INDEX_NONE;
 	ActiveGameplayStyle = nullptr;
 	ActivationConfigurationRevision = 0;
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
@@ -363,12 +374,8 @@ const FProject_JComboNode* UProject_JGameplayAbility_Melee::GetCurrentComboNode(
 
 FGameplayTagContainer UProject_JGameplayAbility_Melee::GetOwnerGameplayTags() const
 {
-	FGameplayTagContainer OwnerTags;
-	if (const UAbilitySystemComponent* AbilitySystem = GetAbilitySystemComponentFromActorInfo())
-	{
-		AbilitySystem->GetOwnedGameplayTags(OwnerTags);
-	}
-	return OwnerTags;
+	return Project_J::Combat::ReadInputOwnerTags(GetAbilitySystemComponentFromActorInfo(),
+		Cast<AProject_JPlayerCharacter>(GetAvatarActorFromActorInfo()));
 }
 
 bool UProject_JGameplayAbility_Melee::TryQueueOrConsumeComboInput(const FGameplayTag InputTag)
@@ -473,7 +480,19 @@ void UProject_JGameplayAbility_Melee::StartComboNode(const FProject_JComboNode& 
 			ActiveComboMontage == NodeMontage ? 1 : 0);
 	}
 
-	ApplyCameraDirectionRotation();
+	auto* Player = Cast<AProject_JPlayerCharacter>(GetAvatarActorFromActorInfo());
+	if (!AttackDefinition->bUseLocomotionFacing)
+	{
+		const FVector MoveDirection = AttackDefinition->bFaceMoveInput && Player ? Player->GetGameplayMoveDirection() : FVector::ZeroVector;
+		if (!MoveDirection.IsNearlyZero())
+		{
+			Player->FaceGameplayDirection(MoveDirection.Rotation());
+		}
+		else
+		{
+			ApplyCameraDirectionRotation();
+		}
+	}
 	ResetComboWindows();
 	HitActorsThisSwing.Reset();
 	CurrentComboNodeTag = Node.NodeTag;
@@ -519,6 +538,7 @@ void UProject_JGameplayAbility_Melee::StartComboNode(const FProject_JComboNode& 
 	}
 
 	ActiveComboMontage = NodeMontage;
+	ActiveComboMontageInstanceID = INDEX_NONE;
 	// Authored combo windows can begin during the montage's normal blend-out.
 	// Keep GAS montage ownership until completion so those notifies can still
 	// acquire their ability lease and a late transition/cancellation is observed.
@@ -529,8 +549,52 @@ void UProject_JGameplayAbility_Melee::StartComboNode(const FProject_JComboNode& 
 		MontageTask->OnCompleted.AddDynamic(this, &UProject_JGameplayAbility_Melee::OnMontageCompleted);
 		MontageTask->OnInterrupted.AddDynamic(this, &UProject_JGameplayAbility_Melee::OnMontageInterrupted);
 		MontageTask->OnCancelled.AddDynamic(this, &UProject_JGameplayAbility_Melee::OnMontageInterrupted);
+		const auto* StartingTask = MontageTask;
 		MontageTask->ReadyForActivation();
+		if (IsActive() && MontageTask == StartingTask)
+		{
+			const auto* ActorInfo = GetCurrentActorInfo();
+			const auto* Anim = ActorInfo ? ActorInfo->GetAnimInstance() : nullptr;
+			if (const auto* Instance = Anim ? Anim->GetActiveInstanceForMontage(NodeMontage) : nullptr)
+			{
+				ActiveComboMontageInstanceID = Instance->GetInstanceID();
+			}
+		}
 	}
+}
+
+bool UProject_JGameplayAbility_Melee::CanDispatchAttackNotify(const USkeletalMeshComponent& Mesh,
+	const FAnimNotifyEventReference& EventReference)
+{
+	if (!EventReference.GetContextData<UE::Anim::FAnimNotifyMontageInstanceContext>()) { return true; }
+	const auto* Player = Cast<AProject_JPlayerCharacter>(Mesh.GetOwner());
+	const auto* ASC = Player ? Player->GetAbilitySystemComponent() : nullptr;
+	const auto* Ability = ASC ? Cast<UProject_JGameplayAbility_Melee>(ASC->GetAnimatingAbility()) : nullptr;
+	return !Ability || Ability->MatchesAttackMontageSource(&Mesh, EventReference);
+}
+
+bool UProject_JGameplayAbility_Melee::MatchesAttackMontageSource(const USkeletalMeshComponent* Mesh,
+	const FAnimNotifyEventReference& EventReference) const
+{
+	const auto* ActorInfo = GetCurrentActorInfo();
+	auto* Anim = ActorInfo ? ActorInfo->GetAnimInstance() : nullptr;
+	const auto* Context = EventReference.GetContextData<UE::Anim::FAnimNotifyMontageInstanceContext>();
+	if (!IsActive() || bEndingAttack || !ActiveAttackDefinition || !ActiveComboMontage || !Mesh || !Anim ||
+		Mesh->GetAnimInstance() != Anim || !Context || ActiveComboMontageInstanceID == INDEX_NONE ||
+		Context->MontageInstanceID != ActiveComboMontageInstanceID)
+	{
+		return false;
+	}
+	// Natural blend-out can still deliver an authored window. Check identity
+	// without requiring the instance to remain in the active montage map.
+	const auto* Instance = Anim->GetMontageInstanceForID(ActiveComboMontageInstanceID);
+	if (!Instance || Instance->Montage != ActiveComboMontage) { return false; }
+
+	const FName Section = ActiveAttackDefinition->MontageSectionName;
+	if (Section.IsNone()) { return true; }
+	const auto* Event = EventReference.GetNotify();
+	return Event && Event->GetLinkedMontage() == ActiveComboMontage &&
+		ActiveComboMontage->GetSectionName(ActiveComboMontage->GetSectionIndexFromPosition(Event->GetTime())) == Section;
 }
 
 uint64 UProject_JGameplayAbility_Melee::BeginComboWindow()
@@ -560,6 +624,12 @@ bool UProject_JGameplayAbility_Melee::AcceptsComboInput(FGameplayTag InputTag) c
 	return ComboInputTags.HasTagExact(InputTag);
 }
 
+bool UProject_JGameplayAbility_Melee::HasComboTransition(FGameplayTag InputTag) const
+{
+	const auto* Node = AcceptsComboInput(InputTag) ? GetCurrentComboNode() : nullptr;
+	return Node && ActiveComboDefinition->FindTransition(*Node, InputTag, GetOwnerGameplayTags());
+}
+
 void UProject_JGameplayAbility_Melee::ReconcileCombatConfiguration()
 {
 	const auto* Player = Cast<AProject_JPlayerCharacter>(GetAvatarActorFromActorInfo());
@@ -575,7 +645,31 @@ void UProject_JGameplayAbility_Melee::ReconcileCombatConfiguration()
 
 void UProject_JGameplayAbility_Melee::OnMontageCompleted()
 {
-	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+	const auto* Completed = ActiveAttackDefinition.Get();
+	const auto* Avatar = GetAvatarActorFromActorInfo();
+	const bool bHasCompletionEffect = Completed && Completed->SelfEffectOnCompletion;
+	if (IsActive() && !bEndingAttack && bHasCompletionEffect && Avatar && Avatar->HasAuthority() && HasActiveWeapon())
+	{
+		const auto* ASC = GetAbilitySystemComponentFromActorInfo();
+		const auto& Tags = FProject_JGameplayTags::Get();
+		if (ASC && ASC->GetAvatarActor() == Avatar && ASC->HasMatchingGameplayTag(Tags.State_CombatMode) &&
+			!ASC->HasMatchingGameplayTag(Tags.State_Dead) && !ASC->HasMatchingGameplayTag(Tags.State_HitReacting) &&
+			!ASC->HasMatchingGameplayTag(Tags.State_Mounted))
+		{
+			const auto* CompletedTask = MontageTask;
+			const auto Effect = ApplyGameplayEffectToOwner(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo,
+				Completed->SelfEffectOnCompletion->GetDefaultObject<UGameplayEffect>(), GetAbilityLevel(), 1);
+			if (IsComboDebugEnabled())
+			{
+				UE_LOG(LogProjectJCombatCombo, Log, TEXT("Completion effect %s Applied=%d"),
+					*GetNameSafe(Completed->SelfEffectOnCompletion.Get()), Effect.IsValid());
+			}
+			if (!IsActive() || MontageTask != CompletedTask) { return; }
+		}
+	}
+	// A predicting client's completion must leave the server task alive to commit the effect.
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo,
+		!bHasCompletionEffect || (Avatar && Avatar->HasAuthority()), false);
 }
 
 void UProject_JGameplayAbility_Melee::OnMontageInterrupted()
@@ -625,8 +719,13 @@ void UProject_JGameplayAbility_Melee::ApplyCameraDirectionRotation()
 	{
 		if (APlayerController* PC = Cast<APlayerController>(Character->GetController()))
 		{
-			// Rotate character to face camera view or input direction (for 3rd person)
 			FRotator ControlRot = PC->GetControlRotation();
+			if (ActiveGameplayStyle && ActiveGameplayStyle->bLockFacingDuringSwing && !Character->IsLocallyControlled())
+			{
+				// The authority consumes the remote player's camera in the accepted Mover input.
+				const auto* Input = Character->GetMover()->GetLastInputCmd().InputCollection.FindDataByType<FCharacterDefaultInputs>();
+				if (Input && !Input->ControlRotation.ContainsNaN()) { ControlRot = Input->ControlRotation; }
+			}
 			ControlRot.Pitch = 0.0f;
 			ControlRot.Roll = 0.0f;
 			Character->FaceGameplayDirection(ControlRot);

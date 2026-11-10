@@ -33,6 +33,7 @@ protected:
 public:
 	void Initialize(USpringArmComponent* InCameraBoom, UCameraComponent* InFollowCamera);
 	void RefreshAbilitySystemBinding();
+	float GetDashMotionAlpha() const { return DashMotionAlpha; }
 
 	UPROPERTY()
 	TObjectPtr<USpringArmComponent> CameraBoom;
@@ -69,6 +70,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Framing", meta=(ClampMin="0.0", UIMin="0.0"))
 	float FramingInterpolationSpeed = 8.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Motion", meta=(ClampMin="0.0", ClampMax="15.0"))
+	float DashFieldOfViewBoost = 11.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Motion", meta=(ClampMin="0.0", ClampMax="10.0"))
+	float SprintFieldOfViewBoost = 6.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Motion", meta=(ClampMin="1.0", Units="cm/s"))
+	float DashFullEffectSpeed = 1500.0f;
+
 	/** Switches the local over-the-shoulder framing without changing gameplay facing. */
 	UFUNCTION(BlueprintCallable, Category="Camera|Framing")
 	void SetCombatRightShoulder(bool bUseRightShoulder);
@@ -85,9 +95,13 @@ private:
 	void OnControllerChanged(APawn* Pawn, AController* OldController, AController* NewController);
 
 	void UnregisterAbilitySystemBinding();
+	void UpdateMotionFraming(float DeltaTime);
 
 	TWeakObjectPtr<UAbilitySystemComponent> BoundAbilitySystemComponent;
 	FDelegateHandle CombatModeTagEventHandle;
+	float BaseFieldOfView = 90.0f;
+	float DashMotionAlpha = 0.0f;
+	float SprintMotionAlpha = 0.0f;
 	bool bIsCombatMode = false;
 	bool bIsLocallyControlled = false;
 	bool bUseRightCombatShoulder = true;

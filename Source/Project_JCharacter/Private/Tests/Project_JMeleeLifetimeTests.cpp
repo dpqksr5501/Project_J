@@ -14,6 +14,10 @@
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JGameplayTags.h"
 #include "Animation/AnimInstance.h"
+#include "Animation/AnimMontage.h"
+#include "Animation/ActiveMontageInstanceScope.h"
+#include "Animation/AnimNotifies/AnimNotify.h"
+#include "Animation/Project_JAnimNotifyState_ComboWindow.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
 #include "Engine/Engine.h"
@@ -60,10 +64,24 @@ bool FProjectJMeleeLifetimeTest::RunTest(const FString& Parameters)
  TestTrue(TEXT("Presentation remains active before the authored trail notify"), Presentation->GetActiveAttackTag().IsValid());
  TestNotNull(TEXT("Hit definition remains active"), Hit->GetActiveAttackDefinition());
  TestTrue(TEXT("Montage is playing"), Player->GetMesh()->GetAnimInstance()->IsAnyMontagePlaying());
+ FAnimNotifyEvent WindowEvent;
+ FAnimNotifyEventReference OldWindow(&WindowEvent, ASC->GetCurrentMontage());
+ const auto* OriginalInstance = Player->GetMesh()->GetAnimInstance()->GetActiveInstanceForMontage(ASC->GetCurrentMontage());
+ if (TestNotNull(TEXT("First montage has an execution identity"), OriginalInstance))
+ {
+  OldWindow.AddContextData<UE::Anim::FAnimNotifyMontageInstanceContext>(OriginalInstance->GetInstanceID());
+  TestTrue(TEXT("Current execution can open an authored window"), First->MatchesAttackMontageSource(Player->GetMesh(), OldWindow));
+  TestTrue(TEXT("Current execution can dispatch a hit or cosmetic cue"),
+   UProject_JGameplayAbility_Melee::CanDispatchAttackNotify(*Player->GetMesh(), OldWindow));
+ }
  ASC->CancelAbilityHandle(FirstHandle); ASC->CancelAbilityHandle(SecondHandle);
  TestFalse(TEXT("Cancellation clears presentation"), Presentation->GetActiveAttackTag().IsValid());
  Input->ClearCommandInputHistory(); Input->HandleInputTagPressed(Tags.InputTag_Weapon_LMB);
  TestTrue(TEXT("A fresh attack starts after cancellation"), First->IsActive());
+ TestFalse(TEXT("A late Begin from a cancelled copy of the same montage is rejected"),
+  First->MatchesAttackMontageSource(Player->GetMesh(), OldWindow));
+ TestFalse(TEXT("A previous execution cannot start a hit or cosmetic cue on its replacement"),
+  UProject_JGameplayAbility_Melee::CanDispatchAttackNotify(*Player->GetMesh(), OldWindow));
  TestTrue(TEXT("Repeated attack restores presentation"), Presentation->GetActiveAttackTag().IsValid());
  Second->EndAbility(SecondHandle, First->GetCurrentActorInfo(), FGameplayAbilityActivationInfo(), true, true);
  TestTrue(TEXT("Inactive sibling's late end cannot clear current presentation"), Presentation->GetActiveAttackTag().IsValid());
@@ -77,8 +95,15 @@ bool FProjectJMeleeLifetimeTest::RunTest(const FString& Parameters)
   FGameplayEventData Payload; Payload.EventTag = Tags.InputTag_Weapon_LMB;
   ASC->HandleGameplayEvent(Payload.EventTag, &Payload);
   TestEqual(TEXT("Buffered input preserves the current attack"), Presentation->GetActiveAttackTag(), StartNode->AttackDefinition->AttackTag);
-  Payload.EventTag = Tags.Event_Combat_ComboWindow; Payload.EventMagnitude = 1;
-  ASC->HandleGameplayEvent(Payload.EventTag, &Payload);
+  auto* Montage = ASC->GetCurrentMontage();
+  const auto* Instance = Player->GetMesh()->GetAnimInstance()->GetActiveInstanceForMontage(Montage);
+  if (TestNotNull(TEXT("The new montage has an execution identity"), Instance))
+  {
+   auto* Notify = NewObject<UProject_JAnimNotifyState_ComboWindow>(Montage);
+   FBranchingPointNotifyPayload Branch(Player->GetMesh(), Montage, &WindowEvent, Instance->GetInstanceID());
+   Notify->BranchingPointNotifyBegin(Branch);
+   Notify->BranchingPointNotifyEnd(Branch);
+  }
   TestTrue(TEXT("Same ability continues the combo"), First->IsActive());
   TestEqual(TEXT("Opening the combo window advances presentation"), Presentation->GetActiveAttackTag(), NextNode->AttackDefinition->AttackTag);
   TestTrue(TEXT("Opening the combo window advances hit validation"), Hit->GetActiveAttackDefinition() == NextNode->AttackDefinition);

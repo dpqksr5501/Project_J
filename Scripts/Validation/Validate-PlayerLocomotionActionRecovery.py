@@ -18,7 +18,7 @@ controller=unreal.GameplayStatics.get_player_controller(world,0)
 anim=pawn.get_source_mesh().get_anim_instance();inputs=local_inputs(world)
 actions={n:unreal.load_asset('/Game/Input/Actions/IA_'+n) for n in
          ['Move','MoveIntent_Forward','ToggleCombat','Jump','Skill_T']}
-montages={n:unreal.load_asset('/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/AM_Spellblade_'+n)
+montages={n:unreal.load_asset('/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_'+n)
           for n in ['LMB1','R','Equip']}
 assert all(actions.values()) and all(montages.values())
 assert not pawn.get_current_montage(),'Start after equipment initialization'

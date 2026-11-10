@@ -144,9 +144,9 @@ bool FProjectJModularSharedPhysicsBounds::RunTest(const FString&)
         TestEqual(TEXT("Shared opt-in value is restored"),Shared->GetInt(),SavedShared);
         TestTrue(TEXT("Shared opt-in SetBy priority is preserved"),EConsoleVariableFlags(Shared->GetFlags() & ECVF_SetByMask)==SavedSetBy);
     };
-    auto* LeaderAsset=LoadObject<USkeletalMesh>(nullptr,TEXT("/Game/Spellblade/Meshes/SK_Spellblade_Complete.SK_Spellblade_Complete"));
-    auto* Lower=LoadObject<USkeletalMesh>(nullptr,TEXT("/Game/Spellblade/Meshes/SK_Spellblade_lower.SK_Spellblade_lower"));
-    auto* Shoulder=LoadObject<USkeletalMesh>(nullptr,TEXT("/Game/Spellblade/Meshes/SK_Spellblade_sho.SK_Spellblade_sho"));
+    auto* LeaderAsset=LoadObject<USkeletalMesh>(nullptr,TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete.SK_Spellblade_Complete"));
+    auto* Lower=LoadObject<USkeletalMesh>(nullptr,TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_lower.SK_Spellblade_lower"));
+    auto* Shoulder=LoadObject<USkeletalMesh>(nullptr,TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_sho.SK_Spellblade_sho"));
     auto* PA=LoadObject<UPhysicsAsset>(nullptr,TEXT("/Game/Characters/Mannequins/Rigs/PA_Mannequin.PA_Mannequin"));
     if(!TestNotNull(TEXT("Actual hidden source asset"),LeaderAsset) || !TestNotNull(TEXT("Actual lower part"),Lower) ||
        !TestNotNull(TEXT("Different actual shoulder part"),Shoulder) || !TestNotNull(TEXT("Actual shared physics asset"),PA)) return false;

@@ -9,8 +9,11 @@
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
 #include "Backend/Project_JLocalProfileSubsystem.h"
+#include "CharacterClass/Project_JCharacterClassDefinition.h"
+#include "CharacterClass/Project_JProgressionComponent.h"
 #include "Engine/GameInstance.h"
 #include "Project_JAbilitySystemComponent.h"
+#include "Project_JPlayerCharacter.h"
 #include "Abilities/GameplayAbility.h"
 #include "GameFramework/Pawn.h"
 #include "UObject/StrongObjectPtr.h"
@@ -97,6 +100,28 @@ void AProject_JGameMode::HandleStartingNewPlayer_Implementation(APlayerControlle
 	}
 	Super::HandleStartingNewPlayer_Implementation(NewPlayer);
 }
+
+UClass* AProject_JGameMode::GetDefaultPawnClassForController_Implementation(AController* InController)
+{
+	const auto* State = IsValid(InController) ? InController->GetPlayerState<AProject_JPlayerState>() : nullptr;
+	const auto* Progression = State ? State->ProgressionComponent.Get() : nullptr;
+	const auto* Job = Progression ? Progression->GetState().ClassDefinition.Get() : nullptr;
+	if (Job && !PlayerPawnClassesByJob.IsEmpty())
+	{
+		if (const auto* PawnClass = PlayerPawnClassesByJob.Find(Job->ClassId))
+		{
+			const auto* Defaults = PawnClass->GetDefaultObject();
+			if (Defaults && Defaults->GetCharacterClassId() == Job->ClassId)
+			{
+				return PawnClass->Get();
+			}
+		}
+		UE_LOG(LogGameMode, Error, TEXT("Missing or invalid player pawn mapping for job %s"), *Job->ClassId.ToString());
+		return nullptr;
+	}
+	return Super::GetDefaultPawnClassForController_Implementation(InController);
+}
+
 void AProject_JGameMode::Logout(AController* Exiting)
 {
 	if (auto* Profiles = GetGameInstance() ? GetGameInstance()->GetSubsystem<UProject_JLocalProfileSubsystem>() : nullptr)

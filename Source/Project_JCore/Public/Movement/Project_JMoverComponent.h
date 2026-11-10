@@ -78,6 +78,9 @@ public:
  void QueueGameplayFacing(FRotator Facing);
  /** Attach movement extraction to an already playing montage; never starts a second montage. */
  void FollowGameplayMontage(class UAnimMontage* Montage);
+ /** Supplies dash movement settings only during this synchronous montage start. */
+ void StartGameplayDashMontage(class UAnimMontage* Montage, FVector Direction, float TravelEndPosition,
+  TFunctionRef<void()> StartMontage);
  void StopGameplayMontageRootMotion(class UAnimMontage* ExpectedMontage=nullptr);
  /** Synchronous authority handover: writes the backend's pending state before acknowledging a pose. */
  bool ApplyAuthorityHandoverTransform(const FTransform& Transform);
@@ -90,6 +93,7 @@ protected:
   const FMoverTickStartData& StartState, const FMoverTimeStep& FirstStep,
   const FMoverPredictTrajectoryParams& PredictionParams, TArray<FTrajectorySampleInfo>& OutSamples) override;
 private:
+ void ReleaseGameplayMontageTracking();
  UFUNCTION() void GameplayMontageSectionChanged(class UAnimMontage* Montage,FName Section,bool bLooped);
  UFUNCTION() void GameplayMontageEnded(class UAnimMontage* Montage,bool bInterrupted);
 	UFUNCTION() void FinishExternalMovement(const FMoverSyncState& State, const FMoverAuxStateContext& Aux);
@@ -99,4 +103,12 @@ private:
  TWeakObjectPtr<class UAnimMontage> RootMotionMontage;
  int32 RootMotionMontageInstance=INDEX_NONE;
  TWeakObjectPtr<class UAnimInstance> RootMotionAnim;
+ struct FDashMontageStart
+ {
+  const class UAnimMontage* Montage;
+  FVector Direction;
+  float TravelEndPosition;
+ };
+ const FDashMontageStart* DashMontageStart = nullptr;
+ bool bRootMotionDash = false;
 };

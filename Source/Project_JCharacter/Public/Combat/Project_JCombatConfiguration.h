@@ -24,6 +24,8 @@ struct PROJECT_JCHARACTER_API FProject_JCombatConfiguration
 	GENERATED_BODY()
 	UPROPERTY(BlueprintReadOnly) TObjectPtr<const UProject_JCombatStyleDefinition> GameplayStyle = nullptr;
 	UPROPERTY(BlueprintReadOnly) TObjectPtr<const UProject_JCombatStyleDefinition> AnimationStyle = nullptr;
+	/** Explicit hand-contact override, independent of linked-layer selection. */
+	UPROPERTY(BlueprintReadOnly) TObjectPtr<const UProject_JCombatStyleDefinition> PassiveLeftGripStyle = nullptr;
 	UPROPERTY(BlueprintReadOnly) EProject_JCombatConfigurationSource GameplaySource = EProject_JCombatConfigurationSource::None;
 	UPROPERTY(BlueprintReadOnly) EProject_JCombatConfigurationSource AnimationSource = EProject_JCombatConfigurationSource::None;
 	UPROPERTY(BlueprintReadOnly) int32 Revision = 0;

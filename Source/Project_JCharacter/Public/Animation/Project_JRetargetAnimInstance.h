@@ -56,6 +56,11 @@ public:
 	/** Immutable GT snapshot consumed by the body graph's worker update. */
 	const FProject_JInputPoseContact& GetInputPoseContact(bool bPrimary) const
 	{ return bPrimary ? SnapshotRightInputPoseContact : SnapshotLeftInputPoseContact; }
+	bool UsesAuthoredCarryRotation() const { return bUseAuthoredCarryRotation; }
+	bool ShouldLimitCarryReach() const
+	{
+		return bCarryOverlapsActionSnapshot && bUseAuthoredCarryRotation && SmoothedLeftContactAlpha <= UE_SMALL_NUMBER;
+	}
 
 	/**
 	 * Explicitly registers or clears the weapon visual component to track.
@@ -217,6 +222,9 @@ protected:
 	FTransform SnapshotLeftGripInPrimaryHandSpace = FTransform::Identity;
 	FName SnapshotPrimaryHandBoneName = NAME_None;
 	bool bHasPrimaryHandSpaceGripSnapshot = false;
+	bool bAuthoredCarryRotationSnapshot = false;
+	bool bCarryOverlapsActionSnapshot = false;
+	bool bPassiveLeftActionBlendSnapshot = false;
 	bool bHasValidRightSnapshot = false;
 	/** A hand-driven weapon cannot be an IK target for that same hand, even for one fading frame. */
 	bool bPrimaryIKSuppressedSnapshot = false;
@@ -228,6 +236,9 @@ protected:
 	FProject_JInputPoseContact SnapshotLeftInputPoseContact;
 	float TargetRightAlphaSnapshot = 1.0f;
 	float TargetLeftAlphaSnapshot = 0.0f;
+	float LeftCarryAlphaSnapshot = 0.0f;
+	float SmoothedLeftContactAlpha = 0.0f;
+	bool bUseAuthoredCarryRotation = false;
 	FVector SnapshotRightElbowTarget = FVector::ZeroVector;
 	FVector SnapshotLeftElbowTarget = FVector::ZeroVector;
 };

@@ -9,6 +9,7 @@
 #include "Project_JGameMode.generated.h"
 
 class AProject_JPlayerState;
+class AProject_JPlayerCharacter;
 
 /**
  *  Simple GameMode for a third person game
@@ -26,6 +27,7 @@ public:
 	virtual void InitGameState() override;
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 	virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
+	virtual UClass* GetDefaultPawnClassForController_Implementation(AController* InController) override;
 	virtual void Logout(AController* Exiting) override;
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 
@@ -50,6 +52,10 @@ public:
 	int32 MaxTrustedSessions = 128;
 
 protected:
+	/** Selects the avatar from the server's committed progression on initial spawn and respawn. */
+	UPROPERTY(EditDefaultsOnly, Category="MMO|Character")
+	TMap<FName, TSubclassOf<AProject_JPlayerCharacter>> PlayerPawnClassesByJob;
+
 	virtual FProject_JWorldInstanceId CreatePrototypeWorldInstanceId() const;
 	virtual void AssignPrototypeIdentity(AProject_JPlayerState& ProjectPlayerState) const;
 

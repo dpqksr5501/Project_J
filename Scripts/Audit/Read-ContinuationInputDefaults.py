@@ -42,16 +42,17 @@ controller_class = gm.get_editor_property('player_controller_class')
 pawn_class = gm.get_editor_property('default_pawn_class')
 controller = unreal.get_default_object(controller_class) if controller_class else None
 pawn = unreal.get_default_object(pawn_class) if pawn_class else None
-greatsword_class = unreal.EditorAssetLibrary.load_blueprint_class('/Game/Character_BPs/Spellblade/BP_Spellblade')
+greatsword_class = unreal.EditorAssetLibrary.load_blueprint_class('/Game/Character_BPs/GreatSword/BP_Greatsword')
 greatsword = unreal.get_default_object(greatsword_class) if greatsword_class else None
 actions = ['jump_action','move_action','move_intent_forward_action','move_intent_backward_action',
            'move_intent_left_action','move_intent_right_action','look_action','mouse_look_action',
            'sprint_action','toggle_combat_action','attack_action','heavy_attack_action','skill_modifier_action',
            'interact_action','prototype_starting_weapon','sprint_ability_tag']
-registry = json.loads((root / 'Saved/Validation/Continuation_20261014/AssetRegistry1/registry.json').read_text(encoding='utf-8-sig'))
-packages = sorted({row['package'] for row in registry['assets']
-                   if row['package'].startswith('/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/')
-                   and 'AnimMontage' in row['asset_class_path']})
+registry = unreal.AssetRegistryHelpers.get_asset_registry()
+registry.search_all_assets(synchronous_search=True)
+packages = sorted(str(asset.package_name) for asset in registry.get_assets_by_path(
+    '/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage', include_only_on_disk_assets=True)
+    if str(asset.asset_class_path.asset_name) == 'AnimMontage')
 montages = []
 for package in packages:
     montage = unreal.load_asset(package)
@@ -75,7 +76,7 @@ for package in packages:
         errors.append({'asset': package, 'public_api': 'AnimationLibrary.get_animation_notify_events', 'error': str(error)})
     montages.append({'asset': package, 'state_notifies': notifies})
 result = {
-    'scope_ko': 'Config global GameMode와 그 Controller/Pawn CDO, actual Greatsword BP CDO의 입력 property 및 기존 registry에서 관련 Sword montage만 public API로 로드. 실제 레벨 WorldSettings override·runtime instance·focus/device/BP graph 전체 완료가 아님.',
+    'scope_ko': 'Config global GameMode와 Controller/Pawn CDO, Greatsword BP CDO의 입력 설정 및 현재 Asset Registry의 대검 몽타주를 공개 API로 조회.',
     'asset_mutation': False, 'asset_save': False,
     'game_mode': {'class': path(gm_class), 'defaults': read_properties(gm, ['player_controller_class','default_pawn_class'])},
     'controller': {'class': path(controller_class), 'defaults': read_properties(controller, ['default_mapping_contexts','mobile_excluded_mapping_contexts','force_touch_controls'])} if controller else None,

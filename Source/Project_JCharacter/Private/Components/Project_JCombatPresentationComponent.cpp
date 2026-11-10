@@ -229,6 +229,10 @@ void UProject_JCombatPresentationComponent::PlayCue(const FGameplayTag CueTag)
 
 	if (GetOwner() && GetOwner()->HasAuthority())
 	{
+		const TStrongObjectPtr<ThisClass> Self(this);
+		const TStrongObjectPtr<AActor> Owner(GetOwner());
+		const uint32 Instance = ActiveAttackInstance;
+		const FGameplayTag Attack = ActiveAttackTag;
 		bool bRecoveryChanged = false;
         bool bWarningChanged = false;
 		if (Cue && Cue->bLooping)
@@ -246,13 +250,20 @@ void UProject_JCombatPresentationComponent::PlayCue(const FGameplayTag CueTag)
             bRecoveryChanged = bWarningChanged = true;
         }
         if (bRecoveryChanged) { PublishRecoveryState(); }
+		const int32 Revision = ReplicatedPresentationState.Revision;
         if (bWarningChanged) { MulticastWarningPresentationState(ReplicatedPresentationState); }
 
 		// A listen server is both the authority and a local viewer.  The multicast
 		// handler deliberately skips authority to avoid duplicate effects, so play
 		// the cosmetic locally before notifying remote clients.
 		PlayCueLocal(CueTag);
-		MulticastPlayPresentationCue(ActiveAttackTag, CueTag, true, ++NextPresentationEventOrder, ActiveAttackInstance, ReplicatedPresentationState);
+		// A Niagara activation callback can end or replace the attack. Do not
+		// stamp the outgoing cue with the new attack or a newer recovery state.
+		if (CanAcceptPresentation() && GetOwner() == Owner.Get() && Owner->HasAuthority() &&
+			ActiveAttackInstance == Instance && ActiveAttackTag == Attack && ReplicatedPresentationState.Revision == Revision)
+		{
+			MulticastPlayPresentationCue(Attack, CueTag, true, ++NextPresentationEventOrder, Instance, ReplicatedPresentationState);
+		}
 		return;
 	}
 

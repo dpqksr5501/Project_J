@@ -162,7 +162,7 @@ bool FProjectJMannyPlaybackBindings::RunTest(const FString&)
   }
  }
  int32 Stacks=0,AuthoredStacks=0,References=0;
- for(const TCHAR* Path:{TEXT("/Game/Animation_Logic/ABPs/ABP_Player_Master.ABP_Player_Master"),TEXT("/Game/Animation_Logic/ABPs/Spellblade/ABP_Spellblade_Layers.ABP_Spellblade_Layers"),TEXT("/Game/Animation_Logic/ABPs/Spellblade/ABP_Spellblade_Woman_RunTIme.ABP_Spellblade_Woman_RunTIme")})
+ for(const TCHAR* Path:{TEXT("/Game/Animation_Logic/ABPs/ABP_Player_Master.ABP_Player_Master"),TEXT("/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Basic.ABP_Greatsword_Basic"),TEXT("/Game/Animation_Logic/ABPs/Spellblade/ABP_Spellblade_Woman_RunTIme.ABP_Spellblade_Woman_RunTIme")})
  {
   auto* BP=LoadObject<UAnimBlueprint>(nullptr,Path);if(!TestTrue(TEXT("Production animation class loads"),BP && BP->GeneratedClass && BP->TargetSkeleton))continue;
   TArray<UEdGraph*> Graphs;BP->GetAllGraphs(Graphs);

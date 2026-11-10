@@ -16,7 +16,7 @@ bool FProjectJDefinitionRegistryAtomicTest::RunTest(const FString&)
 	auto* World = GI->GetWorld();
 	ON_SCOPE_EXIT { GI->Shutdown(); World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
 	auto* Registry = GI->GetSubsystem<UProject_JCharacterDataSubsystem>();
-	auto* Authored = LoadObject<UProject_JCharacterClassDefinition>(nullptr, TEXT("/Game/DataAssetSets/Class/DA_Class_Spellblade.DA_Class_Spellblade"));
+	auto* Authored = LoadObject<UProject_JCharacterClassDefinition>(nullptr, TEXT("/Game/DataAssetSets/Class/DA_Class_Greatsword.DA_Class_Greatsword"));
 	auto* Item = LoadObject<UProject_JEquipmentItemDefinition>(nullptr, TEXT("/Game/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_Equip.DA_Greatsword_Equip"));
 	if (!TestNotNull(TEXT("Real registry"), Registry) || !TestNotNull(TEXT("Authored class"), Authored) || !TestNotNull(TEXT("Authored item"), Item)) return false;
 	const uint64 BootstrapRefreshes = Registry->GetRegistryStats().Refreshes;

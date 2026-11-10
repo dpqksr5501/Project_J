@@ -7,10 +7,13 @@
 #include "Camera/CameraComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Movement/Project_JMoverPawn.h"
+#include "Movement/Project_JMontageDashMove.h"
+#include "Movement/Project_JMoverLifecycle.h"
 #include "DefaultMovementSet/CharacterMoverComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Project_JGameplayTags.h"
+#include "Project_JPlayerCharacter.h"
 
 UProject_JCameraComponent::UProject_JCameraComponent()
 {
@@ -68,6 +71,8 @@ void UProject_JCameraComponent::RefreshAbilitySystemBinding()
 		return;
 	}
 	UnregisterAbilitySystemBinding();
+	DashMotionAlpha = 0.0f;
+	SprintMotionAlpha = 0.0f;
 	bIsCombatMode = ASC && ASC->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_CombatMode);
 	if (!bIsLocallyControlled) return;
 
@@ -78,7 +83,8 @@ void UProject_JCameraComponent::RefreshAbilitySystemBinding()
 			? FVector(CombatSocketOffset.X, bUseRightCombatShoulder ? CombatSocketOffset.Y : -CombatSocketOffset.Y, CombatSocketOffset.Z)
 			: NormalSocketOffset;
 	}
-	if (FollowCamera) FollowCamera->SetFieldOfView(bIsCombatMode ? CombatFieldOfView : NormalFieldOfView);
+	BaseFieldOfView = bIsCombatMode ? CombatFieldOfView : NormalFieldOfView;
+	if (FollowCamera) FollowCamera->SetFieldOfView(BaseFieldOfView);
 	if (ASC)
 	{
 		BoundAbilitySystemComponent = ASC;
@@ -131,11 +137,50 @@ void UProject_JCameraComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 			: NormalSocketOffset;
 		CameraBoom->SocketOffset = FMath::VInterpTo(CameraBoom->SocketOffset, TargetOffset, DeltaTime, FramingInterpolationSpeed);
 	}
+	UpdateMotionFraming(DeltaTime);
 	if (FollowCamera)
 	{
 		const float TargetFOV = bIsCombatMode ? CombatFieldOfView : NormalFieldOfView;
-		FollowCamera->SetFieldOfView(FMath::FInterpTo(FollowCamera->FieldOfView, TargetFOV, DeltaTime, FramingInterpolationSpeed));
+		BaseFieldOfView = FMath::FInterpTo(BaseFieldOfView, TargetFOV, DeltaTime, FramingInterpolationSpeed);
+		const float MotionBoost = FMath::Lerp(SprintMotionAlpha * SprintFieldOfViewBoost, DashFieldOfViewBoost, DashMotionAlpha);
+		FollowCamera->SetFieldOfView(FMath::Clamp(BaseFieldOfView + MotionBoost, 1.0f, 170.0f));
 	}
+}
+
+void UProject_JCameraComponent::UpdateMotionFraming(float DeltaTime)
+{
+	float DashTarget = 0.0f;
+	float SprintTarget = 0.0f;
+	const auto* Player = Cast<AProject_JPlayerCharacter>(GetOwner());
+	const auto* Mover = Player ? Player->GetMover() : nullptr;
+	if (Mover && Mover->IsOnGround())
+	{
+		const auto& State = Mover->GetSyncState();
+		const FVector Velocity = Player->GetVelocity();
+		if (Player->IsDodging())
+		{
+			if (const auto* Dash = State.LayeredMoves.FindActiveMove<FProject_JMontageDashMove>())
+			{
+				// A blocked dash has no forward speed and fades out just like a completed dash.
+				const float ForwardSpeed = FVector::DotProduct(Velocity, Dash->TravelDirection);
+				DashTarget = FMath::GetMappedRangeValueClamped(
+					FVector2f(0.2f * DashFullEffectSpeed, DashFullEffectSpeed), FVector2f(0.0f, 1.0f), ForwardSpeed);
+			}
+		}
+		if (const auto* Gait = State.SyncStateCollection.FindDataByType<FProject_JMoverLifecycle>(); Gait && Gait->bSprint)
+		{
+			const float SprintSpeed = Player->GetMoverMaxSpeed(true);
+			if (SprintSpeed > 0.0f)
+			{
+				const float SpeedFraction = Velocity.Size2D() / SprintSpeed;
+				SprintTarget = FMath::GetMappedRangeValueClamped(FVector2f(0.55f, 1.0f), FVector2f(0.0f, 1.0f), SpeedFraction);
+			}
+		}
+	}
+
+	DashMotionAlpha = FMath::FInterpConstantTo(DashMotionAlpha, DashTarget, DeltaTime,
+		DashTarget > DashMotionAlpha ? 20.0f : 6.0f);
+	SprintMotionAlpha = FMath::FInterpConstantTo(SprintMotionAlpha, SprintTarget, DeltaTime, 4.0f);
 }
 
 void UProject_JCameraComponent::OnCombatStateTagChanged(const FGameplayTag CallbackTag, int32 NewCount)

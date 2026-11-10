@@ -59,6 +59,8 @@ EDataValidationResult UProject_JComboDefinition::IsDataValid(FDataValidationCont
 	EDataValidationResult Result = Super::IsDataValid(Context);
 	bool bHasError = Result == EDataValidationResult::Invalid;
 	TSet<FGameplayTag> KnownNodeTags;
+	TSet<FGameplayTag> ReachableNodeTags;
+	TArray<const FProject_JComboNode*> PendingNodes;
 	bool bHasStartNode = false;
 
 	for (int32 NodeIndex = 0; NodeIndex < Nodes.Num(); ++NodeIndex)
@@ -76,6 +78,11 @@ EDataValidationResult UProject_JComboDefinition::IsDataValid(FDataValidationCont
 		}
 		KnownNodeTags.Add(Node.NodeTag);
 		bHasStartNode |= !Node.StartInputTags.IsEmpty();
+		if (!Node.StartInputTags.IsEmpty())
+		{
+			ReachableNodeTags.Add(Node.NodeTag);
+			PendingNodes.Add(&Node);
+		}
 
 		if (!Node.AttackDefinition)
 		{
@@ -110,6 +117,30 @@ EDataValidationResult UProject_JComboDefinition::IsDataValid(FDataValidationCont
 			{
 				Project_J::DataValidation::AddError(Context, bHasError, FText::Format(NSLOCTEXT("ProjectJComboDefinition", "UnknownTransitionTarget", "Node '{0}' transitions to unknown node '{1}'."), FText::FromString(Node.NodeTag.ToString()), FText::FromString(Transition.TargetNodeTag.ToString())));
 			}
+		}
+	}
+
+	// Reachability is structural. An owner-tag condition may narrow a route
+	// further, but it cannot make an otherwise disconnected node reachable.
+	for (int32 Index = 0; Index < PendingNodes.Num(); ++Index)
+	{
+		for (const auto& Transition : PendingNodes[Index]->Transitions)
+		{
+			if (ReachableNodeTags.Contains(Transition.TargetNodeTag)) { continue; }
+			if (const auto* Target = FindNode(Transition.TargetNodeTag))
+			{
+				ReachableNodeTags.Add(Transition.TargetNodeTag);
+				PendingNodes.Add(Target);
+			}
+		}
+	}
+	for (const FGameplayTag Tag : KnownNodeTags)
+	{
+		if (!ReachableNodeTags.Contains(Tag))
+		{
+			Project_J::DataValidation::AddWarning(Context,
+				FText::Format(NSLOCTEXT("ProjectJComboDefinition", "UnreachableNode",
+					"Combo node '{0}' is unreachable from every start input."), FText::FromString(Tag.ToString())));
 		}
 	}
 

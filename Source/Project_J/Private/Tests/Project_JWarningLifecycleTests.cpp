@@ -37,7 +37,7 @@ bool FProjectJRegistryBootstrap::RunTest(const FString&)
 	auto* World=GI->GetWorld();
 	ON_SCOPE_EXIT { GI->Shutdown(); World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
 	auto* Registry=GI->GetSubsystem<UProject_JCharacterDataSubsystem>();
-	auto* Class=LoadObject<UProject_JCharacterClassDefinition>(nullptr,TEXT("/Game/DataAssetSets/Class/DA_Class_Spellblade.DA_Class_Spellblade"));
+	auto* Class=LoadObject<UProject_JCharacterClassDefinition>(nullptr,TEXT("/Game/DataAssetSets/Class/DA_Class_Greatsword.DA_Class_Greatsword"));
 	if (!TestNotNull(TEXT("Real GI registry"),Registry) || !TestNotNull(TEXT("Authored production class"),Class)) return false;
 	TestEqual(TEXT("PrimaryAsset class is ready before persistence or caller refresh"),Registry->GetClassDefinition(Class->ClassId),Class);
 	TArray<FText> Errors;

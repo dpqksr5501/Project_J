@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 
 class USkeletalMeshComponent;
+class USkeletalMesh;
 class APawn;
 class UProject_JHandGripProfile;
 class UProject_JRetargetAnimInstance;
@@ -11,6 +12,11 @@ struct FProject_JGripArmBones;
 
 namespace Project_J::Animation
 {
+	/** Locomotion contact intent. Action montages own their own grip windows. */
+	inline constexpr TCHAR LeftHandCarryIKCurve[] = TEXT("LeftHandCarryIK");
+	inline constexpr TCHAR LeftHandCarryAuthoredRotationCurve[] = TEXT("LeftHandCarryAuthoredRotation");
+	inline constexpr TCHAR CastUpperBodySlot[] = TEXT("CastUpperBody");
+
 	/** Runtime contact owner in either pose route: body main instance, otherwise body post process. */
 	PROJECT_JCHARACTER_API const UProject_JRetargetAnimInstance* FindBodyContactController(const USkeletalMeshComponent* Mesh);
 	/** One precedence rule for visual animation and normal weapon mounting. Game thread only. */
@@ -37,6 +43,9 @@ namespace Project_J::Animation
 
 	/** Accept float pose/import roundoff, but reject material anisotropy, singular and mirrored scales. */
 	PROJECT_JCHARACTER_API bool IsPositiveUniformContactScale(const FVector& Scale);
+	/** Read a fixed weapon grip in mesh component space from its root reference pose. */
+	PROJECT_JCHARACTER_API bool ResolveFixedSkeletalGripInRoot(const USkeletalMesh& Mesh, FName SocketName,
+		FTransform& OutGripInRoot);
 
 	/** Fixed root-in-hand mount, preserving weapon mesh size. Positive uniform scales only (no shear/mirroring). */
 	PROJECT_JCHARACTER_API bool MakePrimaryGripAttachment(const FTransform& GripInRoot,

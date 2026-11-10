@@ -7,18 +7,36 @@
 | 대상 | 현재 이름·경로 | 보존하는 계약 |
 | --- | --- | --- |
 | 캐릭터 BP | `/Game/Character_BPs/Spellblade/BP_Spellblade` | 공통 Player Master 상속·Mover·GAS |
-| 전용 몸체·Skeleton·ABP·Control/IK Rig·프로필 | `/Game/Spellblade/**` | UE5 코어 본, 추가 얼굴·머리·의상 본, 기존 후처리 역할 |
+| 전용 몸체·Skeleton·ABP·Control/IK Rig·프로필 | `/Game/Characters/Spellblade/**` | UE5 코어 본, 추가 얼굴·머리·의상 본, 기존 후처리 역할 |
 | 기존 몸체·의상 제작 자원 | `/Game/Characters/Spellblade/**` | 제작·실시간 리타깃 대체 경로 |
 | 전투 애니메이션·전용 DA | Spellblade 폴더·에셋 이름 | 기존 공격 데이터·태그·노티파이의 역할 |
 | native 호환 fixture | `AProject_JSpellbladeCharacter` | 이전 클래스는 CoreRedirect로 연결 |
 | 캐릭터 제작 원본 | `SourceArt/Characters/Spellblade/UE5/Spellblade_UE5_Rig.blend` | `Armature` 318본, `CTRL_Spellblade` 제작 컨트롤 |
 | 새 무기·장식 | `/Game/Weapons/Spellblade/**` | 원본 drawn/sheath 4종의 메시·스킨 |
-| 새 장착 아이템 | `DA_Spellblade_Equip`, `Spellblade.Starter` | 기존 전투 스타일을 재사용하는 별도 장비 |
+| 새 장착 아이템 | `DA_Spellblade_Equip`, `Spellblade.Starter` | Spellblade 전용 스타일과 전투 레이어 |
 | 기존 Basic 대검 | `/Game/Weapons/Greatsword/Basic/**`, 기존 무기 BP·장착 DA·프레젠테이션 | `Greatsword.Starter`와 기존 인벤토리 의미 |
-| 저장된 직업 ID | `GreatSword` | 기존 profile·진행도·정의 fingerprint 의미 |
+| 저장된 직업 ID | `GreatSword`, `Spellblade` | 기존 `GreatSword` profile·진행도 의미를 유지하고 `Spellblade`는 별도 ID 사용 |
 | 기존 전투 태그 | `Combo/Attack/Command/CombatStyle.Greatsword.*` 등 | 저장·명령·전투 의미의 안정 식별자 |
 
 225개 에셋의 실제 package 대응은 [AssetMappings.csv](Data/SpellbladeMigration_20261101/AssetMappings.csv)에 있다. `AssetTools.rename_assets`를 사용하고 참조를 저장한다. UObject 파일을 파일 탐색기로 옮기거나 바이너리 문자열을 수정하지 않는다. PrimaryAsset ID에는 명시적인 이전→현재 리다이렉트를 둔다. 과거 성능 보고서·원자료의 이름과 해시는 당시 실행의 근거이므로 유지한다.
+
+후속 분리에서 기존 대검의 애니메이션 패키지 60개는 CSV의 이주 전 `Great_Sword/Animations/Sword` 경로로 돌아갔다. 현재 작업 경로는 [스킬 인계 문서](Spellblade_Skill_Handoff.md#원본과-프로젝트-경로)를 따른다.
+
+2026-11-09에 별도 `/Game/Spellblade/` 아래의 45개 에셋을 기존 `/Game/Characters/Spellblade/`로 옮겼다. 폴더와 에셋 이름의 나머지 부분은 그대로이므로, 예를 들어 `Meshes/SK_Spellblade_Complete`는 새 루트 아래 같은 위치에 있다. 캐릭터 BP·전투 레이어·모션·무기·Asset Manager 데이터는 기존 담당 폴더에서 참조한다. 위 CSV와 모션 출처의 이전 경로는 당시 기록이다.
+
+이동은 Unreal AssetTools로 수행했다. 이동 후 새 프로세스에서 45개 목적지와 외부 참조 패키지 80개를 확인했다. 저장된 참조는 새 경로를 가리키고 이전 루트의 리디렉터는 0개다. 제작 도구·미리보기·테스트에 직접 적힌 경로도 새 루트로 갱신했다. 이동 전 패키지와 참조의 복구본은 중앙 보관소의 `SpellbladeConsolidationBefore.zip`에 있으며 내부 명세에서 프로젝트 상대 경로와 SHA-256을 확인할 수 있다.
+
+에디터 빌드와 애니메이션·Blend Space 미리보기 205개를 확인했다. 평지 PIE는 새 경로의 몸체와 양손 소켓을 사용해 발도·납도, 정지 가드와 이동 전환을 통과했다. 비교용 `ABP_Spellblade_Secondary`에는 이동 전 로드 시에도 legacy 손 본을 찾지 못하는 경고가 있었다.
+
+후속 BP·ABP 참조 점검에서 비교용 `ABP_Spellblade_Secondary`의 저장된 패키지 참조와 코드·설정·제작 도구 호출이 없음을 확인했다. 패키지 하나를 로컬 중앙 보관소로 옮겼다. 복구 시 에디터를 닫고 `ArchiveLocations.json`에 기록된 `centralPath`의 SHA-256을 확인한 뒤, 비어 있는 원래 경로 `Content/Characters/Spellblade/Animation/ABP_Spellblade_Secondary.uasset`에 복사한다. `ABP_Spellblade_Body`는 Complete 메시의 후처리이고, Basic 대검 레이어는 `ABP_Greatsword_Basic`으로 이름을 바꿨다. `ABP_Spellblade_Retarget`과 `ABP_Spellblade_Woman_RunTIme`은 호환 경로와 검증에서 명시적으로 로드하므로 유지한다. 별도 캐릭터 BP와 직업 정의는 [직업별 실행 경로](Spellblade_Skill_Handoff.md#직업별-실행-경로)에 정리했다.
+
+### 자동 PIE 종료 검증
+
+Windows의 UE 5.8.4에서 렌더링 PIE의 플레이 검사가 끝난 뒤 프로세스가 `0xC0000005`를 반환했다. 종료 스택에서 Core Ticker 큐가 남은 콜백을 파괴하고, 그 콜백이 잡고 있던 `SRichTextBlock`의 ICU 방향 분석 객체가 ICU 전역 정리 이후 해제되는 경로를 확인했다. 최초 콜백을 등록한 작업의 식별자는 확인하지 못했다. 알림을 꺼도 재현됐고, `OnExit`에서 큐를 비우는 첫 시도 후에도 재현됐다.
+
+프로젝트 에디터 모듈에서 Windows 5.8.4의 일반 에디터 종료에 한해 마지막 로그 정리 시점에 남은 Core Ticker 콜백을 해제한다. 모듈과 작업 스레드 종료 이후이며 ICU 종료 직전이다. 알림을 켠 동일 렌더링 PIE를 두 번 실행해 모두 종료 코드 0을 확인했다. 자동 재현의 종료 경로에 대한 호환 처리이며 다른 종료 경로나 엔진 버전은 별도 검증 범위다. 로컬 중앙 보관소에서 `SpellbladeRigExitOwnerTrace`와 `SpellbladeRigExitSkinFinal`로 스택과 재현 기록을 찾을 수 있다.
+
+후속 검증에서 현행·이전 Blend Space와 현행의 다섯 가드 시퀀스를 실제 Persona 탭으로 열고 닫았다. 탭을 열린 채 자동화가 `QUIT_EDITOR`를 직접 부르면 메인 프레임의 자산 편집기 종료 경로를 건너뛰며 별도의 AnimationEditor 접근 위반이 재현됐다. 같은 Blend Space를 열어 둔 채 `CLOSE_SLATE_MAINFRAME`을 사용한 검증은 정상 종료했다. 자동화도 사용자와 같은 메인 프레임 닫기 경로를 사용한다.
 
 새 이름은 구 클라이언트에 새 BP 경로를 자동 제공하지 않는다. 실시간 네트워크 프로토콜은 **8→9**로 올려 이전 배포물과 혼합 접속하지 않게 한다. 현재/호환 버전을 함께 갱신하고 이전 8의 엔진 checksum 거절을 시험한다. 저장 스키마 버전과 네트워크 버전은 별개다. 새 Cook·Shipping·구 Stage82와의 실제 소켓 시험은 별도 검증 대상이다.
 

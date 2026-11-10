@@ -1,5 +1,6 @@
 #include "Animation/Project_JAnimNotifyState_CombatPresentationCue.h"
 #include "Animation/AnimSequenceBase.h"
+#include "Combat/Project_JGameplayAbility_Melee.h"
 
 #include "Components/Project_JCombatPresentationComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -77,6 +78,8 @@ void UProject_JAnimNotifyState_CombatPresentationCue::NotifyBegin(USkeletalMeshC
             *GetNameSafe(Animation), *CueTag.ToString());
         return;
     }
+    if (Purpose != EProject_JCombatCuePurpose::GameplayWarning &&
+        !UProject_JGameplayAbility_Melee::CanDispatchAttackNotify(*KeepMesh.Get(), EventReference)) { return; }
     const TStrongObjectPtr<AActor> KeepOwner(OwnerActor);
     auto* Presentation = OwnerActor->FindComponentByClass<UProject_JCombatPresentationComponent>();
     if (!IsValid(Presentation) || Presentation->IsBeingDestroyed())

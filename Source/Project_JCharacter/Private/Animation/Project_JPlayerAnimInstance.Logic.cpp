@@ -160,7 +160,8 @@ bool UProject_JPlayerAnimInstance::EvaluateIsMoving()
 }
 bool UProject_JPlayerAnimInstance::EvaluateIsStarting()
 {
-	return EvaluateIsMoving() && PlayerTrajectoryFutureVelocity.Size2D()>=PlayerVelocity.Size2D()+100.
+	return bGroundRecoveryEligible && !IsActionControllingLocomotion() && EvaluateIsMoving()
+		&& PlayerTrajectoryFutureVelocity.Size2D()>=PlayerVelocity.Size2D()+100.
 		&& PlayerSpeed2D<=100.;
 }
 bool UProject_JPlayerAnimInstance::EvaluateTurnInPlace()
@@ -215,11 +216,18 @@ bool UProject_JPlayerAnimInstance::EvaluateFootPinning() { return (PlayerMovemen
 bool UProject_JPlayerAnimInstance::EvaluateSlopeWarping() { return EvaluateFootPinning() || (PlayerMovementMode == EProject_JPlayerMovementMode::Sliding); }
 EOffsetRootBoneMode UProject_JPlayerAnimInstance::EvaluateRootRotationMode()
 {
-	return IsSlotActive(TEXT("DefaultSlot")) || (PlayerMovementMode == EProject_JPlayerMovementMode::Ragdoll) || (PlayerMovementMode == EProject_JPlayerMovementMode::Flying)?EOffsetRootBoneMode::Release:EOffsetRootBoneMode::Accumulate;
+	const auto& Frame = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
+	// Root offset is rebased to the snapped component during travel. Interpolate
+	// avoids applying the component rotation delta a second time on that frame.
+	if (Frame.Movement.bMovementDashTravel) return EOffsetRootBoneMode::Interpolate;
+	const bool bSlotOwnsRoot = !Frame.Montage.bReleasedLocomotion && IsSlotActive(TEXT("DefaultSlot"));
+	return bSlotOwnsRoot || (PlayerMovementMode == EProject_JPlayerMovementMode::Ragdoll) || (PlayerMovementMode == EProject_JPlayerMovementMode::Flying)?EOffsetRootBoneMode::Release:EOffsetRootBoneMode::Accumulate;
 }
 EOffsetRootBoneMode UProject_JPlayerAnimInstance::EvaluateRootTranslationMode()
 {
-	return !IsSlotActive(TEXT("DefaultSlot")) && EvaluateFootPinning() && EvaluateIsMoving()?EOffsetRootBoneMode::Interpolate:EOffsetRootBoneMode::Release;
+	const auto& Frame = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
+	const bool bSlotOwnsRoot = !Frame.Montage.bReleasedLocomotion && IsSlotActive(TEXT("DefaultSlot"));
+	return !bSlotOwnsRoot && EvaluateFootPinning() && EvaluateIsMoving()?EOffsetRootBoneMode::Interpolate:EOffsetRootBoneMode::Release;
 }
 double UProject_JPlayerAnimInstance::EvaluateRootTranslationHalfLife() { return (PlayerMovementState == EProject_JPlayerMovementState::Idle)?.1:.3; }
 double UProject_JPlayerAnimInstance::EvaluateRootTranslationRadius() { return PlayerOffsetRootTranslationRadius; }
@@ -362,11 +370,15 @@ void UProject_JPlayerAnimInstance::UpdateNativeStates()
   // Retire requests from the covered source as well as its selected one-shot.
   PlayerNotifyTransitionReTransition=PlayerNotifyTransitionToLoop=false;
  }
- else if (GroundPresentationSeconds<TNumericLimits<double>::Max())
-  GroundPresentationSeconds+=FMath::Max(0.f,Frame.DeltaTime);
- if (!bActionOwns && (Frame.Air.bIsFalling || (PlayerMovementMode==EProject_JPlayerMovementMode::OnGround &&
-          Frame.Input.bHasMoveInput && PlayerMovementState==EProject_JPlayerMovementState::Moving)))
-  bGroundRecoveryEligible=true;
+ else
+ {
+  // The first uncovered update must still route held movement to its loop.
+  if (Frame.Air.bIsFalling || (GroundPresentationSeconds>0. && PlayerMovementMode==EProject_JPlayerMovementMode::OnGround &&
+       Frame.Input.bHasMoveInput && PlayerMovementState==EProject_JPlayerMovementState::Moving))
+   bGroundRecoveryEligible=true;
+  if (GroundPresentationSeconds<TNumericLimits<double>::Max())
+   GroundPresentationSeconds+=FMath::Max(0.f,Frame.DeltaTime);
+ }
  // Taking over a ground one-shot retires its covered presentation too.
  // Keep source clocks, input, physical movement and state-history clocks intact.
  if (bActionOwns && IsGroundOneShot(PlayerStateMachineState))
@@ -380,7 +392,8 @@ void UProject_JPlayerAnimInstance::UpdateNativeStates()
 bool UProject_JPlayerAnimInstance::IsActionControllingLocomotion() const
 {
  const auto& Frame=GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
- return Frame.Montage.bFullBodyMontageActive || Frame.Montage.FullBodyMontageWeight>ZERO_ANIMWEIGHT_THRESH || Frame.Movement.bHasGameplayRootMotion;
+ return Frame.Movement.bHasGameplayRootMotion || (!Frame.Montage.bReleasedLocomotion &&
+  (Frame.Montage.bFullBodyMontageActive || Frame.Montage.FullBodyMontageWeight>ZERO_ANIMWEIGHT_THRESH));
 }
 
 FTransform UProject_JPlayerAnimInstance::ReadOffsetRootTransform()
@@ -508,7 +521,10 @@ void UProject_JPlayerAnimInstance::UpdateNativeRootOffset(const FAnimNodeReferen
 	{
 		const FTransform Delta=PlayerCharacterProperties.BasedMovementDelta;
 		Offset->SetOffsetRootTranslation(Offset->GetOffsetRootTranslation()+Delta.GetTranslation());
-		Offset->SetOffsetRootRotation(Delta.GetRotation()*Offset->GetOffsetRootRotation());
+		const auto& Proxy=GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>();
+		// The dash already committed facing in Mover. Discard the previous locomotion yaw offset.
+		Offset->SetOffsetRootRotation(Proxy.GetThreadSafeData().Movement.bMovementDashTravel
+			? Proxy.GetComponentTransform().GetRotation() : Delta.GetRotation()*Offset->GetOffsetRootRotation());
 	}
 }
 void UProject_JPlayerAnimInstance::ResetNativeFootPlacement()

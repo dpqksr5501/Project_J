@@ -43,7 +43,11 @@ void AProject_JMoverPawn::PostInitializeComponents()
  Super::PostInitializeComponents(); Mover->InputProducer=this; Mover->SetUpdatedComponent(Capsule); Mover->SetPrimaryVisualComponent(Mesh);
  Mesh->ComponentTags.AddUnique(TEXT("ProjectJ.PoseSource")); Mesh->AddTickPrerequisiteComponent(Mover); Capsule->SetCanEverAffectNavigation(bCanAffectNavigationGeneration);
  if(auto* Settings=Mover->FindSharedSettings_Mutable<UCommonLegacyMovementSettings>())
- { Settings->MaxSpeed=800.f; Settings->Acceleration=Settings->Deceleration=4000.f; Settings->TurningRate=500.f; Settings->JumpUpwardsSpeed=500.f; }
+ {
+  Settings->MaxSpeed=800.f; Settings->Acceleration=Settings->Deceleration=4000.f; Settings->TurningRate=500.f;
+  if (ensureMsgf(FMath::IsFinite(JumpLaunchSpeed) && JumpLaunchSpeed > 0.f, TEXT("Invalid jump launch speed on %s"), *GetName()))
+   Settings->JumpUpwardsSpeed=JumpLaunchSpeed;
+ }
 }
 void AProject_JMoverPawn::BeginPlay()
 {
@@ -173,7 +177,7 @@ void AProject_JMoverPawn::ProduceInput_Implementation(int32,FMoverInputCmdContex
  if(!MoveIntent.IsNearlyZero()) Direction=FRotator(0,GetControlRotation().Yaw,0).RotateVector(FVector(MoveIntent.Y,MoveIntent.X,0));
  PopulateMoverInput(InputCmd,Direction.GetClampedToMaxSize(1.f),bStrafe,bSprint,Speed);
 }
-void AProject_JMoverPawn::PopulateMoverInput(FMoverInputCmdContext& InputCmd,FVector WorldIntent,bool bUseStrafe,bool bUseSprint,float Speed,bool bAllowJump,bool bUseVelocityInput,float AnalogAmount)
+void AProject_JMoverPawn::PopulateMoverInput(FMoverInputCmdContext& InputCmd,FVector WorldIntent,bool bUseStrafe,bool bUseSprint,float Speed,bool bAllowJump,bool bUseVelocityInput,float AnalogAmount,bool bLockFacing)
 {
  auto& Input=InputCmd.InputCollection.FindOrAddMutableDataByType<FCharacterDefaultInputs>();
  auto& Intent=InputCmd.InputCollection.FindOrAddMutableDataByType<FProject_JMoverInputs>(); Input=FCharacterDefaultInputs(); Intent=FProject_JMoverInputs();
@@ -186,8 +190,9 @@ void AProject_JMoverPawn::PopulateMoverInput(FMoverInputCmdContext& InputCmd,FVe
  // destination. Player intent must retain acceleration/braking and air momentum.
  const EMoveInputType InputType=bUseVelocityInput?EMoveInputType::Velocity:EMoveInputType::DirectionalIntent;
  Input.SetMoveInput(InputType,bUseVelocityInput?WorldIntent*Speed:WorldIntent);
- if(bUseStrafe && (!WorldIntent.IsNearlyZero() || Mover->IsAirborne())) LastOrientation=FRotator(0,Input.ControlRotation.Yaw,0).Vector(); else if(!bUseStrafe && !WorldIntent.IsNearlyZero()) LastOrientation=WorldIntent.GetSafeNormal();
- if(Mover->HasFeaturesWithTag(Mover_AnimRootMotion_Montage,false)) LastOrientation=GetActorForwardVector();
+ if(bLockFacing || Mover->HasFeaturesWithTag(Mover_AnimRootMotion_Montage,false)) LastOrientation=GetActorForwardVector();
+ else if(bUseStrafe && (!WorldIntent.IsNearlyZero() || Mover->IsAirborne())) LastOrientation=FRotator(0,Input.ControlRotation.Yaw,0).Vector();
+ else if(!bUseStrafe && !WorldIntent.IsNearlyZero()) LastOrientation=WorldIntent.GetSafeNormal();
  Input.OrientationIntent=LastOrientation; Input.bIsJumpPressed=bJumpPressed&&bAllowJump; Input.bIsJumpJustPressed=bJumpJustPressed&&Input.bIsJumpPressed;
  if(LastControlFrame!=GFrameCounter)
  {
@@ -201,9 +206,9 @@ void AProject_JMoverPawn::PopulateMoverInput(FMoverInputCmdContext& InputCmd,FVe
  static IConsoleVariable* AnalogStyle=nullptr;
  if(!AnalogStyle) AnalogStyle=IConsoleManager::Get().FindConsoleVariable(TEXT("DDCvar.AnalogInputStyle"));
  Intent.bWalk=bWalk || (!bUseVelocityInput && (!AnalogStyle || AnalogStyle->GetInt()==1) && SmoothedAnalogInputAmount<=.7f);
- Intent.ControlRotationRate=ControlYawRate;
+ Intent.ControlRotationRate=bLockFacing?0.f:ControlYawRate;
  const FVector Direction=Mover->IsAirborne()?GetVelocity().GetSafeNormal2D():WorldIntent;
- if(bUseStrafe && !Direction.IsNearlyZero() && RotationOffsetChooser)
+ if(!bLockFacing && bUseStrafe && !Direction.IsNearlyZero() && RotationOffsetChooser)
  {
   float Angle=FMath::FindDeltaAngleDegrees(LastOrientation.Rotation().Yaw,Direction.Rotation().Yaw);
   // Source ClampAngleToPreventConstantFlippingAt180, only while previously forward.

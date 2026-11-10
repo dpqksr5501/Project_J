@@ -18,6 +18,8 @@
 #include "Engine/World.h"
 #include "Equipment/Project_JEquipmentItemDefinition.h"
 #include "Game/Project_JPlayerState.h"
+#include "Game/Project_JGameMode.h"
+#include "GameFramework/PlayerController.h"
 #include "GameFramework/WorldSettings.h"
 #include "HAL/FileManager.h"
 #include "Inventory/Project_JConsumableDefinition.h"
@@ -1188,7 +1190,7 @@ bool FProjectJLocalProfileLifecycleTest::RunTest(const FString &)
 	TestTrue(TEXT("Existing registry explicitly loads authored PrimaryAssets"),
 			 Definitions && Definitions->LoadPrimaryAssetDefinitions());
 	auto *AuthoredClass = LoadObject<UProject_JCharacterClassDefinition>(
-		nullptr, TEXT("/Game/DataAssetSets/Class/DA_Class_Spellblade.DA_Class_Spellblade"));
+		nullptr, TEXT("/Game/DataAssetSets/Class/DA_Class_Greatsword.DA_Class_Greatsword"));
 	TestTrue(TEXT("Actual default character class resolves through the same saved-ID registry"),
 			 AuthoredClass && Definitions->GetClassDefinition(AuthoredClass->ClassId) == AuthoredClass);
 	World->InitializeActorsForPlay(FURL());
@@ -1200,6 +1202,100 @@ bool FProjectJLocalProfileLifecycleTest::RunTest(const FString &)
 
 namespace
 {
+struct FJobProfileRestore : IAutomationLatentCommand
+{
+	struct FJob
+	{
+		const TCHAR* Name;
+		const TCHAR* Weapon;
+		const TCHAR* Pawn;
+	};
+	const FJob Jobs[2] = {
+		{TEXT("GreatSword"), TEXT("Greatsword.Starter"), TEXT("BP_Greatsword_C")},
+		{TEXT("Spellblade"), TEXT("Spellblade.Starter"), TEXT("BP_Spellblade_C")}
+	};
+	FAutomationTestBase* Test;
+	TStrongObjectPtr<UGameInstance> GI;
+	UProject_JLocalProfileSubsystem* Profiles;
+	AProject_JPlayerState* Player = nullptr;
+	AProject_JGameMode* Mode;
+	TSharedPtr<TOptional<bool>> OpenResult;
+	int32 Index = 0;
+	int32 Step = 0;
+	double Started = FPlatformTime::Seconds();
+
+	FJobProfileRestore(FAutomationTestBase* InTest, UGameInstance* InGI, AProject_JGameMode* InMode)
+		: Test(InTest), GI(InGI), Profiles(InGI->GetSubsystem<UProject_JLocalProfileSubsystem>()), Mode(InMode) {}
+	~FJobProfileRestore()
+	{
+		auto* World = GI->GetWorld();
+		GI->Shutdown();
+		World->DestroyWorld(false);
+		GEngine->DestroyWorldContext(World);
+	}
+	void Open(const TCHAR* Name)
+	{
+		Player = GI->GetWorld()->SpawnActor<AProject_JPlayerState>();
+		OpenResult = MakeShared<TOptional<bool>>();
+		Profiles->OpenProfile(Player, Name, [Result = OpenResult](bool bOK) { *Result = bOK; });
+	}
+	bool Update() override
+	{
+		if (FPlatformTime::Seconds() - Started > 25)
+		{
+			Test->AddError(TEXT("Job profile restore fixture timed out"));
+			return true;
+		}
+		const auto& Job = Jobs[Index];
+		if (Step == 0) { Open(Job.Name); Step = 1; return false; }
+		if (!OpenResult->IsSet()) return false;
+		if (!Test->TestTrue(TEXT("Profile admitted"), OpenResult->GetValue() && Profiles->IsReady(Player))) return true;
+		if (Profiles->IsCheckpointPending(Player)) return false;
+		auto* Data = GI->GetSubsystem<UProject_JCharacterDataSubsystem>();
+		auto* Class = Data->GetClassDefinition(Job.Name);
+		auto* Item = Data->GetItemDefinition(Job.Weapon, 1);
+		if (!Test->TestNotNull(TEXT("Authored class"), Class) || !Test->TestNotNull(TEXT("Authored starter weapon"), Item)) return true;
+		auto* Progression = Player->FindComponentByClass<UProject_JProgressionComponent>();
+		auto* Inventory = Player->GetInventoryComponent();
+		auto* Equipment = Player->GetEquipmentManagerComponent();
+		if (Step == 1)
+		{
+			Player->GetProjectJAbilitySystemComponent()->InitAbilityActorInfo(Player, nullptr);
+			Progression->InitializeDefaults(Class, nullptr, 1);
+			Step = 2;
+		}
+		else if (Step == 2) { Inventory->AddItemDefinition(Item); Step = 3; }
+		else if (Step == 3)
+		{
+			const auto Items = Inventory->GetItemInstances();
+			if (!Test->TestTrue(TEXT("Starter weapon persisted in inventory"), Items.Num() == 1 && Items[0].ItemDef == Item)) return true;
+			Equipment->RequestEquipmentChange(Equipment->NewRequestId(), Items[0].InstanceId, EProject_JEquipmentSlot::Weapon, false);
+			Step = 4;
+		}
+		else if (Step == 4)
+		{
+			if (!Test->TestTrue(TEXT("Starter weapon committed"), Equipment->GetEquippedItemInSlot(EProject_JEquipmentSlot::Weapon) == Item)) return true;
+			Profiles->Detach(Player);
+			Player->Destroy();
+			Open(Job.Name);
+			Step = 5;
+		}
+		else
+		{
+			Test->TestTrue(TEXT("Reopened SQLite restores the exact job"), Progression->GetState().ClassDefinition == Class);
+			Test->TestTrue(TEXT("Reopened SQLite restores the exact equipped weapon"), Equipment->GetEquippedItemInSlot(EProject_JEquipmentSlot::Weapon) == Item);
+			auto* Controller = GI->GetWorld()->SpawnActor<APlayerController>();
+			Player->SetOwner(Controller);
+			Controller->SetPlayerState(Player);
+			auto* Pawn = Mode->SpawnDefaultPawnAtTransform(Controller, FTransform(FVector(Index * 1000, 0, 400)));
+			Test->TestTrue(TEXT("Restored job spawns its own authored pawn"), Pawn && Pawn->GetClass()->GetFName() == FName(Job.Pawn));
+			Step = 0;
+			return ++Index == UE_ARRAY_COUNT(Jobs);
+		}
+		return false;
+	}
+};
+
 struct FProfileProgressAdmission : IAutomationLatentCommand
 {
 	FAutomationTestBase* Test;
@@ -1368,6 +1464,30 @@ struct FProfileProgressAdmission : IAutomationLatentCommand
 	}
 };
 } // namespace
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJJobProfileRestoreTest, "ProjectJ.MMO.Persistence.JobPawnRestore", PersistenceTestFlags)
+bool FProjectJJobProfileRestoreTest::RunTest(const FString&)
+{
+	auto* ModeClass = LoadClass<AProject_JGameMode>(nullptr, TEXT("/Game/ThirdPerson/Blueprints/BP_Project_JGameMode.BP_Project_JGameMode_C"));
+	if (!TestNotNull(TEXT("Authored game mode"), ModeClass)) return false;
+	auto* GI = NewObject<UGameInstance>(GEngine);
+	GI->InitializeStandalone();
+	auto* World = GI->GetWorld();
+	GI->GetSubsystem<UProject_JLocalProfileSubsystem>()->DatabasePath = TestDirectory() / TEXT("JobProfiles.sqlite");
+	auto* Mode = World->SpawnActor<AProject_JGameMode>(ModeClass);
+	if (!TestNotNull(TEXT("Game mode instance"), Mode))
+	{
+		GI->Shutdown();
+		World->DestroyWorld(false);
+		GEngine->DestroyWorldContext(World);
+		return false;
+	}
+	World->InitializeActorsForPlay(FURL());
+	World->GetWorldSettings()->NotifyBeginPlay();
+	World->GetWorldSettings()->NotifyMatchStarted();
+	ADD_LATENT_AUTOMATION_COMMAND(FJobProfileRestore(this, GI, Mode));
+	return true;
+}
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJProfileProgressAdmissionTest, "ProjectJ.MMO.Persistence.ProgressAdmission", PersistenceTestFlags)
 bool FProjectJProfileProgressAdmissionTest::RunTest(const FString&)

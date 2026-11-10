@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Components/Project_JCombatHitValidationComponent.h"
 #include "Combat/Project_JAttackDefinition.h"
+#include "Combat/Project_JGameplayAbility_Melee.h"
 #include "Combat/Project_JMeleeSweep.h"
 #include "UObject/StrongObjectPtr.h"
 #include "UObject/UObjectGlobals.h"
@@ -39,6 +40,7 @@ void UProject_JAnimNotifyState_MeleeHit::NotifyBegin(USkeletalMeshComponent* Mes
 			*SocketName.ToString(), *GetNameSafe(MeshComp));
 		return;
 	}
+	if (!UProject_JGameplayAbility_Melee::CanDispatchAttackNotify(*MeshComp, EventReference)) { return; }
 	if (AActor* OwnerActor = MeshComp->GetOwner())
 	{
 		// Shared asset housekeeping follows the existing WeaponMotion/GroundContact

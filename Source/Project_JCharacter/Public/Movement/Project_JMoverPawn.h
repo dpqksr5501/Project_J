@@ -60,9 +60,12 @@ public:
  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Movement") TObjectPtr<UNavMoverComponent> NavMover;
  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation") TObjectPtr<USkeletalMeshComponent> Mesh;
 protected:
+ /** Upward velocity applied by the predicted Mover jump. */
+ UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Movement|Jump", meta=(ClampMin="1.0", Units="cm/s"))
+ float JumpLaunchSpeed=500.f;
  virtual void Landed(const FHitResult& Hit);
  UFUNCTION(BlueprintImplementableEvent, meta=(DisplayName="On Landed")) void K2_OnLanded(const FHitResult& Hit);
- void PopulateMoverInput(FMoverInputCmdContext& InputCmd, FVector WorldIntent, bool bUseStrafe, bool bUseSprint, float Speed, bool bAllowJump=true, bool bUseVelocityInput=true,float AnalogAmount=-1.f);
+ void PopulateMoverInput(FMoverInputCmdContext& InputCmd, FVector WorldIntent, bool bUseStrafe, bool bUseSprint, float Speed, bool bAllowJump=true, bool bUseVelocityInput=true,float AnalogAmount=-1.f,bool bLockFacing=false);
 private:
  UFUNCTION() void FinalizePhysicalLifecycle(const FMoverSyncState& State,const FMoverAuxStateContext& Aux);
  UFUNCTION() void UpdateBasedOrientation(const FTransform& Delta,const FMoverTimeStep& Step);

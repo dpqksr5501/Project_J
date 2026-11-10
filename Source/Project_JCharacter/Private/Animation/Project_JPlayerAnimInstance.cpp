@@ -1,4 +1,7 @@
 #include "Animation/Project_JPlayerAnimInstance.h"
+#include "Movement/Project_JMontageDashMove.h"
+#include "Movement/Project_JMontageLocomotionHandoff.h"
+#include "Animation/AnimMontage.h"
 #include "Movement/Project_JMoverLifecycle.h"
 #include "Animation/Project_JCharacterAnimInstanceProxy.h"
 #include "Animation/Project_JPreparedAnimTrajectory.h"
@@ -94,6 +97,45 @@ void UProject_JPlayerAnimInstance::AccumulateBasedMovement(const FTransform& Del
  PendingBasedMovementDelta.SetRotation((Delta.GetRotation()*PendingBasedMovementDelta.GetRotation()).GetNormalized());
 }
 
+void UProject_JPlayerAnimInstance::UpdateActionLocomotionHandoff(FProject_JAnimThreadSafeData& Data)
+{
+	const FAnimMontageInstance* Instance = GetActiveMontageInstance();
+	if (!Instance && HandoffMontageInstanceId != INDEX_NONE)
+	{
+		// A naturally fading montage is still a pose source after it leaves the active map.
+		Instance = GetMontageInstanceForID(HandoffMontageInstanceId);
+	}
+	const auto* Handoff = Instance && Instance->Montage
+		? Instance->Montage->FindMetaDataByClass<UProject_JMontageLocomotionHandoff>() : nullptr;
+	if (!Handoff)
+	{
+		HandoffMontageInstanceId = INDEX_NONE;
+		GraphRecoveryLocomotionWeight = GraphStationaryCastLegWeight = 0.f;
+		return;
+	}
+	if (HandoffMontageInstanceId != Instance->GetInstanceID())
+	{
+		HandoffMontageInstanceId = Instance->GetInstanceID();
+		GraphStationaryCastLegWeight = 0.f;
+		bCastHasHandedOffLegs = false;
+	}
+	const float Position = Instance->GetPosition();
+	Data.Montage.bReleasedLocomotion = Handoff->RecoveryStart >= 0.f && Position >= Handoff->RecoveryStart
+		&& !Data.Movement.bHasGameplayRootMotion;
+	GraphRecoveryLocomotionWeight = Data.Montage.bReleasedLocomotion
+		? FMath::SmoothStep(0.f, 1.f, (Position - Handoff->RecoveryStart) / FMath::Max(.01f, Handoff->RecoveryBlendTime))
+		: 0.f;
+
+	// A settled locomotion foot may be planted elsewhere than the authored cast foot.
+	// Once locomotion takes over, it retains the legs until this cast ends.
+	bCastHasHandedOffLegs |= Data.Air.bIsInAir || Data.Input.bHasMoveInput || Data.Movement.GroundSpeed >= 20.f;
+	const bool bStationaryPose = !bCastHasHandedOffLegs
+		&& Position >= Handoff->StationaryPoseWindow.X && Position < Handoff->StationaryPoseWindow.Y;
+	const float CastTarget = bStationaryPose ? FMath::Clamp(Handoff->StationaryPoseWeight, 0.f, 1.f) : 0.f;
+	GraphStationaryCastLegWeight = FMath::FInterpConstantTo(GraphStationaryCastLegWeight, CastTarget, Data.DeltaTime,
+		CastTarget > GraphStationaryCastLegWeight ? 4.f : 12.f);
+}
+
 void UProject_JPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_Anim_PlayerGTUpdate);
@@ -101,6 +143,8 @@ void UProject_JPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	auto* Mover = Project_J::Movement::FindMover(Pawn);
 	if (!Mover)
 	{
+		HandoffMontageInstanceId = INDEX_NONE;
+		GraphRecoveryLocomotionWeight = GraphStationaryCastLegWeight = 0.f;
 		BindLocomotionSource(nullptr);
 		PlayerHasOwningActor = TryGetPawnOwner() != nullptr;
 		PlayerUseThreadSafeUpdateAnimation = TryGetPawnOwner() != nullptr;
@@ -110,6 +154,8 @@ void UProject_JPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	}
 	if (!Mover->HasBeenInitialized() || !Mover->HasBegunPlay())
 	{
+		HandoffMontageInstanceId = INDEX_NONE;
+		GraphRecoveryLocomotionWeight = GraphStationaryCastLegWeight = 0.f;
 		BindLocomotionSource(nullptr);
 		return;
 	}
@@ -129,6 +175,7 @@ void UProject_JPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	Data.Air.bIsInAir = Mover->IsAirborne();
 	Data.Air.bIsFalling = Mover->IsFalling();
 	Data.Movement.bHasGameplayRootMotion = Mover->HasFeaturesWithTag(Mover_AnimRootMotion_Montage,false);
+	Data.Movement.bMovementDashTravel = Mover->GetSyncState().LayeredMoves.FindActiveMove<FProject_JMontageDashMove>() != nullptr;
 	const auto* Input = Mover->GetLastInputCmd().InputCollection.FindDataByType<FCharacterDefaultInputs>();
 	const auto* Intent = Mover->GetLastInputCmd().InputCollection.FindDataByType<FProject_JMoverInputs>();
 	const auto* PhysicalLife=Mover->GetSyncState().SyncStateCollection.FindDataByType<FProject_JMoverLifecycle>();
@@ -138,6 +185,7 @@ void UProject_JPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	const auto* Settings = Mover->FindSharedSettings<UCommonLegacyMovementSettings>();
 	const FVector Move = Input ? Input->GetMoveInput_WorldSpace() : FVector::ZeroVector;
 	Data.Input.bHasMoveInput = !Move.IsNearlyZero();
+	UpdateActionLocomotionHandoff(Data);
 	Data.Input.MovementDirection = Move.IsNearlyZero()?0.f:FMath::FindDeltaAngleDegrees(Pawn->GetActorRotation().Yaw,Move.Rotation().Yaw);
 	Data.Movement.Acceleration = Move.GetSafeNormal() * (Settings ? Settings->Acceleration : 4000.f);
 	Data.Movement.RelativeVelocityDirection = FMath::UnwindDegrees(Data.Movement.Velocity.Rotation().Yaw - Pawn->GetActorRotation().Yaw);

@@ -164,7 +164,21 @@ void UProject_JCombatStyleDefinition::PostEditChangeProperty(FPropertyChangedEve
 EDataValidationResult UProject_JCombatStyleDefinition::IsDataValid(FDataValidationContext& Context) const
 {
 	TArray<FText> Errors;
-	const bool bValid = ValidateDefinition(Errors);
+	bool bValid = ValidateDefinition(Errors);
+	if (bOverridePassiveLeftGripReleaseSlots)
+	{
+		TSet<FName> UniqueSlots;
+		for (const FName Slot : PassiveLeftGripReleaseSlots)
+		{
+			if (Slot.IsNone() || UniqueSlots.Contains(Slot))
+			{
+				Context.AddError(FText::FromString(TEXT("Passive left grip release slots must be named and unique.")));
+				bValid = false;
+				break;
+			}
+			UniqueSlots.Add(Slot);
+		}
+	}
 	for (const auto& Error : Errors) Context.AddError(Error);
 	return Super::IsDataValid(Context) == EDataValidationResult::Invalid || !bValid ? EDataValidationResult::Invalid : EDataValidationResult::Valid;
 }

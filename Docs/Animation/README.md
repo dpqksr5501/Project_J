@@ -21,6 +21,8 @@ NPC 그래프는 기존 Unarmed의 동작·BlendSpace·전투 슬롯·Control Ri
 | Manny 공용 모션·Quinn·비표준 골격·추가 망토 뼈 | [스켈레톤 제작 기준](Authoring/HumanoidSkeletonRetargetingStandards.md) |
 | 몸체별 손 보정·소켓·무기 부착·양손 파지 | [무기 파지와 손 접촉](Authoring/Weapon_Hand_Contact_System.md) |
 | Spellblade 이름·장비 이주, 독립 무기 본·스킨과 보존 ID | [Spellblade 제작·이주 기록](Authoring/Spellblade_Migration_2026-11-01.md) |
+| 새 Spellblade 전투 모션, 몽타주, 상체 BS의 검토 경로와 원본 대응 | [Spellblade 전투 에셋 검토](Authoring/Spellblade_CombatKit.md) |
+| Spellblade와 Basic 대검의 실제 BP·스킬·입력, 대시 카메라와 복귀 상태 | [Spellblade 스킬 인계](Authoring/Spellblade_Skill_Handoff.md) |
 | 메시·의상·장비의 기존 LOD 보존과 제작 | [LOD 제작](Authoring/Mesh_LOD_Authoring.md) |
 | 골격 Family와 몸체 Body 프로필의 역할·수명 | [리타깃 프로필](Architecture/Runtime_Retarget_Profiles_2026-10-13.md) |
 | 실제 원인·실패·복구·빌드·회귀·PIE | [로코모션 전환·검증 기록](Architecture/Player_Locomotion_Migration_2026-10-19.md) |

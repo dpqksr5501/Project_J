@@ -1,12 +1,95 @@
 #include "Authoring/Project_JAssetMigrationLibrary.h"
+#include "Animation/Project_JHandContact.h"
+#include "Animation/Project_JHandGripProfile.h"
+#include "Animation/Project_JRetargetAnimInstance.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Serialization/JsonSerializer.h"
 #include "Rendering/SkeletalMeshModel.h"
 #include "Rendering/SkeletalMeshLODModel.h"
 #include "Animation/Skeleton.h"
+#include "Animation/BlendSpace.h"
+#include "Animation/AnimSequence.h"
+#include "Animation/AnimData/IAnimationDataModel.h"
+#include "Algo/AllOf.h"
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "Editor.h"
 #include "Misc/PackageName.h"
+#include "UObject/PerPlatformProperties.h"
+#include "UObject/UnrealType.h"
+
+bool UProject_JAssetMigrationLibrary::ResolveSkeletalWeaponGripPreview(USkeletalMeshComponent* Body,
+    USkeletalMesh* Weapon, FName GripSocket, FTransform& OutWorldMount)
+{
+    using namespace Project_J::Animation;
+    const auto* Controller = FindBodyContactController(Body);
+    if (!Controller || !Weapon || !IsPositiveUniformContactScale(Body->GetComponentScale())) { return false; }
+
+    const auto Calibration = Controller->GetHandGripCalibration();
+    const auto Palm = ResolveHandContact(*Body, Calibration.PrimaryPalmSocketName, Calibration.PrimaryArm.Hand, false);
+    FTransform Grip, RootInHand;
+    if (!Palm.IsValid() || !ResolveFixedSkeletalGripInRoot(*Weapon, GripSocket, Grip)
+        || !MakePrimaryGripAttachment(Grip, Palm.PalmInHand, Calibration.PrimaryHandOffset, RootInHand)) { return false; }
+
+    const FTransform HandWorld = Body->GetBoneTransform(Palm.Hand, RTS_World);
+    if (!IsPositiveUniformContactScale(HandWorld.GetScale3D())) { return false; }
+    OutWorldMount = RootInHand * HandWorld;
+    return !OutWorldMount.ContainsNaN();
+}
+
+bool UProject_JAssetMigrationLibrary::MatchAnimationPlaybackToAuthoredRate(UAnimSequence* Sequence)
+{
+    if (!IsValid(Sequence) || (GEditor && GEditor->PlayWorld) || !Sequence->GetDataModel()) { return false; }
+    const FFrameRate AuthoredRate = Sequence->GetDataModel()->GetFrameRate();
+    auto* Property = FindFProperty<FStructProperty>(UAnimSequence::StaticClass(), TEXT("PlatformTargetFrameRate"));
+    if (!AuthoredRate.IsValid() || AuthoredRate.Numerator <= 0 || !Property
+        || Property->Struct != FPerPlatformFrameRate::StaticStruct()) { return false; }
+    auto* Playback = Property->ContainerPtrToValuePtr<FPerPlatformFrameRate>(Sequence);
+    for (const auto& Override : Playback->PerPlatform)
+    {
+        if (Override.Value != AuthoredRate) { return false; }
+    }
+    if (Playback->Default == AuthoredRate) { return true; }
+
+    // The data controller's frame rate controls authored keys only. This editor
+    // property has its own resample/compression notification.
+    Sequence->Modify();
+    Sequence->PreEditChange(Property);
+    Playback->Default = AuthoredRate;
+    FPropertyChangedEvent Event(Property, EPropertyChangeType::ValueSet);
+    Sequence->PostEditChangeProperty(Event);
+    return Sequence->GetSamplingFrameRate() == AuthoredRate;
+}
+
+bool UProject_JAssetMigrationLibrary::RebuildBlendSpaceInterpolation(UBlendSpace* BlendSpace)
+{
+    if (!IsValid(BlendSpace) || BlendSpace->GetBlendSamples().IsEmpty()) { return false; }
+    const auto IsSampleIndex = [BlendSpace](int32 Index)
+    {
+        return BlendSpace->GetBlendSamples().IsValidIndex(Index);
+    };
+    const auto HasValidIndices = [&]()
+    {
+        const FBlendSpaceData& Data = BlendSpace->GetBlendSpaceData();
+        return Algo::AllOf(BlendSpace->GetGridSamples(), [&](const FEditorElement& Element)
+            {
+                return Algo::AllOf(Element.Indices, [&](int32 Index) { return Index == INDEX_NONE || IsSampleIndex(Index); });
+            }) &&
+            Algo::AllOf(Data.Triangles, [&](const FBlendSpaceTriangle& Triangle) { return Algo::AllOf(Triangle.SampleIndices, IsSampleIndex); }) &&
+            Algo::AllOf(Data.Segments, [&](const FBlendSpaceSegment& Segment) { return Algo::AllOf(Segment.SampleIndices, IsSampleIndex); });
+    };
+    const bool bHadValidIndices = HasValidIndices();
+    BlendSpace->Modify();
+    BlendSpace->ResampleData();
+    if (!HasValidIndices()) { return false; }
+    if (!bHadValidIndices)
+    {
+        UE_LOG(LogTemp, Display, TEXT("Rebuilt stale interpolation indices for %s."), *BlendSpace->GetPathName());
+    }
+    BlendSpace->MarkPackageDirty();
+    return true;
+}
 
 USkeleton* UProject_JAssetMigrationLibrary::CreateSharedSkeleton(const TArray<USkeletalMesh*>& Meshes,const FString& PackageName)
 {

@@ -56,6 +56,20 @@ public:
 	FString InspectFoundationPlayback() const;
  FName GetFoundationStateName() const;
  int32 GetTrajectoryPredictionRate() const;
+ /** Locomotion contribution to the legs underneath an authored full-body recovery. */
+ UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Combat Animation")
+ float GraphRecoveryLocomotionWeight = 0.f;
+
+ /** Authored cast contribution to the legs when both movement intent and speed permit it. */
+ UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Combat Animation")
+ float GraphStationaryCastLegWeight = 0.f;
+
+private:
+ void UpdateActionLocomotionHandoff(FProject_JAnimThreadSafeData& Data);
+ int32 HandoffMontageInstanceId = INDEX_NONE;
+ bool bCastHasHandedOffLegs = false;
+
+public:
 #if !UE_BUILD_SHIPPING
  /** Explicit command-line diagnostics only; cumulative values avoid ticker/update ordering assumptions. */
  FProject_JTrajectoryDiagnosticCounters GetTrajectoryDiagnosticCounters() const

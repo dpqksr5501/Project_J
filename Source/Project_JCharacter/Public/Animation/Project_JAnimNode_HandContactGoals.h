@@ -35,6 +35,9 @@ private:
 	FCompactPoseBoneIndex GoalIndices[2] = {FCompactPoseBoneIndex(INDEX_NONE),FCompactPoseBoneIndex(INDEX_NONE)};
 	FCompactPoseBoneIndex ReferenceIndices[2] = {FCompactPoseBoneIndex(INDEX_NONE),FCompactPoseBoneIndex(INDEX_NONE)};
 	bool bFollowPublishedPrimary = false;
+	bool bKeepSecondaryRotation = false;
+	bool bLimitSecondaryCarryReach = false;
+	FVector SecondaryPalmInHand = FVector::ZeroVector;
 	bool bBonesValid = false;
 	FName ReferenceName(int32 Side) const;
 };

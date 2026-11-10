@@ -51,12 +51,30 @@ bool UProject_JCombatIntroComponent::PlayTransition(APawn& CharacterOwner, UAnim
 	if (bEndingPlay || TransitionRevision != BeforePlay) { return false; }
 	Phase = NewPhase;
 	bPendingCombatMode = NewPhase == EProject_JCombatTransitionPhase::Drawing;
+	bOutroNeedsSourcePose = false;
 	ActiveTransitionMontage = Montage;
 	MontageOwner = &CharacterOwner;
 	const uint64 Revision = ++TransitionRevision;
 	FOnMontageEnded EndDelegate;
 	EndDelegate.BindUObject(this, &ThisClass::HandleMontageEnded, Revision);
 	Anim->Montage_SetEndDelegate(EndDelegate, Montage);
+	if (IsPlayingOutro())
+	{
+		const auto* Instance = Anim->GetActiveInstanceForMontage(Montage);
+		bOutroNeedsSourcePose = Instance && Instance->GetBlendTime() > UE_SMALL_NUMBER && Instance->GetWeight() < 1.f;
+		if (bOutroNeedsSourcePose)
+		{
+			FOnMontageBlendedInEnded BlendedIn;
+			BlendedIn.BindUObject(this, &ThisClass::ReleaseOutroSourcePose, Revision);
+			Anim->Montage_SetBlendedInDelegate(BlendedIn, Montage);
+			auto BlendingOut = FOnMontageBlendingOutStarted::CreateWeakLambda(this,
+				[this, Revision](UAnimMontage* InterruptedMontage, bool)
+				{
+					ReleaseOutroSourcePose(InterruptedMontage, Revision);
+				});
+			Anim->Montage_SetBlendingOutDelegate(BlendingOut, Montage);
+		}
+	}
 	PublishState();
 	return TransitionRevision == Revision && Phase == NewPhase;
 }
@@ -88,6 +106,25 @@ void UProject_JCombatIntroComponent::CancelTransition(APawn& CharacterOwner, EPr
 	if (bEndingPlay || TransitionRevision != CancelRevision) { return; }
 	if (ExpectedPhase == EProject_JCombatTransitionPhase::Drawing) { OnCombatIntroEnded.Broadcast(Montage, true); }
 	else { OnCombatOutroEnded.Broadcast(Montage, true); }
+}
+
+void UProject_JCombatIntroComponent::ReleaseOutroSourcePose(UAnimMontage* Montage, uint64 ExpectedRevision)
+{
+	if (bEndingPlay || ExpectedRevision != TransitionRevision || Montage != ActiveTransitionMontage || !IsBlendingIntoOutro()) { return; }
+	bOutroNeedsSourcePose = false;
+	PublishState();
+}
+
+float UProject_JCombatIntroComponent::GetOutgoingPoseWeight() const
+{
+	const auto* Source = IsBlendingIntoOutro() ? Project_J::Movement::FindPoseSource(MontageOwner.Get()) : nullptr;
+	const auto* Anim = Source ? Source->GetAnimInstance() : nullptr;
+	const auto* Instance = Anim ? Anim->GetActiveInstanceForMontage(ActiveTransitionMontage) : nullptr;
+	if (!Instance) { return 0.f; }
+	const float MontageWeight = FMath::Clamp(Instance->GetWeight(), 0.f, 1.f);
+	// The slot also fades its source. Keep more of the armed base early in
+	// that crossfade while still reaching zero before the linked layer retires.
+	return 1.f - FMath::Square(MontageWeight);
 }
 
 void UProject_JCombatIntroComponent::HandleMontageEnded(UAnimMontage* Montage, bool bInterrupted, uint64 ExpectedRevision)

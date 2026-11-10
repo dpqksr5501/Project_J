@@ -98,7 +98,7 @@ bool FProjectJAvatarPoseRoutes::RunTest(const FString&)
  const auto* Class=LoadClass<AProject_JPlayerCharacter>(nullptr,TEXT("/Game/Character_BPs/Spellblade/BP_Spellblade.BP_Spellblade_C"));
  const auto* Avatar=Class?Class->GetDefaultObject<AProject_JPlayerCharacter>():nullptr;
  const auto* Master=LoadObject<UAnimBlueprint>(nullptr,TEXT("/Game/Animation_Logic/ABPs/ABP_Player_Master.ABP_Player_Master"));
- const auto* Fallback=LoadObject<UAnimBlueprint>(nullptr,TEXT("/Game/Spellblade/Animation/ABP_Spellblade_Retarget.ABP_Spellblade_Retarget"));
+ const auto* Fallback=LoadObject<UAnimBlueprint>(nullptr,TEXT("/Game/Characters/Spellblade/Animation/ABP_Spellblade_Retarget.ABP_Spellblade_Retarget"));
  if (!TestNotNull(TEXT("Direct body fixture"),Avatar) || !Master || !Fallback) return false;
  auto* Source=Avatar->GetMesh();const auto* Mesh=Source->GetSkeletalMeshAsset();
  if (!Mesh || !Mesh->GetPostProcessAnimBlueprint()) return false;
@@ -121,7 +121,7 @@ bool FProjectJAvatarPoseRoutes::RunTest(const FString&)
  for(auto* Graph:Graphs) for(UEdGraphNode* Node:Graph->Nodes)
   if(Node->IsA<UAnimGraphNode_CopyBone>() && Node->NodeComment==TEXT("ProjectJ.SourcePoseMarkers")) ++Markers;
  TestEqual(TEXT("Common master has no body-specific final marker writers"),Markers,0);
- auto* BodyBlueprint=LoadObject<UAnimBlueprint>(nullptr,TEXT("/Game/Spellblade/Animation/ABP_Spellblade_Body.ABP_Spellblade_Body"));
+ auto* BodyBlueprint=LoadObject<UAnimBlueprint>(nullptr,TEXT("/Game/Characters/Spellblade/Animation/ABP_Spellblade_Body.ABP_Spellblade_Body"));
  if(!BodyBlueprint)return false;
  Graphs.Reset();BodyBlueprint->GetAllGraphs(Graphs);Markers=0;
  for(auto* Graph:Graphs)for(UEdGraphNode* Node:Graph->Nodes)

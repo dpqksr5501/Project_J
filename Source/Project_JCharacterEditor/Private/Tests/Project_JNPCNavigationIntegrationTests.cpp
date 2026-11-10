@@ -1165,7 +1165,7 @@ bool FProjectJCanonicalMeleeCompatibleSkeletonTest::RunTest(const FString&)
     const TStrongObjectPtr<UProject_JAttackDefinition> SelectedAttack(LoadObject<UProject_JAttackDefinition>(nullptr,
         TEXT("/Game/DataAssetSets/AttackDefinition/Spellblade/DA_Attack_Spellblade_LMB1.DA_Attack_Spellblade_LMB1")));
     const TStrongObjectPtr<USkeletalMesh> SelectedMesh(LoadObject<USkeletalMesh>(nullptr,
-        TEXT("/Game/Spellblade/Meshes/SK_Spellblade_Complete.SK_Spellblade_Complete")));
+        TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete.SK_Spellblade_Complete")));
     if (!TestNotNull(TEXT("Actual player attack exists"),SelectedAttack.Get()) || !TestNotNull(TEXT("Actual player main mesh exists"),SelectedMesh.Get())) return false;
     USkeleton* const OriginalTarget=SelectedMesh->GetSkeleton();
     if (!TestNotNull(TEXT("Actual player target skeleton exists"),OriginalTarget) || !TestNotNull(TEXT("Actual player montage exists"),SelectedAttack->Montage.Get())) return false;

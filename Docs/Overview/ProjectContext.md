@@ -568,13 +568,16 @@ Enhanced Input / NavMover → GAS 정책 검증 → Mover / Network Prediction
 ```text
 AProject_JPlayerCharacter
   → BP_Player_Master
-    → BP_GreatSword
+    → BP_Spellblade
+    → BP_Greatsword
 
 ABP_Player_Master
   + ALI_HumanoidCombat
-  + ABP_Greatsword_Layers
+  + ABP_Spellblade
+  + ABP_Greatsword_Basic
 ```
 
+- Spellblade와 Basic 대검은 각자 시작 무기, 입력·커맨드, 공격 데이터와 전투 레이어를 선택한다. Basic 대검은 Manny 외형을 사용한다. 공통 Mover와 GAS 실행부를 재사용한다. 실제 에셋 경로, 복귀 롤백 범위, 버프 방향 제어 및 로컬 카메라 튜닝은 [Spellblade 스킬 인계](../Animation/Authoring/Spellblade_Skill_Handoff.md)를 따른다.
 - 새 플레이어 직업은 `BP_Player_Master` 자식 + 기존 직업 layer/DA로 확장한다. 값 차이만 있는 직업마다 native 클래스를 추가하지 않는다. `AProject_JGreatswordCharacter`는 기존 native 테스트 fixture용으로 유지한다. 사람형 NPC는 입력/PlayerState 계약까지 플레이어 부모에서 상속하지 않는다.
 - 공통 입력, GAS 소유권, 장비 시스템, SSR, locomotion graph를 직업 Blueprint에 복사하지 않는다.
 - `ABP_Player_Master`는 지상 상태 선택·재생/보정, Project_J 점프 재선택·원본 일반 추락, 슬롯·Aim·접지·Pose History·Mount 선택을 소유한다. 실제 BP_Player/GreatSword/NPC 연결을 저장했다. 직업/몸체 DA의 역할은 유지한다.

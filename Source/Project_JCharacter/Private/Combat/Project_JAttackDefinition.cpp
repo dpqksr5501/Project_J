@@ -5,9 +5,11 @@
 #include "Animation/AnimMontage.h"
 #include "Animation/AnimSequence.h"
 #include "Animation/Project_JAnimNotifyState_MeleeHit.h"
+#include "Animation/Project_JAnimNotifyState_CombatPresentationCue.h"
 #include "Engine/SkeletalMesh.h"
 
 #if WITH_EDITOR
+#include "Movement/Project_JMontageLocomotionHandoff.h"
 #include "Validation/Project_JDataValidation.h"
 #endif
 
@@ -99,6 +101,28 @@ EDataValidationResult UProject_JAttackDefinition::IsDataValid(FDataValidationCon
 	if (MovementPolicy == EProject_JAttackMovementPolicy::RootMotionWarped)
 	{
 		Project_J::DataValidation::AddWarning(Context, NSLOCTEXT("ProjectJAttackDefinition", "WarpExecutor", "RootMotionWarped requires an executor that configures Motion Warping targets; native Melee does not supply targets."));
+	}
+	if (Montage && MovementPolicy == EProject_JAttackMovementPolicy::RootMotionMontage && !Montage->HasRootMotion())
+	{
+		Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJAttackDefinition", "MissingMontageRootMotion",
+			"RootMotionMontage requires a montage with an enabled root-motion animation sequence."));
+	}
+	if (const auto* Handoff = Montage ? Montage->FindMetaDataByClass<UProject_JMontageLocomotionHandoff>() : nullptr)
+	{
+		if (const FString Failure = Handoff->GetValidationFailure(*Montage); !Failure.IsEmpty())
+		{
+			Project_J::DataValidation::AddError(Context, bHasError, FText::FromString(Failure));
+		}
+		if (Handoff->RecoveryStart >= 0.f && Montage->Notifies.ContainsByPredicate([Handoff](const FAnimNotifyEvent& Notify)
+		{
+			return Notify.GetEndTriggerTime() > Handoff->RecoveryStart && Notify.NotifyStateClass
+				&& (Notify.NotifyStateClass->IsA<UProject_JAnimNotifyState_MeleeHit>()
+					|| Notify.NotifyStateClass->IsA<UProject_JAnimNotifyState_CombatPresentationCue>());
+		}))
+		{
+			Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJAttackDefinition", "EarlyRecovery",
+				"Locomotion recovery must follow the melee hit and combat presentation windows."));
+		}
 	}
 	if (bOverrideGripIK && (!FMath::IsFinite(PrimaryGripIKAlpha) || PrimaryGripIKAlpha < 0.0f || PrimaryGripIKAlpha > 1.0f ||
 		!FMath::IsFinite(SecondaryGripIKAlpha) || SecondaryGripIKAlpha < 0.0f || SecondaryGripIKAlpha > 1.0f))

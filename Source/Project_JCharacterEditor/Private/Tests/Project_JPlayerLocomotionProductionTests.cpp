@@ -8,7 +8,9 @@
 #include "Project_JPlayerCharacter.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "AnimGraphNode_Slot.h"
+#include "AnimGraphNode_LayeredBoneBlend.h"
 #include "AnimGraphNode_SaveCachedPose.h"
+#include "AnimGraphNode_UseCachedPose.h"
 #include "AnimGraphNode_LinkedAnimLayer.h"
 #include "AnimGraphNode_BlendStack.h"
 #include "EdGraph/EdGraph.h"
@@ -98,8 +100,23 @@ bool FProjectJPlayerLocomotionProductionGraph::RunTest(const FString&)
  if (!FullSlot || !UpperSlot || !Procedural || !Ground) {AddError(TEXT("Missing on-foot pose contract"));return false;}
  TestTrue(TEXT("GASP source clocks keep updating underneath full-weight skills"),FullSlot->Node.bAlwaysUpdateSourcePose);
  const auto Linked=[](UEdGraphPin* A,UEdGraphPin* B){return A && B && A->LinkedTo.Num()==1 && A->LinkedTo[0]==B;};
- TestTrue(TEXT("Full-body skills override the result of all procedural feet/body corrections"),Linked(FullSlot->FindPin(TEXT("Source")),Procedural->FindPin(TEXT("Pose"))));
- TestTrue(TEXT("Mounted blending receives the final skill pose"),Linked(Ground->FindPin(TEXT("Pose")),FullSlot->FindPin(TEXT("Pose"))));
+ const auto PeerOwner=[](const UEdGraphPin* Pin)->UEdGraphNode*{return Pin && Pin->LinkedTo.Num()==1?Pin->LinkedTo[0]->GetOwningNode():nullptr;};
+ const auto* FullBase=Cast<UAnimGraphNode_UseCachedPose>(PeerOwner(FullSlot->FindPin(TEXT("Source"))));
+ const auto* Handoff=Cast<UAnimGraphNode_LayeredBoneBlend>(PeerOwner(Ground->FindPin(TEXT("Pose"))));
+ if (FullBase && Handoff)
+ {
+  const auto* ReleasedLegs=Cast<UAnimGraphNode_UseCachedPose>(PeerOwner(Handoff->FindPin(TEXT("BlendPoses_0"))));
+  TestTrue(TEXT("Full-body action and released legs share the corrected locomotion pose"),
+   FullBase->SaveCachedPoseNode.IsValid() && ReleasedLegs && ReleasedLegs->SaveCachedPoseNode==FullBase->SaveCachedPoseNode &&
+   Linked(FullBase->SaveCachedPoseNode->FindPin(TEXT("Pose")),Procedural->FindPin(TEXT("Pose"))));
+  TestTrue(TEXT("Mounted blending receives the action with the optional locomotion handoff"),
+   Linked(Handoff->FindPin(TEXT("BasePose")),FullSlot->FindPin(TEXT("Pose"))));
+ }
+ else
+ {
+  TestTrue(TEXT("Full-body skills override the result of all procedural feet/body corrections"),Linked(FullSlot->FindPin(TEXT("Source")),Procedural->FindPin(TEXT("Pose"))));
+  TestTrue(TEXT("Mounted blending receives the final skill pose"),Linked(Ground->FindPin(TEXT("Pose")),FullSlot->FindPin(TEXT("Pose"))));
+ }
  TestTrue(TEXT("UpperBody stays in its masked layering branch"),UpperSlot->FindPin(TEXT("Pose")) && UpperSlot->FindPin(TEXT("Pose"))->LinkedTo.Num()==1 && UpperSlot->FindPin(TEXT("Pose"))->LinkedTo[0]->GetOwningNode()->GetClass()->GetFName()==TEXT("AnimGraphNode_LayeredBoneBlend"));
  for (const TCHAR* Path:{TEXT("/Game/Character_BPs/BP_Player_Master.BP_Player_Master_C"),TEXT("/Game/Character_BPs/Spellblade/BP_Spellblade.BP_Spellblade_C")})
  {
@@ -337,7 +354,7 @@ bool FProjectJDirectNativeQueries::RunTest(const FString&)
   if(auto* Var=Cast<UK2Node_VariableGet>(Node);Var && Var->VariableReference.GetMemberName()==GET_MEMBER_NAME_CHECKED(UProject_JRetargetAnimInstance,RightWristTarget))++Wrist;
  }
  TestEqual(TEXT("The primary hand directly consumes its native target"),Wrist,1);
- auto* Layer=LoadObject<UAnimBlueprint>(nullptr,TEXT("/Game/Animation_Logic/ABPs/Spellblade/ABP_Spellblade_Layers.ABP_Spellblade_Layers"));if(!TestNotNull(TEXT("Weapon layer"),Layer))return false;
+ auto* Layer=LoadObject<UAnimBlueprint>(nullptr,TEXT("/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Basic.ABP_Greatsword_Basic"));if(!TestNotNull(TEXT("Weapon layer"),Layer))return false;
  for(UEdGraph* Event:Layer->UbergraphPages)TestTrue(TEXT("Weapon layer has no disconnected event leftovers"),Event->Nodes.IsEmpty());
  return true;
 }

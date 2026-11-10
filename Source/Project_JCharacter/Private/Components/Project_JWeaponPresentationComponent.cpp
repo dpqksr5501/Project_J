@@ -56,12 +56,10 @@ namespace Project_J::WeaponPresentation
 		if (const auto* Skinned=Cast<USkeletalMeshComponent>(GripComponent))
 		{
 			const auto* Asset=Skinned->GetSkeletalMeshAsset();
-			const auto* Socket=Asset ? Asset->FindSocket(GripName) : nullptr;
 			// Only a fixed root reference socket can define the mount. Never feed
 			// animated ornament bones or last frame's solved/world grip back into IK.
-			if (!Socket || Asset->GetRefSkeleton().FindBoneIndex(Socket->BoneName)!=0)
+			if (!Asset || !Project_J::Animation::ResolveFixedSkeletalGripInRoot(*Asset, GripName, Grip))
 			{ OutReason=TEXT("SkeletalGripRequiresRootSocket"); return false; }
-			Grip=Socket->GetSocketLocalTransform()*Asset->GetRefSkeleton().GetRefBonePose()[0];
 		}
 		else
 		{
@@ -829,17 +827,17 @@ void UProject_JWeaponPresentationComponent::EndIndependentMotion()
 			// Montage_IsActive becomes false at blend-out START, not when its pose
 			// contribution reaches zero. Use that same instance and weight through
 			// the return to Idle, including pauses and per-attack blend curves.
-			if (Profile->MotionPresentation.bFollowMontageBlendOut && EndingMontage &&
-				EndingMontage->IsStopped() && EndingMontage->GetWeight() > UE_KINDA_SMALL_NUMBER &&
-				Project_J::Movement::FindPoseSource(Character)->GetAnimInstance() == EndingSourceAnim &&
-				Project_J::Movement::FindPoseSource(Character)->DoesSocketExist(Profile->DrawnSocketName))
+			const bool bFollowEndingMontage = Profile->MotionPresentation.bFollowMontageBlendOut && EndingMontage &&
+				EndingMontage->IsStopped() && EndingMontage->GetWeight() > UE_KINDA_SMALL_NUMBER;
+			auto* SourceMesh = bFollowEndingMontage ? Project_J::Movement::FindPoseSource(Character) : nullptr;
+			if (SourceMesh && SourceMesh->GetAnimInstance() == EndingSourceAnim && SourceMesh->DoesSocketExist(Profile->DrawnSocketName))
 			{
 				ContactRecoverySourceAnim = EndingSourceAnim;
 				ContactRecoverySourceInstanceID = AutoAttackSourceInstanceID;
 				ContactRecoverySourceStartWeight = EndingMontage->GetWeight();
-				ContactRecoverySourceMesh = Project_J::Movement::FindPoseSource(Character);
+				ContactRecoverySourceMesh = SourceMesh;
 				ContactRecoverySourceSocket = Profile->DrawnSocketName;
-				const FTransform SourceSocketWorld = Project_J::Movement::FindPoseSource(Character)->GetSocketTransform(Profile->DrawnSocketName, RTS_World);
+				const FTransform SourceSocketWorld = SourceMesh->GetSocketTransform(Profile->DrawnSocketName, RTS_World);
 				ContactRecoveryWeaponInSourceSocket = WeaponRoot->GetComponentTransform().GetRelativeTransform(SourceSocketWorld);
 				ContactRecoveryGripInSourceSocket = ExitGrip.PrimaryGripWorldTransform.GetRelativeTransform(SourceSocketWorld);
 			}
@@ -1064,15 +1062,22 @@ void UProject_JWeaponPresentationComponent::UpdateIndependentMotion(float DeltaT
 	const FTransform SourceSocketWorld = CharacterMesh->GetSocketTransform(PresentationProfile->DrawnSocketName, RTS_World);
 	if (SourceSocketWorld.ContainsNaN() || !SourceSocketWorld.IsRotationNormalized() || ActiveMotionEntryWorld.ContainsNaN()) return;
 	const bool bContactHandoff = PresentationProfile->MotionPresentation.bUseContactHandoff;
-	const USkeletalMeshComponent* ReturnMesh = bContactHandoff ? nullptr : ActiveMotionReturnMesh.Get();
-	const FTransform ReturnSocketWorld = ReturnMesh && !ActiveMotionReturnSocket.IsNone() && ReturnMesh->DoesSocketExist(ActiveMotionReturnSocket)
+	const USkeletalMeshComponent* ReturnMesh = ActiveMotionReturnMesh.Get();
+	// A direct-body FK attack already animates the outgoing hand and the
+	// source socket on the same pose. A frozen entry transform lets the
+	// blade lag behind that hand while it accelerates into the montage.
+	const bool bLiveEntry = bContactHandoff && bAutoAttackMotionActive && ActiveMotionKeys.IsEmpty()
+		&& ActivePrimaryGripIKAlpha <= UE_SMALL_NUMBER && ReturnMesh == CharacterMesh;
+	const FTransform ReturnSocketWorld = (!bContactHandoff || bLiveEntry) && ReturnMesh
+		&& !ActiveMotionReturnSocket.IsNone() && ReturnMesh->DoesSocketExist(ActiveMotionReturnSocket)
 		? ActiveMotionReturnRelative * ReturnMesh->GetSocketTransform(ActiveMotionReturnSocket, RTS_World) : SourceSocketWorld;
+	const FTransform EntryWorld = bLiveEntry ? ReturnSocketWorld : ActiveMotionEntryWorld;
 	auto EvaluateWorld = [&](const FVector& Correction)
 	{
 		return bContactHandoff
 			? Project_J::WeaponMotion::EvaluateContactDrivenWorldTransform(ActiveMotionKeys,
 				ActiveMotionNormalizedTime, ActiveMotionDurationSeconds, ActiveEntryBlendSeconds,
-				SourceSocketWorld, ActiveMotionEntryWorld, Correction)
+				SourceSocketWorld, EntryWorld, Correction)
 			: Project_J::WeaponMotion::EvaluatePresentationWorldTransform(ActiveMotionKeys,
 				ActiveMotionNormalizedTime, ActiveMotionDurationSeconds, ActiveEntryBlendSeconds, ActiveExitBlendSeconds,
 				SourceSocketWorld, ReturnSocketWorld, Correction);

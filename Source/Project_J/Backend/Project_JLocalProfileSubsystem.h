@@ -82,6 +82,7 @@ class PROJECT_J_API UProject_JLocalProfileSubsystem : public UGameInstanceSubsys
   private:
 	friend struct FProjectJQuestRewardProfileTestAccess;
 	friend class FProjectJLocalProfileLifecycleTest;
+	friend class FProjectJJobProfileRestoreTest;
 	friend class FProjectJProfileUnknownShapeTest;
 	friend class FProjectJProfileProgressCapacityTest;
 	friend class FProjectJProfileProgressAdmissionTest;

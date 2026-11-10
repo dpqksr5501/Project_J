@@ -5,23 +5,26 @@
 void FProject_JAnimNode_HandContactGoals::PreUpdate(const UAnimInstance* Instance)
 {
 	Hands[0] = Hands[1] = NAME_None;
+	SecondaryPalmInHand = FVector::ZeroVector;
 	if (const auto* Body=Cast<UProject_JRetargetAnimInstance>(Instance))
 	{
 		Hands[0]=Body->GetBodyHandContact(true).Hand;
-		Hands[1]=Body->GetBodyHandContact(false).Hand;
+		const auto SecondaryContact = Body->GetBodyHandContact(false);
+		Hands[1] = SecondaryContact.Hand;
+		SecondaryPalmInHand = SecondaryContact.PalmInHand.GetLocation();
 	}
 }
 
 void FProject_JAnimNode_HandContactGoals::Initialize_AnyThread(const FAnimationInitializeContext& Context)
 {
 	FAnimNode_SkeletalControlBase::Initialize_AnyThread(Context);
-	Targets[0]=Targets[1]={};bFollowPublishedPrimary=false;bBonesValid=false;
+	Targets[0]=Targets[1]={};bFollowPublishedPrimary=false;bKeepSecondaryRotation=false;bLimitSecondaryCarryReach=false;bBonesValid=false;
 }
 
 void FProject_JAnimNode_HandContactGoals::UpdateInternal(const FAnimationUpdateContext& Context)
 {
 	FAnimNode_SkeletalControlBase::UpdateInternal(Context);
-	Targets[0]=Targets[1]={};bFollowPublishedPrimary=false;
+	Targets[0]=Targets[1]={};bFollowPublishedPrimary=false;bKeepSecondaryRotation=false;bLimitSecondaryCarryReach=false;
 	const auto* Body=Cast<UProject_JRetargetAnimInstance>(Context.AnimInstanceProxy->GetAnimInstanceObject());
 	if (!Body) return;
 	Targets[0]={Body->GetInputPoseContact(true),Body->RightWristTarget,Body->bRightContactTargetValid?Body->RightGripAlpha:0.f};
@@ -30,6 +33,8 @@ void FProject_JAnimNode_HandContactGoals::UpdateInternal(const FAnimationUpdateC
 	{
 		Targets[1].Relative={Hands[0],Body->LeftGripInPrimaryHandSpace};
 		bFollowPublishedPrimary=true;
+		bKeepSecondaryRotation = Body->UsesAuthoredCarryRotation();
+		bLimitSecondaryCarryReach = Body->ShouldLimitCarryReach();
 	}
 	for (auto& Target:Targets)
 		Target.Alpha=FMath::IsFinite(Target.Alpha)?FMath::Clamp(Target.Alpha,0.f,1.f):0.f;
@@ -95,7 +100,23 @@ void FProject_JAnimNode_HandContactGoals::EvaluateSkeletalControl_AnyThread(FCom
 		}
 		Published[Side]=Input;
 		if (Targets[Side].Alpha>UE_SMALL_NUMBER && !Target.ContainsNaN())
-			Published[Side].Blend(Input,Target,Targets[Side].Alpha);
+		{
+			float GoalAlpha = Targets[Side].Alpha;
+			if (Side == 1 && bKeepSecondaryRotation)
+			{
+				// Keep the blended wrist orientation and land its palm on the same grip point.
+				const FVector PalmTarget = Target.TransformPosition(SecondaryPalmInHand);
+				if (bLimitSecondaryCarryReach)
+				{
+					// The carry track supplies the pose. IK closes its contact error
+					// without pulling a departing gesture back across the chest.
+					const double Gap = FVector::Distance(PalmTarget, Input.TransformPosition(SecondaryPalmInHand));
+					GoalAlpha *= static_cast<float>(1. - FMath::SmoothStep(4., 12., Gap));
+				}
+				Target = FTransform(Input.GetRotation(), PalmTarget - Input.TransformVector(SecondaryPalmInHand), Input.GetScale3D());
+			}
+			Published[Side].Blend(Input,Target,GoalAlpha);
+		}
 		Transforms.Emplace(GoalIndices[Side],Published[Side]);
 	}
 	Transforms.Sort([](const FBoneTransform& A,const FBoneTransform& B){return A.BoneIndex<B.BoneIndex;});

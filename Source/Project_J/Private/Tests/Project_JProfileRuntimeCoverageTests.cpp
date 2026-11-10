@@ -496,7 +496,7 @@ bool FProjectJProfileRuntimeCoverageTest::RunTest(const FString &)
 	if (!TestTrue(TEXT("Existing registry loaded"), Data->LoadPrimaryAssetDefinitions()))
 		return false;
 	auto *Class = LoadObject<UProject_JCharacterClassDefinition>(
-		nullptr, TEXT("/Game/DataAssetSets/Class/DA_Class_Spellblade.DA_Class_Spellblade"));
+		nullptr, TEXT("/Game/DataAssetSets/Class/DA_Class_Greatsword.DA_Class_Greatsword"));
 	if (!Class)
 		return false;
 	auto *One = NewObject<UProject_JCharacterAdvancementDefinition>(Data);

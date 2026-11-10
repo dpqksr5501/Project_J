@@ -2,6 +2,7 @@
 #include "GameFramework/Pawn.h"
 #include "Movement/Project_JMovementQueries.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Engine/SkeletalMesh.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Animation/Project_JHandGripProfile.h"
 #include "Animation/Project_JRetargetAnimInstance.h"
@@ -82,6 +83,16 @@ bool Project_J::Animation::IsPositiveUniformContactScale(const FVector& Scale)
 	// Evaluated float bone scales are promoted to double by FVector. The default
 	// double NearlyEqual tolerance incorrectly treats harmless pose roundoff as shear.
 	return Scale.GetMax() - Scale.GetMin() <= Scale.GetMax() * 1.e-4;
+}
+
+bool Project_J::Animation::ResolveFixedSkeletalGripInRoot(const USkeletalMesh& Mesh, FName SocketName,
+	FTransform& OutGripInRoot)
+{
+	const auto* Socket = Mesh.FindSocket(SocketName);
+	const auto& Ref = Mesh.GetRefSkeleton();
+	if (!Socket || Ref.FindBoneIndex(Socket->BoneName) != 0) { return false; }
+	OutGripInRoot = Socket->GetSocketLocalTransform() * Ref.GetRefBonePose()[0];
+	return true;
 }
 
 bool Project_J::Animation::MakePrimaryGripAttachment(const FTransform& GripInRoot,

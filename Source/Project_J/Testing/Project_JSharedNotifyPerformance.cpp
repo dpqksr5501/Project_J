@@ -94,7 +94,7 @@ bool FProjectJSharedNotifyPerformance::RunTest(const FString&)
     FString Output;
     FParse::Value(FCommandLine::Get(), TEXT("ProjectJNotifyOutput="), Output);
     TStrongObjectPtr<UAnimMontage> Montage(LoadObject<UAnimMontage>(nullptr,
-        TEXT("/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/AM_Spellblade_R.AM_Spellblade_R")));
+        TEXT("/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_R.AM_Greatsword_R")));
     if (!TestNotNull(TEXT("Authored motion montage"), Montage.Get())) return false;
     TArray<FAnimNotifyEvent> Events;
     UAnimationBlueprintLibrary::GetAnimationNotifyEvents(Montage.Get(), Events);

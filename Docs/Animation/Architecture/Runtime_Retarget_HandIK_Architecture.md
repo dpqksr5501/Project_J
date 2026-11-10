@@ -285,6 +285,10 @@ Leader ABA, Follower 런타임 리타기팅, Retarget IK, Hand IK, Foot IK가 �
   - 클라이언트 Follower 메시 기본 옵션으로 `VisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered` 적용.
   - `UProject_JRetargetAnimInstance`에서 `bEnableFollowerRetarget`, `bTierAllowsHandIK`, `bTierAllowsFootIK`, `bTierAllowsRetargetIK`, `RetargetIKLODThreshold`, `RetargetLODThreshold`를 노출하여 AnimGraph 상의 조건 분기(`Blend Poses by Bool` 및 노드 LOD 핀) 지원.
 
+무기의 주손 부착과 기본 양손 자세는 무기·애니메이션 데이터가 담당한다. 왼손을 잡거나 놓는 타이밍은 애니메이션 커브나 명시적 접촉 구간에 저작한다. 런타임 손 IK는 중요도가 높은 캐릭터의 접촉 오차를 줄인다. 포즈 갱신 요구가 있는 전투 동작은 보호하고, 일반 원격 캐릭터는 Mid/Far에서 그립 타깃 조회와 손 IK를 건너뛴다. Post Process는 정책과 커브에 같은 포즈 소스를 사용하며 갱신당 한 번만 찾는다.
+
+공개 사례에서 Epic은 중요도에 따라 메시 갱신 빈도를 조절하고, New World는 다수 캐릭터에 공유할 수 있는 동작과 인스턴스별 상태를 분리했다. System Link의 구현은 근접 공격 중 왼손 그립의 재접촉을 애니메이션 타임라인에서 저작한다. [Epic Animation Budget Allocator](https://dev.epicgames.com/documentation/unreal-engine/animation-budget-allocator-in-unreal-engine), [New World 개발팀 발표](https://www.newworld.com/en-us/news/articles/upgraded-combat-and-animation-system-deep-dive), [System Link 왼손 IK 구현](https://systemlinkarena.com/pages/lefthandik.html).
+
 ---
 
 ## 5. 외부 AI 및 아키텍처 검토 요청 사항 (Questions for Architecture Review)

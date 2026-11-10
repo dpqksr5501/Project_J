@@ -320,7 +320,7 @@ bool FProjectJNPCAttackMovementPolicyTest::RunTest(const FString& Parameters)
 {
 	FActionFixture F;
 	auto* MeshAsset = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple.SKM_Quinn_Simple"));
-	auto* Montage = LoadObject<UAnimMontage>(nullptr, TEXT("/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/AM_Spellblade_LMB1.AM_Spellblade_LMB1"));
+	auto* Montage = LoadObject<UAnimMontage>(nullptr, TEXT("/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LMB1.AM_Greatsword_LMB1"));
 	if (!TestNotNull(TEXT("Existing NPC mesh fixture"), MeshAsset) || !TestNotNull(TEXT("Existing greatsword montage fixture"), Montage)) { return false; }
 	auto* Mesh = F.NPC->GetMesh(); Mesh->SetSkeletalMesh(MeshAsset); Mesh->SetAnimInstanceClass(UAnimInstance::StaticClass());
 	if (!TestNotNull(TEXT("Native animation instance"), Mesh->GetAnimInstance())) { return false; }

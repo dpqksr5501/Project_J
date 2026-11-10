@@ -147,6 +147,37 @@ bool FProjectJSecondaryHandContactTest::RunTest(const FString&)
 	Corrections.Reset();Goals.EvaluateSkeletalControl_AnyThread(Output,Corrections);
 	TestTrue(TEXT("Body-goal publication applies contact alpha once before solving"),Corrections.Num()==2 && Corrections[0].Transform.Equals(BlendedDriver,.001));
 	TestTrue(TEXT("A hand-mounted weapon's support goal follows the published primary wrist"),Corrections.Num()==2 && Corrections[1].Transform.Equals(WristInDriver*BlendedDriver,.001));
+	const FTransform InputSupport = Output.Pose.GetComponentSpaceTransform(Support);
+	Instance->bUseAuthoredCarryRotation = true;
+	Goals.UpdateInternal(Update);
+	Corrections.Reset(); Goals.EvaluateSkeletalControl_AnyThread(Output, Corrections);
+	if (!TestEqual(TEXT("Authored carry publishes both goals"), Corrections.Num(), 2)) { return false; }
+	const FTransform SupportGoal = Corrections[1].Transform;
+	TestTrue(TEXT("Carry keeps the wrist orientation of the blended pose"), SupportGoal.GetRotation().Equals(InputSupport.GetRotation(), .001));
+	TestTrue(TEXT("Carry keeps a nonzero palm anchor on the same weapon contact point"),
+		SupportGoal.TransformPosition(Palm->RelativeLocation).Equals((GripInDriver * BlendedDriver).GetLocation(), .001));
+	Instance->bCarryOverlapsActionSnapshot = true;
+	Instance->LeftGripInPrimaryHandSpace.SetTranslation(FVector(100., 0., 0.));
+	Goals.UpdateInternal(Update);
+	Corrections.Reset(); Goals.EvaluateSkeletalControl_AnyThread(Output, Corrections);
+	TestTrue(TEXT("A departing hand is not pulled back by overlapping carry"),
+		Corrections.Num() == 2 && Corrections[1].Transform.Equals(InputSupport, .001));
+	Instance->bCarryOverlapsActionSnapshot = false;
+	Goals.UpdateInternal(Update);
+	Corrections.Reset(); Goals.EvaluateSkeletalControl_AnyThread(Output, Corrections);
+	TestTrue(TEXT("Locomotion without a montage can still recover its authored grip"),
+		Corrections.Num() == 2 && !Corrections[1].Transform.Equals(InputSupport, .001));
+
+	Instance->bHasValidLeftSnapshot = true;
+	Instance->bAuthoredCarryRotationSnapshot = true;
+	Instance->LeftCarryAlphaSnapshot = 1.f;
+	Instance->NativeThreadSafeUpdateAnimation(1.f / 60.f);
+	TestEqual(TEXT("Pose-owned carry arrives at the current frame weight"), Instance->LeftGripAlpha, 1.f);
+	TestTrue(TEXT("Pose-owned carry keeps authored rotation"), Instance->UsesAuthoredCarryRotation());
+	Instance->LeftCarryAlphaSnapshot = 0.f;
+	Instance->NativeThreadSafeUpdateAnimation(1.f / 60.f);
+	TestEqual(TEXT("Pose-owned carry leaves no interpolated release tail"), Instance->LeftGripAlpha, 0.f);
+	TestFalse(TEXT("Released carry also relinquishes wrist orientation"), Instance->UsesAuthoredCarryRotation());
 	TestTrue(TEXT("Publishing goals cannot alter the animated body"),Output.Pose.GetComponentSpaceTransform(Driver).Equals(NewDriver,.001));
 	Goals.PrimaryGoalBone.BoneName=Names[0];Goals.InitializeBoneReferences(Bones);
 	TestFalse(TEXT("Publishing a goal into an ancestor of the body is rejected"),Goals.IsValidToEvaluate(Skeleton,Bones));

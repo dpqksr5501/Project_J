@@ -3,6 +3,7 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Combat/Project_JCombatCommandSet.h"
+#include "Combat/Project_JCombatInputTags.h"
 #include "Combat/Project_JComboDefinition.h"
 #include "Combat/Project_JCombatStyleDefinition.h"
 #include "Combat/Project_JGameplayAbility_Melee.h"
@@ -325,15 +326,8 @@ void UProject_JSkillInputExecutionComponent::RecordRawInput(
 
 FGameplayTagContainer UProject_JSkillInputExecutionComponent::GetOwnerGameplayTags() const
 {
-	FGameplayTagContainer OwnerTags;
-	if (BoundPlayerCharacter)
-	{
-		if (const UAbilitySystemComponent* ASC = BoundPlayerCharacter->GetAbilitySystemComponent())
-		{
-			ASC->GetOwnedGameplayTags(OwnerTags);
-		}
-	}
-	return OwnerTags;
+	const auto* Player = BoundPlayerCharacter.Get();
+	return Project_J::Combat::ReadInputOwnerTags(Player ? Player->GetAbilitySystemComponent() : nullptr, Player);
 }
 
 void UProject_JSkillInputExecutionComponent::HandleInputTagReleased(FGameplayTag InputTag)

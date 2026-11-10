@@ -82,6 +82,8 @@ class PROJECT_JCHARACTER_API AProject_JPlayerCharacter : public AProject_JBaseCh
 public:
 	virtual void ReceiveAuthorityCombatInput(const FGameplayTag& InputTag, double ClientTimestamp, uint32 InputSequence) override;
 	virtual void ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdContext& InputCmd) override;
+	/** Returns move intent and, when requested, the forward axis of the same input sample. */
+	FVector GetGameplayMoveDirection(FVector* OutControlForward = nullptr) const;
 	virtual FProject_JMoverPolicy ResolveMoverPolicy(const FProject_JMoverInputs& Requested,const FCharacterDefaultInputs* Input=nullptr) const override;
 	virtual float GetMoverMaxSpeed(bool bAcceptedSprint) const override;
 	virtual const FProject_JStrafeDirectionPolicy& GetStrafeDirectionPolicy() const override;
@@ -421,6 +423,7 @@ public:
 
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+	FORCEINLINE UProject_JCameraComponent* GetCameraComponent() const { return CameraComponent; }
 
 	FORCEINLINE UProject_JWeaponPresentationComponent* GetWeaponPresentationComponent() const { return WeaponPresentationComponent; }
 	FORCEINLINE const UProject_JCharacterAnimProfile* GetCharacterAnimProfile() const { return CharacterAnimProfile; }
@@ -501,6 +504,8 @@ public:
 	/** True while an entering-combat montage is preparing the combat animation layer. */
 	UFUNCTION(BlueprintPure, Category = "Combat|Animation")
 	bool IsCombatIntroPlaying() const;
+	bool IsCombatOutroBlendingIn() const;
+	float GetCombatWeaponLayerWeight() const;
 
 	/** True while the combat-exit sheathe montage owns the FullBody presentation. */
 	UFUNCTION(BlueprintPure, Category = "Combat|Animation")

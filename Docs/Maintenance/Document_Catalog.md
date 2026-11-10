@@ -4,7 +4,7 @@
 
 목록은 파일 위치와 문서 종류를 안내한다. 구현 완료·현재 성능을 판정하는 표가 아니며, 각 문서의 날짜·범위·후속 기록을 함께 읽는다. 통합 문서 안내는 이전 링크를 이어주는 진입점이고 상세 본문은 통합 가이드에 있다.
 
-문서 폴더 파일 3488개, Markdown 288개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
+문서 폴더 파일 3491개, Markdown 290개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
 
 ## 주제별 목록
 
@@ -86,7 +86,9 @@
 | [플레이어 애니메이션 라이브러리와 추가 수입](../Animation/Authoring/Player_Animation_Library.md) | 제작 가이드 | Animation/Authoring/Player_Animation_Library.md |
 | [애니메이션 제작 가이드](../Animation/Authoring/README.md) | 목차·문서 관리 | Animation/Authoring/README.md |
 | [보조 손 접촉과 직업별 파지 설정](../Animation/Authoring/Secondary_Hand_Contact.md) | 통합 문서 안내 | Animation/Authoring/Secondary_Hand_Contact.md |
+| [Spellblade 전투 세트](../Animation/Authoring/Spellblade_CombatKit.md) | 제작 가이드 | Animation/Authoring/Spellblade_CombatKit.md |
 | [Spellblade 이름·무기 이주](../Animation/Authoring/Spellblade_Migration_2026-11-01.md) | 제작 가이드 | Animation/Authoring/Spellblade_Migration_2026-11-01.md |
+| [Spellblade 스킬 구현·개선 인계](../Animation/Authoring/Spellblade_Skill_Handoff.md) | 제작 가이드 | Animation/Authoring/Spellblade_Skill_Handoff.md |
 | [무기 파지와 손 접촉 통합 가이드](../Animation/Authoring/Weapon_Hand_Contact_System.md) | 통합 상세 가이드 | Animation/Authoring/Weapon_Hand_Contact_System.md |
 | [마우스 회전 끊김 콘솔 진단](../Animation/Debug/Mouse_Turn_Trace_2026-10-06.md) | 구조·계약 | Animation/Debug/Mouse_Turn_Trace_2026-10-06.md |
 | [애니메이션 소스 수명과 Strafe 출발 점검 — 2026-10-23](../Animation/Diagnostics/Animation_Source_Review_2026-10-23.md) | 진단·수정 기록 | Animation/Diagnostics/Animation_Source_Review_2026-10-23.md |
@@ -391,6 +393,7 @@
 | [Animation/Archive/PreMover_20261019/Project_J/Testing](../Animation/Archive/PreMover_20261019/Project_J/Testing) | 6 | 문서 이동·보존 기록 |
 | [Animation/Archive/PreMover_20261019/Project_JCharacter/Private/Tests](../Animation/Archive/PreMover_20261019/Project_JCharacter/Private/Tests) | 7 | 문서 이동·보존 기록 |
 | [Animation/Authoring/Data/GreatswordA_20261103](../Animation/Authoring/Data/GreatswordA_20261103) | 23 | 문서 이동·보존 기록 |
+| [Animation/Authoring/Data/SpellbladeCombatKit](../Animation/Authoring/Data/SpellbladeCombatKit) | 1 | 문서 이동·보존 기록 |
 | [Animation/Authoring/Data/SpellbladeMigration_20261101](../Animation/Authoring/Data/SpellbladeMigration_20261101) | 1 | 문서 이동·보존 기록 |
 | [Animation/Diagnostics](../Animation/Diagnostics) | 4 | 문서 이동·보존 기록 |
 | [Animation/Planning/GASP_Backward_Reface_2026-10-12_Evidence](../Animation/Planning/GASP_Backward_Reface_2026-10-12_Evidence) | 6 | 문서 이동·보존 기록 |

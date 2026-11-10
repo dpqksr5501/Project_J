@@ -11,6 +11,6 @@ namespace ProjectJ::Network
 {
     // Realtime RPC/replication wire contract. Bump for incompatible changes;
     // independent of marketing, persistence schema and backend API versions.
-    //13: typed predicted melee hit with execution-clock and node-visit context.
-    inline constexpr uint32 RealtimeProtocolVersion = 13;
+    // 14: Spellblade montage dash layered move in Mover sync state.
+    inline constexpr uint32 RealtimeProtocolVersion = 14;
 }

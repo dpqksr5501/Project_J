@@ -77,7 +77,7 @@ struct FRun : TSharedFromThis<FRun>
 		{
 			TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_AnimationBudgetProbe_LoadFixture);
 			MeshAsset.Reset(LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple.SKM_Quinn_Simple")));
-			Montage.Reset(LoadObject<UAnimMontage>(nullptr, TEXT("/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/AM_Spellblade_LMB1.AM_Spellblade_LMB1")));
+			Montage.Reset(LoadObject<UAnimMontage>(nullptr, TEXT("/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LMB1.AM_Greatsword_LMB1")));
 		}
 		if (!MeshAsset || !Montage || Montage->SlotAnimTracks.IsEmpty()
 			|| Montage->SlotAnimTracks[0].AnimTrack.AnimSegments.IsEmpty()

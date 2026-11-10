@@ -1,12 +1,20 @@
 #include "Components/Project_JPlayerInputBindingComponent.h"
 
+#include "AbilitySystemComponent.h"
+#include "Combat/Project_JCombatCommandSet.h"
+#include "Combat/Project_JCombatInputTags.h"
+#include "Combat/Project_JCombatStyleDefinition.h"
+#include "EnhancedActionKeyMapping.h"
 #include "EnhancedInputComponent.h"
+#include "EnhancedPlayerInput.h"
 #include "InputActionValue.h"
+#include "Project_JGameplayTags.h"
 #include "Project_JPlayerCharacter.h"
 #include "Project_JLocomotionAnimStateComponent.h"
 #include "Components/Project_JSkillInputRouterComponent.h"
 #include "Mount/Project_JMountComponent.h"
 #include "GameFramework/PlayerController.h"
+#include "KeyState.h"
 #include "UObject/StrongObjectPtr.h"
 #include <functional>
 #include <type_traits>
@@ -113,25 +121,28 @@ bool UProject_JPlayerInputBindingComponent::BindInput(UInputComponent* PlayerInp
 		BindOwnedAction(ActionSet.SkillModifierAction, ETriggerEvent::Canceled, this, &UProject_JPlayerInputBindingComponent::HandleSkillModifierReleased);
 	}
 
-	TSet<const UInputAction*> BoundSkillActions;
 	if (const UProject_JSkillInputMappingData* SkillInputMappingData = ActiveSkillInputMappingData)
 	{
+		TSet<const UInputAction*> BoundModifiers;
 		if (UProject_JSkillInputRouterComponent* SkillInputRouter = BoundPlayerCharacter->SkillInputRouterComponent)
 		{
 			for (const FProject_JSkillModifierBinding& ModifierBinding : SkillInputMappingData->ModifierBindings)
 			{
-				if (!ModifierBinding.InputAction || !ModifierBinding.ModifierTag.IsValid() || BoundSkillActions.Contains(ModifierBinding.InputAction))
+				if (!ModifierBinding.InputAction || !ModifierBinding.ModifierTag.IsValid() || BoundModifiers.Contains(ModifierBinding.InputAction))
 				{
 					continue;
 				}
 
-				BoundSkillActions.Add(ModifierBinding.InputAction);
-				BindOwnedAction(ModifierBinding.InputAction, ETriggerEvent::Started, SkillInputRouter, &UProject_JSkillInputRouterComponent::HandleModifierPressed, ModifierBinding.ModifierTag);
+				BoundModifiers.Add(ModifierBinding.InputAction);
+				BindOwnedAction(ModifierBinding.InputAction, ETriggerEvent::Started, this, &ThisClass::HandleMappedSkillModifierPressed,
+					ModifierBinding.ModifierTag, ModifierBinding.BlockedHeldKey, ModifierBinding.InputAction.Get());
 				BindOwnedAction(ModifierBinding.InputAction, ETriggerEvent::Completed, SkillInputRouter, &UProject_JSkillInputRouterComponent::HandleModifierReleased, ModifierBinding.ModifierTag);
 				BindOwnedAction(ModifierBinding.InputAction, ETriggerEvent::Canceled, SkillInputRouter, &UProject_JSkillInputRouterComponent::HandleModifierReleased, ModifierBinding.ModifierTag);
 			}
 		}
 
+		// An action can be a skill press and also stay held for a subsequent chord.
+		TSet<const UInputAction*> BoundSkillActions;
 		for (const FProject_JDirectSkillInputBinding& SkillBinding : SkillInputMappingData->DirectSkillBindings)
 		{
 			if (!SkillBinding.InputAction || !SkillBinding.InputTag.IsValid() || BoundSkillActions.Contains(SkillBinding.InputAction))
@@ -235,10 +246,30 @@ void UProject_JPlayerInputBindingComponent::TickComponent(
 
 void UProject_JPlayerInputBindingComponent::HandleInteract()
 {
-	if (BoundPlayerCharacter)
+	AProject_JPlayerCharacter* Player = BoundPlayerCharacter.Get();
+	if (!Player) { return; }
+
+	const auto* Mount = Player->GetMountComponent();
+	const auto* Style = Player->GetCurrentCombatStyle();
+	const auto* ASC = Player->GetAbilitySystemComponent();
+	if ((!Mount || !Mount->IsMounted()) && Player->IsCombatModeActive() && Style && Style->CommandSet && ASC)
 	{
-		BoundPlayerCharacter->TryInteract();
+		static const FGameplayTag InteractInput = FGameplayTag::RequestGameplayTag(TEXT("InputTag.Interact"));
+		const auto OwnerTags = Project_J::Combat::ReadInputOwnerTags(ASC, Player);
+		const TArray<FProject_JCombatCommandInputEntry> Input = {{InteractInput, 0.0}};
+		if (Style->CommandSet->FindBestMatch(Input, OwnerTags))
+		{
+			const uint64 Revision = BindingRevision;
+			const uint64 Receipt = ++NextDirectInputReceipt;
+			Player->HandleSkillInputTagPressedFromSource(InteractInput, this, Receipt);
+			if (IsCurrentBinding(Player, Revision))
+			{
+				Player->HandleSkillInputTagReleasedFromSource(InteractInput, this, Receipt);
+			}
+			return;
+		}
 	}
+	Player->TryInteract();
 }
 
 void UProject_JPlayerInputBindingComponent::HandleMove(const FInputActionValue& Value)
@@ -461,6 +492,56 @@ void UProject_JPlayerInputBindingComponent::HandleSkillModifierReleased()
 	}
 }
 
+bool UProject_JPlayerInputBindingComponent::WasSkillKeyHeldAtPress(const FKey& Key, const UInputAction* InputAction) const
+{
+	const auto* PC = BoundPlayerCharacter ? Cast<APlayerController>(BoundPlayerCharacter->GetController()) : nullptr;
+	const auto* PlayerInput = PC ? Cast<UEnhancedPlayerInput>(PC->PlayerInput) : nullptr;
+	const auto* Modifier = Key.IsValid() && PlayerInput ? PlayerInput->GetKeyState(Key) : nullptr;
+	if (!Modifier) { return false; }
+	if (Modifier->EventCounts[IE_Pressed].IsEmpty() && Modifier->EventCounts[IE_Released].IsEmpty())
+	{
+		return Modifier->bDown;
+	}
+
+	// Enhanced Input can dispatch a press after both keys have been released in the same frame.
+	// Compare the physical key edges in that frame instead of using the final modifier state.
+	uint32 ActionPress = MAX_uint32;
+	for (const auto& Mapping : PlayerInput->GetEnhancedActionMappingsView())
+	{
+		if (Mapping.Action != InputAction) { continue; }
+		const auto* ActionKey = PlayerInput->GetKeyState(Mapping.Key);
+		if (ActionKey && !ActionKey->EventCounts[IE_Pressed].IsEmpty())
+		{
+			ActionPress = FMath::Min(ActionPress, ActionKey->EventCounts[IE_Pressed][0]);
+		}
+	}
+	if (ActionPress == MAX_uint32) { return Modifier->bDown; }
+
+	uint32 LastEdge = 0;
+	bool bHeld = Modifier->bDownPrevious;
+	for (const EInputEvent Event : {IE_Pressed, IE_Released})
+	{
+		for (const uint32 Edge : Modifier->EventCounts[Event])
+		{
+			if (Edge > LastEdge && Edge < ActionPress)
+			{
+				LastEdge = Edge;
+				bHeld = Event == IE_Pressed;
+			}
+		}
+	}
+	return bHeld;
+}
+
+void UProject_JPlayerInputBindingComponent::HandleMappedSkillModifierPressed(
+	FGameplayTag ModifierTag, FKey BlockedHeldKey, const UInputAction* InputAction)
+{
+	if (BoundPlayerCharacter && BoundPlayerCharacter->SkillInputRouterComponent && !WasSkillKeyHeldAtPress(BlockedHeldKey, InputAction))
+	{
+		BoundPlayerCharacter->SkillInputRouterComponent->HandleModifierPressed(ModifierTag);
+	}
+}
+
 void UProject_JPlayerInputBindingComponent::HandleDirectSkillActionPressed(UInputAction* InputAction)
 {
 	if (!InputAction || !BoundPlayerCharacter || !BoundPlayerCharacter->SkillInputRouterComponent || !ActiveSkillInputMappingData || ActiveDirectInputTags.Contains(InputAction))
@@ -471,7 +552,9 @@ void UProject_JPlayerInputBindingComponent::HandleDirectSkillActionPressed(UInpu
 	const FProject_JDirectSkillInputBinding* BestBinding = nullptr;
 	for (const FProject_JDirectSkillInputBinding& SkillBinding : ActiveSkillInputMappingData->DirectSkillBindings)
 	{
-		if (SkillBinding.InputAction != InputAction || !SkillBinding.InputTag.IsValid() || !BoundPlayerCharacter->SkillInputRouterComponent->AreModifierTagsMatched(SkillBinding.RequiredModifierTags, SkillBinding.BlockedModifierTags))
+		if (SkillBinding.InputAction != InputAction || !SkillBinding.InputTag.IsValid()
+			|| (SkillBinding.RequiredHeldKey.IsValid() && !WasSkillKeyHeldAtPress(SkillBinding.RequiredHeldKey, InputAction))
+			|| !BoundPlayerCharacter->SkillInputRouterComponent->AreModifierTagsMatched(SkillBinding.RequiredModifierTags, SkillBinding.BlockedModifierTags))
 		{
 			continue;
 		}

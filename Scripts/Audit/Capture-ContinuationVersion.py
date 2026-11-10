@@ -26,8 +26,10 @@ historical = [{'path':r['path'], 'actual':digest(root/r['path']), 'historical_sh
 # Mover/Family retarget migration. Freeze current selected assets instead.
 asset_paths={r['path'] for r in historical if (root/r['path']).is_file()}
 asset_paths.update(('Content/Character_BPs/Spellblade/BP_Spellblade.uasset',
+                   'Content/Character_BPs/GreatSword/BP_Greatsword.uasset',
                    'Content/Animation_Logic/ABPs/ABP_Player_Master.uasset',
-                   'Content/Animation_Logic/ABPs/Spellblade/ABP_Spellblade_Layers.uasset',
+                   'Content/Animation_Logic/ABPs/Spellblade/ABP_Spellblade.uasset',
+                   'Content/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Basic.uasset',
                    'Content/Animation_Logic/ABPs/Spellblade/ABP_Spellblade_Woman_RunTIme.uasset'))
 assets=[{'path':p,'sha256':sha(root/p)} for p in sorted(asset_paths)]
 content=content_worktree_hashes(root)

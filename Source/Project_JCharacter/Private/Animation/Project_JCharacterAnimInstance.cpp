@@ -77,6 +77,7 @@ void UProject_JCharacterAnimInstance::NativeThreadSafeUpdateAnimation(float Delt
 	GraphAimOffsetAlpha = Snapshot.Aim.AimOffsetAlpha;
 	GraphCombatSpeed = Snapshot.Movement.GroundSpeed;
 	GraphCombatDirection = Snapshot.Movement.RelativeVelocityDirection;
+	GraphCombatWeaponLayerWeight = Snapshot.Combat.WeaponLayerWeight;
 	// This callback is part of UE's thread-safe update phase, but the Task Graph
 	// may execute that phase as a foreground task. Record UE's runtime state so
 	// Insights distinguishes actual parallel evaluation from foreground work.
@@ -278,6 +279,7 @@ bool UProject_JCharacterAnimInstance::FillPlayerThreadSafeData(FProject_JAnimThr
 	Data.Combat.bIsHitReacting = OwningPlayerCharacter->IsHitReacting();
 	Data.Combat.bIsPlayingCombatIntro = OwningPlayerCharacter->IsCombatIntroPlaying();
 	Data.Combat.bIsPlayingCombatOutro = OwningPlayerCharacter->IsCombatOutroPlaying();
+	Data.Combat.WeaponLayerWeight = OwningPlayerCharacter->GetCombatWeaponLayerWeight();
 	if (const UProject_JWeaponAnimProfile* WeaponAnimProfile = OwningPlayerCharacter->GetWeaponAnimProfile())
 	{
 		Data.Combat.PresentationMode = WeaponAnimProfile->CombatPresentationMode;

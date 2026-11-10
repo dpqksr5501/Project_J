@@ -28,6 +28,9 @@ public:
 	/** Freeze the running combo/commands by default; equipment revocation always cancels. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Execution")
 	EProject_JCombatExecutionChangePolicy ExecutionChangePolicy = EProject_JCombatExecutionChangePolicy::CompleteCurrentExecution;
+	/** Sample aim at each accepted attack node and keep camera steering out of that swing. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Execution")
+	bool bLockFacingDuringSwing = false;
 	/** Legacy melee defaults remain enabled. GAS-only styles can opt out of each requirement. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Capabilities")
 	bool bUsesCombo = true;
@@ -60,6 +63,14 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
 	TObjectPtr<UProject_JWeaponAnimProfile> WeaponAnimationProfile = nullptr;
+
+	/** With an override enabled, an empty list intentionally releases carry for no slots. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation|Hand Contact")
+	bool bOverridePassiveLeftGripReleaseSlots = false;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation|Hand Contact",
+		meta = (EditCondition = "bOverridePassiveLeftGripReleaseSlots"))
+	TArray<FName> PassiveLeftGripReleaseSlots = { FName(TEXT("DefaultSlot")), FName(TEXT("UpperBody")), FName(TEXT("CastUpperBody")) };
 
 	/**
 	 * Maps stable AttackTag identities to cosmetic cue metadata. Authority reads

@@ -28,6 +28,20 @@ FProject_JCombatConfiguration FProject_JCombatConfiguration::Resolve(const UProj
 			Result.GameplaySource = EProject_JCombatConfigurationSource::Equipment;
 		}
 	}
+	// Follow the resolved gameplay and animation precedence, then inherit authored
+	// advancement or class defaults when the equipped style has no override.
+	const UProject_JCombatStyleDefinition* ContactCandidates[] = {
+		Result.GameplayStyle.Get(), Result.AnimationStyle.Get(),
+		Advancement ? Advancement->CombatStyleOverride.Get() : nullptr, ClassStyle
+	};
+	for (const auto* Candidate : ContactCandidates)
+	{
+		if (Candidate && Candidate->bOverridePassiveLeftGripReleaseSlots)
+		{
+			Result.PassiveLeftGripStyle = Candidate;
+			break;
+		}
+	}
 	return Result;
 }
 

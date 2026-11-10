@@ -216,6 +216,8 @@ class PROJECT_J_API UProject_JPlayerHUDWidget : public UUserWidget
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
 	virtual void NativeTick(const FGeometry &Geometry, float DeltaTime) override;
+	virtual int32 NativePaint(const FPaintArgs& Args, const FGeometry& Geometry, const FSlateRect& CullingRect,
+		FSlateWindowElementList& Elements, int32 Layer, const FWidgetStyle& Style, bool bParentEnabled) const override;
 	virtual FReply NativeOnKeyDown(const FGeometry &Geometry, const FKeyEvent &Event) override;
 	virtual FReply NativeOnPreviewKeyDown(const FGeometry &Geometry, const FKeyEvent &Event) override;
 	virtual FReply NativeOnMouseButtonDown(const FGeometry &Geometry, const FPointerEvent &Event) override;
@@ -239,6 +241,7 @@ class PROJECT_J_API UProject_JPlayerHUDWidget : public UUserWidget
 	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<class UProject_JCraftingJobsWidget> CraftingJobsView;
 
   private:
+	float DashEdgeOpacity = 0.f;
 	UPROPERTY() TArray<TObjectPtr<UTextBlock>> PartyLabels;
 	UPROPERTY() TArray<TObjectPtr<UProgressBar>> PartyHealthBars;
 	int32 PresentedPartyMemberCount = 0;

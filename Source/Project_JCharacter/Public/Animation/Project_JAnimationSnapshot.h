@@ -30,6 +30,7 @@ struct PROJECT_JCHARACTER_API FProject_JAnimMovementThreadSafeData
  bool bHasTrajectory = false;
  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation|Snapshot")
  bool bHasGameplayRootMotion = false;
+ bool bMovementDashTravel = false;
 };
 
 USTRUCT(BlueprintType)
@@ -95,6 +96,8 @@ struct PROJECT_JCHARACTER_API FProject_JAnimCombatThreadSafeData
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	bool bIsPlayingCombatOutro = false;
 
+	float WeaponLayerWeight = 1.f;
+
 	/** Continuous animation composition selected by the equipped weapon profile. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	EProject_JCombatAnimationPresentationMode PresentationMode = EProject_JCombatAnimationPresentationMode::UpperBodyOverlay;
@@ -109,6 +112,7 @@ struct PROJECT_JCHARACTER_API FProject_JAnimMontageThreadSafeData
  // Includes the first blend-in frame and blend-out; excludes UpperBody equip.
  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation|Snapshot")
  bool bFullBodyMontageActive = false;
+ bool bReleasedLocomotion = false;
 };
 
 USTRUCT(BlueprintType)

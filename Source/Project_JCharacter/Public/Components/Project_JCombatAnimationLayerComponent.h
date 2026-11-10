@@ -15,7 +15,8 @@ enum class EProject_JCombatAnimationLayerState : uint8
 	Inactive,
 	PreparingCombat,
 	CombatActive,
-	SuppressedByMount
+	SuppressedByMount,
+	BlendingOutOfCombat
 };
 
 /**
