@@ -34,6 +34,7 @@ public:
 	void Initialize(USpringArmComponent* InCameraBoom, UCameraComponent* InFollowCamera);
 	void RefreshAbilitySystemBinding();
 	float GetDashMotionAlpha() const { return DashMotionAlpha; }
+	bool ApplyWheelZoom(float WheelDelta);
 
 	UPROPERTY()
 	TObjectPtr<USpringArmComponent> CameraBoom;
@@ -96,12 +97,15 @@ private:
 
 	void UnregisterAbilitySystemBinding();
 	void UpdateMotionFraming(float DeltaTime);
+	float GetBaseArmLength() const;
+	float GetTargetArmLength() const;
 
 	TWeakObjectPtr<UAbilitySystemComponent> BoundAbilitySystemComponent;
 	FDelegateHandle CombatModeTagEventHandle;
 	float BaseFieldOfView = 90.0f;
 	float DashMotionAlpha = 0.0f;
 	float SprintMotionAlpha = 0.0f;
+	float WheelZoomOffset = 0.0f;
 	bool bIsCombatMode = false;
 	bool bIsLocallyControlled = false;
 	bool bUseRightCombatShoulder = true;

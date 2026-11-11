@@ -34,7 +34,7 @@ bool FProjectJCursorGestureTest::RunTest(const FString&)
     }
     Gesture.KeyDown(EKeys::LeftAlt, false, true);
     TestFalse(TEXT("A modifier held before Alt also cancels cursor toggle"), Gesture.KeyUp(EKeys::LeftAlt));
-    Gesture.KeyDown(EKeys::LeftAlt, false); Gesture.MouseDown();
+    Gesture.KeyDown(EKeys::LeftAlt, false); Gesture.PointerInteraction();
     TestFalse(TEXT("Alt drag/click does not hide the cursor"), Gesture.KeyUp(EKeys::LeftAlt));
     Gesture.KeyDown(EKeys::LeftAlt, false); Gesture.Reset();
     TestFalse(TEXT("Focus loss or avatar change cancels a pending toggle"), Gesture.KeyUp(EKeys::LeftAlt));

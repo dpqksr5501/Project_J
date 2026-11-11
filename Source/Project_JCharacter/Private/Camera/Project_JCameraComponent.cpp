@@ -15,6 +15,13 @@
 #include "Project_JGameplayTags.h"
 #include "Project_JPlayerCharacter.h"
 
+namespace
+{
+constexpr float WheelZoomStep = 25.0f;
+constexpr float MinWheelArmLength = 200.0f;
+constexpr float MaxWheelArmLength = 650.0f;
+}
+
 UProject_JCameraComponent::UProject_JCameraComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -50,7 +57,33 @@ void UProject_JCameraComponent::BeginPlay()
 
 void UProject_JCameraComponent::OnControllerChanged(APawn* Pawn, AController* OldController, AController* NewController)
 {
+	if (OldController != NewController) WheelZoomOffset = 0.0f;
 	RefreshAbilitySystemBinding();
+}
+
+bool UProject_JCameraComponent::ApplyWheelZoom(float WheelDelta)
+{
+	if (!bIsLocallyControlled || !IsValid(CameraBoom) || !IsValid(FollowCamera) ||
+		!FollowCamera->IsActive() || !FMath::IsFinite(WheelDelta) || WheelDelta == 0.0f)
+	{
+		return false;
+	}
+	// Start at the clamped target so reversing at a limit also responds after
+	// a switch between the normal and combat camera distances.
+	const float Target = FMath::Clamp(GetTargetArmLength() - WheelDelta * WheelZoomStep,
+		MinWheelArmLength, MaxWheelArmLength);
+	WheelZoomOffset = Target - GetBaseArmLength();
+	return true;
+}
+
+float UProject_JCameraComponent::GetBaseArmLength() const
+{
+	return bIsCombatMode ? CombatTargetArmLength : NormalTargetArmLength;
+}
+
+float UProject_JCameraComponent::GetTargetArmLength() const
+{
+	return FMath::Clamp(GetBaseArmLength() + WheelZoomOffset, MinWheelArmLength, MaxWheelArmLength);
 }
 
 void UProject_JCameraComponent::RefreshAbilitySystemBinding()
@@ -78,7 +111,7 @@ void UProject_JCameraComponent::RefreshAbilitySystemBinding()
 
 	if (CameraBoom)
 	{
-		CameraBoom->TargetArmLength = bIsCombatMode ? CombatTargetArmLength : NormalTargetArmLength;
+		CameraBoom->TargetArmLength = GetTargetArmLength();
 		CameraBoom->SocketOffset = bIsCombatMode
 			? FVector(CombatSocketOffset.X, bUseRightCombatShoulder ? CombatSocketOffset.Y : -CombatSocketOffset.Y, CombatSocketOffset.Z)
 			: NormalSocketOffset;
@@ -130,7 +163,7 @@ void UProject_JCameraComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 
 	if (CameraBoom)
 	{
-		const float TargetLength = bIsCombatMode ? CombatTargetArmLength : NormalTargetArmLength;
+		const float TargetLength = GetTargetArmLength();
 		CameraBoom->TargetArmLength = FMath::FInterpTo(CameraBoom->TargetArmLength, TargetLength, DeltaTime, ZoomInterpolationSpeed);
 		const FVector TargetOffset = bIsCombatMode
 			? FVector(CombatSocketOffset.X, bUseRightCombatShoulder ? CombatSocketOffset.Y : -CombatSocketOffset.Y, CombatSocketOffset.Z)

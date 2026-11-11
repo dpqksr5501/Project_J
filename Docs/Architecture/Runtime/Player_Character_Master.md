@@ -15,6 +15,10 @@ UProject_JPlayerAnimInstance
 
 캐릭터와 ABP의 상속 트리를 일대일로 복제하지 않는다. 플레이어의 공통 컴포넌트와 기본값은 `BP_Player_Master`, 공통 포즈 흐름은 `ABP_Player_Master`가 제공한다. 직업·장비·몸체 차이는 기존 프로필과 레이어로 공급한다. 사람형 NPC는 필요한 애니메이션 계약을 공유할 수 있지만 플레이어 입력·카메라·PlayerState 소유권까지 상속하지 않는다. 동물·탈것을 이 플레이어 부모 아래로 이동하지 않는다.
 
+일반 점프의 발사 속도는 `AProject_JPlayerCharacter::GetEffectiveJumpLaunchSpeed`에서 612.37244cm/s로 정한다. 이 값은 기존 Spellblade BP 값과 같다. 플레이어 자식 BP의 직렬화된 이전 값은 런타임 점프에 사용되지 않는다. Mover 초기화가 같은 값을 서버 권위와 클라이언트 예측에 적용한다. NPC 등 비플레이어의 점프는 기존 `Non-Player Jump Launch Speed`를 사용한다. 스킬 루트 모션, 공중 제약, 중력 및 점프 수락 조건은 기존 경로에서 처리한다. 배포 시 서버와 클라이언트의 이동 튜닝 버전을 함께 갱신한다.
+
+마우스 휠 줌은 공통 플레이어 컨트롤러가 게임 뷰포트에서 받고, 소유 플레이어의 카메라 컴포넌트가 처리한다. 한 칸은 목표 거리 25cm이고 범위는 200–650cm다. 전투 전후의 기본 거리에 같은 줌 오프셋을 더한 뒤 범위를 적용한다. 인벤토리·미니맵의 휠 처리와 Alt 커서 모드, 탑승·별도 시점의 입력 경계는 기존 경로를 사용한다. 줌은 로컬 표시 상태이며 서버에 복제하지 않는다.
+
 ## 책임과 데이터
 
 2026-10-26 원격 Cloth 비용은 기존 월드 animation-budget subsystem의 거리 관측과 animation-update coordinator에서 제어한다. 필수 source pose·직접 ABP/명시적 리타깃 경로와 별개의 cosmetic 인스턴스 예산이며, 공통 Master BP/ABP를 수정하지 않았다. 로컬 authored 품질·LOD0를 보존하고 지원하지 않는 의상/외부 interactor writer는 원본 유지/opt-out한다. 피부 body의 파생 LOD와 숨은 producer/표시 소비자의 역할, 실제 200명 결과·복구 수명·남은 한계는 [후속 보고서](../../Performance/Reports/ProjectJ_Cloth_Budget_200_2026-10-25.md)를 따른다. 아래 이전 리깅 검증을 새 성능·모든 원격 의상 품질 승인으로 재사용하지 않는다.

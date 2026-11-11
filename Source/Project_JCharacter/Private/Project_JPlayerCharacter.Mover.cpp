@@ -8,6 +8,21 @@
 #include "Movement/Project_JMoverComponent.h"
 #include "Movement/Project_JGroundMovement.h"
 #include "MoverDataModelTypes.h"
+#include "UObject/UnrealType.h"
+
+float AProject_JPlayerCharacter::GetEffectiveJumpLaunchSpeed() const
+{
+	// Preserve Spellblade's authored speed for both authority and prediction.
+	return 612.37244f;
+}
+
+#if WITH_EDITOR
+bool AProject_JPlayerCharacter::CanEditChange(const FProperty* InProperty) const
+{
+	return InProperty && InProperty->GetFName() != GET_MEMBER_NAME_CHECKED(AProject_JPlayerCharacter, JumpLaunchSpeed) &&
+		Super::CanEditChange(InProperty);
+}
+#endif
 
 const FProject_JStrafeDirectionPolicy& AProject_JPlayerCharacter::GetStrafeDirectionPolicy() const
 {

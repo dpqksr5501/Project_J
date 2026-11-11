@@ -86,6 +86,10 @@ public:
 	FVector GetGameplayMoveDirection(FVector* OutControlForward = nullptr) const;
 	virtual FProject_JMoverPolicy ResolveMoverPolicy(const FProject_JMoverInputs& Requested,const FCharacterDefaultInputs* Input=nullptr) const override;
 	virtual float GetMoverMaxSpeed(bool bAcceptedSprint) const override;
+	virtual float GetEffectiveJumpLaunchSpeed() const final override;
+#if WITH_EDITOR
+	virtual bool CanEditChange(const FProperty* InProperty) const override;
+#endif
 	virtual const FProject_JStrafeDirectionPolicy& GetStrafeDirectionPolicy() const override;
 
 private:

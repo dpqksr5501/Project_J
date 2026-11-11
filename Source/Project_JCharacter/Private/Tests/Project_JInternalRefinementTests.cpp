@@ -29,6 +29,8 @@
 #include "GameFramework/PlayerState.h"
 #include "Components/Project_JCommandBudgetComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "DefaultMovementSet/CharacterMoverComponent.h"
+#include "DefaultMovementSet/Settings/CommonLegacyMovementSettings.h"
 #include "Project_JSpellbladeCharacter.h"
 #include "Project_JGameplayTags.h"
 #include "Project_JAbilitySystemComponent.h"
@@ -272,9 +274,79 @@ bool FProjectJCameraOwnershipTest::RunTest(const FString&)
 	Controller->Possess(Pawn);
 	TestTrue(TEXT("Local possession restores the camera"), View->IsActive() && Camera->IsComponentTickEnabled());
 	TestTrue(TEXT("Authored lag configuration survives"), Boom->bEnableCameraLag);
+	const float DefaultLength = Boom->TargetArmLength;
+	const auto SettleZoom = [&]
+	{
+		for (int32 Frame = 0; Frame < 60; ++Frame)
+		{
+			static_cast<UActorComponent*>(Camera)->TickComponent(1.f / 30.f, LEVELTICK_All, &Camera->PrimaryComponentTick);
+		}
+	};
+	TestFalse(TEXT("Nonfinite wheel delta is ignored"), Camera->ApplyWheelZoom(std::numeric_limits<float>::quiet_NaN()));
+	TestTrue(TEXT("Local wheel up is accepted"), Camera->ApplyWheelZoom(1.f));
+	SettleZoom();
+	TestTrue(TEXT("Wheel up targets exactly 25 cm closer"), FMath::IsNearlyEqual(Boom->TargetArmLength, DefaultLength - 25.f, 0.1f));
+	TestTrue(TEXT("Wheel down is accepted"), Camera->ApplyWheelZoom(-1.f));
+	SettleZoom();
+	TestTrue(TEXT("Inverse wheel deltas return to the authored distance"), FMath::IsNearlyEqual(Boom->TargetArmLength, DefaultLength, 0.1f));
+	Camera->ApplyWheelZoom(-100.f);
+	SettleZoom();
+	const float MaxLength = Boom->TargetArmLength;
+	Camera->ApplyWheelZoom(-100.f);
+	SettleZoom();
+	TestTrue(TEXT("Repeated wheel down stops at 650 cm"), FMath::IsNearlyEqual(MaxLength, 650.f, 0.1f) &&
+		FMath::IsNearlyEqual(Boom->TargetArmLength, MaxLength, 0.1f));
+	Camera->ApplyWheelZoom(1.f);
+	SettleZoom();
+	TestTrue(TEXT("The first notch off the maximum targets 625 cm"), FMath::IsNearlyEqual(Boom->TargetArmLength, 625.f, 0.1f));
+	Camera->ApplyWheelZoom(100.f);
+	SettleZoom();
+	TestTrue(TEXT("The near limit keeps the spring arm at 200 cm"), FMath::IsNearlyEqual(Boom->TargetArmLength, 200.f, 0.1f));
 	Controller->UnPossess();
 	TestFalse(TEXT("Ownership loss disables interpolation"), Camera->IsComponentTickEnabled());
+	TestFalse(TEXT("An unpossessed camera cannot consume the wheel"), Camera->ApplyWheelZoom(1.f));
+	Controller->Possess(Pawn);
+	TestEqual(TEXT("New possession starts at the authored distance"), Boom->TargetArmLength, DefaultLength);
 	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJSharedPlayerJumpTest, "ProjectJ.Internal.Mover.SharedPlayerJump", InternalTestFlags)
+bool FProjectJSharedPlayerJumpTest::RunTest(const FString&)
+{
+	FInternalTestWorld Scope;
+	Scope.World->InitializeActorsForPlay(FURL());
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	constexpr float ExpectedSpeed = 612.37244f;
+	const TCHAR* PlayerClasses[] = {
+		TEXT("/Game/Character_BPs/BP_Player_Master.BP_Player_Master_C"),
+		TEXT("/Game/Character_BPs/Spellblade/BP_Spellblade.BP_Spellblade_C"),
+		TEXT("/Game/Character_BPs/GreatSword/BP_Greatsword.BP_Greatsword_C")
+	};
+	for (const TCHAR* Path : PlayerClasses)
+	{
+		UClass* Class = LoadClass<AProject_JPlayerCharacter>(nullptr, Path);
+		if (!TestNotNull(Path, Class)) continue;
+		const auto* Player = Scope.World->SpawnActor<AProject_JPlayerCharacter>(
+			Class, FVector::ZeroVector, FRotator::ZeroRotator, Params);
+		if (!TestNotNull(TEXT("Player instance"), Player)) continue;
+		const auto* Settings = Player->GetMover()->FindSharedSettings<UCommonLegacyMovementSettings>();
+		if (TestNotNull(TEXT("Real Mover shared settings"), Settings))
+		{
+			TestEqual(Path, Settings->JumpUpwardsSpeed, ExpectedSpeed);
+			TestTrue(TEXT("Movement settings belong to this pawn's Mover"), Settings->GetOuter() == Player->GetMover());
+		}
+	}
+	const auto* NonPlayer = Scope.World->SpawnActor<AProject_JMoverPawn>(FVector::ZeroVector, FRotator::ZeroRotator, Params);
+	if (TestNotNull(TEXT("Non-player instance"), NonPlayer))
+	{
+		const auto* Settings = NonPlayer->GetMover()->FindSharedSettings<UCommonLegacyMovementSettings>();
+		if (TestNotNull(TEXT("Non-player Mover settings"), Settings))
+		{
+			TestEqual(TEXT("Non-player jump tuning stays independent"), Settings->JumpUpwardsSpeed, 500.f);
+		}
+	}
+	return !HasAnyErrors();
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJPoolDefinitionBoundsTest, "ProjectJ.Internal.Pooling.DefinitionBounds", InternalTestFlags)
