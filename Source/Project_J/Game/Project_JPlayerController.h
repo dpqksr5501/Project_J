@@ -23,6 +23,7 @@ class AProject_JPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 public:
+	virtual bool InputKey(const FInputKeyEventArgs& Params) override;
 	virtual void SetViewTarget(AActor* NewViewTarget,FViewTargetTransitionParams TransitionParams=FViewTargetTransitionParams()) override;
 	virtual void UpdateCameraManager(float DeltaSeconds) override;
 

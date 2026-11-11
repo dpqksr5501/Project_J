@@ -35,6 +35,7 @@ public:
  UFUNCTION(BlueprintCallable, Category="Movement") virtual void Jump();
  UFUNCTION(BlueprintCallable, Category="Movement") virtual void StopJumping();
  UFUNCTION(BlueprintCallable, Category="Movement") bool CanJump() const { return CanJumpInternal_Implementation(); }
+ UFUNCTION(BlueprintPure, Category="Movement|Jump") virtual float GetEffectiveJumpLaunchSpeed() const { return JumpLaunchSpeed; }
  virtual bool CanJumpInternal_Implementation() const;
  UFUNCTION(BlueprintNativeEvent, Category="Movement") void OnJumped();
  virtual void OnJumped_Implementation();
@@ -60,8 +61,8 @@ public:
  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Movement") TObjectPtr<UNavMoverComponent> NavMover;
  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation") TObjectPtr<USkeletalMeshComponent> Mesh;
 protected:
- /** Upward velocity applied by the predicted Mover jump. */
- UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Movement|Jump", meta=(ClampMin="1.0", Units="cm/s"))
+ /** Authored speed for non-player pawns. Use GetEffectiveJumpLaunchSpeed for the simulation value. */
+ UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Movement|Jump", meta=(DisplayName="Non-Player Jump Launch Speed", ClampMin="1.0", Units="cm/s"))
  float JumpLaunchSpeed=500.f;
  virtual void Landed(const FHitResult& Hit);
  UFUNCTION(BlueprintImplementableEvent, meta=(DisplayName="On Landed")) void K2_OnLanded(const FHitResult& Hit);

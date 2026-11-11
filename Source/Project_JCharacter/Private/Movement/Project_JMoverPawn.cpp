@@ -45,8 +45,9 @@ void AProject_JMoverPawn::PostInitializeComponents()
  if(auto* Settings=Mover->FindSharedSettings_Mutable<UCommonLegacyMovementSettings>())
  {
   Settings->MaxSpeed=800.f; Settings->Acceleration=Settings->Deceleration=4000.f; Settings->TurningRate=500.f;
-  if (ensureMsgf(FMath::IsFinite(JumpLaunchSpeed) && JumpLaunchSpeed > 0.f, TEXT("Invalid jump launch speed on %s"), *GetName()))
-   Settings->JumpUpwardsSpeed=JumpLaunchSpeed;
+  const float EffectiveJumpSpeed = GetEffectiveJumpLaunchSpeed();
+  if (ensureMsgf(FMath::IsFinite(EffectiveJumpSpeed) && EffectiveJumpSpeed > 0.f, TEXT("Invalid jump launch speed on %s"), *GetName()))
+   Settings->JumpUpwardsSpeed=EffectiveJumpSpeed;
  }
 }
 void AProject_JMoverPawn::BeginPlay()

@@ -9,7 +9,7 @@ struct FProject_JCursorGesture
 		if (Key == EKeys::LeftAlt) { if (!bRepeat) { bHeld = true; bChord = bOtherModifierDown; } }
 		else if (bHeld && !bRepeat) bChord = true;
 	}
-	void MouseDown() { if (bHeld) bChord = true; }
+	void PointerInteraction() { if (bHeld) bChord = true; }
 	bool KeyUp(FKey Key)
 	{
 		if (Key != EKeys::LeftAlt) return false;

@@ -76,7 +76,12 @@ public:
 		if (Gesture.KeyUp(Event.GetKey()) && bOurViewport && Owner.IsValid()) Owner->ToggleCursorMode();
 		return false;
 	}
-	bool HandleMouseButtonDownEvent(FSlateApplication&, const FPointerEvent&) override { Gesture.MouseDown(); return false; }
+	bool HandleMouseButtonDownEvent(FSlateApplication&, const FPointerEvent&) override { Gesture.PointerInteraction(); return false; }
+	bool HandleMouseWheelOrGestureEvent(FSlateApplication& App, const FPointerEvent& Event, const FPointerEvent* InGestureEvent) override
+	{
+		if (Event.GetWheelDelta() != 0.0f && IsOurViewport(App, Event.GetUserIndex())) Gesture.PointerInteraction();
+		return false; // Let Slate route the wheel to the widget or viewport.
+	}
 	void Reset() { Gesture.Reset(); }
 private:
 	TWeakObjectPtr<UProject_JPlayerUIComponent> Owner;

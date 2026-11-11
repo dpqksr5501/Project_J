@@ -23,6 +23,8 @@
 #include "Network/Project_JNetObjectPrioritizer_Combat.h"
 #include "Project_JNPCCharacter.h"
 #include "Project_JPlayerCharacter.h"
+#include "Camera/Project_JCameraComponent.h"
+#include "Mount/Project_JMountComponent.h"
 #include "Project_JLocomotionAnimStateComponent.h"
 #include "Game/Project_JProfilingCrowdComponent.h"
 #include "PoseSearch/PoseSearchDatabase.h"
@@ -135,6 +137,32 @@ void AProject_JPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReaso
 	InputLeaseSubsystem.Reset();
 	if (MobileControlsWidget) { MobileControlsWidget->RemoveFromParent(); MobileControlsWidget = nullptr; }
 	Super::EndPlay(EndPlayReason);
+}
+
+bool AProject_JPlayerController::InputKey(const FInputKeyEventArgs& Params)
+{
+	// Slate routes to the hovered widget first. Only handle the axis that
+	// reaches the game viewport, once per wheel event.
+	if (Params.Key == EKeys::MouseWheelAxis && Params.Event == IE_Axis && !Params.bIsTouchEvent &&
+		IsLocalPlayerController() && !IsPaused() && !IsLookInputIgnored() && !bShowMouseCursor)
+	{
+		const FModifierKeysState Modifiers = FSlateApplication::IsInitialized()
+			? FSlateApplication::Get().GetModifierKeys() : FModifierKeysState();
+		if (!Modifiers.IsAltDown() && !Modifiers.IsControlDown() &&
+			!Modifiers.IsShiftDown() && !Modifiers.IsCommandDown())
+		{
+			if (const auto* Avatar = Cast<AProject_JPlayerCharacter>(GetPawn()); Avatar && GetViewTarget() == Avatar)
+			{
+				const auto* Mount = Avatar->GetMountComponent();
+				if (auto* Camera = Avatar->GetCameraComponent();
+					Camera && (!Mount || !Mount->IsMounted()) && Camera->ApplyWheelZoom(Params.AmountDepressed))
+				{
+					return true;
+				}
+			}
+		}
+	}
+	return Super::InputKey(Params);
 }
 
 void AProject_JPlayerController::UpdateCameraManager(float DeltaSeconds)
