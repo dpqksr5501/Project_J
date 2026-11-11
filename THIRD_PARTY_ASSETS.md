@@ -33,6 +33,7 @@ Project J에는 자체 코드와 외부 콘텐츠가 함께 들어 있다. 이 �
 | **A07 · Basic 대검** | `SourceArt/Weapons/Greatsword/Basic/`, `Content/Weapons/Greatsword/Basic/`. [제작 기록](SourceArt/Weapons/Greatsword/Basic/README.md)은 제공된 GothicGreatsword_MMO FBX·텍스처를 입력으로 설명 | **`Unverified`**. 최초 제작·취득 경로와 권리 정보 필요. A01의 연관 무기와 별도 장비 |
 | **A08 · SlashTrail** | `Content/SlashTrail_SoftTofu/` | **`Unverified`**. 원 상품·제작자·취득 조건 필요. Niagara뿐 아니라 재질·리본/노이즈 텍스처도 확인 |
 | **A09 · 템플릿·맵·미디어** | `Content/ThirdPerson/`, `Content/Input/Touch/`, `Content/Level/`, `Content/World/MainWorld/`, `Content/__ExternalActors__/`, `Content/__ExternalObjects__/`, `Docs/Media/ProjectJ_Video_Thumbnail.jpg`와 비교 이미지 | **`Needs Review`**. 템플릿·프로젝트 저작·외부 파생 자원을 구분. 맵·blend의 포함 데이터, 영상·이미지의 외부 아트·상표·음원도 해당 조건 확인 |
+| **A10 · Winger 캐릭터와 제작 원본** | 로컬 `Content/Characters/Winger/`, `SourceArt/Characters/Winger/UE5/`. 원작은 넥슨 **마비노기 영웅전(Vindictus)**의 **레지나(Regina)**. 작성자가 Project J의 Winger에 사용한 원작 캐릭터를 확인함. [국내 공식 업데이트](https://heroes.nexon.com/guide/update_view?no=44), [글로벌 공식 레이드 소개](https://vindictus.nexon.net/news/2784/season-3-episode-1) | **`Needs Review`**. 개별 FBX·SMD·텍스처의 최초 배포처와 취득 조건, 외부 게임 사용 및 원본·수정본 공개 Git/LFS 재배포 허락은 미확인. |
 
 ### Black Desert 콘텐츠의 출처와 사용 범위
 
@@ -49,6 +50,12 @@ Project J에는 자체 코드와 외부 콘텐츠가 함께 들어 있다. 이 �
 | Cook된 게임 빌드 배포 | 허용 근거 미확인 |
 | 영상·스크린샷·포트폴리오 | 팬 콘텐츠 정책과 실제 용도 대조 필요. 원본 파일 배포와 별도 검토 |
 | 공모전·상금·상업적 활용 | 콘텐츠 라이선스와 실제 대회의 출품·홍보·배포 조건을 사전 검토 |
+
+### 마비노기 영웅전 레지나의 출처와 사용 범위
+
+2026-11-11 확인. 넥슨은 레지나를 「눈물의 화원」(Garden of Tears)의 레이드 보스로 소개한다. Project J의 Winger는 제공받은 레지나 모델·텍스처·모션을 바탕으로 UE5 리깅·리타기팅과 날개 애니메이션을 제작한 로컬 시험 캐릭터다. [국내 공식 업데이트](https://heroes.nexon.com/guide/update_view?no=44), [글로벌 공식 레이드 소개](https://vindictus.nexon.net/news/2784/season-3-episode-1)
+
+넥슨의 국내 게임 IP 사용 가이드는 비영리 앱 등 디지털 콘텐츠를 만들려는 경우 고객센터에 개별 문의하도록 안내한다. Nexon America의 영상·스트리밍 안내에도 게임 에셋의 별도 배포를 허용하지 않는다는 내용이 있다. Project J에서 사용하는 원본·수정본의 공개 재배포에 대한 별도 허락은 확인되지 않았다. Winger 에셋은 로컬에 보관 중이다. [넥슨 게임 IP 사용 가이드](https://m.nexon.com/terms/743), [Nexon America 영상·스트리밍 안내](https://playersupport.nexon.com/hc/en-us/articles/206109746-Statement-on-Permissible-Uses-of-VOD-and-Streaming)
 
 ## 3. 환경 라이브러리
 
