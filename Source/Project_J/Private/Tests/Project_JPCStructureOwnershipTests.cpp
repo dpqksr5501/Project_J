@@ -56,15 +56,38 @@ bool FProjectJJobPawnSelectionTest::RunTest(const FString&)
         auto* Expected = LoadClass<APawn>(nullptr, PawnPath);
         if (!TestNotNull(TEXT("Expected playable pawn"), Expected)) return;
         TestEqual(TEXT("Committed job selects its own pawn"), Mode->GetDefaultPawnClassForController(Controller), Expected);
+        const auto CheckSprintGrant = [&]()
+        {
+            FGameplayAbilitySpecHandle Sprint;
+            int32 Count = 0;
+            for (const auto& Spec : State->GetAbilitySystemComponent()->GetActivatableAbilities())
+            {
+                if (Spec.Ability && Spec.Ability->GetClass() == UProject_JGameplayAbility_Sprint::StaticClass())
+                {
+                    Sprint = Spec.Handle;
+                    ++Count;
+                }
+            }
+            TestEqual(TEXT("The player has exactly one shared Sprint ability"), Count, 1);
+            return Sprint;
+        };
+        FGameplayAbilitySpecHandle InitialSprint;
         auto* First = Mode->SpawnDefaultPawnAtTransform(Controller, FTransform(FVector(0, 0, 400)));
         if (TestNotNull(TEXT("Initial pawn spawned"), First))
         {
             TestEqual(TEXT("Initial pawn class"), First->GetClass(), Expected);
+            Controller->Possess(First);
+            InitialSprint = CheckSprintGrant();
+            Controller->UnPossess();
             First->Destroy();
         }
         auto* Respawn = Mode->SpawnDefaultPawnAtTransform(Controller, FTransform(FVector(1000, 0, 400)));
         if (TestNotNull(TEXT("Replacement pawn spawned"), Respawn))
+        {
             TestEqual(TEXT("Replacement retains the committed job pawn"), Respawn->GetClass(), Expected);
+            Controller->Possess(Respawn);
+            TestTrue(TEXT("Respawn keeps the PlayerState's Sprint spec"), CheckSprintGrant() == InitialSprint);
+        }
     };
     CheckJob(Greatsword, TEXT("/Game/Character_BPs/GreatSword/BP_Greatsword.BP_Greatsword_C"));
     CheckJob(Spellblade, TEXT("/Game/Character_BPs/Spellblade/BP_Spellblade.BP_Spellblade_C"));
@@ -156,7 +179,7 @@ bool FProjectJAuthoredClassGrantOwnershipTest::RunTest(const FString&)
     ASC->InitAbilityActorInfo(Owner, Owner);
     auto* Progression = Owner->GetProgressionComponent();
     Progression->InitializeDefaults(Class, nullptr, 1);
-    TestEqual(TEXT("The authored class and style grant eight specs once, including core combat toggle"), ASC->GetActivatableAbilities().Num(), 8);
+    TestEqual(TEXT("The NPC class and style grant seven specs once, including core combat toggle"), ASC->GetActivatableAbilities().Num(), 7);
     for (const auto& Entry : Set->GrantedAbilityEntries)
     {
         int32 Matching = 0;
@@ -168,7 +191,7 @@ bool FProjectJAuthoredClassGrantOwnershipTest::RunTest(const FString&)
         TestEqual(FString::Printf(TEXT("Actual input %s has one matching class/level spec"), *Entry.InputTag.ToString()), Matching, 1);
     }
     TestTrue(TEXT("Level changes preserve the grant owner"), Progression->SetLevel(12));
-    TestEqual(TEXT("Level publication does not grant a second copy"), ASC->GetActivatableAbilities().Num(), 8);
+    TestEqual(TEXT("Level publication does not grant a second copy"), ASC->GetActivatableAbilities().Num(), 7);
     TArray<FText> Conflicts;
     FProject_JCombatConfiguration::FindInputGrantConflicts(*ASC, Conflicts);
     TestTrue(TEXT("Actual default composition has no cross-source input collisions"), Conflicts.IsEmpty());

@@ -7,6 +7,9 @@ class USkeleton;
 class UAnimBlueprint;
 class UAnimSequence;
 class UBlendSpace;
+class UIKRetargeter;
+class APlayerController;
+class UInputAction;
 class UProject_JAttackDefinition;
 
 /** Bounded authoring operations used by reviewed asset migrations. */
@@ -15,6 +18,36 @@ class PROJECT_JCHARACTEREDITOR_API UProject_JAssetMigrationLibrary : public UBlu
 {
     GENERATED_BODY()
 public:
+    /** Author a new visual follower graph. Optional animation is limited to one target subtree. */
+    UFUNCTION(BlueprintCallable, Category="Project J|Authoring|Animation")
+    static bool ConfigureRetargetFollower(UAnimBlueprint* Blueprint, USkeletalMesh* Target, UIKRetargeter* Retargeter,
+        UAnimSequence* Overlay, FName OverlayRoot);
+
+    /** Layer Winger motion over the body input pose. Optionally use phase-matched run and sprint samples. */
+    UFUNCTION(BlueprintCallable, Category="Project J|Authoring|Animation")
+    static bool InstallWingerWingMotions(UAnimBlueprint* Blueprint, USkeletalMesh* Target, const TArray<UAnimSequence*>& Motions,
+        UBlendSpace* RunBlend = nullptr, UAnimSequence* Sprint = nullptr);
+
+    /** Reskin the far LOD's wing branch to the first authored idle pose and remove its bones from that LOD. Never saves. */
+    UFUNCTION(BlueprintCallable, Category="Project J|Asset Migration")
+    static FString BakeWingerFarWings(USkeletalMesh* Mesh, UAnimSequence* Idle);
+
+    /** Count bind transforms that differ between the Winger mesh and its separate Skeleton asset. */
+    UFUNCTION(BlueprintCallable, Category="Project J|Asset Migration")
+    static int32 CountWingerBindDifferences(USkeletalMesh* Mesh);
+
+    /** Copy only the validated local bind transforms into Winger's own Skeleton. Never saves. */
+    UFUNCTION(BlueprintCallable, Category="Project J|Asset Migration")
+    static bool UpdateWingerSkeletonBind(USkeletalMesh* Mesh);
+
+    /** Align offline UE5 IK markers to their baked FK limbs, preserving the root and weapon tracks. Never saves. */
+    UFUNCTION(BlueprintCallable, Category="Project J|Asset Migration")
+    static bool RepairOfflineLimbMarkers(UAnimSequence* Sequence, USkeletalMesh* Mesh);
+
+    /** Inject an Enhanced Input action into the local controller during an editor play test. */
+    UFUNCTION(BlueprintCallable, Category="Project J|Authoring|Testing")
+    static bool InjectPIEInput(APlayerController* Controller, const UInputAction* Action, FVector Value);
+
     /** Read-only preview mount for a standalone skeletal weapon mesh. */
     UFUNCTION(BlueprintCallable, Category="Project J|Authoring|Combat")
     static bool ResolveSkeletalWeaponGripPreview(USkeletalMeshComponent* Body, USkeletalMesh* Weapon,

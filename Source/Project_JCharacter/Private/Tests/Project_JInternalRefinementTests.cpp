@@ -321,7 +321,8 @@ bool FProjectJSharedPlayerJumpTest::RunTest(const FString&)
 	const TCHAR* PlayerClasses[] = {
 		TEXT("/Game/Character_BPs/BP_Player_Master.BP_Player_Master_C"),
 		TEXT("/Game/Character_BPs/Spellblade/BP_Spellblade.BP_Spellblade_C"),
-		TEXT("/Game/Character_BPs/GreatSword/BP_Greatsword.BP_Greatsword_C")
+		TEXT("/Game/Character_BPs/GreatSword/BP_Greatsword.BP_Greatsword_C"),
+		TEXT("/Game/Characters/Winger/Blueprints/BP_Winger.BP_Winger_C")
 	};
 	for (const TCHAR* Path : PlayerClasses)
 	{
