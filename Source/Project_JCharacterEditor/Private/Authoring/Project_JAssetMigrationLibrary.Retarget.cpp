@@ -3,8 +3,11 @@
 #include "Animation/Project_JWingerAnimInstance.h"
 #include "AnimGraphNode_BlendListByInt.h"
 #include "AnimGraphNode_BlendSpacePlayer.h"
+#include "AnimGraphNode_ComponentToLocalSpace.h"
 #include "AnimGraphNode_LayeredBoneBlend.h"
 #include "AnimGraphNode_LinkedInputPose.h"
+#include "AnimGraphNode_LocalToComponentSpace.h"
+#include "AnimGraphNode_ModifyBone.h"
 #include "AnimGraphNode_RetargetPoseFromMesh.h"
 #include "AnimGraphNode_Root.h"
 #include "AnimGraphNode_SequencePlayer.h"
@@ -474,6 +477,154 @@ bool UProject_JAssetMigrationLibrary::InstallWingerWingMotions(
     Target->Modify();
     Target->SetPostProcessAnimBlueprint(Blueprint->GeneratedClass.Get());
     Target->SetPostProcessAnimGraphLODThreshold(1);
+    return true;
+}
+
+bool UProject_JAssetMigrationLibrary::InstallWingerClothMotion(UAnimBlueprint* Blueprint, USkeletalMesh* Target)
+{
+    if ((GEditor && GEditor->PlayWorld) || !Blueprint || !Target ||
+        Blueprint->ParentClass != UProject_JWingerAnimInstance::StaticClass() ||
+        Blueprint->TargetSkeleton != Target->GetSkeleton())
+    {
+        return false;
+    }
+
+    const FName Roots[] = {TEXT("jiggle_f_01"), TEXT("jiggle_k_01"), TEXT("jiggle_legL_01"), TEXT("jiggle_legR_01")};
+    const FName Hems[] = {TEXT("jiggle_f_02"), TEXT("jiggle_k_02")};
+    const FReferenceSkeleton& Skeleton = Target->GetRefSkeleton();
+    for (FName Bone : Roots)
+    {
+        if (Skeleton.FindBoneIndex(Bone) <= 0) return false;
+    }
+    for (FName Bone : Hems)
+    {
+        if (Skeleton.FindBoneIndex(Bone) <= 0) return false;
+    }
+
+    TArray<UEdGraph*> Graphs;
+    Blueprint->GetAllGraphs(Graphs);
+    UEdGraph* const* Found = Graphs.FindByPredicate([](const UEdGraph* Graph)
+    {
+        return Graph && Graph->GetFName() == TEXT("AnimGraph");
+    });
+    if (!Found)
+    {
+        return false;
+    }
+    UEdGraph* Graph = *Found;
+    TObjectPtr<UEdGraphNode>* RootNode = Graph->Nodes.FindByPredicate([](const UEdGraphNode* Node)
+    {
+        return Node && Node->IsA<UAnimGraphNode_Root>();
+    });
+    auto* Root = RootNode ? Cast<UAnimGraphNode_Root>(RootNode->Get()) : nullptr;
+    if (!Root || Root->Pins.Num() != 1 || Root->Pins[0]->LinkedTo.Num() != 1)
+    {
+        return false;
+    }
+    UEdGraphPin* Result = Root->Pins[0];
+    UEdGraphPin* Previous = Result->LinkedTo[0];
+    // Only splice the existing Winger output once.
+    if (!Previous->GetOwningNode()->IsA<UAnimGraphNode_LayeredBoneBlend>())
+    {
+        return false;
+    }
+
+    Blueprint->Modify();
+    Graph->Modify();
+    TArray<UEdGraphNode*> Added;
+    const auto Connect = [Graph](UEdGraphPin* From, UEdGraphPin* To)
+    {
+        return From && To && Graph->GetSchema()->TryCreateConnection(From, To);
+    };
+    const auto Fail = [&]()
+    {
+        for (auto* Node : Added)
+        {
+            FBlueprintEditorUtils::RemoveNode(Blueprint, Node, true);
+        }
+        if (Result->LinkedTo.IsEmpty())
+        {
+            Connect(Previous, Result);
+        }
+        return false;
+    };
+    FGraphNodeCreator<UAnimGraphNode_LocalToComponentSpace> ToComponentCreator(*Graph);
+    auto* ToComponent = ToComponentCreator.CreateNode();
+    ToComponent->NodePosX = Previous->GetOwningNode()->NodePosX + 250;
+    ToComponentCreator.Finalize();
+    Added.Add(ToComponent);
+    if (!Connect(Previous, ToComponent->FindPin(TEXT("LocalPose"), EGPD_Input)))
+    {
+        return Fail();
+    }
+    UEdGraphPin* Pose = ToComponent->FindPin(TEXT("ComponentPose"), EGPD_Output);
+    int32 X = ToComponent->NodePosX + 220;
+    auto AddRotationInput = [&](FName Property)
+    {
+        FGraphNodeCreator<UK2Node_VariableGet> Creator(*Graph);
+        auto* Getter = Creator.CreateNode();
+        Getter->VariableReference.SetSelfMember(Property);
+        Getter->NodePosX = X;
+        Getter->NodePosY = -170;
+        Creator.Finalize();
+        Added.Add(Getter);
+        return Getter->GetValuePin();
+    };
+    const auto AddControl = [&](FName Bone, UEdGraphPin* Rotation, float Alpha)
+    {
+        FGraphNodeCreator<UAnimGraphNode_ModifyBone> Creator(*Graph);
+        auto* Control = Creator.CreateNode();
+        Control->NodePosX = X;
+        auto& Node = Control->Node;
+        Node.BoneToModify.BoneName = Bone;
+        Node.RotationMode = BMM_Additive;
+        Node.RotationSpace = BCS_ComponentSpace;
+        Node.LODThreshold = 1;
+        Node.Alpha = Alpha;
+        Creator.Finalize();
+        Added.Add(Control);
+        if (!Connect(Pose, Control->FindPin(TEXT("ComponentPose"), EGPD_Input)) ||
+            !Connect(Rotation, Control->FindPin(TEXT("Rotation"), EGPD_Input)))
+        {
+            return false;
+        }
+        Pose = Control->FindPin(TEXT("Pose"), EGPD_Output);
+        X += 240;
+        return Pose != nullptr;
+    };
+    auto* RootRotation = AddRotationInput(GET_MEMBER_NAME_CHECKED(UProject_JWingerAnimInstance, ClothRootRotation));
+    for (int32 Index = 0; Index < UE_ARRAY_COUNT(Roots); ++Index)
+    {
+        if (!AddControl(Roots[Index], RootRotation, Index < 2 ? 1.f : 0.45f)) return Fail();
+    }
+    auto* HemRotation = AddRotationInput(GET_MEMBER_NAME_CHECKED(UProject_JWingerAnimInstance, ClothHemRotation));
+    for (FName Bone : Hems)
+    {
+        if (!AddControl(Bone, HemRotation, 1.f)) return Fail();
+    }
+    FGraphNodeCreator<UAnimGraphNode_ComponentToLocalSpace> ToLocalCreator(*Graph);
+    auto* ToLocal = ToLocalCreator.CreateNode();
+    ToLocal->NodePosX = X;
+    ToLocalCreator.Finalize();
+    Added.Add(ToLocal);
+    if (!Connect(Pose, ToLocal->FindPin(TEXT("ComponentPose"), EGPD_Input)))
+    {
+        return Fail();
+    }
+    Result->BreakLinkTo(Previous);
+    if (!Connect(ToLocal->FindPin(TEXT("Pose"), EGPD_Output), Result))
+    {
+        return Fail();
+    }
+    Root->NodePosX = X + 220;
+    FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(Blueprint);
+    FKismetEditorUtilities::CompileBlueprint(Blueprint);
+    if (Blueprint->Status == BS_Error)
+    {
+        Fail();
+        FKismetEditorUtilities::CompileBlueprint(Blueprint);
+        return false;
+    }
     return true;
 }
 

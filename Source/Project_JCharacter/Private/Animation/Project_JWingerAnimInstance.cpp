@@ -14,6 +14,32 @@ void UProject_JWingerAnimInstance::ResetWingMotion()
     bHasMotionSample = false;
     AirEpisode = 0;
     PhaseRemaining = 0.f;
+    ClothDrag = ClothFollow = FVector::ZeroVector;
+    ClothRootRotation = ClothHemRotation = FRotator::ZeroRotator;
+}
+
+void UProject_JWingerAnimInstance::UpdateClothMotion(const USkeletalMeshComponent& Mesh,
+    const FVector& Forward, const FVector& Velocity, float DeltaSeconds)
+{
+    // The waist stays attached to the animated body. Two damped responses
+    // give the hem a little more lag without oscillating after a stop.
+    const FVector Horizontal(Velocity.X, Velocity.Y, 0);
+    const FVector Target = -Horizontal.GetClampedToMaxSize(750.0) * (6.0 / 750.0)
+        + Forward * FMath::Clamp(-Velocity.Z / 420.0, -1.2, 1.2);
+    const float Step = FMath::Clamp(DeltaSeconds, 0.f, 0.05f);
+    ClothDrag = FMath::Lerp(ClothDrag, Target, 1.f - FMath::Exp(-11.f * Step));
+    ClothFollow = FMath::Lerp(ClothFollow, ClothDrag, 1.f - FMath::Exp(-6.f * Step));
+    const auto Rotation = [&Mesh](const FVector& Deflection)
+    {
+        const FVector AxisDegrees = Mesh.GetComponentTransform().InverseTransformVectorNoScale(
+            FVector::CrossProduct(FVector::DownVector, Deflection));
+        const double Degrees = AxisDegrees.Size();
+        return Degrees > KINDA_SMALL_NUMBER
+            ? FQuat(AxisDegrees / Degrees, FMath::DegreesToRadians(Degrees)).Rotator()
+            : FRotator::ZeroRotator;
+    };
+    ClothRootRotation = Rotation(ClothDrag * 0.8);
+    ClothHemRotation = Rotation(ClothFollow * 0.55);
 }
 
 void UProject_JWingerAnimInstance::NativeInitializeAnimation()
@@ -43,6 +69,10 @@ void UProject_JWingerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
     }
 
     const FVector Velocity = Pawn->GetVelocity();
+    if (Mesh)
+    {
+        UpdateClothMotion(*Mesh, Pawn->GetActorForwardVector(), Velocity, DeltaSeconds);
+    }
     const auto* Lifecycle = Mover->GetSyncState().SyncStateCollection.FindDataByType<FProject_JMoverLifecycle>();
     if (Mover->IsAirborne())
     {

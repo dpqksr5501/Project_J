@@ -19,6 +19,12 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Transient, Category="Wings")
     float WingSprintBlendPercent = 0.f;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Transient, Category="Cloth")
+    FRotator ClothRootRotation = FRotator::ZeroRotator;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Transient, Category="Cloth")
+    FRotator ClothHemRotation = FRotator::ZeroRotator;
+
     UPROPERTY(EditDefaultsOnly, Category="Wings", meta=(ClampMin="0"))
     float LandingDuration = 0.4f;
 
@@ -31,7 +37,10 @@ public:
 
 private:
     void ResetWingMotion();
+    void UpdateClothMotion(const USkeletalMeshComponent& Mesh, const FVector& Forward, const FVector& Velocity, float DeltaSeconds);
 
+    FVector ClothDrag = FVector::ZeroVector;
+    FVector ClothFollow = FVector::ZeroVector;
     bool bWasAirborne = false;
     bool bHasMotionSample = false;
     uint64 AirEpisode = 0;
