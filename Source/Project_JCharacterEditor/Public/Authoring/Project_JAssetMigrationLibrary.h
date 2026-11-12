@@ -32,6 +32,10 @@ public:
     UFUNCTION(BlueprintCallable, Category="Project J|Authoring|Animation")
     static bool InstallWingerClothMotion(UAnimBlueprint* Blueprint, USkeletalMesh* Target);
 
+    /** Connect Winger's partial torso inheritance to the existing wing pose. Never saves. */
+    UFUNCTION(BlueprintCallable, Category="Project J|Authoring|Animation")
+    static bool InstallWingerWingInheritance(UAnimBlueprint* Blueprint, USkeletalMesh* Target);
+
     /** Reskin the far LOD's wing branch to the first authored idle pose and remove its bones from that LOD. Never saves. */
     UFUNCTION(BlueprintCallable, Category="Project J|Asset Migration")
     static FString BakeWingerFarWings(USkeletalMesh* Mesh, UAnimSequence* Idle);

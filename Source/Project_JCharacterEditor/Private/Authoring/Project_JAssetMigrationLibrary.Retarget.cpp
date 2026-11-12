@@ -1,6 +1,7 @@
 #include "Authoring/Project_JAssetMigrationLibrary.h"
 
 #include "Animation/Project_JWingerAnimInstance.h"
+#include "Animation/Project_JAnimGraphNode_WingInheritance.h"
 #include "AnimGraphNode_BlendListByInt.h"
 #include "AnimGraphNode_BlendSpacePlayer.h"
 #include "AnimGraphNode_ComponentToLocalSpace.h"
@@ -626,6 +627,70 @@ bool UProject_JAssetMigrationLibrary::InstallWingerClothMotion(UAnimBlueprint* B
         return false;
     }
     return true;
+}
+
+bool UProject_JAssetMigrationLibrary::InstallWingerWingInheritance(UAnimBlueprint* Blueprint, USkeletalMesh* Target)
+{
+    if ((GEditor && GEditor->PlayWorld) || !Blueprint || !Target ||
+        Blueprint->ParentClass != UProject_JWingerAnimInstance::StaticClass() ||
+        Blueprint->TargetSkeleton != Target->GetSkeleton())
+    {
+        return false;
+    }
+
+    TArray<UEdGraph*> Graphs;
+    Blueprint->GetAllGraphs(Graphs);
+    UEdGraph* const* Found = Graphs.FindByPredicate([](const UEdGraph* Graph)
+    {
+        return Graph && Graph->GetFName() == TEXT("AnimGraph");
+    });
+    if (!Found) return false;
+    UEdGraph* Graph = *Found;
+
+    UEdGraphPin* Input = nullptr;
+    for (UEdGraphNode* Node : Graph->Nodes)
+    {
+        if (Node->IsA<UProject_JAnimGraphNode_WingInheritance>()) return false;
+        const auto* Layer = Cast<UAnimGraphNode_LayeredBoneBlend>(Node);
+        if (!Layer || Layer->Node.LayerSetup.Num() != 1 || Layer->Node.LayerSetup[0].BranchFilters.Num() != 1 ||
+            Layer->Node.LayerSetup[0].BranchFilters[0].BoneName != TEXT("a_01"))
+        {
+            continue;
+        }
+        UEdGraphPin* Pose = Node->FindPin(TEXT("Pose"), EGPD_Output);
+        if (Input || !Pose || Pose->LinkedTo.Num() != 1 ||
+            !Pose->LinkedTo[0]->GetOwningNode()->IsA<UAnimGraphNode_LocalToComponentSpace>())
+        {
+            return false;
+        }
+        Input = Pose->LinkedTo[0]->GetOwningNode()->FindPin(TEXT("ComponentPose"), EGPD_Output);
+    }
+    if (!Input || Input->LinkedTo.Num() != 1) return false;
+
+    UEdGraphPin* Consumer = Input->LinkedTo[0];
+    Blueprint->Modify();
+    Graph->Modify();
+    Input->GetOwningNode()->Modify();
+    Consumer->GetOwningNode()->Modify();
+    FGraphNodeCreator<UProject_JAnimGraphNode_WingInheritance> Creator(*Graph);
+    auto* Control = Creator.CreateNode();
+    Control->NodePosX = Input->GetOwningNode()->NodePosX + 160;
+    Control->NodePosY = Input->GetOwningNode()->NodePosY - 220;
+    Creator.Finalize();
+    const auto* Schema = Graph->GetSchema();
+    Input->BreakLinkTo(Consumer);
+    if (Schema->TryCreateConnection(Input, Control->FindPinChecked(TEXT("ComponentPose"), EGPD_Input)) &&
+        Schema->TryCreateConnection(Control->FindPinChecked(TEXT("Pose"), EGPD_Output), Consumer))
+    {
+        FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(Blueprint);
+        FKismetEditorUtilities::CompileBlueprint(Blueprint);
+        if (Blueprint->Status != BS_Error) return true;
+    }
+
+    FBlueprintEditorUtils::RemoveNode(Blueprint, Control, true);
+    Schema->TryCreateConnection(Input, Consumer);
+    FKismetEditorUtilities::CompileBlueprint(Blueprint);
+    return false;
 }
 
 FString UProject_JAssetMigrationLibrary::BakeWingerFarWings(USkeletalMesh* Mesh, UAnimSequence* Idle)
