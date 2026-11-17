@@ -8,7 +8,7 @@ Regina를 Project J의 Winger 시험 몸체로 제작했다. 프로젝트 에셋
 - Blender에서 Quinn의 UE5 89본과 계층·축을 기준으로 재바인딩했다. Winger의 관절 길이와 원본 스킨 영향 값을 유지하면서 팔꿈치 평면과 손바닥 기준 방향을 맞췄다. UE에서 총 144본, 날개 가지 20본, 지면 root 스케일 1과 중립 회전, LOD0 삼각형 32,759개, 미가중 정점·잘못된 영향 본 0개를 확인했다. 기존 Winger 머티리얼 14개 슬롯을 연결했다.
 - `/Game/Characters/Winger/Animation/Retargeted`에는 공용 Manny 로코모션 575개 시퀀스와 11개 Blend Space의 Winger용 에셋이 있다. Blend Space 샘플과 가산 기준 포즈는 Winger 변환본을 가리킨다. 제작용 레시피는 `/Game/Characters/Winger/Rig/UE5/RTG_Manny_to_Winger_UE5`다. FK, Pelvis, Root Motion, Curve Remap 및 네 사지 IK 마커를 사용한다. 손발 마커는 최종 FK로 작성하며, 원본과 같은 루트 추출/잠금 설정을 유지한다. 오프라인 이동량은 원본과 대상 골반 높이 비율인 약 0.813배다. 기존 모션매칭의 후보·데이터베이스는 공용 애니메이션을 직접 소비한다.
 - `ABP_Winger_Wings`는 같은 표시 메시의 Input Pose에서 `a_01` 이하만 합성한다. Idle·Walk·Run/Sprint와 Mover 기반 이륙·공중 루프·착지를 사용한다. 날개 관절과 깃털의 동작은 한 세트의 Blender 액션에 베이크한다.
-- LOD0·LOD1에서 날개 후처리를 평가한다. LOD2는 Idle 첫 프레임의 날개 실루엣을 스킨에 베이크하고 날개 20본을 평가 본과 섹션 스킨에서 제거한다. LOD별 삼각형은 32,759 / 8,189 / 4,094개, 평가 본은 144 / 144 / 124개다. 별도 날개 메시, 물리 솔버, 날개 복제 상태를 만들지 않았다.
+- LOD0·LOD1에서 날개 후처리를 평가한다. LOD2는 Idle 첫 프레임의 날개 실루엣을 스킨에 베이크하고 날개 20본을 평가 본과 섹션 스킨에서 제거한다. LOD별 삼각형은 32,759 / 8,189 / 4,093개, 평가 본은 144 / 144 / 124개다. 날개는 단일 스켈레탈 메시의 포즈 레이어에서 계산한다.
 
 Blender 제작 원본과 FBX는 [SourceArt](../../../SourceArt/Characters/Winger/UE5/)에 있다. `C:\Users\I\Desktop\Winger\UE5_Direct`에도 텍스처를 포함한 `Winger_UE5.blend`와 메시·날개 FBX 및 SHA-256 목록을 내보냈다. `/Game/Characters/Winger/Test/L_Winger_Test`에서 직접 재생을 확인할 수 있다. 이전 원본 70개, 검 및 리타깃 자료는 제작 비교용으로 보존한다.
 
@@ -21,6 +21,14 @@ Blender 제작 원본과 FBX는 [SourceArt](../../../SourceArt/Characters/Winger
 천의 앞·뒤 `jiggle_f`·`jiggle_k`와 양옆 `jiggle_leg` 스킨 본은 기존 몸체 포즈를 따른다. `ABP_Winger_Wings`의 날개 합성 뒤에 `InstallWingerClothMotion`으로 제한된 회전을 연결한다. 현재 이동 속도와 상승·낙하 속도에 반응하고, 끝단은 더 느리게 따라온 뒤 정지 시 기본 포즈로 가라앉는다. LOD0·1에서 적용하며 LOD2는 기존 스킨 포즈를 사용한다. 별도 표면 솔버나 의상 메시가 필요하지 않다.
 
 저장한 에셋을 다시 열어 60Hz PIE 810프레임에서 달리기, 스프린트, 점프·착지, 정지, 재이동과 LOD1·2 전환을 비교했다. 앞·뒤 뿌리 본의 최대 추가 회전은 달리기 3.2°, 스프린트 4.5°, 점프 5.6°였고, 정지 안정화 후와 LOD2에서는 0°였다. 로컬 측정과 화면은 중앙 보관소 INDEX.csv에서 WingerClothMotion으로 찾을 수 있다.
+
+### 긴 뒤쪽 천의 Chaos Cloth
+
+원본에서 발 기준면 아래로 약 50cm 내려오던 뒤쪽 패널 한 장을 Blender에서 `upper_long_hem` 섹션으로 분리했다. `upper`와 `upper2`에 섞인 이 패널의 면 189개를 함께 사용한다. 허리의 형태와 UV를 유지하고 밑단의 기본 위치를 높였다. 새 섹션은 기존 반투명 `M_Winger_upper`를 쓰며, 해당 패널의 보조 본 가중치는 골반 스킨으로 옮겼다. 나머지 천에는 기존 본 기반 움직임을 사용한다.
+
+`SK_Winger_UE5`의 LOD0에서만 Spellblade 망토와 같은 임베디드 Chaos Cloth를 평가한다. 시뮬레이션 정점 121개 중 허리 49개를 고정하고, 밑단까지 이동 허용치를 최대 9cm로 점차 높인다. 스킨 포즈로 돌아오는 힘과 감쇠를 적용하고 `PA_Mannequin`의 몸체 충돌, `BP_Winger`의 월드 정적 단순 충돌을 사용한다. LOD1·2는 조정한 기본 형태를 스킨으로 평가한다. 새 메시 컴포넌트나 별도 Tick을 추가하지 않았다.
+
+저장한 에셋을 다시 열어 60Hz PIE에서 평지, 14° 경사, 12cm 단차 계단 오르내리기, 점프·착지, 강제 및 거리 기반 LOD 전환을 검증했다. 선택 패널의 바닥 여유는 486개 샘플에서 모두 양수였고, 최솟값은 계단 하강 중 2.31cm였다. LOD 전환 직전·직후에 측정한 밑단 최저점 높이 차이는 최대 1.94cm였다. 단순 충돌 테스트 지형과 로컬 플레이 범위의 결과다. 자동화 에디터는 결과 기록과 PIE 월드 종료 뒤 Python 종료 단계에서 예외가 발생했다. 로컬 원자료와 종료 로그는 중앙 보관소 INDEX.csv에서 WingerHemCloth로 찾을 수 있다.
 
 ### 손목을 중심으로 접히는 날개
 

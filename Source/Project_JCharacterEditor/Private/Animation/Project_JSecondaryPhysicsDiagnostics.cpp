@@ -65,7 +65,7 @@ FString UProject_JPlayerLocomotionLibrary::InspectSkinnedMeshRendering(USkeletal
 	FString Text; FJsonSerializer::Serialize(Result, TJsonWriterFactory<>::Create(&Text)); return Text;
 }
 
-FString UProject_JPlayerLocomotionLibrary::InspectSkinnedMeshSurface(USkeletalMeshComponent* Mesh, int32 LODIndex)
+FString UProject_JPlayerLocomotionLibrary::InspectSkinnedMeshSurface(USkeletalMeshComponent* Mesh, int32 LODIndex, FName MaterialSlot)
 {
 	check(IsInGameThread());
 	if (!IsValid(Mesh) || !Mesh->GetSkeletalMeshAsset()) return TEXT("{}");
@@ -76,6 +76,23 @@ FString UProject_JPlayerLocomotionLibrary::InspectSkinnedMeshSurface(USkeletalMe
 	const FSkeletalMeshRenderData* RenderData = Mesh->GetSkeletalMeshRenderData();
 	if (!RenderData || !RenderData->LODRenderData.IsValidIndex(LODIndex)) return TEXT("{}");
 	const FSkeletalMeshLODRenderData& LOD = RenderData->LODRenderData[LODIndex];
+	const FSkelMeshRenderSection* TargetSection = nullptr;
+	if (!MaterialSlot.IsNone())
+	{
+		const auto* Asset = Mesh->GetSkeletalMeshAsset();
+		const auto& Materials = Asset->GetMaterials();
+		const auto* Info = Asset->GetLODInfo(LODIndex);
+		for (int32 Index = 0; Index < LOD.RenderSections.Num(); ++Index)
+		{
+			const auto& Section = LOD.RenderSections[Index];
+			const int32 MaterialIndex = Info && Info->LODMaterialMap.IsValidIndex(Index) &&
+				Info->LODMaterialMap[Index] != INDEX_NONE ? Info->LODMaterialMap[Index] : Section.MaterialIndex;
+			if (!Materials.IsValidIndex(MaterialIndex) || Materials[MaterialIndex].MaterialSlotName != MaterialSlot) continue;
+			if (TargetSection) return TEXT("{}");
+			TargetSection = &Section;
+		}
+		if (!TargetSection) return TEXT("{}");
+	}
 	const FSkinWeightVertexBuffer* Weights = Mesh->GetSkinWeightBuffer(LODIndex);
 	if (!Weights || Weights->GetNumVertices() != LOD.GetNumVertices() || LOD.GetNumVertices() == 0) return TEXT("{}");
 	TArray<FMatrix44f> RefToLocal;
@@ -86,7 +103,8 @@ FString UProject_JPlayerLocomotionLibrary::InspectSkinnedMeshSurface(USkeletalMe
 	LOD.MultiSizeIndexContainer.GetIndexBuffer(Indices);
 	TArray<FVector> WorldPositions;
 	const auto& ClothData = Mesh->GetCurrentClothingData_AnyThread();
-	if (!ClothData.IsEmpty())
+	bool bSimulated = false;
+	if (!ClothData.IsEmpty() && (!TargetSection || TargetSection->HasClothingData()))
 	{
 		// Completed simulation particles and their native topology, rather than the
 		// underlying bone-skinned input that the cloth replaces.
@@ -94,6 +112,7 @@ FString UProject_JPlayerLocomotionLibrary::InspectSkinnedMeshSurface(USkeletalMe
 		const auto& Assets = Mesh->GetSkeletalMeshAsset()->GetMeshClothingAssets();
 		for (const auto& Pair : ClothData)
 		{
+			if (TargetSection && Pair.Key != TargetSection->CorrespondClothAssetIndex) continue;
 			if (!Assets.IsValidIndex(Pair.Key)) return TEXT("{}");
 			const auto* Asset = Cast<UClothingAssetCommon>(Assets[Pair.Key]);
 			if (!Asset || !Asset->LodData.IsValidIndex(Pair.Value.LODIndex)) return TEXT("{}");
@@ -103,9 +122,22 @@ FString UProject_JPlayerLocomotionLibrary::InspectSkinnedMeshSurface(USkeletalMe
 			for (const FVector3f& Position : Pair.Value.Positions)
 				WorldPositions.Add(Pair.Value.Transform.TransformPosition(FVector(Position)));
 			for (uint32 Index : Physical.Indices) Indices.Add(Offset + Index);
+			bSimulated = true;
 		}
 	}
-	else
+	if (!bSimulated && TargetSection)
+	{
+		const uint32 BaseVertex = TargetSection->BaseVertexIndex;
+		const uint32 BaseIndex = TargetSection->BaseIndex;
+		LOD.MultiSizeIndexContainer.GetIndexBuffer(Indices);
+		const TArrayView<const uint32> SectionIndices(Indices.GetData() + BaseIndex, TargetSection->NumTriangles * 3);
+		TArray<uint32> LocalIndices;
+		for (uint32 Index : SectionIndices) LocalIndices.Add(Index - BaseVertex);
+		Indices = MoveTemp(LocalIndices);
+		for (uint32 Index = 0; Index < TargetSection->NumVertices; ++Index)
+			WorldPositions.Add(Mesh->GetComponentTransform().TransformPosition(FVector(Positions[BaseVertex + Index])));
+	}
+	else if (!bSimulated)
 		for (const FVector3f& Position : Positions)
 			WorldPositions.Add(Mesh->GetComponentTransform().TransformPosition(FVector(Position)));
 	const auto Result = MakeShared<FJsonObject>();
@@ -114,7 +146,7 @@ FString UProject_JPlayerLocomotionLibrary::InspectSkinnedMeshSurface(USkeletalMe
 	Result->SetStringField(TEXT("leader"), GetPathNameSafe(Mesh->LeaderPoseComponent.Get()));
 	Result->SetNumberField(TEXT("lod"), LODIndex);
 	Result->SetNumberField(TEXT("bone_revision"), PoseOwner->GetBoneTransformRevisionNumber());
-	Result->SetStringField(TEXT("surface_source"), ClothData.IsEmpty() ? TEXT("bone_skinning") : TEXT("cloth_simulation"));
+	Result->SetStringField(TEXT("surface_source"), bSimulated ? TEXT("cloth_simulation") : TEXT("bone_skinning"));
 	TArray<TSharedPtr<FJsonValue>> Vertices, Triangles;
 	Vertices.Reserve(WorldPositions.Num());
 	bool bFinite = true;

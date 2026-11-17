@@ -52,9 +52,9 @@ public:
  /** Rebase an explicitly supplied physics copy through verified mesh coordinates and bone names. PreserveBoneLocalFrames is for preserved legacy axes reposed with their skinned geometry, and requires an identity mesh basis. Preserves body order, collision pairs, masses, limits and solver settings; preflights every body/constraint. Refuses PIE/unsupported geometry; never saves. */
  UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
  static bool RebaseCompatiblePhysics(UPhysicsAsset* Physics, USkeletalMesh* Previous, USkeletalMesh* Target, const TMap<FName,FName>& BoneMap, FTransform SourceToTarget, bool PreserveBoneLocalFrames=false);
- /** Create standard embedded Chaos clothing for each LOD0 section, with a pinned upper band and a smooth max-distance transition. Refuses PIE/existing clothing; never saves. */
+ /** Create embedded Chaos clothing for each LOD0 section or the unique section using MaterialSlot. Higher LODs use their skinning. Refuses PIE/existing clothing; never saves. */
  UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
- static FString CreateSurfaceClothing(USkeletalMesh* Mesh, UPhysicsAsset* Collisions, float PinnedTopDepth=8.f, float TransitionDepth=25.f, float MaxDistance=70.f);
+ static FString CreateSurfaceClothing(USkeletalMesh* Mesh, UPhysicsAsset* Collisions, float PinnedTopDepth=8.f, float TransitionDepth=25.f, float MaxDistance=70.f, FName MaterialSlot=NAME_None);
  /** Rebuild embedded cloth caches and section bindings after authoring. Refuses PIE or a non section-per-asset layout; never saves. */
  UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
  static bool RefreshSurfaceClothing(USkeletalMesh* Mesh);
@@ -105,7 +105,7 @@ public:
  static FString InspectSkinnedMeshRendering(USkeletalMeshComponent* Mesh);
  /** Read completed cloth simulation topology when active, otherwise LOD bone skinning, in world space. Supports LeaderPose followers; diagnostic only, no simulation/asset mutation. */
  UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Diagnostics")
- static FString InspectSkinnedMeshSurface(USkeletalMeshComponent* Mesh, int32 LODIndex = 0);
+ static FString InspectSkinnedMeshSurface(USkeletalMeshComponent* Mesh, int32 LODIndex = 0, FName MaterialSlot = NAME_None);
  /** Read completed sole-plane solve diagnostics for authoring; no asset/pose mutation. */
  UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Diagnostics")
  static FString InspectFootClearance(USkeletalMeshComponent* Mesh);

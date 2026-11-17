@@ -52,22 +52,33 @@ bool UProject_JPlayerLocomotionLibrary::CopySurfaceClothingConfiguration(USkelet
 }
 
 FString UProject_JPlayerLocomotionLibrary::CreateSurfaceClothing(USkeletalMesh* Mesh, UPhysicsAsset* Collisions,
-	float PinnedTopDepth, float TransitionDepth, float MaxDistance)
+	float PinnedTopDepth, float TransitionDepth, float MaxDistance, FName MaterialSlot)
 {
 	if (!Mesh || !Collisions || (GEditor && GEditor->PlayWorld) || !Mesh->GetMeshClothingAssets().IsEmpty()
 		|| PinnedTopDepth <= 0.f || TransitionDepth <= 0.f || MaxDistance <= 0.f) return TEXT("{}");
 	const FSkeletalMeshModel* Model = Mesh->GetImportedModel();
-	if (!Model || Model->LODModels.Num() != 1) return TEXT("{}");
-	const int32 SectionCount = Model->LODModels[0].Sections.Num();
-	for (const FSkelMeshSection& Section : Model->LODModels[0].Sections)
+	if (!Model || Model->LODModels.IsEmpty() || (MaterialSlot.IsNone() && Model->LODModels.Num() != 1))
+		return TEXT("{}");
+	const auto& Sections = Model->LODModels[0].Sections;
+	const auto& Materials = Mesh->GetMaterials();
+	TArray<int32> TargetSections;
+	for (int32 Index = 0; Index < Sections.Num(); ++Index)
+	{
+		const FSkelMeshSection& Section = Sections[Index];
+		if (!MaterialSlot.IsNone() && (!Materials.IsValidIndex(Section.MaterialIndex) ||
+			Materials[Section.MaterialIndex].MaterialSlotName != MaterialSlot)) continue;
 		if (Section.HasClothingData() || Section.SoftVertices.IsEmpty()) return TEXT("{}");
+		TargetSections.Add(Index);
+	}
+	if (TargetSections.IsEmpty() || (!MaterialSlot.IsNone() && TargetSections.Num() != 1))
+		return TEXT("{}");
 	const FScopedTransaction Transaction(NSLOCTEXT("ProjectJ", "CreateSurfaceClothing", "Create surface clothing"));
 	Mesh->Modify();
 	UClothingAssetFactory* Factory = NewObject<UClothingAssetFactory>();
 	TArray<UClothingAssetCommon*> Created;
 	TArray<TSharedPtr<FJsonValue>> Reports;
 	bool bSuccess = true;
-	for (int32 SectionIndex = 0; SectionIndex < SectionCount; ++SectionIndex)
+	for (int32 SectionIndex : TargetSections)
 	{
 		FSkeletalMeshClothBuildParams Params;
 		Params.AssetName = FString::Printf(TEXT("SurfaceCloth_Section%d"), SectionIndex);
