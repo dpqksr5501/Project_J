@@ -148,8 +148,8 @@ bool AProject_JPlayerController::InputKey(const FInputKeyEventArgs& Params)
 	{
 		const FModifierKeysState Modifiers = FSlateApplication::IsInitialized()
 			? FSlateApplication::Get().GetModifierKeys() : FModifierKeysState();
-		if (!Modifiers.IsAltDown() && !Modifiers.IsControlDown() &&
-			!Modifiers.IsShiftDown() && !Modifiers.IsCommandDown())
+		// Shift can be held for sprint while adjusting the gameplay camera.
+		if (!Modifiers.IsAltDown() && !Modifiers.IsControlDown() && !Modifiers.IsCommandDown())
 		{
 			if (const auto* Avatar = Cast<AProject_JPlayerCharacter>(GetPawn()); Avatar && GetViewTarget() == Avatar)
 			{
