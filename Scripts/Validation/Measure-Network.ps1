@@ -26,6 +26,7 @@ param(
     [switch]$PlayerStateAudienceOwnerView,
     [switch]$PartyUI,
     [switch]$NoTrace,
+    [switch]$ServerBaseline,
     [ValidateRange(0,200)][int]$PacketLag = 0,
     [ValidateRange(0,20)][int]$PacketLoss = 0,
     [int]$Port = 17871,
@@ -94,6 +95,7 @@ function Get-ProjectJCanonicalSSRObservation {
  return [ordered]@{duplicate=$duplicate;geometry=$geometry;acceptedSubmission=$acceptedSubmission;tracePending=(($null -ne $acceptedSubmission) -or !($duplicate -or $null -ne $geometry))}
 }
 $ErrorActionPreference = 'Stop'
+if ($ServerBaseline -and !$NoTrace) { throw 'ServerBaseline requires NoTrace so only the bounded server frame/region trace is captured.' }
 if ($ServerPerformanceThreads -and $Executable) { throw 'ServerPerformanceThreads requires this runner dedicated-server mode; packaged Game execution is a listen server.' }
 . "$PSScriptRoot/Source-Provenance.ps1"
 . "$PSScriptRoot/../Audit/Continuation-ScratchPaths.ps1"
@@ -256,6 +258,9 @@ function Start-Fixture($arguments) {
         if($logs.Count -ne 1){throw 'NoTrace launch requires one explicit process log.'}
         $role=[IO.Path]::GetFileNameWithoutExtension($logs[0].Substring('-ABSLOG='.Length))
         if($role -notmatch '^(Server|Client[1-8])$'){throw 'Unexpected network fixture log role.'}
+        if ($ServerBaseline -and $role -eq 'Server') {
+            $actualArguments += @('-trace=frame,region', "-tracefile=$runRoot/Server.utrace")
+        }
         $actualArguments|ConvertTo-Json|Set-Content -LiteralPath "$runRoot/$role-effective-arguments.json" -Encoding utf8
     }
     $quoted = @($actualArguments | ForEach-Object { '"' + $_ + '"' }) -join ' '
@@ -361,6 +366,26 @@ $fixtureProcesses = @($server) + $clients
 $nativeHandles = @($fixtureProcesses | ForEach-Object { $_.Handle })
 @($server) + $clients | Select-Object Id,ProcessName | ConvertTo-Json | Set-Content "$runRoot/processes.json" -Encoding utf8
 Write-Output "Started server and $ClientCount clients: $runRoot"
+if ($ServerBaseline) {
+    $peakWorkingSet = 0L
+    $peakPrivate = 0L
+    $samples = 0
+    while (!$server.WaitForExit(500)) {
+        $server.Refresh()
+        if ($server.HasExited) { break }
+        $peakWorkingSet = [Math]::Max($peakWorkingSet, $server.PeakWorkingSet64)
+        $peakPrivate = [Math]::Max($peakPrivate, $server.PrivateMemorySize64)
+        ++$samples
+    }
+    [ordered]@{
+        samples = $samples
+        sampleIntervalMs = 500
+        peakWorkingSetBytes = $peakWorkingSet
+        sampledPeakPrivateBytes = $peakPrivate
+        trace = 'Server.utrace'
+        scope = 'Server process only. Working set uses the OS process high-water mark; private bytes are sampled after clients launch.'
+    } | ConvertTo-Json | Set-Content -LiteralPath "$runRoot/server-baseline.json" -Encoding utf8
+}
 foreach ($process in $fixtureProcesses) { $process.WaitForExit() }
 $exitCodes = @($fixtureProcesses | ForEach-Object {$_.ExitCode})
 # Persist native completion before result/CSV parsing can fail independently.
@@ -1230,6 +1255,10 @@ if($Executable){
 }
 $startupErrors = @(Get-ChildItem -LiteralPath $runRoot -Filter '*.log' | Select-String -Pattern 'LogPython: Error:' | ForEach-Object { $_.Line })
 $passed=$passed -and (!$IrisCSV -or $irisCSVValidation.passed)
+if ($ServerBaseline) {
+    $serverTrace = Get-Item -LiteralPath "$runRoot/Server.utrace" -ErrorAction SilentlyContinue
+    $passed = $passed -and $samples -gt 0 -and $peakWorkingSet -gt 0 -and $peakPrivate -gt 0 -and $serverTrace.Length -gt 0
+}
 $passed=$passed -and (!$networkBudgetValidation -or $networkBudgetValidation.passed)
 $passed=$passed -and (!$RenderedClientCSV -or $clientCSVValidation.passed) -and (!$RenderedClothTaskPriority -or $renderedClothTaskPriorityValidation.passed)
 $passed=$passed -and ($RenderedClothVertexBudget -lt 0 -or $renderedClothExecutionValidation.passed)

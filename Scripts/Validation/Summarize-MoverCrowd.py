@@ -19,8 +19,9 @@ def stats(values):
 def summarize(root):
     manifest = json.loads((root/'manifest.json').read_text(encoding='utf-8-sig'))
     verification = json.loads((root/'verification.json').read_text(encoding='utf-8-sig'))
-    if not verification['success'] or not manifest['movement'] or manifest['actors'] != 200:
-        raise ValueError('Requires verified 200-body Mover workload: '+str(root))
+    count = manifest['actors']
+    if not verification['success'] or not manifest['movement'] or type(count) is not int or not 1 <= count <= 200:
+        raise ValueError('Requires a verified moving Mover crowd of 1–200 avatars: '+str(root))
     with (root/'frames.csv').open(encoding='utf-8-sig', newline='') as stream:
         rows = list(csv.DictReader(stream))
     phases = {}
@@ -31,10 +32,13 @@ def summarize(root):
         captures = {i+j for i, r in enumerate(group) if int(r['capture_requested']) for j in range(3)}
         measured = [r for i, r in enumerate(group) if float(r['elapsed_s']) >= first+1 and i not in captures]
         if phase == 5:
-            measured = [r for r in measured if int(r['montages']) == 200]
-        if not all(int(r['actors']) == 200 for r in measured):
+            measured = [r for r in measured if int(r['montages']) == count]
+        if not all(int(r['actors']) == count for r in group):
             raise ValueError('Crowd size changed')
+        if not measured:
+            raise ValueError(f'No qualifying frames in phase {name}: {root}')
         phases[name] = dict(total_frames=len(group), excluded_frames=len(group)-len(measured),
+                            fully_rendered_frames=sum(int(r['rendered_actors']) == count for r in measured),
                             rendered_200_frames=sum(int(r['rendered_actors']) == 200 for r in measured),
                             duration_seconds=float(group[-1]['elapsed_s'])-first,
                             measured_span_seconds=float(measured[-1]['elapsed_s'])-float(measured[0]['elapsed_s']),
@@ -55,6 +59,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
     result = dict(method='p50 median; p95/p99 nearest rank. Separate runs retain their variance. '
                          'Exclude first 1s per phase, screenshot request frame and next 2 frames. '
-                         'Attack uses only simultaneous 200-montage rows. D3D12 offscreen; no socket clients.',
+                         'Attack uses rows with montages active on every configured avatar. D3D12 offscreen; no socket clients.',
                   runs=[summarize(path) for path in args.runs])
     args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')

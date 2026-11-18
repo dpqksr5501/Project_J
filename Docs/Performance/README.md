@@ -1,5 +1,89 @@
 # 성능 설계·수집·결과
 
+## 2026-11-18 기반 작업 기준선
+
+Development Editor에서 클라이언트 표시 밀도와 서버 실접속 수를 따로 측정한다. 각 축에서 같은 실행 바이너리를 사용하고 기존 러너를 재사용한다. Cook과 배포 실험은 별도다.
+
+렌더 비교는 Ryzen 7 9800X3D와 RX 9070 XT에서 1280×720 출력이 확인된 D3D12 offscreen, 단순 Entry 장면, Spellblade Avatar 100/200개와 로컬 소유자 1명씩이다. 네트워크 연결은 0개다. `Summarize-MoverCrowd.py`는 시작 1초와 캡처 요청/후속 2프레임을 제외한다. 공격은 전체 Avatar에서 몽타주가 활성인 표본을 사용한다.
+
+| 표시 Avatar | 이동 프레임 P95 / P99 | 동시 공격 프레임 P95 / P99 | 프로세스 Private peak |
+| ---: | ---: | ---: | ---: |
+| 100 | 41.40 / 47.44ms | 55.26 / 90.86ms (66표본) | 18.36GiB |
+| 200 | 71.56 / 73.72ms | 102.93 / 119.76ms (34표본) | 21.46GiB |
+
+공격 GT P95는 39.12→85.30ms, GPU P95는 10.16→16.81ms였다. 스레드별 시간은 별개 분포다. 먼저 200개 공격 구간의 GT 실행과 wait를 분석할 근거가 생겼다. 메모리는 준비를 포함한 전체 Editor 게임 프로세스의 500ms 샘플 peak이며, 개체당 비용이나 VRAM의 증가분으로 해석할 수 없다. 렌더 요약은 `Saved/StorageCleanup_20261104/ArchiveStore/02_Measurements/NPCFoundation_20261118_Render_Density.json`에 있다.
+
+```powershell
+foreach ($count in 100,200) {
+    ./Scripts/Validation/Measure-RenderedCrowd.ps1 -RunName "Density_$count" -Count $count -Movement -LocalPlayer -DisableEditorPython -ForceResolution
+}
+```
+
+서버 비교는 같은 복제 프로브 100개를 사용하는 전용 Editor 서버의 NullRHI·로컬 소켓 테스트다. 30Hz 제한에서 각 조건은 5개 AOI/FastArray 단계와 정상 종료를 통과했다. 송신량에는 테스트 제어 트래픽이 포함된다.
+
+| 실제 접속 | 서버 송신량 | 프레임 시작 간격 P95 / P99 | 서버 Private peak |
+| ---: | ---: | ---: | ---: |
+| 2 | 9.52KiB/s | 33.64 / 33.95ms | 1.70GiB |
+| 4 | 19.42KiB/s | 33.88 / 34.10ms | 1.71GiB |
+
+첫 캐릭터 애니메이션 실행은 2접속을 통과했다. 4접속은 네 소켓이 모두 입장했으나 초기 준비 단계에서 시간 초과돼 측정 구간에 도달하지 못했다. 위 표는 같은 복제 프로브로 다시 실행한 결과다. 실제 캐릭터의 수정 후 2·4접속은 아래에 기록한다. 요약·실행명·trace/CSV SHA는 `Saved/StorageCleanup_20261104/ArchiveStore/02_Measurements/NPCFoundation_20261118_Network_Baseline.json`에 있다.
+
+```powershell
+foreach ($count in 2,4) {
+    ./Scripts/Validation/Measure-Network.ps1 -RunName "Socket_$count" -ClientCount $count -NPCCount 100 -NoTrace -ServerBaseline
+}
+```
+
+`-ServerBaseline`은 클라이언트 추적을 끈 상태에서 서버 frame/region trace와 프로세스 메모리만 수집한다. `Server/network-phases.csv`에서 송신량·단계 시간을 읽고, `Server.utrace`에서 Insights의 `Game Frames` 트랙을 `ProjectJ.Network.Stage*` 구간별로 추출한다. 단계 첫·마지막 프레임을 제외한 연속 `StartTime`의 차이를 틱 간격으로 집계한다.
+
+### 실제 캐릭터 2·4접속 후속
+
+기존 4접속은 `Stage 0` 시간 초과였다. 후속 실행에서 구 경로가 사용하던 임시 Pawn 좌표가 네 슬롯 모두 `(54.656, 79.013, 208.000)`임을 확인했다. 충돌이 없는 임시 Pawn의 좌표에 충돌이 있는 캐릭터 캡슐들을 그대로 생성하던 시험 코드가 초기 착지 조건을 깨뜨릴 수 있었다. `Entry`의 시험 바닥에서 실제 캡슐 치수에 따라 슬롯별 위치를 나누고 기존 네이티브 배치 검사로 충돌과 바닥 지지를 확인한다. 이후 AOI 이동도 슬롯별 Y 간격을 유지한다. 기존 착지 확인과 AOI 그룹의 X 거리·단계 조건을 사용한다. 실패 자료는 보존했다.
+
+수정 후 기존 Spellblade BP를 사용하는 로컬 실소켓 2·4접속이 각각 AOI·FastArray 5단계와 정상 접속 종료를 통과했다. 4접속의 슬롯별 요청 위치와 실제 생성 위치가 정확히 일치했다. 두 실행은 같은 소스·바이너리 지문, 전용 Editor 서버, NullRHI, 복제 프로브 100개, 30Hz 제한, 추가 지연·손실 0 조건이다. 송신량은 단계 1–5의 서버 합계로 테스트 제어 트래픽을 포함한다.
+
+| 실제 캐릭터 접속 | 서버 송신량 | 프레임 시작 간격 P95 / P99 | 서버 Private peak |
+| ---: | ---: | ---: | ---: |
+| 2 | 37.54KiB/s | 34.63 / 34.89ms (444표본) | 2.83GiB |
+| 4 | 133.06KiB/s | 34.63 / 35.00ms (440표본) | 2.85GiB |
+
+장시간 실행, 실제 필드 NPC AI, RHI 클라이언트, 손실 조건 및 출시 서버 패키지는 별도 검증이다. 원본 실패와 최종 빌드·실행 지문, 메모리, trace/CSV SHA는 `Saved/StorageCleanup_20261104/ArchiveStore/02_Measurements/NPCSocketSlots_20261118_Authored_Baseline.json`에 있다.
+
+```powershell
+foreach ($count in 2,4) {
+    ./Scripts/Validation/Measure-Network.ps1 -RunName "AuthoredSocket_$count" -ClientCount $count -NPCCount 100 -Animation -NoTrace -ServerBaseline
+}
+```
+
+### 저장된 실행 재집계와 전후 비교
+
+렌더 스크린샷과 프레임 CSV, 서버 연결 검증·단계별 송신량·메모리·서버 프레임을 `Compare-FoundationBaselines.py`로 한 번에 집계한다. 렌더 100·200은 같은 RHI 바이너리와 1280×720 설정을 사용했다. 두 실행의 소스 지문 차이는 당시 함께 작업 중이던 `Measure-Network.ps1`이었다. 실제 2·4접속은 같은 전용 서버 바이너리와 설정에서 측정했다. 비교기는 같은 축 안에서 설정과 실행 바이너리 지문을 확인한다. 이전 기준선과 비교할 때는 축별 부하와 조건을 맞추고, 변경된 실행 바이너리의 지문과 원자료 SHA를 결과에 함께 남긴다.
+
+새 서버 실행은 `Server.utrace`에서 Stage1–5의 `Game Frames`를 CSV로 내보낸다. 아래는 해당 서버 실행 폴더 하나를 처리하는 예다. 보존된 실행에는 이 파일이 이미 있다.
+
+```powershell
+$run = (Resolve-Path 'Saved/Validation/GroupD_20260910/AuthoredSocket_2').Path
+$insights = 'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealInsights.exe'
+$frames = (New-Item -ItemType Directory -Path "$run/ServerFrames").FullName.Replace('\','/')
+$response = "$frames/Export.rsp"
+$export = 'TimingInsights.ExportTimingEvents "{0}/Server-{{region}}.csv" -columns=ThreadId,ThreadName,TimerName,StartTime,EndTime,Duration -threads="Game Frames" -region=ProjectJ.Network.Stage*' -f $frames
+$export | Set-Content -LiteralPath $response -Encoding utf8NoBOM
+Start-Process $insights -ArgumentList "`"$run/Server.utrace`" -AutoQuit -NoUI `"-ExecOnAnalysisCompleteCmd=@=$response`"" -WindowStyle Hidden -Wait
+```
+
+재집계는 에디터 없이 실행한다. 새 측정을 비교하려면 `$render`, `$server`를 새 실행 폴더들로 바꾸고 다른 출력 파일명을 사용한다.
+
+```powershell
+$render = 100,200 | ForEach-Object { "Saved/Validation/WholeProjectAudit_20261013/NPCFoundation_20261118_Render$_" }
+$server = 2,4 | ForEach-Object { "Saved/Validation/GroupD_20260910/NPCSocketSlots_20261118_Auth$_" }
+$measurements = 'Saved/StorageCleanup_20261104/ArchiveStore/02_Measurements'
+python ./Scripts/Validation/Compare-FoundationBaselines.py --render @render --server @server `
+    --compare "$measurements/NPCFoundationTable_20261118_Baseline.json" `
+    --output "$measurements/NPCFoundationTable_Repeat.json"
+```
+
+서버 송신량은 Stage1–5의 전송 바이트를 전체 초로 나눈 프로세스 전체 송신율이다. 프레임 시작 간격과 메모리는 각 실행의 조건에서 해석한다. 렌더 밀도와 소켓 수는 별도의 축이다.
+
 **2026-10-28 서버 실행·표현 자원:** [전용 서버 병렬 평가와 headless 의상 생성](Architecture/PerformanceOptimizationFoundation.md#2026-10-28-서버-병렬-평가와-headless-의상-생성). 같은 바이너리에서 지원 startup 정책과 실제 task 실행을 확인했고, 서버 Frame82→39ms와 RHI 품질을 보존한 headless cloth 생성 방지를 검증했다. client FPS·운영 CCU 보장과 구분한다.
 
 **직접 ABP 후속 분석:** [200명 Cloth 병목과 품질 예산](Reports/ProjectJ_Cloth_Budget_200_2026-10-25.md). GT 대기 구간·Cloth OFF/내부 직렬화 진단을 분리하고, 로컬 품질을 유지하는 변경의 실제 검증 상태를 기록한다.

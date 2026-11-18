@@ -13,6 +13,7 @@
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "GameFramework/WorldSettings.h"
+#include "GameFramework/PlayerController.h"
 #include "System/Project_JTargetScoringSubsystem.h"
 #include "UObject/StrongObjectPtr.h"
 #include "UObject/GarbageCollection.h"
@@ -421,6 +422,156 @@ bool FProjectJNPCPreparedBatchTest::RunTest(const FString&)
     TestEqual(TEXT("Restart preserves exactly two current registry agents"), F.Scheduler->GetAgentCount(), 2);
     return !HasAnyErrors();
 }
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJNPCRetryUnsubmittedBatchTest, "ProjectJ.Continuation.NPCRetryUnsubmittedBatch",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJNPCRetryUnsubmittedBatchTest::RunTest(const FString&)
+{
+    ProjectJNPCCallbackTests::FWorld F;
+    auto* Target = F.Target(100);
+    auto* Peer = F.World->SpawnActor<AProject_JNPCCallbackFixture>();
+    auto* PeerScoring = NewObject<UProject_JTargetScoringComponent>(Peer);
+    Peer->AddInstanceComponent(PeerScoring);
+    PeerScoring->RegisterComponent();
+    if (!TestTrue(TEXT("Both NPCs register"), F.Scoring->StartBatchedNPCDecisions(1) && PeerScoring->StartBatchedNPCDecisions(1))) return false;
+
+    bool bChangedTeam = false;
+    Peer->OnLifeQuery = [&]
+    {
+        if (!bChangedTeam) bChangedTeam = F.Scheduler->RegisterTarget(Target, 3);
+    };
+    ON_SCOPE_EXIT { Peer->OnLifeQuery = {}; };
+    F.Scheduler->Tick(0);
+    if (!TestTrue(TEXT("Later NPC changes the captured roster"), bChangedTeam)
+        || !TestEqual(TEXT("First NPC prepared a candidate"), F.Scheduler->GetStats().LastTickSnapshotValues, 1)
+        || !TestEqual(TEXT("Invalidated batch never entered Core"), F.Scheduler->GetStats().SubmittedDecisions, uint64(0))) return false;
+
+    F.Scheduler->Tick(0);
+    TestEqual(TEXT("Both NPCs retry in the next pass without waiting for a query that never ran"),
+        F.Scheduler->GetStats().SubmittedDecisions, uint64(2));
+    return !HasAnyErrors();
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJNPCPlayerPossessionTargetTest, "ProjectJ.Continuation.NPCPlayerPossessionTarget",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJNPCPlayerPossessionTargetTest::RunTest(const FString&)
+{
+    ProjectJNPCCallbackTests::FWorld F;
+    UClass* PlayerClass = LoadClass<AProject_JPlayerCharacter>(nullptr, TEXT("/Game/Character_BPs/Spellblade/BP_Spellblade.BP_Spellblade_C"));
+    UClass* NPCClass = LoadClass<AProject_JNPCCharacter>(nullptr, TEXT("/Game/NPCs/BP_NPC_Test.BP_NPC_Test_C"));
+    auto* Definition = LoadObject<UProject_JNPCActivationDefinition>(nullptr,
+        TEXT("/Game/DataAssetSets/NPC/DA_NPC_PrototypeCleaveActivation.DA_NPC_PrototypeCleaveActivation"));
+    if (!TestTrue(TEXT("Existing authored player, NPC and combat definition load"), PlayerClass && NPCClass && Definition)) return false;
+
+    auto* NPC = F.World->SpawnActor<AProject_JNPCCharacter>(NPCClass, FVector(0, 1000, 0), FRotator::ZeroRotator);
+    auto* Controller = F.World->SpawnActor<APlayerController>();
+    auto* State = F.World->SpawnActor<AProject_JPlayerState>();
+    auto* First = F.World->SpawnActor<AProject_JPlayerCharacter>(PlayerClass, FVector(350, 1000, 0), FRotator::ZeroRotator);
+    auto* Replacement = F.World->SpawnActor<AProject_JPlayerCharacter>(PlayerClass, FVector(500, 1000, 0), FRotator::ZeroRotator);
+    if (!TestTrue(TEXT("Actual controller, state and authored Pawns spawn"), NPC && Controller && State && First && Replacement)) return false;
+    State->SetOwner(Controller);
+    Controller->SetPlayerState(State);
+    Controller->Possess(First);
+    if (!TestTrue(TEXT("Authored NPC activates through the public combat assembly"), NPC->StartCombatActions(Definition, 1))) return false;
+    auto* Scoring = NPC->FindComponentByClass<UProject_JTargetScoringComponent>();
+    if (!TestNotNull(TEXT("Activation provides the actual NPC target scorer"), Scoring)
+        || !TestEqual(TEXT("Only the possessed player registers"), F.Scheduler->GetTargetCount(), 1)
+        || !TestTrue(TEXT("Default team is hostile to the default encounter"), F.Scheduler->CanActOnTarget(Scoring, First))) return false;
+
+    auto* Attributes = State->GetProjectJAttributeSet();
+    if (!TestNotNull(TEXT("PlayerState owns the live attributes"), Attributes)) return false;
+    const float LiveHealth = Attributes->GetHealth();
+    Attributes->InitHealth(0);
+    TestFalse(TEXT("A dead but still possessed player is ineligible"), F.Scheduler->CanActOnTarget(Scoring, First));
+    Attributes->InitHealth(LiveHealth);
+
+    auto* Service = F.World->GetSubsystem<UProject_JTargetScoringSubsystem>();
+    F.Scheduler->Tick(0);
+    if (!TestEqual(TEXT("Possessed player entered a real worker batch"), F.Scheduler->GetStats().SubmittedDecisions, uint64(1))) return false;
+    const double Deadline = FPlatformTime::Seconds() + 2;
+    while (Service->GetPendingCount() && FPlatformTime::Seconds() < Deadline)
+    {
+        Service->Tick(0);
+        FPlatformProcess::SleepNoStats(.001f);
+    }
+    if (!TestEqual(TEXT("One old-Pawn result awaits NPC delivery"), F.Scheduler->GetOutstandingCount(), 1)
+        || !TestEqual(TEXT("The worker delivered that result"), Service->GetPendingCount(), 0)) return false;
+
+    Controller->Possess(Replacement);
+    TestEqual(TEXT("Replacement swaps the automatic registry entry"), F.Scheduler->GetTargetCount(), 1);
+    TestFalse(TEXT("The detached living Pawn is no longer a target"), F.Scheduler->CanActOnTarget(Scoring, First));
+    TestTrue(TEXT("The current Pawn is immediately eligible"), F.Scheduler->CanActOnTarget(Scoring, Replacement));
+    F.Scheduler->Tick(0);
+    TestEqual(TEXT("Late scoring for the old Pawn is discarded"), F.Scheduler->GetStats().DiscardedDecisions, uint64(1));
+    TestNull(TEXT("Late scoring does not publish the old Pawn"), Scoring->GetLastScoredTarget());
+
+    const double ReacquireDeadline = FPlatformTime::Seconds() + 2;
+    while (!Scoring->GetLastScoredTarget() && FPlatformTime::Seconds() < ReacquireDeadline)
+    {
+        Service->Tick(0);
+        F.Scheduler->Tick(0);
+        FPlatformProcess::SleepNoStats(.001f);
+    }
+    TestEqual(TEXT("Real NPC scoring acquires the replacement"), Scoring->GetLastScoredTarget(), static_cast<AActor*>(Replacement));
+
+    First->Destroy();
+    TestEqual(TEXT("Old Pawn EndPlay cannot remove the replacement"), F.Scheduler->GetTargetCount(), 1);
+    TestTrue(TEXT("Explicit team assignment still updates the same row"), F.Scheduler->RegisterTarget(Replacement, 1));
+    TestFalse(TEXT("Explicit friendly team excludes the replacement"), F.Scheduler->CanActOnTarget(Scoring, Replacement));
+    Controller->UnPossess();
+    TestEqual(TEXT("Unpossess retires the possession-owned row even after a team change"), F.Scheduler->GetTargetCount(), 0);
+    Controller->Possess(Replacement);
+    Replacement->Destroy();
+    TestEqual(TEXT("Destroying the current Pawn retires its row"), F.Scheduler->GetTargetCount(), 0);
+    NPC->StopCombatActions();
+    TestEqual(TEXT("Combat retirement releases the authored NPC scorer"), F.Scheduler->GetAgentCount(), 0);
+    return !HasAnyErrors();
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJNPCRetryRejectedBatchTest, "ProjectJ.Continuation.NPCRetryRejectedBatch",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJNPCRetryRejectedBatchTest::RunTest(const FString&)
+{
+    ProjectJNPCCallbackTests::FWorld F;
+    auto* Target = F.Target(100);
+    if (!TestTrue(TEXT("NPC can schedule its target query"), F.Scoring->StartBatchedNPCDecisions(1))) return false;
+    auto* Service = F.World->GetSubsystem<UProject_JTargetScoringSubsystem>();
+    TArray<FProject_JGameplayAsyncRequestToken> Blockers;
+    const auto ReserveSlot = [&]
+    {
+        const auto Token = Service->Submit(F.NPC, {}, EProject_JTargetScoringExecution::Serial, 0,
+            [](const FProjectJTargetScoringCompletion&) {});
+        if (Token.IsValid()) Blockers.Add(Token);
+        return Token.IsValid();
+    };
+    ON_SCOPE_EXIT
+    {
+        Target->OnLifeQuery = {};
+        for (const auto Token : Blockers) Service->Cancel(Token);
+    };
+    for (int32 Index = 1; Index < UProject_JTargetScoringSubsystem::MaxPendingRequests; ++Index)
+    {
+        if (!TestTrue(TEXT("Core accepts an actual reservation"), ReserveSlot())) return false;
+    }
+    // Interleave the final reservation with snapshot capture, after the scheduler's capacity check.
+    bool bInterleaved = false;
+    Target->OnLifeQuery = [&]
+    {
+        if (bInterleaved) return;
+        bInterleaved = true;
+        TestTrue(TEXT("Snapshot callback fills the last Core slot"), ReserveSlot());
+    };
+    F.Scheduler->Tick(0);
+    if (!TestTrue(TEXT("Snapshot callback ran after preflight"), bInterleaved)
+        || !TestEqual(TEXT("Full Core queue rejects the prepared batch"), F.Scheduler->GetStats().RejectedBatches, uint64(1))
+        || !TestEqual(TEXT("No NPC slot reserved by the rejected batch"), F.Scheduler->GetOutstandingCount(), 0)) return false;
+
+    Service->Cancel(Blockers[0]);
+    F.Scheduler->Tick(0);
+    TestEqual(TEXT("NPC fills a freed slot on the next pass"), F.Scheduler->GetStats().SubmittedDecisions, uint64(1));
+    return !HasAnyErrors();
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJNPCReadyBatchRetirementTest, "ProjectJ.Continuation.NPCReadyBatchRetirement",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJNPCReadyBatchRetirementTest::RunTest(const FString&)

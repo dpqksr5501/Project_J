@@ -142,6 +142,12 @@ bool RenderedClientEnabled() { return AnimationEnabled() && FParse::Param(FComma
 bool CombatEnabled() { return AnimationEnabled() && FParse::Param(FCommandLine::Get(), TEXT("ProjectJCombatInputFixture")); }
 bool CanonicalMeleeEnabled() { return CombatEnabled() && FParse::Param(FCommandLine::Get(), TEXT("ProjectJCanonicalMeleeFixture")); }
 bool CanonicalMovingRecipientEnabled() { return CanonicalMeleeEnabled() && FParse::Param(FCommandLine::Get(),TEXT("ProjectJCanonicalMeleeMovingRecipient")); }
+bool UsesEntryFixtureFloor(const UWorld& World)
+{
+	static const FName EntryMap(TEXT("/Engine/Maps/Entry"));
+	return World.GetPackage()->GetFName() == EntryMap;
+}
+double AuthoredFixtureLaneY(int32 Slot, double Radius) { return Slot * 4.0 * Radius; }
 bool CleaveEnabled() { return AnimationEnabled() && FParse::Param(FCommandLine::Get(), TEXT("ProjectJNPCCleaveFixture")); }
 int32 CombatFanoutCount() { int32 Count=0; FParse::Value(FCommandLine::Get(),TEXT("ProjectJNPCCleaveFanout="),Count); return Count; }
 bool CombatFanoutEnabled() { return CleaveEnabled() && CombatFanoutCount()==32; }
@@ -1842,6 +1848,19 @@ void AProject_JNetworkLoadGameMode::StartStage(int32 NewStage)
 	const FString Region = FString::Printf(TEXT("ProjectJ.Network.Stage%d"), NewStage);
 	RegionId = TRACE_BEGIN_REGION_WITH_ID(*Region);
 	Stage = NewStage; StageStarted = FPlatformTime::Seconds(); RequiredPulse = Pulse + 1;
+	const bool bUseEntryLanes = AnimationEnabled() && UsesEntryFixtureFloor(*GetWorld());
+	double EntryLaneRadius = 0.0;
+	if (bUseEntryLanes)
+	{
+		for (const auto& PC : Clients)
+		{
+			const auto* Capsule = Project_J::Movement::FindCapsule(PC->GetPawn());
+			const double Radius = Capsule ? Capsule->GetScaledCapsuleRadius() : 0.0;
+			if (!FMath::IsFinite(Radius) || Radius <= 0.0)
+			{ Finish(false, TEXT("Entry AOI lanes require live player capsules")); return; }
+			EntryLaneRadius = FMath::Max(EntryLaneRadius, Radius);
+		}
+	}
 	auto* Driver = GetWorld()->GetNetDriver(); StageOutBytes = Driver ? Driver->OutTotalBytes : 0;
 	if (Stage == 4) { for (int32 I = 0; I < 10; ++I) { NPCs[I]->Destroy(); NPCs[I] = nullptr; } }
 	if (Stage == 5)
@@ -1882,7 +1901,8 @@ void AProject_JNetworkLoadGameMode::StartStage(int32 NewStage)
 		}
 		if (APawn* Pawn = PC->GetPawn())
 		{
-			const FVector Target((Stage == 2 ? 1 - Slot % 2 : Slot % 2) * 20000,0,Pawn->GetActorLocation().Z);
+			const double LaneY = bUseEntryLanes ? AuthoredFixtureLaneY(Slot, EntryLaneRadius) : 0.0;
+			const FVector Target((Stage == 2 ? 1 - Slot % 2 : Slot % 2) * 20000, LaneY, Pawn->GetActorLocation().Z);
             if(auto* Player=Cast<AProject_JPlayerCharacter>(Pawn))
             {
                 auto Teleport=MakeShared<FTeleportEffect>();Teleport->TargetLocation=Target;
@@ -1977,7 +1997,7 @@ void AProject_JNetworkLoadGameMode::Tick(float DeltaSeconds)
         for (AProject_JNetworkLoadController* PC : Clients)
         {
             if (!IsValid(PC)) continue;
-            if (CanonicalMovingRecipientEnabled() && Stage==0)
+			if (AnimationEnabled() && Stage==0)
             {
                 // One failed-boundary snapshot only: preserve all spawn, contact and landing gates.
                 const TStrongObjectPtr<APawn> Pawn(PC->GetPawn());
@@ -2011,32 +2031,48 @@ void AProject_JNetworkLoadGameMode::Tick(float DeltaSeconds)
 	{
 		if (AnimationEnabled())
 		{
+            const bool bEntryPlacement = UsesEntryFixtureFloor(*GetWorld());
+            const bool bNativePlacement = bEntryPlacement || CanonicalMovingRecipientEnabled();
             TArray<FVector> NativeSpawnCenters;
-            if(CanonicalMovingRecipientEnabled() && Clients.ContainsByPredicate([](const auto& PC) { return !Cast<AProject_JPlayerCharacter>(PC->GetPawn()); }))
+            if(bNativePlacement && Clients.ContainsByPredicate([](const auto& PC) { return !Cast<AProject_JPlayerCharacter>(PC->GetPawn()); }))
             {
-                // Two fixed initial scene slots, projected once before either authored Pawn is created.
                 auto* Class=LoadClass<AProject_JPlayerCharacter>(nullptr,TEXT("/Game/Character_BPs/Spellblade/BP_Spellblade.BP_Spellblade_C"));
                 const auto* Template=Class?Class->GetDefaultObject<AProject_JPlayerCharacter>():nullptr;
                 const auto* Capsule=Template?Cast<UCapsuleComponent>(Template->GetRootComponent()):nullptr;
                 float Radius=0,HalfHeight=0;if(Capsule) Capsule->GetScaledCapsuleSize(Radius,HalfHeight);
-                auto* Navigation=FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
-                const AActor* StartSettings=GetWorld()->GetWorldSettings();
-                const FVector Anchor=StartSettings->GetActorLocation();
-                const auto* Data=Navigation && Template?Navigation->GetNavDataForProps(Template->GetNavAgentPropertiesRef(),Anchor):nullptr;
-                if(Clients.Num()!=2 || !Capsule || !Capsule->IsQueryCollisionEnabled() || !FMath::IsFinite(Radius) || !FMath::IsFinite(HalfHeight) || Radius<=0 || HalfHeight<Radius ||
-                   !Navigation || Navigation->IsNavigationBuildInProgress() || !IsValid(Data) || Data->IsActorBeingDestroyed() || !Data->IsRegistered() || Data->GetWorld()!=GetWorld())
-                { Finish(false,TEXT("Authored-map initial slots require actual CDO capsule and registered compatible NavData"));return; }
-                for(int32 Slot=0;Slot<2;++Slot)
+                if (!Capsule || !Capsule->IsQueryCollisionEnabled() || !FMath::IsFinite(Radius) || !FMath::IsFinite(HalfHeight) || Radius <= 0 || HalfHeight < Radius)
+                { Finish(false, TEXT("Initial authored slots require a valid CDO capsule")); return; }
+
+                if (bEntryPlacement)
                 {
-                    const FVector Seed=Anchor+FVector(0,double(Slot)*4.0*Radius,0);
-                    FNavLocation Foot;
-                    if(!Navigation->ProjectPointToNavigation(Seed,Foot,Data->GetDefaultQueryExtent(),Data) || Foot.Location.ContainsNaN() ||
-                       !FVector2D(Seed.X,Seed.Y).Equals(FVector2D(Foot.Location.X,Foot.Location.Y),UE_KINDA_SMALL_NUMBER))
-                    { Finish(false,FString::Printf(TEXT("Authored-map initial slot projection rejected slot=%d seed=%s"),Slot,*Seed.ToString()));return; }
-                    NativeSpawnCenters.Add(Foot.Location+Capsule->GetUpVector()*HalfHeight);
+                    // EnsureAnimationFloor places its top at Z=0. Admit each real capsule
+                    // above that floor before possession, with a distinct lane for every slot.
+                    for (int32 Slot = 0; Slot < Clients.Num(); ++Slot)
+                    {
+                        NativeSpawnCenters.Emplace((Slot % 2) * 20000, AuthoredFixtureLaneY(Slot, Radius), HalfHeight + 2.0);
+                    }
                 }
-                if(FVector::DistSquared(NativeSpawnCenters[0],NativeSpawnCenters[1])<FMath::Square(2.0*Radius))
-                { Finish(false,TEXT("Authored-map initial slots do not separate the actual capsules"));return; }
+                else
+                {
+                    // Preserve the two projected initial slots on the authored canonical map.
+                    auto* Navigation=FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+                    const AActor* StartSettings=GetWorld()->GetWorldSettings();
+                    const FVector Anchor=StartSettings->GetActorLocation();
+                    const auto* Data=Navigation?Navigation->GetNavDataForProps(Template->GetNavAgentPropertiesRef(),Anchor):nullptr;
+                    if(Clients.Num()!=2 || !Navigation || Navigation->IsNavigationBuildInProgress() || !IsValid(Data) || Data->IsActorBeingDestroyed() || !Data->IsRegistered() || Data->GetWorld()!=GetWorld())
+                    { Finish(false,TEXT("Authored-map initial slots require registered compatible NavData"));return; }
+                    for(int32 Slot=0;Slot<2;++Slot)
+                    {
+                        const FVector Seed=Anchor+FVector(0,AuthoredFixtureLaneY(Slot, Radius),0);
+                        FNavLocation Foot;
+                        if(!Navigation->ProjectPointToNavigation(Seed,Foot,Data->GetDefaultQueryExtent(),Data) || Foot.Location.ContainsNaN() ||
+                           !FVector2D(Seed.X,Seed.Y).Equals(FVector2D(Foot.Location.X,Foot.Location.Y),UE_KINDA_SMALL_NUMBER))
+                        { Finish(false,FString::Printf(TEXT("Authored-map initial slot projection rejected slot=%d seed=%s"),Slot,*Seed.ToString()));return; }
+                        NativeSpawnCenters.Add(Foot.Location+Capsule->GetUpVector()*HalfHeight);
+                    }
+                    if(FVector::DistSquared(NativeSpawnCenters[0],NativeSpawnCenters[1])<FMath::Square(2.0*Radius))
+                    { Finish(false,TEXT("Authored-map initial slots do not separate the actual capsules"));return; }
+                }
             }
             bool bSpawnedThisTick=false;
 			for (AProject_JNetworkLoadController* PC : Clients)
@@ -2045,11 +2081,17 @@ void AProject_JNetworkLoadGameMode::Tick(float DeltaSeconds)
                 if(Cast<AProject_JPlayerCharacter>(OldPawn)) continue;
                 auto* PS = PC->GetPlayerState<AProject_JPlayerState>();
                 FString SpawnFailure;
-                if(CanonicalMovingRecipientEnabled() && !NativeSpawnCenters.IsValidIndex(PC->FixtureSlot))
-                { Finish(false,TEXT("Authored-map initial slot identity changed before Pawn creation"));return; }
-                const FVector SpawnLocation=CanonicalMovingRecipientEnabled()?NativeSpawnCenters[PC->FixtureSlot]:OldPawn->GetActorLocation();
-				auto* Player = ProjectJAuthoredAnimationFixture::Spawn(GetWorld(), PC, PS, SpawnLocation,false,CanonicalMovingRecipientEnabled(),&SpawnFailure);
-				if (!Player) { Finish(false, CanonicalMovingRecipientEnabled()?TEXT("Authored-map native spawn admission failed: ")+SpawnFailure:TEXT("Authored animation fixture spawn failed")); return; }
+                if(bNativePlacement && !NativeSpawnCenters.IsValidIndex(PC->FixtureSlot))
+                { Finish(false,TEXT("Initial slot identity changed before Pawn creation"));return; }
+                const FVector PreviousLocation = OldPawn->GetActorLocation();
+                const FVector SpawnLocation=bNativePlacement?NativeSpawnCenters[PC->FixtureSlot]:PreviousLocation;
+				auto* Player = ProjectJAuthoredAnimationFixture::Spawn(GetWorld(), PC, PS, SpawnLocation,false,bNativePlacement,&SpawnFailure);
+				if (!Player) { Finish(false, bNativePlacement?TEXT("Native authored spawn admission failed: ")+SpawnFailure:TEXT("Authored animation fixture spawn failed")); return; }
+                if (bEntryPlacement)
+                {
+                    UE_LOG(LogProjectJDNetwork, Display, TEXT("Entry authored spawn slot=%d previous=%s requested=%s actual=%s"),
+                        PC->FixtureSlot, *PreviousLocation.ToString(), *SpawnLocation.ToString(), *Player->GetActorLocation().ToString());
+                }
 				OldPawn->Destroy();
                 bSpawnedThisTick=true;
 				PS->SetPublicCharacterSnapshot(FName(*FString::Printf(TEXT("DClient%d"), PC->FixtureSlot)), 1);

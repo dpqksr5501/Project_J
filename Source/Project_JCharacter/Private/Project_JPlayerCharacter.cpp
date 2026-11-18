@@ -40,6 +40,7 @@
 #include "GameFramework/PlayerState.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "Network/Project_JOwnedPawnScopeComponent.h"
+#include "System/Project_JNPCDecisionSubsystem.h"
 #include "Project_JAbilitySystemOwnerInterface.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
@@ -314,6 +315,10 @@ void AProject_JPlayerCharacter::BeginPlay()
 void AProject_JPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	bCreationDependencyEnding = true;
+	if (auto* World = GetWorld(); World && HasAuthority())
+	{
+		if (auto* Decisions = World->GetSubsystem<UProject_JNPCDecisionSubsystem>()) Decisions->UnregisterPlayerTarget(this);
+	}
 	UProject_JOwnedPawnScopeComponent::WithdrawFor(this);
 	StopObservingPlayerStateAbilitySystem();
 	if (IsValid(MountComponent)) MountComponent->OnRuntimeOwnerPrerequisitesChanged().Remove(MountRuntimeOwnerPrerequisitesChangedHandle);
@@ -369,6 +374,11 @@ void AProject_JPlayerCharacter::PossessedBy(AController* NewController)
 	RefreshAbilitySystemDependentComponents();
 	ApplyPrototypeStartingEquipment();
 	if (FoleyComponent) { FoleyComponent->PrepareLocalAudio(); }
+	if (auto* World = GetWorld(); World && HasAuthority() && IsValid(this) && !IsActorBeingDestroyed() && !bCreationDependencyEnding
+		&& GetController() == NewController && IsValid(Cast<APlayerController>(NewController)) && !NewController->IsActorBeingDestroyed())
+	{
+		if (auto* Decisions = World->GetSubsystem<UProject_JNPCDecisionSubsystem>()) Decisions->RegisterPlayerTarget(this);
+	}
 }
 
 void AProject_JPlayerCharacter::PawnClientRestart()
@@ -386,6 +396,10 @@ void AProject_JPlayerCharacter::UnPossessed()
 	SprintMoveInput = FVector2D::ZeroVector;
 	if (PlayerInputBindingComponent) PlayerInputBindingComponent->UnbindInput();
 	Super::UnPossessed();
+	if (auto* World = GetWorld(); World && HasAuthority() && !Cast<APlayerController>(GetController()))
+	{
+		if (auto* Decisions = World->GetSubsystem<UProject_JNPCDecisionSubsystem>()) Decisions->UnregisterPlayerTarget(this);
+	}
 }
 
 bool AProject_JPlayerCharacter::CanConsumePlayerStateAbilitySystem(const APlayerState* State) const

@@ -3,6 +3,7 @@
 #include "Components/Project_JTargetScoringComponent.h"
 #include "Components/Project_JNPCActionComponent.h"
 #include "Project_JNPCCharacter.h"
+#include "Project_JPlayerCharacter.h"
 #include "Project_JCombatInterface.h"
 #include "Optimization/Project_JTargetSpatialSnapshot.h"
 #include "Engine/World.h"
@@ -25,6 +26,8 @@ struct FProjectJNPCDecisionAgent
 
 namespace
 {
+constexpr int32 DefaultPlayerTargetTeam = 2; // Default encounter combatants use team 1.
+
 	bool IsLivingActor(AActor* Actor)
 	{
 		if (!IsValid(Actor) || Actor->IsActorBeingDestroyed()) { return false; }
@@ -261,6 +264,35 @@ void UProject_JNPCDecisionSubsystem::UnregisterAgent(UProject_JTargetScoringComp
 
 bool UProject_JNPCDecisionSubsystem::RegisterTarget(AActor* Target, int32 TeamId)
 {
+	return RegisterTargetInternal(Target, TeamId, false);
+}
+
+bool UProject_JNPCDecisionSubsystem::RegisterPlayerTarget(AProject_JPlayerCharacter* Pawn)
+{
+	return RegisterTargetInternal(Pawn, DefaultPlayerTargetTeam, true);
+}
+
+void UProject_JNPCDecisionSubsystem::UnregisterPlayerTarget(AProject_JPlayerCharacter* Pawn)
+{
+	check(IsInGameThread());
+	const TWeakObjectPtr<AActor> Key(Pawn);
+	if (Targets.ContainsByPredicate([Key](const FTarget& Entry) { return Entry.bPlayerPossession && Entry.Actor.HasSameIndexAndSerialNumber(Key); }))
+	{
+		UnregisterTarget(Pawn);
+	}
+}
+
+bool UProject_JNPCDecisionSubsystem::FTarget::HasCurrentPlayerPossession() const
+{
+	if (!bPlayerPossession) return true;
+	const auto* Pawn = Cast<APawn>(Actor.Get());
+	const auto* Controller = Pawn ? Cast<APlayerController>(Pawn->GetController()) : nullptr;
+	return IsValid(Controller) && !Controller->IsActorBeingDestroyed()
+		&& Controller->GetWorld() == Pawn->GetWorld() && Controller->GetPawn() == Pawn;
+}
+
+bool UProject_JNPCDecisionSubsystem::RegisterTargetInternal(AActor* Target, int32 TeamId, bool bPlayerPossession)
+{
 	check(IsInGameThread());
 	if (!IsActiveServer() || TeamId < 0 || !IsValid(Target) || !Target->HasAuthority()
 		|| Target->IsActorBeingDestroyed() || Target->GetWorld() != GetWorld()) { return false; }
@@ -268,6 +300,12 @@ bool UProject_JNPCDecisionSubsystem::RegisterTarget(AActor* Target, int32 TeamId
 	{
 		if (Entry.Actor.Get() == Target)
 		{
+			if (bPlayerPossession)
+			{
+				// A BP can set the team during ReceivePossessed, before the native hook returns.
+				if (!Entry.bPlayerPossession) { Entry.bPlayerPossession = true; ++TargetRegistryRevision; }
+				return true;
+			}
 			if (Entry.Team != TeamId) { ++TargetRegistryRevision; }
 			Entry.Team = TeamId;
 			// A faction change must not leave a cached friendly target selected.
@@ -284,7 +322,7 @@ bool UProject_JNPCDecisionSubsystem::RegisterTarget(AActor* Target, int32 TeamId
 	}
 	Targets.RemoveAll([](const FTarget& Entry) { return !Entry.Actor.IsValid(); });
 	if (Targets.Num() >= MaxTargets) { ++Stats.RejectedTargets; return false; }
-	Targets.Add({Target, TeamId});
+	Targets.Add({Target, TeamId, bPlayerPossession});
 	++TargetRegistryRevision;
 	return true;
 }
@@ -310,11 +348,13 @@ bool UProject_JNPCDecisionSubsystem::CanActOnTarget(const UProject_JTargetScorin
 void UProject_JNPCDecisionSubsystem::UnregisterTarget(AActor* Target)
 {
 	check(IsInGameThread());
-	if (Targets.RemoveAll([Target](const FTarget& Entry) { return Entry.Actor.Get() == Target; }) > 0) { ++TargetRegistryRevision; }
+	if (!Target) return;
+	const TWeakObjectPtr<AActor> Key(Target);
+	if (Targets.RemoveAll([Key](const FTarget& Entry) { return Entry.Actor.HasSameIndexAndSerialNumber(Key); }) > 0) { ++TargetRegistryRevision; }
 	const auto AgentSnapshot = Agents;
 	for (const auto& Agent : AgentSnapshot)
 	{
-		if (auto* Component = Agent->Component.Get(); Component && Component->SelectedTarget.Get() == Target) { Component->InvalidateQueryContext(); }
+		if (auto* Component = Agent->Component.Get(); Component && Component->SelectedTarget.HasSameIndexAndSerialNumber(Key)) { Component->InvalidateQueryContext(); }
 	}
 }
 
@@ -324,15 +364,15 @@ bool UProject_JNPCDecisionSubsystem::IsEligibleTarget(AActor* Target, int32 Team
 	if (!IsLivingActor(Target) || !IsActiveServer() || Target->GetWorld() != GetWorld()) return false;
 	// IsDead above can reenter gameplay and change registration. Build/read only
 	// afterward, with no callbacks while holding a derived map reference.
-	if (TargetTeamsRevision != TargetRegistryRevision)
+	if (TargetMembershipRevision != TargetRegistryRevision)
 	{
 		TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_NPCDecision_TargetMembership);
-		TargetTeams.Reset(); TargetTeams.Reserve(Targets.Num());
-		for (const auto& Entry : Targets) TargetTeams.Add(Entry.Actor, Entry.Team);
-		TargetTeamsRevision = TargetRegistryRevision;
+		TargetMembershipIndices.Reset(); TargetMembershipIndices.Reserve(Targets.Num());
+		for (int32 Index = 0; Index < Targets.Num(); ++Index) TargetMembershipIndices.Add(Targets[Index].Actor, Index);
+		TargetMembershipRevision = TargetRegistryRevision;
 	}
-	const int32* RegisteredTeam = TargetTeams.Find(Target);
-	return RegisteredTeam && *RegisteredTeam != Team;
+	const int32* Index = TargetMembershipIndices.Find(Target);
+	return Index && Targets[*Index].Team != Team && Targets[*Index].HasCurrentPlayerPossession();
 }
 
 bool UProject_JNPCDecisionSubsystem::RegisterObserver(AActor* Observer)
@@ -414,7 +454,7 @@ void UProject_JNPCDecisionSubsystem::StopScheduler()
 	const auto PreviousAgents = MoveTemp(Agents);
 	AgentIndices.Reset(); AgentCursor.Reset();
 	Ready.Empty(); ActiveBatches.Empty(); Targets.Empty(); Observers.Empty(); OutstandingDecisions = 0;
-	TargetTeams.Empty();
+	TargetMembershipIndices.Empty();
 	++TargetRegistryRevision;
 	for (const auto& Agent : PreviousAgents)
 	{
@@ -602,7 +642,7 @@ void UProject_JNPCDecisionSubsystem::Tick(float DeltaTime)
             { DiscardTargetCapture(false); return false; }
             if (FPlatformTime::Seconds() - TargetCapture->CapturedAt > MaxResultAgeSeconds) { DiscardTargetCapture(true); return false; }
             ++TargetCapture->NextIndex;
-            if (!bLiving || !IsValid(Target) || Target->GetWorld() != GetWorld()) continue;
+            if (!bLiving || !IsValid(Target) || Target->GetWorld() != GetWorld() || !Entry.HasCurrentPlayerPossession()) continue;
             const FVector Position = Target->GetActorLocation();
             ++Stats.LastTickTargetPositionReads;
             if (Position.ContainsNaN()) continue;
@@ -705,7 +745,6 @@ void UProject_JNPCDecisionSubsystem::Tick(float DeltaTime)
 		}
 		ProjectJ::TargetScoring::FSnapshot Snapshot;
 		if (!Component->PrepareSpatialSnapshot(Spatial, CandidateIndices, CapturedActors, Snapshot)) { continue; }
-		Agent->LastScheduled = Now;
 		Stats.LastTickSnapshotValues += Snapshot.Candidates.Num();
 		Snapshots.Add(MoveTemp(Snapshot));
 		BatchAgents.Add(Agent);
@@ -765,8 +804,10 @@ void UProject_JNPCDecisionSubsystem::Tick(float DeltaTime)
 			OutstandingDecisions += BatchAgents.Num();
 			++Stats.SubmittedBatches;
 			Stats.SubmittedDecisions += BatchAgents.Num();
+			const double SubmittedAt = FPlatformTime::Seconds();
 			for (const auto& Agent : BatchAgents)
 			{
+				Agent->LastScheduled = SubmittedAt;
 				Agent->bPending = true;
 				if (auto* Component = Agent->Component.Get()) { Component->PendingToken = Token; Component->bSharedBatchRequest = true; }
 			}

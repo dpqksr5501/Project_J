@@ -17,6 +17,16 @@ Registry는 서버/standalone Game·PIE 월드에서만 실행한다. 클라이�
 
 활성화는 공통 observer snapshot의 정확한3D 존재 판정(`HasAny`)을 사용한다. 첫 match에서 끝내고 전체 후보 배열·정렬은 만들지 않는다. 전체 후보가 필요한 NPC scoring은 기존 안정 ID 순서를 유지한다.
 
+### NPC 전투 대상과 판단 주기
+
+- 서버의 `AProject_JPlayerCharacter`는 실제 `APlayerController`가 빙의하면 기존 NPC 타깃 등록부에 들어간다. 기본 플레이어 팀은 2이며 기본 Encounter 전투 팀은 1이다. 기존 `RegisterTarget`의 명시 팀 설정은 해당 빙의 동안 우선한다. BP에서 일반 플레이어를 따로 등록할 필요는 없다. 스크립트가 관리하는 다른 종류의 타깃에는 기존 등록·해제 API를 사용한다.
+- 사망한 플레이어는 권위 생존 검사에서 제외된다. 빙의 해제와 Pawn 종료는 해당 Pawn의 등록만 제거한다. 캡처와 결과 소비가 현재 Controller↔Pawn 페어를 다시 확인하므로, 분리된 이전 Pawn의 결과가 남은 상태에서도 새 Pawn과 별도로 처리된다. 탑승 중에는 등록 대상이 되는 플레이어 캐릭터를 직접 조종하는 동안에만 이 기본 경로가 적용된다. 별도 탑승 액터의 타깃 정책은 기존 명시 등록을 사용한다.
+- 판단 주기는 Core가 배치를 수락한 시점부터 계산한다. 제출 전 스냅샷이 무효화되거나 접수가 거절되면 다음 유효한 스케줄 패스에서 기존 방문·시간 예산으로 다시 시도한다.
+
+`ProjectJ.Continuation.NPCPlayerPossessionTarget`은 기존 `BP_NPC_Test`, `BP_Spellblade`, `DA_NPC_PrototypeCleaveActivation`으로 전투를 시작하고 플레이어의 자동 등록을 확인한다. 작업자가 이전 Pawn의 입력을 받은 후 빙의를 교체한다. 이전 결과 폐기, 새 Pawn 획득, 이전 Pawn 종료와 등록 격리, 빙의 해제와 현재 Pawn 종료 시 해제를 검사한다. `NPCRetryUnsubmittedBatch`와 `NPCRetryRejectedBatch`는 각각 제출 전 스냅샷 무효화와 캡처 도중 Core 대기열이 포화되는 경우를 검증한다. 대기열 포화 시험은 실제 슬롯 하나를 확보한 뒤 다음 스케줄 패스의 접수를 확인한다.
+
+2026-11-18 집중 실행에서 세 테스트 모두 경고 없이 통과했다. 실행 결과는 `Saved/Validation/Continuation_20261014/NPCFoundationTable_20261118_Native2/index.json`에 있다.
+
 | 경계 | 현재 제한과 포화 정책 |
 | --- | --- |
 | 등록 | 월드당2048 ID, 중복 owner 충돌/retirement/overflow 거절 |

@@ -8,6 +8,7 @@
 #include "Optimization/Project_JTargetSpatialSnapshot.h"
 #include "Project_JNPCDecisionSubsystem.generated.h"
 
+class AProject_JPlayerCharacter;
 class UProject_JTargetScoringComponent;
 class UProject_JNPCActionComponent;
 struct FProjectJNPCDecisionAgent;
@@ -78,7 +79,7 @@ public:
 	void UnregisterAgent(UProject_JTargetScoringComponent* Component);
 	/** Revalidate authoritative registry membership/team/life when consuming an advisory decision. */
 	bool CanActOnTarget(const UProject_JTargetScoringComponent* Component, AActor* Target) const;
-	/** Explicit, bounded registry. Caller updates team metadata when its authoritative faction changes. */
+	/** Sets explicit team metadata. Player-controlled characters enrolled by possession retire on release. */
 	UFUNCTION(BlueprintCallable, Category="NPC|Decision")
 	bool RegisterTarget(AActor* Target, int32 TeamId);
 	UFUNCTION(BlueprintCallable, Category="NPC|Decision")
@@ -106,10 +107,21 @@ public:
 protected:
 	virtual bool DoesSupportWorldType(EWorldType::Type WorldType) const override;
 private:
+	friend class AProject_JPlayerCharacter;
 #if WITH_DEV_AUTOMATION_TESTS
 	friend class FProjectJNPCRegistryChurnTest;
 #endif
-	struct FTarget { TWeakObjectPtr<AActor> Actor; int32 Team = 0; };
+	struct FTarget
+	{
+		TWeakObjectPtr<AActor> Actor;
+		int32 Team = 0;
+		bool bPlayerPossession = false;
+
+		bool HasCurrentPlayerPossession() const;
+	};
+	bool RegisterPlayerTarget(AProject_JPlayerCharacter* Pawn);
+	void UnregisterPlayerTarget(AProject_JPlayerCharacter* Pawn);
+	bool RegisterTargetInternal(AActor* Target, int32 TeamId, bool bPlayerPossession);
 	void StopScheduler();
 	void UpdateActions();
 	struct FActionEntry
@@ -150,8 +162,8 @@ private:
     void DiscardTargetCapture(bool bExpired);
     void UpdateTargetCaptureStats();
 	/** Derived membership only; ordered Targets remains the authority and snapshot/tie-break source. */
-	mutable TMap<TWeakObjectPtr<AActor>, int32> TargetTeams;
-	mutable uint64 TargetTeamsRevision = MAX_uint64;
+	mutable TMap<TWeakObjectPtr<AActor>, int32> TargetMembershipIndices;
+	mutable uint64 TargetMembershipRevision = MAX_uint64;
 	TArray<TWeakObjectPtr<AActor>> Observers;
 	struct FReadyDecision
 	{

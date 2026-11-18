@@ -26,6 +26,33 @@
 4. 에디터·빌드·검증이 정상 종료된 뒤 Apply한다. 설정 에셋을 지정하지 않으면 공통 기본값을 사용한다.
 5. 저장된 에셋을 다시 열어 전환·재질·변형·접촉을 확인하고 기존 장착 경로에 연결한다. 생성 성공은 제작 품질 승인과 다르다.
 
+### 새 캐릭터의 표현 예산 확인
+
+| 항목 | 기존 제작·검사 경로 |
+| --- | --- |
+| 메시·LOD | `Inspect Mesh LODs`로 원본의 단계 수와 수동 검수 대상을 확인한다. 캐릭터 BP에서 표시 메시의 Forced LOD, Leader Pose와 부모 LOD 동기화를 확인하고, 원격 카메라 거리 변화로 실제 전환을 본다. |
+| Cloth | 의상 컴포넌트의 `Allow Cloth Quality Budget`, 유효한 Leader Pose와 `NoVisualBudget` 태그를 확인한다. 실행 예산에서 정지·복귀까지 허용하는 옵션은 품질 예산과 별도다. 메인 메시 자체의 Cloth는 메시의 Cloth LOD 매핑과 실제 평가 비용을 검수한다. |
+| 전투 FX | 실제 공격에서 사용하는 `AttackPresentationProfile`의 큐를 열어 `Use Remote Spawn Budget`, Niagara System의 Effect Type 및 반복 효과 종료 정책을 확인한다. 생성 예산과 이미 활성화된 Niagara의 거리·수량 제한은 각각 확인한다. GameplayWarning은 기존 필수 경고 경로에서 검수한다. |
+
+대표 읽기 전용 확인에서 Spellblade 몸체와 Winger 메인 메시는 각각 3개 LOD가 있었다. Spellblade 망토의 1개 LOD는 Cloth 수동 검수 대상으로 분류됐다. Spellblade 100/200개 기준선의 동시 공격 표본에서 관리 망토는 100/200개, 원격 품질 축소는 99/199개, 로컬 축소는 0개였다. Winger는 LOD0에서 메인 메시 Cloth를 사용하고 LOD1·2에서 해제한다. 현행 모듈러 의상 예산의 등록 범위는 Leader Pose가 있는 모듈러 파츠다. [최신 렌더 기준선](../../Performance/README.md#2026-11-18-기반-작업-기준선) · [Winger Cloth 제작](Winger_UE5_Export_2026-11-11.md#긴-뒤쪽-천의-chaos-cloth)
+
+저장된 `DA_AP_SpellbladeKit_SwordCues`에서 원격 생성 예산이 큐 2개에 모두 활성화됐고, `NS_CombatTrail`은 `NET_CombatTrail`을 사용했다. 이 확인은 설정과 참조의 증거다. 활성 FX 개별 비용과 필수 경고 도달은 별도의 관측 대상이다. 원자료는 `ArchiveStore/02_Measurements/NPCFoundation_20261118_SpellbladeFX.json`에 있다.
+
+신규 BP를 검수할 때는 `Inspect-CharacterPresentationBudget.py`로 상속된 컴포넌트 템플릿의 메시 LOD, Cloth 예산 허용 플래그, `NoVisualBudget`을 한 번에 읽는다. 기본 Combat Presentation Set은 자동 검사한다. 장착·공격에 따라 고르는 Set 또는 Profile은 `ProjectJBudgetPresentations`에 쉼표로 구분해 지정한다. 보고서는 `Saved/PresentationBudgetInspection/<실행명>/report.json`에 저장된다. 에셋과 맵은 읽기 전용으로 연다.
+
+```powershell
+$root = (Get-Location).Path
+$editor = 'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+& $editor "$root/Project_J.uproject" -run=pythonscript -unattended -NullRHI -NoLiveCoding -nop4 `
+    '-DisablePlugins=EditorToolset,AutomationTestToolset,ToolsetRegistry' `
+    "-script=$root/Scripts/Authoring/Inspect-CharacterPresentationBudget.py" `
+    '-ProjectJBudgetRun=SpellbladeWingerReview' `
+    '-ProjectJBudgetBlueprints=/Game/Character_BPs/Spellblade/BP_Spellblade,/Game/Characters/Winger/Blueprints/BP_Winger' `
+    '-ProjectJBudgetPresentations=/Game/DataAssetSets/Presentation/Spellblade/CombatKit/DA_AP_SpellbladeKit_SwordCues'
+```
+
+`modular_candidate_requires_runtime_leader`는 Spellblade 망토처럼 실행 시 Leader Pose 연결을 확인할 대상이다. `mesh_owned_cloth_outside_modular_budget`은 Winger처럼 메인 메시의 Cloth LOD 매핑을 검수할 대상을 뜻한다. Spellblade 몸체와 Winger는 각각 3개 LOD였고, Spellblade 망토는 Cloth 품질 예산을 허용했으며 실행 예산 옵션은 꺼져 있었다. 실제 Cloth 등록, 동적 장착, Niagara cull과 필수 경고 타이밍은 실행 중 확인한다.
+
 저장소 루트에서 실행 예:
 
 ```powershell
