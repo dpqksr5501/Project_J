@@ -94,7 +94,7 @@ def game_intervals(path):
     return intervals
 
 
-def summarize_server(path):
+def summarize_server(path, reference_runs=None):
     manifest = read_json(path/'manifest.json')
     check = read_json(path/'verification.json')
     memory = read_json(path/'server-baseline.json')
@@ -124,9 +124,24 @@ def summarize_server(path):
     conditions = {'cpu': manifest['cpu'].strip(), 'npc_count': manifest['npcCount'], 'animation': manifest['animation'],
                   'host': Path(manifest['executable']).name, 'sample_interval_ms': memory['sampleIntervalMs'],
                   'arguments': timing_args(args, {'-projectjfixtureclients', '-port'})}
-    evidence = ['manifest.json', 'verification.json', 'Server-effective-arguments.json', 'Server.utrace',
+    evidence = ['manifest.json', 'verification.json', 'Server-effective-arguments.json',
                 'Server/network-phases.csv', 'server-baseline.json', *frame_files]
-    return count, with_provenance(path, manifest, conditions, metrics, evidence)
+    trace_name = 'Server.utrace'
+    if (path / trace_name).is_file():
+        return count, with_provenance(path, manifest, conditions, metrics, [*evidence, trace_name])
+
+    reference = (reference_runs or {}).get(str(count), {})
+    reference_evidence = dict(reference.get('evidence', {}))
+    trace_sha = reference_evidence.pop(trace_name, '')
+    require(re.fullmatch(r'[0-9a-f]{64}', trace_sha),
+            f'Missing {trace_name}; replay requires its original comparison baseline: {path}')
+    entry = with_provenance(path, manifest, conditions, metrics, evidence)
+    require(entry['evidence'] == reference_evidence and all(
+        entry[key] == reference.get(key) for key in ('conditions', 'source_sha256', 'runtime_sha256')
+    ), f'Missing {trace_name}; the retained inputs differ from the original comparison baseline: {path}')
+    entry['evidence'][trace_name] = trace_sha
+    entry['trace_evidence'] = 'recorded_sha256'
+    return count, entry
 
 
 def axis(paths, summarize):
@@ -165,9 +180,12 @@ def main():
     parser.add_argument('--compare', type=Path)
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
-    result = {'schema': 1, 'render': axis(args.render, summarize_render), 'server': axis(args.server, summarize_server)}
-    if args.compare:
-        result['comparison'] = compare(result, read_json(args.compare))
+    previous = read_json(args.compare) if args.compare else None
+    reference_runs = previous['server'] if previous else None
+    result = {'schema': 1, 'render': axis(args.render, summarize_render),
+              'server': axis(args.server, lambda path: summarize_server(path, reference_runs))}
+    if previous:
+        result['comparison'] = compare(result, previous)
     with args.output.open('x', encoding='utf-8') as stream:
         json.dump(result, stream, indent=2)
         stream.write('\n')

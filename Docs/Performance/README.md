@@ -71,18 +71,23 @@ $export | Set-Content -LiteralPath $response -Encoding utf8NoBOM
 Start-Process $insights -ArgumentList "`"$run/Server.utrace`" -AutoQuit -NoUI `"-ExecOnAnalysisCompleteCmd=@=$response`"" -WindowStyle Hidden -Wait
 ```
 
-재집계는 에디터 없이 실행한다. 새 측정을 비교하려면 `$render`, `$server`를 새 실행 폴더들로 바꾸고 다른 출력 파일명을 사용한다.
+재집계는 에디터 없이 실행한다. 비교 기준은 [저장소에 포함된 기준선 JSON](Reports/Data/ProjectJ_Foundation_Baseline_2026-11-18.json)이다. 새 측정을 비교할 때는 `$render`, `$server`를 새 실행 폴더들로 바꾸고 다른 출력 파일명을 사용한다. 새 서버 측정에는 `Server.utrace`와 단계별 CSV가 필요하다. 과거 `Server.utrace`가 퇴역한 뒤에는 이 기준선과 보존된 CSV·명세의 SHA-256이 모두 일치할 때 기존 실행을 재집계할 수 있다. 이때 결과의 `trace_evidence`는 `recorded_sha256`이다.
 
 ```powershell
 $render = 100,200 | ForEach-Object { "Saved/Validation/WholeProjectAudit_20261013/NPCFoundation_20261118_Render$_" }
 $server = 2,4 | ForEach-Object { "Saved/Validation/GroupD_20260910/NPCSocketSlots_20261118_Auth$_" }
 $measurements = 'Saved/StorageCleanup_20261104/ArchiveStore/02_Measurements'
+$reference = 'Docs/Performance/Reports/Data/ProjectJ_Foundation_Baseline_2026-11-18.json'
 python ./Scripts/Validation/Compare-FoundationBaselines.py --render @render --server @server `
-    --compare "$measurements/NPCFoundationTable_20261118_Baseline.json" `
+    --compare $reference `
     --output "$measurements/NPCFoundationTable_Repeat.json"
 ```
 
 서버 송신량은 Stage1–5의 전송 바이트를 전체 초로 나눈 프로세스 전체 송신율이다. 프레임 시작 간격과 메모리는 각 실행의 조건에서 해석한다. 렌더 밀도와 소켓 수는 별도의 축이다.
+
+### 트레이스에서 확인한 검증 결과
+
+[성능 트레이스 검증 결과](Reports/ProjectJ_Trace_Findings_2026-11-18.md)에 실행 조건·측정치·실패 원인과 원본 없이 다시 읽을 수 있는 CSV·로그를 정리했다.
 
 **2026-10-28 서버 실행·표현 자원:** [전용 서버 병렬 평가와 headless 의상 생성](Architecture/PerformanceOptimizationFoundation.md#2026-10-28-서버-병렬-평가와-headless-의상-생성). 같은 바이너리에서 지원 startup 정책과 실제 task 실행을 확인했고, 서버 Frame82→39ms와 RHI 품질을 보존한 headless cloth 생성 방지를 검증했다. client FPS·운영 CCU 보장과 구분한다.
 

@@ -96,6 +96,8 @@ Start→Cycle의 의미 조건이 이미 충족된 경우에만, 같은 에셋·
 | FinalHz30 / FinalHz120 | 최종 저장 에셋의 방향·복귀·ownership | 각각 4개 통과, 실패·경고 0 |
 | CPUTrace / TraceExport | 최종 저장 에셋·200명·비용 분해 | 1개 통과, 측정 region 8개 추출 |
 
+2026-11-18 정리 후에도 `RenderedBaseline2`는 시나리오별 초기 화면과 두 복귀 구간의 시작·중간·안정 화면, 재생·방향 기록과 판정을 보존한다. 최종 `SelectiveRendered`와 실패한 `RenderedBaseline` 캡처는 전체를 유지한다. [캡처 정리와 검증 기록](../../Performance/Reports/ProjectJ_Trace_Findings_2026-11-18.md#원본-퇴역과-검증-캡처-정리-결과)
+
 최초 방향 시험은 몸체를 전방으로 고정하고 OTM 입력을 90도 이상 바꿔, 현재 경로가 Start를 선택하지 않는 다섯 경우도 Start→Loop 시험으로 요구했다. 같은 방향 연결과 초기 회전 진입을 혼동한 fixture 조건이었다. OTM의 초기 몸체를 이동 방향에 맞춰 수정했고, 같은 Start 검증을 유지한 채 기존 경로의 16개 방향 사례가 통과했다. 회전 중 입력은 별도의 기존 input-response 시험으로 검증한다. 제품의 재생 정책을 바꿔 시험을 통과시키지 않았다.
 
 실제 렌더 capture는 움직이는 캐릭터·바닥·조명을 사용한다. 같은 입력 조건에서 복귀 시점 기준의 capture와 실제 playback time을 함께 비교한다. 복귀가 앞당겨져 두 실행의 capture가 항상 같은 simulation 시각은 아니다. component-space FootStep 값을 world foot sliding 개선 수치로 취급하지 않는다. capture를 CPU 비용 측정에 섞지 않는다.

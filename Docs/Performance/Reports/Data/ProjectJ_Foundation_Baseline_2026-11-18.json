@@ -1,0 +1,258 @@
+{
+  "schema": 1,
+  "render": {
+    "100": {
+      "run": "Saved/Validation/WholeProjectAudit_20261013/NPCFoundation_20261118_Render100",
+      "conditions": {
+        "adapter": "AMD Radeon RX 9070 XT",
+        "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor",
+        "output": [
+          1280,
+          720
+        ],
+        "host": "UnrealEditor-Cmd.exe",
+        "arguments": [
+          "/Engine/Maps/Entry?game=/Script/Engine.GameModeBase",
+          "-game",
+          "-unattended",
+          "-nop4",
+          "-nosplash",
+          "-nosound",
+          "-NoDDCCleanup",
+          "-NoLiveCoding",
+          "-RenderOffscreen",
+          "-windowed",
+          "-ResX=1280",
+          "-ResY=720",
+          "-ProjectJRenderedCrowdFixture",
+          "-ExecCmds=t.MaxFPS 0,r.VSync 0,",
+          "-statnamedevents",
+          "-SaveToUserDir",
+          "-ProjectJRenderedCrowdMovement",
+          "-ForceRes",
+          "-DisablePython",
+          "-ProjectJRenderedCrowdLocalPlayer"
+        ]
+      },
+      "metrics": {
+        "private_peak_mib": 18796.53515625,
+        "working_set_peak_mib": 5012.33203125,
+        "idle_frame_p50_ms": 34.987499,
+        "idle_frame_p95_ms": 36.2523,
+        "idle_frame_p99_ms": 36.987099,
+        "idle_frames": 187,
+        "move_pivot_frame_p50_ms": 38.1419985,
+        "move_pivot_frame_p95_ms": 41.404804,
+        "move_pivot_frame_p99_ms": 47.4375,
+        "move_pivot_frames": 178,
+        "jump_land_frame_p50_ms": 37.723701,
+        "jump_land_frame_p95_ms": 39.083897,
+        "jump_land_frame_p99_ms": 40.513401,
+        "jump_land_frames": 181,
+        "attack_frame_p50_ms": 48.7048015,
+        "attack_frame_p95_ms": 55.256104,
+        "attack_frame_p99_ms": 90.864197,
+        "attack_frames": 66,
+        "return_frame_p50_ms": 35.414101,
+        "return_frame_p95_ms": 36.320999,
+        "return_frame_p99_ms": 37.450703,
+        "return_frames": 193
+      },
+      "source_sha256": "72597edb53e0b41c9be9105cfe39d563bc02f35d64e8b9fd85d718f9f43f8ef1",
+      "runtime_sha256": "8ba8631d24438013b02fc580dab250498436d81bbfa22f68a34118a9f6cead94",
+      "evidence": {
+        "frames.csv": "839200eb226607a715de403f55181bab177c941c39b747a210e36795da92716d",
+        "manifest.json": "f68f9d89dfdb713b936ffd71b59c782c02439be54b3c8847dd385cb2f188b8f6",
+        "process.json": "5d71e7e466d4e2510b071342ae372e8d5f6e76ddafbccea3707453953112147a",
+        "verification.json": "45fe2b5e2f47a95d265e284d424955d49879895e251511cd21e0cef203895226",
+        "viewport-output.json": "1a938086d986f32aae02046df64b346d453d9b3f560bd2b5c9c4f99131ef1cda",
+        "Run.log": "3cced6921c42e27a51d412a1cca642756ad99dc3404e9da0dc421147efb5ff3f"
+      }
+    },
+    "200": {
+      "run": "Saved/Validation/WholeProjectAudit_20261013/NPCFoundation_20261118_Render200",
+      "conditions": {
+        "adapter": "AMD Radeon RX 9070 XT",
+        "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor",
+        "output": [
+          1280,
+          720
+        ],
+        "host": "UnrealEditor-Cmd.exe",
+        "arguments": [
+          "/Engine/Maps/Entry?game=/Script/Engine.GameModeBase",
+          "-game",
+          "-unattended",
+          "-nop4",
+          "-nosplash",
+          "-nosound",
+          "-NoDDCCleanup",
+          "-NoLiveCoding",
+          "-RenderOffscreen",
+          "-windowed",
+          "-ResX=1280",
+          "-ResY=720",
+          "-ProjectJRenderedCrowdFixture",
+          "-ExecCmds=t.MaxFPS 0,r.VSync 0,",
+          "-statnamedevents",
+          "-SaveToUserDir",
+          "-ProjectJRenderedCrowdMovement",
+          "-ForceRes",
+          "-DisablePython",
+          "-ProjectJRenderedCrowdLocalPlayer"
+        ]
+      },
+      "metrics": {
+        "private_peak_mib": 21971.859375,
+        "working_set_peak_mib": 7284.74609375,
+        "idle_frame_p50_ms": 54.200802,
+        "idle_frame_p95_ms": 56.898903,
+        "idle_frame_p99_ms": 59.993999,
+        "idle_frames": 119,
+        "move_pivot_frame_p50_ms": 59.636398,
+        "move_pivot_frame_p95_ms": 71.564896,
+        "move_pivot_frame_p99_ms": 73.724594,
+        "move_pivot_frames": 111,
+        "jump_land_frame_p50_ms": 63.901604,
+        "jump_land_frame_p95_ms": 73.987,
+        "jump_land_frame_p99_ms": 75.030403,
+        "jump_land_frames": 105,
+        "attack_frame_p50_ms": 90.0815045,
+        "attack_frame_p95_ms": 102.928696,
+        "attack_frame_p99_ms": 119.762894,
+        "attack_frames": 34,
+        "return_frame_p50_ms": 60.2555525,
+        "return_frame_p95_ms": 65.488991,
+        "return_frame_p99_ms": 68.039406,
+        "return_frames": 114
+      },
+      "source_sha256": "0377a8f10271c402e99dd08022dbd4266d776c53008e857bb33d33b129552ef1",
+      "runtime_sha256": "8ba8631d24438013b02fc580dab250498436d81bbfa22f68a34118a9f6cead94",
+      "evidence": {
+        "frames.csv": "373bf4745e35311a7d14775d6725e990565c90b5c4cb9224cdf05138815529f0",
+        "manifest.json": "0bbfb938d86645d01eabfc03ea3d4da6d5d922aa6fa042c614546387eadaad77",
+        "process.json": "6c8afb82fd84ca762d5a453fc5217bf87546a8b408842bcbdd24e6ddb9a6d212",
+        "verification.json": "18bae7f62095ee2d60fa8281689cee162efe14c549152fe286386e0e1ae56dc3",
+        "viewport-output.json": "1a938086d986f32aae02046df64b346d453d9b3f560bd2b5c9c4f99131ef1cda",
+        "Run.log": "f563b6ef823fa3cc92f006554b7fa43c672753d4c088e33528655c734431b5db"
+      }
+    }
+  },
+  "server": {
+    "2": {
+      "run": "Saved/Validation/GroupD_20260910/NPCSocketSlots_20261118_Auth2",
+      "conditions": {
+        "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor",
+        "npc_count": 100,
+        "animation": true,
+        "host": "UnrealEditor-Cmd.exe",
+        "sample_interval_ms": 500,
+        "arguments": [
+          "-game",
+          "-unattended",
+          "-nop4",
+          "-nosplash",
+          "-NullRHI",
+          "-nosound",
+          "-NoLiveCoding",
+          "-NoDDCCleanup",
+          "-SaveToUserDir",
+          "-ProjectJNetworkFixture",
+          "-ProjectJFixtureNPCs=100",
+          "-ExecCmds=t.MaxFPS 30",
+          "-ProjectJAnimationFixture",
+          "-PktLag=0",
+          "-PktLoss=0",
+          "-DisablePlugins=EditorToolset,AutomationTestToolset,ToolsetRegistry",
+          "-DisablePython",
+          "/Engine/Maps/Entry?game=/Script/Project_J.Project_JNetworkLoadGameMode",
+          "-server",
+          "-trace=frame,region"
+        ]
+      },
+      "metrics": {
+        "server_tick_hz": 30.01252353659492,
+        "server_frame_p95_ms": 34.63419999999928,
+        "server_frame_p99_ms": 34.88699999999767,
+        "server_frames": 444,
+        "server_out_kib_s": 37.53523319754759,
+        "server_out_bytes": 581461,
+        "server_private_peak_mib": 2901.703125,
+        "server_working_set_peak_mib": 2987.10546875
+      },
+      "source_sha256": "0d79ce0f3e5344c445d6178e09e29f12c4e6f1ca441cf3ff71ef73ad76e689e5",
+      "runtime_sha256": "d002db45e3e79d1e28fc548b828dfe3d6ee3da40645e49c44ff8293ce95c4e1a",
+      "evidence": {
+        "manifest.json": "f85e50185d3200e50b2048d3f6209833c97a862db07b85b39ff52cd2194961d9",
+        "verification.json": "a3b84321f34357cc79e25153fb6f55cddd5951886560496c750d2b36e172493f",
+        "Server-effective-arguments.json": "a63a88e7c7b68bb56099dd2167a4ce8551d0cf012efa6af47b6e5e380f060d79",
+        "Server.utrace": "6c296d839a8f500a2eb32a57e535e139d107745c15f491fe6e2d160062c2fb44",
+        "Server/network-phases.csv": "796656d7f067cc850450abed4efbed6ec4271a585ca4787920fd8f54a62d1ec6",
+        "server-baseline.json": "c09e1348b61a0ef629b22e84b7a04c8fb6c220fe2c0f7fd9f4ab4d8e7802b158",
+        "ServerFrames/Server-ProjectJ.Network.Stage1.csv": "b3d27e63a9a05ced4999eb4841ad94105a509062c5e61dd7ad7a3a0ac3b1caff",
+        "ServerFrames/Server-ProjectJ.Network.Stage2.csv": "a6a7c7750232afaf0fae60504eedb9f80f292cb2f4fc543d3c6301347ff632d8",
+        "ServerFrames/Server-ProjectJ.Network.Stage3.csv": "0d0758a146126e561c8d2317fec9fd80610a45df1fd499007800cc20419d5255",
+        "ServerFrames/Server-ProjectJ.Network.Stage4.csv": "9e897984f732ce5c0c1b8807f82e6e0e497fb241b7af72208fc9637b7b505f02",
+        "ServerFrames/Server-ProjectJ.Network.Stage5.csv": "ab71b70668db03f69c3c8171db0cf4b2f7c3f7229e49f3324d27e550c7b1b307"
+      }
+    },
+    "4": {
+      "run": "Saved/Validation/GroupD_20260910/NPCSocketSlots_20261118_Auth4",
+      "conditions": {
+        "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor",
+        "npc_count": 100,
+        "animation": true,
+        "host": "UnrealEditor-Cmd.exe",
+        "sample_interval_ms": 500,
+        "arguments": [
+          "-game",
+          "-unattended",
+          "-nop4",
+          "-nosplash",
+          "-NullRHI",
+          "-nosound",
+          "-NoLiveCoding",
+          "-NoDDCCleanup",
+          "-SaveToUserDir",
+          "-ProjectJNetworkFixture",
+          "-ProjectJFixtureNPCs=100",
+          "-ExecCmds=t.MaxFPS 30",
+          "-ProjectJAnimationFixture",
+          "-PktLag=0",
+          "-PktLoss=0",
+          "-DisablePlugins=EditorToolset,AutomationTestToolset,ToolsetRegistry",
+          "-DisablePython",
+          "/Engine/Maps/Entry?game=/Script/Project_J.Project_JNetworkLoadGameMode",
+          "-server",
+          "-trace=frame,region"
+        ]
+      },
+      "metrics": {
+        "server_tick_hz": 29.81849495673695,
+        "server_frame_p95_ms": 34.63419999999928,
+        "server_frame_p99_ms": 35.002999999989015,
+        "server_frames": 440,
+        "server_out_kib_s": 133.05940667859272,
+        "server_out_bytes": 2056464,
+        "server_private_peak_mib": 2914.46875,
+        "server_working_set_peak_mib": 2994.640625
+      },
+      "source_sha256": "0d79ce0f3e5344c445d6178e09e29f12c4e6f1ca441cf3ff71ef73ad76e689e5",
+      "runtime_sha256": "d002db45e3e79d1e28fc548b828dfe3d6ee3da40645e49c44ff8293ce95c4e1a",
+      "evidence": {
+        "manifest.json": "1690863ac41c77e6cf29de6afa26725c578d3ccb5194d984848033849e2006f9",
+        "verification.json": "754e5629c7d071c1ffd7846fce1a488d86a229536938fc6621bd79d6d57b18a3",
+        "Server-effective-arguments.json": "e73222030692511c0a309ded461ea6e66531154fb49206e6fd0a4f95124ae8aa",
+        "Server.utrace": "b18e8a2673e6cdad60ac29a71ba3a929c07ca384a5d5863776443d36f9356cad",
+        "Server/network-phases.csv": "2dbfecc90f9f6f4f1f89f0fe71143f5723258fe8adf7f8cde57c604f7f845c11",
+        "server-baseline.json": "b24808e49b3a42d3bbad9763c13c352fc87de72bc1c13eba6d510ce8803ea4f7",
+        "ServerFrames/Server-ProjectJ.Network.Stage1.csv": "e90b60c3594d7c28a742eae93c98a92fd08ac5712f3e4207768f68929f9b38f2",
+        "ServerFrames/Server-ProjectJ.Network.Stage2.csv": "7c5ec5e6cc4c8113b7284ab362cb54124af660517265e8c47de37cc3f2673848",
+        "ServerFrames/Server-ProjectJ.Network.Stage3.csv": "be94962bd84a0d8d935adf4b449db7a0f86b7ad1c05f96ad21a6d2af06180806",
+        "ServerFrames/Server-ProjectJ.Network.Stage4.csv": "3c8f94665b2d3f66010d428ae0338053cd3281cc03d939267770ba6929cf417c",
+        "ServerFrames/Server-ProjectJ.Network.Stage5.csv": "c58514334884d1c53a8b7e33b0663501ee77bc05d0822df9f65c842e08f7e0c1"
+      }
+    }
+  },
+  "source_receipt_sha256": "ce476ca34d06c94f3725786e9e3bb464709842204cc0c1e32c626d2cdab212aa"
+}
