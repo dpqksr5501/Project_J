@@ -648,7 +648,7 @@
       "props": [
         {
           "id": "B01.RidgeMonolith01",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Pillar/SM_Pillar_01_128_128_512_01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Pillar_01_128_128_512_01",
           "position_xy_m": [
             1622,
             6842
@@ -665,7 +665,7 @@
         },
         {
           "id": "B01.RidgeMonolith02",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Pillar/SM_Pillar_01_128_128_512_01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Pillar_01_128_128_512_01",
           "position_xy_m": [
             1622,
             6798
@@ -682,7 +682,7 @@
         },
         {
           "id": "B01.RidgeMonolith03",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Pillar/SM_Pillar_01_128_128_512_01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Pillar_01_128_128_512_01",
           "position_xy_m": [
             1660,
             6866
@@ -699,7 +699,7 @@
         },
         {
           "id": "B01.RidgeMonolith04",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Pillar/SM_Pillar_01_128_128_512_01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Pillar_01_128_128_512_01",
           "position_xy_m": [
             1698,
             6798
@@ -716,7 +716,7 @@
         },
         {
           "id": "B01.RidgeMonolith05",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Pillar/SM_Pillar_01_128_128_512_01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Pillar_01_128_128_512_01",
           "position_xy_m": [
             1692,
             6835
@@ -733,7 +733,7 @@
         },
         {
           "id": "B01.RidgeMonolith06",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Pillar/SM_Pillar_01_128_128_512_01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Pillar_01_128_128_512_01",
           "position_xy_m": [
             1640,
             6780
@@ -750,7 +750,7 @@
         },
         {
           "id": "B01.StagingCampfire",
-          "mesh": "/Game/Map_Resource/ElderboomVillage/Meshes/SM_Campfire_uenpfeifa_lod3_Var1",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Campfire_uenpfeifa_lod3_Var1",
           "position_xy_m": [
             1740,
             6838
@@ -767,7 +767,7 @@
         },
         {
           "id": "B01.StagingSupply",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_FruitCrate01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_FruitCrate01",
           "position_xy_m": [
             1738,
             6846
@@ -912,7 +912,7 @@
         ],
         "guards": {
           "actor_path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579430C03_1100038350",
-          "mesh": "/Game/Map_Resource/ElderboomVillage/Meshes/SM_Worn_Wooden_Beam_tgmsdc0fa_lod3",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Worn_Wooden_Beam_tgmsdc0fa_lod3",
           "lines": [
             {
               "id": "B01.WestFaceGuard",
@@ -3984,7 +3984,7 @@
       "props": [
         {
           "id": "B02.OldCanopyTree",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Foliage/Ceiba_Tree_01/SM_Ceiba_Tree_01_A",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Ceiba_Tree_01_A",
           "position_xy_m": [
             6506,
             5660
@@ -4002,7 +4002,7 @@
         },
         {
           "id": "B02.NorthernRootCover",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Foliage/CeibaRoots_01/SM_Ceiba_Roots_01_B",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Ceiba_Roots_01_B",
           "position_xy_m": [
             6492,
             5650
@@ -4020,7 +4020,7 @@
         },
         {
           "id": "B02.WesternRootCover",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Foliage/CeibaRoots_01/SM_Ceiba_Roots_05",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Ceiba_Roots_05",
           "position_xy_m": [
             6448,
             5646
@@ -4038,7 +4038,7 @@
         },
         {
           "id": "B02.RuinEntrance",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Wall/SM_Wall_01_Open_192_256_01_A",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Wall_01_Open_192_256_01_A",
           "position_xy_m": [
             6470,
             5596
@@ -4056,7 +4056,7 @@
         },
         {
           "id": "B02.BrokenWestWall",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Wall/SM_Wall_01_Linear_512_512_01_A",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Wall_01_Linear_512_512_01_A",
           "position_xy_m": [
             6440,
             5620
@@ -4074,7 +4074,7 @@
         },
         {
           "id": "B02.EasternPillar",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Pillar/SM_Pillar_01_64_64_256_D",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Pillar_01_64_64_256_D",
           "position_xy_m": [
             6490,
             5606

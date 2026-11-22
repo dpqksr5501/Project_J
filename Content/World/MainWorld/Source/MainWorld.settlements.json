@@ -268,7 +268,7 @@
         "status": "SLATTED_ROTOR_BLOCKOUT_NOT_FINAL_ART"
       },
       "roof_contact_profile": {
-        "mesh": "/Game/Map_Resource/Meshes/Houses/Roofs/House02_Roof/SM_House02_Roof",
+        "mesh": "/Game/Map_Resource/main_1/Meshes/SM_House02_Roof",
         "wall_contact_source_z_cm": -72.8342056274,
         "gable_tip_ratio": 0.85
       }
@@ -514,7 +514,7 @@
         }
       ],
       "roof_contact_profile": {
-        "mesh": "/Game/Map_Resource/Meshes/Houses/Roofs/House02_Roof/SM_House02_Roof",
+        "mesh": "/Game/Map_Resource/main_1/Meshes/SM_House02_Roof",
         "wall_contact_source_z_cm": -72.8342056274,
         "gable_tip_ratio": 0.85
       },
@@ -1428,7 +1428,7 @@
         "water_level_m": 145
       },
       "roof_contact_profile": {
-        "mesh": "/Game/Map_Resource/Meshes/Houses/Roofs/House02_Roof/SM_House02_Roof",
+        "mesh": "/Game/Map_Resource/main_1/Meshes/SM_House02_Roof",
         "wall_contact_source_z_cm": -72.8342056274,
         "gable_tip_ratio": 0.85
       },
@@ -1691,7 +1691,7 @@
         "edge_attachment": true
       },
       "roof_contact_profile": {
-        "mesh": "/Game/Map_Resource/Meshes/Houses/Roofs/House02_Roof/SM_House02_Roof",
+        "mesh": "/Game/Map_Resource/main_1/Meshes/SM_House02_Roof",
         "wall_contact_source_z_cm": -72.8342056274,
         "gable_tip_ratio": 0.85
       },
@@ -1701,7 +1701,7 @@
           109,
           -70
         ],
-        "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_MainTower2Doors",
+        "mesh": "/Game/Map_Resource/main_1/Meshes/SM_MainTower2Doors",
         "scale": 0.7,
         "foundation_width_m": 11.299999999999999,
         "footprint_relief_m": 2.174999999999727,
@@ -2306,7 +2306,7 @@
         ]
       },
       "roof_contact_profile": {
-        "mesh": "/Game/Map_Resource/Meshes/Houses/Roofs/House02_Roof/SM_House02_Roof",
+        "mesh": "/Game/Map_Resource/main_1/Meshes/SM_House02_Roof",
         "wall_contact_source_z_cm": -72.8342056274,
         "gable_tip_ratio": 0.85
       },
@@ -2520,7 +2520,7 @@
       },
       "functional_walk_timeout_s": 90,
       "roof_contact_profile": {
-        "mesh": "/Game/Map_Resource/Meshes/Houses/Roofs/House02_Roof/SM_House02_Roof",
+        "mesh": "/Game/Map_Resource/main_1/Meshes/SM_House02_Roof",
         "wall_contact_source_z_cm": -72.8342056274,
         "gable_tip_ratio": 0.85
       },
@@ -2588,7 +2588,7 @@
           "storeys": 1,
           "yaw_degrees": 161.56505117707613,
           "foundation_bottom_m": 873.9411865347397,
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Tents01_Item01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Tents01_Item01",
           "mesh_scale": 0.6
         },
         {
@@ -2607,7 +2607,7 @@
           "storeys": 1,
           "yaw_degrees": -90,
           "foundation_bottom_m": 876.6235937500005,
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Tents01_Item03",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Tents01_Item03",
           "mesh_scale": 0.65
         },
         {
@@ -2626,7 +2626,7 @@
           "storeys": 1,
           "yaw_degrees": -90,
           "foundation_bottom_m": 880.3780000000002,
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Tents01_Item04",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Tents01_Item04",
           "mesh_scale": 0.8
         },
         {
@@ -2645,7 +2645,7 @@
           "storeys": 1,
           "yaw_degrees": -90,
           "foundation_bottom_m": 874.5962489062504,
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Tents01_Item03",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Tents01_Item03",
           "mesh_scale": 0.65
         }
       ],
@@ -3178,7 +3178,7 @@
       ],
       "functional_walk_timeout_s": 120,
       "roof_contact_profile": {
-        "mesh": "/Game/Map_Resource/Meshes/Houses/Roofs/House02_Roof/SM_House02_Roof",
+        "mesh": "/Game/Map_Resource/main_1/Meshes/SM_House02_Roof",
         "wall_contact_source_z_cm": -72.8342056274,
         "gable_tip_ratio": 0.85
       },
@@ -3224,7 +3224,7 @@
           "width": 3.936,
           "depth": 5.132,
           "yaw_degrees": -90,
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Tents01_Item04",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Tents01_Item04",
           "mesh_scale": 1,
           "center_m": [
             3185.0,
@@ -3345,7 +3345,7 @@
         "blend_m": 2
       },
       "roof_contact_profile": {
-        "mesh": "/Game/Map_Resource/Meshes/Houses/Roofs/House02_Roof/SM_House02_Roof",
+        "mesh": "/Game/Map_Resource/main_1/Meshes/SM_House02_Roof",
         "wall_contact_source_z_cm": -72.8342056274,
         "gable_tip_ratio": 0.85
       },

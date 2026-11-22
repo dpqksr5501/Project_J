@@ -5,7 +5,7 @@
   "world_asset": "/Game/World/MainWorld/Maps/L_MainWorld",
   "runtime_definition": "/Game/World/MainWorld/Data/DA_MainWorld",
   "owned_content_root": "/Game/World/MainWorld",
-  "resource_content_root": "/Game/Map_Resource/MainWorld",
+  "resource_content_root": "/Game/Map_Resource/main_1",
   "external_actor_root": "/Game/__ExternalActors__/World/MainWorld/",
   "external_object_root": "/Game/__ExternalObjects__/World/MainWorld/",
   "world_grid": {

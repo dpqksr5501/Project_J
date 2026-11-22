@@ -9,7 +9,7 @@
     637.197932876337
   ],
   "yaw_degrees": 140.0,
-  "mesh_asset": "/Game/Map_Resource/MainWorld/Geometry/SM_H08_RidgeMine",
+  "mesh_asset": "/Game/Map_Resource/main_1/Meshes/SM_H08_RidgeMine",
   "height_sha256": "bc3a7957a44629beb807d4a453443e9d02e48981be0cfb93d5054432c077f8c8",
   "local_axis_m": [
     -8,

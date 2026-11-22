@@ -2547,7 +2547,7 @@
   "plots": [
     {
       "id": "S01_P000",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_MiddleHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_MiddleHouse",
       "center_m": [
         4143.774649201364,
         4220.225350798636,
@@ -2561,7 +2561,7 @@
     },
     {
       "id": "S01_P001",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_SmallHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_SmallHouse",
       "center_m": [
         4128.283113964892,
         4235.716886035108,
@@ -2575,7 +2575,7 @@
     },
     {
       "id": "S01_P002",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_SmallHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_SmallHouse",
       "center_m": [
         4120.0,
         4301.413324890137,
@@ -2589,7 +2589,7 @@
     },
     {
       "id": "S01_P003",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_MiddleHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_MiddleHouse",
       "center_m": [
         4072.0,
         4282.504985656738,
@@ -2603,7 +2603,7 @@
     },
     {
       "id": "S01_P004",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_SmallHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_SmallHouse",
       "center_m": [
         4052.0,
         4282.586675109863,
@@ -2617,7 +2617,7 @@
     },
     {
       "id": "S01_P005",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_MiddleHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_MiddleHouse",
       "center_m": [
         4192.0,
         4270.004985656738,
@@ -2631,7 +2631,7 @@
     },
     {
       "id": "S01_P006",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_BigHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_BigHouse",
       "center_m": [
         4192.0,
         4291.076142578125,
@@ -2645,7 +2645,7 @@
     },
     {
       "id": "S01_P007",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_SmallHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_SmallHouse",
       "center_m": [
         4216.0,
         4270.086675109863,
@@ -2659,7 +2659,7 @@
     },
     {
       "id": "S01_P008",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_SmallHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_SmallHouse",
       "center_m": [
         4247.009779253921,
         4280.990220746079,
@@ -2673,7 +2673,7 @@
     },
     {
       "id": "S01_P009",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_MiddleHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_MiddleHouse",
       "center_m": [
         4232.932457579823,
         4295.067542420177,
@@ -2687,7 +2687,7 @@
     },
     {
       "id": "S01_P010",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_SmallHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_SmallHouse",
       "center_m": [
         4256.0,
         4286.086675109863,
@@ -2701,7 +2701,7 @@
     },
     {
       "id": "S01_P011",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_SmallHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_SmallHouse",
       "center_m": [
         4264.990220746079,
         4315.009779253921,
@@ -2715,7 +2715,7 @@
     },
     {
       "id": "S01_P012",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_MiddleHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_MiddleHouse",
       "center_m": [
         4299.067542420177,
         4312.932457579823,
@@ -2729,7 +2729,7 @@
     },
     {
       "id": "S01_P013",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_MiddleHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_MiddleHouse",
       "center_m": [
         4284.932457579823,
         4327.067542420177,
@@ -2743,7 +2743,7 @@
     },
     {
       "id": "S01_P014",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_MiddleHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_MiddleHouse",
       "center_m": [
         4311.067542420177,
         4340.932457579823,
@@ -2757,7 +2757,7 @@
     },
     {
       "id": "S01_P015",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_SmallHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_SmallHouse",
       "center_m": [
         4296.990220746079,
         4355.009779253921,
@@ -2771,7 +2771,7 @@
     },
     {
       "id": "S01_P016",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_SmallHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_SmallHouse",
       "center_m": [
         4327.009779253921,
         4356.990220746079,
@@ -2785,7 +2785,7 @@
     },
     {
       "id": "S01_P017",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_BigHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_BigHouse",
       "center_m": [
         4331.076142578125,
         4384.0,
@@ -2799,7 +2799,7 @@
     },
     {
       "id": "S01_P018",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_MiddleHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_MiddleHouse",
       "center_m": [
         4310.004985656738,
         4384.0,
@@ -2813,7 +2813,7 @@
     },
     {
       "id": "S01_P019",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_SmallHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_SmallHouse",
       "center_m": [
         4329.913324890137,
         4404.0,
@@ -2827,7 +2827,7 @@
     },
     {
       "id": "S01_P020",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_SmallHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_SmallHouse",
       "center_m": [
         4310.086675109863,
         4404.0,
@@ -2841,7 +2841,7 @@
     },
     {
       "id": "S01_P021",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_SmallHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_SmallHouse",
       "center_m": [
         4329.913324890137,
         4452.0,
@@ -2855,7 +2855,7 @@
     },
     {
       "id": "S01_P022",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_SmallHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_SmallHouse",
       "center_m": [
         4220.0,
         4500.913324890137,
@@ -2869,7 +2869,7 @@
     },
     {
       "id": "S01_P023",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_SmallHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_SmallHouse",
       "center_m": [
         4191.086675109863,
         4512.0,
@@ -2883,7 +2883,7 @@
     },
     {
       "id": "S01_P024",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_MiddleHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_MiddleHouse",
       "center_m": [
         4185.639564361009,
         4498.360435638991,
@@ -2897,7 +2897,7 @@
     },
     {
       "id": "S01_P025",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_MiddleHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_MiddleHouse",
       "center_m": [
         4166.360435638991,
         4453.639564361009,
@@ -2911,7 +2911,7 @@
     },
     {
       "id": "S01_P026",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_SmallHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_SmallHouse",
       "center_m": [
         4143.086675109863,
         4440.0,
@@ -2925,7 +2925,7 @@
     },
     {
       "id": "S01_P027",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_SmallHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_SmallHouse",
       "center_m": [
         4160.913324890137,
         4440.0,
@@ -2939,7 +2939,7 @@
     },
     {
       "id": "S01_P028",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_MiddleHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_MiddleHouse",
       "center_m": [
         4143.004985656738,
         4420.0,
@@ -2953,7 +2953,7 @@
     },
     {
       "id": "S01_P029",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_SmallHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_SmallHouse",
       "center_m": [
         4160.913324890137,
         4420.0,
@@ -2967,7 +2967,7 @@
     },
     {
       "id": "S01_P030",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_SmallHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_SmallHouse",
       "center_m": [
         4141.697327527266,
         4406.302672472734,
@@ -2981,7 +2981,7 @@
     },
     {
       "id": "S01_P031",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_MiddleHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_MiddleHouse",
       "center_m": [
         4154.360435638991,
         4393.639564361009,
@@ -2995,7 +2995,7 @@
     },
     {
       "id": "S01_P032",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_SmallHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_SmallHouse",
       "center_m": [
         4121.697327527266,
         4386.302672472734,
@@ -3009,7 +3009,7 @@
     },
     {
       "id": "S01_Infill_000",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_MiddleHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_MiddleHouse",
       "center_m": [
         4188.298913924778,
         4308.095014343262,
@@ -3028,7 +3028,7 @@
     },
     {
       "id": "S01_Infill_001",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_SmallHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_SmallHouse",
       "center_m": [
         4204.381280975612,
         4311.713833714945,
@@ -3047,7 +3047,7 @@
     },
     {
       "id": "S01_Infill_002",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_SmallHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_SmallHouse",
       "center_m": [
         4212.86656234985,
         4320.199115089184,
@@ -3066,7 +3066,7 @@
     },
     {
       "id": "S01_Infill_003",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_SmallHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_SmallHouse",
       "center_m": [
         4230.508994271594,
         4335.841547010928,
@@ -3085,7 +3085,7 @@
     },
     {
       "id": "S01_Infill_004",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_MiddleHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_MiddleHouse",
       "center_m": [
         4238.936512479577,
         4344.384591551423,
@@ -3104,7 +3104,7 @@
     },
     {
       "id": "S01_Infill_005",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_SmallHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_SmallHouse",
       "center_m": [
         4257.308576740845,
         4358.641129480178,
@@ -3123,7 +3123,7 @@
     },
     {
       "id": "S01_Infill_006",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_SmallHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_SmallHouse",
       "center_m": [
         4274.951008662589,
         4374.283561401922,
@@ -3142,7 +3142,7 @@
     },
     {
       "id": "S01_Infill_007",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_SmallHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_SmallHouse",
       "center_m": [
         4283.436290036828,
         4382.768842776161,
@@ -3161,7 +3161,7 @@
     },
     {
       "id": "S01_Infill_008",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_SmallHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_SmallHouse",
       "center_m": [
         4285.132528132468,
         4305.092868611948,
@@ -3180,7 +3180,7 @@
     },
     {
       "id": "S01_Infill_009",
-      "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_SmallHouse",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_SmallHouse",
       "center_m": [
         4308.1223058634705,
         4364.161965383991,

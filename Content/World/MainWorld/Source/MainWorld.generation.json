@@ -176,7 +176,7 @@
         {
           "label": "S02_Farm_Well",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579270C03_1466703929",
-          "mesh": "/Game/Map_Resource/Meshes/Well/SM_MainWell",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_MainWell",
           "location_cm": [
             -192399.8049295805,
             -193699.90048858343,
@@ -346,7 +346,7 @@
         {
           "label": "S04_Forestry_TimberYard_Cart",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579290C03_1935058295",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Cart01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Cart01",
           "location_cm": [
             245840.10423489235,
             67314.03774801343,
@@ -366,7 +366,7 @@
         {
           "label": "S04_Forestry_CarpenterCourt_Cart",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579290C03_1935093297",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Cart01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Cart01",
           "location_cm": [
             233840.10423489235,
             83014.03774801343,
@@ -665,7 +665,7 @@
         {
           "label": "S03_Lake_MooredBoat1",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345792A0C03_1868071489",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Boat01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Boat01",
           "location_cm": [
             -238898.77137481008,
             148907.13962526104,
@@ -675,7 +675,7 @@
         {
           "label": "S03_Lake_MooredBoat2",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345792A0C03_1868076490",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Boat01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Boat01",
           "location_cm": [
             -237501.2873656304,
             148907.1292677365,
@@ -685,7 +685,7 @@
         {
           "label": "S03_Lake_FishingGoods1",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345792A0C03_1868080491",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_FruitCrate01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_FruitCrate01",
           "location_cm": [
             -235700.0,
             155800.0000038147,
@@ -695,7 +695,7 @@
         {
           "label": "S03_Lake_FishingGoods2",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345792A0C03_1868085492",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Barrel01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Barrel01",
           "location_cm": [
             -235400.00000537268,
             155700.00001010453,
@@ -705,7 +705,7 @@
         {
           "label": "S03_Lake_FishingGoods3",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345792A0C03_1868089493",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_FruitCrate01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_FruitCrate01",
           "location_cm": [
             -235800.00000316254,
             155500.00000213317,
@@ -715,7 +715,7 @@
         {
           "label": "S03_Lake_FishingGoods4",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345792A0C03_1868092494",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Barrel01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Barrel01",
           "location_cm": [
             -235000.0000113814,
             155800.00000119623,
@@ -1044,7 +1044,7 @@
         {
           "label": "S06_Harbor_Lookout",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345792B0C03_1814178686",
-          "mesh": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_MainTower2Doors",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_MainTower2Doors",
           "location_cm": [
             267706.44554138184,
             -285198.4783416748,
@@ -1074,7 +1074,7 @@
         {
           "label": "S06_Harbor_MerchantBoat1",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345792B0C03_1814198689",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Boat01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Boat01",
           "location_cm": [
             243498.2691805332,
             -283671.4277718636,
@@ -1084,7 +1084,7 @@
         {
           "label": "S06_Harbor_MerchantBoat2",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345792B0C03_1814202690",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Boat01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Boat01",
           "location_cm": [
             248045.14418053333,
             -287584.8392301969,
@@ -1483,7 +1483,7 @@
         {
           "label": "S05_Mountain_OreCart",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345792D0C03_1748597059",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Cart01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Cart01",
           "location_cm": [
             -153083.51095174794,
             195706.58710094081,
@@ -1779,7 +1779,7 @@
         {
           "label": "S07_River_Well",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345792F0C03_1275533424",
-          "mesh": "/Game/Map_Resource/Meshes/Well/SM_MainWell",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_MainWell",
           "location_cm": [
             87600.20938683767,
             -136599.93587400828,
@@ -2111,7 +2111,7 @@
         {
           "label": "S09_North_SupplyCrate",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579300C03_2047313640",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_FruitCrate01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_FruitCrate01",
           "location_cm": [
             -62000.0,
             400100.0000038147,
@@ -2121,7 +2121,7 @@
         {
           "label": "S09_North_WaterBarrel",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579300C03_2047316641",
-          "mesh": "/Game/Map_Resource/ElderboomVillage/Meshes/SM_Wooden_Barrel_uc2ichvqx_lod3",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Wooden_Barrel_uc2ichvqx_lod3",
           "location_cm": [
             -61799.99941444397,
             400100.0638103485,
@@ -2376,7 +2376,7 @@
         {
           "label": "S08_Watch_Table",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579310C03_1978714850",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Furniture01_Table01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Furniture01_Table01",
           "location_cm": [
             -85099.5484161377,
             -84399.45293426514,
@@ -2386,7 +2386,7 @@
         {
           "label": "S08_Watch_Bench",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579310C03_1978718851",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Furniture01_Bench01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Furniture01_Bench01",
           "location_cm": [
             -85199.98469924927,
             -84800.0000038147,
@@ -2396,7 +2396,7 @@
         {
           "label": "S08_Watch_Cart",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579310C03_1978721852",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Cart01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Cart01",
           "location_cm": [
             -85567.54047774937,
             -83789.13045404441,
@@ -2406,7 +2406,7 @@
         {
           "label": "S08_Watch_Sacks",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579310C03_1978751853",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Sacks01_Item01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Sacks01_Item01",
           "location_cm": [
             -84577.22653911432,
             -84020.18274468393,
@@ -2548,7 +2548,7 @@
         {
           "label": "H01_G01_Rock01",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579330C03_1214340261",
-          "mesh": "/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Rocks/Rock_02/S_Rock_02",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/S_Rock_02",
           "location_cm": [
             -84916.50364129036,
             -153753.29351165172,
@@ -2558,7 +2558,7 @@
         {
           "label": "H01_G01_Rock02",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579330C03_1214351262",
-          "mesh": "/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Rocks/Rock_02/S_Rock_02",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/S_Rock_02",
           "location_cm": [
             -83101.44684208272,
             -148042.9047790182,
@@ -2568,7 +2568,7 @@
         {
           "label": "H01_G01_Rock03",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579330C03_1214363263",
-          "mesh": "/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Rocks/Rock_02/S_Rock_02",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/S_Rock_02",
           "location_cm": [
             -88682.92989835198,
             -147366.1438806937,
@@ -2578,7 +2578,7 @@
         {
           "label": "H01_G03_Rock01",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579330C03_1214397264",
-          "mesh": "/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Rocks/Rock_02/S_Rock_02",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/S_Rock_02",
           "location_cm": [
             -104916.50364129036,
             -145753.29351165172,
@@ -2588,7 +2588,7 @@
         {
           "label": "H01_G03_Rock02",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579330C03_1214410265",
-          "mesh": "/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Rocks/Rock_02/S_Rock_02",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/S_Rock_02",
           "location_cm": [
             -103101.44684208272,
             -140042.9047790182,
@@ -2598,7 +2598,7 @@
         {
           "label": "H01_G03_Rock03",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579330C03_1214458266",
-          "mesh": "/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Rocks/Rock_02/S_Rock_02",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/S_Rock_02",
           "location_cm": [
             -109082.92989835198,
             -139766.14388069374,
@@ -2608,7 +2608,7 @@
         {
           "label": "H01_ColdCampfire",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579330C03_1214637267",
-          "mesh": "/Game/Map_Resource/ElderboomVillage/Meshes/SM_Campfire_uenpfeifa_lod3_Var1",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Campfire_uenpfeifa_lod3_Var1",
           "location_cm": [
             -105999.96857062187,
             -136000.01786495946,
@@ -2618,7 +2618,7 @@
         {
           "label": "H01_OldCart",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579330C03_1214649268",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Cart01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Cart01",
           "location_cm": [
             -105355.45180990925,
             -136183.7455502253,
@@ -2628,7 +2628,7 @@
         {
           "label": "H01_AbandonedSacks",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579330C03_1214659269",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Sacks01_Item01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Sacks01_Item01",
           "location_cm": [
             -105684.12249451451,
             -136625.95917031122,
@@ -3095,7 +3095,7 @@
         {
           "label": "H02_ColdFire",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579340C03_1662346465",
-          "mesh": "/Game/Map_Resource/ElderboomVillage/Meshes/SM_Campfire_uenpfeifa_lod3_Var1",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Campfire_uenpfeifa_lod3_Var1",
           "location_cm": [
             -218899.98063659668,
             -133000.03052902222,
@@ -3105,7 +3105,7 @@
         {
           "label": "H02_Supplies",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579340C03_1662380466",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Sacks01_Item01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Sacks01_Item01",
           "location_cm": [
             -218683.2262046832,
             -130925.38923973573,
@@ -3115,7 +3115,7 @@
         {
           "label": "H02_StolenCart",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579340C03_1662392467",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Cart01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Cart01",
           "location_cm": [
             -213405.14295959473,
             -133399.9824371338,
@@ -3125,7 +3125,7 @@
         {
           "label": "H02_DenRockA",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579340C03_1662452468",
-          "mesh": "/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Rocks/Rock_02/S_Rock_02",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/S_Rock_02",
           "location_cm": [
             -190016.5405608776,
             -124207.95803308443,
@@ -3135,7 +3135,7 @@
         {
           "label": "H02_DenRockB",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579340C03_1662652469",
-          "mesh": "/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Rocks/Rock_02/S_Rock_02",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/S_Rock_02",
           "location_cm": [
             -189605.46049843912,
             -124517.52436593758,
@@ -3471,7 +3471,7 @@
             }
           ],
           "height_m": 2.7,
-          "post_mesh": "/Game/Map_Resource/ElderboomVillage/Meshes/SM_Modular_Fence_ufflaitdw_lod3_Var1"
+          "post_mesh": "/Game/Map_Resource/main_1/Meshes/SM_Modular_Fence_ufflaitdw_lod3_Var1"
         }
       ],
       "structures": [
@@ -3487,7 +3487,7 @@
           "depth": 5.132,
           "yaw_degrees": -45,
           "foundation_bottom_m": 83.93835682360668,
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Tents01_Item04",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Tents01_Item04",
           "scale": 1,
           "access_plan": {
             "instances": 2,
@@ -3527,7 +3527,7 @@
           "depth": 5.132,
           "yaw_degrees": -130,
           "foundation_bottom_m": 79.37237475792244,
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Tents01_Item04",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Tents01_Item04",
           "scale": 1,
           "access_plan": {
             "instances": 2,
@@ -3594,7 +3594,7 @@
         {
           "label": "H03_G01_Landmark01",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579350C03_2114586669",
-          "mesh": "/Game/Map_Resource/Megascans/3D_Assets/TreeStumpA/SM_TreeStumpA_00",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_TreeStumpA_00",
           "location_cm": [
             153752.0172642877,
             5681.2900823147465,
@@ -3604,7 +3604,7 @@
         {
           "label": "H03_G01_Landmark02",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579350C03_2114598670",
-          "mesh": "/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Rocks/Rock_02/S_Rock_02",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/S_Rock_02",
           "location_cm": [
             151112.41168517046,
             6393.475189157459,
@@ -3614,7 +3614,7 @@
         {
           "label": "H03_G02_Landmark01",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579350C03_2114607671",
-          "mesh": "/Game/Map_Resource/Megascans/3D_Assets/TreeStumpA/SM_TreeStumpA_00",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_TreeStumpA_00",
           "location_cm": [
             134752.0172642877,
             -8318.709917685253,
@@ -3624,7 +3624,7 @@
         {
           "label": "H03_G02_Landmark02",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579350C03_2114645672",
-          "mesh": "/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Rocks/Rock_02/S_Rock_02",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/S_Rock_02",
           "location_cm": [
             132112.41168517046,
             -7606.524810842541,
@@ -3634,7 +3634,7 @@
         {
           "label": "H03_G03_Landmark01",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579350C03_2114656673",
-          "mesh": "/Game/Map_Resource/Megascans/3D_Assets/TreeStumpA/SM_TreeStumpA_00",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_TreeStumpA_00",
           "location_cm": [
             144752.0172642877,
             2681.2900823147465,
@@ -3644,7 +3644,7 @@
         {
           "label": "H03_G03_Landmark02",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579350C03_2114714674",
-          "mesh": "/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Rocks/Rock_02/S_Rock_02",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/S_Rock_02",
           "location_cm": [
             142112.41168517046,
             3393.475189157459,
@@ -4137,7 +4137,7 @@
         {
           "label": "H04_G01_Landmark01",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579360C03_2070655874",
-          "mesh": "/Game/Map_Resource/Megascans/3D_Assets/TreeStumpA/SM_TreeStumpA_00",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_TreeStumpA_00",
           "location_cm": [
             -244318.6934138309,
             13610.579404196174,
@@ -4147,7 +4147,7 @@
         {
           "label": "H04_G01_Landmark02",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579360C03_2070667875",
-          "mesh": "/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Rocks/Rock_02/S_Rock_02",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/S_Rock_02",
           "location_cm": [
             -246861.70641031934,
             14296.882606528514,
@@ -4157,7 +4157,7 @@
         {
           "label": "H04_G02_Landmark01",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579360C03_2070677876",
-          "mesh": "/Game/Map_Resource/Megascans/3D_Assets/TreeStumpA/SM_TreeStumpA_00",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_TreeStumpA_00",
           "location_cm": [
             -222318.6934138309,
             30610.579404196174,
@@ -4167,7 +4167,7 @@
         {
           "label": "H04_G02_Landmark02",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579360C03_2070707877",
-          "mesh": "/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Rocks/Rock_02/S_Rock_02",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/S_Rock_02",
           "location_cm": [
             -224861.70641031934,
             31296.882606528514,
@@ -4177,7 +4177,7 @@
         {
           "label": "H04_G03_Landmark01",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579360C03_2070719878",
-          "mesh": "/Game/Map_Resource/Megascans/3D_Assets/TreeStumpA/SM_TreeStumpA_00",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_TreeStumpA_00",
           "location_cm": [
             -260318.6934138309,
             10610.579404196174,
@@ -4187,7 +4187,7 @@
         {
           "label": "H04_G03_Landmark02",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579360C03_2070774879",
-          "mesh": "/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Rocks/Rock_02/S_Rock_02",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/S_Rock_02",
           "location_cm": [
             -262861.7064103193,
             11296.882606528514,
@@ -4641,7 +4641,7 @@
         {
           "label": "H05_G01_Landmark01",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579370C03_1823808079",
-          "mesh": "/Game/Map_Resource/Megascans/3D_Assets/TreeStumpA/SM_TreeStumpA_00",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_TreeStumpA_00",
           "location_cm": [
             207184.62351678335,
             97171.53720595305,
@@ -4651,7 +4651,7 @@
         {
           "label": "H05_G01_Landmark02",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579370C03_1823820080",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Firewood01_Item01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Firewood01_Item01",
           "location_cm": [
             204799.01764678955,
             98499.58459663391,
@@ -4661,7 +4661,7 @@
         {
           "label": "H05_G01_Landmark03",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579370C03_1823830081",
-          "mesh": "/Game/Map_Resource/Megascans/3D_Assets/TreeStumpA/SM_TreeStumpA_00",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_TreeStumpA_00",
           "location_cm": [
             202049.08685302734,
             95804.52569580078,
@@ -4671,7 +4671,7 @@
         {
           "label": "H05_G02_Landmark01",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579370C03_1823866082",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Buildings/SM_Facade_Custom_01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Facade_Custom_01",
           "location_cm": [
             231240.9716477998,
             100209.35473318078,
@@ -4681,7 +4681,7 @@
         {
           "label": "H05_G02_Landmark02",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579370C03_1823875083",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Buildings/SM_Facade_Custom_01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Facade_Custom_01",
           "location_cm": [
             228799.94882202148,
             101618.62082350254,
@@ -4691,7 +4691,7 @@
         {
           "label": "H05_G02_Landmark03",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579370C03_1823920084",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Pillar/SM_Pillar_Cube_01_A",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Pillar_Cube_01_A",
           "location_cm": [
             226141.01905935348,
             99268.85008102554,
@@ -4701,7 +4701,7 @@
         {
           "label": "H05_G02_Landmark04",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579370C03_1824108085",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Pillar/SM_Pillar_Cube_01_A",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Pillar_Cube_01_A",
           "location_cm": [
             227064.4734489422,
             96731.67999773426,
@@ -4711,7 +4711,7 @@
         {
           "label": "H05_G02_Landmark05",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579370C03_1824123086",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Pillar/SM_Pillar_Cube_01_A",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Pillar_Cube_01_A",
           "location_cm": [
             229723.45438958876,
             96262.82991670878,
@@ -4721,7 +4721,7 @@
         {
           "label": "H05_G02_Landmark06",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579370C03_1824134087",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Pillar/SM_Pillar_Cube_01_A",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Pillar_Cube_01_A",
           "location_cm": [
             231458.98094064652,
             98331.14991897446,
@@ -4731,7 +4731,7 @@
         {
           "label": "H05_G03_Landmark01",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579370C03_1824171088",
-          "mesh": "/Game/Map_Resource/Megascans/3D_Assets/TreeStumpA/SM_TreeStumpA_00",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_TreeStumpA_00",
           "location_cm": [
             238184.62351678335,
             110171.53720595305,
@@ -4741,7 +4741,7 @@
         {
           "label": "H05_G03_Landmark02",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579370C03_1824181089",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Firewood01_Item01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Firewood01_Item01",
           "location_cm": [
             235799.01764678955,
             111499.58459663391,
@@ -4751,7 +4751,7 @@
         {
           "label": "H05_G03_Landmark03",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579370C03_1824227090",
-          "mesh": "/Game/Map_Resource/Megascans/3D_Assets/TreeStumpA/SM_TreeStumpA_00",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_TreeStumpA_00",
           "location_cm": [
             233049.08685302734,
             108804.52569580078,
@@ -5241,17 +5241,17 @@
           "sets": [
             {
               "component": "Canopy00",
-              "mesh": "/Game/Map_Resource/ElderboomVillage/Meshes/SM_BlackAlder_Forest_01.SM_BlackAlder_Forest_01",
+              "mesh": "/Game/Map_Resource/main_1/Meshes/SM_BlackAlder_Forest_01.SM_BlackAlder_Forest_01",
               "count": 174
             },
             {
               "component": "Canopy01",
-              "mesh": "/Game/Map_Resource/ElderboomVillage/Meshes/SM_BlackAlder_Field_04.SM_BlackAlder_Field_04",
+              "mesh": "/Game/Map_Resource/main_1/Meshes/SM_BlackAlder_Field_04.SM_BlackAlder_Field_04",
               "count": 38
             },
             {
               "component": "Canopy02",
-              "mesh": "/Game/Map_Resource/ElderboomVillage/Meshes/SM_BlackAlder_Field_02.SM_BlackAlder_Field_02",
+              "mesh": "/Game/Map_Resource/main_1/Meshes/SM_BlackAlder_Field_02.SM_BlackAlder_Field_02",
               "count": 48
             }
           ],
@@ -5274,7 +5274,7 @@
         {
           "label": "H06_NorthPool",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579390C03_1327225446",
-          "mesh": "/Game/Map_Resource/MainWorld/Geometry/SM_H06_NorthPool",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_H06_NorthPool",
           "location_cm": [
             89800.0,
             -212400.0,
@@ -5284,7 +5284,7 @@
         {
           "label": "H06_SouthPool",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579390C03_1442322447",
-          "mesh": "/Game/Map_Resource/MainWorld/Geometry/SM_H06_SouthPool",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_H06_SouthPool",
           "location_cm": [
             87600.0,
             -256000.0,
@@ -5294,7 +5294,7 @@
         {
           "label": "H06_G01_Landmark01",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579390C03_1442643469",
-          "mesh": "/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Rocks/Rock_02/S_Rock_02",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/S_Rock_02",
           "location_cm": [
             84631.51056236163,
             -248378.50413555218,
@@ -5304,7 +5304,7 @@
         {
           "label": "H06_G01_Landmark02",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579390C03_1442749470",
-          "mesh": "/Game/Map_Resource/Megascans/3D_Assets/TreeStumpA/SM_TreeStumpA_00",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_TreeStumpA_00",
           "location_cm": [
             82172.64553348182,
             -247665.4510019725,
@@ -5314,7 +5314,7 @@
         {
           "label": "H06_G02_Landmark01",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579390C03_1442799471",
-          "mesh": "/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Rocks/Rock_02/S_Rock_02",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/S_Rock_02",
           "location_cm": [
             84631.51056236163,
             -211378.50413555218,
@@ -5324,7 +5324,7 @@
         {
           "label": "H06_G02_Landmark02",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579390C03_1442897472",
-          "mesh": "/Game/Map_Resource/Megascans/3D_Assets/TreeStumpA/SM_TreeStumpA_00",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_TreeStumpA_00",
           "location_cm": [
             82172.64553348182,
             -210665.4510019725,
@@ -5334,7 +5334,7 @@
         {
           "label": "H06_G03_Landmark01",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579390C03_1442930473",
-          "mesh": "/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Rocks/Rock_02/S_Rock_02",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/S_Rock_02",
           "location_cm": [
             92631.51056236163,
             -219378.50413555218,
@@ -5344,7 +5344,7 @@
         {
           "label": "H06_G03_Landmark02",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579390C03_1442940474",
-          "mesh": "/Game/Map_Resource/Megascans/3D_Assets/TreeStumpA/SM_TreeStumpA_00",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_TreeStumpA_00",
           "location_cm": [
             90172.64553348182,
             -218665.4510019725,
@@ -5836,17 +5836,17 @@
           "sets": [
             {
               "component": "WetFringe00",
-              "mesh": "/Game/Map_Resource/ElderboomVillage/Meshes/SM_Grass_Clumps_rbojr_Var1_lod1.SM_Grass_Clumps_rbojr_Var1_lod1",
+              "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Grass_Clumps_rbojr_Var1_lod1.SM_Grass_Clumps_rbojr_Var1_lod1",
               "count": 439
             },
             {
               "component": "WetFringe01",
-              "mesh": "/Game/Map_Resource/ElderboomVillage/Meshes/SM_Grass_Clumps_rbojr_Var3_lod1.SM_Grass_Clumps_rbojr_Var3_lod1",
+              "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Grass_Clumps_rbojr_Var3_lod1.SM_Grass_Clumps_rbojr_Var3_lod1",
               "count": 415
             },
             {
               "component": "WetFringe02",
-              "mesh": "/Game/Map_Resource/Megascans/3D_Plants/FernB/SM_FernB_00.SM_FernB_00",
+              "mesh": "/Game/Map_Resource/main_1/Meshes/SM_FernB_00.SM_FernB_00",
               "count": 146
             }
           ],
@@ -5858,7 +5858,7 @@
           "id": "H06.NorthPool",
           "label": "H06_NorthPool",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579390C03_1327225446",
-          "mesh": "/Game/Map_Resource/MainWorld/Geometry/SM_H06_NorthPool.SM_H06_NorthPool",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_H06_NorthPool.SM_H06_NorthPool",
           "triangles": 476,
           "geometry_source": "MainWorld.H06.wetland.json",
           "geometry_sha256": "22c90408d30417dcd67c503184b87f649a3702c24896f21b64bc207baa925f2a",
@@ -5871,7 +5871,7 @@
           "id": "H06.SouthPool",
           "label": "H06_SouthPool",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579390C03_1442322447",
-          "mesh": "/Game/Map_Resource/MainWorld/Geometry/SM_H06_SouthPool.SM_H06_SouthPool",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_H06_SouthPool.SM_H06_SouthPool",
           "triangles": 1199,
           "geometry_source": "MainWorld.H06.wetland.json",
           "geometry_sha256": "22c90408d30417dcd67c503184b87f649a3702c24896f21b64bc207baa925f2a",
@@ -5894,7 +5894,7 @@
         {
           "label": "Coast_Southeast_H07_Surface",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793A0C03_1715530654",
-          "mesh": "/Game/Map_Resource/MainWorld/Geometry/SM_Coast_Southeast_H07",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Coast_Southeast_H07",
           "location_cm": [
             346800.0,
             -318200.0,
@@ -5902,7 +5902,7 @@
           ]
         }
       ],
-      "mesh": "/Game/Map_Resource/MainWorld/Geometry/SM_Coast_Southeast_H07.SM_Coast_Southeast_H07",
+      "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Coast_Southeast_H07.SM_Coast_Southeast_H07",
       "geometry_source": "MainWorld.coast.southeast.geometry.json",
       "geometry_sha256": "aacd765bdf2c8b8d1de573b5520714d049abcf773e5e35c4a54531dde6bf2ada",
       "height_sha256": "bc3a7957a44629beb807d4a453443e9d02e48981be0cfb93d5054432c077f8c8",
@@ -5951,7 +5951,7 @@
         {
           "label": "Coast_Southeast_H07_Surface",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793A0C03_1715530654",
-          "mesh": "/Game/Map_Resource/MainWorld/Geometry/SM_Coast_Southeast_H07",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Coast_Southeast_H07",
           "location_cm": [
             346800.0,
             -318200.0,
@@ -5961,7 +5961,7 @@
         {
           "label": "Coast_South_00_v1",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793A0C03_2128746655",
-          "mesh": "/Game/Map_Resource/MainWorld/Geometry/SM_Coast_South_00",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Coast_South_00",
           "location_cm": [
             -353200.0,
             -318200.0,
@@ -5971,7 +5971,7 @@
         {
           "label": "Coast_South_01_v1",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793A0C03_2129303656",
-          "mesh": "/Game/Map_Resource/MainWorld/Geometry/SM_Coast_South_01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Coast_South_01",
           "location_cm": [
             -253200.0,
             -318200.0,
@@ -5981,7 +5981,7 @@
         {
           "label": "Coast_South_02_v1",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793A0C03_2130726657",
-          "mesh": "/Game/Map_Resource/MainWorld/Geometry/SM_Coast_South_02",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Coast_South_02",
           "location_cm": [
             -153200.0,
             -318200.0,
@@ -5991,7 +5991,7 @@
         {
           "label": "Coast_South_03_v1",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793A0C03_2132099658",
-          "mesh": "/Game/Map_Resource/MainWorld/Geometry/SM_Coast_South_03",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Coast_South_03",
           "location_cm": [
             -53200.0,
             -318200.0,
@@ -6001,7 +6001,7 @@
         {
           "label": "Coast_South_04_v1",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793A0C03_2133263659",
-          "mesh": "/Game/Map_Resource/MainWorld/Geometry/SM_Coast_South_04",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Coast_South_04",
           "location_cm": [
             46800.0,
             -318200.0,
@@ -6011,7 +6011,7 @@
         {
           "label": "Coast_South_05_v1",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793A0C03_2134005660",
-          "mesh": "/Game/Map_Resource/MainWorld/Geometry/SM_Coast_South_05",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Coast_South_05",
           "location_cm": [
             146800.0,
             -318200.0,
@@ -6021,7 +6021,7 @@
         {
           "label": "Coast_South_06_v1",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793A0C03_2135508661",
-          "mesh": "/Game/Map_Resource/MainWorld/Geometry/SM_Coast_South_06",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Coast_South_06",
           "location_cm": [
             251800.0,
             -318200.0,
@@ -6031,7 +6031,7 @@
         {
           "label": "Coast_South_07_v1",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793A0C03_2135984662",
-          "mesh": "/Game/Map_Resource/MainWorld/Geometry/SM_Coast_South_07",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Coast_South_07",
           "location_cm": [
             395000.0,
             -318200.0,
@@ -6045,13 +6045,13 @@
           "stage": "COASTAL_SURFACE_BLOCKOUT",
           "geometry_source": "MainWorld.coast.southeast.geometry.json",
           "geometry_sha256": "2c887c9fc89dbc68bbda067e8b530874e3a5367dd45bae8a619b841e2f9a4180",
-          "mesh_asset": "/Game/Map_Resource/MainWorld/Geometry/SM_Coast_Southeast_H07",
+          "mesh_asset": "/Game/Map_Resource/main_1/Meshes/SM_Coast_Southeast_H07",
           "center_m": [
             7500,
             850,
             0
           ],
-          "material": "/Game/Map_Resource/MainWorld/Materials/M_MainWorldWaterReview",
+          "material": "/Game/Map_Resource/main_1/Materials/M_MainWorldWaterReview",
           "sea_level_m": 0,
           "base_seam_y_m": 500,
           "clip_bounds_m": [
@@ -6071,13 +6071,13 @@
           "stage": "COASTAL_SURFACE_BLOCKOUT",
           "geometry_source": "MainWorld.coast.south.00.geometry.json",
           "geometry_sha256": "b5bfaf60842986b0abcfd62778e266f9c58aaca5e4376a10bcd14b567efc82c0",
-          "mesh_asset": "/Game/Map_Resource/MainWorld/Geometry/SM_Coast_South_00",
+          "mesh_asset": "/Game/Map_Resource/main_1/Meshes/SM_Coast_South_00",
           "center_m": [
             500.0,
             850,
             0
           ],
-          "material": "/Game/Map_Resource/MainWorld/Materials/M_MainWorldWaterReview",
+          "material": "/Game/Map_Resource/main_1/Materials/M_MainWorldWaterReview",
           "sea_level_m": 0,
           "base_seam_y_m": 500,
           "clip_bounds_m": [
@@ -6097,13 +6097,13 @@
           "stage": "COASTAL_SURFACE_BLOCKOUT",
           "geometry_source": "MainWorld.coast.south.01.geometry.json",
           "geometry_sha256": "fdb4db85e34603ce9af8fcece6cb82e5da76d1f488619e974e7c91c6b4479731",
-          "mesh_asset": "/Game/Map_Resource/MainWorld/Geometry/SM_Coast_South_01",
+          "mesh_asset": "/Game/Map_Resource/main_1/Meshes/SM_Coast_South_01",
           "center_m": [
             1500.0,
             850,
             0
           ],
-          "material": "/Game/Map_Resource/MainWorld/Materials/M_MainWorldWaterReview",
+          "material": "/Game/Map_Resource/main_1/Materials/M_MainWorldWaterReview",
           "sea_level_m": 0,
           "base_seam_y_m": 500,
           "clip_bounds_m": [
@@ -6123,13 +6123,13 @@
           "stage": "COASTAL_SURFACE_BLOCKOUT",
           "geometry_source": "MainWorld.coast.south.02.geometry.json",
           "geometry_sha256": "aaf2969c0e87fc851205fe25cd4dfaa81964b599c54d29d6aeb487b2f386b540",
-          "mesh_asset": "/Game/Map_Resource/MainWorld/Geometry/SM_Coast_South_02",
+          "mesh_asset": "/Game/Map_Resource/main_1/Meshes/SM_Coast_South_02",
           "center_m": [
             2500.0,
             850,
             0
           ],
-          "material": "/Game/Map_Resource/MainWorld/Materials/M_MainWorldWaterReview",
+          "material": "/Game/Map_Resource/main_1/Materials/M_MainWorldWaterReview",
           "sea_level_m": 0,
           "base_seam_y_m": 500,
           "clip_bounds_m": [
@@ -6149,13 +6149,13 @@
           "stage": "COASTAL_SURFACE_BLOCKOUT",
           "geometry_source": "MainWorld.coast.south.03.geometry.json",
           "geometry_sha256": "b8344926bc683131152d3f56ed43028d296197220b3660aeaabf180d52d276e9",
-          "mesh_asset": "/Game/Map_Resource/MainWorld/Geometry/SM_Coast_South_03",
+          "mesh_asset": "/Game/Map_Resource/main_1/Meshes/SM_Coast_South_03",
           "center_m": [
             3500.0,
             850,
             0
           ],
-          "material": "/Game/Map_Resource/MainWorld/Materials/M_MainWorldWaterReview",
+          "material": "/Game/Map_Resource/main_1/Materials/M_MainWorldWaterReview",
           "sea_level_m": 0,
           "base_seam_y_m": 500,
           "clip_bounds_m": [
@@ -6175,13 +6175,13 @@
           "stage": "COASTAL_SURFACE_BLOCKOUT",
           "geometry_source": "MainWorld.coast.south.04.geometry.json",
           "geometry_sha256": "29664420b4c43644dfe8d727329783009d2ce55654f6455c56559c4e30215ffa",
-          "mesh_asset": "/Game/Map_Resource/MainWorld/Geometry/SM_Coast_South_04",
+          "mesh_asset": "/Game/Map_Resource/main_1/Meshes/SM_Coast_South_04",
           "center_m": [
             4500.0,
             850,
             0
           ],
-          "material": "/Game/Map_Resource/MainWorld/Materials/M_MainWorldWaterReview",
+          "material": "/Game/Map_Resource/main_1/Materials/M_MainWorldWaterReview",
           "sea_level_m": 0,
           "base_seam_y_m": 500,
           "clip_bounds_m": [
@@ -6201,13 +6201,13 @@
           "stage": "COASTAL_SURFACE_BLOCKOUT",
           "geometry_source": "MainWorld.coast.south.05.geometry.json",
           "geometry_sha256": "527a6a209a7800a71a58b5ddcb07452c53d266858343ecca7d91564ebdb69642",
-          "mesh_asset": "/Game/Map_Resource/MainWorld/Geometry/SM_Coast_South_05",
+          "mesh_asset": "/Game/Map_Resource/main_1/Meshes/SM_Coast_South_05",
           "center_m": [
             5500.0,
             850,
             0
           ],
-          "material": "/Game/Map_Resource/MainWorld/Materials/M_MainWorldWaterReview",
+          "material": "/Game/Map_Resource/main_1/Materials/M_MainWorldWaterReview",
           "sea_level_m": 0,
           "base_seam_y_m": 500,
           "clip_bounds_m": [
@@ -6227,13 +6227,13 @@
           "stage": "COASTAL_SURFACE_BLOCKOUT",
           "geometry_source": "MainWorld.coast.south.06.geometry.json",
           "geometry_sha256": "2e659679e505866acd70c4196687cd6158d26df980b7794eb2975e9fa2529d34",
-          "mesh_asset": "/Game/Map_Resource/MainWorld/Geometry/SM_Coast_South_06",
+          "mesh_asset": "/Game/Map_Resource/main_1/Meshes/SM_Coast_South_06",
           "center_m": [
             6550.0,
             850,
             0
           ],
-          "material": "/Game/Map_Resource/MainWorld/Materials/M_MainWorldWaterReview",
+          "material": "/Game/Map_Resource/main_1/Materials/M_MainWorldWaterReview",
           "sea_level_m": 0,
           "base_seam_y_m": 500,
           "clip_bounds_m": [
@@ -6253,13 +6253,13 @@
           "stage": "COASTAL_SURFACE_BLOCKOUT",
           "geometry_source": "MainWorld.coast.south.07.geometry.json",
           "geometry_sha256": "aaa66bfa8f172c6cc92d85aa5cfed4c25d261a0dd2cf36d94a0a4bf61bdc37e3",
-          "mesh_asset": "/Game/Map_Resource/MainWorld/Geometry/SM_Coast_South_07",
+          "mesh_asset": "/Game/Map_Resource/main_1/Meshes/SM_Coast_South_07",
           "center_m": [
             7982.0,
             850,
             0
           ],
-          "material": "/Game/Map_Resource/MainWorld/Materials/M_MainWorldWaterReview",
+          "material": "/Game/Map_Resource/main_1/Materials/M_MainWorldWaterReview",
           "sea_level_m": 0,
           "base_seam_y_m": 500,
           "clip_bounds_m": [
@@ -6478,7 +6478,7 @@
         {
           "label": "H07_RockBluff",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793C0C03_1085463038",
-          "mesh": "/Game/Map_Resource/Brushify/Meshes/Cliffs/Meshes/Cliff_Large_01/S_Cliff_Large_01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/S_Cliff_Large_01",
           "location_cm": [
             355985.6748046875,
             -329667.8765106201,
@@ -6488,7 +6488,7 @@
         {
           "label": "H07_G01_Landmark01",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793C0C03_1085495039",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_FruitCrate01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_FruitCrate01",
           "location_cm": [
             371251.4852581477,
             -329639.49984263314,
@@ -6498,7 +6498,7 @@
         {
           "label": "H07_G01_Landmark02",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793C0C03_1085505040",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Barrel03",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Barrel03",
           "location_cm": [
             368585.40296503756,
             -330873.79053270514,
@@ -6508,7 +6508,7 @@
         {
           "label": "H07_G01_Landmark03",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793C0C03_1085563041",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_FruitCrate01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_FruitCrate01",
           "location_cm": [
             368239.49984390015,
             -332651.4852653329,
@@ -6518,7 +6518,7 @@
         {
           "label": "H07_G01_Landmark04",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793C0C03_1085754042",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Barrel03",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Barrel03",
           "location_cm": [
             369109.377895102,
             -334150.65847262857,
@@ -6528,7 +6528,7 @@
         {
           "label": "H07_G01_Landmark05",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793C0C03_1085766043",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_FruitCrate01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_FruitCrate01",
           "location_cm": [
             370800.000003648,
             -334799.9999988847,
@@ -6538,7 +6538,7 @@
         {
           "label": "H07_G01_Landmark06",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793C0C03_1085776044",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Barrel03",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Barrel03",
           "location_cm": [
             372427.45013968454,
             -334203.6660453399,
@@ -6548,7 +6548,7 @@
         {
           "label": "H07_G02_Landmark01",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793C0C03_1085807045",
-          "mesh": "/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Rocks/Rock_02/S_Rock_02",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/S_Rock_02",
           "location_cm": [
             325040.54117360077,
             -331914.5999168967,
@@ -6558,7 +6558,7 @@
         {
           "label": "H07_G02_Landmark02",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793C0C03_1085817046",
-          "mesh": "/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Rocks/Rock_02/S_Rock_02",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/S_Rock_02",
           "location_cm": [
             322358.4292404723,
             -330654.94727194647,
@@ -6568,7 +6568,7 @@
         {
           "label": "H07_G03_Landmark01",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793C0C03_1085861047",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Barrel03",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Barrel03",
           "location_cm": [
             358055.82960689795,
             -321945.2074422242,
@@ -6578,7 +6578,7 @@
         {
           "label": "H07_G03_Landmark02",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793C0C03_1086085048",
-          "mesh": "/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Rocks/Rock_02/S_Rock_02",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/S_Rock_02",
           "location_cm": [
             356690.1148687073,
             -320775.13430377096,
@@ -7061,7 +7061,7 @@
           "depth": 5.132,
           "yaw_degrees": -60,
           "foundation_bottom_m": 19.884186359166506,
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Tents01_Item04",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Tents01_Item04",
           "scale": 1,
           "access_plan": {
             "instances": 3,
@@ -7107,7 +7107,7 @@
           "depth": 5.132,
           "yaw_degrees": -75,
           "foundation_bottom_m": 14.315715968154109,
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Tents01_Item04",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Tents01_Item04",
           "scale": 1,
           "access_plan": {
             "instances": 2,
@@ -7207,7 +7207,7 @@
         {
           "label": "H08_OreCart",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793E0C03_2061328415",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Cart01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Cart01",
           "location_cm": [
             -171939.040523672,
             191472.67599788596,
@@ -7217,7 +7217,7 @@
         {
           "label": "H08_SupplyCrate",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793E0C03_2061657416",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_FruitCrate01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_FruitCrate01",
           "location_cm": [
             -171600.00000292223,
             191200.00000245203,
@@ -7227,7 +7227,7 @@
         {
           "label": "H08_WaterBarrel",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793E0C03_2061668417",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_Barrel03",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Barrel03",
           "location_cm": [
             -172630.2230911255,
             190566.12356567383,
@@ -7237,7 +7237,7 @@
         {
           "label": "H08_BrokenOreRock",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793E0C03_2061678418",
-          "mesh": "/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Rocks/Rock_02/S_Rock_02",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/S_Rock_02",
           "location_cm": [
             -172204.8710425432,
             190395.81124135092,
@@ -7543,7 +7543,7 @@
         {
           "label": "H09_CourtPillar01",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793F0C03_2021548614",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Pillar/SM_Pillar_01_128_128_512_01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Pillar_01_128_128_512_01",
           "location_cm": [
             236399.8884808114,
             223800.15847002703,
@@ -7553,7 +7553,7 @@
         {
           "label": "H09_CourtPillar02",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793F0C03_2021561615",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Pillar/SM_Pillar_01_128_128_512_01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Pillar_01_128_128_512_01",
           "location_cm": [
             237599.84702151763,
             225900.11894058526,
@@ -7563,7 +7563,7 @@
         {
           "label": "H09_CourtPillar03",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793F0C03_2021572616",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Pillar/SM_Pillar_01_128_128_512_01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Pillar_01_128_128_512_01",
           "location_cm": [
             239999.81893108808,
             225900.06901686767,
@@ -7573,7 +7573,7 @@
         {
           "label": "H09_CourtPillar04",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793F0C03_2021606617",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Pillar/SM_Pillar_01_128_128_512_01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Pillar_01_128_128_512_01",
           "location_cm": [
             241199.80666435912,
             223800.01306173234,
@@ -7583,7 +7583,7 @@
         {
           "label": "H09_NorthArch",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793F0C03_2021617618",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Wall/SM_Wall_01_Open_192_256_01_A",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Wall_01_Open_192_256_01_A",
           "location_cm": [
             238544.09478759766,
             226400.00003051758,
@@ -7593,7 +7593,7 @@
         {
           "label": "H09_WestCourtWall",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793F0C03_2021664619",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Wall/SM_Wall_01_Linear_512_512_01_A",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Wall_01_Linear_512_512_01_A",
           "location_cm": [
             236431.99995829232,
             224844.0,
@@ -7603,7 +7603,7 @@
         {
           "label": "H09_EastCourtWall",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793F0C03_2021852620",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Wall/SM_Wall_01_Linear_512_512_01_A",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Wall_01_Linear_512_512_01_A",
           "location_cm": [
             241431.99995829232,
             224744.0,
@@ -7613,7 +7613,7 @@
         {
           "label": "H09_ShrinePillarWest",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793F0C03_2021868621",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Pillar/SM_Pillar_01_64_64_256_D",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Pillar_01_64_64_256_D",
           "location_cm": [
             237299.9828567505,
             219799.98910713196,
@@ -7623,7 +7623,7 @@
         {
           "label": "H09_ShrinePillarEast",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793F0C03_2021883622",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Pillar/SM_Pillar_01_64_64_256_D",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Pillar_01_64_64_256_D",
           "location_cm": [
             240299.99220496454,
             219799.98124412092,
@@ -7633,7 +7633,7 @@
         {
           "label": "H09_ShrineBackWall",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793F0C03_2021922623",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Wall/SM_Wall_01_Linear_512_512_01_A",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Wall_01_Linear_512_512_01_A",
           "location_cm": [
             238544.0,
             217368.00004170768,
@@ -7643,7 +7643,7 @@
         {
           "label": "H09_BuriedEngravedSlab",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793F0C03_2021936624",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Floor/SM_Floor_Engraved_800_800_01_A",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Floor_Engraved_800_800_01_A",
           "location_cm": [
             238800.00692749023,
             218000.00639343262,
@@ -7653,7 +7653,7 @@
         {
           "label": "H09_GrovePillarWest",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793F0C03_2021998625",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Pillar/SM_Pillar_01_64_64_256_D",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Pillar_01_64_64_256_D",
           "location_cm": [
             237200.0171432495,
             199800.01089286804,
@@ -7663,7 +7663,7 @@
         {
           "label": "H09_GrovePillarEast",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE512345793F0C03_2022202626",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Pillar/SM_Pillar_01_64_64_256_D",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Pillar_01_64_64_256_D",
           "location_cm": [
             240399.9828567505,
             199799.98910713196,
@@ -8105,7 +8105,7 @@
         {
           "label": "B01_RidgeMonolith01",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579410C03_1502221983",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Pillar/SM_Pillar_01_128_128_512_01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Pillar_01_128_128_512_01",
           "location_cm": [
             -241000.10592072993,
             281000.16226545494,
@@ -8115,7 +8115,7 @@
         {
           "label": "B01_RidgeMonolith02",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579410C03_1502555984",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Pillar/SM_Pillar_01_128_128_512_01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Pillar_01_128_128_512_01",
           "location_cm": [
             -241000.14430895867,
             276600.12932209147,
@@ -8125,7 +8125,7 @@
         {
           "label": "B01_RidgeMonolith03",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579410C03_1502569985",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Pillar/SM_Pillar_01_128_128_512_01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Pillar_01_128_128_512_01",
           "location_cm": [
             -237200.17286277036,
             283400.08756564115,
@@ -8135,7 +8135,7 @@
         {
           "label": "B01_RidgeMonolith04",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579410C03_1502580986",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Pillar/SM_Pillar_01_128_128_512_01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Pillar_01_128_128_512_01",
           "location_cm": [
             -233400.18963626993,
             276600.03984173713,
@@ -8145,7 +8145,7 @@
         {
           "label": "B01_RidgeMonolith05",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579410C03_1502614987",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Pillar/SM_Pillar_01_128_128_512_01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Pillar_01_128_128_512_01",
           "location_cm": [
             -234000.19348637108,
             280299.98940268456,
@@ -8155,7 +8155,7 @@
         {
           "label": "B01_RidgeMonolith06",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579410C03_1502625988",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Pillar/SM_Pillar_01_128_128_512_01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Pillar_01_128_128_512_01",
           "location_cm": [
             -239200.1841506958,
             274799.93968582153,
@@ -8165,7 +8165,7 @@
         {
           "label": "B01_StagingCampfire",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579410C03_1502680989",
-          "mesh": "/Game/Map_Resource/ElderboomVillage/Meshes/SM_Campfire_uenpfeifa_lod3_Var1",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Campfire_uenpfeifa_lod3_Var1",
           "location_cm": [
             -229199.98063659668,
             280599.9694709778,
@@ -8175,7 +8175,7 @@
         {
           "label": "B01_StagingSupply",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579410C03_1502887990",
-          "mesh": "/Game/Map_Resource/SkyTown/Meshes/SM_FruitCrate01",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_FruitCrate01",
           "location_cm": [
             -229400.0,
             281400.0000038147,
@@ -8413,7 +8413,7 @@
         ],
         "guards": {
           "actor_path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579430C03_1100038350",
-          "mesh": "/Game/Map_Resource/ElderboomVillage/Meshes/SM_Worn_Wooden_Beam_tgmsdc0fa_lod3",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Worn_Wooden_Beam_tgmsdc0fa_lod3",
           "lines": [
             {
               "id": "B01.WestFaceGuard",
@@ -9752,7 +9752,7 @@
         {
           "label": "B02_OldCanopyTree",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579440C03_1410150529",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Foliage/Ceiba_Tree_01/SM_Ceiba_Tree_01_A",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Ceiba_Tree_01_A",
           "location_cm": [
             247290.52951006155,
             162914.0816954029,
@@ -9762,7 +9762,7 @@
         {
           "label": "B02_NorthernRootCover",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579440C03_1410478530",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Foliage/CeibaRoots_01/SM_Ceiba_Roots_01_B",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Ceiba_Roots_01_B",
           "location_cm": [
             245902.09524672513,
             161750.85055209693,
@@ -9772,7 +9772,7 @@
         {
           "label": "B02_WesternRootCover",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579440C03_1410490531",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Foliage/CeibaRoots_01/SM_Ceiba_Roots_05",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Ceiba_Roots_05",
           "location_cm": [
             241637.5518179515,
             161386.2229907389,
@@ -9782,7 +9782,7 @@
         {
           "label": "B02_RuinEntrance",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579440C03_1410500532",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Wall/SM_Wall_01_Open_192_256_01_A",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Wall_01_Open_192_256_01_A",
           "location_cm": [
             243544.09478759766,
             156400.00003051758,
@@ -9792,7 +9792,7 @@
         {
           "label": "B02_BrokenWestWall",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579440C03_1410532533",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Wall/SM_Wall_01_Linear_512_512_01_A",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Wall_01_Linear_512_512_01_A",
           "location_cm": [
             240752.48692182772,
             158652.67686386162,
@@ -9802,7 +9802,7 @@
         {
           "label": "B02_EasternPillar",
           "path": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.StaticMeshActor_UAID_1CCE51234579440C03_1410542534",
-          "mesh": "/Game/Map_Resource/AncientTempleRuins/Environment/Construction/Pillar/SM_Pillar_01_64_64_256_D",
+          "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Pillar_01_64_64_256_D",
           "location_cm": [
             245799.98500872165,
             157399.98629572507,

@@ -50,7 +50,7 @@
   "groundcover_palettes": {
     "Meadow": [
       {
-        "mesh": "/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Foliage/Grass/S_Grass",
+        "mesh": "/Game/Map_Resource/main_1/Meshes/S_Grass",
         "density": 115,
         "scale": [
           0.5,
@@ -62,7 +62,7 @@
         ]
       },
       {
-        "mesh": "/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Foliage/Clovers/S_Clovers_01",
+        "mesh": "/Game/Map_Resource/main_1/Meshes/S_Clovers_01",
         "density": 18,
         "scale": [
           0.75,
@@ -74,7 +74,7 @@
         ]
       },
       {
-        "mesh": "/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Foliage/Clovers/S_Clovers_02",
+        "mesh": "/Game/Map_Resource/main_1/Meshes/S_Clovers_02",
         "density": 14,
         "scale": [
           0.6,
@@ -86,7 +86,7 @@
         ]
       },
       {
-        "mesh": "/Game/Map_Resource/ElderboomVillage/Meshes/SM_Grass_Clumps_rbojr_Var2_lod1",
+        "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Grass_Clumps_rbojr_Var2_lod1",
         "density": 9,
         "scale": [
           0.55,
@@ -98,7 +98,7 @@
         ]
       },
       {
-        "mesh": "/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Foliage/Flowers/S_Flowers_01_Small",
+        "mesh": "/Game/Map_Resource/main_1/Meshes/S_Flowers_01_Small",
         "density": 2,
         "scale": [
           0.45,
@@ -110,7 +110,7 @@
         ]
       },
       {
-        "mesh": "/Game/Map_Resource/ProceduralNaturePack/Meshes/grass/grass_small_02",
+        "mesh": "/Game/Map_Resource/main_1/Meshes/grass_small_02",
         "density": 20,
         "scale": [
           0.65,
@@ -124,7 +124,7 @@
     ],
     "Forest": [
       {
-        "mesh": "/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Foliage/Grass/S_Grass",
+        "mesh": "/Game/Map_Resource/main_1/Meshes/S_Grass",
         "density": 65,
         "scale": [
           0.45,
@@ -136,7 +136,7 @@
         ]
       },
       {
-        "mesh": "/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Foliage/Clovers/S_Clovers_02",
+        "mesh": "/Game/Map_Resource/main_1/Meshes/S_Clovers_02",
         "density": 24,
         "scale": [
           0.7,
@@ -148,7 +148,7 @@
         ]
       },
       {
-        "mesh": "/Game/Map_Resource/ElderboomVillage/Meshes/SM_Grass_Clumps_rbojr_Var3_lod1",
+        "mesh": "/Game/Map_Resource/main_1/Meshes/SM_Grass_Clumps_rbojr_Var3_lod1",
         "density": 10,
         "scale": [
           0.5,
@@ -160,7 +160,7 @@
         ]
       },
       {
-        "mesh": "/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Foliage/Branches/S_Branches",
+        "mesh": "/Game/Map_Resource/main_1/Meshes/S_Branches",
         "density": 2,
         "scale": [
           0.5,
@@ -172,7 +172,7 @@
         ]
       },
       {
-        "mesh": "/Game/Map_Resource/ProceduralNaturePack/Meshes/leaves/leaves_fern_01",
+        "mesh": "/Game/Map_Resource/main_1/Meshes/leaves_fern_01",
         "density": 7,
         "scale": [
           0.55,
@@ -184,7 +184,7 @@
         ]
       },
       {
-        "mesh": "/Game/Map_Resource/ProceduralNaturePack/Meshes/leaves/leaves_fern_02",
+        "mesh": "/Game/Map_Resource/main_1/Meshes/leaves_fern_02",
         "density": 5,
         "scale": [
           0.5,
@@ -198,7 +198,7 @@
     ],
     "Riparian": [
       {
-        "mesh": "/Game/Map_Resource/Megascans/3D_Plants/ThatchingGrass/SM_ThatchingGrass00_V2",
+        "mesh": "/Game/Map_Resource/main_1/Meshes/SM_ThatchingGrass00_V2",
         "density": 38,
         "scale": [
           0.65,
@@ -210,7 +210,7 @@
         ]
       },
       {
-        "mesh": "/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Foliage/Grass/S_Grass",
+        "mesh": "/Game/Map_Resource/main_1/Meshes/S_Grass",
         "density": 95,
         "scale": [
           0.6,
@@ -222,7 +222,7 @@
         ]
       },
       {
-        "mesh": "/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Foliage/Clovers/S_Clovers_01",
+        "mesh": "/Game/Map_Resource/main_1/Meshes/S_Clovers_01",
         "density": 12,
         "scale": [
           0.8,
@@ -236,7 +236,7 @@
     ],
     "Alpine": [
       {
-        "mesh": "/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Foliage/Grass/S_Grass",
+        "mesh": "/Game/Map_Resource/main_1/Meshes/S_Grass",
         "density": 35,
         "scale": [
           0.3,
@@ -248,7 +248,7 @@
         ]
       },
       {
-        "mesh": "/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Foliage/Clovers/S_Clovers_01_Dry",
+        "mesh": "/Game/Map_Resource/main_1/Meshes/S_Clovers_01_Dry",
         "density": 12,
         "scale": [
           0.5,
@@ -266,11 +266,11 @@
   "shrub_start_cull_cm": 24000,
   "shrub_end_cull_cm": 36000,
   "bush_meshes": [
-    "/Game/Map_Resource/Nanite_Env_Bundle_1/StunningNaturalPlace/Meshes/Foliage/Bush/S_Bush_Type_1_Small_1",
-    "/Game/Map_Resource/Nanite_Env_Bundle_1/StunningNaturalPlace/Meshes/Foliage/Bush/S_Bush_Type_1_Small_3",
-    "/Game/Map_Resource/Nanite_Env_Bundle_1/StunningNaturalPlace/Meshes/Foliage/Bush/S_Bush_Type_1_Small_5"
+    "/Game/Map_Resource/main_1/Meshes/S_Bush_Type_1_Small_1",
+    "/Game/Map_Resource/main_1/Meshes/S_Bush_Type_1_Small_3",
+    "/Game/Map_Resource/main_1/Meshes/S_Bush_Type_1_Small_5"
   ],
-  "groundcover_source": "/Game/Map_Resource/Brushify/Materials/Landscape/GrassTypes/LG_Grass",
+  "groundcover_source": "/Game/Map_Resource/main_1/Materials/LG_Grass",
   "existing_grass_bounds_m": [
     2960,
     2930,
