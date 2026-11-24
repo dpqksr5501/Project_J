@@ -66,6 +66,7 @@ protected:
 	};
 	TMap<TWeakObjectPtr<USkeletalMeshComponent>, TMap<int32, FTraceState>> TraceStates;
 	void PruneCollectedMeshes();
+	void RetireTraceState(USkeletalMeshComponent* MeshComp, int32 NotifyInstanceID);
 	void TickAuthoredPath(USkeletalMeshComponent* Mesh,const FAnimNotifyEventReference& Reference,FTraceState& State,
 		class UProject_JCombatHitValidationComponent* Validation,const UProject_JAttackDefinition* Attack);
 	FDelegateHandle PostGCHandle;

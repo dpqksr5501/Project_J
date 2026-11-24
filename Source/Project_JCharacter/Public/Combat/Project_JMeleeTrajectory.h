@@ -4,6 +4,8 @@
 
 class USkeletalMesh;
 class UAnimMontage;
+class USkeleton;
+struct FAnimSegment;
 struct FProject_JAuthoritativeTraceSegment;
 
 USTRUCT(BlueprintType)
@@ -35,6 +37,8 @@ struct PROJECT_JCHARACTER_API FProject_JMeleeTrajectory
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Melee Path") FString SourceStamp;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Melee Path") TArray<FProject_JMeleeTrajectoryKey> Keys;
     static constexpr int32 MaxKeys=64;
+    static const FAnimSegment* FindWindowSegment(const UAnimMontage& Montage, float Start, float End);
+    static bool HasDeclaredSkeletonCompatibility(const USkeleton* A, const USkeleton* B);
     FString GetValidationFailure() const;
     bool BuildWorldSegments(float PreviousMontageTime,float CurrentMontageTime,float From,float To,
         const FTransform& PreviousRoot,const FTransform& CurrentRoot,const FTransform& MeshToRoot,

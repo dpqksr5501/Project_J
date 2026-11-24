@@ -310,6 +310,20 @@ Caps 확장 7개 타격 시퀀스와 E Flurry 4타·복귀는 `Project_JSpellbla
 
 위 수치는 저장된 시퀀스를 24Hz로 평가한 결과다. 2·3타의 반대 발 전후 이동 폭은 각각 0.7·0.8cm, T의 반대 발은 2.8cm 증가했다. 발끝 회전과 옆 디딤은 포즈에 남겼다. 우클릭 강공격은 47cm 안에서 곡선만 옮겼을 때 대표 구간 변위가 거의 같아 이동 거리를 60cm로 늘렸다. 이 동작의 접지를 더 다듬으려면 디딤 포즈도 함께 검토한다. 공중 공격은 타격 구간에 맞춰 수평 이동을 배치하고 착지는 플레이에서 따로 확인한다.
 
+## 근접 타격 궤적 베이크
+
+`DA_Spellblade_Equip → DA_CombatStyle_SpellbladeKit → DA_Combo_SpellbladeKit`과 스타일의 추가 공격 목록을 기준으로 관리한다. 활성 정의 29개 중 근접 공격 26개의 네이티브 타격 창 28개에 궤적을 저장했다. 기본·연계·차지·질주·공중 공격과 Longblade의 Bash, Flurry, Twin 등이 포함된다. Flurry 1·2타는 한 공격 안의 두 타격 창을 각각 저장한다. Focus(Z, 마나), Mend(X, 회복), Haste(C, 가속)는 기존 GAS 효과 스킬이다.
+
+콘텐츠 브라우저의 `/Game/DataAssetSets/AttackDefinition/Spellblade/CombatKit`에서 기존 공격 DA를 열면 첫 창의 `MeleeTrajectory`와 후속 창의 `AdditionalMeleeTrajectories`를 볼 수 있다. 공격 정의와 궤적을 같은 패키지에 저장하므로 에셋 참조와 롤백 단위도 공격 DA 하나다. `_Canonical` 회귀용 에셋은 별도 테스트 픽스처로 유지한다.
+
+각 타격 창을 포함하는 하나의 몽타주 세그먼트를 평가한다. 창 양 끝은 반드시 샘플링하고, 기본 120Hz가 창당 64개 키 제한을 넘으면 60Hz를 시도한다. 여러 세그먼트에 걸치는 창, 겹치는 창, 호환되지 않는 스켈레톤, 정지 궤적은 저장 전에 확인한다. 원본 시퀀스·장비 소켓·몽타주 타이밍을 바꾸면 베이크 지문을 다시 확인한다. 샘플링 오차 검사는 압축 시퀀스의 메시 공간을 기준으로 하며 공중 블렌드, 회전, 경사, 이동 표적 판정은 플레이 검수에 포함한다.
+
+[베이크 스크립트](../../../Scripts/Editor/Bake-SpellbladeMeleeTrajectories.py)는 PIE를 종료한 뒤 `UnrealEditor-Cmd -run=pythonscript -script=<스크립트 절대 경로>`로 실행한다.
+
+1. `PROJECT_J_SPELLBLADE_BAKE_OUTPUT`에 `Saved` 아래 검증 폴더를 지정한다. `preflight` 모드에서 `Preflight.json`의 활성 공격, 창 수, 키 수와 원본 대비 오차를 확인한다.
+2. 결과를 검토한 경로와 `source_stamp` 배열(첫 창부터 순서대로)을 `Approved.json`에 기록한다. `PROJECT_J_SPELLBLADE_BAKE_MODE=apply`로 실행하면 원본 패키지를 백업하고 승인된 정의를 저장한다.
+3. 별도 Editor 프로세스에서 `PROJECT_J_SPELLBLADE_BAKE_MODE=verify`를 실행해 재로드된 지문과 Data Validation을 확인한다. [서버 측정과 검증 기록](../../Architecture/Planning/Project_J_MMO_Audit_Followup_2026-11-24.md#스펠블레이드-실전-공격-전체-베이크)
+
 ## 플레이 검증
 
 | 검증 범위 | 결과 |

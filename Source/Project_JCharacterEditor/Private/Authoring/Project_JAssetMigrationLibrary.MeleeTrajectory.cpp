@@ -1,5 +1,6 @@
 #include "Authoring/Project_JAssetMigrationLibrary.h"
 #include "Authoring/Project_JCanonicalMeleeAuthoring.h"
+#include "Algo/Count.h"
 #include "Animation/Project_JPlayerLocomotionLibrary.h"
 #include "Animation/Project_JAnimNotifyState_MeleeHit.h"
 #include "Animation/AnimMontage.h"
@@ -47,6 +48,14 @@ bool SamePath(const FProject_JMeleeTrajectory& A,const FProject_JMeleeTrajectory
     return FProject_JMeleeTrajectory::StaticStruct()->CompareScriptStruct(&A,&B,PPF_None);
 }
 
+bool SamePaths(TConstArrayView<FProject_JMeleeTrajectory> A, TConstArrayView<FProject_JMeleeTrajectory> B)
+{
+    if (A.Num() != B.Num()) return false;
+    for (int32 Index = 0; Index < A.Num(); ++Index)
+        if (!SamePath(A[Index], B[Index])) return false;
+    return true;
+}
+
 // A local immutable read description; all callers pin its source objects before evaluation/edit callbacks.
 struct FCanonicalSource
 {
@@ -61,22 +70,26 @@ struct FCanonicalSource
     FTransform SocketLocal=FTransform::Identity;
     bool bSocket=false;
     float Start=0,End=0;
+    double GridHz=SamplingHz;
     TArray<float> Times;
     FString MetadataStamp;
 };
 
-bool MakeTimes(float Start,float End,TArray<float>& Out,FString& Failure)
+bool MakeTimes(float Start,float End,TArray<float>& Out,double& GridHz,FString& Failure)
 {
     if (!FMath::IsFinite(Start) || !FMath::IsFinite(End) || Start<0 || End<=Start || End>MAX_int32/SamplingHz)
     { Failure=TEXT("Melee notify window is not a finite forward interval."); return false; }
-    const int64 First=FMath::FloorToInt64(double(Start)*SamplingHz)+1;
-    const int64 Last=FMath::CeilToInt64(double(End)*SamplingHz)-1;
+    GridHz = SamplingHz;
+    if (FMath::CeilToInt64(double(End)*GridHz)-FMath::FloorToInt64(double(Start)*GridHz)+1>FProject_JMeleeTrajectory::MaxKeys)
+        GridHz = SamplingHz / 2.0;
+    const int64 First=FMath::FloorToInt64(double(Start)*GridHz)+1;
+    const int64 Last=FMath::CeilToInt64(double(End)*GridHz)-1;
     if (Last-First+3>FProject_JMeleeTrajectory::MaxKeys)
-    { Failure=TEXT("120 Hz absolute montage grid exceeds the 64-key contract; no decimation was applied."); return false; }
+    { Failure=TEXT("A 60 Hz absolute montage grid exceeds the 64-key per-window contract."); return false; }
     Out.Reset(); Out.Add(Start);
     for (int64 Grid=First;Grid<=Last;++Grid)
     {
-        const float Time=float(double(Grid)/SamplingHz);
+        const float Time=float(double(Grid)/GridHz);
         if (Time>Start && Time<End && Time>Out.Last()) Out.Add(Time);
     }
     Out.Add(End);
@@ -118,6 +131,7 @@ FString OtherAttackFields(const UProject_JAttackDefinition& Attack)
     for (TFieldIterator<FProperty> Field(Attack.GetClass());Field;++Field)
     {
         if (Field->GetFName()==GET_MEMBER_NAME_CHECKED(UProject_JAttackDefinition,MeleeTrajectory) ||
+            Field->GetFName()==GET_MEMBER_NAME_CHECKED(UProject_JAttackDefinition,AdditionalMeleeTrajectories) ||
             Field->HasAnyPropertyFlags(CPF_Transient|CPF_Deprecated)) continue;
         FString Name=Field->GetName(),Text;
         Field->ExportTextItem_Direct(Text,Field->ContainerPtrToValuePtr<void>(&Attack),nullptr,const_cast<UProject_JAttackDefinition*>(&Attack),PPF_None);
@@ -126,7 +140,7 @@ FString OtherAttackFields(const UProject_JAttackDefinition& Attack)
     return LexToString(FBlake3::HashBuffer(Bytes.GetData(),Bytes.Num()));
 }
 
-bool CaptureSource(const UProject_JAttackDefinition& Attack,USkeletalMesh& Mesh,FCanonicalSource& Out,FString& Failure)
+bool CaptureSource(const UProject_JAttackDefinition& Attack,USkeletalMesh& Mesh,FCanonicalSource& Out,FString& Failure,int32 NotifyIndex=INDEX_NONE)
 {
     const auto Fail=[&](const TCHAR* Why) { Failure=Why; return false; };
     if (!IsInGameThread() || !IsValid(&Attack) || !IsValid(&Mesh) || (GEditor && GEditor->PlayWorld))
@@ -147,7 +161,7 @@ bool CaptureSource(const UProject_JAttackDefinition& Attack,USkeletalMesh& Mesh,
         Attack.MovementPolicy==EProject_JAttackMovementPolicy::RootMotionWarped || !Attack.MontageSectionName.IsNone())
         return Fail(TEXT("Require forward unwarped montage execution without a selected section jump."));
     if (Mesh.IsCompiling() || Mesh.GetOutermost()->IsDirty() || Montage->GetOutermost()->IsDirty() ||
-        Montage->SlotAnimTracks.Num()!=1 || Montage->SlotAnimTracks[0].AnimTrack.AnimSegments.Num()!=1 ||
+        Montage->SlotAnimTracks.Num()!=1 ||
         Montage->Notifies.Num()>64 || Montage->CompositeSections.Num()!=1 ||
         Montage->CompositeSections[0].GetTime()!=0 || !Montage->CompositeSections[0].NextSectionName.IsNone())
     {
@@ -158,7 +172,25 @@ bool CaptureSource(const UProject_JAttackDefinition& Attack,USkeletalMesh& Mesh,
             Montage->CompositeSections.Num()?*Montage->CompositeSections[0].NextSectionName.ToString():TEXT("<none>"));
         return false;
     }
-    const FAnimSegment Segment=Montage->SlotAnimTracks[0].AnimTrack.AnimSegments[0];
+    if (NotifyIndex == INDEX_NONE)
+    {
+        NotifyIndex = Montage->Notifies.IndexOfByPredicate([](const FAnimNotifyEvent& Event)
+        {
+            return Cast<UProject_JAnimNotifyState_MeleeHit>(Event.NotifyStateClass.Get()) != nullptr;
+        });
+    }
+    if (!Montage->Notifies.IsValidIndex(NotifyIndex))
+        return Fail(TEXT("No native melee window exists in the selected montage."));
+    auto* SelectedNotify = Cast<UProject_JAnimNotifyState_MeleeHit>(Montage->Notifies[NotifyIndex].NotifyStateClass.Get());
+    if (!SelectedNotify || SelectedNotify->GetClass()!=UProject_JAnimNotifyState_MeleeHit::StaticClass())
+        return Fail(TEXT("Custom melee notify subclasses require separate qualification."));
+    const TStrongObjectPtr<UProject_JAnimNotifyState_MeleeHit> KeepNotify(SelectedNotify);
+    const float Start = Montage->Notifies[NotifyIndex].GetTriggerTime();
+    const float End = Montage->Notifies[NotifyIndex].GetEndTriggerTime();
+    const FAnimSegment* SelectedSegment = FProject_JMeleeTrajectory::FindWindowSegment(*Montage, Start, End);
+    if (!SelectedSegment)
+        return Fail(TEXT("Require a melee window wholly inside one unambiguous montage segment."));
+    const FAnimSegment Segment = *SelectedSegment;
     auto* Sequence=Cast<UAnimSequence>(Segment.GetAnimReference().Get());
     const TStrongObjectPtr<UAnimSequence> KeepSequence(Sequence);
     if (IsValid(Sequence))
@@ -173,11 +205,16 @@ bool CaptureSource(const UProject_JAttackDefinition& Attack,USkeletalMesh& Mesh,
     if (!IsValid(&Attack) || !IsValid(&Mesh) || !IsValid(Montage) || Attack.Montage!=Montage || (GEditor && GEditor->PlayWorld) ||
         !Attack.bMontageDriven || !FMath::IsFinite(Attack.PlayRate) || Attack.PlayRate<=0 || !Attack.MontageSectionName.IsNone() ||
         Attack.MovementPolicy==EProject_JAttackMovementPolicy::RootMotionWarped || Mesh.IsCompiling() || Mesh.GetOutermost()->IsDirty() ||
-        Montage->GetOutermost()->IsDirty() || Montage->SlotAnimTracks.Num()!=1 || Montage->SlotAnimTracks[0].AnimTrack.AnimSegments.Num()!=1 ||
+        Montage->GetOutermost()->IsDirty() || Montage->SlotAnimTracks.Num()!=1 ||
         Montage->Notifies.Num()>64 || Montage->CompositeSections.Num()!=1 || Montage->CompositeSections[0].GetTime()!=0 ||
         !Montage->CompositeSections[0].NextSectionName.IsNone())
         return Fail(TEXT("Selected source changed during compilation completion."));
-    const FAnimSegment& CurrentSegment=Montage->SlotAnimTracks[0].AnimTrack.AnimSegments[0];
+    const FAnimSegment* Current = FProject_JMeleeTrajectory::FindWindowSegment(*Montage, Start, End);
+    if (!Current || !Montage->Notifies.IsValidIndex(NotifyIndex) ||
+        Montage->Notifies[NotifyIndex].NotifyStateClass.Get() != SelectedNotify ||
+        Montage->Notifies[NotifyIndex].GetTriggerTime() != Start || Montage->Notifies[NotifyIndex].GetEndTriggerTime() != End)
+        return Fail(TEXT("Selected window changed during compilation completion."));
+    const FAnimSegment& CurrentSegment=*Current;
     if (CurrentSegment.GetAnimReference()!=Segment.GetAnimReference() || CurrentSegment.StartPos!=Segment.StartPos ||
         CurrentSegment.AnimStartTime!=Segment.AnimStartTime || CurrentSegment.AnimEndTime!=Segment.AnimEndTime ||
         CurrentSegment.AnimPlayRate!=Segment.AnimPlayRate || CurrentSegment.LoopingCount!=Segment.LoopingCount)
@@ -191,19 +228,17 @@ bool CaptureSource(const UProject_JAttackDefinition& Attack,USkeletalMesh& Mesh,
         return Fail(TEXT("Require one clean non-additive RAW sequence with a finite forward non-looping segment."));
     USkeleton* Skeleton=Sequence->GetSkeleton();
     USkeleton* TargetSkeleton=Mesh.GetSkeleton();
-    if (!IsValid(Skeleton) || !IsValid(TargetSkeleton) || Skeleton!=Montage->GetSkeleton() ||
+    USkeleton* MontageSkeleton=Montage->GetSkeleton();
+    if (!IsValid(Skeleton) || !IsValid(TargetSkeleton) || !IsValid(MontageSkeleton) ||
+        MontageSkeleton->GetOutermost()->IsDirty() ||
+        !FProject_JMeleeTrajectory::HasDeclaredSkeletonCompatibility(MontageSkeleton, Skeleton) ||
         Skeleton->GetOutermost()->IsDirty() || TargetSkeleton->GetOutermost()->IsDirty())
         return Fail(TEXT("Sequence/montage require one clean source skeleton and the selected mesh requires a clean target skeleton."));
-    const TStrongObjectPtr<USkeleton> KeepSourceSkeleton(Skeleton),KeepTargetSkeleton(TargetSkeleton);
+    const TStrongObjectPtr<USkeleton> KeepSourceSkeleton(Skeleton),KeepTargetSkeleton(TargetSkeleton),KeepMontageSkeleton(MontageSkeleton);
     if (TargetSkeleton!=Skeleton)
     {
-        const auto Declares=[](const USkeleton& Owner,const USkeleton& Other)
-        {
-            return Owner.GetCompatibleSkeletons().ContainsByPredicate([&](const TSoftObjectPtr<USkeleton>& Item)
-                {return Item.ToSoftObjectPath()==FSoftObjectPath(&Other);});
-        };
         // Do not let the editor's global "all compatible" override admit an unrelated rig.
-        if ((!Declares(*TargetSkeleton,*Skeleton) && !Declares(*Skeleton,*TargetSkeleton)) || !TargetSkeleton->IsCompatibleForEditor(Skeleton))
+        if (!FProject_JMeleeTrajectory::HasDeclaredSkeletonCompatibility(TargetSkeleton, Skeleton) || !TargetSkeleton->IsCompatibleForEditor(Skeleton))
             return Fail(TEXT("Selected mesh must use a declared native compatible skeleton."));
         // A distinct target is sampled through explicit native name remapping,
         // never through the RAW model's source-index-to-target-index shortcut.
@@ -216,27 +251,16 @@ bool CaptureSource(const UProject_JAttackDefinition& Attack,USkeletalMesh& Mesh,
             if (SourceRef.FindBoneIndex(Bone)==INDEX_NONE)
                 return Fail(TEXT("RAW track has no source-skeleton bone."));
     }
-    if (!IsValid(Skeleton) || !IsValid(TargetSkeleton) || Sequence->GetSkeleton()!=Skeleton || Montage->GetSkeleton()!=Skeleton ||
+    if (!IsValid(Skeleton) || !IsValid(TargetSkeleton) || Sequence->GetSkeleton()!=Skeleton || Montage->GetSkeleton()!=MontageSkeleton ||
         Mesh.GetSkeleton()!=TargetSkeleton || Skeleton->GetOutermost()->IsDirty() || TargetSkeleton->GetOutermost()->IsDirty() ||
         !TargetSkeleton->IsCompatibleMesh(&Mesh))
         return Fail(TEXT("Selected source/target skeleton binding changed or does not match the selected mesh."));
     if (Attack.MovementPolicy==EProject_JAttackMovementPolicy::RootMotionMontage && !Sequence->bEnableRootMotion)
         return Fail(TEXT("Root-motion movement requires an actual root-motion source sequence."));
-    int32 MeleeIndex=INDEX_NONE;
-    for (int32 Index=0;Index<Montage->Notifies.Num();++Index)
-    {
-        const auto* Melee=Cast<UProject_JAnimNotifyState_MeleeHit>(Montage->Notifies[Index].NotifyStateClass.Get());
-        if (!Melee) continue;
-        if (MeleeIndex!=INDEX_NONE || Melee->GetClass()!=UProject_JAnimNotifyState_MeleeHit::StaticClass())
-            return Fail(TEXT("Require exactly one native melee hit window; custom notify subclasses require separate qualification."));
-        MeleeIndex=Index;
-    }
-    if (MeleeIndex==INDEX_NONE) return Fail(TEXT("No native melee window exists in the selected montage."));
-    const FAnimNotifyEvent& Event=Montage->Notifies[MeleeIndex];
-    const auto* Melee=CastChecked<UProject_JAnimNotifyState_MeleeHit>(Event.NotifyStateClass.Get());
-    const float Start=Event.GetTriggerTime(),End=Event.GetEndTriggerTime();
+    const FAnimNotifyEvent& Event=Montage->Notifies[NotifyIndex];
+    const auto* Melee=SelectedNotify;
     if (Event.IsBranchingPoint() || Event.GetLinkedMontage()!=Montage || Start<Segment.StartPos || End>Segment.GetEndPos() || End>Montage->GetPlayLength())
-        return Fail(TEXT("Require a linked queued melee window wholly within the single segment."));
+        return Fail(TEXT("Require a linked queued melee window wholly within its segment."));
     const FName Socket=Melee->GetTraceSocketName();
     if (Socket.IsNone()) return Fail(TEXT("Melee trace socket/bone is empty."));
     int32 SocketMatches=0;
@@ -261,9 +285,9 @@ bool CaptureSource(const UProject_JAttackDefinition& Attack,USkeletalMesh& Mesh,
     if (!IsFiniteVector(Attack.HitSpec.CanonicalBladeTipOffset)) return Fail(TEXT("Static blade-tip offset is not finite."));
 
     FCanonicalSource Read; Read.Montage=Montage; Read.Sequence=Sequence; Read.Skeleton=Skeleton; Read.TargetSkeleton=TargetSkeleton;
-    Read.Segment=Segment; Read.NotifyIndex=MeleeIndex; Read.SocketName=Socket; Read.TraceBone=TraceBone; Read.SocketLocal=SocketLocal; Read.bSocket=SocketMatches==1;
+    Read.Segment=Segment; Read.NotifyIndex=NotifyIndex; Read.SocketName=Socket; Read.TraceBone=TraceBone; Read.SocketLocal=SocketLocal; Read.bSocket=SocketMatches==1;
     Read.Start=Start; Read.End=End;
-    if (!MakeTimes(Start,End,Read.Times,Failure)) return false;
+    if (!MakeTimes(Start,End,Read.Times,Read.GridHz,Failure)) return false;
     FBufferArchive Bytes;
     FString Policy=SamplingPolicy; Bytes<<Policy;
     FString MeshPath=Mesh.GetPathName(),MontagePath=Montage->GetPathName(),SequencePath=Sequence->GetPathName(),SkeletonPath=Skeleton->GetPathName();
@@ -293,6 +317,22 @@ bool CaptureSource(const UProject_JAttackDefinition& Attack,USkeletalMesh& Mesh,
     FString Slot=Montage->SlotAnimTracks[0].SlotName.ToString(); Bytes<<Slot;
     float TrackStart=Segment.StartPos,AnimStart=Segment.AnimStartTime,AnimEnd=Segment.AnimEndTime,SegmentRate=Segment.AnimPlayRate;
     int32 Loops=Segment.LoopingCount;Bytes<<TrackStart<<AnimStart<<AnimEnd<<SegmentRate<<Loops;
+    const auto& TrackSegments = Montage->SlotAnimTracks[0].AnimTrack.AnimSegments;
+    if (TrackSegments.Num() > 1 || MontageSkeleton != Skeleton || Read.GridHz != SamplingHz)
+    {
+        FString LayoutPolicy = TEXT("ProjectJ.CanonicalMelee.WindowSegment.v1");
+        FString MontageSkeletonPath = MontageSkeleton->GetPathName();
+        double GridHz = Read.GridHz;
+        int32 Count = TrackSegments.Num();
+        Bytes << LayoutPolicy << MontageSkeletonPath << GridHz << Count;
+        for (const FAnimSegment& Item : TrackSegments)
+        {
+            FString AssetPath = GetPathNameSafe(Item.GetAnimReference().Get());
+            float StartPosition = Item.StartPos, SourceStart = Item.AnimStartTime, SourceEnd = Item.AnimEndTime, Rate = Item.AnimPlayRate;
+            int32 LoopCount = Item.LoopingCount;
+            Bytes << AssetPath << StartPosition << SourceStart << SourceEnd << Rate << LoopCount;
+        }
+    }
     for (const auto& Section:Montage->CompositeSections)
     { FString Name=Section.SectionName.ToString(),Next=Section.NextSectionName.ToString();float Time=Section.GetTime();Bytes<<Name<<Next<<Time; }
     int32 NotifyCount=Montage->Notifies.Num(); Bytes<<NotifyCount;
@@ -453,6 +493,70 @@ FString MakeOutputStamp(const FCanonicalSource& Source,const FProject_JMeleeTraj
     for (const auto& Key:Path.Keys) { float Time=Key.MontageTime;FVector Position=Key.MeshPosition;Bytes<<Time<<Position; }
     return LexToString(FBlake3::HashBuffer(Bytes.GetData(),Bytes.Num()));
 }
+
+void DescribePathReference(const FCanonicalSource& Source, USkeletalMesh& Mesh, const FProject_JMeleeTrajectory& Path,
+    const TSharedRef<FJsonObject>& Report)
+{
+    Report->SetStringField(TEXT("socket"), Path.SocketName.ToString());
+    Report->SetNumberField(TEXT("grid_hz"), Source.GridHz);
+    double Travel = 0.0, MaxStep = 0.0;
+    for (int32 Index = 1; Index < Path.Keys.Num(); ++Index)
+    {
+        const double Step = FVector::Distance(Path.Keys[Index - 1].MeshPosition, Path.Keys[Index].MeshPosition);
+        Travel += Step;
+        MaxStep = FMath::Max(MaxStep, Step);
+    }
+    Report->SetNumberField(TEXT("travel_cm"), Travel);
+    Report->SetNumberField(TEXT("max_key_step_cm"), MaxStep);
+    int32 ReferenceSamples = 0;
+    double MaxDelta = 0.0;
+    if (Source.Sequence->IsCompressedDataValid() &&
+        Source.Sequence->GetSkeletonVirtualBoneGuid() == Source.Skeleton->GetVirtualBoneGuid())
+    {
+        FAnimPoseEvaluationOptions Options;
+        Options.EvaluationType = EAnimDataEvalType::Compressed;
+        Options.bShouldRetarget = true;
+        Options.bExtractRootMotion = true;
+        Options.bIncorporateRootMotionIntoPose = false;
+        Options.OptionalSkeletalMesh = &Mesh;
+        Options.bEvaluateCurves = true;
+        const auto Sample = [&](float Time, const FVector& Expected)
+        {
+            const float SourceTime = Source.Segment.ConvertTrackPosToAnimPos(Time);
+            FAnimPose Pose;
+            UAnimPoseExtensions::GetAnimPoseAtTime(Source.Sequence, double(SourceTime), Options, Pose);
+            if (!Pose.IsValid()) return;
+            TArray<FName> Names;
+            UAnimPoseExtensions::GetBoneNames(Pose, Names);
+            if (!Names.Contains(Source.TraceBone)) return;
+            if (Source.bSocket)
+            {
+                UAnimPoseExtensions::GetSocketNames(Pose, Names);
+                if (!Names.Contains(Source.SocketName)) return;
+            }
+            const FTransform Trace = Source.bSocket
+                ? UAnimPoseExtensions::GetSocketPose(Pose, Source.SocketName, EAnimPoseSpaces::World)
+                : UAnimPoseExtensions::GetBonePose(Pose, Source.TraceBone, EAnimPoseSpaces::World);
+            const double Delta = FVector::Distance(Trace.TransformPosition(Path.BladeTipOffset), Expected);
+            if (Trace.ContainsNaN() || !FMath::IsFinite(Delta)) return;
+            MaxDelta = FMath::Max(MaxDelta, Delta);
+            ++ReferenceSamples;
+        };
+        for (int32 Index = 0; Index < Path.Keys.Num(); ++Index)
+        {
+            const auto& Key = Path.Keys[Index];
+            Sample(Key.MontageTime, Key.MeshPosition);
+            if (Index)
+            {
+                const auto& Previous = Path.Keys[Index - 1];
+                const float Time = FMath::Lerp(Previous.MontageTime, Key.MontageTime, 0.5f);
+                Sample(Time, FMath::Lerp(Previous.MeshPosition, Key.MeshPosition, 0.5));
+            }
+        }
+    }
+    Report->SetNumberField(TEXT("compressed_samples"), ReferenceSamples);
+    if (ReferenceSamples > 0) Report->SetNumberField(TEXT("compressed_max_delta_cm"), MaxDelta);
+}
 }
 
 bool Project_J::CanonicalMeleeAuthoring::ValidateCurrentSource(const UProject_JAttackDefinition& Attack,USkeletalMesh& Mesh,
@@ -461,7 +565,7 @@ bool Project_J::CanonicalMeleeAuthoring::ValidateCurrentSource(const UProject_JA
     OutFailure=Path.GetValidationFailure(); if (!OutFailure.IsEmpty()) return false;
     if (!Path.bEnabled) return true;
     FCanonicalSource Source;
-    if (!CaptureSource(Attack,Mesh,Source,OutFailure)) return false;
+    if (!CaptureSource(Attack,Mesh,Source,OutFailure,Path.NotifyIndex)) return false;
     if (Path.SourceMesh.ToSoftObjectPath()!=FSoftObjectPath(&Mesh) || Path.SourceMontage.ToSoftObjectPath()!=FSoftObjectPath(Source.Montage) ||
         Path.NotifyIndex!=Source.NotifyIndex || Path.SocketName!=Source.SocketName || Path.WindowStart!=Source.Start || Path.WindowEnd!=Source.End ||
         Path.bUseBladeTipOffset!=Attack.HitSpec.bUseCanonicalBladeTipOffset ||
@@ -476,7 +580,7 @@ bool Project_J::CanonicalMeleeAuthoring::ValidateCurrentSource(const UProject_JA
 }
 
 bool Project_J::CanonicalMeleeAuthoring::BuildCandidate(const UProject_JAttackDefinition& Attack,USkeletalMesh& SourceMesh,
-    FProject_JMeleeTrajectory& OutPath,FString& OutFailure)
+    FProject_JMeleeTrajectory& OutPath,FString& OutFailure,int32 NotifyIndex)
 {
     const auto Fail=[&](const TCHAR* Why) { OutFailure=Why;return false; };
     if (!IsInGameThread() || !IsValid(&Attack) || !IsValid(&SourceMesh) || (GEditor && GEditor->PlayWorld))
@@ -484,7 +588,7 @@ bool Project_J::CanonicalMeleeAuthoring::BuildCandidate(const UProject_JAttackDe
     TStrongObjectPtr<UProject_JAttackDefinition> KeepAttack(const_cast<UProject_JAttackDefinition*>(&Attack));
     TStrongObjectPtr<USkeletalMesh> KeepMesh(&SourceMesh);
     FCanonicalSource Source;
-    if (!CaptureSource(Attack,SourceMesh,Source,OutFailure)) return false;
+    if (!CaptureSource(Attack,SourceMesh,Source,OutFailure,NotifyIndex)) return false;
     TStrongObjectPtr<UAnimMontage> KeepMontage(Source.Montage);TStrongObjectPtr<UAnimSequence> KeepSequence(Source.Sequence);TStrongObjectPtr<USkeleton> KeepSkeleton(Source.Skeleton);TStrongObjectPtr<USkeleton> KeepTargetSkeleton(Source.TargetSkeleton);
     FProject_JMeleeTrajectory Candidate;Candidate.bEnabled=true;Candidate.SourceMesh=&SourceMesh;Candidate.SourceMontage=Source.Montage;
     Candidate.NotifyIndex=Source.NotifyIndex;Candidate.SocketName=Source.SocketName;Candidate.bUseBladeTipOffset=Attack.HitSpec.bUseCanonicalBladeTipOffset;
@@ -544,6 +648,7 @@ FString UProject_JAssetMigrationLibrary::BakeCanonicalMeleeTrajectory(UProject_J
     const TStrongObjectPtr<UObject> KeepOuter(TargetOuter);
     const FString TargetPath=Attack->GetPathName();
     const FProject_JMeleeTrajectory Original=Attack->MeleeTrajectory;
+    const TArray<FProject_JMeleeTrajectory> OriginalAdditional = Attack->AdditionalMeleeTrajectories;
     const FString OtherFields=OtherAttackFields(*Attack);
     // Freeze the selected target before either compiler completion can invoke listeners.
     const auto IsTargetCurrent=[&]()
@@ -552,43 +657,106 @@ FString UProject_JAssetMigrationLibrary::BakeCanonicalMeleeTrajectory(UProject_J
             Attack->GetOuter()==TargetOuter && Attack->GetOutermost()==Package && Attack->GetPathName()==TargetPath &&
             Attack->IsAsset() && Package!=GetTransientPackage() && Package->IsFullyLoaded();
     };
+    const auto OwnsPaths = [&](const FProject_JMeleeTrajectory& Path, TConstArrayView<FProject_JMeleeTrajectory> Additional)
+    {
+        return IsValid(Attack) && SamePath(Attack->MeleeTrajectory, Path)
+            && SamePaths(Attack->AdditionalMeleeTrajectories, Additional);
+    };
+    const auto MatchesTarget = [&](const FProject_JMeleeTrajectory& Path, TConstArrayView<FProject_JMeleeTrajectory> Additional)
+    {
+        return IsTargetCurrent() && OwnsPaths(Path, Additional) && OtherAttackFields(*Attack) == OtherFields;
+    };
     FCanonicalSource Source;
     if (!CaptureSource(*Attack,*SourceMesh,Source,Reason)) return Finish();
-    if (!IsTargetCurrent() || Package->IsDirty() || !SamePath(Attack->MeleeTrajectory,Original) || OtherAttackFields(*Attack)!=OtherFields)
+    if (!MatchesTarget(Original, OriginalAdditional) || Package->IsDirty())
         return Fail(TEXT("Selected attack identity, clean state or inputs changed during source preparation."));
     TStrongObjectPtr<UAnimMontage> KeepMontage(Source.Montage);TStrongObjectPtr<UAnimSequence> KeepSequence(Source.Sequence);TStrongObjectPtr<USkeleton> KeepSkeleton(Source.Skeleton);TStrongObjectPtr<USkeleton> KeepTargetSkeleton(Source.TargetSkeleton);
     Result->SetStringField(TEXT("attack"),Attack->GetPathName());Result->SetStringField(TEXT("source_mesh"),SourceMesh->GetPathName());
     Result->SetStringField(TEXT("source_montage"),Source.Montage->GetPathName());Result->SetStringField(TEXT("source_sequence"),Source.Sequence->GetPathName());
     FProject_JMeleeTrajectory Candidate;
     if (!Project_J::CanonicalMeleeAuthoring::BuildCandidate(*Attack,*SourceMesh,Candidate,Reason)) return Finish();
-    if (!IsTargetCurrent() || Package->IsDirty() || !SamePath(Attack->MeleeTrajectory,Original) || OtherAttackFields(*Attack)!=OtherFields)
+    TArray<int32> AdditionalIndices;
+    for (int32 Index = Candidate.NotifyIndex + 1; Index < Source.Montage->Notifies.Num(); ++Index)
+    {
+        if (Cast<UProject_JAnimNotifyState_MeleeHit>(Source.Montage->Notifies[Index].NotifyStateClass.Get()))
+            AdditionalIndices.Add(Index);
+    }
+    TArray<FProject_JMeleeTrajectory> Additional;
+    for (int32 Index : AdditionalIndices)
+    {
+        auto& Window = Additional.AddDefaulted_GetRef();
+        if (!Project_J::CanonicalMeleeAuthoring::BuildCandidate(*Attack,*SourceMesh,Window,Reason,Index)) return Finish();
+        const auto& Previous = Additional.Num() == 1 ? Candidate : Additional[Additional.Num() - 2];
+        if (Window.WindowStart < Previous.WindowEnd)
+            return Fail(TEXT("Authored melee windows must be ordered and disjoint."));
+    }
+    const auto ValidateCandidates = [&]()
+    {
+        if (!Project_J::CanonicalMeleeAuthoring::ValidateCurrentSource(*Attack,*SourceMesh,Candidate,Reason)) return false;
+        for (const auto& Window : Additional)
+            if (!Project_J::CanonicalMeleeAuthoring::ValidateCurrentSource(*Attack,*SourceMesh,Window,Reason)) return false;
+        const int32 NotifyCount = Algo::CountIf(Attack->Montage->Notifies, [](const FAnimNotifyEvent& Event)
+        {
+            return Cast<UProject_JAnimNotifyState_MeleeHit>(Event.NotifyStateClass.Get()) != nullptr;
+        });
+        if (NotifyCount == 1 + Additional.Num()) return true;
+        Reason = TEXT("Melee notify window set changed during authoring.");
+        return false;
+    };
+    if (!ValidateCandidates() || !MatchesTarget(Original, OriginalAdditional) || Package->IsDirty())
         return Fail(TEXT("Selected attack identity, clean state or inputs changed during RAW evaluation."));
     Result->SetStringField(TEXT("source_stamp"),Candidate.SourceStamp);Result->SetNumberField(TEXT("key_count"),Candidate.Keys.Num());
     Result->SetNumberField(TEXT("window_start"),Candidate.WindowStart);Result->SetNumberField(TEXT("window_end"),Candidate.WindowEnd);
+    Result->SetNumberField(TEXT("window_count"), 1 + Additional.Num());
+    Result->SetNumberField(TEXT("primary_grid_hz"), Source.GridHz);
+    DescribePathReference(Source, *SourceMesh, Candidate, Result);
+    TArray<TSharedPtr<FJsonValue>> AdditionalJson;
+    for (const auto& Path : Additional)
+    {
+        const auto Window = MakeShared<FJsonObject>();
+        Window->SetNumberField(TEXT("notify_index"), Path.NotifyIndex);
+        Window->SetNumberField(TEXT("window_start"), Path.WindowStart);
+        Window->SetNumberField(TEXT("window_end"), Path.WindowEnd);
+        Window->SetNumberField(TEXT("key_count"), Path.Keys.Num());
+        Window->SetStringField(TEXT("source_stamp"), Path.SourceStamp);
+        FCanonicalSource WindowSource;
+        if (!CaptureSource(*Attack, *SourceMesh, WindowSource, Reason, Path.NotifyIndex)) return Finish();
+        DescribePathReference(WindowSource, *SourceMesh, Path, Window);
+        AdditionalJson.Add(MakeShared<FJsonValueObject>(Window));
+    }
+    Result->SetArrayField(TEXT("additional_windows"), AdditionalJson);
     TArray<TSharedPtr<FJsonValue>> Samples;
     for (const auto& Key:Candidate.Keys)
     { const auto Row=MakeShared<FJsonObject>();Row->SetNumberField(TEXT("montage_time"),Key.MontageTime);Row->SetNumberField(TEXT("x"),Key.MeshPosition.X);Row->SetNumberField(TEXT("y"),Key.MeshPosition.Y);Row->SetNumberField(TEXT("z"),Key.MeshPosition.Z);Samples.Add(MakeShared<FJsonValueObject>(Row)); }
     Result->SetArrayField(TEXT("keys"),Samples);bPreflight=true;
     if (!bExecute) return Finish();
+    if (MatchesTarget(Original, OriginalAdditional) && !Package->IsDirty() &&
+        SamePath(Original, Candidate) && SamePaths(OriginalAdditional, Additional))
+    {
+        Result->SetBoolField(TEXT("unchanged"), true);
+        bExecuted = true;
+        return Finish();
+    }
     FScopedTransaction Transaction(NSLOCTEXT("ProjectJCanonicalMelee","Bake","Bake canonical melee gameplay trajectory"),!IsRunningCommandlet());
-    if (!IsTargetCurrent() || Package->IsDirty() || !SamePath(Attack->MeleeTrajectory,Original) || OtherAttackFields(*Attack)!=OtherFields)
+    if (!MatchesTarget(Original, OriginalAdditional) || Package->IsDirty())
     { Transaction.Cancel();return Fail(TEXT("Selected attack changed while opening the editor transaction.")); }
     Attack->Modify();
     // Validate sources first: FinishCompilation can itself edit/rename the target.
-    if (!Project_J::CanonicalMeleeAuthoring::ValidateCurrentSource(*Attack,*SourceMesh,Candidate,Reason) ||
-        !IsTargetCurrent() || !SamePath(Attack->MeleeTrajectory,Original) || OtherAttackFields(*Attack)!=OtherFields)
+    if (!ValidateCandidates() || !MatchesTarget(Original, OriginalAdditional))
     {
         // Modify may already have dirtied the package. Do not clear a listener's unrelated dirty edit.
         Transaction.Cancel();if (Reason.IsEmpty()) Reason=TEXT("Selected attack changed before installation.");return Finish();
     }
     Attack->MeleeTrajectory=Candidate;
+    Attack->AdditionalMeleeTrajectories = Additional;
     const auto Rollback=[&]()
     {
         // Retire only this writer's exact bundle. Never overwrite reentrant unrelated edits.
-        const bool bOwns=IsValid(Attack) && SamePath(Attack->MeleeTrajectory,Candidate);
+        const bool bOwns=OwnsPaths(Candidate, Additional);
         if (bOwns)
         {
             Attack->MeleeTrajectory=Original;
+            Attack->AdditionalMeleeTrajectories = OriginalAdditional;
             // The object may have moved. Preserve every package's dirty state;
             // this writer's restored field still needs review after a callback/save failure.
             Attack->GetOutermost()->SetDirtyFlag(true);
@@ -604,8 +772,7 @@ FString UProject_JAssetMigrationLibrary::BakeCanonicalMeleeTrajectory(UProject_J
     FDataValidationContext Context;
     const EDataValidationResult Validation=Attack->IsDataValid(Context);
     if (Validation==EDataValidationResult::Invalid ||
-        !Project_J::CanonicalMeleeAuthoring::ValidateCurrentSource(*Attack,*SourceMesh,Candidate,Reason) ||
-        !IsTargetCurrent() || !SamePath(Attack->MeleeTrajectory,Candidate) || OtherAttackFields(*Attack)!=OtherFields)
+        !ValidateCandidates() || !MatchesTarget(Candidate, Additional))
     { Rollback();if (Reason.IsEmpty()) Reason=TEXT("Installed attack failed validation or changed during editor callbacks.");return Finish(); }
     if (bSave)
     {
@@ -614,8 +781,7 @@ FString UProject_JAssetMigrationLibrary::BakeCanonicalMeleeTrajectory(UProject_J
         if (!UPackage::SavePackage(Package,Attack,*Filename,Args))
         { Rollback();return Fail(TEXT("Selected package save failed; own in-memory field rolled back, disk write success is not claimed.")); }
         bSaved=true;
-        if (!Project_J::CanonicalMeleeAuthoring::ValidateCurrentSource(*Attack,*SourceMesh,Candidate,Reason) ||
-            !IsTargetCurrent() || !SamePath(Attack->MeleeTrajectory,Candidate) || OtherAttackFields(*Attack)!=OtherFields)
+        if (!ValidateCandidates() || !MatchesTarget(Candidate, Additional))
         {
             Rollback();
             // A completed SavePackage is an observed write. Do not claim a disk rollback after external save callbacks.

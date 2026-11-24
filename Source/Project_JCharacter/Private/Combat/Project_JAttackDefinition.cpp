@@ -15,42 +15,59 @@
 
 FString UProject_JAttackDefinition::GetMeleeTrajectoryFailure(const USkeletalMesh* SourceMesh) const
 {
-    const auto& Path=MeleeTrajectory;
-    if (!Path.bEnabled) return {};
+    if (!MeleeTrajectory.bEnabled) return {};
+    if (const FString Failure = GetMeleeTrajectoryFailure(SourceMesh, MeleeTrajectory); !Failure.IsEmpty()) return Failure;
+    if (AdditionalMeleeTrajectories.Num() >= Montage->Notifies.Num())
+        return TEXT("Enabled attack has too many additional melee paths.");
+    int32 PreviousIndex = MeleeTrajectory.NotifyIndex;
+    float PreviousEnd = MeleeTrajectory.WindowEnd;
+    for (const auto& Path : AdditionalMeleeTrajectories)
+    {
+        if (Path.NotifyIndex <= PreviousIndex || Path.WindowStart < PreviousEnd)
+            return TEXT("Additional melee paths require unique ordered and disjoint notify windows.");
+        if (const FString Failure = GetMeleeTrajectoryFailure(SourceMesh, Path); !Failure.IsEmpty()) return Failure;
+        PreviousIndex = Path.NotifyIndex;
+        PreviousEnd = Path.WindowEnd;
+    }
+    return {};
+}
+
+const FProject_JMeleeTrajectory* UProject_JAttackDefinition::FindMeleeTrajectory(const FAnimNotifyEvent& Event) const
+{
+    if (!MeleeTrajectory.bEnabled || !Montage || Event.GetLinkedMontage() != Montage.Get()) return nullptr;
+    const auto Matches = [&](const FProject_JMeleeTrajectory& Path)
+    {
+        return Path.bEnabled && Montage->Notifies.IsValidIndex(Path.NotifyIndex)
+            && Montage->Notifies[Path.NotifyIndex].NotifyStateClass == Event.NotifyStateClass
+            && Path.WindowStart == Event.GetTriggerTime() && Path.WindowEnd == Event.GetEndTriggerTime();
+    };
+    if (Matches(MeleeTrajectory)) return &MeleeTrajectory;
+    return AdditionalMeleeTrajectories.FindByPredicate(Matches);
+}
+
+FString UProject_JAttackDefinition::GetMeleeTrajectoryFailure(const USkeletalMesh* SourceMesh, const FProject_JMeleeTrajectory& Path) const
+{
     if (const FString Failure=Path.GetValidationFailure(); !Failure.IsEmpty()) return Failure;
-    if (!bMontageDriven || !Montage || MovementPolicy==EProject_JAttackMovementPolicy::RootMotionWarped || !FMath::IsFinite(PlayRate) || PlayRate<=0 ||
+    if (!Path.bEnabled || !bMontageDriven || !Montage || !MontageSectionName.IsNone() ||
+        MovementPolicy==EProject_JAttackMovementPolicy::RootMotionWarped || !FMath::IsFinite(PlayRate) || PlayRate<=0 ||
         !SourceMesh || Path.SourceMesh.ToSoftObjectPath()!=FSoftObjectPath(SourceMesh) || Path.SourceMontage.ToSoftObjectPath()!=FSoftObjectPath(Montage.Get()))
         return TEXT("Enabled melee path requires its selected mesh, montage and forward unwarped execution.");
     if (!Montage->Notifies.IsValidIndex(Path.NotifyIndex) || Montage->Notifies.Num()>64 || Montage->SlotAnimTracks.Num()!=1)
         return TEXT("Enabled melee path has an unsupported montage or missing notify.");
     const auto& Event=Montage->Notifies[Path.NotifyIndex];
     const auto* Notify=Cast<UProject_JAnimNotifyState_MeleeHit>(Event.NotifyStateClass.Get());
-    const auto& Segments=Montage->SlotAnimTracks[0].AnimTrack.AnimSegments;
+    const FAnimSegment* Segment = FProject_JMeleeTrajectory::FindWindowSegment(*Montage, Path.WindowStart, Path.WindowEnd);
     if (Event.IsBranchingPoint() || Event.GetLinkedMontage()!=Montage.Get() || !Notify || Notify->GetTraceSocketName()!=Path.SocketName ||
         Event.GetTriggerTime()!=Path.WindowStart || Event.GetEndTriggerTime()!=Path.WindowEnd ||
         Path.bUseBladeTipOffset!=HitSpec.bUseCanonicalBladeTipOffset || Path.BladeTipOffset!=(HitSpec.bUseCanonicalBladeTipOffset?HitSpec.CanonicalBladeTipOffset:FVector::ZeroVector) ||
-        Segments.Num()!=1 || Segments[0].LoopingCount!=1 || Segments[0].AnimPlayRate<=0 ||
-        Path.WindowStart<Segments[0].StartPos || Path.WindowEnd>Segments[0].GetEndPos())
+        !Segment || Segment->LoopingCount!=1 || !FMath::IsFinite(Segment->AnimPlayRate) || Segment->AnimPlayRate<=0 ||
+        Event.NotifyStateClass->GetClass()!=UProject_JAnimNotifyState_MeleeHit::StaticClass())
         return TEXT("Enabled melee path no longer matches its queued source window, segment, socket or tip.");
-    const auto* Sequence=Cast<UAnimSequence>(Segments[0].GetAnimReference());
-    if (!Sequence || Sequence->IsValidAdditive() || !IsValid(Sequence->GetSkeleton()) ||
-        Sequence->GetSkeleton()!=Montage->GetSkeleton() || !IsValid(SourceMesh->GetSkeleton()))
-        return TEXT("Enabled melee path requires one non-additive sequence on its montage skeleton and a valid selected mesh skeleton.");
-    const USkeleton* SourceSkeleton=Sequence->GetSkeleton();
-    const USkeleton* TargetSkeleton=SourceMesh->GetSkeleton();
-    if (SourceSkeleton!=TargetSkeleton)
-    {
-        // Admission only: no soft loads or pose evaluation. The offline builder
-        // validates RAW index layout and stamps both skeletons' retarget inputs.
-        const auto Declares=[](const USkeleton* A,const USkeleton* B)
-        {
-            const FSoftObjectPath Path(B);
-            return A->GetCompatibleSkeletons().ContainsByPredicate([&](const TSoftObjectPtr<USkeleton>& Other)
-                { return Other.ToSoftObjectPath()==Path; });
-        };
-        if (!Declares(TargetSkeleton,SourceSkeleton) && !Declares(SourceSkeleton,TargetSkeleton))
-            return TEXT("Enabled melee path selected skeletons no longer declare native compatibility.");
-    }
+    const auto* Sequence=Cast<UAnimSequence>(Segment->GetAnimReference());
+    if (!Sequence || Sequence->IsValidAdditive() ||
+        !FProject_JMeleeTrajectory::HasDeclaredSkeletonCompatibility(Sequence->GetSkeleton(), SourceMesh->GetSkeleton()) ||
+        !FProject_JMeleeTrajectory::HasDeclaredSkeletonCompatibility(Sequence->GetSkeleton(), Montage->GetSkeleton()))
+        return TEXT("Enabled melee path requires a non-additive sequence compatible with the montage and mesh skeletons.");
     return {};
 }
 
@@ -78,6 +95,8 @@ EDataValidationResult UProject_JAttackDefinition::IsDataValid(FDataValidationCon
 	bool bHasError = Result == EDataValidationResult::Invalid;
 	if (const FString Failure=MeleeTrajectory.GetValidationFailure(); !Failure.IsEmpty())
 	{ Project_J::DataValidation::AddError(Context,bHasError,FText::FromString(Failure)); }
+	if (!MeleeTrajectory.bEnabled && !AdditionalMeleeTrajectories.IsEmpty())
+	{ Project_J::DataValidation::AddError(Context,bHasError,NSLOCTEXT("ProjectJAttackDefinition", "MissingPrimaryTrajectory", "Additional melee windows require an enabled primary trajectory.")); }
 	if (!AttackTag.IsValid())
 	{
 		Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJAttackDefinition", "MissingTag", "AttackTag is required."));

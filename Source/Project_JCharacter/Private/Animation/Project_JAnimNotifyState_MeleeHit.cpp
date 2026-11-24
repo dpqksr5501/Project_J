@@ -13,6 +13,34 @@
 #include "Animation/AnimNotifyQueue.h"
 #include "Animation/AnimMontage.h"
 
+DEFINE_LOG_CATEGORY_STATIC(LogProjectJAuthoredMelee, Log, All);
+
+namespace
+{
+bool CanProduceMeleeContacts(const AActor* Owner)
+{
+	return IsValid(Owner) && !Owner->IsActorBeingDestroyed() &&
+		(Owner->HasAuthority() || Owner->GetLocalRole() == ROLE_AutonomousProxy);
+}
+
+void LogAuthorityMeleeSweep(const AActor& Owner, int32 Index, float Radius, const FVector& Start, const FVector& End, const TArray<FHitResult>& Hits)
+{
+	if (!Owner.HasAuthority() || !UE_LOG_ACTIVE(LogProjectJAuthoredMelee, VeryVerbose)) return;
+	const FString Targets = FString::JoinBy(Hits, TEXT(","), [](const FHitResult& Hit) { return GetNameSafe(Hit.GetActor()); });
+	UE_LOG(LogProjectJAuthoredMelee, VeryVerbose, TEXT("MeleeSweep frame=%llu source=%s segment=%d radius=%.3f start=%s end=%s hits=%s"),
+		GFrameCounter, *Owner.GetName(), Index, Radius, *Start.ToCompactString(), *End.ToCompactString(), *Targets);
+}
+
+void LogAuthorityMeleeEvent(const AActor& Owner, const AActor& Target)
+{
+	if (Owner.HasAuthority())
+	{
+		UE_LOG(LogProjectJAuthoredMelee, VeryVerbose, TEXT("MeleeEvent frame=%llu source=%s target=%s"),
+			GFrameCounter, *Owner.GetName(), *Target.GetName());
+	}
+}
+}
+
 UProject_JAnimNotifyState_MeleeHit::UProject_JAnimNotifyState_MeleeHit()
 {
 }
@@ -34,51 +62,54 @@ void UProject_JAnimNotifyState_MeleeHit::NotifyBegin(USkeletalMeshComponent* Mes
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_Combat_MeleeBegin);
 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
-	if (!MeshComp || SocketName.IsNone() || !MeshComp->DoesSocketExist(SocketName))
+	if (!IsValid(MeshComp)) { return; }
+	// Other clients already receive attack presentation through its own notify/replication path.
+	AActor* OwnerActor = MeshComp->GetOwner();
+	if (!CanProduceMeleeContacts(OwnerActor)) { return; }
+	if (SocketName.IsNone() || !MeshComp->DoesSocketExist(SocketName))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Melee Hit Trace requires Leader mesh socket '%s' on %s; hit window will not open."),
 			*SocketName.ToString(), *GetNameSafe(MeshComp));
 		return;
 	}
 	if (!UProject_JGameplayAbility_Melee::CanDispatchAttackNotify(*MeshComp, EventReference)) { return; }
-	if (AActor* OwnerActor = MeshComp->GetOwner())
+	// The asset is shared between meshes. GC retires dead entries without scanning
+	// all visible actors on every Begin.
+	if (!PostGCHandle.IsValid()) PostGCHandle = FCoreUObjectDelegates::GetPostGarbageCollect().AddUObject(this, &ThisClass::PruneCollectedMeshes);
+	if (auto* ExistingStates = TraceStates.Find(MeshComp))
 	{
-		// Shared asset housekeeping follows the existing WeaponMotion/GroundContact
-		// GC lifecycle, rather than rescanning every living mesh for each Begin.
-		if (!PostGCHandle.IsValid()) PostGCHandle = FCoreUObjectDelegates::GetPostGarbageCollect().AddUObject(this, &ThisClass::PruneCollectedMeshes);
-		if (auto* ExistingStates = TraceStates.Find(MeshComp))
+		if (ExistingStates->Contains(EventReference.GetNotifyInstanceID())) { return; }
+		for (auto It = ExistingStates->CreateIterator(); It; ++It)
 		{
-			// Duplicate Begin for the same execution must not leak another window.
-			if (ExistingStates->Contains(EventReference.GetNotifyInstanceID())) { return; }
-			for (auto It = ExistingStates->CreateIterator(); It; ++It)
-			{
-				if (It.Value().WindowToken && (!It.Value().Validation.IsValid() || !It.Value().Validation->IsHitWindowCurrent(It.Value().WindowToken))) { It.RemoveCurrent(); }
-			}
+			if (It.Value().WindowToken && (!It.Value().Validation.IsValid() || !It.Value().Validation->IsHitWindowCurrent(It.Value().WindowToken))) { It.RemoveCurrent(); }
 		}
-		auto* HitValidation = OwnerActor->FindComponentByClass<UProject_JCombatHitValidationComponent>();
+	}
+	auto* HitValidation = OwnerActor->FindComponentByClass<UProject_JCombatHitValidationComponent>();
 
-        const auto* Attack=HitValidation?HitValidation->GetActiveAttackDefinition():nullptr;
-        const bool bAuthored=Attack && Attack->MeleeTrajectory.bEnabled;
-        if (bAuthored)
-        {
-            const auto& Path=Attack->MeleeTrajectory;
-            const auto* Event=EventReference.GetNotify();
-            if (!Attack->GetMeleeTrajectoryFailure(MeshComp->GetSkeletalMeshAsset()).IsEmpty() || !Event ||
-                EventReference.GetSourceObject()!=Attack->Montage || Event->GetLinkedMontage()!=Attack->Montage ||
-                Event->NotifyStateClass.Get()!=this || Event->GetTriggerTime()!=Path.WindowStart || Event->GetEndTriggerTime()!=Path.WindowEnd)
-            { UE_LOG(LogTemp,Warning,TEXT("Authored melee path rejected its source/window binding on %s"),*GetNameSafe(OwnerActor)); return; }
-        }
-		const uint64 Token = HitValidation ? HitValidation->BeginHitWindow() : 0;
-		if (HitValidation && !Token) { return; }
-		TraceStates.FindOrAdd(MeshComp).Add(EventReference.GetNotifyInstanceID(),
-			{ResolveTraceLocation(MeshComp), HitValidation, Token, HitValidation ? HitValidation->GetSpatialRevision() : 0});
-        if (bAuthored)
-        {
-            auto& State=TraceStates.FindChecked(MeshComp).FindChecked(EventReference.GetNotifyInstanceID());
-            State.bAuthoredPath=true; State.AuthoredAttack=Attack; State.AuthoredPath=Attack->MeleeTrajectory;
-            State.ConsumedMontageTime=State.AuthoredPath.WindowStart;
-        }
-
+	const auto* Attack = HitValidation ? HitValidation->GetActiveAttackDefinition() : nullptr;
+	const bool bAuthored = Attack && Attack->MeleeTrajectory.bEnabled;
+	const FProject_JMeleeTrajectory* Path = nullptr;
+	if (bAuthored)
+	{
+		const auto* Event = EventReference.GetNotify();
+		Path = Event ? Attack->FindMeleeTrajectory(*Event) : nullptr;
+		if (!Path || EventReference.GetSourceObject() != Attack->Montage || Event->NotifyStateClass.Get() != this ||
+			!Attack->GetMeleeTrajectoryFailure(MeshComp->GetSkeletalMeshAsset(), *Path).IsEmpty())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Authored melee path rejected its source/window binding on %s"), *GetNameSafe(OwnerActor));
+			return;
+		}
+	}
+	const uint64 Token = HitValidation ? HitValidation->BeginHitWindow() : 0;
+	if (HitValidation && !Token) { return; }
+	FTraceState& State = TraceStates.FindOrAdd(MeshComp).Add(EventReference.GetNotifyInstanceID(),
+		{Path ? FVector::ZeroVector : ResolveTraceLocation(MeshComp), HitValidation, Token, HitValidation ? HitValidation->GetSpatialRevision() : 0});
+	if (Path)
+	{
+		State.bAuthoredPath = true;
+		State.AuthoredAttack = Attack;
+		State.AuthoredPath = *Path;
+		State.ConsumedMontageTime = State.AuthoredPath.WindowStart;
 	}
 }
 
@@ -93,12 +124,18 @@ void UProject_JAnimNotifyState_MeleeHit::NotifyTick(USkeletalMeshComponent* Mesh
 	}
 	auto* MeshStates = TraceStates.Find(MeshComp);
 	auto* State = MeshStates ? MeshStates->Find(EventReference.GetNotifyInstanceID()) : nullptr;
-	if (!State || (State->WindowToken && (!State->Validation.IsValid() || !State->Validation->IsHitWindowCurrent(State->WindowToken))))
+	if (!State)
 	{
 		return;
 	}
 	AActor* OwnerActor = MeshComp->GetOwner();
-	if (!OwnerActor || !HitEventTag.IsValid())
+	if (!CanProduceMeleeContacts(OwnerActor))
+	{
+		RetireTraceState(MeshComp, EventReference.GetNotifyInstanceID());
+		return;
+	}
+	if (!HitEventTag.IsValid() || (State->WindowToken && (!State->Validation.IsValid() ||
+		!State->Validation->IsHitWindowCurrent(State->WindowToken))))
 	{
 		return;
 	}
@@ -174,6 +211,7 @@ void UProject_JAnimNotifyState_MeleeHit::NotifyTick(USkeletalMeshComponent* Mesh
 		TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_Combat_MeleeSweep);
 		Project_J::Combat::SweepMeleeSphere(*World, Params, TraceStart, TraceEnd, EffectiveTraceRadius, OutHits);
 	}
+	LogAuthorityMeleeSweep(*OwnerActor, 0, EffectiveTraceRadius, TraceStart, TraceEnd, OutHits);
 
 	for (const FHitResult& Hit : OutHits)
 	{
@@ -198,6 +236,7 @@ void UProject_JAnimNotifyState_MeleeHit::NotifyTick(USkeletalMeshComponent* Mesh
 
 			// Send the hit event to the attacker's ability system
 			// The MeleeCombo Ability will catch this, filter duplicates, and apply GameplayEffects
+			LogAuthorityMeleeEvent(*OwnerActor, *HitActor);
 			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(OwnerActor, HitEventTag, Payload);
 		}
 	}
@@ -222,9 +261,11 @@ void UProject_JAnimNotifyState_MeleeHit::TickAuthoredPath(USkeletalMeshComponent
         if (Original) Original->EndHitWindow(OriginalToken);
         UE_LOG(LogTemp,Warning,TEXT("Authored melee path retired without fallback: %s; Owner=%s"),Reason,*GetNameSafe(Mesh->GetOwner()));
     };
-    if (!Validation || Validation!=State.Validation.Get() || Attack!=State.AuthoredAttack.Get() || !Attack || !Attack->MeleeTrajectory.bEnabled ||
-        State.AuthoredPath.SourceStamp!=Attack->MeleeTrajectory.SourceStamp || !FMath::IsFinite(CurrentTime) ||
-        !Attack->GetMeleeTrajectoryFailure(Mesh->GetSkeletalMeshAsset()).IsEmpty())
+    const FAnimNotifyEvent* Event = Reference.GetNotify();
+    const FProject_JMeleeTrajectory* Path = Attack && Event ? Attack->FindMeleeTrajectory(*Event) : nullptr;
+    if (!Validation || Validation!=State.Validation.Get() || Attack!=State.AuthoredAttack.Get() || !Path ||
+        State.AuthoredPath.SourceStamp!=Path->SourceStamp || !FMath::IsFinite(CurrentTime) ||
+        !Attack->GetMeleeTrajectoryFailure(Mesh->GetSkeletalMeshAsset(), *Path).IsEmpty())
     { Retire(TEXT("Execution/source data changed")); return; }
     if (State.SpatialRevision!=Validation->GetSpatialRevision())
     { Retire(TEXT("Spatial discontinuity")); return; }
@@ -271,6 +312,7 @@ void UProject_JAnimNotifyState_MeleeHit::TickAuthoredPath(USkeletalMeshComponent
         if (!IsCurrent()) return;
         { TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_Combat_MeleeSweep);
           Project_J::Combat::SweepMeleeSphere(*World,Params,Segments[I].TraceStart,Segments[I].TraceEnd,Radius,Hits); }
+        LogAuthorityMeleeSweep(*Owner, I, Radius, Segments[I].TraceStart, Segments[I].TraceEnd, Hits);
         if (!IsCurrent()) return;
         for (const auto& Hit:Hits)
         {
@@ -294,6 +336,7 @@ void UProject_JAnimNotifyState_MeleeHit::TickAuthoredPath(USkeletalMeshComponent
         if (!IsValid(Victim) || Victim->IsActorBeingDestroyed()) continue;
         FGameplayEventData Payload; Payload.EventTag=HitEventTag; Payload.Instigator=Owner; Payload.Target=Victim;
         Payload.TargetData=UAbilitySystemBlueprintLibrary::AbilityTargetDataFromHitResult(Contact.Hit);
+        LogAuthorityMeleeEvent(*Owner, *Victim);
         UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Owner,HitEventTag,Payload);
     }
 }
@@ -324,14 +367,19 @@ FVector UProject_JAnimNotifyState_MeleeHit::ResolveTraceLocation(USkeletalMeshCo
 
 void UProject_JAnimNotifyState_MeleeHit::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {
+	RetireTraceState(MeshComp, EventReference.GetNotifyInstanceID());
+	Super::NotifyEnd(MeshComp, Animation, EventReference);
+}
+
+void UProject_JAnimNotifyState_MeleeHit::RetireTraceState(USkeletalMeshComponent* MeshComp, int32 NotifyInstanceID)
+{
 	if (auto* MeshStates = TraceStates.Find(MeshComp))
 	{
 		FTraceState State;
-		if (MeshStates->RemoveAndCopyValue(EventReference.GetNotifyInstanceID(), State))
+		if (MeshStates->RemoveAndCopyValue(NotifyInstanceID, State))
 		{
+			if (MeshStates->IsEmpty()) { TraceStates.Remove(MeshComp); }
 			if (auto* HitValidation = State.Validation.Get()) { HitValidation->EndHitWindow(State.WindowToken); }
 		}
-		if (MeshStates->IsEmpty()) { TraceStates.Remove(MeshComp); }
 	}
-	Super::NotifyEnd(MeshComp, Animation, EventReference);
 }

@@ -286,6 +286,7 @@ bool AuthorStrikes(UProject_JCombatStyleDefinition& Style, TArray<UObject*>& Ass
 		Attack->PlayRate = 1.f;
 		Attack->MovementPolicy = EProject_JAttackMovementPolicy::InPlace;
 		Attack->MeleeTrajectory = {};
+		Attack->AdditionalMeleeTrajectories.Reset();
 		if (bKick)
 		{
 			Attack->HitSpec.bUseCanonicalBladeTipOffset = false;
@@ -434,6 +435,7 @@ bool AuthorBuffCasts(UProject_JCombatStyleDefinition& Style, UInputMappingContex
 		Attack->SelfEffectOnCompletion = Cast.Effect;
 		Attack->HitSpec = {};
 		Attack->MeleeTrajectory = {};
+		Attack->AdditionalMeleeTrajectories.Reset();
 
 		auto& Node = Combo.Nodes.AddDefaulted_GetRef();
 		Node.NodeTag = Tag(TEXT("Combo.Spellblade.") + Name);
@@ -570,6 +572,7 @@ bool AuthorReserveAttacks(UProject_JCombatStyleDefinition& Style, UInputMappingC
 	Rush->HitSpec.CanonicalBladeTipOffset = FVector::ZeroVector;
 	Rush->HitSpec.TraceRadius = 40.f;
 	Rush->MeleeTrajectory = {};
+	Rush->AdditionalMeleeTrajectories.Reset();
 
 	// The source begins airborne. Keep the lower body's existing falling and landing pose.
 	DownMontage->SlotAnimTracks[0].SlotName = TEXT("UpperBody");
@@ -593,6 +596,7 @@ bool AuthorReserveAttacks(UProject_JCombatStyleDefinition& Style, UInputMappingC
 	Down->RequiredOwnerTags.Reset();
 	Down->BlockedOwnerTags.Reset();
 	Down->MeleeTrajectory = {};
+	Down->AdditionalMeleeTrajectories.Reset();
 	auto DownPresentation = *Trail;
 	DownPresentation.AttackTag = Down->AttackTag;
 	Style.CombatPresentationSet->AttackPresentations.Add(DownPresentation);

@@ -1,5 +1,11 @@
 # 네트워크
 
+11월 독립 감사 이후 적용한 온라인 채널 정원·Iris 입장 한도, 200접속과 실제 보스 피해 결과, 서버·생성기 분리 계획은 [감사 후속 현황](../Architecture/Planning/Project_J_MMO_Audit_Followup_2026-11-24.md#200인에서-확인한-사실)에 있다. 아래 10월 테스트는 당시 저장·복제 구조와 실소켓 검증의 근거다.
+
+11월 로컬 온라인 경로는 Nakama 인증에서 캐릭터 일회용 티켓을 발급하고, 세션이 승인된 뒤 PostgreSQL 가방을 소유자에게 복제한다. 던전은 목적지 워커 확인을 거쳐 입장하고, 클리어 커밋 뒤 복귀를 연다. 백엔드 재시작 후 동일 복귀 nonce의 재사용 거절을 확인했다. Standalone 던전의 참가 식별과 보상은 별도 미해결 항목이다. [온라인 검증과 남은 항목](../Architecture/Planning/Project_J_MMO_Audit_Followup_2026-11-24.md#다시-검증하기-전에)
+
+채널 설정과 현재 NetDriver의 입장 상한, 단일 보스에서 완주한 인원, Burst 처리 시간의 외삽은 다른 숫자다. 호스트 분리 비교에서는 관심 범위와 입력을 고정하고 가용 메모리·서버 틱 시작 간격·송신량·전원 타격과 체력 수신을 함께 본다. [수용량 추정과 비교 절차](../Architecture/Planning/Project_J_MMO_Audit_Followup_2026-11-24.md#수용량-추정과-분리-호스트-검증)
+
 2026-10-19 장비 복제는 owner-only 상세 FastArray와 관찰자용 슬롯/정의 FastArray로 분리했다. 관찰자에게 인스턴스 ID·수량·잠금·가방 순서를 보내지 않으며, 두 표현의 변경 권위는 서버의 기존 장착/해제 commit 하나다. PS의 공통 명령 예산은 장비·가방·소모품·퀘스트·SSR 입장에서 공유하고 도메인 제한은 별도로 유지한다. [현재 전체 권고 판정과 검증](../Review/Architecture/Project_J_MMO_Remaining_2026-10-19.md)을 참고한다. 이 변경을 custom Iris 파티/길드 adapter나 계정 인증 구현으로 해석하지 않는다.
 
 같은 작업의 로컬 영속 저장은 Windows Development 단독 opt-in 범위다. 순번 창64·checkpoint 최신1과 원자적 확정, v1 이관 도구가 구현돼 있어도 네트워크/Shipping 저장을 활성화한 것은 아니다. 최종 기본2clients/NPC100·LagLoss/ReorderLoss와 저장/재시작 결과는 [공유 검증 요약](../Review/Architecture/Project_J_MMO_Validation_2026-10-19.json)에 있으며, Editor-host 서버 모드를 독립 Server 바이너리나 운영 CCU 검증으로 세지 않는다.

@@ -1,6 +1,12 @@
 # Project J 프로젝트 맥락
 
-**최신 범위·종료:** 사용자가 약5일의 작업 시간을 지적하며 현재 기반의 정말 필수적인 작업만 요청했고, 현재 수정·최종 검증·인계를 끝으로 종료하기로 합의했다.167에서 해당 필수 마감을 완료했다. 미래 콘텐츠 실행 기능 추가·선택 고도화·별도 성능/엔진 실험은 보류한다. 아래 장기 지도·과거 active/다음 작업 표기·시간 추정을 자동 확장 지시로 실행하지 않는다. 운영 provider/소스 엔진 미정·전체 규모 성능의 미입증은 보존하며 전체 MMORPG 완성으로 표현하지 않는다. [최종 마감 기록](../Architecture/Planning/Project_J_MMO_Architecture_Work_2026-10-26.md)의167차와 보류 경계를 따른다.
+**2026-11-24 구현·검증 기준.** `점검.md`의 독립 감사에서 로컬 PostgreSQL 저장과 두 서버 던전 이동, 전투 수명·병렬 평가, 원격 경량 망토·그래픽 설정과 저장 맵의 보스 경고를 연결했다. 야간 재검증에 앞선 로컬 Iris는 필드 40/40·던전 24/24 확정 타격과 완주를 기록했다. 전용 서버의 베이크 공격 계약은 본 갱신 없이 스윕을 만든 회귀를 통과했고, 40인 기본 공격은 라이브 소켓 경로를 사용했다. 최신 장비·조준으로 실제 200인 재실행과 부하 환경 분리는 남아 있다. [감사 후속 현황과 검증 시작점](../Architecture/Planning/Project_J_MMO_Audit_Followup_2026-11-24.md#다시-검증하기-전에)
+
+**2026-11-23 기반 구축 이력.** Phase 1~3 시스템 기반, 공통 부모 연결, 스타터 에셋 7종과 버그 8건을 다룬 단계다. 당시 Editor 빌드, `WiringFinal_Run1` 101/101, `BugHuntFinal_Run2` 62/62, 8모듈 DAG 검증을 기록했다. [안정화·청사진·시스템 구축 기록](../Architecture/Planning/Project_J_MMO_Hardening_And_Blueprint_2026-11-22.md) · [콘텐츠 제작·시스템 연결 가이드](../Architecture/Blueprints/Content_Authoring_Integration_Guide.md)
+
+**2026-11-24 야간 재검증.** 동일 호스트의 Iris 필드는 16·24·32인에서 타격·체력 수신·정상 로그아웃을 통과했다. 40인은 서버에서 전원 타격을 확정한 뒤 물리 메모리 보호선에 걸렸다. 별도 D3D12 관측 던전 16인, 집중 회귀 7건과 PGlite도 통과했다. Burst 처리 시간 외삽은 RAM 병목·Iris 입장 한도와 분리해 다음 검증 인원 선택에 사용한다. [실행별 결과](../Architecture/Planning/Project_J_MMO_Audit_Followup_2026-11-24.md#문서-기준-로컬-재검증--2026-11-24-야간) · [수용량 추정과 호스트 분리](../Architecture/Planning/Project_J_MMO_Audit_Followup_2026-11-24.md#수용량-추정과-분리-호스트-검증)
+
+**이전 167차 마감 기록:** 사용자가 약5일의 작업 시간을 지적하며 현재 기반의 정말 필수적인 작업만 요청했고, 현재 수정·최종 검증·인계를 끝으로 종료하기로 합의했다.167에서 해당 필수 마감을 완료했다. 미래 콘텐츠 실행 기능 추가·선택 고도화·별도 성능/엔진 실험은 보류한다. 아래 장기 지도·과거 active/다음 작업 표기·시간 추정을 자동 확장 지시로 실행하지 않는다. 운영 provider/소스 엔진 미정·전체 규모 성능의 미입증은 보존하며 전체 MMORPG 완성으로 표현하지 않는다. [최종 마감 기록](../Architecture/Planning/Project_J_MMO_Architecture_Work_2026-10-26.md)의167차와 보류 경계를 따른다.
 
 167은 canonical 예측 hit에 기존 node 시작 시각·visit을 함께 전달해 source 실행 시계만 고정 보정하고 target query는 유지했다. 서버는 실제 owner 연결 기반의 제한된 lead·현재 key/visit/공간/packet과 immutable clock을 검증한다. 기존 RPC와 typed RPC는 한 예산·검증·효과 본문을 공유하며 protocol13이다. 권위 명중·geometry/head 범위·NPC non-MM은 유지했다.
 

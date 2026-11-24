@@ -1,4 +1,6 @@
 #include "Combat/Project_JMeleeTrajectory.h"
+#include "Animation/AnimMontage.h"
+#include "Animation/Skeleton.h"
 #include "Components/Project_JCombatHitValidationComponent.h"
 
 namespace
@@ -10,6 +12,37 @@ bool ValidUniformTransform(const FTransform& T)
         FMath::IsNearlyEqual(S.X,S.Y) && FMath::IsNearlyEqual(S.X,S.Z);
 }
 }
+const FAnimSegment* FProject_JMeleeTrajectory::FindWindowSegment(const UAnimMontage& Montage, float Start, float End)
+{
+    if (Montage.SlotAnimTracks.Num() != 1 || !FMath::IsFinite(Start) || !FMath::IsFinite(End) || End <= Start)
+        return nullptr;
+    const FAnimSegment* MatchingSegment = nullptr;
+    for (const FAnimSegment& Segment : Montage.SlotAnimTracks[0].AnimTrack.AnimSegments)
+    {
+        const float SegmentEnd = Segment.GetEndPos();
+        if (Start >= SegmentEnd || End <= Segment.StartPos) continue;
+        if (MatchingSegment || !FMath::IsFinite(SegmentEnd) || !FMath::IsFinite(Segment.StartPos)
+            || Start < Segment.StartPos || End > SegmentEnd)
+            return nullptr;
+        MatchingSegment = &Segment;
+    }
+    return MatchingSegment;
+}
+
+bool FProject_JMeleeTrajectory::HasDeclaredSkeletonCompatibility(const USkeleton* A, const USkeleton* B)
+{
+    if (!IsValid(A) || !IsValid(B)) return false;
+    const auto Declares = [](const USkeleton& Owner, const USkeleton& Other)
+    {
+        const FSoftObjectPath OtherPath(&Other);
+        return Owner.GetCompatibleSkeletons().ContainsByPredicate([&](const TSoftObjectPtr<USkeleton>& Item)
+        {
+            return Item.ToSoftObjectPath() == OtherPath;
+        });
+    };
+    return A == B || Declares(*A, *B) || Declares(*B, *A);
+}
+
 FString FProject_JMeleeTrajectory::GetValidationFailure() const
 {
     if (!bEnabled) return {};

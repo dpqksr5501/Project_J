@@ -9,6 +9,7 @@
 
 class UAnimMontage;
 class UGameplayEffect;
+struct FAnimNotifyEvent;
 
 /** How an authored attack is allowed to move the character. */
 UENUM(BlueprintType)
@@ -106,8 +107,15 @@ public:
 	/** Optional authored gameplay path. Disabled retains live source-pose traces. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Hit")
 	FProject_JMeleeTrajectory MeleeTrajectory;
+
+	/** Additional queued melee notify windows on this attack montage. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Hit")
+	TArray<FProject_JMeleeTrajectory> AdditionalMeleeTrajectories;
+
 	/** Empty means supported. Enabled data never silently falls back to a live pose. */
 	FString GetMeleeTrajectoryFailure(const USkeletalMesh* SourceMesh) const;
+	FString GetMeleeTrajectoryFailure(const USkeletalMesh* SourceMesh, const FProject_JMeleeTrajectory& Path) const;
+	const FProject_JMeleeTrajectory* FindMeleeTrajectory(const FAnimNotifyEvent& Event) const;
 
 	/** Server NPC melee only. One preserves the locked-target attack; larger values allow registered hostile sweep contacts.
 	 * Counts unique validated targets attempted by one attack, including immunity/failed effects. Captured at activation. */

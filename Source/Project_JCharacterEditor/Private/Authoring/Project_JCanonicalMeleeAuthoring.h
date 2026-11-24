@@ -9,7 +9,7 @@ namespace Project_J::CanonicalMeleeAuthoring
     // Same RAW producer used by the selected-asset operation and native integration.
     // Allows a transient attack; never edits/saves an asset, and failure leaves OutPath untouched.
     bool BuildCandidate(const UProject_JAttackDefinition& Attack, USkeletalMesh& SourceMesh,
-        FProject_JMeleeTrajectory& OutPath, FString& OutFailure);
+        FProject_JMeleeTrajectory& OutPath, FString& OutFailure, int32 NotifyIndex = INDEX_NONE);
 
     // Editor-only source/stamp validation; does not evaluate full poses.
     bool ValidateCurrentSource(const UProject_JAttackDefinition& Attack, USkeletalMesh& Mesh,

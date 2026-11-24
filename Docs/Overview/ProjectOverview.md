@@ -21,11 +21,14 @@ Project J는 Unreal Engine 5.8 기반의 **3인칭 액션 MMORPG 프로토타입
 - 서버 권위 인벤토리와 장비 FastArray 복제
 - 장비에 따른 AbilitySet, GameplayEffect, 능력치, 메시, 무기 애니메이션 프로필 적용
 - PlayerState 기반 플레이어 ASC, 속성, 인벤토리 및 장비 소유
-- 저비용 NPC 정책과 Mass 확장을 위한 초기 기반
+- 비모션매칭 NPC의 어그로·경로·공격과 Mass 군중 이동·표현 기반
 - 월드 인스턴스 ID, 백엔드 요청 ID, 트랜잭션 ID와 같은 MMO 공통 타입
-- 거리와 전투 상태를 고려하는 transport-independent replication policy 기반 (실제 Iris/RepGraph adapter 및 관심 관리는 아직 미구현)
-- **[추가]** 서버 권위 레벨 동기화(SetCharacterLevel API) 및 핸드오버 플레이어 캐릭터 직렬화/역직렬화(Round-trip)
-- **[추가]** 설정 파일(DefaultEngine.ini)을 활용한 소프트 클래스 경로 동적 로딩 및 스레드 안전 비동기 응답 처리
+- 기본 Iris 복제, 플레이어·탈것의 공간 우선순위, 소유자 상세 FastArray와 공개 외형 분리, 채널별 접속 상한
+- 로컬 Nakama·PostgreSQL을 사용하는 캐릭터 로그인과 가방·우편·장비·채집·제작, 별도 서버 사이 던전 입장·재입장·보상·복귀
+- 저장된 테스트 맵의 필드 보스·던전·채집 노드·제작대·비행 탈것, 실제 HUD 그래픽 설정과 테스트 하네스
+- 서버 권위 레벨 동기화, 핸드오버 캐릭터 직렬화, 설정 기반 소프트 클래스 로딩
+
+로컬 검증에서는 실제 단발 공격의 서버 확정 피해를 Iris 필드 40인과 던전 24인에서 확인했다. Generic 합성 200접속, 로컬 200체 렌더, 실제 200인 보스전은 검증 항목이 다르다. 실제 200인 보스전은 완료 근거가 없다. [검증 기준과 원자료](../Architecture/Planning/Project_J_MMO_Audit_Followup_2026-11-24.md#다시-검증하기-전에)
 
 현재 기본 맵과 GameMode 설정에는 Unreal Third Person 템플릿 경로가 일부 남아 있다. 이는 프로젝트의 최종 게임 정체성이 Third Person 템플릿이라는 뜻이 아니라, 아직 콘텐츠와 프로젝트 설정 정리가 완료되지 않았다는 의미다.
 
@@ -134,7 +137,7 @@ NPC는 PlayerState가 없을 수 있으므로 `AProject_JBaseCharacter`의 chara
 - 대규모 환경에서는 모든 Actor를 같은 빈도로 복제하거나 갱신하지 않는다.
 - 거리, owner, combat, party, guild, public event 같은 relevance 이유를 정책으로 표현한다.
 
-현재 Gateway와 handover 코드는 실제 megaserver 구현이 아니라 향후 backend 및 서버 이동을 연결하기 위한 계약과 경계다.
+Gateway와 handover는 서버 이동 계약을 제공한다. 실제 로컬 던전 경로에서는 두 Unreal 서버와 Nakama·PostgreSQL의 예약·워커 확인·입장 티켓·채널 임대를 사용한다. 채널 정원은 설정과 실제 NetDriver 한도를 함께 적용한다. 설치형 UE 5.8의 현행 Iris 드라이버에서 관측한 유효 슬롯은 127이었다. 운영 정원과 여러 서버가 공유하는 단일 월드의 수용량은 별도 검증 범위다. [네트워크 구현과 검증](../Networking/README.md)
 
 ## 애니메이션 원칙
 
@@ -151,7 +154,8 @@ NPC는 PlayerState가 없을 수 있으므로 `AProject_JBaseCharacter`의 chara
 - 직업, 전직, 장비는 AbilitySet을 통해 능력과 effect를 부여한다.
 - 공격, 회피, 피격과 같은 action은 GAS ability와 명시적인 combat state로 표현한다.
 - locomotion 제한은 `FProject_JCombatMovementPolicy`와 같은 정책 경계를 통해 계산한다.
-- 실제 피해는 서버 검증과 GameplayEffect 경로로 확정하는 것을 목표로 한다.
+- 실제 피해는 서버 검증과 GameplayEffect 경로로 확정한다.
+- 라이브 소켓 근접 공격은 필요한 본 포즈를 갱신한다. 지원하는 베이크 공격은 전용 서버에서 몽타주 시각과 Mover 루트로 스윕을 만들며, 해당 경로의 본 갱신 생략은 집중 회귀에서 확인했다. [전투 제작과 판정 기준](../Combat/README.md)
 
 ## 인벤토리와 장비 원칙
 
@@ -166,20 +170,20 @@ Inventory item instance
 - 장착 요청은 서버가 item ownership과 slot 규칙을 검증한다.
 - 장비 gameplay 적용과 제거는 서버에서 수행한다.
 - 클라이언트는 복제된 장비 상태로 로컬 visual을 구성한다.
-- 향후 persistence와 거래가 붙으면 inventory write는 RequestId, IdempotencyKey, TransactionId와 연결한다.
+- 온라인에서 연결한 가방·우편·장비 쓰기는 PostgreSQL 명령에서 세션 세대·revision·멱등 영수증을 확인한다. 소유자 FastArray는 커밋 결과를 전달한다. Standalone 개발 프로필은 SQLite 경로를 사용한다.
 
 ## 아직 본격 구현하지 않는 영역
 
-다음 기능은 방향과 최소 계약만 유지하고, 실제 요구와 측정이 생기기 전까지 깊게 구현하지 않는다.
+다음은 구현 기반 위에서 운영 계약이나 현장 검증이 필요한 영역이다.
 
-- 실제 megaserver 및 server meshing
-- 경매장과 전역 경제 ledger
-- 길드, 파티, public event의 전체 gameplay
+- 단일 월드의 megaserver 및 server meshing
+- 운영 규모의 경매·경제·길드·공격대·전역 이벤트
 - GM backoffice와 제재 시스템
 - 본격적인 anti-cheat SDK 연동
-- 수백 단위 Mass/VAT/impostor crowd
-- 모든 NPC에 player-grade Motion Matching 적용
-- 실제 backend가 없는 상태의 복잡한 retry·transaction orchestration
+- 실제 200인 동일 보스의 반복 교전, 별도 서버 호스트와 다중 호스트 검증
+- MainWorld 전체의 고속 비행 전환 품질, HLOD·PSO·식생 전환과 운영 부하
+
+NPC는 비모션매칭 정책을 유지한다.
 
 ## 리팩터링 판단 기준
 
@@ -196,15 +200,7 @@ Project J의 리팩터링은 다음 기준을 따른다.
 
 ## 현재 우선순위
 
-현재 구조에 맞는 가까운 작업 순서는 다음과 같다.
-
-1. 플레이어와 NPC의 ASC·Attribute·Equipment 소유 전략을 코드에서 더 명시적으로 표현
-2. inventory와 equipment 교체 과정을 서버 단일 operation으로 구조화
-3. 레거시 AbilityTag 입력을 InputTag 경로로 마이그레이션
-4. `PlayerCharacter`와 `CharacterAnimInstance`의 조정·정책·디버그 책임 분리
-5. inventory, equipment, AbilitySet, combat validation 자동화 테스트 추가
-6. **[완료]** Gateway와 persistence 계층 확장을 위한 핸드오버 직렬화 현대화 및 비동기 스레드/GC 안전성 확보
-7. **[완료]** GAS Attribute 레벨 동기화 보장 API(SetCharacterLevel) 구현 및 설정형 테스트 경로 소프트 로드 구축
+다음 검증을 시작할 때는 [최신 구현과 확인 범위](../Architecture/Planning/Project_J_MMO_Audit_Followup_2026-11-24.md#다시-검증하기-전에)에서 실행별 선행 조건을 확인한다. 근접 공격·서버 틱, 던전·저장, 의상·그래픽, 탈것·월드의 검증은 실제 소비 경로에 맞춰 선택한다. 과거의 구현 순서와 지금 남은 검증은 [아키텍처 실행 이력](../Architecture/Planning/README.md)에서 확인한다.
 
 ## 관련 문서
 
