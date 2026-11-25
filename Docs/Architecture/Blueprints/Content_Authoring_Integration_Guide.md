@@ -38,8 +38,10 @@
   1. `Content/DataAssetSets/MMO/DA_NPCBrain_FieldBoss_Starter` 복제 (`IsGiantBoss = true`, `BossPhaseHealthThresholds = {0.70, 0.35}`) 후 BP의 `BrainDefinition`에 지정 → `CCResistanceComponent->bIsBossCCImmune = true` 자동 설정.
   2. `UProject_JMultiPartHitComponent` 부착 → 최대 8개 부위(`Head` 약점 `2.0x`, `Body` `1.0x`, `Tail` 등) 소켓/반경 설정 (30Hz 소켓 히스토리 자동 기록, 미부착 시 저장 검증기 경고).
   3. 월드에 `AProject_JWorldEncounter` 배치 → `EncounterId` 고유값, `NPCClass`, `bUseSchedule`/`StartUtc`/`EndUtc`(UTC 스케줄), **`BossLootTable = DA_LootTable_FieldBoss_Starter`**(복제본), 선택 `QuestKillEventId` 연결.
-  4. **보상과 카메라**: 인카운터가 전투 중 카메라 요청을 소유하고 종료 시 회수한다. 처치 시 기여도와 같은 월드의 파티 자격을 기준으로 수령자를 고른다. 온라인 보상은 처치 ID를 담은 서버 명령으로 제출해 지급 결과를 확인한다. 퀘스트 처치 기록과 우편 소유권을 각 실행의 결과에서 확인한다.
+  4. **보상과 카메라**: 인카운터가 전투 중 카메라 요청을 소유하고 종료 시 회수한다. 수령자는 전투 기여자와 처치 위치의 `PartyRewardRadiusCm` 안에 있는 자격 충족 파티원이다. `ActivationRadius`는 스폰 준비에 사용한다. 온라인 보상은 처치 ID를 담은 서버 명령으로 제출해 지급 결과를 확인한다. 퀘스트 처치 기록과 우편 소유권을 각 실행의 결과에서 확인한다.
   5. **공격과 위험 경고**: 인카운터의 `CombatDefinition`, NPC의 비모션매칭 AnimBP, 경고와 타격 시간이 연결된 몽타주를 지정한다. 활성 `ActiveWarningCues`는 원격 장식 VFX의 드롭·불투명도 제한에서 제외한다. 저장된 테스트 맵에서는 실제 마커의 생성·해제를 확인했다. 200인 화면의 가독성·메시 가림·개별 FX 품질은 실제 장면에서 확인한다.
+
+MainWorld B01은 기존 테스트 보스 모델·클리브·경고와 초기 골드 보상 테이블을 재사용한다. 단독 PIE에서는 테스트 플레이어의 배치와 체력만 명령으로 준비한 뒤, 실제 입력 10회로 보스를 처치하고 개인 우편과 300초 재등장 대기 진입을 확인했다. 최종 보스 에셋·Nav 추적과 리셋·재등장 완료·온라인 재접속·다인원 교전은 별도 검증이 필요하다. [저장 연결과 전투 근거](../../WorldGen/07_GAMEPLAY_SPATIAL_INTEGRATION.md)
 
 ### 2.3 새 던전 콘텐츠 제작 (월드 입구 + 메뉴 UI + 파티 동반 입장, `BP01`)
 1. **던전 정의서(`UProject_JDungeonDefinition`) 생성**:

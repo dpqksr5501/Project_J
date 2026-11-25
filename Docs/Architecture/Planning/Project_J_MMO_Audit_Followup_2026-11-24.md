@@ -30,8 +30,8 @@
 
 ## 200인에서 확인한 사실
 
-- **접속과 전투는 별도 검증이다.** 설치형 UE 5.8의 현행 Iris 드라이버는 유효 슬롯 127을 보고했다. 채널 요청 정원과 드라이버가 허용하는 정원은 따로 기록한다. Generic에서 200 소켓과 단순 피해 부하는 통과했다. 앞선 단순 피해 부하는 플레이어 Pawn 없이 GAS 대상에 즉시 피해를 준 시험이다. [채널 정원과 Iris](Project_J_MMO_Independent_Audit_2026-11-23.md#채널별-운영-정원과-로컬-제작-보스-기준선) · [200접속 단순 부하](../../../Saved/Validation/Continuation_20261014/CombatCohort200Final_20261123/verification.json)
-- **제작 보스를 사용한 이전 200인 시험은 실패했고, 최신 장비·조준 경로의 200인 재실행은 남아 있다.** 이전 실행에서 참가자 200명이 접속하고 공격 활성화 200건을 기록했으며 확정 피해는 0건이었다. 최장 월드 틱은 3.34초였다. 생성기는 서버가 결과를 기록한 뒤 종료 처리 중 Windows 커밋 한도에 도달했다. 참가자 간 복제를 제한한 후속 진단에서는 메모리 오류 없이 종료했지만 여전히 피해 0건이었다. 공격 단계 월드 틱 p95는 148.86ms였고, 기록된 거절 사유에는 공격 시작 시각 검증 47건과 미래 시각 24건이 포함됐다. [최초 실패](../../../Saved/Validation/Continuation_20261014/AuthoredBossGeneric200Final_20261123/verification.json) · [메모리 로그](../../../Saved/Validation/Continuation_20261014/AuthoredBossGeneric200Final_20261123/Clients.log#L103299) · [후속 진단](Project_J_MMO_Independent_Audit_2026-11-23.md#채널별-운영-정원과-로컬-제작-보스-기준선)
+- **접속과 전투는 별도 검증이다.** 설치형 UE 5.8의 현행 Iris 드라이버는 유효 슬롯 127을 보고했다. 채널 요청 정원과 드라이버가 허용하는 정원은 따로 기록한다. Generic에서 200 소켓과 단순 피해 부하는 통과했다. 앞선 단순 피해 부하는 플레이어 Pawn 없이 GAS 대상에 즉시 피해를 준 시험이다. [채널 정원과 Iris](Project_J_MMO_Independent_Audit_2026-11-23.md#채널별-운영-정원과-로컬-제작-보스-기준선) · 200접속 단순 부하 (로컬 `Saved/Validation/Continuation_20261014/CombatCohort200Final_20261123/verification.json`)
+- **제작 보스를 사용한 이전 200인 시험은 실패했고, 최신 장비·조준 경로의 200인 재실행은 남아 있다.** 이전 실행에서 참가자 200명이 접속하고 공격 활성화 200건을 기록했으며 확정 피해는 0건이었다. 최장 월드 틱은 3.34초였다. 생성기는 서버가 결과를 기록한 뒤 종료 처리 중 Windows 커밋 한도에 도달했다. 참가자 간 복제를 제한한 후속 진단에서는 메모리 오류 없이 종료했지만 여전히 피해 0건이었다. 공격 단계 월드 틱 p95는 148.86ms였고, 기록된 거절 사유에는 공격 시작 시각 검증 47건과 미래 시각 24건이 포함됐다. 최초 실패 (로컬 `Saved/Validation/Continuation_20261014/AuthoredBossGeneric200Final_20261123/verification.json`) · 메모리 로그 (로컬 `Saved/Validation/Continuation_20261014/AuthoredBossGeneric200Final_20261123/Clients.log`) · [후속 진단](Project_J_MMO_Independent_Audit_2026-11-23.md#채널별-운영-정원과-로컬-제작-보스-기준선)
 - **이후 러너 수정은 그보다 작은 실제 전투에서 검증했다.** 구형 테스트 장비의 스윕이 보스에 닿지 않았고, 실제 장비로 바꾼 뒤에는 조준 입력이 빠진 문제가 드러났다. 러너를 실제 기본 장비와 소유 클라이언트의 조준 입력에 연결한 뒤 필드 40명 전원 타격을 확인했다. 그 실행의 공격 구간 월드 틱 p95는 36.44ms로 30Hz 예산 33.33ms를 넘었다. 별도 36인 추적의 느린 틱 하나에서 액터 복제 25.31ms와 틱 그룹 대기 31.52ms가 관측됐다. 대기 내부 원인과 최신 경로의 200인 결과는 미확인이다. [장비·조준 수정과 40인 비교](../../Performance/README.md#스윕이벤트-분리와-테스트-장비-수정) · [36인 서버 추적](../../Performance/README.md#군중-클라이언트와-전투-서버-cpu-추적--2026-11-24)
 - **표현 최적화의 성과는 클라이언트에서 확인했다.** 스펠블레이드 소유자는 원본 망토를 사용한다. 원격 망토는 렌더 형상과 몸체 충돌을 유지하며 물리 정점을 2,534→678개로 줄였다. 16·20·24인 실접속 필드·던전에서 원격 망토, 타격 및 정상 종료를 확인했다. 24인 던전은 기능 검증 통과, 서버 종합 틱 기준 미달이며 가용 물리 메모리 최저는 5,065MiB였다. 별도 200체 화면 렌더 시험의 실제 소켓은 0개다. [실접속 망토 결과](../../Performance/README.md#스펠블레이드-원격-경량-망토-적용--2026-11-24) · [200체 화면 렌더 시험](../../Performance/README.md#스펠블레이드-망토-계산-주기와-물리-메시-비교--2026-11-24)
 
@@ -51,9 +51,9 @@
 
 ## Phase 1~3 후속 회귀와 Iris 실측
 
-선행 Phase 1~3은 헤드리스 서버 기본 애니메이션, 소유자 복제, 전투·진영·PvE·부활·투사체, 장비와 온라인 저장, 경고 VFX·Cloth·오디오·UI, 탈것·스트리밍·에셋 검증기를 수정했다. 기존 흩어진 사용자 변경도 같은 작업 트리에 있다. 선행 40인 Iris 필드와 24인 Iris 던전의 `worldTickBudgetMet`은 모두 통과했다. 40인 공격 p99는 61.93ms, 33.33ms 초과는 6틱이었다. 24인 던전의 대기 p95는 4.16ms, 공격 중 33.33ms 초과는 0틱이었다. [선행 99건 회귀](../../../Saved/Validation/Continuation_20261014/AuditFixFinal_20261124/index.json) · [40인 필드](../../../Saved/Validation/Continuation_20261014/AuditFixField40_Iris_20261124/verification.json) · [24인 던전](../../../Saved/Validation/Continuation_20261014/AuditFixDungeon24_Iris_20261124/verification.json)
+선행 Phase 1~3은 헤드리스 서버 기본 애니메이션, 소유자 복제, 전투·진영·PvE·부활·투사체, 장비와 온라인 저장, 경고 VFX·Cloth·오디오·UI, 탈것·스트리밍·에셋 검증기를 수정했다. 기존 흩어진 사용자 변경도 같은 작업 트리에 있다. 선행 40인 Iris 필드와 24인 Iris 던전의 `worldTickBudgetMet`은 모두 통과했다. 40인 공격 p99는 61.93ms, 33.33ms 초과는 6틱이었다. 24인 던전의 대기 p95는 4.16ms, 공격 중 33.33ms 초과는 0틱이었다. 선행 99건 회귀 (로컬 `Saved/Validation/Continuation_20261014/AuditFixFinal_20261124/index.json`) · 40인 필드 (로컬 `Saved/Validation/Continuation_20261014/AuditFixField40_Iris_20261124/verification.json`) · 24인 던전 (로컬 `Saved/Validation/Continuation_20261014/AuditFixDungeon24_Iris_20261124/verification.json`)
 
-- **신규 계약 보호.** PvE의 플레이어·같은 인카운터 NPC 판정과 무소속 NPC 예외, 사망 공격자·GAS 태그·Mover 입력, 보스 이베이드 체력 복구, 아군 뒤 벽 및 적 판정, 원격 Mover 기수와 미확정 소유권의 Cloth 경계, 급강하 부스트 비용, 높은 미로드 지형 위의 디테일 그리드를 검증했다. 실제 D3D12에서는 활성 경고의 원격 스폰 예산·불투명도 면제를 확인했다. [집중 회귀 102/102](../../../Saved/Validation/Continuation_20261014/AuditFollowupContractsFinal_20261124/index.json) · [D3D12 경고 회귀 1/1](../../../Saved/Validation/Continuation_20261014/AuditFollowupWarningRHI_20261124/index.json)
+- **신규 계약 보호.** PvE의 플레이어·같은 인카운터 NPC 판정과 무소속 NPC 예외, 사망 공격자·GAS 태그·Mover 입력, 보스 이베이드 체력 복구, 아군 뒤 벽 및 적 판정, 원격 Mover 기수와 미확정 소유권의 Cloth 경계, 급강하 부스트 비용, 높은 미로드 지형 위의 디테일 그리드를 검증했다. 실제 D3D12에서는 활성 경고의 원격 스폰 예산·불투명도 면제를 확인했다. 집중 회귀 102/102 (로컬 `Saved/Validation/Continuation_20261014/AuditFollowupContractsFinal_20261124/index.json`) · D3D12 경고 회귀 1/1 (로컬 `Saved/Validation/Continuation_20261014/AuditFollowupWarningRHI_20261124/index.json`)
 - **재현에서 확인한 수정.** 투사체가 아군 뒤의 같은 스윕 구간을 다시 검사해 벽이나 적을 놓치지 않게 했다. 겹친 아군이 많을 때는 루프를 제한하고 다음 틱에서 나머지 구간을 처리한다. 경고의 예산 면제는 즉시 스폰과 비동기 에셋 로드 완료가 같은 판정 함수를 사용한다. [투사체 경로](../../../Source/Project_JCharacter/Private/Combat/Project_JProjectileManagerSubsystem.cpp) · [경고 스폰과 불투명도](../../../Source/Project_JCharacter/Private/Components/Project_JCombatPresentationComponent.cpp)
 
 ### 필드 실접속과 Burst 스파이크
@@ -66,9 +66,9 @@
 | 40인, 생성기 하나, 트레이스 | 40/40 | 27.25 / 45.15ms | 4틱 | 통과 | 4,966MiB |
 | 24인, D3D12 관측 클라이언트 하나 | 24/24 | 23.37 / 33.65ms | 2틱 | 통과 | 4,814MiB |
 
-24인 렌더 실행은 원격 경량 망토 23개와 소유 캐릭터 원본을 확인했다. 공격 중앙 FPS 75.82, 프레임 p95 24.20ms, 화면 인원 중앙 24명이었다. 기존 Generic 필드 24인 렌더의 중앙 95.86FPS와 비교해 낮았으며, 복제 방식·실행 구성·빌드가 달라 프레임 차이의 원인은 분리되지 않았다. [두 생성기 중단](../../../Saved/Validation/Continuation_20261014/AuditFollowupIrisField40Trace_20261124/verification.json) · [40인 결과](../../../Saved/Validation/Continuation_20261014/AuditFollowupIrisField40SingleTrace_20261124/verification.json) · [24인 렌더 결과](../../../Saved/Validation/Continuation_20261014/AuditFollowupIrisField24Rendered_20261124/verification.json)
+24인 렌더 실행은 원격 경량 망토 23개와 소유 캐릭터 원본을 확인했다. 공격 중앙 FPS 75.82, 프레임 p95 24.20ms, 화면 인원 중앙 24명이었다. 기존 Generic 필드 24인 렌더의 중앙 95.86FPS와 비교해 낮았으며, 복제 방식·실행 구성·빌드가 달라 프레임 차이의 원인은 분리되지 않았다. 두 생성기 중단 (로컬 `Saved/Validation/Continuation_20261014/AuditFollowupIrisField40Trace_20261124/verification.json`) · 40인 결과 (로컬 `Saved/Validation/Continuation_20261014/AuditFollowupIrisField40SingleTrace_20261124/verification.json`) · 24인 렌더 결과 (로컬 `Saved/Validation/Continuation_20261014/AuditFollowupIrisField24Rendered_20261124/verification.json`)
 
-40인에서 느린 틱 4개는 `ProjectJ_CohortMeasuredTickStart/End`를 사용해 각 CSV 행과 대조했다. 네 틱의 `ReleaseTickGroup Block`은 28.03~40.71ms, `NetDriver TickFlush`는 4.22~5.77ms였다. 최장 49.29ms 틱에서는 대기 구간 안의 `STAT_USkeletalMeshComponent_RefreshBoneTransforms_GamethreadEval` 40회가 합계 37.50ms였다. 같은 구간의 Iris 업데이트는 2.65ms이며 NetDriver 범위에 포함된다. 네 틱에서 새로 확정된 타격은 0건이었다. 이전 p99와는 생성기 수와 계측 조건이 달라 개선 폭을 판정할 수 없다. [느린 틱 이벤트 요약](../../../Saved/Validation/Continuation_20261014/AuditFollowupIrisField40SingleTrace_20261124/BurstSlowTicks.json) · [Insights CSV 내보내기](../../../Scripts/Validation/Export-DTrace.ps1)
+40인에서 느린 틱 4개는 `ProjectJ_CohortMeasuredTickStart/End`를 사용해 각 CSV 행과 대조했다. 네 틱의 `ReleaseTickGroup Block`은 28.03~40.71ms, `NetDriver TickFlush`는 4.22~5.77ms였다. 최장 49.29ms 틱에서는 대기 구간 안의 `STAT_USkeletalMeshComponent_RefreshBoneTransforms_GamethreadEval` 40회가 합계 37.50ms였다. 같은 구간의 Iris 업데이트는 2.65ms이며 NetDriver 범위에 포함된다. 네 틱에서 새로 확정된 타격은 0건이었다. 이전 p99와는 생성기 수와 계측 조건이 달라 개선 폭을 판정할 수 없다. 느린 틱 이벤트 요약 (로컬 `Saved/Validation/Continuation_20261014/AuditFollowupIrisField40SingleTrace_20261124/BurstSlowTicks.json`) · [Insights CSV 내보내기](../../../Scripts/Validation/Export-DTrace.ps1)
 
 서버 유휴 정책과 별도로 공격 시작은 `GameplayPose`를 요구하고, 현행 근접 검증은 본 갱신 완료에서 소켓·몽타주 위치·루트 샘플을 수집한다. 이 경로를 유지했다. 다음 최적화에서 서버 공격 포즈를 줄이려면 실제 공격 정의별로 소켓 기반과 베이크된 궤적의 소비자를 확인하고, 같은 명중·노티파이·루트 모션을 검증할 수 있는 경로부터 비교해야 한다. 동기 본 평가의 엔진 분기를 일으킨 조건도 추가 분리 대상이다. [공격 포즈 요청과 샘플 소비](../../../Source/Project_JCharacter/Private/Components/Project_JCombatHitValidationComponent.cpp#L240)
 
@@ -77,7 +77,7 @@
 ### Migration 010과 저장 테스트 맵
 
 - **DB.** PGlite 0.3.10의 새 저장소에 001~010을 적용했다. 최초 적용을 실패시킨 기존 함수 인자명과 우편 스키마 불일치를 수정했다. 기존 우편 수령의 서버 가방 용량, 세션, 응답과 원장 계정을 유지하고 던전 골드에 시스템 발행 출처를 추가했다. 보상 정의 버전 저장·재실행·키 충돌, 우편 수령 재시도·오래된 세션·잔액 보존, 미완료 퀘스트 거부와 완료 수령 재실행, 만료 데이터 정리와 재실행을 실제 SQL로 통과했다. 이 실행은 단일 로컬 PGlite의 범위다. [마이그레이션](../../../Infra/migrations/010_online_audit_fixes.sql) · [회귀 스크립트](../../../Infra/scripts/check-mmo-commands.mjs)
-- **보스와 검증기.** 저장본에서 두 테스트 인카운터가 같은 `BP_FieldBoss_Test`의 머리·몸 MultiPart 두 개를 사용하는 것을 확인했다. NPC BP·AnimBP와 두 탈것 후보, 보스·샌드박스·던전 등 선택 13개는 모두 Valid였고 Data Validation 오류·경고는 각각 0건이었다. 두 배치 인카운터의 `CombatDefinition`과 보스의 AnimClass가 비어 있었다. 이 상태는 피해를 받는 테스트 보스 용도로 유지했다. 실제 보스 공격의 경고 VFX까지 연결하려면 해당 장면용 전투 정의, 호환 AnimBP와 경고 타이밍이 있는 공격 몽타주가 필요하다. 경고의 수신부는 별도 D3D12 회귀에서 확인했다. [저장본 에셋 검사](../../../Saved/Validation/Continuation_20261014/AuditFollowupAssets_20261124/verification.json)
+- **보스와 검증기.** 저장본에서 두 테스트 인카운터가 같은 `BP_FieldBoss_Test`의 머리·몸 MultiPart 두 개를 사용하는 것을 확인했다. NPC BP·AnimBP와 두 탈것 후보, 보스·샌드박스·던전 등 선택 13개는 모두 Valid였고 Data Validation 오류·경고는 각각 0건이었다. 두 배치 인카운터의 `CombatDefinition`과 보스의 AnimClass가 비어 있었다. 이 상태는 피해를 받는 테스트 보스 용도로 유지했다. 실제 보스 공격의 경고 VFX까지 연결하려면 해당 장면용 전투 정의, 호환 AnimBP와 경고 타이밍이 있는 공격 몽타주가 필요하다. 경고의 수신부는 별도 D3D12 회귀에서 확인했다. 저장본 에셋 검사 (로컬 `Saved/Validation/Continuation_20261014/AuditFollowupAssets_20261124/verification.json`)
 
 설치 엔진 직접 Editor 증분 빌드와 8모듈 DAG 검사를 통과했다. 작업 원자료는 기존 중앙 보관소에서 당시 실행 이름으로 찾을 수 있다.
 
@@ -90,15 +90,15 @@
    - 전용 서버에서 `PostProcessAnimBlueprint`, `CopyPose` 모듈러 메시 틱, 그리고 `VisualBodyMesh` 리타깃 팔로워(`bEnableFollowerRetarget`·Hand/Foot/Retarget IK)를 비활성화했다. [Project_JPlayerCharacter.cpp](../../../Source/Project_JCharacter/Private/Project_JPlayerCharacter.cpp) · [Project_JNPCCharacter.cpp](../../../Source/Project_JCharacter/Private/Project_JNPCCharacter.cpp) · [Project_JModularMeshComponent.cpp](../../../Source/Project_JCharacter/Private/Components/Project_JModularMeshComponent.cpp) · [Project_JCharacterAnimInstance.Budget.cpp](../../../Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Budget.cpp)
 
 2. **40인 Iris 필드 보스 Burst 스파이크 제거 검증.**
-   - `-UsePerfThreads` 적용 40인 실행([DSZeroBoneEvalField40_Iris_20261124](../../../Saved/Validation/Continuation_20261014/DSZeroBoneEvalField40_Iris_20261124/verification.json), [AllTimers.csv](../../../Saved/Validation/Continuation_20261014/DSZeroBoneEvalField40_Iris_20261124/TraceExport/AllTimers.csv)): 40/40 확정 타격, `worldTickBudgetMet: true`, **측정 구간 `GamethreadEval=0`**, `SetupParallel=960`(총 0.94ms), Burst `worldTickMs` p95 **12.59ms** / p99 **18.50ms** / p100 **18.95ms** (`over33ms: 0`), `strikeTickMs` p100 **10.57ms**.
-   - `-UsePerfThreads` 미적용 30.0Hz 대조군([DSZeroBoneEvalV2_Field40_Iris30Hz_20261124](../../../Saved/Validation/Continuation_20261014/DSZeroBoneEvalV2_Field40_Iris30Hz_20261124/verification.json)): Idle p50 **6.65ms** / p95 **7.62ms**, `strikeTickMs` p100 **14.78ms**, 비베이크 공격의 직렬 본 평가로 Burst `over33ms` 3틱(p100 47.52ms).
+   - `-UsePerfThreads` 적용 40인 실행(DSZeroBoneEvalField40_Iris_20261124 (로컬 `Saved/Validation/Continuation_20261014/DSZeroBoneEvalField40_Iris_20261124/verification.json`), AllTimers.csv (로컬 `Saved/Validation/Continuation_20261014/DSZeroBoneEvalField40_Iris_20261124/TraceExport/AllTimers.csv`)): 40/40 확정 타격, `worldTickBudgetMet: true`, **측정 구간 `GamethreadEval=0`**, `SetupParallel=960`(총 0.94ms), Burst `worldTickMs` p95 **12.59ms** / p99 **18.50ms** / p100 **18.95ms** (`over33ms: 0`), `strikeTickMs` p100 **10.57ms**.
+   - `-UsePerfThreads` 미적용 30.0Hz 대조군(DSZeroBoneEvalV2_Field40_Iris30Hz_20261124 (로컬 `Saved/Validation/Continuation_20261014/DSZeroBoneEvalV2_Field40_Iris30Hz_20261124/verification.json`)): Idle p50 **6.65ms** / p95 **7.62ms**, `strikeTickMs` p100 **14.78ms**, 비베이크 공격의 직렬 본 평가로 Burst `over33ms` 3틱(p100 47.52ms).
 
 3. **24인 렌더 클라이언트 Iris vs Generic 동일 조건 A/B.**
    - 3-way 코어 격리(`Server=15`, `Clients=240`, `RenderedClient=65280`, `-ThinClient -UsePerfThreads -VerifyRemoteCloak`) 비교:
-     - **Iris** ([AB_Field24_Iris_20261124](../../../Saved/Validation/Continuation_20261014/AB_Field24_Iris_20261124/verification.json)): 렌더 Before **84.07 FPS** / Strike **77.44 FPS** (`gpuMs` 2.48/2.54ms), 서버 Burst p95 **10.33ms** (`over33ms: 0`), 송신 **1,651 KiB/s**.
-     - **Generic** ([AB_Field24_Generic_20261124](../../../Saved/Validation/Continuation_20261014/AB_Field24_Generic_20261124/verification.json)): 렌더 Before **78.47 FPS** / Strike **80.93 FPS** (`gpuMs` 2.46/2.48ms), 서버 Burst p95 **15.98ms** (`over33ms: 0`), 송신 **2,308 KiB/s**.
+     - **Iris** (AB_Field24_Iris_20261124 (로컬 `Saved/Validation/Continuation_20261014/AB_Field24_Iris_20261124/verification.json`)): 렌더 Before **84.07 FPS** / Strike **77.44 FPS** (`gpuMs` 2.48/2.54ms), 서버 Burst p95 **10.33ms** (`over33ms: 0`), 송신 **1,651 KiB/s**.
+     - **Generic** (AB_Field24_Generic_20261124 (로컬 `Saved/Validation/Continuation_20261014/AB_Field24_Generic_20261124/verification.json`)): 렌더 Before **78.47 FPS** / Strike **80.93 FPS** (`gpuMs` 2.46/2.48ms), 서버 Burst p95 **15.98ms** (`over33ms: 0`), 송신 **2,308 KiB/s**.
    - 이 실행에서 Iris의 Burst 월드 처리 p95는 약 35%, 송신량은 약 29% 낮았다. Burst 틱 시작 간격 p95는 Iris 48.03ms, Generic 34.08ms였다. 관측 클라이언트 FPS는 공격 전과 공격 중의 순위가 달랐다. 월드 처리 시간은 프로세스 CPU 사용률과 다른 지표이며, 각 구간과 반복 수를 함께 읽는다.
-   - 최종 검증: `Validate-MMOArchitecture.py` `passed: true`, 직접 UBT `Project_JEditor` 빌드 오류·경고 0건, 최종 집중 회귀 99/99 통과([DSZeroBoneEvalFinalReg_20261124](../../../Saved/Validation/Continuation_20261014/DSZeroBoneEvalFinalReg_20261124/index.json)).
+   - 최종 검증: `Validate-MMOArchitecture.py` `passed: true`, 직접 UBT `Project_JEditor` 빌드 오류·경고 0건, 최종 집중 회귀 99/99 통과(DSZeroBoneEvalFinalReg_20261124 (로컬 `Saved/Validation/Continuation_20261014/DSZeroBoneEvalFinalReg_20261124/index.json`)).
 
 4. **당시 후속 작업 후보.**
    - 기본 공격과 호환 공격을 사전 검사하고, 같은 인원·입력의 라이브/베이크 대조에서 본 평가와 타격 일치를 확인하는 후보였다. 적용한 세 공격과 40인 기본 공격의 결과는 아래에 기록한다.
@@ -113,13 +113,13 @@
 - `ProjectJ.Combat.DedicatedMeleeMontageTiming`은 전용 서버 모드에서 실제 NPC 몽타주를 월드 틱으로 재생한다. `OnPostTickPose`가 캡처한 Mover 앵커를 사용한 권위 스윕 패킷과 본 변환 리비전 불변을 확인한다. 공격 요청 해제 후에도 몽타주 요청이 독립적으로 남으며, 몽타주 종료 후 기존 메시 정책으로 복원된다. 비베이크 공격은 본 갱신으로 승격되고 자체 요청을 해제할 때 기존 시인성·URO·노티파이 정책으로 복원된다.
 - 전용 서버 retarget AnimInstance의 초기화 및 갱신에서 `bEnableFollowerRetarget`을 명시적으로 해제했다. `ProjectJ.PlayerLocomotion.CompatibleBodyServerSource`에서 팔로워 틱과 retarget 플래그, 플레이어 소스 메시의 Post Process AnimBP 비활성화를 검증한다.
 - `DA_Spellblade_Equip`의 현재 참조는 `DA_CombatStyle_SpellbladeKit` → `DA_Combo_SpellbladeKit`이다. 해당 조합과 레거시 공격을 함께 사전 검사했다. 레거시 `DA_Attack_Spellblade_LMB1`의 34개 점은 모두 동일했다. 현재 키트의 `Light01` 계열은 두 세그먼트 몽타주로, 기존 베이커의 단일 세그먼트 계약을 벗어난다. 두 경로의 라이브 소켓 경로와 `_Canonical` 테스트 데이터는 유지했다. `AirHeavy`도 약 17.7m의 누적 이동이 관찰되어 공중 경로의 런타임 일치 근거가 확보될 때까지 유지했다.
-- 베이커가 허용한 비공중 공격 `DA_Attack_Longblade_Flurry_3`(30키, 506.1cm), `DA_Attack_Longblade_Kick`(14키, 194.2cm), `DA_Attack_SpellbladeKit_ChordLunge`(21키, 63.4cm)의 궤적을 저장했다. 나머지 후보들은 사전 검사에서 다중 구간, 네이티브 타격 창 부재, 소스 스켈레톤 등의 조건으로 제외됐다. [사전 검사](../../../Saved/Validation/Continuation_20261014/SpellbladeBossFollowup_20261124/preflight.json), [저장 및 검증](../../../Saved/Validation/Continuation_20261014/SpellbladeBossFollowup_20261124/Baked.json)
-- `BP_FieldBoss_Test`에 기존 NPC 비모션매칭 `ABP_NPC_Mover_Unarmed`를 연결했다. 두 저장 맵의 인카운터는 테스트 전용 공격 몽타주와 NPC 활성화 정의를 사용한다. 경고는 몽타주 0.293초에 시작해 0.623초에 해제되고, 원래 0.643초 타격 시작은 유지된다. `ActiveWarningCues`의 공유 네이티브 경고 마커를 사용한다. 루프백 벤치마크는 여전히 배치 인카운터를 제거하고 같은 클래스의 독립 표적을 기존 위치와 25,000 HP 계약으로 생성한다. [에셋 연결 도구](../../../Scripts/Editor/Bind-MMOTestBossCombat.py), [Data Validation](../../../Saved/Validation/Continuation_20261014/SpellbladeBossFollowup_20261124/BossAssets.json)
+- 베이커가 허용한 비공중 공격 `DA_Attack_Longblade_Flurry_3`(30키, 506.1cm), `DA_Attack_Longblade_Kick`(14키, 194.2cm), `DA_Attack_SpellbladeKit_ChordLunge`(21키, 63.4cm)의 궤적을 저장했다. 나머지 후보들은 사전 검사에서 다중 구간, 네이티브 타격 창 부재, 소스 스켈레톤 등의 조건으로 제외됐다. 사전 검사 (로컬 `Saved/Validation/Continuation_20261014/SpellbladeBossFollowup_20261124/preflight.json`), 저장 및 검증 (로컬 `Saved/Validation/Continuation_20261014/SpellbladeBossFollowup_20261124/Baked.json`)
+- `BP_FieldBoss_Test`에 기존 NPC 비모션매칭 `ABP_NPC_Mover_Unarmed`를 연결했다. 두 저장 맵의 인카운터는 테스트 전용 공격 몽타주와 NPC 활성화 정의를 사용한다. 경고는 몽타주 0.293초에 시작해 0.623초에 해제되고, 원래 0.643초 타격 시작은 유지된다. `ActiveWarningCues`의 공유 네이티브 경고 마커를 사용한다. 루프백 벤치마크는 여전히 배치 인카운터를 제거하고 같은 클래스의 독립 표적을 기존 위치와 25,000 HP 계약으로 생성한다. [에셋 연결 도구](../../../Scripts/Editor/Bind-MMOTestBossCombat.py), Data Validation (로컬 `Saved/Validation/Continuation_20261014/SpellbladeBossFollowup_20261124/BossAssets.json`)
 
 ### 검증
 
-- 설치형 UE 5.8 직접 UBT `Project_JEditor Win64 Development` 증분 빌드 성공. 컴파일 오류·경고 0건. 8모듈 DAG 검사 통과. 신규 전용 서버 계약과 기존 Canonical/경고 회귀를 포함한 집중 테스트 **104/104 통과**. 보스/맵 6개와 베이크 공격 3개의 Data Validation 오류·경고 0건. [빌드](../../../Saved/Validation/Continuation_20261014/SpellbladeBossFollowup_20261124/UBTFinal.log), [집중 회귀](../../../Saved/Validation/Continuation_20261014/SpellbladeBossFollowup_20261124/RegFinal/index.json)
-- 로컬 40인 Iris, ThinClient, `-UsePerfThreads -ServerTrace`, 서버/생성기 8스레드씩 격리. 사전 가용 물리 메모리 18,520MiB, 가용 가상 메모리 23,687MiB, 실행 중 물리 메모리 보호 기준 4,096MiB. 40/40 연결에서 40/40 확정 타격과 피해 합계 400을 확인했다. 서버 30Hz 예산을 충족했다. [40인 재실측](../../../Saved/Validation/Continuation_20261014/SpellbladeBossField40_Iris_20261124/verification.json)
+- 설치형 UE 5.8 직접 UBT `Project_JEditor Win64 Development` 증분 빌드 성공. 컴파일 오류·경고 0건. 8모듈 DAG 검사 통과. 신규 전용 서버 계약과 기존 Canonical/경고 회귀를 포함한 집중 테스트 **104/104 통과**. 보스/맵 6개와 베이크 공격 3개의 Data Validation 오류·경고 0건. 빌드 (로컬 `Saved/Validation/Continuation_20261014/SpellbladeBossFollowup_20261124/UBTFinal.log`), 집중 회귀 (로컬 `Saved/Validation/Continuation_20261014/SpellbladeBossFollowup_20261124/RegFinal/index.json`)
+- 로컬 40인 Iris, ThinClient, `-UsePerfThreads -ServerTrace`, 서버/생성기 8스레드씩 격리. 사전 가용 물리 메모리 18,520MiB, 가용 가상 메모리 23,687MiB, 실행 중 물리 메모리 보호 기준 4,096MiB. 40/40 연결에서 40/40 확정 타격과 피해 합계 400을 확인했다. 서버 30Hz 예산을 충족했다. 40인 재실측 (로컬 `Saved/Validation/Continuation_20261014/SpellbladeBossField40_Iris_20261124/verification.json`)
 
 | 40인 Iris 필드 보스 | 이전 병렬 기준선 | 이번 재실측 |
 | --- | ---: | ---: |
@@ -132,15 +132,15 @@
 | 전체 트레이스 `FParallelAnimationEvaluationTask` | 960 | 1,335 |
 | `ProjectJ_Combat_AuthoredMeleePath` | 0 | 0 |
 
-측정 틱의 시작·종료 마커를 CSV와 대조해 전용 서버 직렬 본 평가 0회가 두 실행의 측정 구간에 해당함을 확인했다. 40인 입력이 사용하는 기본 공격은 양쪽에서 라이브 소켓 경로였으므로 틱 차이의 원인을 이번 궤적 베이크에 귀속할 수 없다. 병렬 본 평가 감소와 40인 베이크 효과는 미검증이다. [구간별 타이머 집계](../../../Saved/Validation/Continuation_20261014/SpellbladeBossFollowup_20261124/TraceSummary.json), [Unreal Insights 타이머](../../../Saved/Validation/Continuation_20261014/SpellbladeBossField40_Iris_20261124/TraceExport/AllTimers.csv)
+측정 틱의 시작·종료 마커를 CSV와 대조해 전용 서버 직렬 본 평가 0회가 두 실행의 측정 구간에 해당함을 확인했다. 40인 입력이 사용하는 기본 공격은 양쪽에서 라이브 소켓 경로였으므로 틱 차이의 원인을 이번 궤적 베이크에 귀속할 수 없다. 병렬 본 평가 감소와 40인 베이크 효과는 미검증이다. 구간별 타이머 집계 (로컬 `Saved/Validation/Continuation_20261014/SpellbladeBossFollowup_20261124/TraceSummary.json`), Unreal Insights 타이머 (로컬 `Saved/Validation/Continuation_20261014/SpellbladeBossField40_Iris_20261124/TraceExport/AllTimers.csv`)
 
-로컬 24인 Iris 던전 루프백에서 배치된 클래스와 기존 위치를 사용해 24/24 연결·확정 타격, 30Hz 예산 충족을 재검증했다. Burst p95 / p99 / 최대는 7.49 / 10.65 / 13.06ms이며 33.3ms 초과는 0회다. [24인 재실측](../../../Saved/Validation/Continuation_20261014/SpellbladeBossDungeon24_Iris_20261124/verification.json)
+로컬 24인 Iris 던전 루프백에서 배치된 클래스와 기존 위치를 사용해 24/24 연결·확정 타격, 30Hz 예산 충족을 재검증했다. Burst p95 / p99 / 최대는 7.49 / 10.65 / 13.06ms이며 33.3ms 초과는 0회다. 24인 재실측 (로컬 `Saved/Validation/Continuation_20261014/SpellbladeBossDungeon24_Iris_20261124/verification.json`)
 
 두 최신 실행의 실제 Burst 틱 시작 간격 p95는 필드 34.08ms, 던전 34.04ms였다. `worldTickBudgetMet`은 러너의 월드 처리 기준 통과를 뜻한다. 틱 시작 간격과 운영 정원은 별도로 판단한다.
 
-저장된 두 맵을 로컬 D3D12 PIE에서 실행해 배치 보스의 공격과 `ActiveWarningCues` 기반 네이티브 마커 생성·해제를 확인했다. 두 보스 모두 실제 스펠블레이드 전투 모드와 LMB 입력으로 100 HP에서 처치했다. 필드 보스 처치 후 게임 브리지의 우편 조회가 0건에서 1건으로 바뀌었다. 던전은 필드에서 기존 메뉴 티켓을 발행해 이동했다. 플레이어의 시작 위치를 맞추는 데 테스트 텔레포트를 사용했다. [저장 맵 플레이 검증](../../../Saved/Validation/Continuation_20261014/SpellbladeBossFollowup_20261124/BossPIE.json)
+저장된 두 맵을 로컬 D3D12 PIE에서 실행해 배치 보스의 공격과 `ActiveWarningCues` 기반 네이티브 마커 생성·해제를 확인했다. 두 보스 모두 실제 스펠블레이드 전투 모드와 LMB 입력으로 100 HP에서 처치했다. 필드 보스 처치 후 게임 브리지의 우편 조회가 0건에서 1건으로 바뀌었다. 던전은 필드에서 기존 메뉴 티켓을 발행해 이동했다. 플레이어의 시작 위치를 맞추는 데 테스트 텔레포트를 사용했다. 저장 맵 플레이 검증 (로컬 `Saved/Validation/Continuation_20261014/SpellbladeBossFollowup_20261124/BossPIE.json`)
 
-로컬 PostgreSQL·Nakama와 별도 서버 2대에서 `-VerifyAuthoredSandbox`를 통과했다. 저장된 보스의 처치 신호가 온라인 던전 완료, 우편을 포함하는 보상 영수증 정확히 1건, 출발 앵커 복귀로 이어졌다. 온라인 픽스처는 보스 HP를 0으로 설정한다. 플레이어 LMB 반격은 위 PIE 실행에서 검증했다. [로컬 온라인 검증](../../../Saved/Validation/Continuation_20261014/SpellbladeBossFollowup_20261124/OnlineDungeon.json)
+로컬 PostgreSQL·Nakama와 별도 서버 2대에서 `-VerifyAuthoredSandbox`를 통과했다. 저장된 보스의 처치 신호가 온라인 던전 완료, 우편을 포함하는 보상 영수증 정확히 1건, 출발 앵커 복귀로 이어졌다. 온라인 픽스처는 보스 HP를 0으로 설정한다. 플레이어 LMB 반격은 위 PIE 실행에서 검증했다. 로컬 온라인 검증 (로컬 `Saved/Validation/Continuation_20261014/SpellbladeBossFollowup_20261124/OnlineDungeon.json`)
 
 대표 서버 트레이스, 검증 요약과 변경 전 에셋 백업을 기존 중앙 보관소에 등록했다. 원래 경로와 중앙 경로의 SHA-256을 대조했으며 복원 매핑은 `ArchiveStore/INDEX.csv`와 `Deduplicated.jsonl`에 기록했다.
 
@@ -155,17 +155,17 @@
 
 | 실행 | 서버 확정 타격 / 체력 확인 / 로그아웃 | Burst 월드 처리 p95 / p99 | 틱 시작 간격 p95 | 최저 물리 / 커밋 여유 | 결과 |
 | --- | --- | --- | --- | --- | --- |
-| [필드 16](../../../Saved/Validation/Continuation_20261014/DocGate_Field16_Iris_20261124_214933/verification.json) | 16 / 16 / 16 | 5.19 / 6.92ms | 34.02ms | 8,424 / 12,568MiB | 통과 |
-| [필드 24](../../../Saved/Validation/Continuation_20261014/DocGate_Field24_Iris_20261124_215104/verification.json) | 24 / 24 / 24 | 7.49 / 10.47ms | 34.01ms | 7,402 / 11,502MiB | 통과 |
-| [필드 32](../../../Saved/Validation/Continuation_20261014/DocGate_Field32_Iris_20261124_215359/verification.json) | 32 / 32 / 32 | 9.50 / 13.31ms | 34.02ms | 5,968 / 10,024MiB | 통과 |
-| [필드 40](../../../Saved/Validation/Continuation_20261014/DocGate_Field40_Iris_20261124_215229/verification.json) | 40 / 0 / 0 | 14.01 / 17.84ms, 중단 전 표본 | 34.07ms | 4,063 / 8,026MiB | 물리 메모리 보호 중단 |
+| 필드 16 (로컬 `Saved/Validation/Continuation_20261014/DocGate_Field16_Iris_20261124_214933/verification.json`) | 16 / 16 / 16 | 5.19 / 6.92ms | 34.02ms | 8,424 / 12,568MiB | 통과 |
+| 필드 24 (로컬 `Saved/Validation/Continuation_20261014/DocGate_Field24_Iris_20261124_215104/verification.json`) | 24 / 24 / 24 | 7.49 / 10.47ms | 34.01ms | 7,402 / 11,502MiB | 통과 |
+| 필드 32 (로컬 `Saved/Validation/Continuation_20261014/DocGate_Field32_Iris_20261124_215359/verification.json`) | 32 / 32 / 32 | 9.50 / 13.31ms | 34.02ms | 5,968 / 10,024MiB | 통과 |
+| 필드 40 (로컬 `Saved/Validation/Continuation_20261014/DocGate_Field40_Iris_20261124_215229/verification.json`) | 40 / 0 / 0 | 14.01 / 17.84ms, 중단 전 표본 | 34.07ms | 4,063 / 8,026MiB | 물리 메모리 보호 중단 |
 
 16·24·32인의 Burst는 모두 처리 시간 33.3ms 초과 0틱이었고, 러너 종합 처리 예산을 통과했다. 40인은 체력 25,000→24,600의 서버 피해를 확정한 뒤 `COHORT_MEMORY_STOP`이 발동해 체력 수신과 종료 단계에 진입하지 못했다. 서버·생성기 프로세스는 정상 종료했다. 생성기 Private Bytes 최고값은 24인 6,327MiB, 32인 7,930MiB, 40인 10,141MiB로 증가했다. 실제 실패 조건은 물리 메모리 부족이었다. 앞서 성공한 40인 실행은 더 큰 사전 여유와 8개씩 종료하는 구성이므로 별도 판본으로 유지한다. 이 호스트의 인원 확대는 32인 검증까지이며, 32인은 운영 정원 추정치가 아니다.
 
-별도 [던전 16인 D3D12 관측](../../../Saved/Validation/Continuation_20261014/DocGate_Dungeon16_Iris_RHI_20261124_215530/verification.json)은 서버·생성기·관측을 4/4/8스레드로 분리했다. 타격·체력 수신·로그아웃은 각각 16건이었다. 공격 구간에서 화면 인원 중앙 16, 원격 경량 망토 검증 통과, 중앙 103.90 FPS와 프레임 p95 13.94ms(255표본)를 기록했다. 서버 Burst 월드 처리 p95 7.35ms, 틱 시작 간격 p95 34.20ms, 33.3ms 초과 0틱이었다. 최저 물리/커밋 여유는 4,693/4,719MiB였다. 이 실행은 던전 전투와 화면 표현의 검증이며 온라인 입장·보상과 배치 보스 경고는 위 별도 실행에 근거한다.
+별도 던전 16인 D3D12 관측 (로컬 `Saved/Validation/Continuation_20261014/DocGate_Dungeon16_Iris_RHI_20261124_215530/verification.json`)은 서버·생성기·관측을 4/4/8스레드로 분리했다. 타격·체력 수신·로그아웃은 각각 16건이었다. 공격 구간에서 화면 인원 중앙 16, 원격 경량 망토 검증 통과, 중앙 103.90 FPS와 프레임 p95 13.94ms(255표본)를 기록했다. 서버 Burst 월드 처리 p95 7.35ms, 틱 시작 간격 p95 34.20ms, 33.3ms 초과 0틱이었다. 최저 물리/커밋 여유는 4,693/4,719MiB였다. 이 실행은 던전 전투와 화면 표현의 검증이며 온라인 입장·보상과 배치 보스 경고는 위 별도 실행에 근거한다.
 
-- [집중 회귀](../../../Saved/Validation/Continuation_20261014/DocGate_Focused_20261124_215708/index.json) 7/7 통과. 전용 서버 `MontageTiming`과 라이브 복원, 서버 리타깃 비활성, 공통 피해 권위·투사체, 원격 탑승자 Cloth, D3D12 경고 수명, 비행 스태미나를 확인했다.
-- [PGlite 재실행](../../../Saved/Validation/Continuation_20261014/DocGate_SQL_20261124_215757/Run.log)은 새 테스트 DB에서 001~010 적용과 저장·보상·우편·던전·채널·제작·재시작 회귀를 통과했다. 이번 실행에서는 실제 Nakama·PostgreSQL 서버 통합을 다시 열지 않았다.
+- 집중 회귀 (로컬 `Saved/Validation/Continuation_20261014/DocGate_Focused_20261124_215708/index.json`) 7/7 통과. 전용 서버 `MontageTiming`과 라이브 복원, 서버 리타깃 비활성, 공통 피해 권위·투사체, 원격 탑승자 Cloth, D3D12 경고 수명, 비행 스태미나를 확인했다.
+- PGlite 재실행 (로컬 `Saved/Validation/Continuation_20261014/DocGate_SQL_20261124_215757/Run.log`)은 새 테스트 DB에서 001~010 적용과 저장·보상·우편·던전·채널·제작·재시작 회귀를 통과했다. 이번 실행에서는 실제 Nakama·PostgreSQL 서버 통합을 다시 열지 않았다.
 - 대표 원자료 16개를 중앙 `ArchiveStore`에 하드링크로 등록하고 크기·SHA-256 및 원본과 동일한 파일인지 확인했다. 원래 실행 경로, 중앙 위치와 복원 정보는 기존 `INDEX.csv`와 `Deduplicated.jsonl`에 있다. 새 C++ 빌드·Cook/패키징은 수행하지 않았다.
 
 ## 수용량 추정과 분리 호스트 검증
@@ -207,7 +207,7 @@
 ## 스펠블레이드 실전 공격 전체 베이크
 
 - 실제 장착 경로가 참조하는 29개 정의를 검사했다. 근접 공격 26개의 28개 타격 창을 기존 `/Game/DataAssetSets/AttackDefinition/Spellblade/CombatKit`의 공격 DA에 저장했다. 새로 저장한 23개와 기존 지문·키가 같아 재저장을 건너뛴 3개를 포함한다. 타격 창이 두 개인 Flurry 1·2타는 두 경로를 분리한다. Focus·Mend·Haste는 기존 효과 스킬이고, 이전 `_Canonical` 회귀용 정의는 유지한다. [제작 절차와 재베이크 기준](../../Animation/Authoring/Spellblade_CombatKit.md#근접-타격-궤적-베이크)
-- 타격 창을 완전히 포함하는 세그먼트를 고르고, 120Hz와 최대 64키를 적용했다. 긴 Finisher 창에는 60Hz를 적용했다. 모든 창에서 압축 소스의 키·중간점과 비교했다. 최대 차이는 AirLight의 13.08cm였고 해당 스윕 반지름은 50cm였다. 이 값의 비교 기준은 메시 공간 원본이고, 런타임 블렌딩·루트 이동·이동 표적에서의 판정 일치는 별도 검증 항목이다. [사전 검사](../../../Saved/Validation/Continuation_20261014/SpellbladeFullBake_20261124/Preflight.json) · [저장 기록](../../../Saved/Validation/Continuation_20261014/SpellbladeFullBake_20261124/Applied.json) · [원본 패키지 복원 명세](../../../Saved/Validation/Continuation_20261014/SpellbladeFullBake_20261124/Backups.json)
+- 타격 창을 완전히 포함하는 세그먼트를 고르고, 120Hz와 최대 64키를 적용했다. 긴 Finisher 창에는 60Hz를 적용했다. 모든 창에서 압축 소스의 키·중간점과 비교했다. 최대 차이는 AirLight의 13.08cm였고 해당 스윕 반지름은 50cm였다. 이 값의 비교 기준은 메시 공간 원본이고, 런타임 블렌딩·루트 이동·이동 표적에서의 판정 일치는 별도 검증 항목이다. 사전 검사 (로컬 `Saved/Validation/Continuation_20261014/SpellbladeFullBake_20261124/Preflight.json`) · 저장 기록 (로컬 `Saved/Validation/Continuation_20261014/SpellbladeFullBake_20261124/Applied.json`) · 원본 패키지 복원 명세 (로컬 `Saved/Validation/Continuation_20261014/SpellbladeFullBake_20261124/Backups.json`)
 
 동일한 로컬 Iris 필드 보스 설정에서 `Light01`을 A/B로 측정했다. 두 실행 모두 16개 접속이 피해 160을 합산해 보스 체력을 25,000→24,840으로 바꿨고, 16개 클라이언트가 결과를 받은 후 정상 종료했다. 서버/생성기 코어 마스크 255/65280, ThinClient, `-UsePerfThreads`, 물리 메모리 보호선 4,096MiB를 고정했다. 기존 `MontageTiming`과 새 베이크를 함께 사용한 작업 트리에서의 결과다.
 
@@ -220,9 +220,9 @@
 | Burst 본 갱신 병렬 작업 등록 | 532회 | 0회 |
 | 전체 트레이스 병렬 애니메이션 평가 | 532회, 누적 146.394ms | 0회 |
 
-베이크 적용 후 기본 공격은 서버에서 몽타주 시간과 Mover 루트로 타격 스윕을 수행했다. 두 실행은 모두 `worldTickBudgetMet=true`였고 틱 시작 간격 p95는 비슷했다. 월드 처리 시간 차이는 한 쌍의 단발 A/B에서 관측한 값이며, 워커 누적 시간은 스레드별 실행 시간의 합이다. [라이브 결과](../../../Saved/Validation/Continuation_20261014/SpellbladeFullBake_Field16_Live_20261124/verification.json) · [베이크 결과](../../../Saved/Validation/Continuation_20261014/SpellbladeFullBake_Field16_Baked_20261124/verification.json) · [Insights 타이머 비교](../../../Saved/Validation/Continuation_20261014/SpellbladeFullBake_20261124/ServerTraceComparison.json)
+베이크 적용 후 기본 공격은 서버에서 몽타주 시간과 Mover 루트로 타격 스윕을 수행했다. 두 실행은 모두 `worldTickBudgetMet=true`였고 틱 시작 간격 p95는 비슷했다. 월드 처리 시간 차이는 한 쌍의 단발 A/B에서 관측한 값이며, 워커 누적 시간은 스레드별 실행 시간의 합이다. 라이브 결과 (로컬 `Saved/Validation/Continuation_20261014/SpellbladeFullBake_Field16_Live_20261124/verification.json`) · 베이크 결과 (로컬 `Saved/Validation/Continuation_20261014/SpellbladeFullBake_Field16_Baked_20261124/verification.json`) · Insights 타이머 비교 (로컬 `Saved/Validation/Continuation_20261014/SpellbladeFullBake_20261124/ServerTraceComparison.json`)
 
-- **수행 검증.** Direct UBT `Project_JEditor Win64 Development` 빌드 성공, 새 Editor 프로세스에서 공격 DA 26/26 재로드 및 Data Validation 통과(오류·경고 0건), 집중 회귀 11/11 통과. [재로드 결과](../../../Saved/Validation/Continuation_20261014/SpellbladeFullBake_20261124/Verified.json) · [집중 회귀](../../../Saved/Validation/Continuation_20261014/SpellbladeFullBake_Regression_20261124/index.json)
+- **수행 검증.** Direct UBT `Project_JEditor Win64 Development` 빌드 성공, 새 Editor 프로세스에서 공격 DA 26/26 재로드 및 Data Validation 통과(오류·경고 0건), 집중 회귀 11/11 통과. 재로드 결과 (로컬 `Saved/Validation/Continuation_20261014/SpellbladeFullBake_20261124/Verified.json`) · 집중 회귀 (로컬 `Saved/Validation/Continuation_20261014/SpellbladeFullBake_Regression_20261124/index.json`)
 - **미검증.** 16인 실소켓 A/B의 입력은 기본 공격이었다. 전체 콤보·공중기·이중 타격 창의 라이브 이동 표적 시나리오와 베이크 적용 후 40인 이상은 재측정하지 않았다. 위의 이전 40인 실측과 수용량 외삽은 당시 에셋 판본의 값이다.
 
 ## 대규모 인원 대응 멀티스레딩·Tick 집계 1차 구현 · 2026-11-24
@@ -249,12 +249,12 @@
 ### 검증 결과
 
 - **아키텍처·빌드**: `Validate-MMOArchitecture.py` 통과(8모듈 DAG 유지, 205 기능 / 20 도메인), Direct UBT `Project_JEditor Win64 Development` 성공(**0 errors, 0 warnings**).
-- **집중 회귀 테스트** ([결과](../../../Saved/Validation/Continuation_20261014/MassiveScaleParallelReg_20261124_v2/index.json)): **106/106 통과, 0 failures, 0 warnings** (19.42s).
+- **집중 회귀 테스트** (결과 (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleParallelReg_20261124_v2/index.json`)): **106/106 통과, 0 failures, 0 warnings** (19.42s).
   - 신규 3종(`ProjectJ.Combat.SpatialHistoryAggregation`, `ProjectJ.Combat.ProjectileParallelAndPrune`, `ProjectJ.Mass.ZeroAllocSteadyStateCrowd`) 및 기존 `ProjectJ.Internal.Updates.RewindScheduling`, `ProjectJ.Crowd.MassSpacing` 모두 통과.
   - 이 실행의 필터는 `RewindScheduling`만 선택했으므로 `UrgentAnimationWindow`는 제외됐다. 2차 검증에 현재 Mover 캐릭터를 사용하는 픽스처로 포함했다.
 - **실측 32인 Iris Field Boss 비교** (`-MeasureCombat -BossCombat -FieldArena -ThinClient -UsePerfThreads`, 서버/생성기 코어 마스크 255/65280, 물리 메모리 보호선 4,096MiB; 직전 32인 기준선 vs 스펠블레이드 베이크+대규모 병렬화 통합 작업 트리):
 
-| 지표 (32인 Iris Field Boss) | 변경 전 ([DocGate_Field32](../../../Saved/Validation/Continuation_20261014/DocGate_Field32_Iris_20261124_215359/verification.json)) | 변경 후 ([MassiveScaleField32](../../../Saved/Validation/Continuation_20261014/MassiveScaleField32_Iris_20261124/verification.json)) | 변화 |
+| 지표 (32인 Iris Field Boss) | 변경 전 (DocGate_Field32 (로컬 `Saved/Validation/Continuation_20261014/DocGate_Field32_Iris_20261124_215359/verification.json`)) | 변경 후 (MassiveScaleField32 (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleField32_Iris_20261124/verification.json`)) | 변화 |
 | --- | ---: | ---: | ---: |
 | 타격 확정 / 체력 확인 / 정상 종료 | 32 / 32 / 32 | **32 / 32 / 32** (`25,000→24,680`) | 동일(완주) |
 | Idle `worldTickMs` p95 / p99 | 7.457 / 8.049ms | **6.687 / 6.862ms** | **-10.3% / -14.7%** |
@@ -264,7 +264,7 @@
 | Burst `peakStrikesPerTick` | 14 strikes/tick | 19 strikes/tick | 공격이 묶이는 틱 조건도 달랐다 |
 | Burst `over33ms` / 예산 충족 | 0 / `true` | **0 / `true`** | 통과 |
 
-- **참고 및 보류**: 동일 호스트(32GB RAM)에서 40인 재시도([MassiveScaleField40](../../../Saved/Validation/Continuation_20261014/MassiveScaleField40_Iris_20261124/verification.json))는 37접속 시점에 4,096MiB 물리 메모리 보호선으로 안전 중단됨(호스트 RAM 제약). 100~200인 이상 실측 및 소스 빌드 UE 5.8 Iris 256슬롯 확장 + 독립 `Project_JServer.exe` 패키징 + 분리 호스트 부하 테스트는 다음 인프라 단계 과제로 남긴다.
+- **참고 및 보류**: 동일 호스트(32GB RAM)에서 40인 재시도(MassiveScaleField40 (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleField40_Iris_20261124/verification.json`))는 37접속 시점에 4,096MiB 물리 메모리 보호선으로 안전 중단됨(호스트 RAM 제약). 100~200인 이상 실측 및 소스 빌드 UE 5.8 Iris 256슬롯 확장 + 독립 `Project_JServer.exe` 패키징 + 분리 호스트 부하 테스트는 다음 인프라 단계 과제로 남긴다.
 
 ## 멀티스레딩과 Tick 집계 2차 독립 검증
 
@@ -277,7 +277,7 @@
 | P1 | Async 투사체는 요청과 회수 틱을 교대로 쓰면서 회수 틱의 이동량을 버렸고, 만료나 조회 실패에서 미결 구간을 버리거나 교체할 수 있었다. UE `WorldCollisionAsync.cpp::QueryTraceData`는 완료된 직전 프레임만 반환한다. | 이전 구간을 먼저 확정하고 이번 구간을 제출한다. 조회할 수 없으면 그 구간을 동기로 검사한다. 새 구간을 열기 전에 이전 구간의 벽·동료 통과·관통 상태와 만료를 확정한다. 동기 경로가 기본값이다. [투사체 처리](../../../Source/Project_JCharacter/Private/Combat/Project_JProjectileManagerSubsystem.cpp) |
 | P1 | 생존 대상의 만료 쿨다운이 남고, 투사체가 0개가 되면 정리도 중단됐다. 고유 채널을 오래 발급하는 공격에 연결하면 맵이 세션 동안 커질 수 있다. 저장소 C++의 일반 플레이 호출자는 이번 추적에서 확인되지 않았다. | 월드 시간 만료를 보관하고 미정리 쿨다운이 있을 동안 주기적으로 만료·파괴 대상을 제거한다. 살아 있는 대상에 200개 채널을 만든 후 정리까지 검증한다. [쿨다운 처리](../../../Source/Project_JCharacter/Private/Combat/Project_JProjectileManagerSubsystem.cpp) |
 | P2 | 기존 `UrgentAnimationWindow`의 `ACharacter` 픽스처는 Mover Pawn만 받는 실제 coordinator의 타입 검사에서 반환됐다. | 현행 Spellblade Pawn·coordinator·예산 메시 픽스처로 교체했다. URO 해제, 짧은 재요청, 복원, 파괴를 확인한다. [URO 회귀](../../../Source/Project_JCharacter/Private/Tests/Project_JUpdateOwnershipTests.cpp) |
-| P2 | 로컬 `UnrealEditor-Cmd -server`의 실제 값은 배치 1, 비동기 Dispatch/Cleanup 0/0이었다. 배치는 SystemSettings에서 왔고 뒤의 두 값은 엔진 기본값이었다. UE `ConfigContext.cpp`의 dedicated 플랫폼 경로는 `DedicatedServerEngine.ini`를 사용한다. 현재 `DefaultServerEngine.ini`의 모든 값을 로컬 실행에 적용된 값으로 볼 수 없다. | 24인 검증에서 세 옵션을 서버 프로세스에만 명시 적용했다. 이번 비교에서 성능 이득이 관측되지 않아 다른 서버 정책까지 함께 활성화하는 설정 파일 이관은 보류했다. [기본값 관찰 로그](../../../Saved/Validation/Continuation_20261014/MassiveScaleIndependent16_Observe_20261124/Server.log) |
+| P2 | 로컬 `UnrealEditor-Cmd -server`의 실제 값은 배치 1, 비동기 Dispatch/Cleanup 0/0이었다. 배치는 SystemSettings에서 왔고 뒤의 두 값은 엔진 기본값이었다. UE `ConfigContext.cpp`의 dedicated 플랫폼 경로는 `DedicatedServerEngine.ini`를 사용한다. 현재 `DefaultServerEngine.ini`의 모든 값을 로컬 실행에 적용된 값으로 볼 수 없다. | 24인 검증에서 세 옵션을 서버 프로세스에만 명시 적용했다. 이번 비교에서 성능 이득이 관측되지 않아 다른 서버 정책까지 함께 활성화하는 설정 파일 이관은 보류했다. 기본값 관찰 로그 (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleIndependent16_Observe_20261124/Server.log`) |
 
 ### 확인된 엔진 계약과 남은 경계
 
@@ -302,15 +302,15 @@
 | Burst 처리 33.3ms 초과 | 0틱 | 0틱 |
 | 최저 물리 / 커밋 여유 | 6,451 / 10,171MiB | 6,537 / 10,248MiB |
 
-이번 A/B에서 세 옵션을 켜는 성능 이득은 관측되지 않았다. 단일 비교이므로 0.159ms 차이를 재현 가능한 비용으로 확정할 수 없다. 중앙 Tick 집계 단독 기여율을 구하려면 동일 장비와 압력에서 집계만 바꾼 통제 비교가 필요하다. [24인 기준](../../../Saved/Validation/Continuation_20261014/MassiveScaleIndependent24_EngineDefaults_20261124/verification.json) · [24인 옵션 사용](../../../Saved/Validation/Continuation_20261014/MassiveScaleIndependent24_Optimized_20261124/verification.json)
+이번 A/B에서 세 옵션을 켜는 성능 이득은 관측되지 않았다. 단일 비교이므로 0.159ms 차이를 재현 가능한 비용으로 확정할 수 없다. 중앙 Tick 집계 단독 기여율을 구하려면 동일 장비와 압력에서 집계만 바꾼 통제 비교가 필요하다. 24인 기준 (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleIndependent24_EngineDefaults_20261124/verification.json`) · 24인 옵션 사용 (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleIndependent24_Optimized_20261124/verification.json`)
 
-Insights에서 Burst 틱당 GT p95는 중앙 이력 캡처 **0.0055→0.0053ms**, `PlayerCharacterTick` 합산 **0.0146→0.0161ms**, `WaitForTasks` **0.1059→0.0968ms**, `ReleaseTickGroup Block` **0.9471→1.0266ms**였다. 전체 트레이스의 `TG_PostPhysics` 평균은 각각 약 **0.027ms**였다. Burst의 GT 본 평가는 양쪽 모두 0회였고 베이크 근접 스윕은 양쪽 168회였다. 전체 실행의 `GamethreadEval` 265회씩은 Burst 선택 범위 밖이었다. 실제 시작 간격이 같은 이 조건에서 비용이 집계 함수에 집중됐다는 증거는 없다. [Insights 집계](../../../Saved/Validation/Continuation_20261014/MassiveScaleIndependent24_Optimized_20261124/TickSchedulerComparison.json)
+Insights에서 Burst 틱당 GT p95는 중앙 이력 캡처 **0.0055→0.0053ms**, `PlayerCharacterTick` 합산 **0.0146→0.0161ms**, `WaitForTasks` **0.1059→0.0968ms**, `ReleaseTickGroup Block` **0.9471→1.0266ms**였다. 전체 트레이스의 `TG_PostPhysics` 평균은 각각 약 **0.027ms**였다. Burst의 GT 본 평가는 양쪽 모두 0회였고 베이크 근접 스윕은 양쪽 168회였다. 전체 실행의 `GamethreadEval` 265회씩은 Burst 선택 범위 밖이었다. 실제 시작 간격이 같은 이 조건에서 비용이 집계 함수에 집중됐다는 증거는 없다. Insights 집계 (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleIndependent24_Optimized_20261124/TickSchedulerComparison.json`)
 
 ### 최종 회귀
 
-- 8모듈 DAG 통과. Direct UBT `Project_JEditor Win64 Development` 증분 빌드 성공, 컴파일러 오류·경고 각각 0건. 이전 UBA 세션 디렉터리 청소 권한 메시지는 빌드 로그에 보존했다. [최종 빌드 로그](../../../Saved/Validation/Continuation_20261014/MassiveScaleIndependentGroundedTestBuild_20261124/UBT.log)
-- 1차와 같은 필터에 기존 누락 테스트와 새 Async Sweep을 더해 **110/110 통과**, 실패·경고·미실행 0건. 실제 월드 틱에서 동기·비동기 벽, 아군 통과, 관통 후 중복 타격, swap 제거, 발사자 파괴, 수명 끝 구간을 확인했다. 도중 바닥이 없던 움직이는 NPC 픽스처의 실패도 남겼다. [최종 결과](../../../Saved/Validation/Continuation_20261014/MassiveScaleIndependentGroundedReg_20261124/index.json) · [중간 결과](../../../Saved/Validation/Continuation_20261014/MassiveScaleIndependentFinalReg_20261124/index.json)
-- 최종 빌드의 기본 설정 관찰에서는 16/16 피해·체력·종료, Burst 월드 처리 p95 4.209ms, 틱 시작 간격 p95 34.059ms, 33.3ms 초과 0틱이었다. 24인 스케줄러 A/B 이후 재등록과 개별 Tick 중복 방지를 추가한 판본이다. [최종 실접속](../../../Saved/Validation/Continuation_20261014/MassiveScaleIndependent16_Observe_20261124/verification.json)
+- 8모듈 DAG 통과. Direct UBT `Project_JEditor Win64 Development` 증분 빌드 성공, 컴파일러 오류·경고 각각 0건. 이전 UBA 세션 디렉터리 청소 권한 메시지는 빌드 로그에 보존했다. 최종 빌드 로그 (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleIndependentGroundedTestBuild_20261124/UBT.log`)
+- 1차와 같은 필터에 기존 누락 테스트와 새 Async Sweep을 더해 **110/110 통과**, 실패·경고·미실행 0건. 실제 월드 틱에서 동기·비동기 벽, 아군 통과, 관통 후 중복 타격, swap 제거, 발사자 파괴, 수명 끝 구간을 확인했다. 도중 바닥이 없던 움직이는 NPC 픽스처의 실패도 남겼다. 최종 결과 (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleIndependentGroundedReg_20261124/index.json`) · 중간 결과 (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleIndependentFinalReg_20261124/index.json`)
+- 최종 빌드의 기본 설정 관찰에서는 16/16 피해·체력·종료, Burst 월드 처리 p95 4.209ms, 틱 시작 간격 p95 34.059ms, 33.3ms 초과 0틱이었다. 24인 스케줄러 A/B 이후 재등록과 개별 Tick 중복 방지를 추가한 판본이다. 최종 실접속 (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleIndependent16_Observe_20261124/verification.json`)
 - 실측은 로컬 16·24인 단발 Iris 필드 보스다. 반복 교전, 밀집 투사체 A/B, 접속 100~200인, 24시간 지속시간, Shipping 패키지와 분리 호스트는 이 작업의 검증 범위 밖이다.
 
 ### 100~200인 확장 검증 우선순위
@@ -352,8 +352,8 @@ Insights에서 Burst 틱당 GT p95는 중앙 이력 캡처 **0.0055→0.0053ms**
 ### 검증 결과
 
 - **아키텍처·빌드**: `Validate-MMOArchitecture.py` 통과(8모듈 DAG 유지, 205 features / 20 domains), Direct UBT `Project_JEditor Win64 Development` 성공(**0 errors, 0 warnings**).
-- **집중 회귀 테스트** ([index.json](../../../Saved/Validation/Continuation_20261014/MassiveScaleWave2Reg_20261125/index.json)): **110/110 통과, 0 failures, 0 warnings** (13.61s). 신규 `ProjectJ.Net.IrisCombatPrioritizerPolicy`, `ProjectJ.Combat.MultiPartBinarySearchRewind` 포함.
-- **실접속 24인 Iris Field Boss 검증** ([verification.json](../../../Saved/Validation/Continuation_20261014/MassiveScaleWave2_Field24_Iris_20261125/verification.json) · [Server.log](../../../Saved/Validation/Continuation_20261014/MassiveScaleWave2_Field24_Iris_20261125/Server.log)):
+- **집중 회귀 테스트** (index.json (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleWave2Reg_20261125/index.json`)): **110/110 통과, 0 failures, 0 warnings** (13.61s). 신규 `ProjectJ.Net.IrisCombatPrioritizerPolicy`, `ProjectJ.Combat.MultiPartBinarySearchRewind` 포함.
+- **실접속 24인 Iris Field Boss 검증** (verification.json (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleWave2_Field24_Iris_20261125/verification.json`) · Server.log (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleWave2_Field24_Iris_20261125/Server.log`)):
   - `DedicatedServerEngine.ini` 실제 로딩 확인 (`net.MaxRPCPerNetUpdate:32`, `a.Budget.Enabled:0`), 5계층 Iris 전투 우선순위기 오류·경고 0건.
   - 확정 타격/체력 확인/정상 종료 **24 / 24 / 24** (`25,000 → 24,760`), 틱 시작 간격 p95 **34.062ms**, Idle `worldTickMs` p95 **5.106ms**, Burst `worldTickMs` p50 **4.381ms** / p95 **5.737ms** / p99 **6.991ms** / p100 **7.123ms**(`peakStrikesPerTick=15`, `over33ms=0`, `worldTickBudgetMet=true`).
 - **미검증/후속 항목**: `DedicatedServerEngine.ini`의 DDoS 섹션명(`[DDoSDetection]` vs `[/Script/PacketHandler.DDoSDetection]`) 런타임 활성화 확인, 100~200인 동시 이동+반복 교전+클라이언트 RHI 군중 프레임 실측, UE 5.8 소스 빌드 256슬롯 및 호스트 분리 부하 테스트.
@@ -383,7 +383,7 @@ Insights에서 Burst 틱당 GT p95는 중앙 이력 캡처 **0.0055→0.0053ms**
 
 ### 24인 Iris 전용 서버 실측
 
-같은 호스트에서 전용 서버와 ThinClient 생성기를 코어 집합별로 분리했다. 시작 시 확인한 물리·커밋 여유의 최솟값은 14,727 MiB였고, 실행 중 최소 물리 여유는 4,728 MiB, 최소 커밋 여유는 7,618 MiB였다. 테스트 중 메모리 예약 기준 4,096 MiB를 지켰다. [검증](../../../Saved/Validation/Continuation_20261014/MassiveScaleWave2Independent_FieldIris_20261125/verification.json) · [서버 로그](../../../Saved/Validation/Continuation_20261014/MassiveScaleWave2Independent_FieldIris_20261125/Server.log)
+같은 호스트에서 전용 서버와 ThinClient 생성기를 코어 집합별로 분리했다. 시작 시 확인한 물리·커밋 여유의 최솟값은 14,727 MiB였고, 실행 중 최소 물리 여유는 4,728 MiB, 최소 커밋 여유는 7,618 MiB였다. 테스트 중 메모리 예약 기준 4,096 MiB를 지켰다. 검증 (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleWave2Independent_FieldIris_20261125/verification.json`) · 서버 로그 (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleWave2Independent_FieldIris_20261125/Server.log`)
 
 | 결과 | 수치 |
 | --- | --- |
@@ -403,10 +403,10 @@ Insights에서 Burst 틱당 GT p95는 중앙 이력 캡처 **0.0055→0.0053ms**
 
 ### 완료 검증과 남은 범위
 
-- **빌드와 경계.** direct UBT `Project_JEditor Win64 Development` 성공. 첫 대상 빌드와 fixture 수정 후의 마지막 증분 빌드가 모두 종료 코드 0이었다. 아키텍처 검사에서 8모듈 DAG, 205 기능, 20 도메인을 확인했다. [마지막 빌드](../../../Saved/Validation/Continuation_20261014/MassiveScaleWave2IndependentFinalBuild_20261125/UBT.log)
-- **확장 자동화.** 최초 필터에서 발견된 202건과 별도 표현 수명 회귀 3건이 통과했다. 초기 RHI 실행은 128건을 완료한 뒤 재진입 fixture에서 종료됐다. 해당 fixture 및 오래된 애니메이션 경고 기대를 바로잡고 부족한 항목을 다시 실행했다. 같은 런타임 코드에서 원본 로그와 이후 두 개 결과를 합산한 **고유 테스트 205/205**다. Gateway 입장·종료, 요청 한도, 실제 루프백 HTTP, 실제 Iris, Niagara 풀/경고, 사망·재진입, UMG/HUD, 전용 서버 MontageTiming, AuthorityHitOrigin, MultiPart 회귀를 포함한다. [테스트별 근거](../../../Saved/Validation/Continuation_20261014/MassiveScaleWave2IndependentFinal_20261125/Wave2RegressionSummary.json)
-- **영속 저장.** SQLite에서 실제 인벤토리 명령 12,289건과 재로드를 통과했다. 별도 스트림에서 16,384건을 처리하고 2개 레코드와 65개 영수증으로 제한되는 것을 확인했다. 새 로컬 PGlite DB에서 마이그레이션과 보상·우편·리스/멱등·재시작 회귀를 통과했다. Nakama 서비스 포트 계약과 로컬 Gateway HTTP도 통과했으며 별도 native Nakama와 PostgreSQL 실행 파일을 쓰는 `NakamaRealMailClaim` 종단 테스트는 이번 환경에서 실행하지 않았다. [SQL 결과](../../../Saved/Validation/Continuation_20261014/MassiveScaleWave2Independent_SQL_20261125/Run.log)
-- **그래픽/UI.** uncooked D3D12 standalone에서 그래픽 UI 적용, 저장, 값 재로드와 관련 CVar를 확인했다. 전체 `ProjectJUIRuntimeSmoke`는 `RequiresCookedData()`가 성공 전제라 이번에는 검증 범위에서 빠졌다. 다인원 카메라의 실제 FPS는 미측정이다. [그래픽 스모크](../../../Saved/Validation/Continuation_20261014/MassiveScaleWave2Independent_GraphicsSmoke_20261125/Run.log)
+- **빌드와 경계.** direct UBT `Project_JEditor Win64 Development` 성공. 첫 대상 빌드와 fixture 수정 후의 마지막 증분 빌드가 모두 종료 코드 0이었다. 아키텍처 검사에서 8모듈 DAG, 205 기능, 20 도메인을 확인했다. 마지막 빌드 (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleWave2IndependentFinalBuild_20261125/UBT.log`)
+- **확장 자동화.** 최초 필터에서 발견된 202건과 별도 표현 수명 회귀 3건이 통과했다. 초기 RHI 실행은 128건을 완료한 뒤 재진입 fixture에서 종료됐다. 해당 fixture 및 오래된 애니메이션 경고 기대를 바로잡고 부족한 항목을 다시 실행했다. 같은 런타임 코드에서 원본 로그와 이후 두 개 결과를 합산한 **고유 테스트 205/205**다. Gateway 입장·종료, 요청 한도, 실제 루프백 HTTP, 실제 Iris, Niagara 풀/경고, 사망·재진입, UMG/HUD, 전용 서버 MontageTiming, AuthorityHitOrigin, MultiPart 회귀를 포함한다. 테스트별 근거 (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleWave2IndependentFinal_20261125/Wave2RegressionSummary.json`)
+- **영속 저장.** SQLite에서 실제 인벤토리 명령 12,289건과 재로드를 통과했다. 별도 스트림에서 16,384건을 처리하고 2개 레코드와 65개 영수증으로 제한되는 것을 확인했다. 새 로컬 PGlite DB에서 마이그레이션과 보상·우편·리스/멱등·재시작 회귀를 통과했다. Nakama 서비스 포트 계약과 로컬 Gateway HTTP도 통과했으며 별도 native Nakama와 PostgreSQL 실행 파일을 쓰는 `NakamaRealMailClaim` 종단 테스트는 이번 환경에서 실행하지 않았다. SQL 결과 (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleWave2Independent_SQL_20261125/Run.log`)
+- **그래픽/UI.** uncooked D3D12 standalone에서 그래픽 UI 적용, 저장, 값 재로드와 관련 CVar를 확인했다. 전체 `ProjectJUIRuntimeSmoke`는 `RequiresCookedData()`가 성공 전제라 이번에는 검증 범위에서 빠졌다. 다인원 카메라의 실제 FPS는 미측정이다. 그래픽 스모크 (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleWave2Independent_GraphicsSmoke_20261125/Run.log`)
 - **원자료.** 검증 결과·로그·CSV 중 17개를 기존 중앙 보관소에 등록했다. 기존 경로와 중앙 파일이 동일한 NTFS 파일을 가리키며 크기와 SHA-256이 일치하는 것을 확인했다. 원래 경로가 없을 때의 복원은 [중앙 보관 규칙](../../Maintenance/Local_Archive_Policy.md)을 따른다.
 - **판정.** 로컬 Wave 2 조건부 통과. 동일 NetDriver의 복제 해제·재등록까지 관찰했다. 실제 seamless travel, 드라이버 교체, 100~200인 이상의 반복 교전, 장시간 엔진 상주, 패키지 전용 서버, DDoS 오탐 한계, 두 보스 동시 보상은 미검증이다. Iris 부팅 경고와 활성 복제 중 serializer 등록 순서는 고인원 검증에서 재확인한다.
 
@@ -436,10 +436,10 @@ Wave 2 감사의 후속으로 페이싱·재시도를 갖춘 온라인 보스 �
 ### 검증 결과
 
 - **아키텍처·빌드**: `Validate-MMOArchitecture.py` 통과(8모듈 DAG 유지, 205 features / 20 domains), Direct UBT `Project_JEditor Win64 Development` 성공(**0 errors, 0 warnings**).
-- **확장 회귀 테스트** ([index.json](../../../Saved/Validation/Continuation_20261014/MassiveScaleWave3Reg_20261125_v2/index.json)): **120/120 통과, 0 failures, 0 warnings** (21.58s).
+- **확장 회귀 테스트** (index.json (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleWave3Reg_20261125_v2/index.json`)): **120/120 통과, 0 failures, 0 warnings** (21.58s).
   - 신규 `ProjectJ.Online.DurableOutboxBurstAndRetry`(동시 2보스 400건 보상 64 페이싱 + `Overloaded`/타임아웃 멱등 재시도 400/400 확정 + `INVALID` 1회 즉시 실패), `ProjectJ.UI.GraphicsSettingsPresetVsCustomOverride` 포함.
-- **실접속 24인 Iris Field Boss 검증** ([verification.json](../../../Saved/Validation/Continuation_20261014/MassiveScaleWave3_Field24_Iris_20261125/verification.json)): 확정 타격/체력 확인/정상 종료 **24 / 24 / 24**(`25,000→24,760`), 틱 시작 간격 p95 **34.049ms**, Idle p95 **5.331ms**, Burst `worldTickMs` p50 **4.524ms** / p95 **5.817ms** / p99 **7.141ms**(`strikeTickMs` p95 **5.522ms**, `over33ms=0`, `worldTickBudgetMet=true`).
-- **D3D12 그래픽 설정 UI 스모크** ([Run.log](../../../Saved/Validation/Continuation_20261014/MassiveScaleWave3_GraphicsSmoke_20261125/Run.log)): **`EXIT=0`, `PROJECT_J_GRAPHICS_SETTINGS_SMOKE success=1`**.
+- **실접속 24인 Iris Field Boss 검증** (verification.json (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleWave3_Field24_Iris_20261125/verification.json`)): 확정 타격/체력 확인/정상 종료 **24 / 24 / 24**(`25,000→24,760`), 틱 시작 간격 p95 **34.049ms**, Idle p95 **5.331ms**, Burst `worldTickMs` p50 **4.524ms** / p95 **5.817ms** / p99 **7.141ms**(`strikeTickMs` p95 **5.522ms**, `over33ms=0`, `worldTickBudgetMet=true`).
+- **D3D12 그래픽 설정 UI 스모크** (Run.log (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleWave3_GraphicsSmoke_20261125/Run.log`)): **`EXIT=0`, `PROJECT_J_GRAPHICS_SETTINGS_SMOKE success=1`**.
 - **미검증**: 실제 PostgreSQL/Nakama 2보스 동시 처치 종단 부하, 200인 클라이언트 RHI 오프스크린 몽타주 FPS 비교, UE 5.8 소스 빌드 256슬롯 및 호스트 분리 실측.
 
 ### Wave 3 독립 감사
@@ -453,7 +453,7 @@ Wave 2 감사의 후속으로 페이싱·재시도를 갖춘 온라인 보스 �
 | P1 | UE `USkeletalMeshComponent`는 망토나 리타깃 결과가 화면에 있어도 숨은 소스 메시의 최근 렌더 상태로 몽타주 전용 여부를 판단한다. 보이는 소스와 가시성 기반 포즈 정책에 한해 원격 `MontageTiming`을 적용한다. Full pose 요청이 우선하며 설정 변경과 가시성 변화도 재평가한다. 저장된 Spellblade의 소스는 숨겨져 있고 기본 정책은 full pose여서 현재는 보호 경로를 유지한다. [메시 정책](../../../Source/Project_JCharacter/Private/Animation/Project_JBudgetedSkeletalMeshComponent.cpp) |
 | P2 | 프리셋 모드 초기화도 동일한 적용 함수를 거쳐 이전 프로필/PIE가 남긴 `SetByGameSetting` 값을 해제한다. UE 5.8 `TConsoleVariable::Unset`은 우선순위 기록의 남은 최고 값을 즉시 설치한다. Effects 행만 수정한 경우 명시적 커스텀 값은 유지하고, 전체 프리셋 전환에서 군중 값을 따로 편집하지 않으면 프리셋을 따른다. [그래픽 정책](../../../Source/Project_J/UI/Project_JGraphicsSettings.cpp) |
 
-`FProjectJOutboxGatewayHTTPTest`는 Unreal의 실제 Nakama ServicePort와 Gateway를 127.0.0.1 TCP 응답기에 연결했다. 미설정 URL의 동기 실패, Gateway 한도 포화, HTTP 503 뒤 `REPLAYED`를 확인했다. 두 실제 요청은 서로 다른 전송 ID, 같은 멱등 키, 같은 UTF-8 인텐트를 보냈다. 별도 SQL 회귀에서는 실제 Nakama 보상 RPC 함수의 SQL과 바인딩을 PGlite에서 실행했다. `(defeat_id, character_id)` 영수증으로 첫 2통의 우편을 확정했고, DB 재시작 후 같은 우편 ID를 반환했으며 변경 페이로드는 `KEY_REUSED`였다. 기존 보스·던전 보상·우편·리스 회귀도 통과했다. [HTTP 테스트](../../../Source/Project_J/Private/Tests/Project_JGatewayHTTPTests.cpp) · [PGlite 로그](../../../Saved/Validation/Continuation_20261014/MassiveScaleWave3Independent_SQLWire_20261125/Run.log)
+`FProjectJOutboxGatewayHTTPTest`는 Unreal의 실제 Nakama ServicePort와 Gateway를 127.0.0.1 TCP 응답기에 연결했다. 미설정 URL의 동기 실패, Gateway 한도 포화, HTTP 503 뒤 `REPLAYED`를 확인했다. 두 실제 요청은 서로 다른 전송 ID, 같은 멱등 키, 같은 UTF-8 인텐트를 보냈다. 별도 SQL 회귀에서는 실제 Nakama 보상 RPC 함수의 SQL과 바인딩을 PGlite에서 실행했다. `(defeat_id, character_id)` 영수증으로 첫 2통의 우편을 확정했고, DB 재시작 후 같은 우편 ID를 반환했으며 변경 페이로드는 `KEY_REUSED`였다. 기존 보스·던전 보상·우편·리스 회귀도 통과했다. [HTTP 테스트](../../../Source/Project_J/Private/Tests/Project_JGatewayHTTPTests.cpp) · PGlite 로그 (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleWave3Independent_SQLWire_20261125/Run.log`)
 
 최대 4,096건 재진입 시험은 소스 월드 종료 뒤까지 접수분을 처리하고 중복 콜백을 무시했다. 타임아웃은 최초 1회와 재시도 5회까지만 진행한다. 큐는 프로세스 메모리에 있으므로 서버가 재시작하거나 재시도 한도를 소진한 작업의 복구에는 영속 작업 기록이 필요하다. 온라인 퀘스트 진척은 여전히 별도 직접 제출이며 보스 2개와 서로 다른 기여자 400명이 겹치면 이론상 보상 64 + 퀘스트 400건까지 동시에 경쟁할 수 있다. 던전 클리어는 별도 인스턴스 키의 불변 본문을 워커 생존·유효 기간에만 재시도한다. [던전 클리어](../../../Source/Project_J/World/Project_JDungeonInstanceSubsystem.cpp)
 
@@ -461,14 +461,14 @@ Wave 2 감사의 후속으로 페이싱·재시도를 갖춘 온라인 보스 �
 
 #### 빌드·확장 회귀·그래픽 설정
 
-- 설치 UE 5.8 Direct UBT의 `Project_JEditor Win64 Development` 성공, 컴파일 오류·경고 0건. 아키텍처 검사에서 8모듈 DAG, 205 기능, 20 도메인을 확인했다. [마지막 빌드](../../../Saved/Validation/Continuation_20261014/MassiveScaleWave3IndependentFixtureBuild_20261125/UBT.log)
-- 최초 120건에서 빠진 Gateway 실제 HTTP, 영속 저장, 무기·장비, Reaudit/SourceAudit, 원격 군중 애니메이션·표현 테스트를 추가했다. **고유 225/225 통과.** 첫 확장 실행에서 장비 Instant 효과 거절을 기존의 스탯 대체 적용으로 잘못 기대한 fixture가 실패했다. 거절과 정상 대체 적용을 각각 검증하도록 수정했다. 재로드 fixture는 UE 월드 종료 순서를 바로잡았다. 두 시험을 같은 런타임 코드에서 재실행했다. 남은 경고는 Gateway 실제 HTTP의 고의 초과 응답 거절을 기록한 libcurl 로그다. [테스트별 결과](../../../Saved/Validation/Continuation_20261014/MassiveScaleWave3IndependentFixtureRegression_20261125/Wave3RegressionSummary.json)
-- D3D12 설정 창을 통해 Effects 행만 변경했을 때의 커스텀 유지, 전체 프리셋 변경에 따른 커스텀 해제, 0.35/0.65/0.85의 수치 왕복과 재적용을 확인했다. 두 번째 프로세스에서 같은 프로필의 `False` 플래그와 Effects@3의 0.85를 재확인했다. [설정 적용](../../../Saved/Validation/Continuation_20261014/MassiveScaleWave3Independent_GraphicsFinal_20261125/Settings.log) · [프로필 재시작](../../../Saved/Validation/Continuation_20261014/MassiveScaleWave3Independent_GraphicsFinal_20261125/Restart.log)
+- 설치 UE 5.8 Direct UBT의 `Project_JEditor Win64 Development` 성공, 컴파일 오류·경고 0건. 아키텍처 검사에서 8모듈 DAG, 205 기능, 20 도메인을 확인했다. 마지막 빌드 (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleWave3IndependentFixtureBuild_20261125/UBT.log`)
+- 최초 120건에서 빠진 Gateway 실제 HTTP, 영속 저장, 무기·장비, Reaudit/SourceAudit, 원격 군중 애니메이션·표현 테스트를 추가했다. **고유 225/225 통과.** 첫 확장 실행에서 장비 Instant 효과 거절을 기존의 스탯 대체 적용으로 잘못 기대한 fixture가 실패했다. 거절과 정상 대체 적용을 각각 검증하도록 수정했다. 재로드 fixture는 UE 월드 종료 순서를 바로잡았다. 두 시험을 같은 런타임 코드에서 재실행했다. 남은 경고는 Gateway 실제 HTTP의 고의 초과 응답 거절을 기록한 libcurl 로그다. 테스트별 결과 (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleWave3IndependentFixtureRegression_20261125/Wave3RegressionSummary.json`)
+- D3D12 설정 창을 통해 Effects 행만 변경했을 때의 커스텀 유지, 전체 프리셋 변경에 따른 커스텀 해제, 0.35/0.65/0.85의 수치 왕복과 재적용을 확인했다. 두 번째 프로세스에서 같은 프로필의 `False` 플래그와 Effects@3의 0.85를 재확인했다. 설정 적용 (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleWave3Independent_GraphicsFinal_20261125/Settings.log`) · 프로필 재시작 (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleWave3Independent_GraphicsFinal_20261125/Restart.log`)
 - 원격 몽타주 회귀는 실제 Spellblade BP와 공격 몽타주를 PIE의 원격 역할로 실행했다. 시험에서 소스를 보이게 한 뒤 오프스크린 몽타주 진행과 렌더 진입 시 갱신 허용, 긴급 애니메이션 요청과의 공존, 소스 숨김·CVar 변경·역할 변경 시 full pose 복귀, 마지막 몽타주 종료 시 원래 설정 복원을 확인했다. 저장된 Spellblade의 숨은 소스는 full pose 보호를 유지한다. [몽타주 회귀](../../../Source/Project_JCharacter/Private/Tests/Project_JUpdateOwnershipTests.cpp)
 
 #### 24인 Iris 실접속과 확인된 범위
 
-동일 호스트의 NullRHI 전용 서버와 ThinClient를 코어 집합별로 분리했다. 물리 메모리 최소 여유는 4,472 MiB, 커밋 최소 여유는 7,760 MiB였다. 둘 다 종료 코드 0이었다. [24인 실측 결과](../../../Saved/Validation/Continuation_20261014/MassiveScaleWave3Independent_FieldIris_20261125/verification.json)
+동일 호스트의 NullRHI 전용 서버와 ThinClient를 코어 집합별로 분리했다. 물리 메모리 최소 여유는 4,472 MiB, 커밋 최소 여유는 7,760 MiB였다. 둘 다 종료 코드 0이었다. 24인 실측 결과 (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleWave3Independent_FieldIris_20261125/verification.json`)
 
 | 항목 | 재측정 |
 | --- | --- |
@@ -480,8 +480,8 @@ Wave 2 감사의 후속으로 페이싱·재시도를 갖춘 온라인 보스 �
 
 코호트는 보스 피해와 복제를 검증하고 살아 있는 보스 체력에서 종료한다. 보스 처치 후 보상 동시 제출이나 GPU 부하와 섞이지 않는 실험이다. Wave 2와 Wave 3의 수치 차이를 단일 코드 변경의 성능 효과로 귀속하려면 별도 A/B가 필요하다.
 
-- D3D12 관측 프로세스를 포함한 12인 실접속은 접속 전 물리 여유 4,067 MiB에서 4,096 MiB 보호선에 걸려 종료됐다. 해당 구성의 FPS와 연결 결과는 미검증이다. [메모리 중단 기록](../../../Saved/Validation/Continuation_20261014/MassiveScaleWave3Independent_RenderedIris_20261125/verification.json)
-- 별도 단일 D3D12 게임 프로세스에서 실제 Spellblade 24명, 로컬 플레이어 1명과 이동·동시 몽타주를 1280×720로 검증했다. 정상 종료와 5,623프레임을 기록했다. 공격 단계에서 최대 24개 몽타주가 동시에 재생됐으며, 캡처 요청 프레임과 구간 첫 0.25초를 제외한 프레임 시간 p50/p95는 **8.491/11.026 ms**였다. 단순 로컬 장면이므로 원격 트레일 지연과 서버 동시 구동 시 FPS는 여기서 확인할 수 없다. [검증](../../../Saved/Validation/WholeProjectAudit_20261013/MassiveScaleWave3Independent_rendered24_20261125/verification.json) · [프레임 원자료](../../../Saved/Validation/WholeProjectAudit_20261013/MassiveScaleWave3Independent_rendered24_20261125/frames.csv)
+- D3D12 관측 프로세스를 포함한 12인 실접속은 접속 전 물리 여유 4,067 MiB에서 4,096 MiB 보호선에 걸려 종료됐다. 해당 구성의 FPS와 연결 결과는 미검증이다. 메모리 중단 기록 (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleWave3Independent_RenderedIris_20261125/verification.json`)
+- 별도 단일 D3D12 게임 프로세스에서 실제 Spellblade 24명, 로컬 플레이어 1명과 이동·동시 몽타주를 1280×720로 검증했다. 정상 종료와 5,623프레임을 기록했다. 공격 단계에서 최대 24개 몽타주가 동시에 재생됐으며, 캡처 요청 프레임과 구간 첫 0.25초를 제외한 프레임 시간 p50/p95는 **8.491/11.026 ms**였다. 단순 로컬 장면이므로 원격 트레일 지연과 서버 동시 구동 시 FPS는 여기서 확인할 수 없다. 검증 (로컬 `Saved/Validation/WholeProjectAudit_20261013/MassiveScaleWave3Independent_rendered24_20261125/verification.json`) · 프레임 원자료 (로컬 `Saved/Validation/WholeProjectAudit_20261013/MassiveScaleWave3Independent_rendered24_20261125/frames.csv`)
 - **판정은 로컬 조건부 통과.** 보상 큐는 월드 종료를 견디고 서버 프로세스 재시작 전까지 유지된다. 프로세스 손실 이후 미전송 보상 복구, 실제 Nakama/PostgreSQL 동시 처치, 100~200인 네트워크 교전과 원격 화질 A/B는 검증 범위에 남는다. 재현 로그·수치·캡처는 기존 로컬 중앙 보관소에 SHA-256을 확인해 등록했다. [복원 규칙](../../Maintenance/Local_Archive_Policy.md)
 
 #### Wave 1~3 종합 잔여 과제
@@ -509,8 +509,8 @@ Wave 3 독립 감사에서 최우선 운영 잔여 과제로 지목된 **서버 
 
 - **아키텍처 DAG 검사**: `python -B Scripts/Validation/Validate-MMOArchitecture.py` → `passed: true` (8모듈 DAG, 205 기능, 20 도메인 무결성 확인).
 - **직접 UBT Editor 빌드**: `UnrealBuildTool.exe Project_JEditor Win64 Development` → **성공 (오류 0, 경고 0, 30.08s)**.
-- **확장 회귀 스위트** ([Automation.log](../../../Saved/Validation/Continuation_20261014/MassiveScaleWave4Reg_20261125/Automation.log)): **125 / 125 통과 (`FAILED=0, NOTRUN=0`)**. Outbox 5종(`DurableOutboxBurstAndRetry`, `OutboxCrashRestartRecovery`, `OutboxDeadLetterRedriveAndFaultClose`, `OutboxGatewayHTTP`, `OutboxSynchronousReply`) 전원 통과.
-- **실접속 24인 Iris 필드 보스 재검증** ([verification.json](../../../Saved/Validation/Continuation_20261014/MassiveScaleWave4_Field24_Iris_20261125/verification.json)): 연결/확정 타격/체력 확인/정상 종료 **24 / 24 / 24 / 24** (`25,000 → 24,760`, `serverExit=0`, `generatorExit=0`), Idle `worldTickMs` p95 **4.835 ms**, Burst `worldTickMs` p50 **4.198 ms** / p95 **5.377 ms** / p99 **6.675 ms** / 최대 **7.572 ms** (`over33ms=0`, `worldTickBudgetMet=true`, 틱 시작 간격 p95 **34.057 ms**).
+- **확장 회귀 스위트** (Automation.log (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleWave4Reg_20261125/Automation.log`)): **125 / 125 통과 (`FAILED=0, NOTRUN=0`)**. Outbox 5종(`DurableOutboxBurstAndRetry`, `OutboxCrashRestartRecovery`, `OutboxDeadLetterRedriveAndFaultClose`, `OutboxGatewayHTTP`, `OutboxSynchronousReply`) 전원 통과.
+- **실접속 24인 Iris 필드 보스 재검증** (verification.json (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleWave4_Field24_Iris_20261125/verification.json`)): 연결/확정 타격/체력 확인/정상 종료 **24 / 24 / 24 / 24** (`25,000 → 24,760`, `serverExit=0`, `generatorExit=0`), Idle `worldTickMs` p95 **4.835 ms**, Burst `worldTickMs` p50 **4.198 ms** / p95 **5.377 ms** / p99 **6.675 ms** / 최대 **7.572 ms** (`over33ms=0`, `worldTickBudgetMet=true`, 틱 시작 간격 p95 **34.057 ms**).
 - **남은 인프라 규모 게이트**: 실제 Nakama/PostgreSQL 다중 보스·퀘스트·인벤토리·던전 동시 부하, 소스 빌드 UE 5.8 256슬롯 Iris 및 호스트 분리 100~200인 교전, 숨은 포즈 소스 원격 화질 A/B, 24시간 상주·seamless travel 게이트는 별도 운영 인프라 검증 단계로 유지한다.
 
 #### Wave 4 독립 감사
@@ -526,18 +526,18 @@ Wave 3 독립 감사에서 최우선 운영 잔여 과제로 지목된 **서버 
 
 정상 틱의 SQLite 열기·읽기·쓰기·종료는 단일 스레드풀 작업으로 직렬화한다. UE 5.8 `Async.h`의 비멀티스레드 인라인 분기를 피하기 위해 스레드풀이 없는 환경에서는 접수를 막는다. 정상 종료에서는 마지막 디스크 작업의 완료를 기다리며, 워커는 GT 완료 콜백을 기다리지 않는다. 저장소를 열지 못한 경우 와이어 송신 없이 종료하고 프로세스 재시작으로 복구를 재시도한다. [저장소](../../../Source/Project_J/Backend/Project_JOnlineOutboxStore.cpp) · [워커·종료](../../../Source/Project_J/Backend/Project_JOnlineWorldSubsystem.cpp)
 
-SQLite 커밋 도중 Win32 VFS의 파일 동기화 직후 테스트 프로세스를 종료했고, 다음 프로세스에서 핫 저널의 존재와 전체 혼합 배치 롤백을 확인했다. 별도 실행에서 커밋 직후 종료했을 때는 신규 추가·확정 삭제·격리가 모두 유지됐다. 각 재오픈에서 `quick_check`를 통과했다. 종료 코드는 준비·강제 종료·롤백 확인·커밋 후 강제 종료·커밋 상태 확인 순으로 **0 / 99 / 0 / 99 / 0**이었다. [프로세스 기록](../../../Saved/Validation/Continuation_20261014/MassiveScaleWave4IndependentNative_20261125/processes.json)
+SQLite 커밋 도중 Win32 VFS의 파일 동기화 직후 테스트 프로세스를 종료했고, 다음 프로세스에서 핫 저널의 존재와 전체 혼합 배치 롤백을 확인했다. 별도 실행에서 커밋 직후 종료했을 때는 신규 추가·확정 삭제·격리가 모두 유지됐다. 각 재오픈에서 `quick_check`를 통과했다. 종료 코드는 준비·강제 종료·롤백 확인·커밋 후 강제 종료·커밋 상태 확인 순으로 **0 / 99 / 0 / 99 / 0**이었다. 프로세스 기록 (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleWave4IndependentNative_20261125/processes.json`)
 
-실제 전용 서버 시작 다섯 건에서 Mock은 기본 DB를 만들지 않았고, 비-Mock의 19142·19143 포트는 서로 다른 DB를 만들었다. INI를 지정하면 기본 경로를 건너뛰었고, CLI와 INI를 함께 주면 CLI 파일만 생성됐다. 생성된 DB의 `PJOB` 앱 ID, 스키마 버전 1과 `quick_check`를 외부 읽기로 대조했다. [경로 결과](../../../Saved/Validation/Continuation_20261014/MassiveScaleWave4IndependentPaths_20261125/paths.json)
+실제 전용 서버 시작 다섯 건에서 Mock은 기본 DB를 만들지 않았고, 비-Mock의 19142·19143 포트는 서로 다른 DB를 만들었다. INI를 지정하면 기본 경로를 건너뛰었고, CLI와 INI를 함께 주면 CLI 파일만 생성됐다. 생성된 DB의 `PJOB` 앱 ID, 스키마 버전 1과 `quick_check`를 외부 읽기로 대조했다. 경로 결과 (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleWave4IndependentPaths_20261125/paths.json`)
 
-동일 호스트의 24인 NullRHI Iris 필드 보스 재측정에서 접속·확정 타격·체력 확인·종료 **24/24**, 보스 체력 25,000→24,760을 확인했다. Burst 월드 작업 p95/p99/최대는 **5.436 / 6.399 / 6.439 ms**, 33.3ms 초과는 0틱이었다. Burst 틱 시작 간격 p95는 34.069ms, 최소 가용 물리 메모리는 5,609MiB였다. 이 코호트는 전투·복제 기준선이며, 처치 후 보상 시험은 SQLite·Gateway 회귀에서 별도로 실행했다. [실측 원본](../../../Saved/Validation/Continuation_20261014/MassiveScaleWave4Independent_FieldIris_20261125/verification.json)
+동일 호스트의 24인 NullRHI Iris 필드 보스 재측정에서 접속·확정 타격·체력 확인·종료 **24/24**, 보스 체력 25,000→24,760을 확인했다. Burst 월드 작업 p95/p99/최대는 **5.436 / 6.399 / 6.439 ms**, 33.3ms 초과는 0틱이었다. Burst 틱 시작 간격 p95는 34.069ms, 최소 가용 물리 메모리는 5,609MiB였다. 이 코호트는 전투·복제 기준선이며, 처치 후 보상 시험은 SQLite·Gateway 회귀에서 별도로 실행했다. 실측 원본 (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleWave4Independent_FieldIris_20261125/verification.json`)
 
 #### 최종 마감 검증
 
-- Direct UBT `Project_JEditor Win64 Development` 빌드 성공, 컴파일 오류·경고 0건. 8모듈 DAG와 205개 기능/20개 도메인 검사를 통과했다. [마지막 빌드 로그](../../../Saved/Validation/Continuation_20261014/MassiveScaleWave4IndependentShutdownBuild_20261125/UBT.log)
-- 확장 RHI 회귀 **233/233**, 실패·미실행 0. `ProjectJ.Online` 11건을 포함한다. 4,099개 대기 보상의 페이지 복구, 새 접수의 가용 슬롯 경쟁, 데드레터 한 자리 부분 리드라이브, 혼합 배치 롤백·재정리 및 외부/손상 파일을 확인했다. 실제 인벤토리 12,289건과 합성 저장 보존 한도 16,384건도 재통과했다. Gateway 의도적 초과 응답의 libcurl 경고와 군중 렌더링의 RHI 가상 예약 경고가 각각 기록됐다. 후자는 단독 RHI 시험에서 재현되지 않았다. [확장 회귀](../../../Saved/Validation/Continuation_20261014/MassiveScaleWave4IndependentExpanded_20261125/index.json) · [RHI 단독 재검증](../../../Saved/Validation/Continuation_20261014/MassiveScaleWave4IndependentRHICrowdCheck_20261125/index.json)
-- 종료 회귀를 보강하고 런타임 코드 변경 없이 다시 통과시켰다. 콜백이 GT에 도달하기 전에 종료를 시작한 상태에서 실패한 활성 쓰기와 대기 중 추가·삭제·격리 작업을 최종 배치로 커밋했다. SQLite 재오픈으로 두 대기 키와 두 격리 레코드를 확인했다. [종료 경합 회귀](../../../Saved/Validation/Continuation_20261014/MassiveScaleWave4IndependentShutdownCheck_20261125/index.json)
-- 실제 Nakama ServicePort → Gateway → 로컬 TCP/HTTP 경로에서 SQLite 커밋 이후 송신, 503 뒤 같은 멱등 키·본문 재시도, `REPLAYED` 한 번 확정, 로컬 삭제 커밋과 재오픈 대기·격리 0건을 확인했다. 별도 PGlite에서는 Nakama RPC가 생성한 SQL이 같은 보상 영수증·우편을 복구하고 충돌한 본문을 거부했다. [HTTP 회귀](../../../Source/Project_J/Private/Tests/Project_JWave4OutboxPersistenceTests.cpp) · [SQL 결과](../../../Saved/Validation/Continuation_20261014/MassiveScaleWave4Independent_SQL_20261125/Run.log)
+- Direct UBT `Project_JEditor Win64 Development` 빌드 성공, 컴파일 오류·경고 0건. 8모듈 DAG와 205개 기능/20개 도메인 검사를 통과했다. 마지막 빌드 로그 (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleWave4IndependentShutdownBuild_20261125/UBT.log`)
+- 확장 RHI 회귀 **233/233**, 실패·미실행 0. `ProjectJ.Online` 11건을 포함한다. 4,099개 대기 보상의 페이지 복구, 새 접수의 가용 슬롯 경쟁, 데드레터 한 자리 부분 리드라이브, 혼합 배치 롤백·재정리 및 외부/손상 파일을 확인했다. 실제 인벤토리 12,289건과 합성 저장 보존 한도 16,384건도 재통과했다. Gateway 의도적 초과 응답의 libcurl 경고와 군중 렌더링의 RHI 가상 예약 경고가 각각 기록됐다. 후자는 단독 RHI 시험에서 재현되지 않았다. 확장 회귀 (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleWave4IndependentExpanded_20261125/index.json`) · RHI 단독 재검증 (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleWave4IndependentRHICrowdCheck_20261125/index.json`)
+- 종료 회귀를 보강하고 런타임 코드 변경 없이 다시 통과시켰다. 콜백이 GT에 도달하기 전에 종료를 시작한 상태에서 실패한 활성 쓰기와 대기 중 추가·삭제·격리 작업을 최종 배치로 커밋했다. SQLite 재오픈으로 두 대기 키와 두 격리 레코드를 확인했다. 종료 경합 회귀 (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleWave4IndependentShutdownCheck_20261125/index.json`)
+- 실제 Nakama ServicePort → Gateway → 로컬 TCP/HTTP 경로에서 SQLite 커밋 이후 송신, 503 뒤 같은 멱등 키·본문 재시도, `REPLAYED` 한 번 확정, 로컬 삭제 커밋과 재오픈 대기·격리 0건을 확인했다. 별도 PGlite에서는 Nakama RPC가 생성한 SQL이 같은 보상 영수증·우편을 복구하고 충돌한 본문을 거부했다. [HTTP 회귀](../../../Source/Project_J/Private/Tests/Project_JWave4OutboxPersistenceTests.cpp) · SQL 결과 (로컬 `Saved/Validation/Continuation_20261014/MassiveScaleWave4Independent_SQL_20261125/Run.log`)
 
 **판정은 로컬 최적화 사이클 종결 가능.** 내구성의 경계는 SQLite가 처음 커밋한 시점이다. `EnqueueDurableMutation()`의 성공 반환은 비동기 접수이며, 커밋 전에 프로세스를 잃으면 해당 요청은 복구할 수 없다. 실제 운영에서는 생산자 측의 영속 처치 ID/보상 의도, 파일의 볼륨 장애·호스트 교체 대비, 데드레터·용량·쓰기 실패 알림과 재처리 운영을 마련한다. 전용 서버의 실제 Nakama/PostgreSQL 동시 처치·퀘스트·던전 종료와 호스트 분리 100~200인 반복 교전은 운영 인프라 검증으로 이어진다.
 
@@ -568,7 +568,7 @@ SQLite 커밋 도중 Win32 VFS의 파일 동기화 직후 테스트 프로세스
 - 집중 UE 회귀 4/4 통과. 혼합 부하는 400캐릭터의 보스 보상 400건, 퀘스트 진척 401건과 던전 클리어 1건을 합쳐 802건을 SQLite에 커밋했다. 공유 64슬롯을 지키며 HTTP 503, 선전송 거부, 커밋 후 응답 유실을 모델링했다. 재시작 뒤 같은 본문·키로 재생했고 서비스 효과는 키별 한 번이었다. 별도 네이티브 HTTP 회귀는 NakamaServicePort·Gateway·SQLite와 루프백 응답기를 연결해 세 RPC와 실제 503 재시도 뒤 `REPLAYED`, SQLite 잔여 0건을 확인했다. PGlite 001–011은 이전 세션 재생, 재시작, 변조된 재생 거절, 만료·이미 수령한 퀘스트, 던전·보상 회귀를 통과했다.
 - 실제 저장된 `BP_Spellblade`를 Hidden Leader 플래그 그대로 로드한 PIE 회귀에서 오프스크린 몽타주 진행·본 갱신 생략, 첫 시야 진입 틱과 긴급 창의 Full Pose, 최근 렌더된 Follower 보호, 시야 자료 미확인 시 보호, 원래 정책 복원을 확인했다. 검증용 절두체를 주입해 가시성의 시점을 결정했다.
 - 별도 단일 D3D12 1280×720 군중에서 24캐릭터의 이동·착지와 동시 몽타주를 실행했다. 캡처 요청 프레임을 제외한 공격 구간 1,003표본의 중앙은 127.95 FPS(7.816ms), p95 10.738ms였다. 군중 캡처에서 대규모 포즈 붕괴는 관찰되지 않았다. 이 장면은 Standalone이므로 네트워크 프록시 최적화의 FPS 절감분이나 의상·무기 근접 검수는 이 수치로 판단하지 않는다.
-- 확장 D3D12 회귀 235/235 통과(경고 없이 성공 234, 경고와 함께 성공 1, 실패/미실행 0). 기존 `GatewayRealHTTP`의 초과 응답 차단에서 발생한 libcurl 메시지가 경고를 기록했다. [확장 회귀 보고서](../../../Saved/Validation/Continuation_20261014/LocalFinalA123_Expanded_20261125/index.json)
+- 확장 D3D12 회귀 235/235 통과(경고 없이 성공 234, 경고와 함께 성공 1, 실패/미실행 0). 기존 `GatewayRealHTTP`의 초과 응답 차단에서 발생한 libcurl 메시지가 경고를 기록했다. 확장 회귀 보고서 (로컬 `Saved/Validation/Continuation_20261014/LocalFinalA123_Expanded_20261125/index.json`)
 - 근거는 `Saved/Validation/Continuation_20261014/LocalFinalA123_{Build2,Focused1,PGliteFinal,Field24_Iris,Expanded}_20261125`, `Saved/Validation/WholeProjectAudit_20261013/LocalFinalA123_Rendered24_20261125`에 남겼다. 완료한 실행의 근거는 중앙 보관소에 SHA-256 검증 후 등록했다.
 
 **마감 판정.** 로컬 코드 및 지정 검증을 종결한다. 실제 네트워크 24명에서 D3D12 클라이언트를 동시 실행하는 조합은 4GiB 보호선과 이번 무렌더 시험의 최저 여유를 고려해 이번 사이클에서 분리했다. 운영 단계에서 Nakama·PostgreSQL 011 배포, 워커 리스가 만료된 데드레터 처리, 분리 호스트의 RHI·지연·채널 수용량을 확인한다.

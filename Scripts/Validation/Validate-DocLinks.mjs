@@ -1,5 +1,4 @@
-// Check local Markdown links after documentation moves. Historical evidence in
-// Saved/Worktrees is optional because it is not tracked in the repository.
+// Published links must also work in a clean checkout.
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -16,8 +15,7 @@ walk(path.join(root, 'Docs'));
 files.push(path.join(root, 'README.md'));
 
 const missing = [];
-const absentLocalArchive = [];
-const archiveRoot = path.join(root, 'Saved', 'Worktrees') + path.sep;
+const generatedRoot = path.join(root, 'Saved') + path.sep;
 let checked = 0;
 for (const file of files) {
   const source = fs.readFileSync(file, 'utf8');
@@ -34,12 +32,12 @@ for (const file of files) {
     try { decoded = decodeURIComponent(bare); }
     catch { decoded = bare; }
     const full = path.resolve(path.dirname(file), decoded);
-    if (fs.existsSync(full)) continue;
+    if (!full.startsWith(generatedRoot) && fs.existsSync(full)) continue;
     const line = source.slice(0, match.index).split('\n').length;
     const record = `${relative}:${line} -> ${target}`;
-    (full.startsWith(archiveRoot) ? absentLocalArchive : missing).push(record);
+    missing.push(record);
   }
 }
-console.log(`${files.length} Markdown files, ${checked} local links, ${missing.length} broken links, ${absentLocalArchive.length} links to absent local archives`);
+console.log(`${files.length} Markdown files, ${checked} local links, ${missing.length} broken links`);
 for (const record of missing) console.error(record);
 if (missing.length) process.exitCode = 1;

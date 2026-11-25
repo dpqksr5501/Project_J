@@ -58,7 +58,7 @@ H07의 암벽은 일반 환경 소품의 선택적 vertical_anchor(kind=top,heig
 
 Manifest.boss_profiles→MainWorld.bosses.json은 Arena/접근·우회/SafeStaging/Encounter/QuestHook의 제작 원천이다. 공간 builder는 기존 AProject_JWorldEncounter를 한 번만 배치하며 동일 EncounterId 소유자가 있으면 중복 생성하지 않는다. 단일 NPC·서버 단계·종료 정리는 Encounter가 소유하고, 비동기 class 준비·중앙 갱신/스폰 예산·고유 ID는 기존 Registry가 관리한다. 현재 실행 계약은 [권위 월드 이벤트](../World/World_Event_Runtime.md)를 따른다. 리셋 반경과 NPC/퀘스트 후보는 실제 AI 바인딩과 구분한다. Source상의 활성 반경과 전투/추적/리셋 원은 서로 다른 역할이다.
 
-이벤트 ID는 WorldBoss.<RegionID>.<StableBossID>로 지역을 포함해 월드 공용 Registry의 FName 키와 다음 Region의 지역 B01 이름이 충돌하지 않게 한다. 지역 StableID/마커는 B01로 유지한다. 신규 B01의 이전 비지역 ID만 Source/Actor 패키지 백업 뒤 정리했으며 실제 PIE에서 현재 ID의 한 owner/Disabled(NPC 미지정) 상태를 확인했다. 활성 보스/리스폰·보상/멀티플레이 구현을 의미하지 않는다. 바닥/공간 이동 검증과 네이티브 이벤트 인터페이스 검증을 별도 기록한다.
+이벤트 ID는 WorldBoss.<RegionID>.<StableBossID>로 지역을 포함해 월드 공용 Registry의 FName 키와 다음 Region의 지역 B01 이름이 충돌하지 않게 한다. 지역 StableID와 마커는 B01로 유지한다. 초기 공간 제작 당시 B01과 B02의 미연결 소유자를 확인했다. B01에는 이후 같은 외부 액터 패키지에서 NPC·전투·개인 우편 보상과 48m 활성 반경을 연결했다. B02는 미연결 소유자를 유지한다. 공간 검사, B01 저장 재검사, 전투 PIE와 다중 클라이언트 검증은 각각 [게임플레이 통합](07_GAMEPLAY_SPATIAL_INTEGRATION.md)에서 확인한다.
 
 
 B02는 동일 boss_profiles/builder와 기존 WorldEncounter를 소비하면서 `combat_pockets`와 내부 이동/순환 trails를 추가했다. 수목이 있는 바깥 원 전체를 빈 전투 원으로 가정하지 않는다. Native CDO의 Pawn 프로파일 단순 충돌을 이동 검사로 사용하고 복합 Visibility 엄폐와 구분한다. Terrain 전용 쿼리는 식생/소유 소품을 제외하지만 이동 여유는 모든 월드 기하를 포함한다. 두 전투 틈과 내부 두 길은 반경1.2m/halfheight2m의 보스 후보 capsule을 검사한다. 실제 보스 형상/AI/스킬·다수인원 전투 합격은 아니다. 이 구분과 기존 서버의 실패/종료 소유권은 [게임플레이 통합](07_GAMEPLAY_SPATIAL_INTEGRATION.md)에 기록했다.

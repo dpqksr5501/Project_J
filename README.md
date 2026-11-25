@@ -8,6 +8,8 @@ Project J는 온라인 액션 게임의 이동·전투·네트워크 시스템�
 
 [게임플레이](#게임플레이-영상) · [핵심 구현](#핵심-구현) · [성능 자료](#성능) · [빌드](#빌드와-실행) · [에셋·라이선스](#저작권과-라이선스) · [문서 목차](Docs/README.md)
 
+MainWorld B01에는 서버 권위 전투와 개인 보상을 연결했습니다. 로컬 UE·Nakama·PostgreSQL에서는 로그인, 우편, 퀘스트 보상, 차단·해제와 던전 왕복을 검증했습니다. 일반 변경은 모듈 계약·도구 회귀·문서 검사로 확인하고, Cook과 패키징은 패키지에서만 확인할 문제가 있을 때 수행합니다. [구현 현황과 실측 범위](Docs/Architecture/Planning/Project_J_PhaseAD_Codex_Audit_2026-11-25.md#제작런타임-적용-후속-점검)
+
 ## 게임플레이 영상
 
 [![Project J 게임플레이 — 클릭하여 YouTube에서 시청](Docs/Media/ProjectJ_Video_Thumbnail.jpg)](https://youtu.be/lvEs-VPWUss)

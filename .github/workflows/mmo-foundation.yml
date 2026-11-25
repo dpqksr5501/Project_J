@@ -5,6 +5,8 @@ on:
     paths:
       - 'Source/**'
       - 'Config/**'
+      - 'Infra/**'
+      - 'Content/**'
       - 'Plugins/**'
       - 'Scripts/**'
       - 'Docs/**'
@@ -15,6 +17,8 @@ on:
     paths:
       - 'Source/**'
       - 'Config/**'
+      - 'Infra/**'
+      - 'Content/**'
       - 'Plugins/**'
       - 'Scripts/**'
       - 'Docs/**'
@@ -45,5 +49,13 @@ jobs:
         run: python Scripts/Validation/Validate-MMOArchitecture.py
       - name: Existing tool regressions
         run: python -m unittest discover -s Scripts/Tests -p "test_*.py"
+      - name: Backend migrations and transactional regressions
+        shell: pwsh
+        run: |
+          node --check Infra/nakama/modules/project_j_mmo.js
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          npm install --prefix "$env:RUNNER_TEMP/mmo-db-test" --ignore-scripts --no-audit --no-fund "@electric-sql/pglite@0.3.10"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          node Infra/scripts/check-mmo-commands.mjs "$env:RUNNER_TEMP/mmo-db-test/node_modules/@electric-sql/pglite/dist/index.js" "$env:RUNNER_TEMP/mmo-db-test/data"
       - name: Documentation links
         run: node Scripts/Validation/Validate-DocLinks.mjs
