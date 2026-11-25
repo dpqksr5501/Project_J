@@ -23,6 +23,7 @@
 #include "Components/Project_JCombatPresentationComponent.h"
 #include "Components/Project_JEquipmentRuntimeComponent.h"
 #include "Engine/World.h"
+#include "Engine/GameInstance.h"
 #include "GameFramework/GameStateBase.h"
 #include "HAL/IConsoleManager.h"
 

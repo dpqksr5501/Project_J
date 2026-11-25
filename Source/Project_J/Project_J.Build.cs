@@ -50,7 +50,6 @@ public class Project_J : ModuleRules
 
 		if (Target.bBuildEditor)
 		{
-			PrivateDependencyModuleNames.Add("Sockets"); // Local HTTP integration fixture, compiled only WITH_EDITOR.
 			PrivateDependencyModuleNames.Add("AnimationBudgetAllocator");
 			PrivateDependencyModuleNames.Add("Project_JMount");
 			PrivateDependencyModuleNames.Add("Project_JAnimationNodes");
@@ -59,6 +58,7 @@ public class Project_J : ModuleRules
 		}
 		if (Target.Type == TargetType.Editor || Target.Type == TargetType.Server)
 		{
+			PrivateDependencyModuleNames.Add("Sockets"); // Local HTTP integration fixture and Prometheus /metrics listener.
 			DynamicallyLoadedModuleNames.Add("PerfCounters");
 		}
 		if (Target.Type != TargetType.Server)

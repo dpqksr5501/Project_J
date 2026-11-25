@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Project_JPlayerCharacter.h"
+#include "Security/Project_JServerIntegritySubsystem.h"
 #include "MoverSimulationTypes.h"
 #include "Movement/Project_JMovementQueries.h"
 #include "Movement/Project_JMoverComponent.h"
@@ -352,6 +353,7 @@ void AProject_JPlayerCharacter::BeginPlay()
 
 void AProject_JPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	RetireServerIntegrityIdentity();
 	bCreationDependencyEnding = true;
 	if (auto* World = GetWorld(); World && HasAuthority())
 	{
@@ -431,6 +433,7 @@ void AProject_JPlayerCharacter::PawnClientRestart()
 
 void AProject_JPlayerCharacter::UnPossessed()
 {
+	RetireServerIntegrityIdentity();
 	UProject_JOwnedPawnScopeComponent::WithdrawFor(this);
 	StopSprint();
 	SprintMoveInput = FVector2D::ZeroVector;
@@ -603,6 +606,11 @@ void AProject_JPlayerCharacter::Tick(float DeltaTime)
 	// frame even when CharacterMovement did not broadcast an update.
 
 
+	if (HasAuthority())
+	{
+		SampleServerMovementIntegrity();
+	}
+
 	if (GetNetMode() != NM_DedicatedServer)
 	{
 		if (LocomotionAnimStateComponent)
@@ -614,6 +622,87 @@ void AProject_JPlayerCharacter::Tick(float DeltaTime)
 		RecordMouseTurnFrame(DeltaTime);
 #endif
 	}
+}
+
+void AProject_JPlayerCharacter::ResetCombatSpatialHistory()
+{
+	Super::ResetCombatSpatialHistory();
+	// Consume the existing authoritative teleport/spatial discontinuity event.
+	// The next sample establishes the new location without a timed exemption.
+	bHasServerIntegrityLocation = false;
+}
+
+void AProject_JPlayerCharacter::RetireServerIntegrityIdentity()
+{
+	bHasServerIntegrityLocation = false;
+	if (ServerIntegrityCharacterId.IsValid())
+	{
+		if (auto* GI = GetGameInstance())
+			if (auto* Integrity = GI->GetSubsystem<UProject_JServerIntegritySubsystem>())
+				Integrity->ReleaseActorState(ServerIntegrityCharacterId, this);
+		ServerIntegrityCharacterId.Invalidate();
+	}
+}
+
+void AProject_JPlayerCharacter::GrantServerMovementIntegrityAllowance(double DurationSeconds)
+{
+	if (!HasAuthority() || !UProject_JServerIntegritySubsystem::IsServerIntegrityEnabled()
+		|| (GetNetMode() != NM_DedicatedServer && GetNetMode() != NM_ListenServer)) return;
+	if (auto* GI = GetGameInstance())
+	{
+		if (auto* Integrity = GI->GetSubsystem<UProject_JServerIntegritySubsystem>())
+		{
+			const FGuid Character = UProject_JServerIntegritySubsystem::ResolveActorCharacterGuid(this);
+			if (ServerIntegrityCharacterId != Character)
+			{
+				RetireServerIntegrityIdentity();
+				ServerIntegrityCharacterId = Character;
+				Integrity->ClaimActorState(Character, this);
+			}
+			Integrity->GrantMovementWhitelist(Character, DurationSeconds, FPlatformTime::Seconds());
+		}
+	}
+}
+
+void AProject_JPlayerCharacter::SampleServerMovementIntegrity()
+{
+	const auto* World = GetWorld();
+	if (!UProject_JServerIntegritySubsystem::IsServerIntegrityEnabled() || !World || World->bIsTearingDown
+		|| (World->GetNetMode() != NM_DedicatedServer && World->GetNetMode() != NM_ListenServer)
+		|| !Cast<APlayerController>(GetController()))
+	{
+		RetireServerIntegrityIdentity();
+		return;
+	}
+	const double Now = FPlatformTime::Seconds();
+	const double Elapsed = Now - LastServerIntegritySampleTime;
+	if ((MountComponent && MountComponent->IsMounted()) || (GetMesh() && GetMesh()->IsSimulatingPhysics()) || IsDead_Implementation())
+	{
+		bHasServerIntegrityLocation = false;
+		return;
+	}
+	if (bHasServerIntegrityLocation && Elapsed < 0.25) return;
+	auto* GI = World->GetGameInstance();
+	auto* Integrity = GI ? GI->GetSubsystem<UProject_JServerIntegritySubsystem>() : nullptr;
+	if (!Integrity) return;
+	const FGuid CharId = UProject_JServerIntegritySubsystem::ResolveActorCharacterGuid(this);
+	if (ServerIntegrityCharacterId != CharId)
+	{
+		RetireServerIntegrityIdentity();
+		ServerIntegrityCharacterId = CharId;
+		Integrity->ClaimActorState(CharId, this);
+	}
+	const FVector CurrentLoc = GetActorLocation();
+	if (bHasServerIntegrityLocation && Elapsed > 0.)
+	{
+		const float MaxSpeed = FMath::Max3(GetMoverMaxSpeed(true), 900.f, static_cast<float>(GetVelocity().Size2D()));
+		// The Mover authority owns corrections. A sampled audit heuristic has
+		// insufficient context to roll back accepted physics or gameplay moves.
+		Integrity->ValidateMovementStep(CharId, LastServerIntegrityLocation, CurrentLoc, MaxSpeed, Elapsed, Now);
+	}
+	LastServerIntegrityLocation = CurrentLoc;
+	LastServerIntegritySampleTime = Now;
+	bHasServerIntegrityLocation = true;
 }
 
 AActor* AProject_JPlayerCharacter::GetAbilitySystemOwnerActor() const

@@ -5,6 +5,8 @@
 #include "Animation/AnimMontage.h"
 #include "DefaultMovementSet/CharacterMoverComponent.h"
 #include "Movement/Project_JMoverComponent.h"
+#include "Engine/GameInstance.h"
+#include "Engine/World.h"
 #include "Project_JGameplayTags.h"
 #include "Project_JPlayerCharacter.h"
 
@@ -59,6 +61,7 @@ void UProject_JGameplayAbility_Dash::ActivateAbility(FGameplayAbilitySpecHandle 
 
 	const float OriginalDuration = Montage->GetPlayLength() / Montage->RateScale;
 	const float NewDuration = FMath::Max(OriginalDuration - DurationReduction, OriginalDuration * .5f);
+	Player->GrantServerMovementIntegrityAllowance(FMath::Max(0.75, static_cast<double>(NewDuration) + 0.35));
 	const float PlayRate = OriginalDuration / NewDuration;
 	auto* Task = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 		this, NAME_None, Montage, PlayRate, NAME_None, true, 1.f, 0.f, true);

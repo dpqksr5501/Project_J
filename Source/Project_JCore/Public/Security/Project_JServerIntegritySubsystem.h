@@ -26,6 +26,27 @@ enum class EProject_JIntegrityAction : uint8
 };
 
 USTRUCT(BlueprintType)
+struct PROJECT_JCORE_API FProject_JIntegrityAuditEvent
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Telemetry")
+	FGuid CharacterId;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Telemetry")
+	FName ViolationCode;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Telemetry")
+	EProject_JIntegrityAction Action = EProject_JIntegrityAction::Accept;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Telemetry")
+	int32 WindowViolationCount = 0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Telemetry")
+	double TimestampSeconds = 0.0;
+};
+
+USTRUCT(BlueprintType)
 struct PROJECT_JCORE_API FProject_JRuntimeTelemetrySnapshot
 {
 	GENERATED_BODY()
@@ -50,7 +71,7 @@ struct PROJECT_JCORE_API FProject_JRuntimeTelemetrySnapshot
  * Server-authoritative Anti-Cheat & Lightweight Telemetry Hook Subsystem (BP06):
  *  - Movement speed envelope check with 1.15x tolerance + KillZ + authorized dash/portal whitelist
  *  - Combat cadence/cooldown violation counter with progressive SnapBack -> Flag -> Disconnect escalation
- *  - Zero-dependency metrics snapshot hook (ready for Stage C Prometheus/Sentry exporters)
+ *  - Bounded ring-buffer audit trail + zero-dependency metrics snapshot hook (Prometheus/Grafana ready)
  */
 UCLASS()
 class PROJECT_JCORE_API UProject_JServerIntegritySubsystem : public UGameInstanceSubsystem
@@ -61,6 +82,12 @@ public:
 	static constexpr double SpeedToleranceMultiplier = 1.15;
 	static constexpr int32 FlagThreshold = 3;
 	static constexpr int32 KickThreshold = 5;
+	static constexpr int32 MaxAuditEvents = 256;
+
+	static bool IsServerIntegrityEnabled();
+
+	/** Resolves a stable server-side FGuid for an actor (authoritative CharacterGuid via social interface, or deterministic fallback). */
+	static FGuid ResolveActorCharacterGuid(const AActor* Actor);
 
 	virtual void Deinitialize() override;
 
@@ -69,6 +96,11 @@ public:
 
 	/** Grants a short-lived server movement whitelist window for authorized teleports/portals/dashes. */
 	void GrantMovementWhitelist(const FGuid& CharacterId, double DurationSeconds, double NowSeconds);
+
+	/** Removes per-character tracking state on logout/destroy to keep tables bounded over 24h uptime. */
+	void ClearCharacterState(const FGuid& CharacterId);
+	void ClaimActorState(const FGuid& CharacterId, AActor* Actor);
+	void ReleaseActorState(const FGuid& CharacterId, const AActor* Actor);
 
 	/** Validates observed displacement over DeltaSeconds against max allowed speed (incl. buffs/mount). */
 	EProject_JIntegrityAction ValidateMovementStep(
@@ -92,6 +124,7 @@ public:
 
 	void UpdateTelemetryCounters(double TickMs, int32 CurrentCCU);
 	FProject_JRuntimeTelemetrySnapshot GetTelemetrySnapshot() const { return Telemetry; }
+	const TArray<FProject_JIntegrityAuditEvent>& GetRecentAuditEvents() const { return AuditEvents; }
 
 private:
 	struct FViolationWindow
@@ -101,11 +134,14 @@ private:
 	};
 
 	EProject_JIntegrityAction RecordViolation(const FGuid& CharacterId, FName Code, double NowSeconds, TMap<FGuid, FViolationWindow>& Table, int64& MetricCounter);
+	void AppendAuditEvent(const FGuid& CharacterId, FName Code, EProject_JIntegrityAction Action, int32 WindowCount, double NowSeconds);
 
 	TSharedPtr<IProject_JAntiCheatBridge> Bridge;
+	TMap<FGuid, TWeakObjectPtr<AActor>> StateOwners;
 	TMap<FGuid, double> MovementWhitelistUntil;
 	TMap<FGuid, FViolationWindow> MovementViolations;
 	TMap<FGuid, FViolationWindow> CombatViolations;
 	TMap<TPair<FGuid, FName>, double> LastAbilityTimes;
+	TArray<FProject_JIntegrityAuditEvent> AuditEvents;
 	FProject_JRuntimeTelemetrySnapshot Telemetry;
 };

@@ -14,6 +14,8 @@
 #include "Network/Project_JIpNetDriver.h"
 #include "Backend/Project_JLocalProfileSubsystem.h"
 #include "Backend/Project_JOnlineWorldSubsystem.h"
+#include "Backend/Project_JServerDrainSubsystem.h"
+#include "Security/Project_JServerIntegritySubsystem.h"
 #include "Backend/Project_JOnlineCrafting.h"
 #include "Backend/Project_JOnlineQuests.h"
 #include "CharacterClass/Project_JCharacterDataSubsystem.h"
@@ -38,6 +40,29 @@
 #include "Abilities/GameplayAbility.h"
 #include "GameFramework/Pawn.h"
 #include "UObject/StrongObjectPtr.h"
+
+namespace
+{
+class FProject_JBackendIntegrityBridge final : public IProject_JAntiCheatBridge
+{
+public:
+	explicit FProject_JBackendIntegrityBridge(UWorld* InWorld) : Origin(InWorld) {}
+	bool IsClientAttested(const FGuid&) const override { return false; }
+	void ReportServerViolation(const FGuid& Character, FName Code, int32 Severity) override
+	{
+		UWorld* World = Origin.Get();
+		if (!World || World->bIsTearingDown || !UProject_JOnlineWorldSubsystem::UsesOnlineBackend(World)) return;
+		auto Body = MakeShared<FJsonObject>();
+		Body->SetStringField(TEXT("character_id"), UProject_JOnlineWorldSubsystem::GuidText(Character));
+		Body->SetStringField(TEXT("violation_code"), Code.ToString());
+		Body->SetNumberField(TEXT("severity"), Severity);
+		Body->SetStringField(TEXT("zone"), World->GetMapName());
+		UProject_JOnlineWorldSubsystem::Submit(World, TEXT("Security"), TEXT("Report_Violation"), Body, FGuid::NewGuid(), [](auto) {});
+	}
+private:
+	TWeakObjectPtr<UWorld> Origin;
+};
+}
 
 AProject_JGameMode::AProject_JGameMode()
 {
@@ -99,7 +124,10 @@ void AProject_JGameMode::BeginPlay()
 			}
 		}
 	}
-	if (!UProject_JOnlineWorldSubsystem::UsesOnlineBackend(GetWorld()) || OnlineAdvertisedEndpoint.IsEmpty()) return;
+	if (!UProject_JOnlineWorldSubsystem::UsesOnlineBackend(GetWorld())) return;
+	if (auto* Integrity = GetGameInstance()->GetSubsystem<UProject_JServerIntegritySubsystem>())
+		Integrity->SetAntiCheatBridge(MakeShared<FProject_JBackendIntegrityBridge>(GetWorld()));
+	if (OnlineAdvertisedEndpoint.IsEmpty()) return;
 	OnlineIncarnation = FGuid::NewGuid();
 	GetGameInstance()->GetSubsystem<UProject_JDungeonInstanceSubsystem>()->SetOnlineChannelId(OnlineChannelId);
 	PublishOnlineHeartbeat();
@@ -121,7 +149,7 @@ void AProject_JGameMode::PublishOnlineHeartbeat()
 	Body->SetStringField(TEXT("endpoint"), OnlineAdvertisedEndpoint);
 	Body->SetNumberField(TEXT("population"), GetNumPlayers());
 	Body->SetNumberField(TEXT("capacity"), ChannelCapacity);
-	Body->SetBoolField(TEXT("draining"), bSessionsClosing);
+	Body->SetBoolField(TEXT("draining"), IsServerDraining());
 	Body->SetBoolField(TEXT("is_dungeon"), bRequireDungeonTicket);
 	UProject_JOnlineWorldSubsystem::Submit(GetWorld(), TEXT("World"), TEXT("Channel_Heartbeat"), Body, {},
 		[WeakThis = TWeakObjectPtr<ThisClass>(this)](const TSharedPtr<FJsonObject>& Ack)
@@ -458,9 +486,30 @@ int64 AProject_JGameMode::GetOnlineEpoch(const AProject_JPlayerState* Player) co
 	return IsValid(Player) && Player->CanAcceptSessionCommand() ? OnlineEpochs.FindRef(Player) : 0;
 }
 
+void AProject_JGameMode::NotifyServerDraining()
+{
+	if (OnlineIncarnation.IsValid())
+	{
+		PublishOnlineHeartbeat();
+	}
+}
+
+bool AProject_JGameMode::IsServerDraining() const
+{
+	if (bSessionsClosing) return true;
+	const UGameInstance* GI = GetGameInstance();
+	const auto* Drain = GI ? GI->GetSubsystem<UProject_JServerDrainSubsystem>() : nullptr;
+	return Drain && Drain->IsDraining();
+}
+
 void AProject_JGameMode::PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
 {
 	Super::PreLogin(Options, Address, UniqueId, ErrorMessage);
+	if (ErrorMessage.IsEmpty() && IsServerDraining())
+	{
+		ErrorMessage = TEXT("ServerDraining");
+		return;
+	}
 	const bool bReturnRequest = UGameplayStatics::HasOption(Options, TEXT("TicketReturn"));
 	if (!ErrorMessage.IsEmpty() || (!bRequireDungeonTicket && !bReturnRequest))
 	{

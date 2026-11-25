@@ -87,6 +87,7 @@ public:
 	FVector GetGameplayMoveDirection(FVector* OutControlForward = nullptr) const;
 	virtual FProject_JMoverPolicy ResolveMoverPolicy(const FProject_JMoverInputs& Requested,const FCharacterDefaultInputs* Input=nullptr) const override;
 	virtual float GetMoverMaxSpeed(bool bAcceptedSprint) const override;
+	void GrantServerMovementIntegrityAllowance(double DurationSeconds);
 	virtual float GetEffectiveJumpLaunchSpeed() const final override;
 #if WITH_EDITOR
 	virtual bool CanEditChange(const FProperty* InProperty) const override;
@@ -669,6 +670,14 @@ private:
 	bool bSprintInputHeld = false;
 	FVector2D SprintMoveInput = FVector2D::ZeroVector;
 	bool bWasSprintLocomotionAllowed = false;
+
+	FVector LastServerIntegrityLocation = FVector::ZeroVector;
+	double LastServerIntegritySampleTime = -1.0;
+	bool bHasServerIntegrityLocation = false;
+	void SampleServerMovementIntegrity();
+	void ResetCombatSpatialHistory() override;
+	void RetireServerIntegrityIdentity();
+	FGuid ServerIntegrityCharacterId;
 
 
 	// Server-side acceptance state for client-sampled cosmetic TIP yaw.  These

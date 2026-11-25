@@ -87,6 +87,12 @@ public:
 	/** Enables SQLite-backed crash-safe persistence at DatabasePath and loads any pending rows for recovery. */
 	bool ConfigurePersistentOutbox(const FString& DatabasePath);
 	bool HasPersistentOutbox() const { return OutboxStore.IsValid(); }
+	bool HasOutboxStoreFailed() const { return bStoreLoadFailed; }
+	bool HasOutstandingDrainWork() const
+	{
+		return bStoreWorkerActive || !QueuedStoreOps.IsEmpty() ||
+			(!bStoreLoadFailed && (!ActiveOutboxKeys.IsEmpty() || bRecoverMore || (OutboxStore && !bStoreOpened)));
+	}
 	bool HasOutstandingQuestProgress(FGuid Character) const;
 
 	/** Moves quarantined DeadLetter rows back to Pending for controlled operator replay. */

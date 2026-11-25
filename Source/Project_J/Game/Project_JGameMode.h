@@ -56,6 +56,8 @@ public:
 	bool HasOnlineSnapshotEdit(FGuid Character) const { return OnlineInventoryPending.Contains(Character); }
 	void PublishRecoveredQuestProgress(FGuid Character, const FJsonObject& Snapshot) const;
 	int32 GetOnlineChannelId() const { return OnlineChannelId; }
+	void NotifyServerDraining();
+	bool IsServerDraining() const;
 	bool SubmitOnlineInventoryEdit(AProject_JPlayerState* Player, const FProject_JPersistentEdit& Edit,
 		FProject_JPersistentCompletion Complete = {}, TFunction<void(const FProject_JProfileDurableResult&)> OnDurable = {});
 	/** Opt-in server policy: login waits without prototype identity/Pawn until a
