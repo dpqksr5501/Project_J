@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Camera/Project_JCameraContextProfile.h"
 #include "Components/ActorComponent.h"
 #include "GameplayTagContainer.h"
 #include "Project_JCameraComponent.generated.h"
@@ -84,6 +85,21 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Camera|Framing")
 	void SetCombatRightShoulder(bool bUseRightShoulder);
 
+	/** Optional DataAsset overriding arm length, FOV, and offset for giant bosses, mounts, and dive flight. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Context")
+	TObjectPtr<UProject_JCameraPolicyAsset> CameraPolicyAsset;
+
+	UFUNCTION(BlueprintCallable, Category="Camera|Context")
+	void SetCameraContextMode(EProject_JCameraContextMode NewMode);
+
+	UFUNCTION(BlueprintCallable, Category="Camera|Context")
+	void ClearCameraContextOverride();
+
+	UFUNCTION(BlueprintPure, Category="Camera|Context")
+	EProject_JCameraContextMode GetActiveCameraContextMode() const;
+
+	void SetBossCameraSource(AActor* Encounter, bool bActive);
+
 protected:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
@@ -109,4 +125,7 @@ private:
 	bool bIsCombatMode = false;
 	bool bIsLocallyControlled = false;
 	bool bUseRightCombatShoulder = true;
+	bool bHasContextOverride = false;
+	EProject_JCameraContextMode ActiveContextMode = EProject_JCameraContextMode::OnFoot;
+	TArray<TWeakObjectPtr<AActor>, TInlineAllocator<2>> BossCameraSources;
 };

@@ -75,6 +75,7 @@ void UProject_JRetargetAnimInstance::NativeInitializeAnimation()
 	{
 		if (World->GetNetMode() == NM_DedicatedServer)
 		{
+			bEnableFollowerRetarget = false;
 			bEnableSecondaryMotion = false;
 			if (USkeletalMeshComponent* OwningComp = GetOwningComponent();
 				OwningComp && OwningComp != Project_J::Movement::FindPoseSource(TryGetPawnOwner()))
@@ -129,6 +130,7 @@ void UProject_JRetargetAnimInstance::NativeUninitializeAnimation()
 	SmoothedLeftContactAlpha = LeftCarryAlphaSnapshot = 0.f;
 	bUseAuthoredCarryRotation = false;
 	bHasActiveHandContact = false;
+	GetProxyOnGameThread<FProject_JRetargetAnimInstanceProxy>().HandContacts = {};
 	GripTargetSnapshotFrame = GripPoseEvaluationFrame = MAX_uint64;
 	Super::NativeUninitializeAnimation();
 }
@@ -225,6 +227,7 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	{
 		if (World->GetNetMode() == NM_DedicatedServer)
 		{
+			bEnableFollowerRetarget = false;
 			bEnableSecondaryMotion = false;
 			return;
 		}
@@ -552,6 +555,11 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	}
 }
 
+const FProject_JRetargetAnimInstanceProxy& UProject_JRetargetAnimInstance::GetRetargetProxyOnGameThread() const
+{
+	return GetProxyOnGameThread<FProject_JRetargetAnimInstanceProxy>();
+}
+
 void UProject_JRetargetAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeconds)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_RetargetBody_ContactMath);
@@ -605,6 +613,21 @@ void UProject_JRetargetAnimInstance::NativeThreadSafeUpdateAnimation(float Delta
 		&& LeftCarryAlphaSnapshot >= SmoothedLeftContactAlpha;
 	GripIKAlpha = RightGripAlpha;
 	bHasActiveHandContact = RightGripAlpha > UE_SMALL_NUMBER || LeftGripAlpha > UE_SMALL_NUMBER;
+
+	// Native thread-safe update precedes the graph update for the same proxy.
+	// Publish the final interpolated values, retaining the current frame's input-pose references.
+	auto& Contacts = GetProxyOnAnyThread<FProject_JRetargetAnimInstanceProxy>().HandContacts;
+	Contacts.PoseContacts[0] = SnapshotRightInputPoseContact;
+	Contacts.PoseContacts[1] = SnapshotLeftInputPoseContact;
+	Contacts.WristTargets[0] = RightWristTarget;
+	Contacts.WristTargets[1] = LeftWristTarget;
+	Contacts.Alphas[0] = bRightContactTargetValid ? RightGripAlpha : 0.f;
+	Contacts.Alphas[1] = bLeftContactTargetValid ? LeftGripAlpha : 0.f;
+	Contacts.PrimaryHandBone = PrimaryHandBoneName;
+	Contacts.LeftWristInPrimaryHand = LeftGripInPrimaryHandSpace;
+	Contacts.bUsePrimaryHandSpace = bUsePrimaryHandSpaceGrip;
+	Contacts.bUseAuthoredCarryRotation = UsesAuthoredCarryRotation();
+	Contacts.bLimitCarryReach = ShouldLimitCarryReach();
 }
 
 void UProject_JRetargetAnimInstance::NativePostEvaluateAnimation()

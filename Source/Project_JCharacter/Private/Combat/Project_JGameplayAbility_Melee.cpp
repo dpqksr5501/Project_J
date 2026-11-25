@@ -58,6 +58,7 @@ UProject_JGameplayAbility_Melee::UProject_JGameplayAbility_Melee()
 	// This keeps input routing generic across jobs without allowing an equipped
 	// weapon's GA to fire while the character is sheathed/non-combat.
 	ActivationRequiredTags.AddTag(FProject_JGameplayTags::Get().State_CombatMode);
+	ActivationBlockedTags.AddTag(FProject_JGameplayTags::Get().State_Dead);
 }
 
 bool UProject_JGameplayAbility_Melee::CanActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
@@ -70,7 +71,8 @@ bool UProject_JGameplayAbility_Melee::CanActivateAbility(FGameplayAbilitySpecHan
 	const auto* Equipment = Avatar ? Avatar->FindComponentByClass<UProject_JEquipmentRuntimeComponent>() : nullptr;
 	if (!Equipment || Equipment->GetWeaponRevision() == 0) { return false; }
 	if (bEndingAttack || (ActorInfo && ActorInfo->AbilitySystemComponent.IsValid()
-		&& (ActorInfo->AbilitySystemComponent->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_Attacking) ||
+		&& (ActorInfo->AbilitySystemComponent->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_Dead) ||
+			ActorInfo->AbilitySystemComponent->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_Attacking) ||
 			ActorInfo->AbilitySystemComponent->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_Dodging))))
 	{
 		return false;

@@ -48,6 +48,7 @@
 #include "Components/Project_JReplicatedAnimEventComponent.h"
 #include "Components/Project_JReplicatedJumpStateComponent.h"
 #include "Components/Project_JAnimationUpdateCoordinatorComponent.h"
+#include "Components/Project_JModularMeshComponent.h"
 #include "Components/Project_JCombatIntroComponent.h"
 #include "Components/Project_JCombatAnimationLayerComponent.h"
 #include "Components/Project_JMountedAnimationLayerComponent.h"
@@ -62,6 +63,7 @@
 #include "Components/Project_JCombatPresentationComponent.h"
 #include "Mount/Project_JMountComponent.h"
 #include "Mount/Project_JMountCharacter.h"
+#include "Mount/Project_JMountMoverComponent.h"
 #include "Mount/Project_JMountItemDefinition.h"
 #include "Interaction/Project_JInteractable.h"
 #include "UI/Project_JCharacterUIBindingComponent.h"
@@ -123,7 +125,10 @@ AProject_JPlayerCharacter::AProject_JPlayerCharacter(const FObjectInitializer& O
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
-	PrimaryActorTick.bCanEverTick = true; // Tick ?쒖꽦??
+	PrimaryActorTick.bCanEverTick = true; // Tick 활성화
+	PrimaryActorTick.bAllowTickBatching = true;
+	SetNetUpdateFrequency(30.0f);
+	SetMinNetUpdateFrequency(2.0f);
 
 	// Don't rotate when the controller rotates. Let that just affect the camera.
 	bUseControllerRotationPitch = false;
@@ -178,6 +183,22 @@ void AProject_JPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 	DOREPLIFETIME(AProject_JPlayerCharacter, CurrentWeaponPresentationProfile);
 	DOREPLIFETIME_CONDITION(AProject_JPlayerCharacter, bReplicatedCombatModePresentation, COND_SkipOwner);
 	DOREPLIFETIME_CONDITION(AProject_JPlayerCharacter, bReplicatedCombatIntroPresentation, COND_SkipOwner);
+}
+
+ELifetimeCondition AProject_JPlayerCharacter::AllowActorComponentToReplicate(const UActorComponent* ComponentToReplicate) const
+{
+	const ELifetimeCondition SuperCondition = Super::AllowActorComponentToReplicate(ComponentToReplicate);
+	if (SuperCondition == COND_Never)
+	{
+		return SuperCondition;
+	}
+	// CombatHitValidationComponent carries only owning-client Server hit RPCs (zero replicated properties);
+	// replicating it to non-owning peers wastes O(N^2) subobject replication passes in dense boss fights.
+	if (ComponentToReplicate == CombatHitValidationComponent.Get())
+	{
+		return COND_OwnerOnly;
+	}
+	return SuperCondition;
 }
 
 // Creation-only: retain PlayerState's own steady priority/count-limiter policy.
@@ -274,6 +295,23 @@ void AProject_JPlayerCharacter::BeginPlay()
 	bCreationDependencyEnding = false;
 	ObservePlayerStateAbilitySystem();
 	Super::BeginPlay();
+	if (GetNetMode() == NM_DedicatedServer && GetMesh())
+	{
+		// Avoid full serial GameThread skeletal pose evaluation for idle/baked-attack players on headless servers;
+		// montages/notifies still tick, and active non-baked attacks promote via ProtectAttackPose().
+		GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickMontagesWhenNotRendered;
+		GetMesh()->SetDisablePostProcessBlueprint(true);
+		if (const auto* AnimBase = Cast<UProject_JCharacterAnimInstanceBase>(GetMesh()->GetAnimInstance()))
+		{
+			if (USkeletalMeshComponent* Follower = AnimBase->GetRuntimeRetargetFollowerMesh())
+			{
+				Follower->SetComponentTickEnabled(false);
+				Follower->SetDisablePostProcessBlueprint(true);
+				Follower->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+			}
+		}
+	}
+	RefreshRemotePresentationParts();
 
 	if (CombatStateComponent)
 	{
@@ -365,6 +403,7 @@ void AProject_JPlayerCharacter::PossessedBy(AController* NewController)
 {
     if (HasAuthority()) UProject_JOwnedPawnScopeComponent::Ensure(Cast<APlayerController>(NewController));
 	Super::PossessedBy(NewController);
+	RefreshRemotePresentationParts();
 
 	if (LocomotionAnimStateComponent)
 	{
@@ -384,6 +423,7 @@ void AProject_JPlayerCharacter::PossessedBy(AController* NewController)
 void AProject_JPlayerCharacter::PawnClientRestart()
 {
 	Super::PawnClientRestart();
+	RefreshRemotePresentationParts();
 	if (auto* ASC = Cast<UProject_JAbilitySystemComponent>(GetAbilitySystemComponent()))
 	{ ASC->RefreshActorInfoForCurrentActor(this); }
 	if (FoleyComponent) { FoleyComponent->PrepareLocalAudio(); }
@@ -396,6 +436,7 @@ void AProject_JPlayerCharacter::UnPossessed()
 	SprintMoveInput = FVector2D::ZeroVector;
 	if (PlayerInputBindingComponent) PlayerInputBindingComponent->UnbindInput();
 	Super::UnPossessed();
+	RefreshRemotePresentationParts();
 	if (auto* World = GetWorld(); World && HasAuthority() && !Cast<APlayerController>(GetController()))
 	{
 		if (auto* Decisions = World->GetSubsystem<UProject_JNPCDecisionSubsystem>()) Decisions->UnregisterPlayerTarget(this);
@@ -431,6 +472,10 @@ void AProject_JPlayerCharacter::ObservePlayerStateAbilitySystem()
 	if (HasAuthority()) return;
 	APlayerState* State = GetPlayerState();
 	if (!State && IsValid(MountComponent)) State = MountComponent->ResolveRuntimeOwner();
+	if (!State)
+	{
+		if (const auto* Mount = Cast<AProject_JMountMoverPawn>(GetAttachParentActor())) State = Mount->ResolveRiderAbilityOwner(this);
+	}
 	// APawn clears PlayerState during mounting. Retain only a weak subscription
 	// through that gap/ASC.Clear so a later actual publication can wake this Pawn.
 	if (!State) return;
@@ -463,6 +508,7 @@ void AProject_JPlayerCharacter::OnMountRuntimeOwnerPrerequisitesChanged()
 	if (bCreationDependencyEnding || IsActorBeingDestroyed()) return;
 	if (HasAuthority())
 	{
+		RefreshRemotePresentationParts();
 		auto* CurrentMount = IsValid(MountComponent) ? MountComponent->GetMountedMount() : nullptr;
 		if (IsValid(CurrentMount) && !CurrentMount->IsActorBeingDestroyed()
 			&& CurrentMount->GetWorld() == GetWorld() && CurrentMount->GetRider() == this)
@@ -487,7 +533,9 @@ void AProject_JPlayerCharacter::OnRep_PlayerState()
 	ObservePlayerStateAbilitySystem();
 	APlayerState* State = GetPlayerState();
 	const auto* PublishedMount = State ? Cast<AProject_JMountCharacter>(State->GetPawn()) : nullptr;
-	const bool bRetainedMountedRider = PublishedMount && PublishedMount->GetRider() == this;
+	const auto* PublishedMoverMount = State ? Cast<AProject_JMountMoverPawn>(State->GetPawn()) : nullptr;
+	const bool bRetainedMountedRider = (PublishedMount && PublishedMount->GetRider() == this)
+		|| (PublishedMoverMount && PublishedMoverMount->GetRider() == this);
 	if ((!State || CanConsumePlayerStateAbilitySystem(State)) && !bRetainedMountedRider)
 	{
 		Super::OnRep_PlayerState();
@@ -502,6 +550,15 @@ void AProject_JPlayerCharacter::OnRep_PlayerState()
 	}
 	if (LocomotionAnimStateComponent) LocomotionAnimStateComponent->RefreshCachedReferences();
 	RefreshAbilitySystemDependentComponents();
+	RefreshRemotePresentationParts();
+}
+
+void AProject_JPlayerCharacter::RefreshRemotePresentationParts()
+{
+	const ENetMode Mode = GetNetMode();
+	if (bCreationDependencyEnding || IsActorBeingDestroyed() || (Mode != NM_Client && Mode != NM_ListenServer)) return;
+	for (auto* Part : TInlineComponentArray<UProject_JModularMeshComponent*>(this))
+		Part->RefreshRemotePresentationMesh();
 }
 
 void AProject_JPlayerCharacter::ApplyPrototypeStartingEquipment()
@@ -546,25 +603,32 @@ void AProject_JPlayerCharacter::Tick(float DeltaTime)
 	// frame even when CharacterMovement did not broadcast an update.
 
 
-	if (LocomotionAnimStateComponent)
+	if (GetNetMode() != NM_DedicatedServer)
 	{
-		TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_PlayerCharacterTick_LocomotionState);
-		LocomotionAnimStateComponent->UpdateState(DeltaTime);
-
-	}
+		if (LocomotionAnimStateComponent)
+		{
+			TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_PlayerCharacterTick_LocomotionState);
+			LocomotionAnimStateComponent->UpdateState(DeltaTime);
+		}
 #if !UE_BUILD_SHIPPING
-	RecordMouseTurnFrame(DeltaTime);
+		RecordMouseTurnFrame(DeltaTime);
 #endif
+	}
 }
 
 AActor* AProject_JPlayerCharacter::GetAbilitySystemOwnerActor() const
 {
+	if (const auto* Mount = Cast<AProject_JMountMoverPawn>(GetAttachParentActor()))
+	{
+		if (auto* State = Mount->ResolveRiderAbilityOwner(this)) return State;
+	}
 	if (APlayerState* PS = GetPlayerState(); CanConsumePlayerStateAbilitySystem(PS))
 	{
 		// A retained mount rider is resolved below using its existing reciprocal
 		// mount/session contract, rather than lending an arbitrary stale PS.
-		if (const auto* Mount = Cast<AProject_JMountCharacter>(PS->GetPawn()); !Mount || Mount->GetRider() != this)
-			return PS;
+		const auto* LegacyMount = Cast<AProject_JMountCharacter>(PS->GetPawn());
+		const auto* MoverMount = Cast<AProject_JMountMoverPawn>(PS->GetPawn());
+		if ((!LegacyMount || LegacyMount->GetRider() != this) && (!MoverMount || MoverMount->GetRider() != this)) return PS;
 	}
 	// APawn clears the rider's PlayerState during the mount possession hand-off.
 	// Resolve only the current reciprocal mount session; never cache an old owner.
@@ -653,6 +717,15 @@ void AProject_JPlayerCharacter::ServerRequestUseMountItem_Implementation(FGuid I
 void AProject_JPlayerCharacter::UseMountItemAuthority(FGuid ItemInstanceId)
 {
 	if (IsActorBeingDestroyed() || !HasAuthority()) return;
+	if (IsDead_Implementation())
+	{
+		return;
+	}
+	if (const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+		ASC && ASC->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_Dead))
+	{
+		return;
+	}
 	if (GetMountComponent() && GetMountComponent()->IsMounted())
 	{
 		return;
@@ -728,9 +801,10 @@ void AProject_JPlayerCharacter::UseMountItemAuthority(FGuid ItemInstanceId)
 				}
 				TSharedPtr<FStreamableHandle> CompletedHandle = MoveTemp(Character->PendingMountClassLoadHandle);
 				Character->PendingMountItemId.Invalidate();
-				if (Character->HasAuthority() && MountClassRef.Get())
+				if (Character->HasAuthority() && !Character->IsDead_Implementation() &&
+					UProject_JCommandBudgetComponent::AdmitClientCommand(Character) && MountClassRef.Get())
 				{
-					// Recheck the inventory, lock state, and current mount after loading.
+					// Recheck the inventory, lock state, session authority, and current mount after loading.
 					Character->UseMountItemAuthority(ItemInstanceId);
 				}
 				else if (Character->HasAuthority())
@@ -1404,17 +1478,26 @@ void AProject_JPlayerCharacter::BeginCombatModeWithIntro()
 
 void AProject_JPlayerCharacter::ServerSetCombatIntroPresentation_Implementation(bool bShouldShowIntro)
 {
+	if (!UProject_JCommandBudgetComponent::AdmitClientCommand(this))
+	{
+		return;
+	}
 	LogCombatPresentationTrace(*this, bShouldShowIntro ? TEXT("ServerIntroRpcReceivedTrue") : TEXT("ServerIntroRpcReceivedFalse"));
 	// This RPC controls only remote visuals. Do not duplicate CanToggleCombatMode
 	// here: its stricter airborne/action checks belong to authoritative gameplay
 	// activation and would unnecessarily delay a confirmed draw presentation.
 	const bool bPreviouslyShowingIntro = bReplicatedCombatIntroPresentation;
-	bReplicatedCombatIntroPresentation = bShouldShowIntro &&
+	const bool bNextShowingIntro = bShouldShowIntro &&
 		!bReplicatedCombatModePresentation &&
 		!(MountComponent && MountComponent->IsMounted());
+	if (bPreviouslyShowingIntro == bNextShowingIntro)
+	{
+		SetCombatTransitionState(bNextShowingIntro);
+		return;
+	}
+	bReplicatedCombatIntroPresentation = bNextShowingIntro;
 	SetCombatTransitionState(bReplicatedCombatIntroPresentation);
-	if (bPreviouslyShowingIntro != bReplicatedCombatIntroPresentation &&
-		GetNetMode() == NM_ListenServer && !IsLocallyControlled())
+	if (GetNetMode() == NM_ListenServer && !IsLocallyControlled())
 	{
 		// The host sees the remote pawn's authority instance, which does not receive its own OnRep.
 		OnRep_ReplicatedCombatIntroPresentation();
@@ -1799,7 +1882,8 @@ bool AProject_JPlayerCharacter::TryApplyHandoverSnapshot(const TArray<uint8>& In
 	// class-floor normalization, but never acknowledge a different level or pose-only apply.
 	if (!CanApplyCharacterLevelExactly(Snapshot.Level)) { return false; }
 
-	if (!CastChecked<UProject_JMoverComponent>(GetMover())->ApplyAuthorityHandoverTransform(FTransform(Snapshot.Rotation,Snapshot.Location)))
+	UProject_JMoverComponent* PlayerMover = Cast<UProject_JMoverComponent>(GetMover());
+	if (!PlayerMover || !PlayerMover->ApplyAuthorityHandoverTransform(FTransform(Snapshot.Rotation, Snapshot.Location)))
 	{
 		return false;
 	}

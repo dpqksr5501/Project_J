@@ -1,4 +1,5 @@
 #include "Components/Project_JCombatHitValidationComponent.h"
+#include "Combat/Project_JMultiPartHitComponent.h"
 #include "Animation/Project_JAnimNotifyState_MeleeHit.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
@@ -19,6 +20,14 @@
 #include "Combat/Project_JAttackDefinition.h"
 #include "Combat/Project_JMeleeSweep.h"
 #include "GameplayEffect.h"
+#include "Project_JAbilitySystemComponent.h"
+#include "Project_JGameplayTags.h"
+#include "Project_JSocialStateInterface.h"
+#include "GenericTeamAgentInterface.h"
+#include "GameFramework/Controller.h"
+#include "GameFramework/PlayerState.h"
+#include "Mount/Project_JMountCharacter.h"
+#include "Mount/Project_JMountMoverComponent.h"
 #include "Engine/World.h"
 #include "Engine/NetConnection.h"
 #include "UObject/StrongObjectPtr.h"
@@ -26,12 +35,118 @@
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "GameFramework/GameStateBase.h"
 #include "Project_JPlayerCharacter.h"
+#include "Project_JNPCCharacter.h"
+#include "AI/Project_JThreatComponent.h"
+#include "HAL/IConsoleManager.h"
 #include "Components/Project_JEquipmentRuntimeComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/Character.h"
 #include "Animation/Project_JBudgetedSkeletalMeshComponent.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogProjectJCombatHitValidation, Log, All);
+
+namespace
+{
+static TAutoConsoleVariable<int32> CVarOpenWorldPvP(
+	TEXT("ProjectJ.Combat.OpenWorldPvP"), 0,
+	TEXT("When 0 (default PvE), non-party AProject_JPlayerCharacter combatants do not friendly-fire each other unless explicitly hostile via IGenericTeamAgentInterface."));
+
+const AActor* CombatParticipant(const AActor* Actor)
+{
+	const APawn* Rider = nullptr;
+	if (const auto* Mount = Cast<AProject_JMountCharacter>(Actor)) Rider = Mount->GetRider();
+	else if (const auto* MoverMount = Cast<AProject_JMountMoverPawn>(Actor)) Rider = MoverMount->GetRider();
+	return IsValid(Rider) && Rider->GetAttachParentActor() == Actor ? Rider : Actor;
+}
+
+const APlayerState* CombatPlayerState(const AActor* Participant)
+{
+	if (const auto* Pawn = Cast<APawn>(Participant))
+	{
+		if (const auto* State = Pawn->GetPlayerState(); IsValid(State) && State->GetPawn() == Pawn) return State;
+		if (const auto* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Pawn); IsValid(ASC) && ASC->GetAvatarActor() == Pawn)
+			return Cast<APlayerState>(ASC->GetOwnerActor());
+	}
+	return nullptr;
+}
+
+FGenericTeamId CombatTeam(const AActor* Participant)
+{
+	const FGenericTeamId Team = FGenericTeamId::GetTeamIdentifier(Participant);
+	if (Team != FGenericTeamId::NoTeam) return Team;
+	const auto* Pawn = Cast<APawn>(Participant);
+	return Pawn && IsValid(Pawn->GetController()) ? FGenericTeamId::GetTeamIdentifier(Pawn->GetController()) : FGenericTeamId::NoTeam;
+}
+
+bool AreFriendlyCombatParticipants(const AActor* Source, const AActor* Target)
+{
+	const AActor* Attacker = CombatParticipant(Source);
+	const AActor* Defender = CombatParticipant(Target);
+	if (Attacker == Defender) return true;
+	const auto AttackerTeam = CombatTeam(Attacker);
+	const auto DefenderTeam = CombatTeam(Defender);
+	if (AttackerTeam != FGenericTeamId::NoTeam && DefenderTeam != FGenericTeamId::NoTeam)
+	{
+		const ETeamAttitude::Type Attitude = FGenericTeamId::GetAttitude(AttackerTeam, DefenderTeam);
+		if (Attitude == ETeamAttitude::Friendly) return true;
+		if (Attitude == ETeamAttitude::Hostile) return false;
+	}
+
+	// Default PvE faction protection: players do not cleave/AoE non-party players during field boss fights,
+	// and NPC bosses/adds spawned by the same encounter owner do not hit each other unless explicitly configured as hostile teams.
+	if (CVarOpenWorldPvP.GetValueOnGameThread() == 0
+		&& Cast<AProject_JPlayerCharacter>(Attacker) != nullptr
+		&& Cast<AProject_JPlayerCharacter>(Defender) != nullptr)
+	{
+		return true;
+	}
+	if (Cast<AProject_JNPCCharacter>(Attacker) != nullptr
+		&& Cast<AProject_JNPCCharacter>(Defender) != nullptr
+		&& Attacker->GetOwner() != nullptr
+		&& Attacker->GetOwner() == Defender->GetOwner())
+	{
+		return true;
+	}
+
+	const auto* AttackerState = CombatPlayerState(Attacker);
+	const auto* DefenderState = CombatPlayerState(Defender);
+	if (!IsValid(AttackerState) || !IsValid(DefenderState)) return false;
+	if (AttackerState == DefenderState) return true;
+	const auto* AttackerSocial = Cast<IProject_JSocialStateInterface>(AttackerState);
+	const auto* DefenderSocial = Cast<IProject_JSocialStateInterface>(DefenderState);
+	if (!AttackerSocial || !DefenderSocial) return false;
+	const FName Party = AttackerSocial->GetPartyId_Implementation();
+	return !Party.IsNone() && Party == DefenderSocial->GetPartyId_Implementation();
+}
+}
+
+bool Project_J::Combat::CanAffectCombatTarget(const AActor* Source, const AActor* Target, const UAbilitySystemComponent* TargetASC)
+{
+	if (!IsValid(Source) || !Source->HasAuthority() || Source->IsActorBeingDestroyed()
+		|| !IsValid(Target) || Target == Source || Target->IsActorBeingDestroyed() || Target->GetWorld() != Source->GetWorld())
+	{
+		return false;
+	}
+	if (AreFriendlyCombatParticipants(Source, Target)) return false;
+	const FGameplayTag DeadTag = FProject_JGameplayTags::Get().State_Dead;
+	if (const UAbilitySystemComponent* SourceASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Source))
+	{
+		if (SourceASC->HasMatchingGameplayTag(DeadTag)) return false;
+	}
+	if (const UProject_JThreatComponent* TargetThreat = Target->FindComponentByClass<UProject_JThreatComponent>())
+	{
+		if (TargetThreat->bIsEvading) return false;
+	}
+	if (!IsValid(TargetASC))
+	{
+		// Geometry queries and non-GAS targets still participate in spatial tests.
+		return true;
+	}
+	if (TargetASC->HasMatchingGameplayTag(DeadTag)) return false;
+	const auto* ProjectASC = Cast<UProject_JAbilitySystemComponent>(TargetASC);
+	const auto* World = Target->GetWorld();
+	return !ProjectASC || !World || !ProjectASC->IsAvatarHealthLossProtected(Target, World->GetTimeSeconds());
+}
 
 UProject_JCombatHitValidationComponent::UProject_JCombatHitValidationComponent()
 {
@@ -65,13 +180,13 @@ void UProject_JCombatHitValidationComponent::BeginAttackNode(const FGameplayTag 
 	const UWorld* World = GetWorld();
 	const AGameStateBase* GameState = World ? World->GetGameState() : nullptr;
 	ActiveAttackStartTimestamp = GameState ? GameState->GetServerWorldTimeSeconds() : (World ? World->GetTimeSeconds() : 0.0f);
-	ProtectAttackPose();
 	bRequiresWeapon = Cast<AProject_JPlayerCharacter>(GetOwner()) != nullptr;
 	AttackEquipment = GetOwner() ? GetOwner()->FindComponentByClass<UProject_JEquipmentRuntimeComponent>() : nullptr;
 	AttackWeaponRevision = AttackEquipment.IsValid() ? AttackEquipment->GetWeaponRevision() : 0;
 	ActivePredictionKey = PredictionKey;
 	ActiveAttackNodeTag = AttackNodeTag;
 	ActiveAttackDefinition = AttackDefinition;
+	ProtectAttackPose();
 	HitWindowTokens.Reset();
 	bManualHitWindowOpen = false;
 	bHitWindowOpen = false;
@@ -122,6 +237,16 @@ void UProject_JCombatHitValidationComponent::ResetSpatialHistory()
 	ActiveAttackStartTimestamp = GameState ? GameState->GetServerWorldTimeSeconds() : (World ? World->GetTimeSeconds() : 0.0f);
 }
 
+bool UProject_JCombatHitValidationComponent::CanUseDedicatedServerMontageOnlyPose(const USkeletalMeshComponent* Mesh) const
+{
+	const UWorld* World = GetWorld();
+	return World && World->GetNetMode() == NM_DedicatedServer
+		&& Cast<UProject_JBudgetedSkeletalMeshComponent>(Mesh) != nullptr
+		&& ActiveAttackDefinition != nullptr
+		&& ActiveAttackDefinition->MeleeTrajectory.bEnabled
+		&& ActiveAttackDefinition->GetMeleeTrajectoryFailure(Mesh->GetSkeletalMeshAsset()).IsEmpty();
+}
+
 void UProject_JCombatHitValidationComponent::ProtectAttackPose()
 {
 	check(IsInGameThread());
@@ -138,7 +263,12 @@ void UProject_JCombatHitValidationComponent::ProtectAttackPose()
 	}
 	if (auto* Budgeted = Cast<UProject_JBudgetedSkeletalMeshComponent>(Mesh))
 	{
-		Budgeted->RequestAnimationUpdate(this, EProject_JAnimationUpdateRequirement::GameplayPose);
+		// Baked MeleeTrajectory attacks on a headless server consume only montage timing
+		// and physical Mover root transforms, so they never need full skeletal bone refresh.
+		const EProject_JAnimationUpdateRequirement Requirement = CanUseDedicatedServerMontageOnlyPose(Budgeted)
+			? EProject_JAnimationUpdateRequirement::MontageTiming
+			: EProject_JAnimationUpdateRequirement::GameplayPose;
+		Budgeted->RequestAnimationUpdate(this, Requirement);
 		return;
 	}
 	// A hit window is authoritative gameplay. Hidden meshes/DS must still refresh
@@ -637,6 +767,7 @@ bool UProject_JCombatHitValidationComponent::ProcessAuthorityHit(AActor* HitActo
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_Combat_AuthorityHit);
 	if (!CanProcessAuthorityHit(HitActor, TargetLimit))
 	{
+		UE_LOG(LogProjectJCombatHitValidation, VeryVerbose, TEXT("Authority hit rejected at gate: source=%s target=%s"), *GetNameSafe(GetOwner()), *GetNameSafe(HitActor));
 		return false;
 	}
 
@@ -647,8 +778,18 @@ bool UProject_JCombatHitValidationComponent::ProcessAuthorityHit(AActor* HitActo
 	// default. Otherwise legitimate authority hits depend on distance to world origin.
 	Request.TraceStart = LastAuthoritativeTraceStart;
 	Request.TraceEnd = LastAuthoritativeTraceEnd;
-	if (HitValidationPolicy.ValidateActors(GetOwner(), Request) != EProject_JCombatHitValidationFailure::None)
+	if (const auto Failure = HitValidationPolicy.ValidateActors(GetOwner(), Request);
+		Failure != EProject_JCombatHitValidationFailure::None)
 	{
+		UE_LOG(LogProjectJCombatHitValidation, VeryVerbose, TEXT("Authority hit rejected by actor policy: source=%s target=%s failure=%d"),
+			*GetNameSafe(GetOwner()), *GetNameSafe(HitActor), static_cast<int32>(Failure));
+		return false;
+	}
+	// Only eligible opponents occupy an authority swing's limited hit slots.
+	if (AreFriendlyCombatParticipants(GetOwner(), HitActor))
+	{
+		UE_LOG(LogProjectJCombatHitValidation, VeryVerbose, TEXT("Authority hit rejected as friendly: source=%s target=%s"),
+			*GetNameSafe(GetOwner()), *GetNameSafe(HitActor));
 		return false;
 	}
 	if (IsTargetObstructed(HitActor))
@@ -720,8 +861,11 @@ EProject_JCombatHitValidationFailure UProject_JCombatHitValidationComponent::Res
 		if (!IsValid(Connection) || !FMath::IsFinite(Connection->AvgLag) || Connection->AvgLag < 0.0f)
 			return EProject_JCombatHitValidationFailure::InvalidNodeClock;
 		// Native AvgLag is server-measured RTT-derived packet lag, not one-way
-		// latency or a presentation clock. Zero permits only existing tolerance.
-		AllowedLead = FMath::Min(AllowedLead, static_cast<double>(Connection->AvgLag) + MaxFuture);
+		// latency or a presentation clock. Include bounded current server tick
+		// delta so local/low-ping clients are not deterministically rejected by a
+		// single server frame hitch while staying strictly capped by LeadCap.
+		const double ServerTickAllowance = FMath::Clamp(static_cast<double>(ClockWorld->GetDeltaSeconds()), 0.0, 0.15);
+		AllowedLead = FMath::Min(AllowedLead, FMath::Max(static_cast<double>(Connection->AvgLag), ServerTickAllowance) + MaxFuture);
 	}
 	// Standalone is an explicit local policy, not a no-connection remote fallback.
 	// This is an untrusted immutable claim inside a server-measured envelope;
@@ -823,31 +967,59 @@ void UProject_JCombatHitValidationComponent::ProcessServerHitRequest(const FProj
 		BoundClientNodeStartTimestamp = Request.NodeClock.ClientNodeStartTimestamp;
 		bClientNodeClockBound = true;
 	}
-	if (UProject_JServerSideRewindComponent* SSRComp = HitActor->FindComponentByClass<UProject_JServerSideRewindComponent>())
+	// An ignored contact still consumes its command budget, sequence and clock
+	// admission. Skip rewinding a target that the server cannot damage.
+	if (AreFriendlyCombatParticipants(KeepOwner.Get(), HitActor))
 	{
-		if (UE_LOG_ACTIVE(LogProjectJCombatHitValidation, Verbose))
-		{
-			double Oldest = 0.0, Newest = 0.0;
-			const bool bHasBounds = SSRComp->TryGetHistoryTimeBounds(Oldest, Newest);
-			UE_LOG(LogProjectJCombatHitValidation, Verbose, TEXT("SSR history bounds Requester=%s Target=%s Query=%.17g HasBounds=%d Oldest=%.17g Newest=%.17g Sequence=%d PredictionKey=%d"),
-				*GetNameSafe(GetOwner()), *GetNameSafe(HitActor), ClientTimestamp, bHasBounds, Oldest, Newest, RequestSequence, PredictionKey);
-		}
-		for (const auto& Segment : Packet.Segments)
-			if (SSRComp->ServerVerifyHit(ClientTimestamp, Segment.TraceStart, Segment.TraceEnd, TraceRadius) &&
-				!IsTargetObstructedFrom(HitActor, Segment.TraceStart)) { bHitConfirmed = true; break; }
+		UE_LOG(LogProjectJCombatHitValidation, Verbose,
+			TEXT("SSR decision=Rejected Reason=FriendlyTarget Sequence=%d PredictionKey=%d"), RequestSequence, PredictionKey);
+		return;
 	}
-	else if (UWorld* World = GetWorld())
+	if (!IsCurrent()) return;
+	if (const UProject_JMultiPartHitComponent* MultiPart = HitActor->FindComponentByClass<UProject_JMultiPartHitComponent>())
 	{
-		// No history owner: require current native collision, not a coarse swept AABB.
-		// This supports every Pawn query primitive the real melee producer can hit.
-		TArray<FHitResult> Hits;
-		const FCollisionQueryParams Params = Project_J::Combat::MakeMeleeSweepParams(GetOwner());
 		for (const auto& Segment : Packet.Segments)
 		{
-			Project_J::Combat::SweepMeleeSphere(*World, Params, Segment.TraceStart, Segment.TraceEnd, TraceRadius, Hits);
-			if (Hits.ContainsByPredicate([HitActor](const FHitResult& Hit) { return Hit.GetActor() == HitActor; }) &&
-				!IsTargetObstructedFrom(HitActor, Segment.TraceStart))
+			FName HitPartName;
+			float PartMult = 1.0f;
+			FVector PartCenter = FVector::ZeroVector;
+			if (MultiPart->VerifyRewoundSegmentHit(ClientTimestamp, Segment.TraceStart, Segment.TraceEnd, TraceRadius, HitPartName, PartMult, PartCenter) &&
+				!IsTargetObstructedFromLocation(HitActor, Segment.TraceStart, PartCenter))
 			{ bHitConfirmed = true; break; }
+		}
+	}
+	if (!bHitConfirmed)
+	{
+		if (UProject_JServerSideRewindComponent* SSRComp = HitActor->FindComponentByClass<UProject_JServerSideRewindComponent>())
+		{
+			if (UE_LOG_ACTIVE(LogProjectJCombatHitValidation, Verbose))
+			{
+				double Oldest = 0.0, Newest = 0.0;
+				const bool bHasBounds = SSRComp->TryGetHistoryTimeBounds(Oldest, Newest);
+				UE_LOG(LogProjectJCombatHitValidation, Verbose, TEXT("SSR history bounds Requester=%s Target=%s Query=%.17g HasBounds=%d Oldest=%.17g Newest=%.17g Sequence=%d PredictionKey=%d"),
+					*GetNameSafe(GetOwner()), *GetNameSafe(HitActor), ClientTimestamp, bHasBounds, Oldest, Newest, RequestSequence, PredictionKey);
+			}
+			for (const auto& Segment : Packet.Segments)
+			{
+				FVector RewoundLocation;
+				if (SSRComp->ServerVerifyHitWithRewoundLocation(ClientTimestamp, Segment.TraceStart, Segment.TraceEnd, TraceRadius, RewoundLocation) &&
+					!IsTargetObstructedFromLocation(HitActor, Segment.TraceStart, RewoundLocation))
+				{ bHitConfirmed = true; break; }
+			}
+		}
+		else if (UWorld* World = GetWorld())
+		{
+			// No history owner: require current native collision, not a coarse swept AABB.
+			// This supports every Pawn query primitive the real melee producer can hit.
+			TArray<FHitResult> Hits;
+			const FCollisionQueryParams Params = Project_J::Combat::MakeMeleeSweepParams(GetOwner());
+			for (const auto& Segment : Packet.Segments)
+			{
+				Project_J::Combat::SweepMeleeSphere(*World, Params, Segment.TraceStart, Segment.TraceEnd, TraceRadius, Hits);
+				if (Hits.ContainsByPredicate([HitActor](const FHitResult& Hit) { return Hit.GetActor() == HitActor; }) &&
+					!IsTargetObstructedFrom(HitActor, Segment.TraceStart))
+				{ bHitConfirmed = true; break; }
+			}
 		}
 	}
 
@@ -903,9 +1075,25 @@ EProject_JCombatHitValidationFailure UProject_JCombatHitValidationComponent::Val
 	{
 		return EProject_JCombatHitValidationFailure::DuplicateTarget;
 	}
-	if (Request.RequestSequence <= LastServerRequestSequence)
+	if (Request.RequestSequence <= 0)
 	{
 		return EProject_JCombatHitValidationFailure::RequestRateLimited;
+	}
+	bool bSequenceBehind = false;
+	uint32 BehindBit = 0;
+	if (Request.RequestSequence <= LastServerRequestSequence)
+	{
+		const int32 Delta = LastServerRequestSequence - Request.RequestSequence;
+		if (Delta >= 32)
+		{
+			return EProject_JCombatHitValidationFailure::RequestRateLimited;
+		}
+		BehindBit = 1u << static_cast<uint32>(Delta);
+		if ((RecentSequenceMask & BehindBit) != 0)
+		{
+			return EProject_JCombatHitValidationFailure::RequestRateLimited;
+		}
+		bSequenceBehind = true;
 	}
 
 	const UWorld* World = GetWorld();
@@ -921,7 +1109,16 @@ EProject_JCombatHitValidationFailure UProject_JCombatHitValidationComponent::Val
 	}
 	// Admission precedes the world query: a blocked valid attempt still owns
 	// its sequence and rate slot, so retries cannot repeat an unbudgeted LOS.
-	LastServerRequestSequence = Request.RequestSequence;
+	if (bSequenceBehind)
+	{
+		RecentSequenceMask |= BehindBit;
+	}
+	else
+	{
+		const int32 Shift = Request.RequestSequence - LastServerRequestSequence;
+		RecentSequenceMask = (Shift >= 32) ? 1u : ((RecentSequenceMask << static_cast<uint32>(Shift)) | 1u);
+		LastServerRequestSequence = Request.RequestSequence;
+	}
 	if (bCheckLiveTraceLOS && IsTargetObstructed(Request.Target))
 	{
 		return EProject_JCombatHitValidationFailure::WorldObstructed;
@@ -936,9 +1133,14 @@ bool UProject_JCombatHitValidationComponent::IsTargetObstructed(const AActor* Hi
 
 bool UProject_JCombatHitValidationComponent::IsTargetObstructedFrom(const AActor* HitActor, const FVector& TraceOrigin) const
 {
+	return !HitActor || IsTargetObstructedFromLocation(HitActor, TraceOrigin, HitActor->GetActorLocation());
+}
+
+bool UProject_JCombatHitValidationComponent::IsTargetObstructedFromLocation(const AActor* HitActor, const FVector& TraceOrigin, const FVector& TargetLocation) const
+{
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_Combat_LineOfSight);
 	const UWorld* World = GetWorld();
-	if (!World || !GetOwner() || !HitActor)
+	if (!World || !GetOwner() || !HitActor || TraceOrigin.ContainsNaN() || TargetLocation.ContainsNaN())
 	{
 		return true;
 	}
@@ -946,12 +1148,15 @@ bool UProject_JCombatHitValidationComponent::IsTargetObstructedFrom(const AActor
 	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(ProjectJCombatLineOfSight), false, GetOwner());
 	QueryParams.AddIgnoredActor(GetOwner());
 	FHitResult BlockingHit;
-	if (!World->LineTraceSingleByChannel(BlockingHit, TraceOrigin, HitActor->GetActorLocation(), ECC_Visibility, QueryParams))
+	if (!World->LineTraceSingleByChannel(BlockingHit, TraceOrigin, TargetLocation, ECC_Visibility, QueryParams))
 	{
 		return false;
 	}
 
-	return BlockingHit.GetActor() != HitActor;
+	if (BlockingHit.GetActor() == HitActor) return false;
+	UE_LOG(LogProjectJCombatHitValidation, VeryVerbose, TEXT("Hit line of sight blocked: source=%s target=%s blocker=%s component=%s"),
+		*GetNameSafe(GetOwner()), *GetNameSafe(HitActor), *GetNameSafe(BlockingHit.GetActor()), *GetNameSafe(BlockingHit.GetComponent()));
+	return true;
 }
 
 bool UProject_JCombatHitValidationComponent::ApplyConfirmedHit(AActor* HitActor)
@@ -972,7 +1177,7 @@ bool UProject_JCombatHitValidationComponent::ApplyConfirmedHit(AActor* HitActor,
 	}
 
 	TStrongObjectPtr<UAbilitySystemComponent> TargetASC(UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(HitActor));
-	if (!IsCurrent() || !IsValid(TargetASC.Get()))
+	if (!IsCurrent() || !IsValid(TargetASC.Get()) || !Project_J::Combat::CanAffectCombatTarget(GetOwner(), HitActor, TargetASC.Get()))
 	{
 		return false;
 	}
@@ -1017,7 +1222,21 @@ UAbilitySystemComponent* UProject_JCombatHitValidationComponent::ResolveOwnerAbi
 void UProject_JCombatHitValidationComponent::EndMeleePoseCapture()
 {
 	++MeleePoseGeneration;
-	if (auto* Mesh = ProtectedMesh.Get()) Mesh->UnregisterOnBoneTransformsFinalizedDelegate(MeleePoseHandle);
+	if (auto* Mesh = ProtectedMesh.Get())
+	{
+		if (bMeleePoseMontageOnly)
+		{
+			if (auto* Budgeted = Cast<UProject_JBudgetedSkeletalMeshComponent>(Mesh))
+			{
+				Budgeted->OnPostTickPose.Remove(MeleePoseHandle);
+			}
+		}
+		else
+		{
+			Mesh->UnregisterOnBoneTransformsFinalizedDelegate(MeleePoseHandle);
+		}
+	}
+	bMeleePoseMontageOnly = false;
 	MeleePoseHandle.Reset(); MeleePoseSamples.Reset();
 	MeleeRootAnchor = FMeleeRootAnchor();
 	MeleePoseAsset.Reset(); MeleePoseAnim.Reset(); MeleePoseAnimClass.Reset(); MeleePoseMontage.Reset(); MeleePoseInstanceID = INDEX_NONE;
@@ -1042,7 +1261,19 @@ void UProject_JCombatHitValidationComponent::BeginMeleePoseCapture()
 		MeleePoseSamples.Add(MoveTemp(Sample));
 	}
 	if (!MeleePoseSamples.IsEmpty())
-		MeleePoseHandle = Mesh->RegisterOnBoneTransformsFinalizedDelegate(FOnBoneTransformsFinalizedMultiCast::FDelegate::CreateUObject(this, &ThisClass::CaptureMeleePose, MeleePoseGeneration));
+	{
+		if (CanUseDedicatedServerMontageOnlyPose(Mesh))
+		{
+			auto* Budgeted = CastChecked<UProject_JBudgetedSkeletalMeshComponent>(Mesh);
+			bMeleePoseMontageOnly = true;
+			MeleePoseHandle = Budgeted->OnPostTickPose.AddUObject(this, &ThisClass::CaptureMeleePose, MeleePoseGeneration);
+		}
+		else
+		{
+			bMeleePoseMontageOnly = false;
+			MeleePoseHandle = Mesh->RegisterOnBoneTransformsFinalizedDelegate(FOnBoneTransformsFinalizedMultiCast::FDelegate::CreateUObject(this, &ThisClass::CaptureMeleePose, MeleePoseGeneration));
+		}
+	}
 }
 
 void UProject_JCombatHitValidationComponent::CaptureMeleePose(uint64 ExpectedGeneration)
@@ -1069,15 +1300,26 @@ void UProject_JCombatHitValidationComponent::CaptureMeleePose(uint64 ExpectedGen
 			Sample.TipOffset != ActiveAttackDefinition->HitSpec.CanonicalBladeTipOffset ||
 			Montage->Notifies[Sample.NotifyIndex].GetTriggerTime() != Sample.TriggerTime || Montage->Notifies[Sample.NotifyIndex].GetEndTriggerTime() != Sample.EndTriggerTime)
 		{ Sample.bValid = false; continue; }
-		Sample.WorldPoint = Notify->ResolveTraceLocation(Mesh, ActiveAttackDefinition);
 		Sample.MontageTime = Instance->GetPosition(); Sample.Frame = GFrameCounter; Sample.Spatial = SpatialRevision;
-		Sample.BoneRevision = Mesh->GetBoneTransformRevisionNumber(); Sample.bValid = !Sample.WorldPoint.ContainsNaN();
+		if (bMeleePoseMontageOnly)
+		{
+			Sample.WorldPoint = FVector::ZeroVector;
+			Sample.BoneRevision = 0;
+			Sample.bValid = true;
+		}
+		else
+		{
+			Sample.WorldPoint = Notify->ResolveTraceLocation(Mesh, ActiveAttackDefinition);
+			Sample.BoneRevision = Mesh->GetBoneTransformRevisionNumber();
+			Sample.bValid = !Sample.WorldPoint.ContainsNaN();
+		}
 	}
 }
 
 bool UProject_JCombatHitValidationComponent::TryGetPreviousMeleePose(USkeletalMeshComponent* Mesh, const FAnimNotifyEventReference& EventReference,
 	FVector& OutWorldPoint, float& OutMontageTime) const
 {
+	if (bMeleePoseMontageOnly) return false;
 	const FMeleePoseSample* Sample = FindPreviousMeleePoseSample(Mesh, EventReference);
 	if (!Sample) return false;
 	OutWorldPoint = Sample->WorldPoint; OutMontageTime = Sample->MontageTime;
@@ -1104,7 +1346,7 @@ const UProject_JCombatHitValidationComponent::FMeleePoseSample* UProject_JCombat
 	for (const auto& Sample : MeleePoseSamples)
 	{
 		if (!Sample.bValid || (Sample.Frame == MAX_uint64 || Sample.Frame + 1 != GFrameCounter) || Sample.Spatial != SpatialRevision ||
-			Sample.BoneRevision != Mesh->GetPreviousBoneTransformRevisionNumber() || !Montage->Notifies.IsValidIndex(Sample.NotifyIndex) ||
+			(!bMeleePoseMontageOnly && Sample.BoneRevision != Mesh->GetPreviousBoneTransformRevisionNumber()) || !Montage->Notifies.IsValidIndex(Sample.NotifyIndex) ||
 			Montage->Notifies[Sample.NotifyIndex].NotifyStateClass.Get() != Sample.Notify.Get() || Event->NotifyStateClass.Get() != Sample.Notify.Get() || !Sample.Notify.IsValid() ||
 			Sample.Socket != Sample.Notify->GetTraceSocketName() || Sample.bUseTipOffset != ActiveAttackDefinition->HitSpec.bUseCanonicalBladeTipOffset ||
 			Sample.TipOffset != ActiveAttackDefinition->HitSpec.CanonicalBladeTipOffset ||
@@ -1196,4 +1438,97 @@ bool UProject_JCombatHitValidationComponent::TryGetMeleeRootInterval(USkeletalMe
 	OutMeshToRoot = MeleeRootAnchor.MeshToRoot;
 	OutPreviousMontageTime = Sample->MontageTime;
 	return true;
+}
+
+int32 UProject_JCombatHitValidationComponent::ServerExecuteHitQuery(
+	const FProject_JHitQuerySpec& Spec,
+	const TArray<AActor*>& CandidateTargets,
+	TArray<AActor*>& OutHitActors,
+	TArray<float>& OutDamageMultipliers,
+	double QueryTimeSeconds) const
+{
+	OutHitActors.Reset();
+	OutDamageMultipliers.Reset();
+	const AActor* Owner = GetOwner();
+	const UWorld* World = GetWorld();
+	if (!Owner || !Owner->HasAuthority() || !World || Spec.MaxTargets <= 0)
+	{
+		return 0;
+	}
+
+	const double EffectiveTime = (QueryTimeSeconds >= 0.0) ? QueryTimeSeconds : World->GetTimeSeconds();
+	TSet<AActor*, DefaultKeyFuncs<AActor*>, TInlineSetAllocator<16>> SeenTargets;
+	for (AActor* Target : CandidateTargets)
+	{
+		if (OutHitActors.Num() >= Spec.MaxTargets)
+		{
+			break;
+		}
+		if (!IsValid(Target) || SeenTargets.Contains(Target) || !Project_J::Combat::CanAffectCombatTarget(
+			Owner, Target, UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target)))
+		{
+			continue;
+		}
+
+		float Multiplier = 1.0f;
+		FVector CheckLocation = Target->GetActorLocation();
+		bool bMatched = false;
+
+		if (Spec.Kind == EProject_JHitQueryKind::MultiPartBoss)
+		{
+			if (const auto* MultiPart = Target->FindComponentByClass<UProject_JMultiPartHitComponent>())
+			{
+				FName HitPartName;
+				const FVector SegStart = Spec.Origin;
+				const FVector SegEnd = Spec.Origin + Spec.ForwardDir.GetSafeNormal() * FMath::Max(10.0f, Spec.OuterRadius);
+				bMatched = MultiPart->VerifyRewoundSegmentHit(
+					EffectiveTime, SegStart, SegEnd, FMath::Max(0.0f, Spec.InnerRadius),
+					HitPartName, Multiplier, CheckLocation);
+			}
+		}
+		else
+		{
+			bMatched = Project_J::Combat::IsPointInsideAoESpec(Spec, CheckLocation, 45.0f);
+		}
+
+		if (!bMatched)
+		{
+			continue;
+		}
+		if (Spec.bRequireLineOfSight && IsTargetObstructedFromLocation(Target, Spec.Origin, CheckLocation))
+		{
+			continue;
+		}
+
+		SeenTargets.Add(Target);
+		OutHitActors.Add(Target);
+		OutDamageMultipliers.Add(Multiplier);
+	}
+	return OutHitActors.Num();
+}
+
+float UProject_JCombatHitValidationComponent::ApplyValidatedCC(
+	AActor* Target,
+	EProject_JCCCategory Category,
+	float BaseDurationSeconds,
+	float BossStaggerDamage) const
+{
+	const AActor* Owner = GetOwner();
+	const UWorld* World = GetWorld();
+	if (!World || !IsValid(Target) || !Project_J::Combat::CanAffectCombatTarget(
+		Owner, Target, UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target)))
+	{
+		return 0.0f;
+	}
+	auto* CC = Target->FindComponentByClass<UProject_JCCResistanceComponent>();
+	if (!CC)
+	{
+		return FMath::Max(0.0f, BaseDurationSeconds);
+	}
+	const double Now = World->GetTimeSeconds();
+	if (CC->bIsBossCCImmune && BossStaggerDamage > 0.0f)
+	{
+		CC->ApplyStaggerDamage(BossStaggerDamage, Now);
+	}
+	return CC->TryApplyCC(Category, BaseDurationSeconds, Now);
 }

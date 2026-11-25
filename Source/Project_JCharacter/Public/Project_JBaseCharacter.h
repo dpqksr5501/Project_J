@@ -18,6 +18,7 @@ class UProject_JCharacterClassDefinition;
 class UProject_JCharacterAdvancementDefinition;
 class UProject_JCombatStyleDefinition;
 class UProject_JFoleyComponent;
+class UProject_JCCResistanceComponent;
 
 UENUM(BlueprintType)
 enum class EProject_JRuntimeStateOwnership : uint8
@@ -56,6 +57,12 @@ class PROJECT_JCHARACTER_API AProject_JBaseCharacter : public AProject_JMoverPaw
 		return FoleyComponent;
 	}
 
+	UFUNCTION(BlueprintPure, Category = "Combat|CC")
+	UProject_JCCResistanceComponent *GetCCResistanceComponent() const
+	{
+		return CCResistanceComponent;
+	}
+
 	UFUNCTION(BlueprintPure, Category = "Character Class")
 	FName GetCharacterClassId() const;
 
@@ -91,6 +98,9 @@ class PROJECT_JCHARACTER_API AProject_JBaseCharacter : public AProject_JMoverPaw
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Foley")
 	TObjectPtr<UProject_JFoleyComponent> FoleyComponent;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|CC")
+	TObjectPtr<UProject_JCCResistanceComponent> CCResistanceComponent;
+
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void TeleportSucceeded(bool bIsATest) override;
@@ -111,6 +121,9 @@ class PROJECT_JCHARACTER_API AProject_JBaseCharacter : public AProject_JMoverPaw
 	{
 		return CurrentSignificance;
 	}
+
+	/** Last Iris combat prioritizer tier applied on an authoritative Iris server (NAME_None if unsynced). */
+	FName GetAppliedIrisPrioritizerName() const { return AppliedIrisPrioritizerName; }
 
   protected:
 	UPROPERTY(Transient)
@@ -180,4 +193,18 @@ class PROJECT_JCHARACTER_API AProject_JBaseCharacter : public AProject_JMoverPaw
 	UProject_JEquipmentManagerComponent *ResolveEquipmentManagerForRuntime() const;
 	void BindEquipmentRuntimeToResolvedEquipmentManager();
 	virtual AActor *GetAbilitySystemOwnerActor() const;
+	void SyncIrisCombatPrioritizer(bool bForceMoverTier = false);
+#if UE_WITH_IRIS
+	virtual void OnReplicationStartedForIris(const FOnReplicationStartedParams& Params) override;
+	virtual void OnStopReplicationForIris(const FOnStopReplicationParams& Params) override;
+#endif
+
+private:
+	friend class UProject_JNetObjectPrioritizer_Combat;
+	friend class UProject_JMultiPartHitComponent;
+	void BindIrisCombatPrioritizer();
+	void UnbindIrisCombatPrioritizer();
+	TWeakObjectPtr<UAbilitySystemComponent> BoundIrisPrioritizerASC;
+	TArray<TPair<FGameplayTag, FDelegateHandle>, TInlineAllocator<5>> IrisPrioritizerTagHandles;
+	FName AppliedIrisPrioritizerName = NAME_None;
 };

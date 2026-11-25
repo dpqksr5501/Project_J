@@ -21,7 +21,7 @@ void FProject_JAnimNode_FootClearance::PrepareContact(const UAnimInstance* Insta
 	// nested arrays afresh would allocate once per support vertex, per avatar.
 	for(auto& Leg:Legs)
 	{
-		Leg.bActive=Leg.bValid=false;Leg.PointCount=0;
+		Leg.bActive=Leg.bValid=false;Leg.PointCount=0;Leg.SourceSignature=0;
 #if WITH_EDITOR
 		Leg.DebugRequiredLift=Leg.DebugAppliedLift=-1.f;
 #endif
@@ -70,6 +70,7 @@ void FProject_JAnimNode_FootClearance::PrepareContact(const UAnimInstance* Insta
 			}
 			else {Leg->Data.MaxLift=0;continue;}
 			if(Leg->PointCount+Sole.Points.Num()>UProject_JFootContactData::MaxPointsPerLeg){Leg->Data.MaxLift=0;continue;}
+			Leg->SourceSignature = HashCombineFast(Leg->SourceSignature, GetTypeHash(Data));
 			for(const auto& Point:Sole.Points)
 			{
 				if(Leg->Data.Points.Num()<=Leg->PointCount)Leg->Data.Points.AddDefaulted();
@@ -101,27 +102,47 @@ void FProject_JAnimNode_FootClearance::PrepareContact(const UAnimInstance* Insta
 
 bool FProject_JAnimNode_FootClearance::IsValidToEvaluate(const USkeleton*,const FBoneContainer& Bones)
 {
+	const uint16 BoneSerial = Bones.GetSerialNumber();
 	auto Resolve=[&](FName Name){FBoneReference R;R.BoneName=Name;R.Initialize(Bones);return R.IsValidToEvaluate(Bones)?R.GetCompactPoseIndex(Bones):FCompactPoseBoneIndex(INDEX_NONE);};
 	bool Any=false;
 	for(auto& Leg:Legs)
 	{
 		if(!Leg.bValid)continue;
-		Leg.Thigh=Resolve(Leg.Data.Thigh);Leg.Calf=Resolve(Leg.Data.Calf);Leg.Foot=Resolve(Leg.Data.Foot);
-		Leg.bValid=Leg.Thigh!=INDEX_NONE && Leg.Calf!=INDEX_NONE && Leg.Foot!=INDEX_NONE;
-		if(!Leg.bValid || Bones.GetParentBoneIndex(Leg.Foot)!=Leg.Calf || Bones.GetParentBoneIndex(Leg.Calf)!=Leg.Thigh){Leg.bValid=false;continue;}
-		if(Leg.Influences.Num()<Leg.PointCount)Leg.Influences.SetNum(Leg.PointCount);
-		for(int32 P=0;P<Leg.PointCount;++P)
+		const bool bCacheMatch = Leg.bBonesResolved && Leg.CachedBoneSerial == BoneSerial
+			&& Leg.CachedSourceSignature == Leg.SourceSignature
+			&& Leg.CachedThighName == Leg.Data.Thigh && Leg.CachedCalfName == Leg.Data.Calf
+			&& Leg.CachedFootName == Leg.Data.Foot && Leg.CachedPointCount == Leg.PointCount;
+		if(!bCacheMatch)
 		{
-			const auto& Point=Leg.Data.Points[P];auto& Indices=Leg.Influences[P];Indices.Reset();float Sum=0;
-			for(const auto& Influence:Point.Influences)
+			Leg.Thigh=Resolve(Leg.Data.Thigh);Leg.Calf=Resolve(Leg.Data.Calf);Leg.Foot=Resolve(Leg.Data.Foot);
+			bool bResolvedValid=Leg.Thigh!=INDEX_NONE && Leg.Calf!=INDEX_NONE && Leg.Foot!=INDEX_NONE
+				&& Bones.GetParentBoneIndex(Leg.Foot)==Leg.Calf && Bones.GetParentBoneIndex(Leg.Calf)==Leg.Thigh;
+			if(bResolvedValid)
 			{
-				const auto Index=Resolve(Influence.Bone);Indices.Add(Index);
-				bool Descendant=false;for(auto Parent=Index;Parent!=INDEX_NONE;Parent=Bones.GetParentBoneIndex(Parent))if(Parent==Leg.Foot){Descendant=true;break;}
-				Leg.bValid&=Descendant && !Influence.Position.ContainsNaN() && FMath::IsFinite(Influence.Weight) && Influence.Weight>0;
-				Sum+=Influence.Weight;
+				if(Leg.Influences.Num()<Leg.PointCount)Leg.Influences.SetNum(Leg.PointCount);
+				for(int32 P=0;P<Leg.PointCount;++P)
+				{
+					const auto& Point=Leg.Data.Points[P];auto& Indices=Leg.Influences[P];Indices.Reset();float Sum=0;
+					for(const auto& Influence:Point.Influences)
+					{
+						const auto Index=Resolve(Influence.Bone);Indices.Add(Index);
+						bool Descendant=false;for(auto Parent=Index;Parent!=INDEX_NONE;Parent=Bones.GetParentBoneIndex(Parent))if(Parent==Leg.Foot){Descendant=true;break;}
+						bResolvedValid&=Descendant && !Influence.Position.ContainsNaN() && FMath::IsFinite(Influence.Weight) && Influence.Weight>0;
+						Sum+=Influence.Weight;
+					}
+					bResolvedValid&=FMath::IsNearlyEqual(Sum,1.f,.001f);
+				}
 			}
-			Leg.bValid&=FMath::IsNearlyEqual(Sum,1.f,.001f);
+			Leg.CachedBoneSerial = BoneSerial;
+			Leg.CachedSourceSignature = Leg.SourceSignature;
+			Leg.CachedThighName = Leg.Data.Thigh;
+			Leg.CachedCalfName = Leg.Data.Calf;
+			Leg.CachedFootName = Leg.Data.Foot;
+			Leg.CachedPointCount = Leg.PointCount;
+			Leg.bBonesResolved = true;
+			Leg.bBonesValid = bResolvedValid;
 		}
+		Leg.bValid = Leg.bBonesValid;
 		Any|=Leg.bValid;
 	}
 	return Any;

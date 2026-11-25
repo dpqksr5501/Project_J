@@ -23,6 +23,10 @@ void UProject_JPlayerInputBindingComponent::BeginPlay()
 {
 	bEnding = false;
 	Super::BeginPlay();
+	if (GetNetMode() == NM_DedicatedServer)
+	{
+		SetComponentTickEnabled(false);
+	}
 }
 
 UProject_JPlayerInputBindingComponent::UProject_JPlayerInputBindingComponent()

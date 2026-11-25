@@ -113,6 +113,8 @@ struct PROJECT_JCHARACTER_API FProject_JAnimMontageThreadSafeData
  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation|Snapshot")
  bool bFullBodyMontageActive = false;
  bool bReleasedLocomotion = false;
+ bool bDefaultSlotActive = false;
+ float DefaultSlotLocalWeight = 0.f;
 };
 
 USTRUCT(BlueprintType)

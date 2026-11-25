@@ -10,6 +10,7 @@
 #include "Components/Project_JAnimationUpdateCoordinatorComponent.h"
 #include "Components/Project_JCombatHitValidationComponent.h"
 #include "Components/Project_JCombatIntroComponent.h"
+#include "Components/Project_JCombatPresentationComponent.h"
 #include "UI/Project_JCharacterUIBindingComponent.h"
 #include "UI/Project_JCharacterViewModel.h"
 #include "Project_JAbilitySystemComponent.h"
@@ -32,10 +33,10 @@ namespace
 struct FComponentOwnershipWorld
 {
 	UWorld* World;
-	explicit FComponentOwnershipWorld(EWorldType::Type Type = EWorldType::Game)
+	explicit FComponentOwnershipWorld(EWorldType::Type Type = EWorldType::Game, EWorldType::Type ContextType = EWorldType::None)
 	{
 		World = UWorld::CreateWorld(Type, false);
-		GEngine->CreateNewWorldContext(Type).SetCurrentWorld(World);
+		GEngine->CreateNewWorldContext(ContextType == EWorldType::None ? Type : ContextType).SetCurrentWorld(World);
 	}
 	void BeginPlay()
 	{
@@ -203,6 +204,115 @@ bool FProjectJUIDemandTest::RunTest(const FString&)
 }
 
 #if WITH_EDITOR
+namespace
+{
+class FDedicatedMeleeMontageCommand final : public IAutomationLatentCommand
+{
+public:
+	explicit FDedicatedMeleeMontageCommand(FAutomationTestBase* InTest)
+		: Test(InTest), Scope(EWorldType::PIE, EWorldType::Game)
+	{
+		// Use PIE's net-mode override without registering a PIE session for the editor to tick.
+		Scope.World->SetPlayInEditorInitialNetMode(NM_DedicatedServer);
+	}
+
+	bool Update() override
+	{
+		if (!Hit && !Start()) { return true; }
+		Scope.World->Tick(LEVELTICK_All, 1.f / 30.f);
+		if (bVerifiedSweep)
+		{
+			if (Mesh->HasAnimationUpdateRequirement() && ++Ticks < 150) { return false; }
+			CheckRestoredPolicy();
+			Hit->BeginAttackNode(Live->AttackTag, Live);
+			Test->TestEqual(TEXT("The unbaked socket attack requires gameplay bones"), Mesh->VisibilityBasedAnimTickOption,
+				EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones);
+			Hit->EndAttack();
+			CheckRestoredPolicy();
+			return true;
+		}
+		if (!Test->TestEqual(TEXT("Baked attack retains montage-only ticking"), Mesh->VisibilityBasedAnimTickOption,
+			EVisibilityBasedAnimTickOption::OnlyTickMontagesWhenNotRendered)) { return true; }
+		FProject_JAuthoritativeSweepRecord Packet;
+		if (Hit->FindAuthoritativeTracePacketAtTime(Scope.World->GetTimeSeconds(), 0, Baked->AttackTag, Packet)
+			&& Packet.bHitWindowOpen && Packet.bAtomicPath && !Packet.Segments.IsEmpty())
+		{
+			Test->TestTrue(TEXT("A real post-pose callback produced the root-anchored authoritative sweep"), PostPoseTicks > 1);
+			Test->TestEqual(TEXT("No bones were finalized while producing the sweep"), Mesh->GetBoneTransformRevisionNumber(), BoneRevision);
+			bVerifiedSweep = true;
+			Hit->EndAttack();
+			Test->TestTrue(TEXT("The active montage still owns its separate timing request"), Mesh->HasAnimationUpdateRequirement());
+			Anim->Montage_Stop(0.f, Baked->Montage);
+			return false;
+		}
+		if (Anim->Montage_IsPlaying(Baked->Montage) && ++Ticks < 150) { return false; }
+		Test->AddError(FString::Printf(TEXT("The authored montage ended without a root-anchored sweep (post pose ticks %d)"), PostPoseTicks));
+		return true;
+	}
+
+private:
+	bool Start()
+	{
+		auto* NPCClass = LoadClass<AProject_JNPCCharacter>(nullptr, TEXT("/Game/NPCs/BP_NPC_Test.BP_NPC_Test_C"));
+		Baked = LoadObject<UProject_JAttackDefinition>(nullptr, TEXT("/Game/DataAssetSets/AttackDefinition/NPC/DA_Attack_NPC_PrototypeCleave_Canonical.DA_Attack_NPC_PrototypeCleave_Canonical"));
+		Live = LoadObject<UProject_JAttackDefinition>(nullptr, TEXT("/Game/DataAssetSets/AttackDefinition/NPC/DA_Attack_NPC_PrototypeCleave.DA_Attack_NPC_PrototypeCleave"));
+		if (!Test->TestTrue(TEXT("The authored NPC and both attack definitions load"), NPCClass && Baked && Live)) { return false; }
+		auto* NPC = Scope.World->SpawnActor<AProject_JNPCCharacter>(NPCClass);
+		if (!Test->TestNotNull(TEXT("The dedicated NPC spawns"), NPC)) { return false; }
+		Hit = NewObject<UProject_JCombatHitValidationComponent>(NPC);
+		NPC->AddInstanceComponent(Hit);
+		Hit->RegisterComponent();
+		auto* Presentation = NewObject<UProject_JCombatPresentationComponent>(NPC);
+		NPC->AddInstanceComponent(Presentation);
+		Presentation->RegisterComponent();
+		Scope.BeginPlay();
+		Mesh = CastChecked<UProject_JBudgetedSkeletalMeshComponent>(NPC->GetMesh());
+		Anim = Mesh->GetAnimInstance();
+		Test->TestEqual(TEXT("PIE world uses dedicated server policy"), NPC->GetNetMode(), NM_DedicatedServer);
+		Test->TestTrue(TEXT("Dedicated NPC post-process blueprint is disabled"), Mesh->GetDisablePostProcessBlueprint());
+		if (!Test->TestTrue(TEXT("The runtime mesh accepts the saved baked path and the live path remains unbaked"),
+			Anim && Baked->MeleeTrajectory.bEnabled && !Live->MeleeTrajectory.bEnabled
+			&& Baked->GetMeleeTrajectoryFailure(Mesh->GetSkeletalMeshAsset()).IsEmpty())) { return false; }
+		SavedVisibility = Mesh->VisibilityBasedAnimTickOption;
+		bSavedURO = Mesh->bEnableUpdateRateOptimizations;
+		bSavedSuppressNotifies = Mesh->bSuppressNotifyEventDispatch;
+		Mesh->OnPostTickPose.AddLambda([this] { ++PostPoseTicks; });
+		Hit->BeginAttackNode(Baked->AttackTag, Baked);
+		BoneRevision = Mesh->GetBoneTransformRevisionNumber();
+		return Test->TestTrue(TEXT("The actual baked montage starts"), Anim->Montage_Play(Baked->Montage) > 0.f);
+	}
+
+	void CheckRestoredPolicy() const
+	{
+		Test->TestEqual(TEXT("Attack restores the original visibility policy"), Mesh->VisibilityBasedAnimTickOption, SavedVisibility);
+		Test->TestEqual(TEXT("Attack restores URO"), bool(Mesh->bEnableUpdateRateOptimizations), bSavedURO);
+		Test->TestEqual(TEXT("Attack restores notify suppression"), bool(Mesh->bSuppressNotifyEventDispatch), bSavedSuppressNotifies);
+	}
+
+	FAutomationTestBase* Test;
+	FComponentOwnershipWorld Scope;
+	UProject_JCombatHitValidationComponent* Hit = nullptr;
+	UProject_JBudgetedSkeletalMeshComponent* Mesh = nullptr;
+	UAnimInstance* Anim = nullptr;
+	UProject_JAttackDefinition* Baked = nullptr;
+	UProject_JAttackDefinition* Live = nullptr;
+	EVisibilityBasedAnimTickOption SavedVisibility = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+	uint32 BoneRevision = 0;
+	int32 PostPoseTicks = 0;
+	int32 Ticks = 0;
+	bool bSavedURO = false;
+	bool bSavedSuppressNotifies = false;
+	bool bVerifiedSweep = false;
+};
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJDedicatedMeleeMontageTest, "ProjectJ.Combat.DedicatedMeleeMontageTiming", ComponentFlags)
+bool FProjectJDedicatedMeleeMontageTest::RunTest(const FString&)
+{
+	ADD_LATENT_AUTOMATION_COMMAND(FDedicatedMeleeMontageCommand(this));
+	return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJUIDedicatedServerTest, "ProjectJ.Components.UIDedicatedServer", ComponentFlags)
 bool FProjectJUIDedicatedServerTest::RunTest(const FString&)
 {

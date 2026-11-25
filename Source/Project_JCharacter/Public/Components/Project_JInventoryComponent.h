@@ -224,6 +224,10 @@ class PROJECT_JCHARACTER_API UProject_JInventoryComponent : public UActorCompone
 	friend class FProjectJCommandReplyAdmissionTest;
 	friend class FProjectJCommittedDeltaTest;
 	bool bEnding = false;
+	FGuid ResolvePersistentRequestId(FGuid ClientCorrelationId);
+	TMap<FGuid, FGuid> RemotePersistentRequests;
+	TArray<FGuid> RemotePersistentRequestOrder;
+	FGuid LastRemotePersistentSessionPrefix;
 	EProject_JBagResult SubmitPersistentBag(FGuid RequestId, const FProject_JBagRequest &Request);
 	EProject_JItemUseResult SubmitPersistentUse(FGuid RequestId, FGuid InstanceId);
 	bool CanPublishState() const;

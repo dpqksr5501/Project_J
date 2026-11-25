@@ -667,14 +667,20 @@ void UProject_JEquipmentRuntimeComponent::ApplyEquipmentEffects(UAbilitySystemCo
 		return;
 	}
 
+	bool bHadInstantEffect = false;
 	if (!ItemDef.EquipmentEffects.IsEmpty())
 	{
 		for (const TSubclassOf<UGameplayEffect>& EffectClass : ItemDef.EquipmentEffects)
 		{
 			// Equipment buffs must have a removable lifetime. Instant base writes
 			// cannot be undone on unequip and must not trigger a second stat fallback.
-			if (!EffectClass || EffectClass->GetDefaultObject<UGameplayEffect>()->DurationPolicy == EGameplayEffectDurationType::Instant)
+			if (!EffectClass)
 			{
+				continue;
+			}
+			if (EffectClass->GetDefaultObject<UGameplayEffect>()->DurationPolicy == EGameplayEffectDurationType::Instant)
+			{
+				bHadInstantEffect = true;
 				continue;
 			}
 
@@ -692,7 +698,7 @@ void UProject_JEquipmentRuntimeComponent::ApplyEquipmentEffects(UAbilitySystemCo
 		}
 	}
 
-	if (RuntimeItem.GrantedEffectHandles.IsEmpty() &&
+	if (!bHadInstantEffect && RuntimeItem.GrantedEffectHandles.IsEmpty() &&
 		ItemDef.StatApplicationPolicy == EProject_JEquipmentStatApplicationPolicy::GameplayEffectsThenStatModifiers)
 	{
 		ApplyEquipmentStatModifiers(ASC, ItemDef, RuntimeItem);

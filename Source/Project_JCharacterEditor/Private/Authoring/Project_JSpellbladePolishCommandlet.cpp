@@ -6,6 +6,7 @@
 #include "Animation/AnimData/CurveIdentifier.h"
 #include "Animation/AnimMontage.h"
 #include "Animation/AnimBlueprint.h"
+#include "Animation/AnimBlueprintGeneratedClass.h"
 #include "Animation/AnimSequence.h"
 #include "Animation/BlendSpace.h"
 #include "Animation/DebugSkelMeshComponent.h"
@@ -21,6 +22,8 @@
 #include "AnimationBlueprintLibrary.h"
 #include "AnimationRuntime.h"
 #include "AnimGraphNode_LayeredBoneBlend.h"
+#include "AnimGraphNode_Base.h"
+#include "AnimGraphNode_Root.h"
 #include "AnimGraphNode_LinkedAnimLayer.h"
 #include "AnimGraphNode_SaveCachedPose.h"
 #include "AnimGraphNode_Slot.h"
@@ -52,6 +55,7 @@
 #include "InputAction.h"
 #include "InputMappingContext.h"
 #include "Kismet2/KismetEditorUtilities.h"
+#include "Kismet2/CompilerResultsLog.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "K2Node_VariableGet.h"
 #include "Materials/MaterialInterface.h"
@@ -64,6 +68,10 @@
 #include "Movement/Project_JMontageVerticalMotion.h"
 #include "Movement/Project_JMontageLocomotionHandoff.h"
 #include "NiagaraSystem.h"
+#include "PhysicsAssetUtils.h"
+#include "PhysicsEngine/PhysicsAsset.h"
+#include "PhysicsEngine/PhysicsConstraintTemplate.h"
+#include "PhysicsEngine/SkeletalBodySetup.h"
 #include "PreviewScene.h"
 #include "RetargetEditor/IKRetargetBatchOperation.h"
 #include "RetargetEditor/IKRetargeterController.h"
@@ -120,6 +128,49 @@ T* Duplicate(T* Source, const FString& Destination)
 	return Copy;
 }
 
+bool AuditSpellbladeAnimationGraphs()
+{
+	const TCHAR* Paths[] = {
+		TEXT("/Game/Characters/Spellblade/Animation/ABP_Spellblade_Body"),
+		TEXT("/Game/Characters/Spellblade/Animation/ABP_Spellblade_Retarget"),
+		TEXT("/Game/Animation_Logic/ABPs/Spellblade/ABP_Spellblade"),
+		TEXT("/Game/Animation_Logic/ABPs/Spellblade/ABP_Spellblade_Woman_RunTIme")
+	};
+	auto& Registry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry").Get();
+	Registry.SearchAllAssets(true);
+	for (const TCHAR* Path : Paths)
+	{
+		auto* Blueprint = Asset<UAnimBlueprint>(Path);
+		if (!Blueprint) return false;
+		TArray<FName> Referencers;
+		Registry.GetReferencers(FName(Path), Referencers, UE::AssetRegistry::EDependencyCategory::Package);
+		TArray<UEdGraph*> Graphs;
+		Blueprint->GetAllGraphs(Graphs);
+		int32 AnimNodes = 0;
+		int32 UnlinkedNodes = 0;
+		for (const UEdGraph* Graph : Graphs)
+		{
+			if (!Graph) continue;
+			for (const UEdGraphNode* Node : Graph->Nodes)
+			{
+				if (!Node || !Node->IsA<UAnimGraphNode_Base>()) continue;
+				++AnimNodes;
+				if (Node->IsA<UAnimGraphNode_Root>() || Node->Pins.ContainsByPredicate([](const UEdGraphPin* Pin)
+				{
+					return Pin && !Pin->LinkedTo.IsEmpty();
+				})) continue;
+				++UnlinkedNodes;
+				UE_LOG(LogTemp, Display, TEXT("PROJECT_J_ABP_UNLINKED asset=%s graph=%s type=%s node=%s"),
+					Path, *Graph->GetName(), *Node->GetClass()->GetName(), *Node->GetName());
+			}
+		}
+		UE_LOG(LogTemp, Display, TEXT("PROJECT_J_ABP_AUDIT asset=%s graphs=%d anim_nodes=%d unlinked=%d referencers=%d"),
+			Path, Graphs.Num(), AnimNodes, UnlinkedNodes, Referencers.Num());
+		for (FName Referencer : Referencers) UE_LOG(LogTemp, Display, TEXT("PROJECT_J_ABP_REF asset=%s package=%s"), Path, *Referencer.ToString());
+	}
+	return true;
+}
+
 bool Save(UObject* AssetToSave)
 {
 	UPackage* Package = AssetToSave->GetOutermost();
@@ -130,6 +181,153 @@ bool Save(UObject* AssetToSave)
 	const bool bSaved = UPackage::SavePackage(Package, AssetToSave, *File, Args);
 	UE_LOG(LogTemp, Display, TEXT("Spellblade polish save %s %s"), *Package->GetName(), bSaved ? TEXT("OK") : TEXT("FAILED"));
 	return bSaved;
+}
+
+bool RemoveUnlinkedSpellbladeUpperBodySequence()
+{
+	auto* Blueprint = Asset<UAnimBlueprint>(TEXT("/Game/Animation_Logic/ABPs/Spellblade/ABP_Spellblade"));
+	auto* BeforeClass = Blueprint ? Cast<UAnimBlueprintGeneratedClass>(Blueprint->GeneratedClass) : nullptr;
+	if (!BeforeClass || Blueprint->GetOutermost()->IsDirty()) return false;
+
+	TArray<UEdGraph*> Graphs;
+	Blueprint->GetAllGraphs(Graphs);
+	UAnimGraphNode_Base* Candidate = nullptr;
+	for (UEdGraph* Graph : Graphs)
+	{
+		if (!Graph || Graph->GetFName() != TEXT("CombatUpperBody")) continue;
+		for (UEdGraphNode* Node : Graph->Nodes)
+		{
+			if (!Node || Node->GetFName() != TEXT("AnimGraphNode_SequencePlayer_0")) continue;
+			if (Candidate || Node->GetClass()->GetFName() != TEXT("AnimGraphNode_SequencePlayer")) return false;
+			Candidate = Cast<UAnimGraphNode_Base>(Node);
+		}
+	}
+	if (!Candidate || !Candidate->GetTag().IsNone() ||
+		!Candidate->InitialUpdateFunction.GetMemberName().IsNone() ||
+		!Candidate->BecomeRelevantFunction.GetMemberName().IsNone() ||
+		!Candidate->UpdateFunction.GetMemberName().IsNone() ||
+		!Candidate->AlwaysDynamicProperties.IsEmpty() ||
+		BeforeClass->GetNodePropertyIndexFromGuid(Candidate->NodeGuid) ||
+		Candidate->Pins.ContainsByPredicate([Candidate](const UEdGraphPin* Pin)
+		{
+			return Pin && (!Pin->LinkedTo.IsEmpty() || Candidate->HasBinding(Pin->PinName));
+		})) return false;
+	for (TFieldIterator<FProperty> It(Candidate->GetFNodeType()); It; ++It)
+		if (Candidate->HasBinding(It->GetFName())) return false;
+
+	const auto SnapshotNodes = [](const UAnimBlueprintGeneratedClass& Class)
+	{
+		TArray<FString> Signature;
+		for (const FStructProperty* Property : Class.GetAnimNodeProperties())
+			Signature.Add(Property->GetName() + TEXT(":") + Property->Struct->GetPathName());
+		Signature.Sort();
+		return Signature;
+	};
+	const auto Before = SnapshotNodes(*BeforeClass);
+	if (Before.IsEmpty()) return false;
+	const FGuid RemovedGuid = Candidate->NodeGuid;
+	FBlueprintEditorUtils::RemoveNode(Blueprint, Candidate, true);
+	FCompilerResultsLog Results;
+	FKismetEditorUtilities::CompileBlueprint(Blueprint, EBlueprintCompileOptions::SkipSave, &Results);
+	auto* AfterClass = Cast<UAnimBlueprintGeneratedClass>(Blueprint->GeneratedClass);
+	const bool bSameRuntimeNodes = AfterClass && !AfterClass->GetNodePropertyIndexFromGuid(RemovedGuid) &&
+		SnapshotNodes(*AfterClass) == Before;
+	UE_LOG(LogTemp, Display, TEXT("PROJECT_J_ABP_CLEANUP guid=%s compiled_nodes=%d same_runtime_nodes=%d errors=%d warnings=%d"),
+		*RemovedGuid.ToString(), Before.Num(), bSameRuntimeNodes, Results.NumErrors, Results.NumWarnings);
+	return bSameRuntimeNodes && Results.NumErrors == 0 && Results.NumWarnings == 0 && Save(Blueprint);
+}
+
+bool BuildHairCollisionTrial()
+{
+	const FString SourcePath = TEXT("/Game/Characters/Spellblade/Physics/PA_Spellblade_Hair");
+	const FString TrialPath = TEXT("/Game/Tests/Physics/PA_Spellblade_Hair_CollisionTrial");
+	UPhysicsAsset* Source = Asset<UPhysicsAsset>(SourcePath);
+	if (!Source) return false;
+	UE_LOG(LogTemp, Display, TEXT("PROJECT_J_HAIR_TRIAL_SOURCE bodies=%d editor_flags=%d constraints=%d"),
+		Source->SkeletalBodySetups.Num(), Source->EditorBodyFlags.Num(), Source->ConstraintSetup.Num());
+
+	TArray<int32> Simulated;
+	for (int32 Index = 0; Index < Source->SkeletalBodySetups.Num(); ++Index)
+	{
+		const USkeletalBodySetup* Body = Source->SkeletalBodySetups[Index];
+		if (!Body) return false;
+		if (Body->PhysicsType == PhysType_Simulated) Simulated.Add(Index);
+	}
+	if (Simulated.Num() != 4) return false;
+	TSet<FName> SimulatedJointBones;
+	TArray<const UPhysicsConstraintTemplate*> SimulatedJoints;
+	for (const UPhysicsConstraintTemplate* Constraint : Source->ConstraintSetup)
+	{
+		if (!Constraint) return false;
+		const FName Child = Constraint->DefaultInstance.GetChildBoneName();
+		const FName Parent = Constraint->DefaultInstance.GetParentBoneName();
+		const int32 ChildIndex = Source->FindBodyIndex(Child);
+		const int32 ParentIndex = Source->FindBodyIndex(Parent);
+		if (ChildIndex == INDEX_NONE || ParentIndex == INDEX_NONE) return false;
+		// RigidBody only creates a solver joint if at least one endpoint is
+		// simulated. Kinematic-only ragdoll joints do not constrain the hair.
+		if (Simulated.Contains(ChildIndex) || Simulated.Contains(ParentIndex))
+		{
+			SimulatedJoints.Add(Constraint);
+			SimulatedJointBones.Add(Child);
+			SimulatedJointBones.Add(Parent);
+		}
+	}
+
+	TArray<int32> Remove;
+	for (int32 Index = 0; Index < Source->SkeletalBodySetups.Num(); ++Index)
+	{
+		const USkeletalBodySetup* Body = Source->SkeletalBodySetups[Index];
+		if (Body->PhysicsType == PhysType_Simulated || SimulatedJointBones.Contains(Body->BoneName) ||
+			Body->AggGeom.GetElementCount() != 1 || Body->AggGeom.SphylElems.Num() != 1) continue;
+		const bool bCanContactHair = Body->CollisionReponse != EBodyCollisionResponse::BodyCollision_Disabled &&
+			Simulated.ContainsByPredicate([Source, Index](int32 Other)
+			{
+				return Source->SkeletalBodySetups[Other]->CollisionReponse != EBodyCollisionResponse::BodyCollision_Disabled &&
+					Source->IsCollisionEnabled(Index, Other);
+			});
+		if (bCanContactHair) continue;
+		Remove.Add(Index);
+		UE_LOG(LogTemp, Display, TEXT("PROJECT_J_HAIR_TRIAL_REMOVE bone=%s reason=no_enabled_dynamic_pair"),
+			*Body->BoneName.ToString());
+	}
+	if (Remove.IsEmpty())
+	{
+		UE_LOG(LogTemp, Error, TEXT("Hair collision trial found no removable capsule."));
+		return false;
+	}
+	UPhysicsAsset* Copy = Duplicate(Source, TrialPath);
+	if (!Copy) return false;
+	// Match PhysicsAssetEditor initialization. An unopened asset may have a
+	// shorter or stale editor-only center-of-mass display flag array.
+	Copy->EditorBodyFlags.SetNum(Copy->SkeletalBodySetups.Num());
+	for (int32 Slot = Remove.Num() - 1; Slot >= 0; --Slot)
+	{
+		const int32 Index = Remove[Slot];
+		Copy->EditorBodyFlags.RemoveAt(Index);
+		FPhysicsAssetUtils::DestroyBody(Copy, Index);
+	}
+	for (const UPhysicsConstraintTemplate* Joint : SimulatedJoints)
+	{
+		const auto& Original = Joint->DefaultInstance;
+		if (!Copy->ConstraintSetup.ContainsByPredicate([&Original](const UPhysicsConstraintTemplate* Candidate)
+		{
+			return Candidate && Candidate->DefaultInstance.JointName == Original.JointName &&
+				Candidate->DefaultInstance.GetChildBoneName() == Original.GetChildBoneName() &&
+				Candidate->DefaultInstance.GetParentBoneName() == Original.GetParentBoneName();
+		})) return false;
+	}
+	for (int32 I = 0; I < Copy->SkeletalBodySetups.Num(); ++I)
+		for (int32 J = 0; J < I; ++J)
+		{
+			const int32 OldI = Source->FindBodyIndex(Copy->SkeletalBodySetups[I]->BoneName);
+			const int32 OldJ = Source->FindBodyIndex(Copy->SkeletalBodySetups[J]->BoneName);
+			if (OldI == INDEX_NONE || OldJ == INDEX_NONE ||
+				Copy->IsCollisionEnabled(I, J) != Source->IsCollisionEnabled(OldI, OldJ)) return false;
+		}
+	UE_LOG(LogTemp, Display, TEXT("PROJECT_J_HAIR_TRIAL_AUTHORED original=%d candidate=%d preserved_simulated_joints=%d stored_joints=%d"),
+		Source->SkeletalBodySetups.Num(), Copy->SkeletalBodySetups.Num(), SimulatedJoints.Num(), Copy->ConstraintSetup.Num());
+	return Save(Copy);
 }
 
 bool SetTrack(UAnimSequence& Clip, FName Bone, const TArray<FTransform>& Transforms)
@@ -870,6 +1068,9 @@ bool PolishSwingTrailsAndCastFacing(bool bApply)
 
 int32 UProject_JSpellbladePolishCommandlet::Main(const FString& Params)
 {
+	if (FParse::Param(*Params, TEXT("AuditAnimationGraphs"))) return AuditSpellbladeAnimationGraphs() ? 0 : 67;
+	if (FParse::Param(*Params, TEXT("RemoveUnlinkedUpperBodySequence"))) return RemoveUnlinkedSpellbladeUpperBodySequence() ? 0 : 68;
+	if (FParse::Param(*Params, TEXT("BuildHairCollisionTrial"))) return BuildHairCollisionTrial() ? 0 : 66;
 	if (FParse::Param(*Params, TEXT("ApplyBasicCut03Trail")))
 	{
 		return ApplyBasicCut03Trail() ? 0 : 66;

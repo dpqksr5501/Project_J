@@ -1,4 +1,5 @@
 #include "Project_JPlayerCharacter.h"
+#include "Project_JGameplayTags.h"
 #include "Project_JLocomotionAnimStateComponent.h"
 #include "Animation/Project_JLocomotionProfile.h"
 #include "AbilitySystemComponent.h"
@@ -32,12 +33,13 @@ const FProject_JStrafeDirectionPolicy& AProject_JPlayerCharacter::GetStrafeDirec
 
 float AProject_JPlayerCharacter::GetMoverMaxSpeed(bool bAcceptedSprint) const
 {
+ const auto* ASC = GetAbilitySystemComponent();
+ if (ASC && ASC->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_Dead)) { return 0.f; }
  const auto* Profile=GetLocomotionProfile();
  const FProject_JGroundMovementSettings Defaults;
  const float Speed=IsMoveInputIgnored()?0.f:bAcceptedSprint?(Profile?Profile->SprintSpeed:Defaults.SprintSpeed):(Profile?Profile->WalkSpeed:Defaults.RunSpeed);
  if (!FMath::IsFinite(Speed) || Speed <= 0.f) { return 0.f; }
  static const FGameplayTag HasteTag = FGameplayTag::RequestGameplayTag(TEXT("State.Spellblade.Haste"));
- const auto* ASC = GetAbilitySystemComponent();
  return ASC && ASC->HasMatchingGameplayTag(HasteTag) ? Speed * 1.15f : Speed;
 }
 
@@ -45,6 +47,15 @@ FProject_JMoverPolicy AProject_JPlayerCharacter::ResolveMoverPolicy(const FProje
 {
  FProject_JMoverPolicy Policy;
  Policy.bRequireDirectionalIntent=true;
+ const auto* ASC = GetAbilitySystemComponent();
+ if (ASC && ASC->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_Dead))
+ {
+  Policy.bStrafe = false;
+  Policy.bSprint = false;
+  Policy.bAllowJump = false;
+  Policy.MaxSpeed = 0.f;
+  return Policy;
+ }
  Policy.bStrafe=IsCombatModeActive() && ShouldUseCombatRotationMode();
  const bool bSprintDirectionAllowed=!Policy.bStrafe || (Input &&
   UProject_JGroundMovementLibrary::SupportsStrafeSprint(Input->GetMoveInput_WorldSpace(),FRotator(0,Input->ControlRotation.Yaw,0).Vector()));
@@ -57,6 +68,12 @@ FProject_JMoverPolicy AProject_JPlayerCharacter::ResolveMoverPolicy(const FProje
 void AProject_JPlayerCharacter::ProduceInput_Implementation(int32, FMoverInputCmdContext& InputCmd)
 {
 	ConsumeMovementInputVector();
+	const auto* ASC = GetAbilitySystemComponent();
+	if (ASC && ASC->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_Dead))
+	{
+		PopulateMoverInput(InputCmd, FVector::ZeroVector, false, false, 0.f, false, false, 0.f, false);
+		return;
+	}
 	const auto* State = GetLocomotionAnimStateComponent();
 	const FVector2D Held = State ? State->GetHeldLocalMoveInput() : FVector2D::ZeroVector;
 	const FVector WorldIntent = !Controller || IsMoveInputIgnored() ? FVector::ZeroVector :
@@ -64,7 +81,6 @@ void AProject_JPlayerCharacter::ProduceInput_Implementation(int32, FMoverInputCm
 	const bool bUseStrafe = IsCombatModeActive() && ShouldUseCombatRotationMode();
 	const bool bUseSprint = IsSprintLocomotionAllowed() && (!bUseStrafe || UProject_JGroundMovementLibrary::SupportsStrafeSprint(WorldIntent,FRotator(0,GetControlRotation().Yaw,0).Vector()));
 	const float Speed = GetMoverMaxSpeed(bUseSprint);
-	const auto* ASC = GetAbilitySystemComponent();
 	const auto* Melee = ASC ? Cast<UProject_JGameplayAbility_Melee>(ASC->GetAnimatingAbility()) : nullptr;
 	const bool bLockFacing = Melee && Melee->LocksFacingDuringSwing();
 	PopulateMoverInput(InputCmd, WorldIntent, bUseStrafe, bUseSprint, Speed, IsJumpLocomotionAllowed(), false, Held.Size(), bLockFacing);

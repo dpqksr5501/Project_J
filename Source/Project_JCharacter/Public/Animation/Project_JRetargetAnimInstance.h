@@ -13,6 +13,7 @@ class USceneComponent;
 class APawn;
 class UProject_JWeaponPresentationComponent;
 class UProject_JRetargetBodyProfile;
+struct FProject_JRetargetAnimInstanceProxy;
 
 /**
  * Shared contact/secondary-animation controller for direct UE5 post processes
@@ -50,6 +51,7 @@ public:
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 	virtual void NativeThreadSafeUpdateAnimation(float DeltaSeconds) override;
 	virtual void NativePostEvaluateAnimation() override;
+	const FProject_JRetargetAnimInstanceProxy& GetRetargetProxyOnGameThread() const;
 
 	uint64 GetGripTargetSnapshotFrame() const { return GripTargetSnapshotFrame; }
 	uint64 GetGripPoseEvaluationFrame() const { return GripPoseEvaluationFrame; }

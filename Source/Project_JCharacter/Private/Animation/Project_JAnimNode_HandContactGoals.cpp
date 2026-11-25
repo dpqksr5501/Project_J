@@ -1,13 +1,15 @@
 #include "Animation/Project_JAnimNode_HandContactGoals.h"
 #include "Animation/Project_JRetargetAnimInstance.h"
-#include "Animation/AnimInstanceProxy.h"
+#include "Animation/Project_JRetargetAnimInstanceProxy.h"
 
 void FProject_JAnimNode_HandContactGoals::PreUpdate(const UAnimInstance* Instance)
 {
+	ContactProxy = nullptr;
 	Hands[0] = Hands[1] = NAME_None;
 	SecondaryPalmInHand = FVector::ZeroVector;
 	if (const auto* Body=Cast<UProject_JRetargetAnimInstance>(Instance))
 	{
+		ContactProxy = &Body->GetRetargetProxyOnGameThread();
 		Hands[0]=Body->GetBodyHandContact(true).Hand;
 		const auto SecondaryContact = Body->GetBodyHandContact(false);
 		Hands[1] = SecondaryContact.Hand;
@@ -25,16 +27,16 @@ void FProject_JAnimNode_HandContactGoals::UpdateInternal(const FAnimationUpdateC
 {
 	FAnimNode_SkeletalControlBase::UpdateInternal(Context);
 	Targets[0]=Targets[1]={};bFollowPublishedPrimary=false;bKeepSecondaryRotation=false;bLimitSecondaryCarryReach=false;
-	const auto* Body=Cast<UProject_JRetargetAnimInstance>(Context.AnimInstanceProxy->GetAnimInstanceObject());
-	if (!Body) return;
-	Targets[0]={Body->GetInputPoseContact(true),Body->RightWristTarget,Body->bRightContactTargetValid?Body->RightGripAlpha:0.f};
-	Targets[1]={Body->GetInputPoseContact(false),Body->LeftWristTarget,Body->bLeftContactTargetValid?Body->LeftGripAlpha:0.f};
-	if (Body->bUsePrimaryHandSpaceGrip && Body->PrimaryHandBoneName==Hands[0])
+	if (!ContactProxy || Context.AnimInstanceProxy != ContactProxy) return;
+	const auto& Contacts = ContactProxy->HandContacts;
+	for (int32 Side = 0; Side < 2; ++Side)
+		Targets[Side] = {Contacts.PoseContacts[Side], Contacts.WristTargets[Side], Contacts.Alphas[Side]};
+	if (Contacts.bUsePrimaryHandSpace && Contacts.PrimaryHandBone == Hands[0])
 	{
-		Targets[1].Relative={Hands[0],Body->LeftGripInPrimaryHandSpace};
+		Targets[1].Relative = {Hands[0], Contacts.LeftWristInPrimaryHand};
 		bFollowPublishedPrimary=true;
-		bKeepSecondaryRotation = Body->UsesAuthoredCarryRotation();
-		bLimitSecondaryCarryReach = Body->ShouldLimitCarryReach();
+		bKeepSecondaryRotation = Contacts.bUseAuthoredCarryRotation;
+		bLimitSecondaryCarryReach = Contacts.bLimitCarryReach;
 	}
 	for (auto& Target:Targets)
 		Target.Alpha=FMath::IsFinite(Target.Alpha)?FMath::Clamp(Target.Alpha,0.f,1.f):0.f;

@@ -161,20 +161,37 @@ void UProject_JCameraComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 		return;
 	}
 
+	const EProject_JCameraContextMode ContextMode = GetActiveCameraContextMode();
+	const bool bUseContextPreset = bHasContextOverride || ContextMode == EProject_JCameraContextMode::GiantBossZoomOut;
+	FProject_JCameraContextPreset ContextPreset;
+	if (bUseContextPreset)
+	{
+		ContextPreset = CameraPolicyAsset
+			? CameraPolicyAsset->ResolvePreset(ContextMode)
+			: GetDefault<UProject_JCameraPolicyAsset>()->ResolvePreset(ContextMode);
+	}
+
 	if (CameraBoom)
 	{
-		const float TargetLength = GetTargetArmLength();
-		CameraBoom->TargetArmLength = FMath::FInterpTo(CameraBoom->TargetArmLength, TargetLength, DeltaTime, ZoomInterpolationSpeed);
-		const FVector TargetOffset = bIsCombatMode
-			? FVector(CombatSocketOffset.X, bUseRightCombatShoulder ? CombatSocketOffset.Y : -CombatSocketOffset.Y, CombatSocketOffset.Z)
-			: NormalSocketOffset;
-		CameraBoom->SocketOffset = FMath::VInterpTo(CameraBoom->SocketOffset, TargetOffset, DeltaTime, FramingInterpolationSpeed);
+		const float TargetLength = bUseContextPreset
+			? FMath::Clamp(ContextPreset.TargetArmLength + WheelZoomOffset, MinWheelArmLength, 2500.0f)
+			: GetTargetArmLength();
+		const float ArmInterp = bUseContextPreset ? ContextPreset.InterpSpeed : ZoomInterpolationSpeed;
+		CameraBoom->TargetArmLength = FMath::FInterpTo(CameraBoom->TargetArmLength, TargetLength, DeltaTime, ArmInterp);
+		const FVector TargetOffset = bUseContextPreset
+			? ContextPreset.SocketOffset
+			: (bIsCombatMode
+				? FVector(CombatSocketOffset.X, bUseRightCombatShoulder ? CombatSocketOffset.Y : -CombatSocketOffset.Y, CombatSocketOffset.Z)
+				: NormalSocketOffset);
+		CameraBoom->SocketOffset = FMath::VInterpTo(CameraBoom->SocketOffset, TargetOffset, DeltaTime, bUseContextPreset ? ContextPreset.InterpSpeed : FramingInterpolationSpeed);
 	}
 	UpdateMotionFraming(DeltaTime);
 	if (FollowCamera)
 	{
-		const float TargetFOV = bIsCombatMode ? CombatFieldOfView : NormalFieldOfView;
-		BaseFieldOfView = FMath::FInterpTo(BaseFieldOfView, TargetFOV, DeltaTime, FramingInterpolationSpeed);
+		const float TargetFOV = bUseContextPreset
+			? ContextPreset.FieldOfView
+			: (bIsCombatMode ? CombatFieldOfView : NormalFieldOfView);
+		BaseFieldOfView = FMath::FInterpTo(BaseFieldOfView, TargetFOV, DeltaTime, bUseContextPreset ? ContextPreset.InterpSpeed : FramingInterpolationSpeed);
 		const float MotionBoost = FMath::Lerp(SprintMotionAlpha * SprintFieldOfViewBoost, DashFieldOfViewBoost, DashMotionAlpha);
 		FollowCamera->SetFieldOfView(FMath::Clamp(BaseFieldOfView + MotionBoost, 1.0f, 170.0f));
 	}
@@ -226,5 +243,40 @@ void UProject_JCameraComponent::SetCombatRightShoulder(bool bUseRightShoulder)
 	if (bIsLocallyControlled)
 	{
 		bUseRightCombatShoulder = bUseRightShoulder;
+	}
+}
+
+void UProject_JCameraComponent::SetCameraContextMode(EProject_JCameraContextMode NewMode)
+{
+	ActiveContextMode = NewMode;
+	bHasContextOverride = true;
+}
+
+void UProject_JCameraComponent::ClearCameraContextOverride()
+{
+	bHasContextOverride = false;
+	ActiveContextMode = EProject_JCameraContextMode::OnFoot;
+}
+
+EProject_JCameraContextMode UProject_JCameraComponent::GetActiveCameraContextMode() const
+{
+	if (bHasContextOverride) return ActiveContextMode;
+	for (const TWeakObjectPtr<AActor>& Source : BossCameraSources)
+	{
+		if (const AActor* Encounter = Source.Get(); Encounter && !Encounter->IsActorBeingDestroyed())
+			return EProject_JCameraContextMode::GiantBossZoomOut;
+	}
+	return EProject_JCameraContextMode::OnFoot;
+}
+
+void UProject_JCameraComponent::SetBossCameraSource(AActor* Encounter, bool bActive)
+{
+	BossCameraSources.RemoveAllSwap([Encounter, bActive](const TWeakObjectPtr<AActor>& Source)
+	{
+		return !Source.IsValid() || (!bActive && Source.Get() == Encounter);
+	});
+	if (bActive && IsValid(Encounter) && !Encounter->IsActorBeingDestroyed() && Encounter->GetWorld() == GetWorld())
+	{
+		BossCameraSources.AddUnique(Encounter);
 	}
 }

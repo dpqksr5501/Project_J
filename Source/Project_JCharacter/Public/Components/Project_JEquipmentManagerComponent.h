@@ -219,6 +219,10 @@ class PROJECT_JCHARACTER_API UProject_JEquipmentManagerComponent : public UActor
 															   bool bUnequip, FGuid RequestId = FGuid(), bool* OutSharedAdmission = nullptr);
 	FProject_JEquipmentOperationResult SubmitPersistentEquipment(FGuid RequestId, FGuid InstanceId,
 																 EProject_JEquipmentSlot Slot, bool bUnequip);
+	FGuid ResolvePersistentRequestId(FGuid ClientCorrelationId);
+	TMap<FGuid, FGuid> RemotePersistentRequests;
+	TArray<FGuid> RemotePersistentRequestOrder;
+	FGuid LastRemotePersistentSessionPrefix;
 	double RequestWindowStart = -1.0;
 	int32 RequestsInWindow = 0;
 	UFUNCTION(Server, Reliable)

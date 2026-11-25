@@ -40,5 +40,21 @@ protected:
 	virtual void ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager) override;
 	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
 private:
+	struct FCrowdSample
+	{
+		FVector Position = FVector::ZeroVector;
+		uint64 Id = 0;
+		float Radius = 42.0f;
+		float HalfHeight = 88.0f;
+	};
+	struct FCrowdCell
+	{
+		TArray<int32, TInlineAllocator<8>> Indices;
+		bool bOverflow = false;
+	};
 	FMassEntityQuery Query;
+	// Persistent scratch buffers reused across frames (zero steady-state heap allocations per tick).
+	TArray<FCrowdSample> ReusableSamples;
+	TArray<FCrowdCell> ReusableCells;
+	TMap<FIntPoint, int32> ReusableGrid;
 };

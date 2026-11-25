@@ -1,4 +1,5 @@
 #include "Components/Project_JReplicatedAnimEventComponent.h"
+#include "Components/Project_JCommandBudgetComponent.h"
 #include "Movement/Project_JMovementQueries.h"
 
 #include "Animation/Project_JLocomotionProfile.h"
@@ -11,6 +12,23 @@
 
 namespace
 {
+bool IsSequenceNewer(int32 Candidate, int32 LastApplied)
+{
+	return Candidate != LastApplied &&
+		static_cast<uint32>(Candidate - LastApplied) < 0x80000000u;
+}
+
+bool IsOrderBeforeOrEqual(int32 A, int32 B)
+{
+	return static_cast<int32>(static_cast<uint32>(A) - static_cast<uint32>(B)) <= 0;
+}
+
+int32 WrapIncrement(int32& Counter)
+{
+	Counter = static_cast<int32>(static_cast<uint32>(Counter) + 1u);
+	return Counter;
+}
+
 float GetServerWorldTimeSeconds(const UWorld* World)
 {
 	if (!World)
@@ -119,6 +137,10 @@ void UProject_JReplicatedAnimEventComponent::DispatchEvent(EProject_JReplicatedA
 void UProject_JReplicatedAnimEventComponent::ServerDispatchMoveState_Implementation(
 	bool bIsMoving, bool bWasSprintingAtBoundary)
 {
+	if (!UProject_JCommandBudgetComponent::AdmitClientCommand(GetOwner()))
+	{
+		return;
+	}
 	ApplyMoveEvent(bIsMoving, bWasSprintingAtBoundary);
 	ReplicateLatestState();
 }
@@ -126,6 +148,10 @@ void UProject_JReplicatedAnimEventComponent::ServerDispatchMoveState_Implementat
 void UProject_JReplicatedAnimEventComponent::ServerDispatchEvent_Implementation(
 	EProject_JReplicatedAnimEventType EventType, bool bFlag)
 {
+	if (!UProject_JCommandBudgetComponent::AdmitClientCommand(GetOwner()))
+	{
+		return;
+	}
 	// A predicted fall-off RPC can arrive after authoritative touchdown. Mover
 	// owns physical air state; an old cosmetic request cannot reopen that episode.
 	if (EventType == EProject_JReplicatedAnimEventType::FallOffStart &&
@@ -155,8 +181,8 @@ void UProject_JReplicatedAnimEventComponent::ApplyEvent(EProject_JReplicatedAnim
 		ApplyMoveEvent(false, bFlag);
 		break;
 	case EProject_JReplicatedAnimEventType::FallOffStart:
-		++ReplicatedAnimEvents.FallOffStartCounter;
-		ReplicatedAnimEvents.FallOffEventOrder = ++NextSemanticEventOrder;
+		WrapIncrement(ReplicatedAnimEvents.FallOffStartCounter);
+		ReplicatedAnimEvents.FallOffEventOrder = WrapIncrement(NextSemanticEventOrder);
 		break;
 	case EProject_JReplicatedAnimEventType::LandingCancel:
 		ApplyLandingCancel();
@@ -175,16 +201,16 @@ void UProject_JReplicatedAnimEventComponent::ApplyMoveEvent(bool bIsMoving, bool
 	// This captures gait at the edge; it is not a continuously replicated sprint flag.
 	ReplicatedAnimEvents.bIsSprinting = bWasSprintingAtBoundary;
 	ReplicatedAnimEvents.MoveServerTimeSeconds = GetServerWorldTimeSeconds(GetWorld());
-	ReplicatedAnimEvents.MoveEventOrder = ++NextSemanticEventOrder;
-	++ReplicatedAnimEvents.MoveSequence;
+	ReplicatedAnimEvents.MoveEventOrder = WrapIncrement(NextSemanticEventOrder);
+	WrapIncrement(ReplicatedAnimEvents.MoveSequence);
 }
 
 void UProject_JReplicatedAnimEventComponent::ApplyLandingStart(
 	float ImpactSpeed, bool bWasMoving, bool bWasSprinting, bool bWasHeavy)
 {
-	++ReplicatedAnimEvents.LandingSequence;
-	++ReplicatedAnimEvents.LandingRevision;
-	ReplicatedAnimEvents.LandingEventOrder = ++NextSemanticEventOrder;
+	WrapIncrement(ReplicatedAnimEvents.LandingSequence);
+	WrapIncrement(ReplicatedAnimEvents.LandingRevision);
+	ReplicatedAnimEvents.LandingEventOrder = WrapIncrement(NextSemanticEventOrder);
 	ReplicatedAnimEvents.LandingServerTimeSeconds = GetServerWorldTimeSeconds(GetWorld());
 	ReplicatedAnimEvents.LandingImpactSpeed = FMath::Max(ImpactSpeed, 0.0f);
 	ReplicatedAnimEvents.bLandingActive = true;
@@ -195,9 +221,9 @@ void UProject_JReplicatedAnimEventComponent::ApplyLandingStart(
 
 void UProject_JReplicatedAnimEventComponent::ApplyLandingCancel()
 {
-	++ReplicatedAnimEvents.LandingRevision;
+	WrapIncrement(ReplicatedAnimEvents.LandingRevision);
 	++ReplicatedAnimEvents.LandingCancelCounter;
-	ReplicatedAnimEvents.LandingEventOrder = ++NextSemanticEventOrder;
+	ReplicatedAnimEvents.LandingEventOrder = WrapIncrement(NextSemanticEventOrder);
 	ReplicatedAnimEvents.LandingServerTimeSeconds = GetServerWorldTimeSeconds(GetWorld());
 	ReplicatedAnimEvents.bLandingActive = false;
 }
@@ -241,24 +267,23 @@ void UProject_JReplicatedAnimEventComponent::ApplyReplicatedEvents(
 		return;
 	}
 
-	bool bMovePending = CurrentState.MoveSequence > LastAppliedMoveSequence;
-	bool bLandingPending = CurrentState.LandingRevision > LastAppliedLandingRevision;
-	bool bFallOffPending = CurrentState.FallOffStartCounter > LastAppliedFallOffCounter;
+	bool bMovePending = IsSequenceNewer(CurrentState.MoveSequence, LastAppliedMoveSequence);
+	bool bLandingPending = IsSequenceNewer(CurrentState.LandingRevision, LastAppliedLandingRevision);
+	bool bFallOffPending = IsSequenceNewer(CurrentState.FallOffStartCounter, LastAppliedFallOffCounter);
 	(void)PreviousState;
 
 	// Apply coalesced state in the authoritative server order. This prevents an old
 	// MoveStart from cancelling a newer landing when both arrive in one net update.
 	while (bMovePending || bLandingPending || bFallOffPending)
 	{
-		const int32 MoveOrder = bMovePending ? CurrentState.MoveEventOrder : MAX_int32;
-		const int32 LandingOrder = bLandingPending ? CurrentState.LandingEventOrder : MAX_int32;
-		const int32 FallOffOrder = bFallOffPending ? CurrentState.FallOffEventOrder : MAX_int32;
-		if (MoveOrder <= LandingOrder && MoveOrder <= FallOffOrder)
+		const bool bMoveBeatsLanding = !bLandingPending || IsOrderBeforeOrEqual(CurrentState.MoveEventOrder, CurrentState.LandingEventOrder);
+		const bool bMoveBeatsFallOff = !bFallOffPending || IsOrderBeforeOrEqual(CurrentState.MoveEventOrder, CurrentState.FallOffEventOrder);
+		if (bMovePending && bMoveBeatsLanding && bMoveBeatsFallOff)
 		{
 			ApplyRemoteMoveState(CurrentState);
 			bMovePending = false;
 		}
-		else if (LandingOrder <= FallOffOrder)
+		else if (bLandingPending && (!bFallOffPending || IsOrderBeforeOrEqual(CurrentState.LandingEventOrder, CurrentState.FallOffEventOrder)))
 		{
 			ApplyRemoteLandingState(CurrentState);
 			bLandingPending = false;
@@ -274,7 +299,7 @@ void UProject_JReplicatedAnimEventComponent::ApplyReplicatedEvents(
 void UProject_JReplicatedAnimEventComponent::ApplyRemoteMoveState(const FProject_JReplicatedAnimEventState& State)
 {
 	LastAppliedMoveSequence = State.MoveSequence;
-	if (State.MoveEventOrder <= LastAppliedSemanticEventOrder)
+	if (!IsSequenceNewer(State.MoveEventOrder, LastAppliedSemanticEventOrder))
 	{
 
 		return;
@@ -296,7 +321,7 @@ void UProject_JReplicatedAnimEventComponent::ApplyRemoteMoveState(const FProject
 void UProject_JReplicatedAnimEventComponent::ApplyRemoteLandingState(const FProject_JReplicatedAnimEventState& State)
 {
 	LastAppliedLandingRevision = State.LandingRevision;
-	if (State.LandingEventOrder <= LastAppliedSemanticEventOrder)
+	if (!IsSequenceNewer(State.LandingEventOrder, LastAppliedSemanticEventOrder))
 	{
 
 		return;
@@ -321,7 +346,7 @@ void UProject_JReplicatedAnimEventComponent::ApplyRemoteLandingState(const FProj
 void UProject_JReplicatedAnimEventComponent::ApplyRemoteFallOffState(const FProject_JReplicatedAnimEventState& State)
 {
 	LastAppliedFallOffCounter = State.FallOffStartCounter;
-	if (State.FallOffEventOrder <= LastAppliedSemanticEventOrder)
+	if (!IsSequenceNewer(State.FallOffEventOrder, LastAppliedSemanticEventOrder))
 	{
 
 		return;

@@ -1,4 +1,5 @@
 #include "Mass/Project_JMassRepresentationSubsystem.h"
+#include "Mass/Project_JNPCPoolSubsystem.h"
 #include "Movement/Project_JMovementQueries.h"
 #include "Mass/Project_JMassMovementProcessor.h"
 #include "MassEntityManager.h"
@@ -148,9 +149,9 @@ bool UProject_JMassRepresentationSubsystem::CanDemote(const FProjectJMassReprese
 	const auto* Anim = NPC->GetMesh()->GetAnimInstance();
 	if (NPC->GetMesh()->IsSimulatingPhysics() || (BudgetMesh && BudgetMesh->IsCombatCritical())
 		|| (Anim && (Anim->Montage_IsPlaying(nullptr) || Anim->RootMotionMode == ERootMotionMode::RootMotionFromEverything))) { return false; }
-	if (!ASC || NPC->GetAttributeSet()->GetHealth() <= 0 || ASC->GetActiveEffects(FGameplayEffectQuery()).Num() > 0) { return false; }
+	if (!ASC || NPC->GetAttributeSet()->GetHealth() <= 0 || ASC->GetActiveGameplayEffects().GetNumGameplayEffects() > 0) { return false; }
 	if (!E.bMass && FVector::DistSquared(NPC->GetNavAgentLocation(), E.Path->GetPathPoints()[0].Location) > FMath::Square(100.0)) { return false; }
-	if (E.bMass && NPC->FindComponentByClass<UCharacterMovementComponent>()->IsComponentTickEnabled()) { return false; }
+	if (E.bMass && Movement->IsComponentTickEnabled()) { return false; }
 	for (const auto& Spec : ASC->GetActivatableAbilities()) { if (Spec.IsActive()) { return false; } }
 	UProject_JNPCActionComponent* Action = nullptr;
 	if (!ResolveActiveAction(*NPC, Action)) { return false; }
@@ -195,6 +196,15 @@ void UProject_JMassRepresentationSubsystem::Demote(FProjectJMassRepresentationEn
 	F.Radius = NPC->GetCapsuleComponent()->GetScaledCapsuleRadius();
 	F.HalfHeight = NPC->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
 	F.Generation = ++E.Generation; F.bMassOwnsMovement = true; E.bMass = true;
+	if (auto* Pool = GetWorld() ? GetWorld()->GetSubsystem<UProject_JNPCPoolSubsystem>() : nullptr)
+	{
+		FProject_JMassVATProxyDescriptor Desc;
+		Desc.AgentId = E.Id;
+		Desc.ArchetypeId = NPC->GetClass()->GetFName();
+		Desc.WorldTransform = NPC->GetActorTransform();
+		Desc.VATAnimClipIndex = 1;
+		Pool->UpsertVATProxy(Desc);
+	}
 	++Stats.Demoted; ++Stats.LastTransitions;
 }
 
@@ -214,6 +224,10 @@ void UProject_JMassRepresentationSubsystem::Promote(FProjectJMassRepresentationE
 		{ E.Action->ResumeSuspendedActions(E.Suspension); }
 	}
 	E.Suspension = {};
+	if (auto* Pool = GetWorld() ? GetWorld()->GetSubsystem<UProject_JNPCPoolSubsystem>() : nullptr)
+	{
+		Pool->RemoveVATProxy(E.Id);
+	}
 	++Stats.Promoted; ++Stats.LastTransitions;
 }
 
@@ -270,15 +284,22 @@ void UProject_JMassRepresentationSubsystem::Tick(float DeltaSeconds)
 			F.HalfHeight = NPC->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
 		}
 		F.bRouteValid = E->Path && E->Path->IsValid() && E->Path->IsUpToDate();
-		double Distance = Observers.IsEmpty() ? 0 : TNumericLimits<double>::Max();
-		for (const auto& P : Observers) { Distance = FMath::Min(Distance, FVector::Distance(P, NPC->GetActorLocation())); }
+		const FVector NPCLocation = NPC->GetActorLocation();
+		constexpr double PromoteDistanceSq = PromoteDistance * PromoteDistance;
+		constexpr double DemoteDistanceSq = DemoteDistance * DemoteDistance;
+		double DistanceSq = Observers.IsEmpty() ? 0.0 : TNumericLimits<double>::Max();
+		for (const auto& P : Observers)
+		{
+			DistanceSq = FMath::Min(DistanceSq, FVector::DistSquared(P, NPCLocation));
+			if (DistanceSq < PromoteDistanceSq) { break; }
+		}
 		const double EligibilityStarted = FPlatformTime::Seconds();
-		const bool bCheckEligibility = Distance >= PromoteDistance && F.bRouteValid;
+		const bool bCheckEligibility = DistanceSq >= PromoteDistanceSq && F.bRouteValid;
 		const bool bEligible = bCheckEligibility && CanDemote(*E);
 		Stats.LastEligibilityMilliseconds += (FPlatformTime::Seconds() - EligibilityStarted) * 1000;
 		Stats.LastEligibilityChecks += bCheckEligibility; Stats.LastEligible += bEligible;
-		const bool bWantCharacter = Distance < PromoteDistance || !F.bRouteValid || !bEligible;
-		const bool bWantMass = !E->bMass && Distance > DemoteDistance && !bWantCharacter;
+		const bool bWantCharacter = DistanceSq < PromoteDistanceSq || !F.bRouteValid || !bEligible;
+		const bool bWantMass = !E->bMass && DistanceSq > DemoteDistanceSq && !bWantCharacter;
 		if (E->bMass && bWantCharacter) { F.bRouteValid = false; } // Freeze while waiting for a transition slot.
 		if ((E->bMass && bWantCharacter) || bWantMass)
 		{
@@ -296,20 +317,40 @@ void UProject_JMassRepresentationSubsystem::Tick(float DeltaSeconds)
 	Processor->bUseCrowdSpacing = CrowdSpacing.GetValueOnGameThread() != 0;
 	const int32 Mode = ParallelMode.GetValueOnGameThread();
 	Processor->bParallel = Mode > 0 || (Mode < 0 && Processor->bUseCrowdSpacing && MovingCount >= 1024);
-	UE::Mass::FProcessingContext Context(Entities, DeltaSeconds);
-	const double WorkerStarted = FPlatformTime::Seconds();
-	UE::Mass::Executor::Run(*Processor, Context); // Joins chunk tasks before reading results or changing ownership.
-	Stats.LastWorkerJoinMilliseconds = (FPlatformTime::Seconds() - WorkerStarted) * 1000;
+	if (MovingCount > 0)
+	{
+		UE::Mass::FProcessingContext Context(Entities, DeltaSeconds);
+		const double WorkerStarted = FPlatformTime::Seconds();
+		UE::Mass::Executor::Run(*Processor, Context); // Joins chunk tasks before reading results or changing ownership.
+		Stats.LastWorkerJoinMilliseconds = (FPlatformTime::Seconds() - WorkerStarted) * 1000;
+	}
 	Stats.MassOwned = 0;
+	UProject_JNPCPoolSubsystem* Pool = GetWorld() ? GetWorld()->GetSubsystem<UProject_JNPCPoolSubsystem>() : nullptr;
 	for (int32 I = Entries.Num() - 1; I >= 0; --I)
 	{
 		const auto E = Entries[I]; auto* NPC = E->NPC.Get();
-		if (!NPC || NPC->IsActorBeingDestroyed()) { Entities->DestroyEntity(E->Entity); Entries.RemoveAt(I); continue; }
+		if (!NPC || NPC->IsActorBeingDestroyed())
+		{
+			if (Pool && E->bMass) { Pool->RemoveVATProxy(E->Id); }
+			Entities->DestroyEntity(E->Entity);
+			Entries.RemoveAt(I);
+			continue;
+		}
 		if (E->bMass)
 		{
 			const auto& F = Entities->GetFragmentDataChecked<FProjectJMassMovementFragment>(E->Entity);
-			NPC->SetActorLocation(F.Position + E->CapsuleOffset, false, nullptr, ETeleportType::TeleportPhysics);
+			const FVector NewWorldLoc = F.Position + E->CapsuleOffset;
+			NPC->SetActorLocation(NewWorldLoc, false, nullptr, ETeleportType::TeleportPhysics);
 			if (!bAccepting) { return; }
+			if (Pool)
+			{
+				FProject_JMassVATProxyDescriptor Desc;
+				Desc.AgentId = E->Id;
+				Desc.ArchetypeId = NPC->GetClass()->GetFName();
+				Desc.WorldTransform = FTransform(NPC->GetActorQuat(), NewWorldLoc, NPC->GetActorScale3D());
+				Desc.VATAnimClipIndex = (F.bRouteValid && F.NextPoint < F.RouteCount) ? 1 : 0;
+				Pool->UpsertVATProxy(Desc);
+			}
 			++Stats.MassOwned;
 		}
 	}

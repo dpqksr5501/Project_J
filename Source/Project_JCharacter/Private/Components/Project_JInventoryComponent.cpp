@@ -11,6 +11,8 @@
 #include "Project_JAttributeSet.h"
 #include "GameplayEffect.h"
 #include "GameFramework/GameStateBase.h"
+#include "GameFramework/PlayerController.h"
+#include "GameFramework/PlayerState.h"
 #include "Engine/World.h"
 #include "UObject/StrongObjectPtr.h"
 
@@ -206,11 +208,57 @@ void UProject_JInventoryComponent::Retire()
 {
 	bEnding = true;
 	InventoryArray.OwnerComponent = nullptr;
+	RemotePersistentRequests.Reset();
+	RemotePersistentRequestOrder.Reset();
+	LastRemotePersistentSessionPrefix.Invalidate();
 	OnItemAdded.Clear();
 	OnItemChanged.Clear();
 	OnItemRemoved.Clear();
 	OnUseCompleted.Clear();
 	OnBagCompleted.Clear();
+}
+
+FGuid UProject_JInventoryComponent::ResolvePersistentRequestId(FGuid ClientCorrelationId)
+{
+	if (!CreatePersistentRequest || !ClientCorrelationId.IsValid())
+	{
+		return ClientCorrelationId;
+	}
+	const UWorld* World = GetWorld();
+	if (!World || World->GetNetMode() == NM_Standalone)
+	{
+		return ClientCorrelationId;
+	}
+	const APlayerState* OwnerState = Cast<APlayerState>(GetOwner());
+	const APlayerController* OwnerPC = OwnerState ? OwnerState->GetPlayerController() : nullptr;
+	if (OwnerPC && OwnerPC->IsLocalController())
+	{
+		return ClientCorrelationId;
+	}
+	if (const FGuid* Existing = RemotePersistentRequests.Find(ClientCorrelationId))
+	{
+		return *Existing;
+	}
+	const FGuid ServerRequestId = CreatePersistentRequest();
+	if (!ServerRequestId.IsValid())
+	{
+		return ClientCorrelationId;
+	}
+	const FGuid SessionPrefix(ServerRequestId.A, ServerRequestId.B, ServerRequestId.C, 0);
+	if (LastRemotePersistentSessionPrefix.IsValid() && LastRemotePersistentSessionPrefix != SessionPrefix)
+	{
+		RemotePersistentRequests.Reset();
+		RemotePersistentRequestOrder.Reset();
+	}
+	LastRemotePersistentSessionPrefix = SessionPrefix;
+	if (RemotePersistentRequestOrder.Num() >= 64)
+	{
+		RemotePersistentRequests.Remove(RemotePersistentRequestOrder[0]);
+		RemotePersistentRequestOrder.RemoveAt(0);
+	}
+	RemotePersistentRequestOrder.Add(ClientCorrelationId);
+	RemotePersistentRequests.Add(ClientCorrelationId, ServerRequestId);
+	return ServerRequestId;
 }
 
 void UProject_JInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty> &OutLifetimeProps) const
@@ -887,7 +935,7 @@ EProject_JBagResult UProject_JInventoryComponent::SubmitPersistentBag(FGuid Requ
 {
 	FProject_JPersistentEdit E;
 	E.Kind = EProject_JPersistentEdit::Bag;
-	E.Request = RequestId;
+	E.Request = ResolvePersistentRequestId(RequestId);
 	E.Instance = R.Source;
 	E.Target = R.Target;
 	E.Amount = R.Count;
@@ -946,7 +994,7 @@ EProject_JItemUseResult UProject_JInventoryComponent::SubmitPersistentUse(FGuid 
 	const uint64 ActorInfoRevision = ProjectASC ? ProjectASC->GetActorInfoRevision() : 0;
 	FProject_JPersistentEdit Edit;
 	Edit.Kind = EProject_JPersistentEdit::Use;
-	Edit.Request = RequestId;
+	Edit.Request = ResolvePersistentRequestId(RequestId);
 	Edit.Instance = InstanceId;
 	const bool Accepted = SubmitPersistentEdit(Edit, [WeakThis, Definition, WeakASC, Avatar, ASCOwner, HadAvatar,
 													  HadASCOwner, ActorInfoRevision, RequestId](bool OK, bool First) {

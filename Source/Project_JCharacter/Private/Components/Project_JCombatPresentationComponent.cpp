@@ -33,6 +33,43 @@ namespace ProjectJCombatPresentationDebug
 		TEXT("ProjectJ.Combat.Presentation.Pool"), 1,
 		TEXT("Use engine Niagara pools for cosmetic cues. 0 restores unpooled creation for comparison."));
 
+	static TAutoConsoleVariable<float> CVarOtherPlayerOpacityScale(
+		TEXT("ProjectJ.Combat.Presentation.OtherPlayerOpacityScale"), 1.0f,
+		TEXT("Opacity multiplier [0..1] pushed to User.OpacityScale on remote player cosmetic Niagara cues. Never attenuates local player or NPC/Boss cues."),
+		ECVF_Scalability);
+
+	static TAutoConsoleVariable<int32> CVarOtherPlayerOptionalEffects(
+		TEXT("ProjectJ.Combat.Presentation.OtherPlayerOptionalEffects"), 1,
+		TEXT("Allow remote player one-shot cues marked for cosmetic budgeting. Never suppresses warning cues or loops."),
+		ECVF_Scalability);
+
+	static TAutoConsoleVariable<float> CVarOtherPlayerMaxCueDistanceCm(
+		TEXT("ProjectJ.Combat.Presentation.OtherPlayerMaxCueDistanceCm"), 3500.0f,
+		TEXT("Max distance (cm) for remote player optional cosmetic one-shot VFX cues (0 disables culling). Never culls local player, bosses, loops, or warnings."));
+
+	static bool IsWithinLocalViewDistance(const UWorld* World, const FVector& Location, float MaxDistanceCm)
+	{
+		if (!World || MaxDistanceCm <= 0.0f) { return true; }
+		const double MaxDistSq = FMath::Square(static_cast<double>(MaxDistanceCm));
+		bool bHasLocalView = false;
+		for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
+		{
+			const APlayerController* PC = It->Get();
+			if (!IsValid(PC) || !PC->IsLocalPlayerController()) { continue; }
+			FVector ViewLoc;
+			FRotator ViewRot;
+			PC->GetPlayerViewPoint(ViewLoc, ViewRot);
+			if (ViewLoc.ContainsNaN()) { continue; }
+			bHasLocalView = true;
+			if (FVector::DistSquared(ViewLoc, Location) <= MaxDistSq)
+			{
+				return true;
+			}
+		}
+		// Preserve cues when no local player controller/camera exists (e.g. headless unit tests).
+		return !bHasLocalView;
+	}
+
 	// Match Niagara's locally viewed owner/instigator/attachment policy. Its
 	// WorldManager helper is not exported by the installed engine module.
 	static bool IsLocallyViewedEffect(const USceneComponent* Component)
@@ -115,6 +152,33 @@ bool UProject_JCombatPresentationComponent::CanAcceptPresentation() const
 		&& GetWorld() && !GetWorld()->bIsTearingDown;
 }
 
+UProject_JWeaponPresentationComponent* UProject_JCombatPresentationComponent::GetCachedWeaponPresentation()
+{
+	AActor* Owner = GetOwner();
+	if (!IsValid(Owner))
+	{
+		CachedWeaponPresentation.Reset();
+		CachedWeaponPresentationOwner.Reset();
+		bWeaponPresentationLookupDone = false;
+		return nullptr;
+	}
+	if (CachedWeaponPresentationOwner.Get() != Owner || !bWeaponPresentationLookupDone || CachedWeaponPresentation.IsStale())
+	{
+		CachedWeaponPresentationOwner = Owner;
+		CachedWeaponPresentation.Reset();
+		Owner->ForEachComponent<UProject_JWeaponPresentationComponent>(false,
+			[this](UProject_JWeaponPresentationComponent* Candidate)
+			{
+				if (!CachedWeaponPresentation.IsValid() && Candidate->IsRegistered() && !Candidate->IsBeingDestroyed())
+				{
+					CachedWeaponPresentation = Candidate;
+				}
+			});
+		bWeaponPresentationLookupDone = true;
+	}
+	return CachedWeaponPresentation.Get();
+}
+
 void UProject_JCombatPresentationComponent::RetirePresentation()
 {
 	if (bEndingPresentation) { return; }
@@ -143,7 +207,7 @@ void UProject_JCombatPresentationComponent::BeginAttackPresentation(const FGamep
 		ActiveAttackTag = AttackTag;
 		StopAllCues();
 		if (!CanAcceptPresentation() || ActiveAttackInstance != Instance || ActiveAttackTag != AttackTag) { return; }
-		if (UProject_JWeaponPresentationComponent* Weapon = GetOwner()->FindComponentByClass<UProject_JWeaponPresentationComponent>())
+		if (UProject_JWeaponPresentationComponent* Weapon = GetCachedWeaponPresentation())
 		{
 			Weapon->SetActiveAttackPresentation(AttackTag);
 		}
@@ -178,12 +242,9 @@ void UProject_JCombatPresentationComponent::EndAttackPresentation()
 	ActiveAttackTag = FGameplayTag();
 	StopAllCues();
 	if (ActiveAttackInstance != Instance || ActiveAttackTag.IsValid()) { return; }
-	if (AActor* Owner = GetOwner())
+	if (UProject_JWeaponPresentationComponent* Weapon = GetCachedWeaponPresentation())
 	{
-		if (UProject_JWeaponPresentationComponent* Weapon = Owner->FindComponentByClass<UProject_JWeaponPresentationComponent>())
-		{
-			Weapon->SetActiveAttackPresentation(FGameplayTag());
-		}
+		Weapon->SetActiveAttackPresentation(FGameplayTag());
 	}
 	ReplicatedPresentationState.ActiveAttackTag = FGameplayTag();
 	ReplicatedPresentationState.ActiveLoopingCueTags.Reset();
@@ -274,10 +335,20 @@ bool UProject_JCombatPresentationComponent::ShouldBudgetRemoteSpawn(const FProje
 {
 	const auto* World = GetWorld(); const auto* Owner = GetOwner(); const auto* Pawn = Cast<APawn>(Owner);
 	// Preview/editor worlds have no game-world budget. Preserve their immediate authoring path.
-	return Cue.bUseRemoteSpawnBudget && World && (World->WorldType == EWorldType::Game || World->WorldType == EWorldType::PIE)
+	return !ActiveWarningCues.HasTagExact(Cue.CueTag) && Cue.bUseRemoteSpawnBudget
+		&& World && (World->WorldType == EWorldType::Game || World->WorldType == EWorldType::PIE)
 		&& IsValid(Owner) && !(Pawn && Pawn->IsLocallyControlled())
 		&& !ProjectJCombatPresentationDebug::IsLocallyViewedEffect(Owner->GetRootComponent());
 }
+
+float UProject_JCombatPresentationComponent::GetCueOpacityMultiplier(FGameplayTag CueTag) const
+{
+	const auto* Player = Cast<AProject_JPlayerCharacter>(GetOwner());
+	if (!Player || ActiveWarningCues.HasTagExact(CueTag) ||
+		ProjectJCombatPresentationDebug::IsLocallyViewedEffect(Player->GetRootComponent())) return 1.f;
+	return FMath::Clamp(ProjectJCombatPresentationDebug::CVarOtherPlayerOpacityScale.GetValueOnGameThread(), 0.f, 1.f);
+}
+
 void UProject_JCombatPresentationComponent::PlayCueLocal(const FGameplayTag CueTag, bool bBudgetGranted)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_CombatPresentation_Spawn);
@@ -332,7 +403,21 @@ void UProject_JCombatPresentationComponent::PlayCueLocal(const FGameplayTag CueT
 	// storage and currently selected profile may be replaced by reentrant code.
 	const FProject_JCombatVFXCueDefinition CueValues = *Cue;
 	const FSoftObjectPath SystemPath = CueValues.NiagaraSystem.ToSoftObjectPath();
+	// GameplayWarning cues (boss telegraphs, danger zones) are never subject to remote cosmetic drop queues.
 	const bool bRemoteBudget = ShouldBudgetRemoteSpawn(CueValues);
+	if (bRemoteBudget && !CueValues.bLooping && Cast<AProject_JPlayerCharacter>(GetOwner()))
+	{
+		if (ProjectJCombatPresentationDebug::CVarOtherPlayerOptionalEffects.GetValueOnGameThread() == 0)
+		{
+			return;
+		}
+		const float MaxDistCm = ProjectJCombatPresentationDebug::CVarOtherPlayerMaxCueDistanceCm.GetValueOnGameThread();
+		if (MaxDistCm > 0.0f && !ProjectJCombatPresentationDebug::IsWithinLocalViewDistance(GetWorld(), GetOwner()->GetActorLocation(), MaxDistCm))
+		{
+			StartedCueTags.AddTag(CueTag);
+			return;
+		}
+	}
 	if (const auto* Deferred = PendingLoopingCues.Find(CueTag);
 		bRemoteBudget && !bBudgetGranted && Deferred && Deferred->bReadyForBudget && Deferred->AttackInstance == ActiveAttackInstance && Deferred->SystemPath == SystemPath)
 	{
@@ -390,7 +475,7 @@ void UProject_JCombatPresentationComponent::PlayCueLocal(const FGameplayTag CueT
 	{
 		if (CueValues.AttachmentTarget == EProject_JCombatVFXAttachmentTarget::Weapon)
 		{
-			if (UProject_JWeaponPresentationComponent* WeaponPresentation = Character->FindComponentByClass<UProject_JWeaponPresentationComponent>())
+			if (UProject_JWeaponPresentationComponent* WeaponPresentation = GetCachedWeaponPresentation())
 			{
 				AttachComponent = WeaponPresentation->GetWeaponVFXAttachmentComponent(CueValues.AttachSocketName);
 			}
@@ -460,9 +545,15 @@ void UProject_JCombatPresentationComponent::PlayCueLocal(const FGameplayTag CueT
 	bool bActivationAttempted = false;
 	if (IsValid(NiagaraComponent) && IsCurrentSpawn())
 	{
-		// Pool reuse does not reset this flag. Set both directions before any
+		// Pool reuse does not reset this flag or User.OpacityScale. Set both directions before any
 		// activation; attached cues always clear force and use live attachment linkage.
 		NiagaraComponent->SetForceLocalPlayerEffect(bForceLocalPlayerEffect);
+		static const FNiagaraVariableBase OpacityParameter(FNiagaraTypeDefinition::GetFloatDef(), TEXT("User.OpacityScale"));
+		const auto AuthoredOpacity = PinnedSystem->GetExposedParameters().GetParameterOptionalValue<float>(OpacityParameter);
+		if (AuthoredOpacity.IsSet())
+		{
+			NiagaraComponent->SetVariableFloat(OpacityParameter.GetName(), AuthoredOpacity.GetValue() * GetCueOpacityMultiplier(CueTag));
+		}
 		if (IsValid(NiagaraComponent) && IsCurrentSpawn())
 		{
 			bActivationAttempted = true;
@@ -893,12 +984,9 @@ void UProject_JCombatPresentationComponent::ApplyReplicatedState()
     UpdateWarningMarker();
     if (!CanAcceptPresentation() || ActiveAttackInstance != WarningInstance ||
         ReplicatedPresentationState.Revision != WarningRevision) { return; }
-	if (AActor* Owner = GetOwner())
+	if (UProject_JWeaponPresentationComponent* Weapon = GetCachedWeaponPresentation())
 	{
-		if (UProject_JWeaponPresentationComponent* Weapon = Owner->FindComponentByClass<UProject_JWeaponPresentationComponent>())
-		{
-			Weapon->SetActiveAttackPresentation(ActiveAttackTag);
-		}
+		Weapon->SetActiveAttackPresentation(ActiveAttackTag);
 	}
 	for (const FGameplayTag& CueTag : ReplicatedPresentationState.ActiveLoopingCueTags)
 	{
@@ -940,12 +1028,9 @@ void UProject_JCombatPresentationComponent::MulticastPlayPresentationCue_Impleme
 		}
 		ActiveAttackTag = AttackTag;
 		ActiveAttackInstance = AttackInstance;
-		if (AActor* Owner = GetOwner())
+		if (UProject_JWeaponPresentationComponent* Weapon = GetCachedWeaponPresentation())
 		{
-			if (UProject_JWeaponPresentationComponent* Weapon = Owner->FindComponentByClass<UProject_JWeaponPresentationComponent>())
-			{
-				Weapon->SetActiveAttackPresentation(AttackTag);
-			}
+			Weapon->SetActiveAttackPresentation(AttackTag);
 		}
 		if (const auto* Cue = ResolveCue(CueTag); Cue && Cue->bLooping) { LastAppliedRecoveryEventOrder = EventOrder; }
 		PlayCueLocal(CueTag);

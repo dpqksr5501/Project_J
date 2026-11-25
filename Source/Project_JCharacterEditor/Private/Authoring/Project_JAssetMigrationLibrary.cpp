@@ -2,6 +2,9 @@
 #include "Animation/Project_JHandContact.h"
 #include "Animation/Project_JHandGripProfile.h"
 #include "Animation/Project_JRetargetAnimInstance.h"
+#include "Animation/Project_JAnimNotifyState_CombatPresentationCue.h"
+#include "Animation/AnimMontage.h"
+#include "AnimationBlueprintLibrary.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
 #include "Engine/SkeletalMeshSocket.h"
@@ -18,6 +21,46 @@
 #include "Misc/PackageName.h"
 #include "UObject/PerPlatformProperties.h"
 #include "UObject/UnrealType.h"
+
+bool UProject_JAssetMigrationLibrary::AddMontageGameplayWarning(UAnimMontage* Montage, FGameplayTag CueTag, float Start, float End)
+{
+    if (!IsValid(Montage) || !CueTag.IsValid() || !FMath::IsFinite(Start) || !FMath::IsFinite(End)
+        || Start < 0.f || End <= Start || End > Montage->GetPlayLength() || (GEditor && GEditor->PlayWorld)) return false;
+
+    for (const FAnimNotifyEvent& Event : Montage->Notifies)
+    {
+        const auto* Cue = Cast<UProject_JAnimNotifyState_CombatPresentationCue>(Event.NotifyStateClass);
+        if (!Cue || !Cue->IsGameplayWarning() || Cue->GetCueTag() != CueTag) continue;
+        return FMath::IsNearlyEqual(Event.GetTime(), Start) && FMath::IsNearlyEqual(Event.GetDuration(), End - Start)
+            && Event.bTriggerOnDedicatedServer && Event.NotifyTriggerChance == 1.f
+            && Event.NotifyFilterType == ENotifyFilterType::NoFiltering && !Event.bCanBeFilteredViaRequest;
+    }
+
+    auto* CueClass = UProject_JAnimNotifyState_CombatPresentationCue::StaticClass();
+    const auto* TagProperty = FindFProperty<FStructProperty>(CueClass, TEXT("CueTag"));
+    const auto* PurposeProperty = FindFProperty<FEnumProperty>(CueClass, TEXT("Purpose"));
+    if (!TagProperty || !PurposeProperty) return false;
+
+    Montage->Modify();
+    const FName Track(TEXT("Gameplay Warning"));
+    if (!Montage->AnimNotifyTracks.ContainsByPredicate([Track](const FAnimNotifyTrack& Entry) { return Entry.TrackName == Track; }))
+        UAnimationBlueprintLibrary::AddAnimationNotifyTrack(Montage, Track);
+    auto* Cue = UAnimationBlueprintLibrary::AddAnimationNotifyStateEvent(Montage, Track, Start, End - Start, CueClass);
+    if (!Cue) return false;
+
+    *TagProperty->ContainerPtrToValuePtr<FGameplayTag>(Cue) = CueTag;
+    PurposeProperty->GetUnderlyingProperty()->SetIntPropertyValue(PurposeProperty->ContainerPtrToValuePtr<void>(Cue),
+        static_cast<int64>(EProject_JCombatCuePurpose::GameplayWarning));
+    auto* Event = Montage->Notifies.FindByPredicate([Cue](const FAnimNotifyEvent& Entry) { return Entry.NotifyStateClass == Cue; });
+    if (!Event) return false;
+    Event->bTriggerOnDedicatedServer = true;
+    Event->NotifyTriggerChance = 1.f;
+    Event->NotifyFilterType = ENotifyFilterType::NoFiltering;
+    Event->bCanBeFilteredViaRequest = false;
+    Montage->RefreshCacheData();
+    Montage->MarkPackageDirty();
+    return true;
+}
 
 bool UProject_JAssetMigrationLibrary::ResolveSkeletalWeaponGripPreview(USkeletalMeshComponent* Body,
     USkeletalMesh* Weapon, FName GripSocket, FTransform& OutWorldMount)

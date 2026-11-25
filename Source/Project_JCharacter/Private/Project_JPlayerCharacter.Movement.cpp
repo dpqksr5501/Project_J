@@ -28,7 +28,6 @@ FProject_JCombatMovementPolicy BuildCombatMovementPolicy(const AProject_JPlayerC
 	if (const UProject_JCombatAnimProfile* CombatAnimProfile = PlayerCharacter.GetCombatAnimProfile())
 	{
 		Policy.bAllowSprintInCombat = CombatAnimProfile->bAllowSprintInCombat;
-		Policy.bUseCombatRotationMode = CombatAnimProfile->bUseCombatRotationMode;
 		Policy.bInterruptIntroOnHit = CombatAnimProfile->bInterruptCombatIntroOnHit;
 	}
 	return Policy;
@@ -66,7 +65,8 @@ void AProject_JPlayerCharacter::UpdateMaxWalkSpeed()
 
 bool AProject_JPlayerCharacter::ShouldUseCombatRotationMode() const
 {
-	return BuildCombatMovementPolicy(*this).ShouldUseCombatRotationMode();
+	const UProject_JCombatAnimProfile* Profile = GetCombatAnimProfile();
+	return !Profile || Profile->bUseCombatRotationMode;
 }
 
 bool AProject_JPlayerCharacter::ShouldInterruptCombatIntroOnHit() const

@@ -231,6 +231,10 @@ bool FProjectJPlayerLocomotionSnapshotBoundaryTest::RunTest(const FString&)
         RecoveryAnim->SelectNativeStateAnimation(TEXT("Locomotion Transition"),uint8(State::LocomotionTransition),false);
         TestEqual(TEXT("Movement beginning under a full-body action keeps the existing locomotion loop"),RecoveryAnim->PlayerStateMachineState,State::LocomotionLoop);
         Frame.Montage.bFullBodyMontageActive=false;Tick(true);
+        RecoveryAnim->SelectNativeStateAnimation(TEXT("Locomotion Transition"),uint8(State::LocomotionTransition),false);
+        TestEqual(TEXT("Held movement first returns to the existing loop when the action releases"),RecoveryAnim->PlayerStateMachineState,State::LocomotionLoop);
+        Tick(true);
+        Frame.Input.bHasMoveInput=false;Tick(false);
         TestEqual(TEXT("Independent movement retains its stop transition"),SelectRecovery(),State::IdleTransition);
         Frame.Montage.bFullBodyMontageActive=true;Frame.Montage.FullBodyMontageWeight=0.f;
         Frame.Input.bHasMoveInput=false;Tick(true);

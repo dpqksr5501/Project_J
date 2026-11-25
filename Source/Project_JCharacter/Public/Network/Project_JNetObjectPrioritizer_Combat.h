@@ -8,10 +8,12 @@
 class AActor;
 
 /**
- * Project_J Custom Net Object Prioritizer based on Combat State.
- * Ensures that actors currently engaged in combat have higher replication frequency and priority.
- * 
- * The policy calculation is kept independent from the Iris adapter layer.
+ * Project_J Combat Network Priority Policy & Production Iris Prioritizer Dispatcher.
+ * Ensures actors actively attacking/dodging/hit-reacting and giant bosses receive higher
+ * Iris spatial priority while dead actors yield bandwidth in 100-200+ player battles.
+ *
+ * Driven event-driven from GAS GameplayTag transitions onto UE 5.8 SIMD
+ * USphereWithOwnerBoostNetObjectPrioritizer tiers (zero per-connection tag lookups).
  */
 UCLASS()
 class PROJECT_JCHARACTER_API UProject_JNetObjectPrioritizer_Combat : public UObject
@@ -19,6 +21,24 @@ class PROJECT_JCHARACTER_API UProject_JNetObjectPrioritizer_Combat : public UObj
 	GENERATED_BODY()
 
 public:
+	static const FName PrioritizerName_DefaultMover;
+	static const FName PrioritizerName_CombatActive;
+	static const FName PrioritizerName_CombatMode;
+	static const FName PrioritizerName_CombatDead;
+	static const FName PrioritizerName_CombatBoss;
+
+	static bool IsIrisCombatPrioritizerEnabled();
+
+	/** Resolves the production Iris prioritizer tier name for TargetActor (single source of truth). */
+	static FName ResolveIrisPrioritizerName(const AActor* TargetActor);
+
+	/**
+	 * Applies the resolved Iris prioritizer tier to TargetActor on an authoritative Iris server.
+	 * Returns true when Iris accepts the tier or it is already assigned.
+	 */
+	static bool SyncActorIrisPrioritizer(AActor* TargetActor, FName& InOutLastAppliedName, bool bForceMoverTier = false);
+	static void RefreshIrisPrioritizersAfterConsoleChange();
+
 	UFUNCTION(BlueprintPure, Category = "Network|Prioritization")
 	float CalculatePriorityMultiplier(const AActor* TargetActor) const;
 
@@ -26,12 +46,6 @@ public:
 	bool HasCombatPriority(const AActor* TargetActor) const;
 
 	FProject_JReplicationPolicyDecision ApplyCombatPriority(const AActor* TargetActor, FProject_JReplicationPolicyDecision Decision) const;
-
-	// Setup prioritizer parameters
-	// virtual void Init(FNetObjectPrioritizerInitParams& Params) override;
-
-	// Perform prioritization per object
-	// virtual void Prioritize(FNetObjectPrioritizationParams& Params) override;
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Network|Prioritization", meta = (ClampMin = "1.0", UIMin = "1.0"))

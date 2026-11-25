@@ -17,7 +17,12 @@ TAutoConsoleVariable<int32> ClothBudgetEnabled(TEXT("ProjectJ.ClothBudget.Enable
     TEXT("Instance-only cosmetic cloth quality budget. 0 restores authored settings; local players always retain them."));
 
 TAutoConsoleVariable<int32> ClothExecutionVertices(TEXT("ProjectJ.ClothBudget.ExecutionVertexCap"),0,
-    TEXT("Opt-in cosmetic cloth geometry admission budget. 0 disables execution actuation (default); not CPU milliseconds."));
+    TEXT("Opt-in cosmetic cloth geometry admission budget. 0 disables the vertex budget (default); not CPU milliseconds."),
+    ECVF_Scalability);
+
+TAutoConsoleVariable<int32> PauseOptInRemoteCloth(TEXT("ProjectJ.ClothBudget.PauseOptInRemote"), 0,
+    TEXT("Park opted-in non-local cosmetic cloth with the native fade and drain path. Protected viewpoints and unmanaged garments keep simulation."),
+    ECVF_Scalability);
 
 bool HasValidConfig(const UClothingAssetCommon* Asset)
 {
@@ -220,18 +225,28 @@ int64 UProject_JAnimationUpdateCoordinatorComponent::GetClothExecutionVertexCap(
     return FMath::Max(0,ClothExecutionVertices.GetValueOnGameThread());
 }
 
+bool UProject_JAnimationUpdateCoordinatorComponent::IsOptionalClothParkingEnabled()
+{
+    return PauseOptInRemoteCloth.GetValueOnGameThread() != 0;
+}
+
+bool UProject_JAnimationUpdateCoordinatorComponent::IsClothExecutionPolicyEnabled()
+{
+    return IsOptionalClothParkingEnabled() || GetClothExecutionVertexCap() > 0;
+}
+
 bool UProject_JAnimationUpdateCoordinatorComponent::IsClothExecutionSource(const USkeletalMeshComponent* Source) const
 {
     return Source && VisualSource.Get()==Source && Source->GetOwner()==GetOwner();
 }
 
-bool UProject_JAnimationUpdateCoordinatorComponent::FClothMesh::CanOwnExecution() const
+bool UProject_JAnimationUpdateCoordinatorComponent::FClothMesh::CanOwnCurrentExecution() const
 {
     const auto* Part=Mesh.Get();
     static const IConsoleVariable* EndWait=IConsoleManager::Get().FindConsoleVariable(TEXT("p.ClothPhysics.UseEndTickWait"));
     static const IConsoleVariable* ClothEnabled=IConsoleManager::Get().FindConsoleVariable(TEXT("p.ClothPhysics"));
     static const IConsoleVariable* InTickWait=IConsoleManager::Get().FindConsoleVariable(TEXT("p.ClothPhysics.WaitForParallelClothTask"));
-    return IsCurrent() && !Part->IsBeingDestroyed() && IsValid(Part->GetOwner()) && !Part->GetOwner()->IsActorBeingDestroyed() &&
+    return !Part->IsBeingDestroyed() && IsValid(Part->GetOwner()) && !Part->GetOwner()->IsActorBeingDestroyed() &&
         Part->IsClothExecutionBudgetAllowed() && !bExecutionDeclined &&
         MaxLODPhysicsVertices.IsSet() && MaxLODPhysicsVertices.GetValue()>0 && Part->LeaderPoseComponent.IsValid() &&
         Part->LeaderPoseComponent->GetOwner()==Part->GetOwner() && !Part->IsSimulatingPhysics() &&
@@ -305,10 +320,11 @@ FProjectJClothExecutionDemand UProject_JAnimationUpdateCoordinatorComponent::Pre
         { Entry.bExecutionReleaseRequested=true; Entry.bExecutionDeclined=true; }
         // Policy publishes handoff requests only. Component writes belong to
         // the next coordinator PrePhysics tick or an explicit pre-mutation API.
-        if(!bCanBudget || !Entry.CanOwnExecution() || bProtected)
+        const bool bEligible=bCanBudget && !bProtected && Entry.CanOwnCurrentExecution();
+        if(!bEligible)
             Entry.bExecutionReleaseRequested|=Entry.bExecutionOwned;
         const int64 Cost=Entry.MaxLODPhysicsVertices.GetValue();
-        if(bCanBudget && !bProtected && !Entry.bExecutionReleaseRequested && Entry.CanOwnExecution() && !Entry.bExecutionOwned &&
+        if(bEligible && !Entry.bExecutionReleaseRequested && !Entry.bExecutionOwned &&
             !Part->IsClothingSimulationSuspended() && FMath::IsFinite(Part->ClothBlendWeight) &&
             Part->ClothBlendWeight>0.f && Part->ClothBlendWeight<=1.f && Part->HasQualifiedClothNativeFrame(GFrameCounter))
         {
@@ -382,13 +398,14 @@ FProjectJClothExecutionStats UProject_JAnimationUpdateCoordinatorComponent::GetC
 
 void UProject_JAnimationUpdateCoordinatorComponent::RefreshClothExecution(UProject_JBudgetedSkeletalMeshComponent* Source,float DeltaTime)
 {
-    if(GetClothExecutionVertexCap()<=0)
+    if(!IsClothExecutionPolicyEnabled())
     {
         for(auto& Entry:ClothMeshes) if(Entry.bExecutionOwned) Entry.ReleaseExecution();
         return;
     }
-    const bool bEnabled=GetClothExecutionVertexCap()>0 && Source->bAllowProjectBudget;
-    const bool bProtected=ProjectJ::Animation::IsClothExecutionProtected(Cast<APawn>(GetOwner())) || Source->HasFullClothQualityGrant();
+    const bool bEnabled=Source->bAllowProjectBudget;
+    const bool bProtected=ProjectJ::Animation::IsClothExecutionProtected(Cast<APawn>(GetOwner())) ||
+        (!IsOptionalClothParkingEnabled() && Source->HasFullClothQualityGrant());
     const uint64 PreviousFrame=GFrameCounter>0?GFrameCounter-1:MAX_uint64;
     const float Step=FMath::IsFinite(DeltaTime) && DeltaTime>0?FMath::Min(DeltaTime/.2f,1.f):0.f;
     for(auto& Entry:ClothMeshes)
@@ -396,7 +413,7 @@ void UProject_JAnimationUpdateCoordinatorComponent::RefreshClothExecution(UProje
         if(!Entry.bExecutionOwned) continue;
         auto* Part=Entry.Mesh.Get();
         if(!bEnabled || bProtected || Entry.bExecutionProtected || Entry.bExecutionReleaseRequested ||
-            !Entry.CanOwnExecution() || Entry.ExecutionLeader.Get()!=Part->LeaderPoseComponent.Get())
+            !Entry.IsCurrent() || !Entry.CanOwnCurrentExecution() || Entry.ExecutionLeader.Get()!=Part->LeaderPoseComponent.Get())
         { Entry.ReleaseExecution(); continue; }
         if(!Entry.HasOwnedExecutionValues()) { Entry.ReleaseExecution(true); continue; }
         if(Entry.GrantFrame==MAX_uint64 || GFrameCounter<Entry.GrantFrame || GFrameCounter-Entry.GrantFrame>1)

@@ -11,6 +11,10 @@
 #include "Components/Project_JCombatHitValidationComponent.h"
 #include "Components/Project_JCombatPresentationComponent.h"
 #include "Components/Project_JTargetScoringComponent.h"
+#include "AI/Project_JThreatComponent.h"
+#include "Project_JCCResistanceComponent.h"
+#include "Project_JSocialStateInterface.h"
+#include "GameFramework/PlayerState.h"
 #include "AbilitySystemComponent.h"
 #include "AIController.h"
 #include "BrainComponent.h"
@@ -35,6 +39,7 @@ AProject_JNPCCharacter::AProject_JNPCCharacter()
 
 	AttributeSet = CreateDefaultSubobject<UProject_JAttributeSet>(TEXT("NPCAttributeSet"));
 	EquipmentManager = CreateDefaultSubobject<UProject_JEquipmentManagerComponent>(TEXT("NPCEquipmentManager"));
+	ThreatComponent = CreateDefaultSubobject<UProject_JThreatComponent>(TEXT("NPCThreatComponent"));
 }
 
 void AProject_JNPCCharacter::BeginPlay()
@@ -44,6 +49,73 @@ void AProject_JNPCCharacter::BeginPlay()
 	if (bApplyDefaultNPCOptimizationPolicy)
 	{
 		ApplyDefaultNPCOptimizationPolicy();
+	}
+
+	if (ThreatComponent)
+	{
+		if (BrainDefinition)
+		{
+			ThreatComponent->BrainDefinition = BrainDefinition;
+		}
+		ThreatComponent->HomeLocation = GetActorLocation();
+	}
+	if (CCResistanceComponent && BrainDefinition && BrainDefinition->bIsGiantBoss)
+	{
+		CCResistanceComponent->bIsBossCCImmune = true;
+	}
+	if (HasAuthority() && BrainDefinition != nullptr)
+	{
+		EnableThreatObservation();
+	}
+}
+
+void AProject_JNPCCharacter::EnableThreatObservation()
+{
+	SyncIrisCombatPrioritizer();
+	if (HasAuthority() && AttributeSet && !HealthLossHandle.IsValid())
+	{
+		HealthLossHandle = AttributeSet->OnConfirmedHealthGELoss.AddUObject(this, &ThisClass::HandleConfirmedHealthLoss);
+	}
+}
+
+void AProject_JNPCCharacter::HandleConfirmedHealthLoss(const FProject_JConfirmedHealthGELoss& Loss)
+{
+	if (!HasAuthority() || !ThreatComponent)
+	{
+		return;
+	}
+	const double LostHealth = static_cast<double>(Loss.OldValue - Loss.NewValue);
+	if (LostHealth <= 0.0 || !FMath::IsFinite(LostHealth))
+	{
+		return;
+	}
+
+	AActor* SourceActor = Loss.Proof.SourceAvatar.Get();
+	if (!SourceActor) SourceActor = Loss.Proof.Instigator.Get();
+	if (!SourceActor) SourceActor = Loss.Proof.SourceOwner.Get();
+	if (!SourceActor) SourceActor = Loss.Proof.EffectCauser.Get();
+
+	FGuid AttackerCharId;
+	if (const IProject_JSocialStateInterface* OwnerId = Cast<IProject_JSocialStateInterface>(Loss.Proof.SourceOwner.Get()))
+	{
+		AttackerCharId = OwnerId->GetAuthoritativeCharacterGuid();
+	}
+	if (!AttackerCharId.IsValid())
+	{
+		if (const APawn* SourcePawn = Cast<APawn>(SourceActor))
+		{
+			if (const IProject_JSocialStateInterface* PSId = Cast<IProject_JSocialStateInterface>(SourcePawn->GetPlayerState()))
+			{
+				AttackerCharId = PSId->GetAuthoritativeCharacterGuid();
+			}
+		}
+	}
+
+	const double Now = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0;
+	ThreatComponent->AddDamageThreat(SourceActor, AttackerCharId, LostHealth, 1.0, Now);
+	if (AttributeSet)
+	{
+		ThreatComponent->EvaluateBossPhase(Loss.NewValue, AttributeSet->GetMaxHealth());
 	}
 }
 
@@ -348,6 +420,11 @@ void AProject_JNPCCharacter::StopCombatActions()
 
 void AProject_JNPCCharacter::EndPlay(EEndPlayReason::Type Reason)
 {
+	if (AttributeSet && HealthLossHandle.IsValid())
+	{
+		AttributeSet->OnConfirmedHealthGELoss.Remove(HealthLossHandle);
+	}
+	HealthLossHandle.Reset();
 	bRuntimeActionEnding = true;
 	StopNavigation();
 	StopCombatActions();
@@ -388,6 +465,10 @@ void AProject_JNPCCharacter::ApplyDefaultNPCOptimizationPolicy()
 	{
 		MeshComponent->bEnableUpdateRateOptimizations = true;
 		MeshComponent->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+		if (GetNetMode() == NM_DedicatedServer)
+		{
+			MeshComponent->SetDisablePostProcessBlueprint(true);
+		}
 	}
 }
 

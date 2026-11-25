@@ -197,18 +197,24 @@ void UProject_JNPCPathSubsystem::Tick(float DeltaTime)
 			< B->Submitted - (B->Priority == EProjectJNPCPathPriority::Urgent ? UrgentBoostSeconds : 0);
 	});
 	int32 InFlight = 0;
-	for (const auto& R : Snapshot) { InFlight += R->bDispatched && !R->bFinished ? 1 : 0; }
+	TSet<const void*> LiveRequests;
+	LiveRequests.Reserve(Requests.Num());
+	for (const auto& R : Snapshot)
+	{
+		InFlight += R->bDispatched && !R->bFinished ? 1 : 0;
+		LiveRequests.Add(R.Get());
+	}
 	for (const auto& R : Snapshot)
 	{
 		if ((FPlatformTime::Seconds() - Now) * 1000.0 >= GameThreadBudgetMilliseconds) { break; }
 		if (!IsActiveServer()) { return; }
-		if (!Requests.Contains(R)) { continue; }
+		if (!LiveRequests.Contains(R.Get())) { continue; }
 		auto* Pawn = R->Pawn.Get();
 		if (!R->Owner.IsValid() || !IsValid(Pawn) || Pawn->IsActorBeingDestroyed() || !Pawn->HasAuthority()
 			|| !R->Controller.IsValid() || Pawn->GetController() != R->Controller.Get()) { Cancel(R->Result.Token); }
 		if (R->bCancelled || R->bDelivered)
 		{
-			if (!R->bDispatched || R->bFinished) { Requests.RemoveSingle(R); }
+			if (!R->bDispatched || R->bFinished) { LiveRequests.Remove(R.Get()); Requests.RemoveSingle(R); }
 			continue;
 		}
 		if (Now >= R->Deadline || R->bFinished)
@@ -225,7 +231,7 @@ void UProject_JNPCPathSubsystem::Tick(float DeltaTime)
 				R->Result.Status = EProjectJNPCPathStatus::Failed; R->Result.Path.Reset();
 			}
 			R->bDelivered = true;
-			if (!R->bDispatched || R->bFinished) { Requests.RemoveSingle(R); }
+			if (!R->bDispatched || R->bFinished) { LiveRequests.Remove(R.Get()); Requests.RemoveSingle(R); }
 			auto Callback = MoveTemp(R->Callback);
 			TStrongObjectPtr<UObject> PinnedOwner(R->Owner.Get());
 			TStrongObjectPtr<APawn> PinnedPawn(Pawn);

@@ -61,6 +61,12 @@ public:
  /** Copy matching per-section cloth configuration objects, preserving shared config identity. Leaves target geometry, masks and collision asset intact; refuses PIE/mismatched classes. Never saves or refreshes. */
  UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
  static bool CopySurfaceClothingConfiguration(USkeletalMesh* Previous, USkeletalMesh* Target);
+ /** Add a lower-resolution simulation mesh to an isolated, one-LOD test duplicate, preserving its LOD0 render geometry. Never saves. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
+ static FString BuildSurfaceClothingPhysicsProxy(USkeletalMesh* TestMesh);
+ /** Finalize an authored physics proxy with the same single render LOD as its source. Never saves. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
+ static FString FinalizeRemoteSurfaceClothingProxy(USkeletalMesh* Source, USkeletalMesh* Proxy);
  /** Paint a smooth 0..1 bending weight only within the lowest HemDepth cm of each embedded cloth section. Preserves fixed vertices and max-distance masks; refreshes bindings but never saves. Refuses PIE/unsupported targets or conflicting artist masks. */
  UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
  static FString PaintSurfaceClothingHemBending(USkeletalMesh* Mesh, float HemDepth=12.f);

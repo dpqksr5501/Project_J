@@ -25,6 +25,7 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerState.h"
 #include "Animation/Project_JCharacterAnimInstance.h"
+#include "Animation/Project_JPresentationMeshResolver.h"
 #include "Animation/Project_JRetargetAnimInstance.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/WorldSettings.h"
@@ -52,6 +53,19 @@
 
 UE_DEFINE_GAMEPLAY_TAG_STATIC(ReauditAttackTag,"ProjectJ.Tests.Reaudit.Attack");
 UE_DEFINE_GAMEPLAY_TAG_STATIC(ReauditModifierTag,"InputTag.Tests.Reaudit.Modifier");
+
+namespace
+{
+void BeginReusedActorPlay(AActor& Actor)
+{
+    // Match ULevel::RouteActorInitialize after RemovedFromWorld. Mover
+    // rebuilds its backend in component initialization, before BeginPlay.
+    Actor.PreInitializeComponents();
+    Actor.InitializeComponents();
+    Actor.PostInitializeComponents();
+    Actor.DispatchBeginPlay(true);
+}
+}
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJCharacterUIBindingReentryTest,
     "ProjectJ.Reaudit.CharacterUIBindingReentry", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -170,7 +184,7 @@ bool FProjectJFollowerIdentityReplacementTest::RunTest(const FString&)
     auto* World=UWorld::CreateWorld(EWorldType::Game,false);
     GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
     ON_SCOPE_EXIT {World->DestroyWorld(false);GEngine->DestroyWorldContext(World);};
-    auto* Character=World->SpawnActor<ACharacter>();auto* Source=Character->GetMesh();
+    auto* Character=World->SpawnActor<AProject_JNPCCharacter>();auto* Source=Character->GetMesh();
     auto MakeFollower=[&](){
         auto* Mesh=NewObject<USkeletalMeshComponent>(Character);Mesh->SetupAttachment(Source);Mesh->RegisterComponent();
         Mesh->AnimScriptInstance=NewObject<UProject_JRetargetAnimInstance>(Mesh);return Mesh;
@@ -230,10 +244,11 @@ bool FProjectJAuthoredFollowerRoleTest::RunTest(const FString&)
     if(!TestNotNull(TEXT("Actual Blueprint construction creates a character"),Character)){return false;}
     auto* Source=Character->GetMesh();auto* Anim=Cast<UProject_JCharacterAnimInstance>(Source->GetAnimInstance());
     if(!TestNotNull(TEXT("Actual source uses native Master anim instance"),Anim)){return false;}
-    auto* Follower=Anim->GetRuntimeRetargetFollowerMesh();
-    if(!TestNotNull(TEXT("Common resolver finds the actual constructed follower"),Follower)){return false;}
-    TestTrue(TEXT("Actual follower remains attached to the source"),Follower->GetAttachParent()==Source);
-    TestTrue(TEXT("Actual follower keeps the native retarget ABP contract"),Follower->GetAnimInstance()&&Follower->GetAnimInstance()->IsA<UProject_JRetargetAnimInstance>());
+    auto* Body=Source->GetSkeletalMeshAsset();
+    if(!TestNotNull(TEXT("Actual source carries the direct body asset"),Body)){return false;}
+    TestNull(TEXT("Direct-body Spellblade requires no separate retarget follower"),Anim->GetRuntimeRetargetFollowerMesh());
+    TestEqual(TEXT("Compatible equipment resolves to the directly animated body"),
+        Project_J::Animation::ResolveEquipmentPoseSource(*Character,*Body,false),Source);
     return true;
 }
 
@@ -336,7 +351,7 @@ bool FProjectJNPCPlayReuseTest::RunTest(const FString&)
         // Keep the selected component, replace collaborators to isolate each public admission boundary.
         if(Case>=1){Scoring->DestroyComponent();Scoring=MakeScoring();}
         if(Case==2){Actions->DestroyComponent();Actions=MakeActions();}
-        NPC->DispatchBeginPlay(true);
+        BeginReusedActorPlay(*NPC);
         AI=World->SpawnActor<AAIController>();AI->Possess(NPC);
         if(!TestTrue(TEXT("Engine-ended AI controller is replaced by a valid new controller"),IsValid(AI)&&!AI->IsActorBeingDestroyed())){return false;}
         NPC->GetAbilitySystemComponent()->InitAbilityActorInfo(NPC,NPC);
@@ -358,7 +373,6 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJPlayerInputPlayReuseTest,
     "ProjectJ.Reaudit.PlayerInputPlayReuse", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJPlayerInputPlayReuseTest::RunTest(const FString&)
 {
-    AddExpectedError(TEXT("has no CharacterAnimProfile, LocomotionProfile, or MotionMatchingAssetSet assigned."),EAutomationExpectedErrorFlags::Contains,2);
     auto* World=UWorld::CreateWorld(EWorldType::Game,false);
     GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
     ON_SCOPE_EXIT {World->EndPlay(EEndPlayReason::Quit);World->DestroyWorld(false);GEngine->DestroyWorldContext(World);};
@@ -386,7 +400,7 @@ bool FProjectJPlayerInputPlayReuseTest::RunTest(const FString&)
     TestEqual(TEXT("Old play removes its real device bindings"),Device->GetActionEventBindings().Num(),0);
     TestFalse(TEXT("Old play releases its held GAS input"),ASC->FindAbilitySpecFromHandle(Handle)->InputPressed);
     TestFalse(TEXT("Old play releases its held modifier"),Router->AreModifierTagsMatched(Required,{}));
-    Player->DispatchBeginPlay(true);ASCProperty->SetObjectPropertyValue_InContainer(Player,ASC);ASC->InitAbilityActorInfo(Player,Player);
+    BeginReusedActorPlay(*Player);ASCProperty->SetObjectPropertyValue_InContainer(Player,ASC);ASC->InitAbilityActorInfo(Player,Player);
     TestTrue(TEXT("New play reacquires its EnhancedInput bindings"),Binding->BindInput(Device,Player,ActionSet));
     TestEqual(TEXT("New play acquires one set of device bindings"),Device->GetActionEventBindings().Num(),FirstBindingCount);
     Executor->Initialize(Player);Executor->HandleInputTagPressed(InputTag);

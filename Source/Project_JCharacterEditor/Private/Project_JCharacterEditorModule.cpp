@@ -519,7 +519,8 @@ public:
 			}
 			return nullptr;
 		});
-		PreviewTickerHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateRaw(this, &FProject_JCharacterEditorModule::TickMontageWeaponPreview));
+		if (!IsRunningCommandlet())
+			PreviewTickerHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateRaw(this, &FProject_JCharacterEditorModule::TickMontageWeaponPreview));
 	}
 
 	virtual void ShutdownModule() override

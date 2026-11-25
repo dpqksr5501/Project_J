@@ -2,6 +2,7 @@
 
 #include "Animation/Project_JCharacterAnimInstance.h"
 #include "Animation/Project_JPlayerLocomotionTypes.h"
+#include "Combat/Project_JCombatQueryTypes.h"
 #include "Animation/AnimExecutionContext.h"
 #include "Animation/AnimNodeReference.h"
 #include "MoverSimulationTypes.h"
@@ -63,6 +64,13 @@ public:
  /** Authored cast contribution to the legs when both movement intent and speed permit it. */
  UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Combat Animation")
  float GraphStationaryCastLegWeight = 0.f;
+
+ /** Distance-tiered Motion Matching LOD for remote players (LocalFullMM -> NearCompactMM -> MidBlendSpace -> FarSimple1D). */
+ UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Player Locomotion|LOD")
+ EProject_JRemoteLocomotionLOD RemoteLocomotionLOD = EProject_JRemoteLocomotionLOD::LocalFullMM;
+
+ UFUNCTION(BlueprintPure, Category="Player Locomotion|LOD", meta=(BlueprintThreadSafe))
+ EProject_JRemoteLocomotionLOD GetRemoteLocomotionLOD() const { return RemoteLocomotionLOD; }
 
 private:
  void UpdateActionLocomotionHandoff(FProject_JAnimThreadSafeData& Data);

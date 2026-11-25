@@ -34,6 +34,7 @@ void FProject_JRetargetAnimInstanceProxy::AddReferencedObjects(UAnimInstance* In
 
 void FProject_JRetargetAnimInstanceProxy::PreUpdate(UAnimInstance* Instance, float DeltaSeconds)
 {
+	HandContacts = {};
 	{
 		TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_RetargetProfile_PreUpdate);
 		const auto* Anim = CastChecked<UProject_JRetargetAnimInstance>(Instance);

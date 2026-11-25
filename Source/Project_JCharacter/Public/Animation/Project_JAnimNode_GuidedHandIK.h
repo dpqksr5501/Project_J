@@ -7,6 +7,8 @@
 #include "Animation/Project_JHandGripProfile.h"
 #include "Project_JAnimNode_GuidedHandIK.generated.h"
 
+struct FProject_JRetargetAnimInstanceProxy;
+
 struct FProject_JGuidedHandIKTraceState;
 
 UENUM()
@@ -98,6 +100,7 @@ struct PROJECT_JCHARACTER_API FProject_JAnimNode_GuidedHandIK : public FAnimNode
 	virtual void PreUpdate(const UAnimInstance* InAnimInstance) override;
 
 private:
+	const FProject_JRetargetAnimInstanceProxy* ContactProxy = nullptr;
 	Project_J::Animation::FGuidedArmChain Chain;
 	FProject_JGripArmBones ProfileArmSnapshot;
 	FProject_JArmBendStability ProfileStabilitySnapshot;

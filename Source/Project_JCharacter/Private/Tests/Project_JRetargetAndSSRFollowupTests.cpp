@@ -104,6 +104,16 @@ bool FProjectJCanonicalMeleeTraceTest::RunTest(const FString&)
 		if (!TestTrue(TEXT("Both actual meshes expose the authored test socket"), LeaderMesh->DoesSocketExist(Notify->SocketName) && RetiredMesh->DoesSocketExist(Notify->SocketName)))
 		{ World->DestroyWorld(false); return false; }
 		FAnimNotifyEventReference Event; Event.SetNotifyInstanceID(11401);
+		Character->SetRole(ROLE_SimulatedProxy);
+		Notify->NotifyBegin(LeaderMesh, nullptr, 1.f, Event);
+		TestTrue(TEXT("A simulated proxy does not open a gameplay melee trace"), Notify->TraceStates.IsEmpty());
+		Character->SetRole(ROLE_AutonomousProxy);
+		Notify->NotifyBegin(LeaderMesh, nullptr, 1.f, Event);
+		TestTrue(TEXT("The predicting owner opens its gameplay melee trace"), Notify->TraceStates.Contains(LeaderMesh));
+		Character->SetRole(ROLE_SimulatedProxy);
+		Notify->NotifyTick(LeaderMesh, nullptr, 1.f / 60.f, Event);
+		TestTrue(TEXT("Losing ownership retires the old trace before the notify ends"), Notify->TraceStates.IsEmpty());
+		Character->SetRole(ROLE_Authority);
 		Notify->NotifyBegin(LeaderMesh, nullptr, 1.f, Event);
 		Notify->NotifyBegin(RetiredMesh, nullptr, 1.f, Event);
 		Notify->NotifyBegin(LeaderMesh, nullptr, 1.f, Event);

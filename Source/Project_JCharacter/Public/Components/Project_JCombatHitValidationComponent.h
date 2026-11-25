@@ -2,6 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "Combat/Project_JCombatHitValidation.h"
+#include "Combat/Project_JCombatQueryTypes.h"
+#include "Project_JCCResistanceComponent.h"
 #include "Components/ActorComponent.h"
 #include "Project_JCombatHitValidationComponent.generated.h"
 
@@ -86,10 +88,21 @@ public:
 	 * authoritative damage geometry.
 	 */
 	void RecordAuthoritativeTrace(const FVector& TraceStart, const FVector& TraceEnd);
+#if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
+	// Armed by the local cohort fixture only. Never participates in hit validation.
+	void ArmHitWindowTelemetry() { HitWindowTelemetryAt = 0.; }
+	void ObserveHitWindowForTelemetry()
+	{
+		if (HitWindowTelemetryAt == 0.) HitWindowTelemetryAt = FPlatformTime::Seconds();
+	}
+	double ReadHitWindowTelemetry() const { return HitWindowTelemetryAt; }
+#endif
 	static constexpr int32 MaxTracePacketSegments = 63;
 	static constexpr int32 MaxRetainedTraceSegments = 192;
 	/** GT-only current-world LOS query; no admission, damage, loading or state mutation. */
 	bool IsTargetObstructedFrom(const AActor* HitActor, const FVector& TraceOrigin) const;
+	/** GT-only LOS query against an explicit rewound target point for SSR consistency. */
+	bool IsTargetObstructedFromLocation(const AActor* HitActor, const FVector& TraceOrigin, const FVector& TargetLocation) const;
 	/** Atomically record the completed native query path. Zero rejects without partial publication. */
 	uint64 RecordAuthoritativeTracePacket(TConstArrayView<FProject_JAuthoritativeTraceSegment> Segments,
 		uint64 WindowToken, uint64 ExpectedSpatialRevision);
@@ -129,13 +142,31 @@ public:
 	/** Convenience overload matching active state. */
 	bool FindAuthoritativeTraceAtTime(double TargetTimestamp, FVector& OutStart, FVector& OutEnd) const;
 
+	/**
+	 * Generalized A09 server-authoritative combat query entry (AoE Circle/Cone/Rect/Donut,
+	 * Multi-Part Giant Boss weakpoint SSR, and LOS filtering).
+	 */
+	int32 ServerExecuteHitQuery(
+		const FProject_JHitQuerySpec& Spec,
+		const TArray<AActor*>& CandidateTargets,
+		TArray<AActor*>& OutHitActors,
+		TArray<float>& OutDamageMultipliers,
+		double QueryTimeSeconds = -1.0) const;
+
+	/** Routes CC duration and boss stagger through target's UProject_JCCResistanceComponent (BP04). */
+	float ApplyValidatedCC(AActor* Target, EProject_JCCCategory Category, float BaseDurationSeconds, float BossStaggerDamage = 0.0f) const;
+
 protected:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 
 private:
+#if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
+	double HitWindowTelemetryAt = -1.;
+#endif
 	void ProtectAttackPose();
 	void RestoreAttackPose();
+	bool CanUseDedicatedServerMontageOnlyPose(const class USkeletalMeshComponent* Mesh) const;
 	TWeakObjectPtr<class USkeletalMeshComponent> ProtectedMesh;
 	struct FMeleePoseSample
 	{
@@ -169,6 +200,7 @@ private:
 	TWeakObjectPtr<UClass> MeleePoseAnimClass;
 	TWeakObjectPtr<class UAnimMontage> MeleePoseMontage;
 	FDelegateHandle MeleePoseHandle;
+	bool bMeleePoseMontageOnly = false;
 	uint64 MeleePoseGeneration=0;
 	int32 MeleePoseInstanceID=INDEX_NONE;
 	void BeginMeleePoseCapture();
@@ -194,6 +226,7 @@ private:
 	bool bClientNodeClockBound = false;
 	double BoundClientNodeStartTimestamp = 0.0;
 	bool bNodeClockRetired = false;
+	uint32 RecentSequenceMask = 0;
 	void ProcessServerHitRequest(const FProject_JCombatHitRequest& Request);
 	EProject_JCombatHitValidationFailure ResolveSourceLookupTimestamp(
 		const FProject_JCombatHitRequest& Request, double& OutTimestamp) const;

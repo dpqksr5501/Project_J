@@ -121,6 +121,8 @@ public:
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void BeginPlay() override;
+	virtual void OnRegister() override;
+	virtual void OnUnregister() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 
@@ -246,6 +248,7 @@ public:
 	void UnregisterRetargetAnimInstance(class UProject_JRetargetAnimInstance* InAnimInstance);
 
 private:
+	void InvalidateOwnerWeaponPresentationCache() const;
 	friend class FProjectJWeaponMotionNumericAdmissionTest;
 	friend class FProjectJWeaponPresentationTeardownTest;
 	friend class FProjectJWeaponPresentationIdentityTest;

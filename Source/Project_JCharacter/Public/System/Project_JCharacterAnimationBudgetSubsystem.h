@@ -1,5 +1,6 @@
 #pragma once
 #include "CoreMinimal.h"
+#include "ConvexVolume.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "Project_JCharacterAnimationBudgetSubsystem.generated.h"
 
@@ -22,7 +23,12 @@ public:
 	int32 GetManagedCount() const;
 	int32 GetTrackedCount() const { return Meshes.Num(); }
 	void Refresh();
+	bool IsOutsideEveryLocalView(const FBoxSphereBounds& Bounds);
 private:
+	friend class FProjectJHiddenLeaderMontageTimingTest;
+	void RefreshMontageViews();
+	uint64 MontageViewsFrame = MAX_uint64;
+	TArray<FConvexVolume, TInlineAllocator<2>> MontageViews;
 	void OnPostActorTick(UWorld* World, ELevelTick TickType, float DeltaSeconds);
 	void RestoreAllocatorIfUnused();
 	void OnWorldCleanup(UWorld* World, bool bSessionEnded, bool bCleanupResources);

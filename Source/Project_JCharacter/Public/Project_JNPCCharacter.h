@@ -13,6 +13,9 @@ class UProject_JNPCActivationComponent;
 class UProject_JNPCActivationDefinition;
 class UProject_JCombatHitValidationComponent;
 class UProject_JCombatPresentationComponent;
+class UProject_JThreatComponent;
+class UProject_JNPCBrainDefinition;
+struct FProject_JConfirmedHealthGELoss;
 
 /**
  * Base character class for NPCs and Monsters in Project J.
@@ -46,6 +49,21 @@ public:
 	UFUNCTION(BlueprintPure, Category="NPC|Combat")
 	bool HasCombatActions() const;
 
+	UFUNCTION(BlueprintPure, Category="NPC|AI")
+	UProject_JThreatComponent* GetThreatComponent() const { return ThreatComponent; }
+
+	/** Binds authoritative GAS health-loss observation to ThreatComponent (auto-called when BrainDefinition is assigned). */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="NPC|AI")
+	void EnableThreatObservation();
+
+	/** Optional DataAsset configuring aggro sight, leash/evade, giant boss flag, and boss HP phase thresholds. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="NPC|AI")
+	TObjectPtr<UProject_JNPCBrainDefinition> BrainDefinition;
+
+	/** Optional quest event ID automatically credited to contributors when this NPC/Boss is defeated. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="NPC|Quest")
+	FName QuestKillEventId = NAME_None;
+
 	/** Returns policy data only; no AI is throttled until its owner opts in. */
 	float GetRecommendedAIUpdateInterval() const;
 	/** Read-only policy access for consumer-local distance tiers; does not change global significance. */
@@ -72,11 +90,16 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NPC|Optimization", meta = (ClampMin = "1.0", UIMin = "1.0"))
 	float NPCMinNetUpdateFrequency = 2.0f;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "NPC|AI")
+	TObjectPtr<UProject_JThreatComponent> ThreatComponent;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NPC|Optimization")
 	FProject_JNPCUpdateBudgetSettings NPCUpdateBudget;
 
 	void ApplyDefaultNPCOptimizationPolicy();
 private:
+	void HandleConfirmedHealthLoss(const FProject_JConfirmedHealthGELoss& Loss);
+	FDelegateHandle HealthLossHandle;
 	friend class FNPCSpatialImportanceTest;
 	bool HasValidNPCNetworkPolicy() const;
 	bool HasUnclaimedRuntimeActions() const;

@@ -5,6 +5,7 @@
 #include "Animation/Project_JAnimNode_HandContactGoals.h"
 #include "Animation/Project_JHandContact.h"
 #include "Animation/Project_JRetargetAnimInstance.h"
+#include "Animation/Project_JRetargetAnimInstanceProxy.h"
 #include "Animation/AnimInstanceProxy.h"
 #include "Animation/Skeleton.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -59,7 +60,7 @@ bool FProjectJSecondaryHandContactTest::RunTest(const FString&)
 	FMemMark Mark(FMemStack::Get());
 	FCompactPose Compact;
 	Compact.SetBoneContainer(&Bones); Compact.ResetToRefPose();
-	FAnimInstanceProxy Proxy(Instance);
+	auto& Proxy = Instance->GetProxyOnGameThread<FProject_JRetargetAnimInstanceProxy>();
 	FComponentSpacePoseContext Output(&Proxy);
 	Output.Pose.InitPose(MoveTemp(Compact));
 	const FCompactPoseBoneIndex Driver(3), Support(6);
@@ -126,21 +127,28 @@ bool FProjectJSecondaryHandContactTest::RunTest(const FString&)
 	Secondary.bUseBoneSpaceEffector = false;
 	Instance->SnapshotLeftInputPoseContact = {Names[3], WristInDriver};
 	FAnimationUpdateContext Update(&Proxy, 1.f / 60.f);
+	Instance->NativeThreadSafeUpdateAnimation(Update.GetDeltaTime());
 	Secondary.UpdateInternal(Update);
 	TestTrue(TEXT("Direct source contact selects the immutable input-pose snapshot"), Secondary.IsValidToEvaluate(Skeleton, Bones));
 	Corrections.Reset(); Secondary.EvaluateSkeletalControl_AnyThread(Output, Corrections);
 	TestTrue(TEXT("Direct source contact resolves against the current input marker"),
 		Corrections.Num() == 3 && Corrections.Last().Transform.Equals(WristInDriver * NewDriver, 0.001));
 	Instance->SnapshotLeftInputPoseContact = {Names[7], WristInDriver};
+	Instance->NativeThreadSafeUpdateAnimation(Update.GetDeltaTime());
 	Secondary.UpdateInternal(Update);
 	TestFalse(TEXT("Direct contact cannot depend on its own solved subtree"), Secondary.IsValidToEvaluate(Skeleton, Bones));
 	FProject_JAnimNode_HandContactGoals Goals;
 	Goals.PrimaryGoalBone.BoneName=Names[8];Goals.SecondaryGoalBone.BoneName=Names[9];
 	const FTransform DesiredDriver(FRotator(6,-9,18),FVector(42,3,8));
 	Instance->SnapshotRightInputPoseContact={Names[0],DesiredDriver};Instance->SnapshotLeftInputPoseContact={};
-	Instance->bRightContactTargetValid=Instance->bLeftContactTargetValid=true;
-	Instance->RightGripAlpha=.5f;Instance->LeftGripAlpha=1.f;
-	Instance->bUsePrimaryHandSpaceGrip=true;Instance->PrimaryHandBoneName=Names[3];Instance->LeftGripInPrimaryHandSpace=WristInDriver;
+	Instance->bHasValidRightSnapshot = Instance->bHasValidLeftSnapshot = true;
+	Instance->bContactRecoverySnapshot = true;
+	Instance->TargetRightAlphaSnapshot = 0.5f;
+	Instance->TargetLeftAlphaSnapshot = 1.0f;
+	Instance->bHasPrimaryHandSpaceGripSnapshot = true;
+	Instance->SnapshotPrimaryHandBoneName = Names[3];
+	Instance->SnapshotLeftGripInPrimaryHandSpace = WristInDriver;
+	Instance->NativeThreadSafeUpdateAnimation(Update.GetDeltaTime());
 	Goals.PreUpdate(Instance);Goals.UpdateInternal(Update);Goals.InitializeBoneReferences(Bones);
 	TestTrue(TEXT("Independent body-goal markers resolve on arbitrary bone names"),Goals.IsValidToEvaluate(Skeleton,Bones));
 	FTransform BlendedDriver;BlendedDriver.Blend(NewDriver,DesiredDriver,.5f);
@@ -148,7 +156,10 @@ bool FProjectJSecondaryHandContactTest::RunTest(const FString&)
 	TestTrue(TEXT("Body-goal publication applies contact alpha once before solving"),Corrections.Num()==2 && Corrections[0].Transform.Equals(BlendedDriver,.001));
 	TestTrue(TEXT("A hand-mounted weapon's support goal follows the published primary wrist"),Corrections.Num()==2 && Corrections[1].Transform.Equals(WristInDriver*BlendedDriver,.001));
 	const FTransform InputSupport = Output.Pose.GetComponentSpaceTransform(Support);
-	Instance->bUseAuthoredCarryRotation = true;
+	Instance->bAuthoredCarryRotationSnapshot = true;
+	Instance->TargetLeftAlphaSnapshot = 0.f;
+	Instance->LeftCarryAlphaSnapshot = 1.f;
+	Instance->NativeThreadSafeUpdateAnimation(Update.GetDeltaTime());
 	Goals.UpdateInternal(Update);
 	Corrections.Reset(); Goals.EvaluateSkeletalControl_AnyThread(Output, Corrections);
 	if (!TestEqual(TEXT("Authored carry publishes both goals"), Corrections.Num(), 2)) { return false; }
@@ -157,12 +168,14 @@ bool FProjectJSecondaryHandContactTest::RunTest(const FString&)
 	TestTrue(TEXT("Carry keeps a nonzero palm anchor on the same weapon contact point"),
 		SupportGoal.TransformPosition(Palm->RelativeLocation).Equals((GripInDriver * BlendedDriver).GetLocation(), .001));
 	Instance->bCarryOverlapsActionSnapshot = true;
-	Instance->LeftGripInPrimaryHandSpace.SetTranslation(FVector(100., 0., 0.));
+	Instance->SnapshotLeftGripInPrimaryHandSpace.SetTranslation(FVector(100., 0., 0.));
+	Instance->NativeThreadSafeUpdateAnimation(Update.GetDeltaTime());
 	Goals.UpdateInternal(Update);
 	Corrections.Reset(); Goals.EvaluateSkeletalControl_AnyThread(Output, Corrections);
 	TestTrue(TEXT("A departing hand is not pulled back by overlapping carry"),
 		Corrections.Num() == 2 && Corrections[1].Transform.Equals(InputSupport, .001));
 	Instance->bCarryOverlapsActionSnapshot = false;
+	Instance->NativeThreadSafeUpdateAnimation(Update.GetDeltaTime());
 	Goals.UpdateInternal(Update);
 	Corrections.Reset(); Goals.EvaluateSkeletalControl_AnyThread(Output, Corrections);
 	TestTrue(TEXT("Locomotion without a montage can still recover its authored grip"),

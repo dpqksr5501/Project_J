@@ -39,6 +39,13 @@ private:
 		int32 PointCount = 0;
 		bool bActive = false;
 		bool bValid = false;
+		uint64 SourceSignature = 0;
+		uint64 CachedSourceSignature = 0;
+		uint16 CachedBoneSerial = 0;
+		FName CachedThighName = NAME_None, CachedCalfName = NAME_None, CachedFootName = NAME_None;
+		int32 CachedPointCount = 0;
+		bool bBonesResolved = false;
+		bool bBonesValid = false;
 #if WITH_EDITOR
 		float DebugRequiredLift = -1.f, DebugAppliedLift = -1.f;
 #endif

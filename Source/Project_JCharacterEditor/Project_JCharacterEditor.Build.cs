@@ -51,7 +51,7 @@ public class Project_JCharacterEditor : ModuleRules
 			"EnhancedInput",
 			"Slate",
 			"SlateCore",
-			"UnrealEd",
+			"UnrealEd", "PhysicsUtilities",
 			"SkeletalMeshUtilitiesCommon", "TargetPlatform", "ContentBrowser"
 		});
 	}

@@ -50,7 +50,7 @@ bool FProjectJWeaponSkeletalVisualTest::RunTest(const FString&)
     if (Mesh)
     {
      TestEqual(TEXT("Draw/sheath selects data, no duplicate actor"),Mesh->GetSkeletalMeshAsset(),bDrawn ? Drawn : Sheathed);
-     TestFalse(TEXT("Reference pose part has no recurring tick"),Mesh->IsComponentTickEnabled());
+     TestEqual(TEXT("Reference pose part tick matches multi-LOD UpdateLODStatus requirement"),Mesh->IsComponentTickEnabled(),Mesh->GetSkeletalMeshAsset() && Mesh->GetSkeletalMeshAsset()->GetLODNum()>1);
      TestNull(TEXT("No character ABP on each weapon"),Mesh->GetAnimClass());
      TestEqual(TEXT("Cosmetic collision disabled"),Mesh->GetCollisionEnabled(),ECollisionEnabled::NoCollision);
     }

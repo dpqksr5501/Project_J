@@ -16,6 +16,7 @@ UProject_JGameplayAbility_Sprint::UProject_JGameplayAbility_Sprint()
 	SetAssetTags(AssetTags);
 
 	ActivationOwnedTags.AddTag(FProject_JGameplayTags::Get().State_Movement_Sprinting);
+	ActivationBlockedTags.AddTag(FProject_JGameplayTags::Get().State_Dead);
 }
 
 void UProject_JGameplayAbility_Sprint::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)

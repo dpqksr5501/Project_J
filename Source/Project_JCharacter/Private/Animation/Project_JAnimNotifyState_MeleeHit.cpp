@@ -1,5 +1,6 @@
 #include "Animation/Project_JAnimNotifyState_MeleeHit.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystemGlobals.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/World.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
@@ -199,6 +200,9 @@ void UProject_JAnimNotifyState_MeleeHit::NotifyTick(USkeletalMeshComponent* Mesh
 
 	if (OwnerActor->HasAuthority() && HitValidation)
 	{
+#if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
+		HitValidation->ObserveHitWindowForTelemetry();
+#endif
 		HitValidation->RecordAuthoritativeTrace(TraceStart, TraceEnd);
 	}
 
@@ -278,6 +282,9 @@ void UProject_JAnimNotifyState_MeleeHit::TickAuthoredPath(USkeletalMeshComponent
     { Retire(TEXT("Missing unconsumed physical interval")); return; }
     const float From=FMath::Max(State.ConsumedMontageTime,PreviousTime);
     if (To<=From) return;
+#if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
+    if (Mesh->GetOwner()->HasAuthority()) Validation->ObserveHitWindowForTelemetry();
+#endif
     TArray<FProject_JAuthoritativeTraceSegment> Segments;
     if (!State.AuthoredPath.BuildWorldSegments(PreviousTime,CurrentTime,From,To,PreviousRoot,CurrentRoot,MeshToRoot,Segments))
     { Retire(TEXT("Invalid or overflowing authored interval")); return; }
@@ -303,8 +310,9 @@ void UProject_JAnimNotifyState_MeleeHit::TickAuthoredPath(USkeletalMeshComponent
             Validation->GetSpatialRevision()==Spatial && Validation->GetActiveAttackDefinition()==BoundAttack.Get();
     };
     struct FContact { FHitResult Hit; int32 Segment=0; };
-    TArray<FContact> Contacts;
+    TArray<FContact, TInlineAllocator<8>> Contacts;
     TArray<FHitResult> Hits;
+    Hits.Reserve(16);
     TSet<TWeakObjectPtr<const AActor>> SeenActors;
     const FCollisionQueryParams Params=Project_J::Combat::MakeMeleeSweepParams(Owner);
     for (int32 I=0;I<Segments.Num();++I)
@@ -318,6 +326,13 @@ void UProject_JAnimNotifyState_MeleeHit::TickAuthoredPath(USkeletalMeshComponent
         {
             auto* Victim=Hit.GetActor();
             if (!IsValid(Victim) || SeenActors.Contains(Victim)) continue;
+            if (bAuthority)
+            {
+                const bool bEligible = Project_J::Combat::CanAffectCombatTarget(
+                    Owner, Victim, UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Victim));
+                if (!IsCurrent()) return;
+                if (!bEligible) continue;
+            }
             // Coalesce the first eligible contact, not a blocked earlier piece.
             // Otherwise splitting this same path over frames changes NPC hits.
             const bool bBlocked=Validation->IsTargetObstructedFrom(Victim,Segments[I].TraceStart);

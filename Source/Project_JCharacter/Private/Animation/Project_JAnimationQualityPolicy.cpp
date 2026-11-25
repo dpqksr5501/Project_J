@@ -6,6 +6,7 @@
 #include "Project_JPlayerCharacter.h"
 #include "Mount/Project_JMountComponent.h"
 #include "Mount/Project_JMountCharacter.h"
+#include "Mount/Project_JMountMoverComponent.h"
 
 namespace ProjectJ::Animation
 {
@@ -17,12 +18,23 @@ bool IsLocalPlayerAvatar(const APawn* Pawn)
 		const auto* Player=Cast<APlayerController>(Controller);
 		return IsValid(Player) && !Player->IsActorBeingDestroyed() && Player->IsLocalController();
 	}
-	const auto* Rider=Pawn->FindComponentByClass<UProject_JMountComponent>();
-	const auto* Mount=Rider?Rider->GetMountedMount():nullptr;
-	if (!Mount) Mount=Cast<AProject_JMountCharacter>(Pawn->GetAttachParentActor());
-	if (!IsValid(Mount) || Mount->IsActorBeingDestroyed() || (Mount->GetRider() && Mount->GetRider()!=Pawn)) return false;
-	const auto* Player=Cast<APlayerController>(Mount->GetController());
-	return IsValid(Player) && !Player->IsActorBeingDestroyed() && Player->IsLocalController();
+	// Fast O(1) getter on AProject_JPlayerCharacter instead of scanning all components every frame.
+	const auto* PlayerChar = Cast<AProject_JPlayerCharacter>(Pawn);
+	const auto* Rider = PlayerChar ? PlayerChar->GetMountComponent() : Pawn->FindComponentByClass<UProject_JMountComponent>();
+	const auto* Mount = Rider ? Rider->GetMountedMount() : nullptr;
+	if (!Mount) Mount = Cast<AProject_JMountCharacter>(Pawn->GetAttachParentActor());
+	if (IsValid(Mount) && !Mount->IsActorBeingDestroyed() && (!Mount->GetRider() || Mount->GetRider() == Pawn))
+	{
+		const auto* Player = Cast<APlayerController>(Mount->GetController());
+		return IsValid(Player) && !Player->IsActorBeingDestroyed() && Player->IsLocalController();
+	}
+	if (const auto* MoverMount = Cast<AProject_JMountMoverPawn>(Pawn->GetAttachParentActor());
+		IsValid(MoverMount) && !MoverMount->IsActorBeingDestroyed() && MoverMount->GetRider() == Pawn)
+	{
+		const auto* Player = Cast<APlayerController>(MoverMount->GetController());
+		return IsValid(Player) && !Player->IsActorBeingDestroyed() && Player->IsLocalController();
+	}
+	return false;
 }
 
 bool IsClothExecutionProtected(const APawn* Pawn)
@@ -43,7 +55,8 @@ bool IsClothExecutionProtected(const APawn* Pawn)
 			(IsValid(ObservedInstigator) && ObservedInstigator->IsLocallyViewed())) return true;
 	}
 	if (Current) return true; // Unresolved/malformed deep attachment chain.
-	const auto* RiderComponent = Pawn->FindComponentByClass<UProject_JMountComponent>();
+	const auto* PlayerChar = Cast<AProject_JPlayerCharacter>(Pawn);
+	const auto* RiderComponent = PlayerChar ? PlayerChar->GetMountComponent() : Pawn->FindComponentByClass<UProject_JMountComponent>();
 	const auto* ObservedMount = RiderComponent ? RiderComponent->GetMountedMount() : nullptr;
 	if (!ObservedMount) ObservedMount = Cast<AProject_JMountCharacter>(Pawn->GetAttachParentActor());
 	if (ObservedMount)
@@ -59,6 +72,20 @@ bool IsClothExecutionProtected(const APawn* Pawn)
 		return Pawn->GetNetMode() != NM_Client || Pawn->GetLocalRole() != ROLE_SimulatedProxy ||
 			ObservedMount->GetLocalRole() != ROLE_SimulatedProxy || !IsValid(MountState) || MountState->IsActorBeingDestroyed() ||
 			MountState->GetWorld()!=Pawn->GetWorld() || MountState->GetPawn() != ObservedMount;
+	}
+	if (const auto* ObservedMoverMount = Cast<AProject_JMountMoverPawn>(Pawn->GetAttachParentActor()))
+	{
+		if (!IsValid(ObservedMoverMount) || ObservedMoverMount->IsActorBeingDestroyed() || ObservedMoverMount->GetRider() != Pawn ||
+			ObservedMoverMount->GetWorld() != Pawn->GetWorld())
+			return true;
+		const auto* MountController = ObservedMoverMount->GetController();
+		if (MountController) return !IsValid(MountController) || MountController->IsActorBeingDestroyed() ||
+			MountController->GetPawn() != ObservedMoverMount;
+		// Foreign controllers are intentionally absent on simulated clients.
+		const auto* MountState = ObservedMoverMount->GetPlayerState();
+		return Pawn->GetNetMode() != NM_Client || Pawn->GetLocalRole() != ROLE_SimulatedProxy ||
+			ObservedMoverMount->GetLocalRole() != ROLE_SimulatedProxy || !IsValid(MountState) || MountState->IsActorBeingDestroyed() ||
+			MountState->GetWorld() != Pawn->GetWorld() || MountState->GetPawn() != ObservedMoverMount;
 	}
 	const auto* Controller=Pawn->GetController();
 	if(Controller && (!IsValid(Controller) || Controller->IsActorBeingDestroyed() ||

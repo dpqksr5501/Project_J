@@ -62,6 +62,11 @@ void UProject_JGameplayAbility_Dash::ActivateAbility(FGameplayAbilitySpecHandle 
 	const float PlayRate = OriginalDuration / NewDuration;
 	auto* Task = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 		this, NAME_None, Montage, PlayRate, NAME_None, true, 1.f, 0.f, true);
+	if (!Task)
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
 	Task->OnCompleted.AddDynamic(this, &ThisClass::OnCompleted);
 	Task->OnInterrupted.AddDynamic(this, &ThisClass::OnInterrupted);
 	Task->OnCancelled.AddDynamic(this, &ThisClass::OnInterrupted);

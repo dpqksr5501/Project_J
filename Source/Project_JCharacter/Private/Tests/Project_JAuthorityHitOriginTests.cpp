@@ -5,6 +5,7 @@
 #include "Combat/Project_JAttackDefinition.h"
 #include "Project_JNPCCharacter.h"
 #include "AbilitySystemComponent.h"
+#include "AIController.h"
 #include "GameplayEffect.h"
 #include "Engine/World.h"
 
@@ -17,9 +18,17 @@ bool FProjectJAuthorityHitOriginTest::RunTest(const FString&)
 	FActorSpawnParameters Params; Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	auto* Attacker = World->SpawnActor<AProject_JNPCCharacter>(Params);
 	auto* Target = World->SpawnActor<AProject_JNPCCharacter>(Params);
-	Attacker->SetActorEnableCollision(false); Target->SetActorEnableCollision(false);
+	auto* Ally = World->SpawnActor<AProject_JNPCCharacter>(Params);
+	Attacker->SetActorEnableCollision(false); Target->SetActorEnableCollision(false); Ally->SetActorEnableCollision(false);
+	auto* AttackerController = World->SpawnActor<AAIController>(Params);
+	auto* AllyController = World->SpawnActor<AAIController>(Params);
+	AttackerController->SetGenericTeamId(FGenericTeamId(13));
+	AllyController->SetGenericTeamId(FGenericTeamId(13));
+	AttackerController->Possess(Attacker);
+	AllyController->Possess(Ally);
 	Attacker->GetAbilitySystemComponent()->InitAbilityActorInfo(Attacker, Attacker);
 	Target->GetAbilitySystemComponent()->InitAbilityActorInfo(Target, Target);
+	Ally->GetAbilitySystemComponent()->InitAbilityActorInfo(Ally, Ally);
 	auto* Hit = NewObject<UProject_JCombatHitValidationComponent>(Attacker); Hit->RegisterComponent();
 	auto* Definition = NewObject<UProject_JAttackDefinition>(Hit);
 	Definition->AttackTag = AuthorityOriginAttack;
@@ -31,13 +40,15 @@ bool FProjectJAuthorityHitOriginTest::RunTest(const FString&)
 	for (const FVector Origin : { FVector::ZeroVector, FVector(10000, -20000, 1000), FVector(-10000, 20000, -1000) })
 	{
 		Attacker->SetActorLocation(Origin); Target->SetActorLocation(Origin + FVector(100, 0, 0));
+		Ally->SetActorLocation(Origin + FVector(75, 0, 0));
 		Hit->BeginAttackNode(AuthorityOriginAttack, Definition); Hit->SetHitWindowOpen(true);
 		TestFalse(TEXT("No recorded authority trace rejects"), Hit->ProcessAuthorityHit(Target));
 		Hit->RecordAuthoritativeTrace(Origin + FVector(1000, 0, 0), Origin + FVector(1100, 0, 0));
 		TestFalse(TEXT("A recorded trace too far from attacker still rejects"), Hit->ProcessAuthorityHit(Target));
 		Hit->RecordAuthoritativeTrace(Origin + FVector(20, 0, 0), Origin + FVector(100, 0, 0));
 		TestFalse(TEXT("Self hit rejects"), Hit->ProcessAuthorityHit(Attacker));
-		TestTrue(TEXT("Nearby authority hit works at any world origin"), Hit->ProcessAuthorityHit(Target));
+		TestFalse(TEXT("A nearby ally is excluded from authority damage"), Hit->ProcessAuthorityHit(Ally, 1));
+		TestTrue(TEXT("An ally cannot exhaust the one-target allowance at any world origin"), Hit->ProcessAuthorityHit(Target, 1));
 		TestFalse(TEXT("Duplicate authority hit rejects"), Hit->ProcessAuthorityHit(Target));
 		Hit->EndAttack();
 		TestFalse(TEXT("Late authority hit after end rejects"), Hit->ProcessAuthorityHit(Target));

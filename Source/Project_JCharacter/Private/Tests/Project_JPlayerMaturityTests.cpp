@@ -109,8 +109,13 @@ bool FProjectJEquipmentGrantOwnershipTest::RunTest(const FString&)
 	Item->StatApplicationPolicy = EProject_JEquipmentStatApplicationPolicy::GameplayEffectsThenStatModifiers;
 	Item->EquipmentEffects.Add(UGameplayEffect::StaticClass());
 	Rider->CurrentASC = Old; Runtime->ApplyEquipmentGameplay(*Rider, *Item, Ledger);
-	TestEqual(TEXT("Invalid instant effect yields only one removable native stat fallback on its owning ASC"), Old->GetActiveEffects(FGameplayEffectQuery()).Num(), 1);
-	TestEqual(TEXT("Invalid effect uses exactly one stat fallback"), OldStats->GetMaxHealth(), 150.0f);
+	TestEqual(TEXT("An authored instant effect is rejected without an active lease"), Old->GetActiveEffects(FGameplayEffectQuery()).Num(), 0);
+	TestEqual(TEXT("Rejected instant equipment cannot change the stat"), OldStats->GetMaxHealth(), 100.0f);
+	Runtime->RemoveEquipmentGameplay(Ledger);
+	Item->EquipmentEffects.Reset();
+	Runtime->ApplyEquipmentGameplay(*Rider, *Item, Ledger);
+	TestEqual(TEXT("An empty effect list uses one removable stat lease"), Old->GetActiveEffects(FGameplayEffectQuery()).Num(), 1);
+	TestEqual(TEXT("The legitimate stat fallback changes the owning ASC"), OldStats->GetMaxHealth(), 150.0f);
 	Runtime->RemoveEquipmentGameplay(Ledger);
 	TestEqual(TEXT("Fallback remains reversible"), OldStats->GetMaxHealth(), 100.0f);
 	TestEqual(TEXT("Cleanup retires the ASC-owned fallback effect"), Old->GetActiveEffects(FGameplayEffectQuery()).Num(), 0);

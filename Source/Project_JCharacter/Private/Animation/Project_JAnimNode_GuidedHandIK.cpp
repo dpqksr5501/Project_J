@@ -3,6 +3,7 @@
 #include "Animation/Project_JGuidedHandIKTrace.h"
 #include "Animation/AnimInstanceProxy.h"
 #include "Animation/Project_JRetargetAnimInstance.h"
+#include "Animation/Project_JRetargetAnimInstanceProxy.h"
 #include "Animation/Project_JHandContact.h"
 #include "Components/SkeletalMeshComponent.h"
 
@@ -29,8 +30,11 @@ void FProject_JAnimNode_GuidedHandIK::UpdateInternal(const FAnimationUpdateConte
 	InputPoseContact = {};
 	if (ArmDefinitionSource != EProject_JGuidedArmDefinitionSource::NodeSettings && !bUseBoneSpaceEffector)
 	{
-		if (const auto* Body = Cast<UProject_JRetargetAnimInstance>(Context.AnimInstanceProxy->GetAnimInstanceObject()))
-			InputPoseContact = Body->GetInputPoseContact(ArmDefinitionSource == EProject_JGuidedArmDefinitionSource::PrimaryBodyProfile);
+		if (ContactProxy && Context.AnimInstanceProxy == ContactProxy)
+		{
+			const int32 Side = ArmDefinitionSource == EProject_JGuidedArmDefinitionSource::PrimaryBodyProfile ? 0 : 1;
+			InputPoseContact = ContactProxy->HandContacts.PoseContacts[Side];
+		}
 	}
 	const FGraphTraversalCounter& Counter = Context.AnimInstanceProxy->GetUpdateCounter();
 	if (!LastActiveUpdate.WasSynchronizedCounter(Counter) || !LastActiveUpdate.WasSynchronizedLastFrame(Counter))
@@ -47,6 +51,7 @@ void FProject_JAnimNode_GuidedHandIK::UpdateInternal(const FAnimationUpdateConte
 
 void FProject_JAnimNode_GuidedHandIK::PreUpdate(const UAnimInstance* InAnimInstance)
 {
+	ContactProxy = nullptr;
 	bProfileArmValid = false;
 	if (ArmDefinitionSource != EProject_JGuidedArmDefinitionSource::NodeSettings)
 	{
@@ -54,6 +59,7 @@ void FProject_JAnimNode_GuidedHandIK::PreUpdate(const UAnimInstance* InAnimInsta
 		const USkeletalMeshComponent* Mesh = InAnimInstance ? InAnimInstance->GetSkelMeshComponent() : nullptr;
 		if (Retarget && Mesh)
 		{
+			ContactProxy = &Retarget->GetRetargetProxyOnGameThread();
 			const FProject_JHandGripCalibration Calibration = Retarget->GetHandGripCalibration();
 			const bool bPrimary = ArmDefinitionSource == EProject_JGuidedArmDefinitionSource::PrimaryBodyProfile;
 			ProfileArmSnapshot = bPrimary ? Calibration.PrimaryArm : Calibration.SecondaryArm;

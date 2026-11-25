@@ -7,6 +7,10 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/Pawn.h"
 #include "Engine/World.h"
+#include "Engine/Engine.h"
+#include "Engine/GameViewportClient.h"
+#include "Engine/LocalPlayer.h"
+#include "SceneView.h"
 #include "HAL/IConsoleManager.h"
 #include "IAnimationBudgetAllocator.h"
 #include "UObject/UObjectIterator.h"
@@ -20,7 +24,8 @@ namespace
 TAutoConsoleVariable<int32> CVarCharacterABA(TEXT("ProjectJ.AnimationBudget.Enabled"), 1,
 	TEXT("Use ABA for eligible non-local, non-combat Character meshes. Requires a.Budget.Enabled=1. 0 restores normal mesh ticking."));
 TAutoConsoleVariable<int32> CVarFullRemoteCloths(TEXT("ProjectJ.ClothBudget.MaxFullRemoteParts"),4,
-	TEXT("Maximum nearby remote cloth components granted authored simulation quality. Local players do not consume this cosmetic quota."));
+	TEXT("Maximum nearby remote cloth components granted authored simulation quality. Local players do not consume this cosmetic quota."),
+	ECVF_Scalability);
 FAutoConsoleCommandWithWorld StatusCommand(TEXT("ProjectJ.AnimationBudget.Status"), TEXT("Report current world's Character ABA ownership."),
 	FConsoleCommandWithWorldDelegate::CreateLambda([](UWorld* World)
 	{
@@ -86,6 +91,40 @@ void UProject_JCharacterAnimationBudgetSubsystem::OnPostActorTick(UWorld* World,
 		FMath::IsFinite(DeltaSeconds) && DeltaSeconds>0 && UProject_JModularMeshComponent::IsClothExecutionObservationEnabled());
 	Refresh();
 }
+void UProject_JCharacterAnimationBudgetSubsystem::RefreshMontageViews()
+{
+	if (MontageViewsFrame == GFrameCounter) return;
+	MontageViewsFrame = GFrameCounter;
+	MontageViews.Reset();
+	for (auto It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		const auto* Controller = It->Get();
+		const auto* Local = Controller ? Controller->GetLocalPlayer() : nullptr;
+		if (!Local) continue;
+		auto* Viewport = Local->ViewportClient ? Local->ViewportClient->Viewport : nullptr;
+		FSceneViewProjectionData Projection;
+		if (!Viewport || GEngine->IsStereoscopic3D(Viewport) || !Local->GetProjectionData(Viewport, Projection))
+		{
+			MontageViews.Reset();
+			return;
+		}
+		FConvexVolume& Frustum = MontageViews.AddDefaulted_GetRef();
+		GetViewFrustumBounds(Frustum, Projection.ComputeViewProjectionMatrix(), true);
+	}
+}
+
+bool UProject_JCharacterAnimationBudgetSubsystem::IsOutsideEveryLocalView(const FBoxSphereBounds& Bounds)
+{
+	RefreshMontageViews();
+	// Extra room for animated extents, cloth and projection modifications around
+	// the ordinary view. Unknown or non-player rendering has no positive proof.
+	return !MontageViews.IsEmpty() && !Bounds.Origin.ContainsNaN() && !Bounds.BoxExtent.ContainsNaN()
+		&& !MontageViews.ContainsByPredicate([&](const FConvexVolume& Frustum)
+		{
+			return Frustum.IntersectBox(Bounds.Origin, Bounds.BoxExtent + FVector(100.));
+		});
+}
+
 void UProject_JCharacterAnimationBudgetSubsystem::Refresh()
 {
 	check(IsInGameThread());
@@ -122,14 +161,15 @@ void UProject_JCharacterAnimationBudgetSubsystem::Refresh()
 	};
 	TArray<FExecutionCandidate,TInlineAllocator<16>> ExecutionCandidates;
 	const int64 ExecutionCap=UProject_JAnimationUpdateCoordinatorComponent::GetClothExecutionVertexCap();
-	const bool bExecutionEnabled=ExecutionCap>0 && GetWorld() && !bEnding &&
+	const bool bParkOptional=UProject_JAnimationUpdateCoordinatorComponent::IsOptionalClothParkingEnabled();
+	const bool bExecutionEnabled=(bParkOptional || ExecutionCap>0) && GetWorld() && !bEnding &&
 		!GetWorld()->bIsTearingDown && GetWorld()->GetNetMode()!=NM_DedicatedServer;
 	for (int32 Index = Meshes.Num() - 1; Index >= 0; --Index)
 	{
 		auto* Mesh = Meshes[Index].Get();
 		if (!Mesh) { Meshes.RemoveAtSwap(Index); continue; }
 		auto* Coordinator=(bObserveNativeClothFrame || !Views.IsEmpty()) && IsValid(Mesh->GetOwner())
-			? Mesh->GetOwner()->FindComponentByClass<UProject_JAnimationUpdateCoordinatorComponent>() : nullptr;
+			? Mesh->GetCachedAnimationUpdateCoordinator() : nullptr;
 		if(bObserveNativeClothFrame && Coordinator) Coordinator->ObserveClothNativeFrameCompletions();
 		const bool bPreviouslyFull=Mesh->ObservedFullClothQuality.Get(false);
 		Mesh->ObservedFullClothQuality.Reset();
@@ -202,7 +242,7 @@ void UProject_JCharacterAnimationBudgetSubsystem::Refresh()
 	{
 		auto* Coordinator=Candidate.Coordinator.Get(); auto* Source=Candidate.Source.Get();
 		if(!Coordinator || !Source) continue;
-		Candidate.bProtected|=Source->HasFullClothQualityGrant() ||
+		Candidate.bProtected|=(!bParkOptional && Source->HasFullClothQualityGrant()) ||
 			ProjectJ::Animation::IsClothExecutionProtected(Cast<APawn>(Source->GetOwner()));
 		Candidate.Demand=Coordinator->PrepareClothExecutionDemand(bExecutionEnabled && Source->bAllowProjectBudget,Candidate.bProtected);
 		ProtectedCost=SumCost(ProtectedCost,Candidate.Demand.Protected);
@@ -218,7 +258,8 @@ void UProject_JCharacterAnimationBudgetSubsystem::Refresh()
 	{
 		auto* Coordinator=Candidate.Coordinator.Get();
 		if(!Coordinator) continue;
-		Candidate.bDesired=Candidate.bProtected || (Candidate.Demand.Eligible>0 && Candidate.Demand.Eligible<=DesiredRemaining);
+		Candidate.bDesired=Candidate.bProtected ||
+			(!bParkOptional && Candidate.Demand.Eligible>0 && Candidate.Demand.Eligible<=DesiredRemaining);
 		if(!Candidate.bProtected && Candidate.bDesired) DesiredRemaining-=Candidate.Demand.Eligible;
 		const bool bMayResume=Candidate.bProtected || (Candidate.bDesired && UnknownParts==0 && Candidate.Demand.Resume<=ResumeRemaining);
 		if(!Candidate.bProtected && bMayResume)
@@ -230,7 +271,7 @@ void UProject_JCharacterAnimationBudgetSubsystem::Refresh()
 	}
 	TRACE_COUNTER_SET(ClothExecutionReserved,bExecutionEnabled?ReservedCost:0);
 	TRACE_COUNTER_SET(ClothExecutionProtected,bExecutionEnabled?ProtectedCost:0);
-	TRACE_COUNTER_SET(ClothExecutionDebt,bExecutionEnabled?FMath::Max(int64(0),ReservedCost-ExecutionCap):0);
+	TRACE_COUNTER_SET(ClothExecutionDebt,bExecutionEnabled && !bParkOptional ? FMath::Max(int64(0),ReservedCost-ExecutionCap) : 0);
 	TRACE_COUNTER_SET(ClothExecutionUnknown,bExecutionEnabled?UnknownParts:0);
 	// Counters describe the last processed world; PIE worlds are distinguished by CPU scope context.
 	TRACE_COUNTER_SET(CharacterABAManaged, Managed);

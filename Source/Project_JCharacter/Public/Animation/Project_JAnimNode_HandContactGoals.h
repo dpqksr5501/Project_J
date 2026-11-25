@@ -5,6 +5,8 @@
 #include "Animation/Project_JHandGripProfile.h"
 #include "Project_JAnimNode_HandContactGoals.generated.h"
 
+struct FProject_JRetargetAnimInstanceProxy;
+
 /** Publish calibrated, alpha-blended wrist goals from this input pose. Does not solve or move the body. */
 USTRUCT(BlueprintInternalUseOnly)
 struct PROJECT_JCHARACTER_API FProject_JAnimNode_HandContactGoals : public FAnimNode_SkeletalControlBase
@@ -23,6 +25,7 @@ public:
 	virtual bool IsValidToEvaluate(const USkeleton*, const FBoneContainer& Bones) override;
 	virtual void EvaluateSkeletalControl_AnyThread(FComponentSpacePoseContext& Output, TArray<FBoneTransform>& Transforms) override;
 private:
+	const FProject_JRetargetAnimInstanceProxy* ContactProxy = nullptr;
 	struct FTarget
 	{
 		FProject_JInputPoseContact Relative;

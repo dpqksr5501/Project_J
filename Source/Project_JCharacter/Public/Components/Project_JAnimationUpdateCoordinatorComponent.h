@@ -40,6 +40,8 @@ class PROJECT_JCHARACTER_API UProject_JAnimationUpdateCoordinatorComponent : pub
 public:
 	UProject_JAnimationUpdateCoordinatorComponent();
 	virtual void BeginPlay() override;
+	virtual void OnRegister() override;
+	virtual void OnUnregister() override;
 	virtual void Deactivate() override;
 	virtual void SetComponentTickEnabled(bool bEnabled) override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -49,6 +51,7 @@ public:
 
 	/** Extends the current urgent update window without changing replication. */
 	void RequestUrgentRemoteAnimationUpdate(float DurationSeconds);
+	bool HasUrgentRemoteAnimationUpdate() const { return bUrgentAnimationUpdateActive; }
 	/** Per-character rollback; local and gameplay-critical characters remain full rate. */
 	UPROPERTY(EditAnywhere, Category="Animation|Visual Budget") bool bAllowVisualBudget = true;
 	int32 GetManagedVisualCount() const { return Visuals.Num(); }
@@ -63,8 +66,10 @@ public:
 	/** Called only by this world's natural post-actor-tick observer. Never waits or changes cloth state. */
 	void ObserveClothNativeFrameCompletions();
 	int32 GetQualifiedClothNativeFrameCount(uint64 Frame) const;
-	/** 0 disables execution actuation; independent of the existing quality policy. */
+	/** Geometry cap for the budget policy. Zero disables that policy. */
 	static int64 GetClothExecutionVertexCap();
+	static bool IsOptionalClothParkingEnabled();
+	static bool IsClothExecutionPolicyEnabled();
 	bool IsClothExecutionSource(const USkeletalMeshComponent* Source) const;
 	/** Read only; measurement must never call PrepareClothExecutionDemand. */
 	FProjectJClothExecutionStats GetClothExecutionStats() const;
@@ -74,6 +79,7 @@ public:
 	void ReleaseClothExecution(class UProject_JModularMeshComponent* Part = nullptr);
 
 private:
+	void InvalidateOwnerMeshCoordinatorCaches() const;
 	friend class FProjectJUrgentAnimationWindowTest;
 	friend class FProjectJClothAllocationTest;
 	friend class FProjectJClothLifecycleTest;
@@ -107,7 +113,7 @@ private:
 		bool bExecutionReleaseRequested = false;
 		bool bExecutionDesired = true, bExecutionMayResume = false, bExecutionProtected = true;
 		bool bSavedSuspended = false, bLastSuspended = false;
-		bool CanOwnExecution() const;
+		bool CanOwnCurrentExecution() const;
 		bool HasOwnedExecutionValues() const;
 		void ReleaseExecution(bool bDecline = false);
 		bool bReduced = false, bAppliedDiscrete = false, bAddedCoordinatorPrerequisite = false;

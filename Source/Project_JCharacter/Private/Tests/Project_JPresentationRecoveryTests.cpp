@@ -18,6 +18,8 @@
 #include "System/Project_JPresentationBudgetSubsystem.h"
 #include "GameplayTagsManager.h"
 #include "HAL/PlatformTime.h"
+#include "HAL/IConsoleManager.h"
+#include "Misc/ScopeExit.h"
 #include "UObject/GarbageCollection.h"
 #include "UObject/StrongObjectPtr.h"
 #include "NiagaraSystem.h"
@@ -492,7 +494,26 @@ bool FProjectJGameplayWarningTest::RunTest(const FString&)
     S.Cue->BasePresentationSet = S.Set;
     const auto* LateCue = S.Cue->ResolveCue(TestCueTag);
     if (!TestNotNull(TEXT("Late profile resolves the real cosmetic cue"), LateCue)) return false;
-    TestTrue(TEXT("Actual optional decoration uses the remote spawn-budget branch"), S.Cue->ShouldBudgetRemoteSpawn(*LateCue));
+    TestFalse(TEXT("An active warning skips the remote queue on both warm spawn and cold completion"), S.Cue->ShouldBudgetRemoteSpawn(*LateCue));
+    auto OrdinaryCue = *LateCue;
+    OrdinaryCue.CueTag = TestAttackTag;
+    TestTrue(TEXT("An ordinary remote cue still uses the spawn-budget branch"), S.Cue->ShouldBudgetRemoteSpawn(OrdinaryCue));
+    auto* Opacity = IConsoleManager::Get().FindConsoleVariable(TEXT("ProjectJ.Combat.Presentation.OtherPlayerOpacityScale"));
+    auto* Player = S.World->SpawnActor<AProject_JSpellbladeCharacter>(FVector(2000, 0, 100), FRotator::ZeroRotator);
+    if (!TestNotNull(TEXT("Opacity setting"), Opacity) || !TestNotNull(TEXT("Unpossessed remote presentation fixture"), Player)) return false;
+    auto* PlayerPresentation = NewObject<UProject_JCombatPresentationComponent>(Player);
+    Player->AddInstanceComponent(PlayerPresentation);
+    PlayerPresentation->RegisterComponent();
+    const float PreviousOpacity = Opacity->GetFloat();
+    const EConsoleVariableFlags OpacityPriority = static_cast<EConsoleVariableFlags>(Opacity->GetFlags() & ECVF_SetByMask);
+    Opacity->Set(0.25f, OpacityPriority);
+    ON_SCOPE_EXIT { Opacity->Set(PreviousOpacity, OpacityPriority); };
+    TestEqual(TEXT("Ordinary remote player Niagara receives the configured multiplier"), PlayerPresentation->GetCueOpacityMultiplier(TestCueTag), 0.25f);
+    PlayerPresentation->BeginAttackPresentation(TestAttackTag);
+    const uint64 PlayerWarning = PlayerPresentation->BeginCueLease(TestCueTag, true);
+    TestTrue(TEXT("The active player warning is published"), PlayerWarning && PlayerPresentation->ActiveWarningCues.HasTagExact(TestCueTag));
+    TestEqual(TEXT("Active warnings retain their authored opacity"), PlayerPresentation->GetCueOpacityMultiplier(TestCueTag), 1.f);
+    PlayerPresentation->EndCueLease(PlayerWarning);
     S.Cue->RefreshPresentation();
     TestEqual(TEXT("Late profile/style refresh preserves the exact producer-owned core"), S.Cue->WarningMarker.Get(), Marker);
     const uint64 Cosmetic = S.Cue->BeginCueLease(TestCueTag);

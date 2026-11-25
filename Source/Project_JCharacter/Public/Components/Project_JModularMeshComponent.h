@@ -23,6 +23,7 @@ public:
 	UFUNCTION(BlueprintPure, Category="ModularMesh|Cloth")
 	bool IsClothExecutionBudgetAllowed() const { return bAllowClothExecutionBudget; }
 	virtual void SetSkeletalMesh(USkeletalMesh* NewMesh, bool bReinitPose = true) override;
+	void RefreshRemotePresentationMesh();
     virtual FBoxSphereBounds CalcBounds(const FTransform& LocalToWorld) const override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
@@ -32,6 +33,13 @@ public:
 	void ObserveClothNativeFrameCompletion();
 	/** Same-incarnation native queued-tick completion proof, not a solver-step count. */
 	bool HasQualifiedClothNativeFrame(uint64 InFrame) const;
+
+#if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
+	/** Isolated fixture only. Leaves the pose and native completion tick at their original cadence. */
+	bool SetClothTickRateForTest(int32 Hertz);
+	double GetLastClothIntervalTickForTest() const;
+	bool UsesNativeClothCadenceForTest() const;
+#endif
 
 	/** Authored parts may follow their skeletal attach parent without a BP construction chain.
 	 * Leave disabled for socket attachments. AttachAndSetLeader enables the same lifecycle for runtime equipment.
@@ -65,6 +73,16 @@ protected:
 	virtual void OnUnregister() override;
 	virtual void OnAttachmentChanged() override;
 private:
+	/** Optional cosmetic variant for another player's view. Keep the same skeleton and pose setup. */
+	UPROPERTY(EditDefaultsOnly, Category="ModularMesh", meta=(AllowPrivateAccess="true"))
+	TSoftObjectPtr<USkeletalMesh> RemotePresentationMesh;
+	UPROPERTY(Transient)
+	TObjectPtr<USkeletalMesh> AuthoredPresentationMesh;
+	uint64 RemotePresentationLoad = 0;
+	bool WantsRemotePresentationMesh() const;
+	void ReleaseRemotePresentationLoad();
+	void ApplyPresentationMesh(USkeletalMesh* NewMesh, bool bReinitPose);
+
 	/** Separate permission from solver-quality tuning. No runtime raw property writer. */
 	UPROPERTY(EditDefaultsOnly, BlueprintGetter=IsClothExecutionBudgetAllowed, BlueprintSetter=SetClothExecutionBudgetAllowed,
 		Category="ModularMesh|Cloth", meta=(AllowPrivateAccess="true"))

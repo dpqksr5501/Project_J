@@ -7,8 +7,6 @@ namespace
 // Covers two opposing 100 cm steps plus the supported capsule diameters.
 constexpr double CrowdCellSize = 400;
 constexpr int32 MaxCellOccupants = 32;
-struct FCrowdSample { FVector Position; uint64 Id; float Radius; float HalfHeight; };
-struct FCrowdCell { TArray<int32, TInlineAllocator<8>> Indices; bool bOverflow = false; };
 FIntPoint CrowdCell(const FVector& P)
 { return FIntPoint(FMath::FloorToInt(P.X / CrowdCellSize), FMath::FloorToInt(P.Y / CrowdCellSize)); }
 }
@@ -28,26 +26,47 @@ void UProject_JMassMovementProcessor::Execute(FMassEntityManager& EntityManager,
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_MassMovement_DispatchAndJoin);
 	// Complete the read snapshot before any chunk mutates positions. The const grid is shared only until join.
-	TArray<FCrowdSample> Samples;
-	TMap<FIntPoint, FCrowdCell> Grid;
+	ReusableSamples.Reset();
+	ReusableGrid.Reset();
+	int32 ActiveCellCount = 0;
 	if (bUseCrowdSpacing)
 	{
+		if (ReusableSamples.Max() < 256) { ReusableSamples.Reserve(256); }
+		if (ReusableCells.Max() < 128) { ReusableCells.Reserve(128); }
+		if (ReusableGrid.Max() < 128) { ReusableGrid.Reserve(128); }
 		TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_MassCrowd_Snapshot);
-		Query.ForEachEntityChunk(Context, [&Samples, &Grid](FMassExecutionContext& Chunk)
+		Query.ForEachEntityChunk(Context, [this, &ActiveCellCount](FMassExecutionContext& Chunk)
 		{
 			for (const auto& Agent : Chunk.GetMutableFragmentView<FProjectJMassMovementFragment>())
 			{
 				if (Agent.Position.ContainsNaN()) { continue; }
-				auto& Cell = Grid.FindOrAdd(CrowdCell(Agent.Position));
+				const FIntPoint Key = CrowdCell(Agent.Position);
+				int32* CellIndexPtr = ReusableGrid.Find(Key);
+				if (!CellIndexPtr)
+				{
+					const int32 NewIdx = ActiveCellCount++;
+					if (NewIdx >= ReusableCells.Num())
+					{
+						ReusableCells.AddDefaulted();
+					}
+					else
+					{
+						ReusableCells[NewIdx].Indices.Reset();
+						ReusableCells[NewIdx].bOverflow = false;
+					}
+					CellIndexPtr = &ReusableGrid.Add(Key, NewIdx);
+				}
+				FCrowdCell& Cell = ReusableCells[*CellIndexPtr];
 				if (Cell.Indices.Num() == MaxCellOccupants) { Cell.bOverflow = true; continue; }
-				Cell.Indices.Add(Samples.Add({Agent.Position, Agent.StableId, Agent.Radius, Agent.HalfHeight}));
+				Cell.Indices.Add(ReusableSamples.Add({Agent.Position, Agent.StableId, Agent.Radius, Agent.HalfHeight}));
 			}
 		});
 	}
-	const auto& ReadGrid = Grid;
-	const auto& ReadSamples = Samples;
+	const TMap<FIntPoint, int32>& ReadGrid = ReusableGrid;
+	const TArray<FCrowdCell>& ReadCells = ReusableCells;
+	const TArray<FCrowdSample>& ReadSamples = ReusableSamples;
 	const bool bCrowd = bUseCrowdSpacing;
-	const auto MoveChunk = [&ReadGrid, &ReadSamples, bCrowd](FMassExecutionContext& Chunk)
+	const auto MoveChunk = [&ReadGrid, &ReadCells, &ReadSamples, bCrowd](FMassExecutionContext& Chunk)
 	{
 		TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_MassMovement_Chunk);
 		const float Delta = FMath::Clamp(Chunk.GetDeltaTimeSeconds(), 0.f, 0.1f);
@@ -63,11 +82,12 @@ void UProject_JMassMovementProcessor::Execute(FMassEntityManager& EntityManager,
 				const auto Center = CrowdCell(Agent.Position);
 				for (int32 Y = -1; Y <= 1; ++Y) for (int32 X = -1; X <= 1; ++X)
 				{
-					const auto* Cell = ReadGrid.Find(Center + FIntPoint(X, Y));
-					if (!Cell) { continue; }
+					const int32* CellIndexPtr = ReadGrid.Find(Center + FIntPoint(X, Y));
+					if (!CellIndexPtr) { continue; }
+					const FCrowdCell& Cell = ReadCells[*CellIndexPtr];
 					// Dense overflow cannot silently omit blockers: request Character traversal instead.
-					if (Cell->bOverflow) { Agent.bNeedsCharacterTraversal = true; }
-					for (const int32 Index : Cell->Indices)
+					if (Cell.bOverflow) { Agent.bNeedsCharacterTraversal = true; }
+					for (const int32 Index : Cell.Indices)
 					{
 						++Agent.NeighborVisits;
 						const auto& Other = ReadSamples[Index];

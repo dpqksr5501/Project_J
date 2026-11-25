@@ -161,7 +161,7 @@ void UProject_JPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	}
 	UAnimInstance::NativeUpdateAnimation(DeltaSeconds);
 	UpdateNativeConsoleVariables();
- BindLocomotionSource(Mover);
+	BindLocomotionSource(Mover);
 	if (NeedsOwnerReferenceRefresh()) CacheOwnerReferences();
 	if (IsPrimaryMeshAnimInstance()) ApplyOptimizationPolicy(BuildOptimizationPolicy());
 	FProject_JAnimThreadSafeData Data;
@@ -211,61 +211,64 @@ void UProject_JPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		}
 	}
 	if (const auto* Life=Mover->GetSyncState().SyncStateCollection.FindDataByType<FProject_JMoverLifecycle>()) Data.Air.bIsJumping=Life->bJumpEpisode && Data.Air.bIsInAir;
-	if (!MoverPredictor)
+	FProject_JPreparedAnimTrajectory Prepared;
+	bool bPreparedTrajectory = false;
+	if (!IsDedicatedServerAnimationContext())
 	{
-		MoverPredictor = NewObject<UMoverTrajectoryPredictor>(this);
-		MoverPredictor->Setup(Mover);
+		if (!MoverPredictor)
+		{
+			MoverPredictor = NewObject<UMoverTrajectoryPredictor>(this);
+			MoverPredictor->Setup(Mover);
+		}
+		TScriptInterface<IPoseSearchTrajectoryPredictorInterface> Predictor(MoverPredictor);
+		const bool bSettledTranslation=(Move.IsNearlyZero() && Data.Movement.GroundSpeed<1.f) ||
+			(!Move.IsNearlyZero() && Settings && FMath::Abs(Data.Movement.GroundSpeed-Settings->MaxSpeed)<1.f &&
+			FVector::DotProduct(Move.GetSafeNormal2D(),Data.Movement.Velocity.GetSafeNormal2D())>.999f);
+		const bool bSettledFacing=FMath::Abs(FMath::FindDeltaAngleDegrees(Pawn->GetActorRotation().Yaw,Data.LocomotionContext.DesiredFacingYaw))<1.f;
+		const bool bBudgetEligible=bSettledTranslation && bSettledFacing && !ProjectJ::Animation::IsLocalPlayerAvatar(Pawn) && !Data.Air.bIsInAir &&
+			!Data.Combat.bIsAttacking && !Data.Combat.bIsDodging && !Data.Combat.bIsHitReacting &&
+			!IsAnyMontagePlaying() && !NeedsFullRateVisualUpdate() &&
+			(CurrentOptimizationPolicy.Tier==EProject_JAnimBudgetTier::Mid || CurrentOptimizationPolicy.Tier==EProject_JAnimBudgetTier::Far);
+		const int32 PredictionHz=bBudgetEligible?FMath::Clamp(PredictionRate.GetValueOnGameThread(),30,60):60;
+		if (const auto* Property=PredictionRateProperty())
+			*Property->ContainerPtrToValuePtr<FFrameRate>(MoverPredictor.Get())=FFrameRate(PredictionHz,1);
+#if !UE_BUILD_SHIPPING
+		// GT capture/history or synchronous fallback time only; the existing worker scope
+		// measures deferred calculation separately. Sampling density and simulation are unchanged.
+		static const bool bMeasureTrajectory = FParse::Param(FCommandLine::Get(), TEXT("ProjectJRenderedCrowdTrajectoryMetrics"));
+		const uint64 TrajectoryStarted = bMeasureTrajectory ? FPlatformTime::Cycles64() : 0;
+#endif
+		{
+			TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_Anim_MoverTrajectoryGenerate);
+			bPreparedTrajectory=TryPrepareNativeTrajectory(DeltaSeconds,PredictionHz,Data,Prepared);
+			if(!bPreparedTrajectory)
+				UPoseSearchTrajectoryLibrary::PoseSearchGenerateTransformTrajectoryWithPredictor(Predictor, DeltaSeconds,
+					MoverTrajectory, PredictorYaw, Data.Movement.Trajectory, .033f, 15, .1f, 15);
+		}
+#if !UE_BUILD_SHIPPING
+		if (bMeasureTrajectory)
+		{
+			TrajectoryDiagnosticCounters.Cycles += FPlatformTime::Cycles64() - TrajectoryStarted;
+			++TrajectoryDiagnosticCounters.Calls;
+			TrajectoryDiagnosticCounters.LastUpdateFrame = GFrameCounter;
+		}
+#endif
+		if(bPreparedTrajectory)
+		{
+			// GT policy uses the previous completed forecast until this update completes.
+			// The worker fills this frame's prediction before any trajectory graph consumer.
+			Data.Movement.FutureTrajectoryVelocity=ThreadSafeData.Movement.FutureTrajectoryVelocity;
+			Data.Movement.FutureTrajectoryTurnAngle=ThreadSafeData.Movement.FutureTrajectoryTurnAngle;
+			Data.Movement.bHasTrajectory=ThreadSafeData.Movement.bHasTrajectory;
+		}
+		else
+		{
+			static const auto* SourcePolicy=IConsoleManager::Get().FindConsoleVariable(TEXT("ProjectJ.AnimationQuality.SourcePolicy.Enabled"));
+			TOptional<float> ReferenceYaw;
+			if(SourcePolicy && SourcePolicy->GetInt()==0) ReferenceYaw=Pawn->GetActorRotation().Yaw;
+			FProject_JPreparedAnimTrajectory::UpdateDerivedMovement(Data,ReferenceYaw);
+		}
 	}
-	TScriptInterface<IPoseSearchTrajectoryPredictorInterface> Predictor(MoverPredictor);
-	const bool bSettledTranslation=(Move.IsNearlyZero() && Data.Movement.GroundSpeed<1.f) ||
-		(!Move.IsNearlyZero() && Settings && FMath::Abs(Data.Movement.GroundSpeed-Settings->MaxSpeed)<1.f &&
-		FVector::DotProduct(Move.GetSafeNormal2D(),Data.Movement.Velocity.GetSafeNormal2D())>.999f);
-	const bool bSettledFacing=FMath::Abs(FMath::FindDeltaAngleDegrees(Pawn->GetActorRotation().Yaw,Data.LocomotionContext.DesiredFacingYaw))<1.f;
-	const bool bBudgetEligible=bSettledTranslation && bSettledFacing && !ProjectJ::Animation::IsLocalPlayerAvatar(Pawn) && !Data.Air.bIsInAir &&
-		!Data.Combat.bIsAttacking && !Data.Combat.bIsDodging && !Data.Combat.bIsHitReacting &&
-		!IsAnyMontagePlaying() && !NeedsFullRateVisualUpdate() &&
-		(CurrentOptimizationPolicy.Tier==EProject_JAnimBudgetTier::Mid || CurrentOptimizationPolicy.Tier==EProject_JAnimBudgetTier::Far);
- const int32 PredictionHz=bBudgetEligible?FMath::Clamp(PredictionRate.GetValueOnGameThread(),30,60):60;
-	if (const auto* Property=PredictionRateProperty())
-		*Property->ContainerPtrToValuePtr<FFrameRate>(MoverPredictor.Get())=FFrameRate(PredictionHz,1);
- FProject_JPreparedAnimTrajectory Prepared;
- bool bPreparedTrajectory=false;
-#if !UE_BUILD_SHIPPING
- // GT capture/history or synchronous fallback time only; the existing worker scope
- // measures deferred calculation separately. Sampling density and simulation are unchanged.
- static const bool bMeasureTrajectory = FParse::Param(FCommandLine::Get(), TEXT("ProjectJRenderedCrowdTrajectoryMetrics"));
- const uint64 TrajectoryStarted = bMeasureTrajectory ? FPlatformTime::Cycles64() : 0;
-#endif
- {
-  TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_Anim_MoverTrajectoryGenerate);
-  bPreparedTrajectory=TryPrepareNativeTrajectory(DeltaSeconds,PredictionHz,Data,Prepared);
-  if(!bPreparedTrajectory)
-   UPoseSearchTrajectoryLibrary::PoseSearchGenerateTransformTrajectoryWithPredictor(Predictor, DeltaSeconds,
-    MoverTrajectory, PredictorYaw, Data.Movement.Trajectory, .033f, 15, .1f, 15);
- }
-#if !UE_BUILD_SHIPPING
- if (bMeasureTrajectory)
- {
-  TrajectoryDiagnosticCounters.Cycles += FPlatformTime::Cycles64() - TrajectoryStarted;
-  ++TrajectoryDiagnosticCounters.Calls;
-  TrajectoryDiagnosticCounters.LastUpdateFrame = GFrameCounter;
- }
-#endif
- if(bPreparedTrajectory)
- {
-  // GT policy uses the previous completed forecast until this update completes.
-  // The worker fills this frame's prediction before any trajectory graph consumer.
-  Data.Movement.FutureTrajectoryVelocity=ThreadSafeData.Movement.FutureTrajectoryVelocity;
-  Data.Movement.FutureTrajectoryTurnAngle=ThreadSafeData.Movement.FutureTrajectoryTurnAngle;
-  Data.Movement.bHasTrajectory=ThreadSafeData.Movement.bHasTrajectory;
- }
- else
- {
-  static const auto* SourcePolicy=IConsoleManager::Get().FindConsoleVariable(TEXT("ProjectJ.AnimationQuality.SourcePolicy.Enabled"));
-  TOptional<float> ReferenceYaw;
-  if(SourcePolicy && SourcePolicy->GetInt()==0) ReferenceYaw=Pawn->GetActorRotation().Yaw;
-  FProject_JPreparedAnimTrajectory::UpdateDerivedMovement(Data,ReferenceYaw);
- }
 	BuildProjectAirFrame(Data);
 	ThreadSafeData = Data;
 	PublishPlayerLocomotionSourceFrame(Data);

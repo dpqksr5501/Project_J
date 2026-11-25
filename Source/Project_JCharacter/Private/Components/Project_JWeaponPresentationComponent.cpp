@@ -1,4 +1,5 @@
 #include "Components/Project_JWeaponPresentationComponent.h"
+#include "Components/Project_JCombatPresentationComponent.h"
 #include "GameFramework/Pawn.h"
 #include "Movement/Project_JMovementQueries.h"
 
@@ -161,10 +162,37 @@ void UProject_JWeaponPresentationComponent::TickComponent(float DeltaTime, ELeve
 	UpdateTickState();
 }
 
+void UProject_JWeaponPresentationComponent::InvalidateOwnerWeaponPresentationCache() const
+{
+	if (AActor* Owner = GetOwner())
+	{
+		if (auto* Presentation = Owner->FindComponentByClass<UProject_JCombatPresentationComponent>())
+		{
+			Presentation->InvalidateWeaponPresentationCache();
+		}
+	}
+}
+
+void UProject_JWeaponPresentationComponent::OnRegister()
+{
+	Super::OnRegister();
+	InvalidateOwnerWeaponPresentationCache();
+}
+
+void UProject_JWeaponPresentationComponent::OnUnregister()
+{
+	Super::OnUnregister();
+	InvalidateOwnerWeaponPresentationCache();
+}
+
 void UProject_JWeaponPresentationComponent::BeginPlay()
 {
 	bEndingPlay = false;
 	Super::BeginPlay();
+	if (GetNetMode() == NM_DedicatedServer)
+	{
+		SetComponentTickEnabled(false);
+	}
 }
 
 bool UProject_JWeaponPresentationComponent::CanCreatePresentation() const

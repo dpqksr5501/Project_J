@@ -9,6 +9,7 @@
 #include "Mount/Project_JMountComponent.h"
 #include "Mount/Project_JMountCharacter.h"
 #include "Mount/Project_JFlyingMountCharacter.h"
+#include "Mount/Project_JMountMoverComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "DefaultMovementSet/CharacterMoverComponent.h"
@@ -309,6 +310,33 @@ void UProject_JCharacterAnimInstance::FillMountThreadSafeData(FProject_JAnimThre
 	const AProject_JMountCharacter* MountedMount = MountComponent ? MountComponent->GetMountedMount() : nullptr;
 	if (!MountedMount)
 	{
+		if (const AProject_JMountMoverPawn* MoverMount = Cast<AProject_JMountMoverPawn>(OwningPlayerCharacter->GetAttachParentActor()))
+		{
+			Data.LocomotionMode = EProject_JAnimationLocomotionMode::Mounted;
+			Data.Mount.bIsMounted = true;
+			if (const UProject_JRiderAnimationProfile* RiderProfile = MoverMount->GetRiderAnimationProfile())
+			{
+				Data.Mount.AnimationTags = RiderProfile->AnimationTags;
+				Data.Mount.TransitionBlendTime = RiderProfile->TransitionBlendTime;
+			}
+			const FVector MountVelocity = MoverMount->GetVelocity();
+			Data.Mount.Speed = MountVelocity.Size2D();
+			Data.Mount.VerticalSpeed = MountVelocity.Z;
+			Data.Mount.bIsFlying = MoverMount->IsFlying();
+			if (const UProject_JMountMoverComponent* MM = MoverMount->GetMountMover())
+			{
+				Data.Mount.bIsGliding = MM->GetLatestMountSyncState().bIsGliding;
+			}
+			USkeletalMeshComponent* RiderMesh = OwningPlayerCharacter->GetMesh();
+			FVector LeftHandTargetWorld, RightHandTargetWorld;
+			if (RiderMesh && MoverMount->GetRiderHandIKTargets(LeftHandTargetWorld, RightHandTargetWorld))
+			{
+				const FTransform RiderMeshTransform = RiderMesh->GetComponentTransform();
+				Data.Mount.LeftHandTargetComponentSpace = RiderMeshTransform.InverseTransformPosition(LeftHandTargetWorld);
+				Data.Mount.RightHandTargetComponentSpace = RiderMeshTransform.InverseTransformPosition(RightHandTargetWorld);
+				Data.Mount.bHasHandIKTargets = true;
+			}
+		}
 		return;
 	}
 
@@ -346,13 +374,16 @@ void UProject_JCharacterAnimInstance::FillMountThreadSafeData(FProject_JAnimThre
 void UProject_JCharacterAnimInstance::FillMontageThreadSafeData(FProject_JAnimThreadSafeData& Data) const
 {
  check(IsInGameThread());
+ static const FName DefaultSlotName(TEXT("DefaultSlot"));
  Data.bIsLocallyControlled=IsLocallyControlledCharacter();
  Data.Montage.bFullBodyMontageActive=false;
+ Data.Montage.bDefaultSlotActive=IsSlotActive(DefaultSlotName);
+ Data.Montage.DefaultSlotLocalWeight=GetSlotMontageLocalWeight(DefaultSlotName);
  Data.Montage.FullBodyMontageWeight=Data.LocomotionMode==EProject_JAnimationLocomotionMode::OnFoot
-  ? FMath::Clamp(GetSlotMontageGlobalWeight(TEXT("DefaultSlot")),0.f,1.f):0.f;
+  ? FMath::Clamp(GetSlotMontageGlobalWeight(DefaultSlotName),0.f,1.f):0.f;
  if (Data.LocomotionMode==EProject_JAnimationLocomotionMode::OnFoot)
   for (const auto* Instance:MontageInstances)
-   if (Instance && Instance->Montage && Instance->Montage->IsValidSlot(TEXT("DefaultSlot")) &&
+   if (Instance && Instance->Montage && Instance->Montage->IsValidSlot(DefaultSlotName) &&
        (Instance->IsPlaying() || Instance->GetWeight()>ZERO_ANIMWEIGHT_THRESH))
    { Data.Montage.bFullBodyMontageActive=true; break; }
 }

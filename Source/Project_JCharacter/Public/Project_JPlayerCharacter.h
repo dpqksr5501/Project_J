@@ -81,6 +81,7 @@ class PROJECT_JCHARACTER_API AProject_JPlayerCharacter : public AProject_JBaseCh
 
 public:
 	virtual void ReceiveAuthorityCombatInput(const FGameplayTag& InputTag, double ClientTimestamp, uint32 InputSequence) override;
+	virtual ELifetimeCondition AllowActorComponentToReplicate(const UActorComponent* ComponentToReplicate) const override;
 	virtual void ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdContext& InputCmd) override;
 	/** Returns move intent and, when requested, the forward axis of the same input sample. */
 	FVector GetGameplayMoveDirection(FVector* OutControlForward = nullptr) const;
@@ -112,6 +113,7 @@ private:
 	FDelegateHandle PlayerStateActorInfoSettledHandle;
 	FDelegateHandle MountRuntimeOwnerPrerequisitesChangedHandle;
 	void OnMountRuntimeOwnerPrerequisitesChanged();
+	void RefreshRemotePresentationParts();
 
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))

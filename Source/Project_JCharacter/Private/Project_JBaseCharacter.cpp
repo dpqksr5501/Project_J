@@ -20,6 +20,14 @@
 #include "Components/Project_JFoleyComponent.h"
 #include "Components/Project_JCombatHitValidationComponent.h"
 #include "Combat/Project_JServerSideRewindComponent.h"
+#include "Combat/Project_JMultiPartHitComponent.h"
+#include "Network/Project_JNetObjectPrioritizer_Combat.h"
+#include "Project_JGameplayTags.h"
+#include "TimerManager.h"
+#include "Project_JCCResistanceComponent.h"
+#include "Project_JSocialStateInterface.h"
+#include "Security/Project_JServerIntegritySubsystem.h"
+#include "Engine/GameInstance.h"
 #include "DefaultMovementSet/CharacterMoverComponent.h"
 #include "UObject/StrongObjectPtr.h"
 
@@ -39,6 +47,7 @@ AProject_JBaseCharacter::AProject_JBaseCharacter(const FObjectInitializer &Objec
 
 	EquipmentRuntime = CreateDefaultSubobject<UProject_JEquipmentRuntimeComponent>(TEXT("EquipmentRuntime"));
 	FoleyComponent = CreateDefaultSubobject<UProject_JFoleyComponent>(TEXT("Foley"));
+	CCResistanceComponent = CreateDefaultSubobject<UProject_JCCResistanceComponent>(TEXT("CCResistanceComponent"));
 }
 
 UAbilitySystemComponent *AProject_JBaseCharacter::GetAbilitySystemComponent() const
@@ -89,13 +98,13 @@ void AProject_JBaseCharacter::BeginPlay()
 			if (!Character)
 				return 0.0f;
 
-			const float DistanceSquared = FVector::DistSquared(Character->GetActorLocation(), Viewpoint.GetLocation());
+			const double DistanceSquared = FVector::DistSquared(Character->GetActorLocation(), Viewpoint.GetLocation());
 
-			if (DistanceSquared < FMath::Square(Character->SignificanceNearDistance))
+			if (DistanceSquared < FMath::Square(static_cast<double>(Character->SignificanceNearDistance)))
 				return 0.0f;
-			if (DistanceSquared < FMath::Square(Character->SignificanceMidDistance))
+			if (DistanceSquared < FMath::Square(static_cast<double>(Character->SignificanceMidDistance)))
 				return 1.0f;
-			if (DistanceSquared < FMath::Square(Character->SignificanceFarDistance))
+			if (DistanceSquared < FMath::Square(static_cast<double>(Character->SignificanceFarDistance)))
 				return 2.0f;
 			return 3.0f;
 		};
@@ -122,6 +131,7 @@ void AProject_JBaseCharacter::BeginPlay()
 
 void AProject_JBaseCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	UnbindIrisCombatPrioritizer();
 	GetMover()->OnTeleportSucceeded.RemoveAll(this);
 	if (BoundProgression.IsValid())
 		BoundProgression->OnChanged.RemoveAll(this);
@@ -151,7 +161,25 @@ void AProject_JBaseCharacter::ResetCombatSpatialHistory()
 {
 	check(IsInGameThread());
 	if (auto* Rewind = FindComponentByClass<UProject_JServerSideRewindComponent>()) { Rewind->ResetHistory(); }
+	if (auto* MultiPart = FindComponentByClass<UProject_JMultiPartHitComponent>()) { MultiPart->ResetHistory(); }
 	if (auto* Hit = FindComponentByClass<UProject_JCombatHitValidationComponent>()) { Hit->ResetSpatialHistory(); }
+	if (HasAuthority() && GetWorld())
+	{
+		if (const IProject_JSocialStateInterface* Identity = Cast<IProject_JSocialStateInterface>(GetPlayerState()))
+		{
+			const FGuid CharId = Identity->GetAuthoritativeCharacterGuid();
+			if (CharId.IsValid())
+			{
+				if (UGameInstance* GI = GetWorld()->GetGameInstance())
+				{
+					if (auto* Integrity = GI->GetSubsystem<UProject_JServerIntegritySubsystem>())
+					{
+						Integrity->GrantMovementWhitelist(CharId, 2.0, GetWorld()->GetTimeSeconds());
+					}
+				}
+			}
+		}
+	}
 }
 
 void AProject_JBaseCharacter::PossessedBy(AController *NewController)
@@ -164,10 +192,19 @@ void AProject_JBaseCharacter::PossessedBy(AController *NewController)
 
 void AProject_JBaseCharacter::UnPossessed()
 {
+	UnbindIrisCombatPrioritizer();
 	if (BoundProgression.IsValid())
 		BoundProgression->OnChanged.RemoveAll(this);
 	BoundProgression.Reset();
 	Super::UnPossessed();
+	if (RuntimeStateOwnership == EProject_JRuntimeStateOwnership::PlayerStatePreferred)
+	{
+		SyncIrisCombatPrioritizer(true);
+	}
+	else
+	{
+		BindIrisCombatPrioritizer();
+	}
 }
 
 void AProject_JBaseCharacter::OnRep_PlayerState()
@@ -351,6 +388,7 @@ void AProject_JBaseCharacter::InitializeAbilitySystem()
 	UAbilitySystemComponent *ASC = GetAbilitySystemComponent();
 	if (!ASC)
 	{
+		UnbindIrisCombatPrioritizer();
 		// PlayerState can replicate away before the old avatar is destroyed.
 		if (BoundProgression.IsValid())
 			BoundProgression->OnChanged.RemoveAll(this);
@@ -370,7 +408,19 @@ void AProject_JBaseCharacter::InitializeAbilitySystem()
 		// A replicated PlayerState ASC publishes its own owner/avatar through GAS.
 		// Pawn lifecycle callbacks consume that tuple; they cannot start a client
 		// recipient epoch or overwrite a replacement Avatar with a stale callback.
-		if (!HasAuthority() && Cast<APlayerState>(RuntimeOwner)) return;
+		if (!HasAuthority() && Cast<APlayerState>(RuntimeOwner))
+		{
+			if (auto* ClientProgression = GetProgressionComponent(); BoundProgression.Get() != ClientProgression)
+			{
+				if (BoundProgression.IsValid())
+					BoundProgression->OnChanged.RemoveAll(this);
+				BoundProgression = ClientProgression;
+				if (ClientProgression)
+					ClientProgression->OnChanged.AddUObject(this, &ThisClass::OnProgressionChanged);
+				OnProgressionChanged();
+			}
+			return;
+		}
 		ASC->InitAbilityActorInfo(RuntimeOwner, this);
 	}
 	auto *Progression = GetProgressionComponent();
@@ -395,6 +445,7 @@ void AProject_JBaseCharacter::InitializeAbilitySystem()
 
 	if (HasAuthority())
 	{
+		BindIrisCombatPrioritizer();
 		UObject *AbilitySourceObject =
 			GetAbilitySystemOwnerActor() ? Cast<UObject>(GetAbilitySystemOwnerActor()) : this;
 		IProject_JAbilitySystemOwnerInterface *OwnerInterface = nullptr;
@@ -539,3 +590,79 @@ bool AProject_JBaseCharacter::TrySetCharacterLevel(int32 NewLevel)
 		InitializeDefaultAttributes(true);
 	return IsCurrent();
 }
+
+void AProject_JBaseCharacter::BindIrisCombatPrioritizer()
+{
+	check(IsInGameThread());
+	if (!HasAuthority() || IsActorBeingDestroyed())
+	{
+		return;
+	}
+
+	UAbilitySystemComponent *ASC = GetAbilitySystemComponent();
+	if (BoundIrisPrioritizerASC.Get() != ASC)
+	{
+		UnbindIrisCombatPrioritizer();
+		BoundIrisPrioritizerASC = ASC;
+		if (ASC)
+		{
+			const FProject_JGameplayTags &GameplayTags = FProject_JGameplayTags::Get();
+			const FGameplayTag WatchedTags[] = {
+				GameplayTags.State_Dead,
+				GameplayTags.State_Attacking,
+				GameplayTags.State_Dodging,
+				GameplayTags.State_HitReacting,
+				GameplayTags.State_CombatMode
+			};
+			for (const FGameplayTag &Tag : WatchedTags)
+			{
+				if (!Tag.IsValid())
+				{
+					continue;
+				}
+				const FDelegateHandle Handle = ASC->RegisterGameplayTagEvent(Tag, EGameplayTagEventType::NewOrRemoved)
+					.AddWeakLambda(this, [this](const FGameplayTag, int32)
+					{
+						SyncIrisCombatPrioritizer();
+					});
+				IrisPrioritizerTagHandles.Emplace(Tag, Handle);
+			}
+		}
+	}
+
+	SyncIrisCombatPrioritizer();
+}
+
+void AProject_JBaseCharacter::UnbindIrisCombatPrioritizer()
+{
+	if (UAbilitySystemComponent *ASC = BoundIrisPrioritizerASC.Get())
+	{
+		for (const TPair<FGameplayTag, FDelegateHandle> &Entry : IrisPrioritizerTagHandles)
+		{
+			ASC->RegisterGameplayTagEvent(Entry.Key, EGameplayTagEventType::NewOrRemoved).Remove(Entry.Value);
+		}
+	}
+	IrisPrioritizerTagHandles.Reset();
+	BoundIrisPrioritizerASC.Reset();
+	AppliedIrisPrioritizerName = NAME_None;
+}
+
+void AProject_JBaseCharacter::SyncIrisCombatPrioritizer(bool bForceMoverTier)
+{
+	UProject_JNetObjectPrioritizer_Combat::SyncActorIrisPrioritizer(this, AppliedIrisPrioritizerName, bForceMoverTier);
+}
+
+#if UE_WITH_IRIS
+void AProject_JBaseCharacter::OnReplicationStartedForIris(const FOnReplicationStartedParams& Params)
+{
+	Super::OnReplicationStartedForIris(Params);
+	AppliedIrisPrioritizerName = NAME_None;
+	SyncIrisCombatPrioritizer();
+}
+
+void AProject_JBaseCharacter::OnStopReplicationForIris(const FOnStopReplicationParams& Params)
+{
+	AppliedIrisPrioritizerName = NAME_None;
+	Super::OnStopReplicationForIris(Params);
+}
+#endif

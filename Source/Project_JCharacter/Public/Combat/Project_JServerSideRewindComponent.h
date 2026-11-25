@@ -44,11 +44,18 @@ public:
 	/** Call after a teleport/handover; interpolation must not bridge separate locations. */
 	void ResetHistory();
 
+	virtual void SetComponentTickEnabled(bool bEnabled) override;
+
 protected:
 	virtual void BeginPlay() override;
+	virtual void OnRegister() override;
+	virtual void OnUnregister() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
+	/** Called by UProject_JCombatSpatialHistorySubsystem in a single contiguous TG_PostPhysics batch pass. */
+	void RecordBatchedSample(double Timestamp, const AActor* Owner, const class UCapsuleComponent* Capsule);
 	// Maximum amount of time (in seconds) to store in the circular buffer
 	UPROPERTY(EditDefaultsOnly, Category = "SSR")
 	float MaxRecordTime = 1.0f;
@@ -60,10 +67,18 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "SSR")
 	bool ServerVerifyHit(double ClientTimestamp, const FVector& TraceStart, const FVector& TraceEnd, float TraceRadius = 0.0f);
 
+	/** Variant returning the exact rewound capsule center on confirmed intersection for consistent LOS checks. */
+	bool ServerVerifyHitWithRewoundLocation(double ClientTimestamp, const FVector& TraceStart, const FVector& TraceEnd, float TraceRadius, FVector& OutRewoundLocation);
+
 	/** GT-only O(1) retained timestamp observation; false leaves outputs unchanged. */
 	bool TryGetHistoryTimeBounds(double& OutOldest, double& OutNewest) const;
 
 private:
+	friend class UProject_JCombatSpatialHistorySubsystem;
+	void StartHistoryCapture();
+	void StopHistoryCapture();
+	bool bUsingBatchCapture = false;
+	bool bCaptureRequested = true;
 	friend class FProjectJRewindHistoryTest;
 	friend class FProjectJRewindSchedulingTest;
 	friend class FProjectJSpatialDiscontinuityTest;

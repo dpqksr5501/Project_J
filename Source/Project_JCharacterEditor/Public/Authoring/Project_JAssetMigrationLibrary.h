@@ -1,16 +1,19 @@
 #pragma once
+#include "GameplayTagContainer.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Project_JAssetMigrationLibrary.generated.h"
 class USkeletalMesh;
 class USkeletalMeshComponent;
 class USkeleton;
 class UAnimBlueprint;
+class UAnimMontage;
 class UAnimSequence;
 class UBlendSpace;
 class UIKRetargeter;
 class APlayerController;
 class UInputAction;
 class UProject_JAttackDefinition;
+class UPhysicsAsset;
 
 /** Bounded authoring operations used by reviewed asset migrations. */
 UCLASS()
@@ -18,6 +21,10 @@ class PROJECT_JCHARACTEREDITOR_API UProject_JAssetMigrationLibrary : public UBlu
 {
     GENERATED_BODY()
 public:
+    /** Retire body setups with no collision shapes and repair their asset indices. Never saves. */
+    UFUNCTION(BlueprintCallable, Category="Project J|Authoring|Physics")
+    static int32 RemoveEmptyPhysicsAssetBodies(UPhysicsAsset* Asset);
+
     /** Author a new visual follower graph. Optional animation is limited to one target subtree. */
     UFUNCTION(BlueprintCallable, Category="Project J|Authoring|Animation")
     static bool ConfigureRetargetFollower(UAnimBlueprint* Blueprint, USkeletalMesh* Target, UIKRetargeter* Retargeter,
@@ -68,6 +75,10 @@ public:
      */
     UFUNCTION(BlueprintCallable, Category="Project J|Authoring|Combat")
     static FString BakeCanonicalMeleeTrajectory(UProject_JAttackDefinition* Attack, USkeletalMesh* SourceMesh, bool bExecute=false, bool bSave=false);
+
+    /** Place an unfiltered, server-authoritative warning ahead of a montage hit. Never saves. */
+    UFUNCTION(BlueprintCallable, Category="Project J|Authoring|Animation")
+    static bool AddMontageGameplayWarning(UAnimMontage* Montage, FGameplayTag CueTag, float Start, float End);
 
     /** Selected non-MM Unarmed template recipe. Dry-run is read-only; execute/save
      * are explicit. Saves only a new target package and never binds an NPC asset.

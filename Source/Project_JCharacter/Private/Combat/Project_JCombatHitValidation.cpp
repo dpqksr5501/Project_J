@@ -1,5 +1,6 @@
 #include "Combat/Project_JCombatHitValidation.h"
 
+#include "Combat/Project_JMultiPartHitComponent.h"
 #include "GameFramework/Actor.h"
 
 EProject_JCombatHitValidationFailure FProject_JCombatHitValidationPolicy::ValidateRequestData(
@@ -46,6 +47,38 @@ EProject_JCombatHitValidationFailure FProject_JCombatHitValidationPolicy::Valida
 	if (!IsValid(Request.Target) || Request.Target == Requester)
 	{
 		return EProject_JCombatHitValidationFailure::InvalidTarget;
+	}
+
+	// Account for large boss capsule/multi-part extents so attacking a limb or tail
+	// does not fail the actor-origin distance check.
+	float TargetExtentAllowance = 0.0f;
+	if (const UProject_JMultiPartHitComponent* MultiPart = Request.Target->FindComponentByClass<UProject_JMultiPartHitComponent>())
+	{
+		for (const FProject_JBossHitPartSpec& Part : MultiPart->HitParts)
+		{
+			TargetExtentAllowance = FMath::Max(TargetExtentAllowance, static_cast<float>(Part.LocalOffset.Size()) + Part.SphereRadius);
+		}
+		TargetExtentAllowance = FMath::Clamp(TargetExtentAllowance, 0.0f, 1500.0f);
+	}
+	else
+	{
+		float ColRadius = 0.0f, ColHalfHeight = 0.0f;
+		Request.Target->GetSimpleCollisionCylinder(ColRadius, ColHalfHeight);
+		if (ColRadius > 80.0f)
+		{
+			TargetExtentAllowance = FMath::Clamp(ColRadius, 0.0f, 600.0f);
+		}
+	}
+
+	if (TargetExtentAllowance > 0.0f)
+	{
+		FProject_JCombatHitValidationPolicy AdjustedPolicy = *this;
+		AdjustedPolicy.MaxTargetDistance = FMath::Max(0.0f, MaxTargetDistance) + TargetExtentAllowance;
+		return AdjustedPolicy.ValidateSpatialData(
+			Requester->GetActorLocation(),
+			Requester->GetActorForwardVector(),
+			Request.Target->GetActorLocation(),
+			Request);
 	}
 
 	return ValidateSpatialData(

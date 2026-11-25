@@ -34,4 +34,8 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta = (ClampMin = "1"))
 	int32 MaxStackCount = 1;
+
+	/** Equipped or carried tool tier. Zero means this definition is not a gathering tool. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item|Gathering", meta = (ClampMin = "0"))
+	int32 GatheringToolTier = 0;
 };

@@ -155,6 +155,11 @@ void UProject_JGameplayAbility_NPCAttack::ActivateAbility(FGameplayAbilitySpecHa
 		this, &ThisClass::OnHitEvent, ActivationRevision, RegisteredHitEventTag);
 	auto* Montage = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None,
 		ActiveDefinition->Montage, ActiveDefinition->PlayRate, ActiveDefinition->MontageSectionName);
+	if (!Montage)
+	{
+		EndAbility(Handle, Info, ActivationInfo, true, true);
+		return;
+	}
 	Montage->OnCompleted.AddDynamic(this, &ThisClass::OnCompleted);
 	Montage->OnInterrupted.AddDynamic(this, &ThisClass::OnInterrupted);
 	Montage->OnCancelled.AddDynamic(this, &ThisClass::OnInterrupted);

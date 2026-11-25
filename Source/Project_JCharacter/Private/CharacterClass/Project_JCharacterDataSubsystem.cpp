@@ -130,7 +130,7 @@ bool UProject_JCharacterDataSubsystem::LoadPrimaryAssetDefinitions()
 	if (!ProjectJ::ValidateAdvancementGraph(ClassValues, AdvancementValues, Errors)) return false;
 
 	TSet<FSoftObjectPath> ItemPaths;
-	for (const FName Type : {FName(TEXT("Project_JEquipmentItemDefinition")), FName(TEXT("Project_JConsumableDefinition")), FName(TEXT("Project_JCompanionItemDefinition"))})
+	for (const FName Type : {FName(TEXT("Project_JEquipmentItemDefinition")), FName(TEXT("Project_JConsumableDefinition")), FName(TEXT("Project_JCompanionItemDefinition")), FName(TEXT("Project_JMountItemDefinition"))})
 	{
 		TArray<FPrimaryAssetId> Ids; Assets->GetPrimaryAssetIdList(Type, Ids);
 		if (ItemPaths.Num() + Ids.Num() > MaxItemDefinitions) return false;

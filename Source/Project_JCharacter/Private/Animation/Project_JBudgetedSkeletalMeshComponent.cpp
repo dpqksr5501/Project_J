@@ -1,10 +1,14 @@
 #include "Animation/Project_JBudgetedSkeletalMeshComponent.h"
 #include "System/Project_JCharacterAnimationBudgetSubsystem.h"
+#include "Components/Project_JAnimationUpdateCoordinatorComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Project_JBaseCharacter.h"
+#include "Project_JPlayerCharacter.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "Engine/World.h"
+#include "Components/MeshComponent.h"
+#include "Components/Project_JModularMeshComponent.h"
 #include "IAnimationBudgetAllocator.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "HAL/IConsoleManager.h"
@@ -33,6 +37,12 @@ namespace Project_J::Anim
 		TEXT("Policy A (1): bBudgetTickWhenNotRendered=true (keeps Hidden Leader ticked by ABA).\n")
 		TEXT("Policy B (0): bBudgetTickWhenNotRendered=false (skips off-screen non-combat characters, wakes only on GameplayPose).\n"),
 		ECVF_Scalability);
+
+	static TAutoConsoleVariable<int32> CVarRemoteProxyMontageTimingOnly(
+		TEXT("Project_J.Anim.RemoteProxyMontageTimingOnly"),
+		1,
+		TEXT("Keep montage timing on client simulated players whose visual source is visible and uses visibility-based pose updates. Full-pose requirements retain priority."),
+		ECVF_Default);
 
 	bool GetBudgetTickWhenNotRendered()
 	{
@@ -88,9 +98,37 @@ void UProject_JBudgetedSkeletalMeshComponent::RetireSharedPhysicsBounds()
 }
 void UProject_JBudgetedSkeletalMeshComponent::OnRegister()
 {
+    CachedCoordinator.Reset();
+    CachedCoordinatorOwner.Reset();
+    bCoordinatorLookupAttempted = false;
     const TStrongObjectPtr<UProject_JBudgetedSkeletalMeshComponent> Keep(IsGarbageCollecting()?nullptr:this);
     RetireSharedPhysicsBounds();TGuardValue<bool> Changing(bChangingSharedBoundsSource,true);
     Super::OnRegister();RetireSharedPhysicsBounds();
+}
+
+UProject_JAnimationUpdateCoordinatorComponent* UProject_JBudgetedSkeletalMeshComponent::GetCachedAnimationUpdateCoordinator()
+{
+    AActor* Owner = GetOwner();
+    if (!IsValid(Owner))
+    {
+        CachedCoordinator.Reset();
+        CachedCoordinatorOwner.Reset();
+        bCoordinatorLookupAttempted = false;
+        return nullptr;
+    }
+    if (CachedCoordinatorOwner.Get() != Owner || !bCoordinatorLookupAttempted || CachedCoordinator.IsStale())
+    {
+        CachedCoordinatorOwner = Owner;
+        CachedCoordinator.Reset();
+        Owner->ForEachComponent<UProject_JAnimationUpdateCoordinatorComponent>(false,
+            [this](UProject_JAnimationUpdateCoordinatorComponent* Candidate)
+            {
+                if (!CachedCoordinator.IsValid() && Candidate->IsRegistered() && !Candidate->IsBeingDestroyed())
+                    CachedCoordinator = Candidate;
+            });
+        bCoordinatorLookupAttempted = true;
+    }
+    return CachedCoordinator.Get();
 }
 void UProject_JBudgetedSkeletalMeshComponent::OnUnregister()
 {
@@ -157,18 +195,130 @@ void UProject_JBudgetedSkeletalMeshComponent::OnMontageStarted(UAnimMontage*)
 	RefreshMontageUpdateRequirement();
 }
 
+void UProject_JBudgetedSkeletalMeshComponent::TickPose(float DeltaTime, bool bNeedsValidRootMotion)
+{
+	Super::TickPose(DeltaTime, bNeedsValidRootMotion);
+	if (!bEnding && OnPostTickPose.IsBound())
+	{
+		OnPostTickPose.Broadcast();
+	}
+}
+
+void UProject_JBudgetedSkeletalMeshComponent::SetHiddenLeaderLateTick(bool bLate)
+{
+	if (bLate && !HiddenLeaderSavedTickGroup.IsSet())
+	{
+		HiddenLeaderSavedTickGroup = PrimaryComponentTick.TickGroup;
+		SetTickGroup(TG_PostUpdateWork);
+	}
+	else if (!bLate && HiddenLeaderSavedTickGroup.IsSet())
+	{
+		SetTickGroup(HiddenLeaderSavedTickGroup.GetValue());
+		HiddenLeaderSavedTickGroup.Reset();
+	}
+}
+
+bool UProject_JBudgetedSkeletalMeshComponent::IsHiddenMontageOnlySafe(bool bAfterCamera)
+{
+	if (!bAfterCamera || !Service.IsValid() || IsSimulatingPhysics() || LeaderPoseComponent.IsValid()) return false;
+	const auto* Coordinator = GetCachedAnimationUpdateCoordinator();
+	if (!Coordinator || Coordinator->HasUrgentRemoteAnimationUpdate()) return false;
+
+	bool bHasFollower = false;
+	const auto IsDemanding = [this](const UMeshComponent& Part)
+	{
+		return Part.WasRecentlyRendered(.25f) || !Service->IsOutsideEveryLocalView(Part.Bounds);
+	};
+	// LeaderPose consumers may be attached to a sibling instead of the source.
+	for (const auto* Component : GetOwner()->GetComponents())
+	{
+		const auto* Part = Cast<USkinnedMeshComponent>(Component);
+		if (!IsValid(Part) || Part->LeaderPoseComponent.Get() != this || !Part->IsRegistered()
+			|| !Part->IsVisible() || Part->bHiddenInGame || !Part->GetSkinnedAsset()) continue;
+		// The managed modular parts and native cloth have source prerequisites.
+		// An unknown consumer can run before the late source: keep full pose.
+		if (!Part->IsA<UProject_JModularMeshComponent>() || IsDemanding(*Part)) return false;
+		bHasFollower = true;
+	}
+	// Include weapons and other mesh children (including ChildActorComponent
+	// descendants) whose socket position is driven by this pose or a follower.
+	TArray<const USceneComponent*, TInlineAllocator<24>> Children;
+	Children.Add(this);
+	for (int32 Index = 0; Index < Children.Num(); ++Index)
+	{
+		const auto* Parent = Children[Index];
+		if (!IsValid(Parent) || !Parent->IsRegistered() || Children.Num() > 128) return false;
+		for (const USceneComponent* Child : Parent->GetAttachChildren())
+		{
+			if (!IsValid(Child)) continue;
+			Children.Add(Child);
+			const auto* Part = Cast<UMeshComponent>(Child);
+			if (Part && Part->IsRegistered() && Part->IsVisible() && !Part->bHiddenInGame && IsDemanding(*Part)) return false;
+		}
+	}
+	return bHasFollower;
+}
+
+void UProject_JBudgetedSkeletalMeshComponent::TickComponent(float DeltaTime, ELevelTick TickType,
+	FActorComponentTickFunction* ThisTickFunction)
+{
+	if (HiddenLeaderSavedTickGroup.IsSet())
+	{
+		// UE updates local cameras before TG_PostUpdateWork. Use the actual
+		// frame's tick group because a new montage can start during a tick.
+		bHiddenLeaderOffscreen = IsHiddenMontageOnlySafe(ThisTickFunction
+			&& ThisTickFunction->GetActualTickGroup() >= TG_PostUpdateWork);
+		RefreshMontageUpdateRequirement();
+	}
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+}
+
 void UProject_JBudgetedSkeletalMeshComponent::RefreshMontageUpdateRequirement()
 {
 	if (bEnding) { return; }
 	const auto* Anim = GetAnimInstance();
 	const bool bNeedsUpdate = Anim && Anim->IsAnyMontagePlaying();
-	if (bNeedsUpdate == bMontageUpdateRequirement) { return; }
-	bMontageUpdateRequirement = bNeedsUpdate;
 	// Attack ownership may end before its montage blend-out. This independent
 	// demand preserves offscreen evaluation and end notifies until all instances
 	// drain, then composes with (rather than releasing) other callers' demands.
-	if (bNeedsUpdate) { RequestAnimationUpdate(this, EProject_JAnimationUpdateRequirement::GameplayPose); }
-	else { ReleaseAnimationUpdate(this); }
+	// On dedicated servers, montage ticking/notifies do not need full skeletal bone evaluation
+	// unless an explicit GameplayPose requester (e.g. non-baked live-socket attack) demands it.
+	if (bNeedsUpdate)
+	{
+		const UWorld* World = GetWorld();
+		const AProject_JPlayerCharacter* RemotePlayer = Cast<AProject_JPlayerCharacter>(GetOwner());
+		const auto Baseline = bVisibilityOverride ? OverrideSavedVisibility : VisibilityBasedAnimTickOption;
+		const bool bRemoteProxy = World && World->GetNetMode() == NM_Client
+			&& RemotePlayer && RemotePlayer->GetLocalRole() == ROLE_SimulatedProxy && !RemotePlayer->IsLocallyControlled()
+			&& RemotePlayer->GetMesh() == this && bAllowProjectBudget
+			&& Project_J::Anim::CVarRemoteProxyMontageTimingOnly.GetValueOnGameThread() != 0;
+		const bool bVisualSource = IsVisible() && !bHiddenInGame;
+		const auto* Coordinator = bRemoteProxy && !bVisualSource ? GetCachedAnimationUpdateCoordinator() : nullptr;
+		const bool bLateHidden = Coordinator && !IsSimulatingPhysics() && !LeaderPoseComponent.IsValid()
+			&& Anim->RootMotionMode != ERootMotionMode::RootMotionFromEverything
+			&& Baseline == EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+		SetHiddenLeaderLateTick(bLateHidden);
+		if (!bLateHidden || Coordinator->HasUrgentRemoteAnimationUpdate()) bHiddenLeaderOffscreen = false;
+		const bool bVisibleSourceTiming = bRemoteProxy && bVisualSource
+			&& (Baseline == EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered
+				|| Baseline == EVisibilityBasedAnimTickOption::OnlyTickMontagesWhenNotRendered);
+		const EProject_JAnimationUpdateRequirement Requirement =
+			((World && World->GetNetMode() == NM_DedicatedServer) || bVisibleSourceTiming || bHiddenLeaderOffscreen)
+				? EProject_JAnimationUpdateRequirement::MontageTiming
+				: EProject_JAnimationUpdateRequirement::GameplayPose;
+		if (!bMontageUpdateRequirement || UpdateRequirements.FindRef(this) != Requirement)
+		{
+			bMontageUpdateRequirement = true;
+			RequestAnimationUpdate(this, Requirement);
+		}
+	}
+	else if (bMontageUpdateRequirement)
+	{
+		bHiddenLeaderOffscreen = false;
+		SetHiddenLeaderLateTick(false);
+		bMontageUpdateRequirement = false;
+		ReleaseAnimationUpdate(this);
+	}
 }
 
 bool UProject_JBudgetedSkeletalMeshComponent::CanUseBudget() const
@@ -244,11 +394,18 @@ void UProject_JBudgetedSkeletalMeshComponent::RefreshAnimationUpdateRequirements
 	// traversal or policy writes; no new component tick or expiry timer is needed.
 	if (UpdateRequirements.IsEmpty() && !bUpdateOverride) { return; }
 	bool bNeedsGameplayPose = false;
+	bool bNeedsMontageTiming = false;
 	for (auto It = UpdateRequirements.CreateIterator(); It; ++It)
 	{
 		if (!Project_J::Anim::IsUpdateRequesterAlive(It.Key().Get())) { It.RemoveCurrent(); }
-		else { bNeedsGameplayPose |= It.Value() == EProject_JAnimationUpdateRequirement::GameplayPose; }
+		else
+		{
+			bNeedsGameplayPose |= It.Value() == EProject_JAnimationUpdateRequirement::GameplayPose;
+			bNeedsMontageTiming |= It.Value() == EProject_JAnimationUpdateRequirement::MontageTiming;
+		}
 	}
+	const bool bNeedsNotifies = bNeedsGameplayPose || bNeedsMontageTiming;
+	const bool bNeedsVisibility = bNeedsGameplayPose || bNeedsMontageTiming;
 	const bool bNeedsUpdate = !UpdateRequirements.IsEmpty();
 	if (bNeedsUpdate && !bUpdateOverride)
 	{
@@ -256,28 +413,46 @@ void UProject_JBudgetedSkeletalMeshComponent::RefreshAnimationUpdateRequirements
 		LeaveBudget();
 		bOverrideSavedURO = bEnableUpdateRateOptimizations;
 	}
-	if (bNeedsGameplayPose && !bGameplayPoseOverride)
+	if (bNeedsVisibility && !bVisibilityOverride)
 	{
 		OverrideSavedVisibility = VisibilityBasedAnimTickOption;
+	}
+	if (bNeedsNotifies && !bNotifyOverride)
+	{
 		bOverrideSavedSuppressNotifies = bSuppressNotifyEventDispatch;
 	}
 	if (bNeedsGameplayPose)
 	{
 		VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
-		bSuppressNotifyEventDispatch = false;
 	}
-	else if (bGameplayPoseOverride)
+	else if (bNeedsMontageTiming)
 	{
-		// Respect newer explicit policies where the effective value differs.
-		if (VisibilityBasedAnimTickOption == EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones)
+		if (bGameplayPoseOverride && VisibilityBasedAnimTickOption == EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones)
 		{
 			VisibilityBasedAnimTickOption = OverrideSavedVisibility;
 		}
-		if (!bSuppressNotifyEventDispatch) { bSuppressNotifyEventDispatch = bOverrideSavedSuppressNotifies; }
+		if (VisibilityBasedAnimTickOption == EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered || bHiddenLeaderOffscreen)
+		{
+			VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickMontagesWhenNotRendered;
+		}
 	}
+	else if (bVisibilityOverride)
+	{
+		// Respect newer explicit policies where the effective value differs.
+		if ((bGameplayPoseOverride && VisibilityBasedAnimTickOption == EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones)
+			|| (bMontageTimingOverride && VisibilityBasedAnimTickOption == EVisibilityBasedAnimTickOption::OnlyTickMontagesWhenNotRendered))
+		{
+			VisibilityBasedAnimTickOption = OverrideSavedVisibility;
+		}
+	}
+	if (bNeedsNotifies) { bSuppressNotifyEventDispatch = false; }
+	else if (bNotifyOverride && !bSuppressNotifyEventDispatch) { bSuppressNotifyEventDispatch = bOverrideSavedSuppressNotifies; }
 	if (bNeedsUpdate) { bEnableUpdateRateOptimizations = false; }
 	else if (bUpdateOverride && !bEnableUpdateRateOptimizations) { bEnableUpdateRateOptimizations = bOverrideSavedURO; }
 	bGameplayPoseOverride = bNeedsGameplayPose;
+	bMontageTimingOverride = bNeedsMontageTiming;
+	bVisibilityOverride = bNeedsVisibility;
+	bNotifyOverride = bNeedsNotifies;
 	bUpdateOverride = bNeedsUpdate;
 }
 
@@ -291,10 +466,13 @@ void UProject_JBudgetedSkeletalMeshComponent::DetachService()
 {
     RetireSharedPhysicsBounds();
 	bEnding = true;
+	OnPostTickPose.Clear();
 	ObservedDistanceTier.Reset(); ObservedFullClothQuality.Reset();
 	LeaveBudget();
 	UpdateRequirements.Reset();
 	bMontageUpdateRequirement = false;
+	bHiddenLeaderOffscreen = false;
+	SetHiddenLeaderLateTick(false);
 	RefreshAnimationUpdateRequirements();
 	if (Service.IsValid()) { Service->UnregisterMesh(this); }
 	Service.Reset();

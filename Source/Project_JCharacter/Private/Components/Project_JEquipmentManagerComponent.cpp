@@ -1,5 +1,6 @@
 #include "Components/Project_JEquipmentManagerComponent.h"
 #include "Components/Project_JEquipmentRuntimeComponent.h"
+#include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerState.h"
 #include "GameFramework/Pawn.h"
 #include "Combat/Project_JCombatStyleDefinition.h"
@@ -122,6 +123,9 @@ void UProject_JEquipmentManagerComponent::Retire()
 	}
 	bEnding = true;
 	EquipmentArray.OwnerComponent = nullptr;
+	RemotePersistentRequests.Reset();
+	RemotePersistentRequestOrder.Reset();
+	LastRemotePersistentSessionPrefix.Invalidate();
 	OnEquipmentEquipped.Clear();
 	OnEquipmentUnequipped.Clear();
 	OnRequestCompleted.Clear();
@@ -709,12 +713,55 @@ FProject_JEquipmentOperationResult UProject_JEquipmentManagerComponent::CommitEq
 
 	return FProject_JEquipmentOperationResult::Success(ItemInstance.InstanceId, Slot);
 }
+FGuid UProject_JEquipmentManagerComponent::ResolvePersistentRequestId(FGuid ClientCorrelationId)
+{
+	if (!CreatePersistentRequest || !ClientCorrelationId.IsValid())
+	{
+		return ClientCorrelationId;
+	}
+	const UWorld* World = GetWorld();
+	if (!World || World->GetNetMode() == NM_Standalone)
+	{
+		return ClientCorrelationId;
+	}
+	const APlayerState* OwnerState = Cast<APlayerState>(GetOwner());
+	const APlayerController* OwnerPC = OwnerState ? OwnerState->GetPlayerController() : nullptr;
+	if (OwnerPC && OwnerPC->IsLocalController())
+	{
+		return ClientCorrelationId;
+	}
+	if (const FGuid* Existing = RemotePersistentRequests.Find(ClientCorrelationId))
+	{
+		return *Existing;
+	}
+	const FGuid ServerRequestId = CreatePersistentRequest();
+	if (!ServerRequestId.IsValid())
+	{
+		return ClientCorrelationId;
+	}
+	const FGuid SessionPrefix(ServerRequestId.A, ServerRequestId.B, ServerRequestId.C, 0);
+	if (LastRemotePersistentSessionPrefix.IsValid() && LastRemotePersistentSessionPrefix != SessionPrefix)
+	{
+		RemotePersistentRequests.Reset();
+		RemotePersistentRequestOrder.Reset();
+	}
+	LastRemotePersistentSessionPrefix = SessionPrefix;
+	if (RemotePersistentRequestOrder.Num() >= 64)
+	{
+		RemotePersistentRequests.Remove(RemotePersistentRequestOrder[0]);
+		RemotePersistentRequestOrder.RemoveAt(0);
+	}
+	RemotePersistentRequestOrder.Add(ClientCorrelationId);
+	RemotePersistentRequests.Add(ClientCorrelationId, ServerRequestId);
+	return ServerRequestId;
+}
+
 FProject_JEquipmentOperationResult UProject_JEquipmentManagerComponent::SubmitPersistentEquipment(
 	FGuid RequestId, FGuid InstanceId, EProject_JEquipmentSlot Slot, bool bUnequip)
 {
 	FProject_JPersistentEdit Edit;
 	Edit.Kind = bUnequip ? EProject_JPersistentEdit::Unequip : EProject_JPersistentEdit::Equip;
-	Edit.Request = RequestId;
+	Edit.Request = ResolvePersistentRequestId(RequestId);
 	Edit.Instance = InstanceId;
 	Edit.Slot = Slot;
 	TWeakObjectPtr<UProject_JEquipmentManagerComponent> WeakThis(this);
@@ -820,7 +867,8 @@ void UProject_JEquipmentManagerComponent::OnRep_EquipmentChanged(FProject_JEquip
 #if !UE_BUILD_SHIPPING
 	++ReplicationDiagnosticChangedCount;
 #endif
-	// Slot / Item changes on existing element
+	// Notify listeners on in-place persistent slot swaps so owning client updates visuals/profiles.
+	BroadcastEquipmentEquipped(Item);
 }
 
 void UProject_JEquipmentManagerComponent::OnRep_EquipmentRemoved(FProject_JEquipmentArrayItem &Item)

@@ -9,6 +9,7 @@
 #include "Project_JSpellbladeCharacter.h"
 #include "Engine/World.h"
 #include "Engine/Engine.h"
+#include "GameFramework/WorldSettings.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "PhysicsEngine/PhysicsAsset.h"
 #include "PhysicsEngine/SkeletalBodySetup.h"
@@ -138,7 +139,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJCompatibleBodyServerSource,"ProjectJ.P
 bool FProjectJCompatibleBodyServerSource::RunTest(const FString&)
 {
  auto* World=UWorld::CreateWorld(EWorldType::PIE,false);
- GEngine->CreateNewWorldContext(EWorldType::PIE).SetCurrentWorld(World);
+ GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
  World->SetPlayInEditorInitialNetMode(NM_DedicatedServer);
  auto* Pawn=World->SpawnActor<AProject_JSpellbladeCharacter>();
  if (TestNotNull(TEXT("Dedicated source fixture"),Pawn))
@@ -154,7 +155,12 @@ bool FProjectJCompatibleBodyServerSource::RunTest(const FString&)
   auto* FollowerInstance=NewObject<UProject_JRetargetAnimInstance>(Follower);
   FollowerInstance->NativeInitializeAnimation();
   TestFalse(TEXT("Dedicated visual follower still avoids cosmetic evaluation"),Follower->IsComponentTickEnabled());
+  TestFalse(TEXT("Dedicated visual follower explicitly disables retargeting"),FollowerInstance->bEnableFollowerRetarget);
+  World->InitializeActorsForPlay(FURL());
+  World->GetWorldSettings()->NotifyBeginPlay();
+  TestTrue(TEXT("Dedicated gameplay mesh disables the post-process blueprint"),Source->GetDisablePostProcessBlueprint());
  }
+ if (World->GetBegunPlay()) World->EndPlay(EEndPlayReason::Quit);
  World->DestroyWorld(false); GEngine->DestroyWorldContext(World);
  return true;
 }

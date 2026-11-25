@@ -41,7 +41,16 @@ FProject_JAnimOptimizationPolicy UProject_JCharacterAnimInstance::BuildOptimizat
 			}
 		}
 	}
-	return ProjectJ::Animation::ResolveSourceQuality(Input, Settings);
+	FProject_JAnimOptimizationPolicy Policy = ProjectJ::Animation::ResolveSourceQuality(Input, Settings);
+	if (IsDedicatedServerAnimationContext())
+	{
+		// Headless dedicated servers never render cosmetic retarget bodies or visual IK.
+		Policy.bEnableFollowerRetarget = false;
+		Policy.bEnableHandIK = false;
+		Policy.bEnableFootIK = false;
+		Policy.bEnableRetargetIK = false;
+	}
+	return Policy;
 }
 void UProject_JCharacterAnimInstance::ApplyOptimizationPolicy(const FProject_JAnimOptimizationPolicy& NewPolicy)
 {

@@ -22,6 +22,27 @@ UProject_JAnimationUpdateCoordinatorComponent::UProject_JAnimationUpdateCoordina
 	SetIsReplicatedByDefault(false);
 }
 
+void UProject_JAnimationUpdateCoordinatorComponent::InvalidateOwnerMeshCoordinatorCaches() const
+{
+	if (AActor* Owner = GetOwner())
+	{
+		Owner->ForEachComponent<UProject_JBudgetedSkeletalMeshComponent>(false,
+			[](UProject_JBudgetedSkeletalMeshComponent* Mesh) { Mesh->InvalidateAnimationUpdateCoordinatorCache(); });
+	}
+}
+
+void UProject_JAnimationUpdateCoordinatorComponent::OnRegister()
+{
+	Super::OnRegister();
+	InvalidateOwnerMeshCoordinatorCaches();
+}
+
+void UProject_JAnimationUpdateCoordinatorComponent::OnUnregister()
+{
+	Super::OnUnregister();
+	InvalidateOwnerMeshCoordinatorCaches();
+}
+
 void UProject_JAnimationUpdateCoordinatorComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	RestoreVisualBudget();
@@ -87,6 +108,7 @@ void UProject_JAnimationUpdateCoordinatorComponent::RequestUrgentRemoteAnimation
 	if (auto* Budgeted = Cast<UProject_JBudgetedSkeletalMeshComponent>(MeshComponent))
 	{
 		Budgeted->RequestAnimationUpdate(this, EProject_JAnimationUpdateRequirement::Presentation);
+		Budgeted->RefreshMontageUpdateRequirement();
 	}
 	else { MeshComponent->bEnableUpdateRateOptimizations = false; }
 

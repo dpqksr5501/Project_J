@@ -6,9 +6,13 @@
 #include "Animation/Project_JCopyPoseAnimInstance.h"
 #include "Animation/Skeleton.h"
 #include "Animation/Project_JPresentationMeshResolver.h"
+#include "Animation/Project_JAnimationQualityPolicy.h"
 #include "ClothingSimulationInstance.h"
 #include "ClothingSimulationInteractor.h"
 #include "GameFramework/Actor.h"
+#include "GameFramework/PlayerState.h"
+#include "Project_JPlayerCharacter.h"
+#include "System/Project_JVisualAssetSubsystem.h"
 #include "HAL/IConsoleManager.h"
 #include "Animation/Project_JBudgetedSkeletalMeshComponent.h"
 #include "PhysicsEngine/PhysicsAsset.h"
@@ -178,8 +182,26 @@ bool UProject_JModularMeshComponent::IsClothExecutionObservationEnabled()
 {
     check(IsInGameThread());
     return CVarObserveClothExecution.GetValueOnGameThread() != 0 ||
-        UProject_JAnimationUpdateCoordinatorComponent::GetClothExecutionVertexCap() > 0;
+        UProject_JAnimationUpdateCoordinatorComponent::IsClothExecutionPolicyEnabled();
 }
+
+#if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
+bool UProject_JModularMeshComponent::SetClothTickRateForTest(int32 Hertz)
+{
+    check(IsInGameThread());
+    if (Hertz <= 0 || !GetSkeletalMeshAsset() || !GetSkeletalMeshAsset()->HasActiveClothingAssets() ||
+        !ClothTickFunction.IsTickFunctionRegistered() || !ClothTickFunction.IsTickFunctionEnabled() ||
+        IsClothingSimulationSuspended() || bDisableClothSimulation || bWaitForParallelClothTask ||
+        ClothTickFunction.TickInterval > 0.f || IsClothBoundToLeaderComponent()) return false;
+    ClothTickFunction.UpdateTickIntervalAndCoolDown(1.f / Hertz);
+    return true;
+}
+
+double UProject_JModularMeshComponent::GetLastClothIntervalTickForTest() const
+{
+    return ClothTickFunction.TickInterval > 0.f ? ClothTickFunction.GetLastIntervalTickGameTime() : -1.;
+}
+#endif
 
 void UProject_JModularMeshComponent::ResetClothNativeObservation()
 {
@@ -298,6 +320,7 @@ UProject_JModularMeshComponent::UProject_JModularMeshComponent()
 	VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
 	PrimaryComponentTick.bCanEverTick = true;
 	PrimaryComponentTick.bStartWithTickEnabled = false;
+	PrimaryComponentTick.bAllowTickBatching = true;
 	bEnableUpdateRateOptimizations = true;
 }
 
@@ -386,6 +409,7 @@ void UProject_JModularMeshComponent::ClearPosePrerequisite()
 }
 void UProject_JModularMeshComponent::OnUnregister()
 {
+ ReleaseRemotePresentationLoad();
  ReleaseClothExecutionLease();
  ResetClothNativeObservation();
  if (++ClothObservationRegistration == 0) ++ClothObservationRegistration;
@@ -395,9 +419,13 @@ void UProject_JModularMeshComponent::OnUnregister()
  // after Super marks us unregistered and releases the clothing resources.
  Super::OnUnregister();
 	if (bFollowAttachParentPose) SetLeaderPoseComponent(nullptr);
+	if (AuthoredPresentationMesh && GetSkeletalMeshAsset() && GetSkeletalMeshAsset() == RemotePresentationMesh.Get())
+		ApplyPresentationMesh(AuthoredPresentationMesh, false);
 }
 void UProject_JModularMeshComponent::OnRegister()
 {
+ if (!RemotePresentationMesh.IsNull() && !AuthoredPresentationMesh && !HasBegunPlay())
+  AuthoredPresentationMesh = GetSkeletalMeshAsset();
  ResetClothNativeObservation();
  if (++ClothObservationRegistration == 0) ++ClothObservationRegistration;
  // Super still creates cloth when rendering is impossible. Keep this runtime
@@ -406,17 +434,23 @@ void UProject_JModularMeshComponent::OnRegister()
  const bool bHeadlessGameWorld = RuntimeWorld &&
   (RuntimeWorld->WorldType == EWorldType::Game || RuntimeWorld->WorldType == EWorldType::PIE) &&
   !IsRunningCommandlet() && !FApp::CanEverRender();
- if (IsNetMode(NM_DedicatedServer) || bHeadlessGameWorld) SetAllowClothActors(false);
+ if (IsNetMode(NM_DedicatedServer) || bHeadlessGameWorld)
+ {
+  SetAllowClothActors(false);
+  SetDisablePostProcessBlueprint(true);
+ }
  Super::OnRegister();
 	if (bFollowAttachParentPose)
 	{
 		RefreshAttachParentPose();
+		RefreshRemotePresentationMesh();
 		return;
 	}
- if(GetAnimClass()==UProject_JCopyPoseAnimInstance::StaticClass())
+ if (!IsNetMode(NM_DedicatedServer) && GetAnimClass()==UProject_JCopyPoseAnimInstance::StaticClass())
   if(auto* Source=Cast<USkeletalMeshComponent>(GetAttachParent()))
    if(CanCopyBasePose(Source->GetSkeletalMeshAsset(),GetSkeletalMeshAsset()))
    {AddTickPrerequisiteComponent(Source);PosePrerequisite=Source;SetComponentTickEnabled(true);}
+ RefreshRemotePresentationMesh();
 }
 
 void UProject_JModularMeshComponent::OnAttachmentChanged()
@@ -466,8 +500,77 @@ void UProject_JModularMeshComponent::RefreshSharedPoseTick()
 
 void UProject_JModularMeshComponent::SetSkeletalMesh(USkeletalMesh* NewMesh, bool bReinitPose)
 {
+	ReleaseRemotePresentationLoad();
+	ApplyPresentationMesh(NewMesh, bReinitPose);
+	RefreshRemotePresentationMesh();
+}
+
+void UProject_JModularMeshComponent::ApplyPresentationMesh(USkeletalMesh* NewMesh, bool bReinitPose)
+{
 	ReleaseClothExecutionLease();
 	ResetClothNativeObservation();
 	Super::SetSkeletalMesh(NewMesh, bReinitPose);
 	if (bFollowAttachParentPose && IsRegistered()) RefreshAttachParentPose();
 }
+
+bool UProject_JModularMeshComponent::WantsRemotePresentationMesh() const
+{
+	const auto* Pawn = Cast<AProject_JPlayerCharacter>(GetOwner());
+	const auto* World = GetWorld();
+	if (!IsRegistered() || IsBeingDestroyed() || !IsValid(Pawn) || Pawn->IsActorBeingDestroyed() ||
+		!Pawn->HasActorBegunPlay() || !World || World->bIsTearingDown || !FApp::CanEverRender() ||
+		Pawn->IsLocallyControlled() || ProjectJ::Animation::IsLocalPlayerAvatar(Pawn))
+	{
+		return false;
+	}
+	const ENetMode Mode = World->GetNetMode();
+	return ((Mode == NM_Client && Pawn->GetLocalRole() == ROLE_SimulatedProxy) || Mode == NM_ListenServer) &&
+		IsValid(Pawn->GetPlayerState());
+}
+
+void UProject_JModularMeshComponent::ReleaseRemotePresentationLoad()
+{
+	if (!RemotePresentationLoad) return;
+	const uint64 Token = RemotePresentationLoad;
+	RemotePresentationLoad = 0;
+	if (auto* Assets = GetWorld() ? GetWorld()->GetSubsystem<UProject_JVisualAssetSubsystem>() : nullptr)
+		Assets->Release(Token);
+}
+
+void UProject_JModularMeshComponent::RefreshRemotePresentationMesh()
+{
+	if (!AuthoredPresentationMesh || RemotePresentationMesh.IsNull()) return;
+	if (!WantsRemotePresentationMesh())
+	{
+		ReleaseRemotePresentationLoad();
+		if (GetSkeletalMeshAsset() && GetSkeletalMeshAsset() == RemotePresentationMesh.Get())
+			ApplyPresentationMesh(AuthoredPresentationMesh, false);
+		return;
+	}
+	if (RemotePresentationLoad || GetSkeletalMeshAsset() != AuthoredPresentationMesh) return;
+	if (auto* Assets = GetWorld()->GetSubsystem<UProject_JVisualAssetSubsystem>())
+	{
+		RemotePresentationLoad = Assets->Request(this, RemotePresentationMesh.ToSoftObjectPath(),
+			[WeakPart = TWeakObjectPtr<UProject_JModularMeshComponent>(this)](UObject* Object)
+			{
+				auto* Part = WeakPart.Get();
+				if (!Part) return;
+				Part->ReleaseRemotePresentationLoad();
+				auto* Variant = Cast<USkeletalMesh>(Object);
+				if (Variant && Variant != Part->AuthoredPresentationMesh && Variant == Part->RemotePresentationMesh.Get() &&
+					Variant->GetSkeleton() == Part->AuthoredPresentationMesh->GetSkeleton() &&
+					Part->GetSkeletalMeshAsset() == Part->AuthoredPresentationMesh && Part->WantsRemotePresentationMesh())
+				{
+					Part->ApplyPresentationMesh(Variant, false);
+				}
+			});
+	}
+}
+
+#if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
+bool UProject_JModularMeshComponent::UsesNativeClothCadenceForTest() const
+{
+	return ClothTickFunction.TickInterval == 0.f && ClothTickFunction.IsTickFunctionRegistered() &&
+		ClothTickFunction.IsTickFunctionEnabled() && !bDisableClothSimulation && !IsClothBoundToLeaderComponent();
+}
+#endif

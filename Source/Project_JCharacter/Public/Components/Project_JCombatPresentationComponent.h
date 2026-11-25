@@ -102,11 +102,14 @@ private:
     void UpdateWarningMarker();
     void EndWarningCue(FGameplayTag CueTag);
 	const FProject_JCombatVFXCueDefinition* ResolveCue(FGameplayTag CueTag) const;
+	float GetCueOpacityMultiplier(FGameplayTag CueTag) const;
 	void PlayCueLocal(FGameplayTag CueTag, bool bBudgetGranted = false);
 	bool ShouldBudgetRemoteSpawn(const FProject_JCombatVFXCueDefinition& Cue) const;
 	void StopCueLocal(FGameplayTag CueTag);
 	void StopAllCues(bool bKeepWarnings = false);
 	void RetirePresentation();
+	friend class UProject_JWeaponPresentationComponent;
+	void InvalidateWeaponPresentationCache() { bWeaponPresentationLookupDone = false; }
 	bool CanAcceptPresentation() const;
 
 	// World-local loader owns residency and work admission; this component owns
@@ -173,4 +176,8 @@ private:
 	int32 LastAppliedPresentationRevision = 0;
 	uint32 ActiveAttackInstance = 0;
 	int32 LastAppliedRecoveryEventOrder = 0;
+	class UProject_JWeaponPresentationComponent* GetCachedWeaponPresentation();
+	TWeakObjectPtr<class UProject_JWeaponPresentationComponent> CachedWeaponPresentation;
+	TWeakObjectPtr<AActor> CachedWeaponPresentationOwner;
+	bool bWeaponPresentationLookupDone = false;
 };

@@ -188,7 +188,8 @@ bool UProject_JPlayerAnimInstance::EvaluateTeleport()
 }
 bool UProject_JPlayerAnimInstance::EvaluateTraversed()
 {
-	return !IsSlotActive(TEXT("DefaultSlot")) && GetCurveValue(TEXT("MovingTraversal"))>0.f && FMath::Abs(EvaluateTrajectoryTurnAngle())<=100.;
+	const auto& Frame = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
+	return !Frame.Montage.bDefaultSlotActive && GetCurveValue(TEXT("MovingTraversal"))>0.f && FMath::Abs(EvaluateTrajectoryTurnAngle())<=100.;
 }
 double UProject_JPlayerAnimInstance::EvaluateTrajectoryTurnAngle()
 {
@@ -220,13 +221,13 @@ EOffsetRootBoneMode UProject_JPlayerAnimInstance::EvaluateRootRotationMode()
 	// Root offset is rebased to the snapped component during travel. Interpolate
 	// avoids applying the component rotation delta a second time on that frame.
 	if (Frame.Movement.bMovementDashTravel) return EOffsetRootBoneMode::Interpolate;
-	const bool bSlotOwnsRoot = !Frame.Montage.bReleasedLocomotion && IsSlotActive(TEXT("DefaultSlot"));
+	const bool bSlotOwnsRoot = !Frame.Montage.bReleasedLocomotion && Frame.Montage.bDefaultSlotActive;
 	return bSlotOwnsRoot || (PlayerMovementMode == EProject_JPlayerMovementMode::Ragdoll) || (PlayerMovementMode == EProject_JPlayerMovementMode::Flying)?EOffsetRootBoneMode::Release:EOffsetRootBoneMode::Accumulate;
 }
 EOffsetRootBoneMode UProject_JPlayerAnimInstance::EvaluateRootTranslationMode()
 {
 	const auto& Frame = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
-	const bool bSlotOwnsRoot = !Frame.Montage.bReleasedLocomotion && IsSlotActive(TEXT("DefaultSlot"));
+	const bool bSlotOwnsRoot = !Frame.Montage.bReleasedLocomotion && Frame.Montage.bDefaultSlotActive;
 	return !bSlotOwnsRoot && EvaluateFootPinning() && EvaluateIsMoving()?EOffsetRootBoneMode::Interpolate:EOffsetRootBoneMode::Release;
 }
 double UProject_JPlayerAnimInstance::EvaluateRootTranslationHalfLife() { return (PlayerMovementState == EProject_JPlayerMovementState::Idle)?.1:.3; }
@@ -311,7 +312,8 @@ void UProject_JPlayerAnimInstance::UpdateNativeTrajectory()
 	PlayerTrajectoryTurnAngle = EvaluateTrajectoryTurnAngle();
 	PlayerTrajectoryFutureFacing = Trajectory.GetSampleAtTime(1.5f,false).Facing.Rotator();
 	PlayerFutureFacingDeltaLastFrame = PlayerFutureFacingDelta;
-	PlayerFutureFacingDelta = EvaluateTotalFacingDelta({0.,.25,.75,1.5});
+	static const TArray<float> DefaultFacingSampleTimes = { 0.f, 0.25f, 0.75f, 1.5f };
+	PlayerFutureFacingDelta = EvaluateTotalFacingDelta(DefaultFacingSampleTimes);
 	// Facing can cross its angular seam while the movement classification stays
 	// unchanged (for example, staggered diagonal keys in Strafe). Trajectory owns
 	// the facing delta; UpdateNativeStates alone owns movement-direction history.
@@ -495,9 +497,10 @@ void UProject_JPlayerAnimInstance::UpdateNativeAimOffset()
 	const FVector2D Previous=PlayerAO;
 	const FRotator Root=PlayerRootTransform.Rotator();const FRotator Delta=(Smoothed-Root).GetNormalized();
 	const FVector2D AO(Delta.Yaw,Delta.Pitch);PlayerAO = AO;
+	const auto& Frame = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
 	const bool Enabled=FMath::Abs((Target-Root).GetNormalized().Yaw)<=((PlayerMovementState == EProject_JPlayerMovementState::Idle)?110.:180.)
 		&& ((PlayerRotationMode == EProject_JPlayerRotationMode::Strafe) || (PlayerRotationMode == EProject_JPlayerRotationMode::Aim))
-		&& Blueprint_GetSlotMontageLocalWeight(TEXT("DefaultSlot"))<.5f && FMath::Abs(AO.X-Previous.X)<135.;
+		&& Frame.Montage.DefaultSlotLocalWeight<.5f && FMath::Abs(AO.X-Previous.X)<135.;
 	PlayerEnableAO = Enabled;
 	PlayerSmoothedAimTarget = Enabled?Smoothed:Target;PlayerAimAngularVelocity = Enabled?AngularVelocity:FVector::ZeroVector;
 }
