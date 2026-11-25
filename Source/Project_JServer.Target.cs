@@ -10,6 +10,8 @@ public class Project_JServerTarget : TargetRules
 		Type = TargetType.Server;
 		DefaultBuildSettings = BuildSettingsVersion.V7;
 		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_8;
-		ExtraModuleNames.AddRange(new string[] { "Project_J", "Project_JCore", "Project_JGAS", "Project_JCharacter" });
+		bUseUnityBuild = false;
+		bUseLoggingInShipping = true;
+		ExtraModuleNames.AddRange(new string[] { "Project_J", "Project_JCore", "Project_JMMO", "Project_JGAS", "Project_JMount", "Project_JCharacter" });
 	}
 }
