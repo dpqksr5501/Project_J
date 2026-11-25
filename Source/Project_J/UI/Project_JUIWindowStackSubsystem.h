@@ -1,8 +1,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Engine/EngineBaseTypes.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "Project_JUIWindowStackSubsystem.generated.h"
+
+class APlayerController;
+class FReply;
+class SWidget;
+class STextBlock;
+class UGameViewportClient;
+class ULocalPlayer;
+class UProject_JOnlineWorldSubsystem;
 
 UENUM(BlueprintType)
 enum class EProject_JColorblindTelegraphMode : uint8
@@ -72,8 +81,34 @@ public:
 	UFUNCTION(BlueprintPure, Category = "UI|Accessibility")
 	FProject_JAccessibilitySettings GetAccessibilitySettings() const { return Accessibility; }
 
+	/** An active queue overlay owns focus for its local controller until the request closes. */
+	bool DeferHUDInputModeForLoginQueue(APlayerController* Controller);
+
 private:
 	void OnWorldCleanup(UWorld* World, bool bSessionEnded, bool bCleanupResources);
+	void OnLocalPlayerRemoved(ULocalPlayer* Player);
+	void OnLoginQueueControllerChanged(APlayerController* NewController);
+	UFUNCTION() void OnLoginQueued(int32 Position);
+	UFUNCTION() void OnConnectDispatched(bool bDispatched);
+	void DismissLoginQueue();
+	FReply CancelLoginQueue();
+	TWeakObjectPtr<UProject_JOnlineWorldSubsystem> OnlineWorld;
+	TWeakObjectPtr<APlayerController> LoginQueueController;
+	TWeakObjectPtr<ULocalPlayer> LoginQueuePlayer;
+	TWeakObjectPtr<UGameViewportClient> LoginQueueViewport;
+	TSharedPtr<SWidget> LoginQueueOverlay;
+	TSharedPtr<SWidget> LoginQueueCancelButton;
+	TSharedPtr<STextBlock> LoginQueueLabel;
+	TWeakPtr<SWidget> PriorLoginQueueFocus;
+	int32 LoginQueueSlateUser = INDEX_NONE;
+	EMouseCaptureMode PriorMouseCapture{};
+	EMouseLockMode PriorMouseLock{};
+	bool bPriorViewportIgnoresInput = false;
+	bool bPriorHideCursorDuringCapture = false;
+	bool bPriorShowMouseCursor = false;
+	bool bDeferredHUDInputMode = false;
+	FDelegateHandle ControllerChangedHandle;
+	FDelegateHandle LocalPlayerRemovedHandle;
 	FDelegateHandle WorldCleanupHandle;
 	TArray<FName> WindowStack;
 	FProject_JAccessibilitySettings Accessibility;

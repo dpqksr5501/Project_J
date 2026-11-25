@@ -14,11 +14,15 @@ bool FProjectJPhase3CrossAssetValidatorTest::RunTest(const FString&)
 	TestFalse(TEXT("NPC with PoseSearch/Chooser blocked"), ValidateNPCAnimPolicy(TEXT("ABP_NPC_Bad"), true).bPassed);
 
 	TestTrue(TEXT("Properly authored foliage passes"),
-		ValidateFoliageAssetPolicy(TEXT("SM_PineTree"), TEXT("HLODLayer_Foliage_Impostor"), 8000.f).bPassed);
-	TestFalse(TEXT("Foliage without Impostor HLOD blocked"),
-		ValidateFoliageAssetPolicy(TEXT("SM_OakTree"), TEXT("HLODLayer_MeshMerge"), 8000.f).bPassed);
-	TestFalse(TEXT("Foliage without WPO distance cut blocked"),
-		ValidateFoliageAssetPolicy(TEXT("SM_BirchTree"), TEXT("HLODLayer_Foliage_Impostor"), 0.f).bPassed);
+		ValidateFoliageAssetPolicy(TEXT("PineInstances"), true, TOptional<int32>(10000)).bPassed);
+	TestFalse(TEXT("Foliage without an explicit Instancing HLOD layer is detected"),
+		ValidateFoliageAssetPolicy(TEXT("OakInstances"), false, TOptional<int32>(8000)).bPassed);
+	TestFalse(TEXT("Active WPO without a cutoff is detected"),
+		ValidateFoliageAssetPolicy(TEXT("BirchInstances"), true, TOptional<int32>(0)).bPassed);
+	TestFalse(TEXT("Active WPO beyond the cutoff ceiling is detected"),
+		ValidateFoliageAssetPolicy(TEXT("BirchInstances"), true, TOptional<int32>(10001)).bPassed);
+	TestTrue(TEXT("Foliage with no confirmed WPO does not require a cutoff"),
+		ValidateFoliageAssetPolicy(TEXT("StaticTreeInstances"), true, {}).bPassed);
 
 	// Verify actual repository Config/DefaultScalability.ini keeps Skeletal RT OFF on @2/@3.
 	FString ScalabilityIni;

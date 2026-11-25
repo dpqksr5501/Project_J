@@ -28,6 +28,8 @@
     [switch]$VerifyRemoteCloak,
     [ValidateRange(1,200)][int]$CloseBatchSize = 200,
     [ValidateRange(0,65535)][int]$ServerMetricsPort = 0,
+    [ValidateRange(1,199)][int]$VerifyCrowdCap,
+    [ValidateRange(1,1000)][double]$MaxBurstTickIntervalP95Ms,
     [ValidateRange(1025,65535)][int]$Port = 17976,
     [string]$UnrealEditor = 'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
 )
@@ -35,6 +37,11 @@ $ErrorActionPreference = 'Stop'
 if ($SplitGenerators -and (!$MeasureCombat -or $Clients -lt 2)) { throw 'Split measurement requires at least two combat clients.' }
 if ($PSBoundParameters.ContainsKey('CloseBatchSize') -and !$MeasureCombat) { throw 'CloseBatchSize requires MeasureCombat.' }
 if ($BossCombat -and !$MeasureCombat) { throw 'The authored boss workload requires MeasureCombat.' }
+if ($MaxBurstTickIntervalP95Ms -and !$MeasureCombat) { throw 'A tick interval budget requires MeasureCombat.' }
+if ($VerifyCrowdCap -and (!$BossCombat -or $LegacyReplication -or !$ServerMetricsPort -or
+    $RenderedClient -or $VerifyCrowdCap -ge ($Clients - 1))) {
+    throw 'VerifyCrowdCap requires an Iris headless boss run, a metrics port, and more remote peers than the cap.'
+}
 if ($StableBossLayout -and (!$BossCombat -or $Clients -lt 32 -or $Clients -gt 64)) { throw 'StableBossLayout requires the 32–64-client authored boss workload.' }
 if ($BossHitDiagnostics -and !$BossCombat) { throw 'BossHitDiagnostics requires the authored boss workload.' }
 if (($DungeonCombat -or $FieldArena) -and !$BossCombat) { throw 'A placed arena requires the authored BossCombat workload.' }
@@ -114,6 +121,10 @@ if ($FieldArena) { $serverArgs += '-ProjectJCohortFieldArena' }
 if ($OwnerOnlyPeers) { $serverArgs += '-ProjectJCohortOwnerOnlyPeers' }
 if ($ServerTrace) { $serverArgs += @('-trace=cpu,frame,bookmark', '-statnamedevents', "-tracefile=$report/Server.utrace") }
 $serverExec = @()
+if ($VerifyCrowdCap) {
+    $serverArgs += '-ProjectJCohortCrowdGroups'
+    $serverExec += "ProjectJ.Net.MaxVisibleRemoteActors $VerifyCrowdCap"
+}
 if ($ServerTickScheduler) {
     $knobs = @('tick.AllowBatchedTicks', 'tick.AllowAsyncTickDispatch', 'tick.AllowAsyncTickCleanup')
     $commands = if ($ServerTickScheduler -eq 'Observe') { @() } else {
@@ -205,6 +216,7 @@ foreach ($entry in $generatorCounts.GetEnumerator()) {
 Write-Output "Started one server and $($processes.Count - 1) client host(s) for $Clients game connections. $report"
 $hostSamples = [Collections.Generic.List[object]]::new()
 $metricsSnapshot = $null
+$crowdSample = $null
 if ($MeasureCombat) {
     $timer = [Diagnostics.Stopwatch]::StartNew()
     while (@($processes.Values | Where-Object { !$_.HasExited }).Count) {
@@ -224,9 +236,20 @@ if ($MeasureCombat) {
             (Select-String -LiteralPath "$report/Server.log" -SimpleMatch 'COHORT_BOSS_AIM' -Quiet)) {
             try {
                 $body = (Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:$ServerMetricsPort/metrics" -TimeoutSec 1).Content
-                if ($body -match '(?m)^projectj_iris_crowd_tracked_objects (\d+)$' -and [int]$Matches[1] -gt 0) {
+                $gauges = @{}
+                foreach ($m in [regex]::Matches([string]$body, '(?m)^projectj_(iris_crowd_\w+|server_active_ccu) (\d+)\r?$')) {
+                    $gauges[$m.Groups[1].Value] = [long]$m.Groups[2].Value
+                }
+                $capObserved = $gauges.server_active_ccu -eq $Clients -and $gauges.iris_crowd_tracked_objects -ge $Clients -and
+                    $gauges.iris_crowd_effective_cap -gt 0 -and $gauges.iris_crowd_effective_cap -le $VerifyCrowdCap -and
+                    $gauges.iris_crowd_allowed_pairs -gt 0 -and $gauges.iris_crowd_culled_pairs -gt 0
+                if ($gauges.iris_crowd_tracked_objects -gt 0 -and (!$VerifyCrowdCap -or $capObserved)) {
+                    $crowdSample = $gauges
                     $metricsSnapshot = $body
                     Set-Content -LiteralPath "$report/server-metrics.prom" -Value $body -Encoding utf8NoBOM -NoNewline
+                }
+                elseif ($gauges.server_active_ccu -eq $Clients) {
+                    Set-Content -LiteralPath "$report/server-metrics-last-full.prom" -Value $body -Encoding utf8NoBOM -NoNewline
                 }
             } catch [System.Net.Http.HttpRequestException] {} catch [System.Threading.Tasks.TaskCanceledException] {}
         }
@@ -375,6 +398,11 @@ if ($FieldArena) {
 if ($BossCombat) {
     $passed = $passed -and [bool](Select-String -LiteralPath "$report/Server.log" -SimpleMatch "COHORT_BOSS_AIM accepted=$Clients expected=$Clients" -Quiet)
 }
+if ($VerifyCrowdCap) { $passed = $passed -and [bool]$crowdSample }
+if ($MaxBurstTickIntervalP95Ms) {
+    $observedInterval = $combat.phases.Burst.tickIntervalMs.p95
+    $passed = $passed -and $null -ne $observedInterval -and $observedInterval -le $MaxBurstTickIntervalP95Ms
+}
 if ($StableBossLayout) {
     $passed = $passed -and [bool](Select-String -LiteralPath "$report/Server.log" -SimpleMatch "COHORT_BOSS_LAYOUT anchor=32 participants=$Clients" -Quiet)
 }
@@ -424,6 +452,9 @@ if ($RenderedClient) {
 }
 [ordered]@{ passed = $passed; serverVerified = $serverVerified; generatorVerified = $generatorVerified
     serverMetricsObserved = if ($ServerMetricsPort) { [bool]$metricsSnapshot } else { $null }
+    requestedCrowdCap = if ($VerifyCrowdCap) { $VerifyCrowdCap } else { $null }
+    observedCrowdMetrics = $crowdSample
+    maxBurstTickIntervalP95Ms = if ($MaxBurstTickIntervalP95Ms) { $MaxBurstTickIntervalP95Ms } else { $null }
     replication = $(if ($irisObserved) { 'Iris' } else { 'Generic' }); replicationVerified = $replicationVerified
     requested = $Clients; peakGameConnections = $peak; confirmedStrikes = $strikes; expectedStrikes = $expected
     serverExit = $server.ExitCode; generatorExit = [int]$generatorExit; generators = $generators; combat = $combat

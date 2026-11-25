@@ -1,6 +1,186 @@
 // Optional non-Shipping, current MainWorld production interaction/arrival acceptance.
 // Included inside the existing network-fixture anonymous namespace after WriteResult.
 #if !UE_BUILD_SHIPPING
+// Standalone reproduction of the existing ClimbTurnDive editor route. Uses the same
+// production controller and World Partition sources in Editor -game or Development packages.
+struct FProjectJMainWorldFlightProbe
+{
+    const double Deadline = FPlatformTime::Seconds() + 150.0;
+    const bool bSpeedClamp = FParse::Param(FCommandLine::Get(), TEXT("ProjectJFlightSpeedClamp"));
+    const bool bUseStarterBlueprint = FParse::Param(FCommandLine::Get(), TEXT("ProjectJFlightMountBlueprint"));
+    TWeakObjectPtr<AProject_JMountMoverPawn> Mount;
+    TWeakObjectPtr<UProject_JWorldStreamingComponent> Activation;
+    TWeakObjectPtr<UProject_JWorldPreloadStreamingComponent> Preload;
+    TArray<TSharedPtr<FJsonValue>> Samples;
+    TArray<float> FrameTimes;
+    FVector LastPosition = FVector::ZeroVector;
+    double Start = 0, LastSample = 0, Distance = 0, PriorTurnYaw = 0, TurnDegrees = 0;
+    double PeakClimb = 0, PeakDive = 0, PeakSpeed = 0;
+    double LastFrameWallTime = 0;
+    int32 IncompleteSamples = 0, BothSourceSamples = 0, VerticalSourceSamples = 0;
+    int32 MountInputSamples = 0, LimitedInputSamples = 0;
+    bool bMounted = false, bHaveTurnHeading = false;
+
+    bool Finish(bool bPassed, const TCHAR* Reason)
+    {
+        auto Result = MakeShared<FJsonObject>();
+        Result->SetBoolField(TEXT("passed"), bPassed);
+        Result->SetStringField(TEXT("reason"), Reason);
+        Result->SetStringField(TEXT("route"), TEXT("ClimbTurnDive"));
+        Result->SetBoolField(TEXT("packaged_content_required"), FPlatformProperties::RequiresCookedData());
+        Result->SetBoolField(TEXT("local_speed_clamp"), bSpeedClamp);
+        Result->SetStringField(TEXT("mount_class"), GetPathNameSafe(Mount.IsValid() ? Mount->GetClass() : nullptr));
+        Result->SetNumberField(TEXT("path_distance_cm"), Distance);
+        Result->SetNumberField(TEXT("peak_speed_cm_s"), PeakSpeed);
+        Result->SetNumberField(TEXT("climb_peak_cm_s"), PeakClimb);
+        Result->SetNumberField(TEXT("dive_peak_cm_s"), PeakDive);
+        Result->SetNumberField(TEXT("turn_degrees"), TurnDegrees);
+        Result->SetNumberField(TEXT("incomplete_samples"), IncompleteSamples);
+        Result->SetNumberField(TEXT("both_sources_samples"), BothSourceSamples);
+        Result->SetNumberField(TEXT("vertical_sources_samples"), VerticalSourceSamples);
+        Result->SetNumberField(TEXT("mount_input_samples"), MountInputSamples);
+        Result->SetNumberField(TEXT("limited_speed_input_samples"), LimitedInputSamples);
+        Result->SetNumberField(TEXT("frame_samples"), FrameTimes.Num());
+        if (!FrameTimes.IsEmpty())
+        {
+            FrameTimes.Sort();
+            const auto Quantile = [this](float Fraction)
+            {
+                return FrameTimes[FMath::Clamp(FMath::CeilToInt(FrameTimes.Num() * Fraction) - 1, 0, FrameTimes.Num() - 1)];
+            };
+            Result->SetNumberField(TEXT("frame_ms_p50"), Quantile(0.50f));
+            Result->SetNumberField(TEXT("frame_ms_p95"), Quantile(0.95f));
+            Result->SetNumberField(TEXT("frame_ms_p99"), Quantile(0.99f));
+            Result->SetNumberField(TEXT("frame_ms_max"), FrameTimes.Last());
+            Result->SetNumberField(TEXT("frames_over_50_ms"), Algo::CountIf(FrameTimes, [](float Ms) { return Ms > 50.f; }));
+            Result->SetNumberField(TEXT("frames_over_100_ms"), Algo::CountIf(FrameTimes, [](float Ms) { return Ms > 100.f; }));
+        }
+        Result->SetArrayField(TEXT("samples"), Samples);
+        FString Json;
+        const FString Root = OutputRoot();
+        IFileManager::Get().MakeDirectory(*Root, true);
+        const bool bSaved = FJsonSerializer::Serialize(Result, TJsonWriterFactory<>::Create(&Json))
+            && FFileHelper::SaveStringToFile(Json, *(Root / TEXT("flight.json")));
+        FPlatformMisc::RequestExitWithStatus(false, bPassed && bSaved ? 0 : 1);
+        return false;
+    }
+
+    bool Tick(UWorld* World)
+    {
+        if (FPlatformTime::Seconds() >= Deadline) return Finish(false, TEXT("MainWorld flight exceeded its wall-time budget"));
+        if (!World || !World->HasBegunPlay()) return true;
+        if (World->GetNetMode() != NM_Standalone || World->GetOutermost()->GetName() != TEXT("/Game/World/MainWorld/Maps/L_MainWorld"))
+            return Finish(false, TEXT("Expected the standalone MainWorld package"));
+        auto* Controller = World->GetFirstPlayerController();
+        auto* Partition = World->GetWorldPartition();
+        auto* Streaming = World->GetSubsystem<UWorldPartitionSubsystem>();
+        const double Now = World->GetTimeSeconds();
+        if (!bMounted)
+        {
+            APawn* Rider = Controller ? Controller->GetPawn().Get() : nullptr;
+            if (!Rider || !Partition || !Partition->IsInitialized() || !Streaming || Now < 5.0) return true;
+            Activation = Controller->FindComponentByClass<UProject_JWorldStreamingComponent>();
+            Preload = Controller->FindComponentByClass<UProject_JWorldPreloadStreamingComponent>();
+            if (!Activation.IsValid() || !Preload.IsValid()) return Finish(false, TEXT("MainWorld did not create both production streaming providers"));
+            Activation->bLimitFlightSpeedForLocalStreaming = bSpeedClamp;
+            UClass* MountClass = AProject_JMountMoverPawn::StaticClass();
+            if (bUseStarterBlueprint)
+                MountClass = LoadClass<AProject_JMountMoverPawn>(nullptr, TEXT("/Game/DataAssetSets/MMO/BP_MountMover_Starter.BP_MountMover_Starter_C"));
+            if (!MountClass) return Finish(false, TEXT("Requested starter Blueprint is missing from the staged content"));
+            FActorSpawnParameters Spawn;
+            Spawn.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+            const FTransform SpawnTransform(FRotator(0, 20, 0), Rider->GetActorLocation());
+            Mount = World->SpawnActor<AProject_JMountMoverPawn>(MountClass, SpawnTransform, Spawn);
+            if (!Mount.IsValid() || !Mount->TryMountRider(Rider)) return Finish(false, TEXT("The local MainWorld player could not mount"));
+            auto* Mover = Mount->GetMountMover();
+            if (!Mover) return Finish(false, TEXT("Mount does not have a Mover component"));
+            Mover->MotionProfile.bCanFly = true;
+            if (!Mover->TryEnterFlightMode()) return Finish(false, TEXT("Mover rejected takeoff"));
+            Start = LastSample = Now;
+            LastFrameWallTime = FPlatformTime::Seconds();
+            LastPosition = Mount->GetActorLocation();
+            bMounted = true;
+            return true;
+        }
+        if (!Controller || !Partition || !Streaming || !Mount.IsValid() || Controller->GetPawn() != Mount.Get()
+            || !Activation.IsValid() || !Preload.IsValid()) return Finish(false, TEXT("Local flight lost its mount, world or streaming source"));
+        const double FrameWallTime = FPlatformTime::Seconds();
+        FrameTimes.Add(static_cast<float>((FrameWallTime - LastFrameWallTime) * 1000.0));
+        LastFrameWallTime = FrameWallTime;
+
+        const double Elapsed = Now - Start;
+        const bool bClimb = Elapsed < 8.0;
+        const bool bTurn = Elapsed >= 8.0 && Elapsed < 11.0;
+        const bool bDive = Elapsed >= 11.0 && Elapsed < 13.0;
+        const bool bRecover = Elapsed >= 13.0 && Elapsed < 16.0;
+        Mount->SetMountControlInput(FVector2D(1.0, bTurn ? 1.0 : 0.0), bClimb ? 0.62f : bDive ? -0.8f : bRecover ? 0.30f : 0.0f);
+        if (Now - LastSample >= 0.25)
+        {
+            if (!Mount->IsFlying()) return Finish(false, TEXT("Mount left flight on the representative route"));
+            const FVector Position = Mount->GetActorLocation();
+            const FVector Velocity = (Position - LastPosition) / (Now - LastSample);
+            if (Position.ContainsNaN() || Velocity.ContainsNaN()) return Finish(false, TEXT("Mount produced an invalid position or velocity"));
+            const double Heading = Velocity.Rotation().Yaw;
+            Distance += FVector::Dist(Position, LastPosition);
+            PeakSpeed = FMath::Max(PeakSpeed, Velocity.Size());
+            if (bClimb) PeakClimb = FMath::Max(PeakClimb, Velocity.Z);
+            if (bDive) PeakDive = FMath::Min(PeakDive, Velocity.Z);
+            if (bTurn)
+            {
+                if (bHaveTurnHeading) TurnDegrees += FMath::Abs(FRotator::NormalizeAxis(Heading - PriorTurnYaw));
+                PriorTurnYaw = Heading;
+                bHaveTurnHeading = true;
+            }
+            const auto& Sources = Partition->GetStreamingSources();
+            const auto* Loaded = Sources.FindByPredicate([&](const FWorldPartitionStreamingSource& Source)
+            {
+                return Source.Name == Preload->GetStreamingSourceIdentity() && Source.TargetState == EStreamingSourceTargetState::Loaded;
+            });
+            const auto* Activated = Sources.FindByPredicate([&](const FWorldPartitionStreamingSource& Source)
+            {
+                return Source.Name == Activation->GetStreamingSourceIdentity() && Source.TargetState == EStreamingSourceTargetState::Activated;
+            });
+            const auto HasVerticalShape = [&](const FWorldPartitionStreamingSource* Source)
+            {
+                return Source && Source->Shapes.ContainsByPredicate([&](const FStreamingSourceShape& Shape) { return Shape.Location.Z * Velocity.Z > 10000.0; });
+            };
+            const bool bBoth = Loaded && Activated;
+            const bool bVertical = HasVerticalShape(Loaded) && HasVerticalShape(Activated);
+            BothSourceSamples += bBoth ? 1 : 0;
+            VerticalSourceSamples += bVertical ? 1 : 0;
+            const bool bComplete = Streaming->IsAllStreamingCompleted();
+            IncompleteSamples += bComplete ? 0 : 1;
+            auto Row = MakeShared<FJsonObject>();
+            Row->SetNumberField(TEXT("time_s"), Elapsed);
+            Row->SetNumberField(TEXT("x_cm"), Position.X);
+            Row->SetNumberField(TEXT("y_cm"), Position.Y);
+            Row->SetNumberField(TEXT("z_cm"), Position.Z);
+            Row->SetNumberField(TEXT("speed_cm_s"), Velocity.Size());
+            Row->SetNumberField(TEXT("vertical_speed_cm_s"), Velocity.Z);
+            Row->SetBoolField(TEXT("both_sources"), bBoth);
+            if (const auto* Mover = Mount->GetMountMover())
+            {
+                if (const auto* Input = Mover->GetLastInputCmd().InputCollection.FindDataByType<FProject_JMountMoverInputs>())
+                {
+                    ++MountInputSamples;
+                    LimitedInputSamples += Input->FlightStreamingSpeedScale < MAX_uint8 ? 1 : 0;
+                    Row->SetNumberField(TEXT("consumed_flight_speed_scale"), Input->GetFlightStreamingSpeedScale());
+                }
+            }
+            Row->SetBoolField(TEXT("vertical_sources"), bVertical);
+            Row->SetBoolField(TEXT("partition_complete"), bComplete);
+            Samples.Add(MakeShared<FJsonValueObject>(Row));
+            LastSample = Now;
+            LastPosition = Position;
+        }
+        if (Elapsed < 32.0) return true;
+        const bool bPassed = Distance > 25000.0 && PeakClimb > 200.0 && PeakDive < -200.0 && TurnDegrees > 45.0
+            && BothSourceSamples > 0 && VerticalSourceSamples > 0;
+        return Finish(bPassed, bPassed ? TEXT("Representative flight and both consumed World Partition sources were observed")
+            : TEXT("Motion or World Partition source requirements were not observed"));
+    }
+};
+
 void AppendArrivalPreparationStats(UWorld* World, FJsonObject& Row)
 {
     const auto* Execution = World ? World->GetSubsystem<UProject_JWorldArrivalSubsystem>() : nullptr;

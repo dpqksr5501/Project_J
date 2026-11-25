@@ -93,6 +93,7 @@ class PROJECT_J_API UProject_JPlayerUIComponent : public UActorComponent
 	UFUNCTION(BlueprintCallable) void SetObservedTarget(AActor *Target);
 
   private:
+	friend class UProject_JUIWindowStackSubsystem;
 	friend class FProjectJUIScreenFailureLifetimeTest;
 	friend class FProjectJUISkillReleaseOwnershipTest;
 	friend class FProjectJAudit2SharedSkillHoldTest;

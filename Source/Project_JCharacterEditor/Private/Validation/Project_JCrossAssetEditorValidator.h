@@ -7,7 +7,7 @@
  * Automatic UE Editor Save & DataValidation guardrail (BP06 / Stage A):
  *  - Blocks PoseSearch/Chooser Motion Matching nodes on NPC AnimBlueprints (NPC non-MM invariant).
  *  - Validates UProject_JNPCBrainDefinition leash/sight bounds.
- *  - Validates Config/DefaultScalability.ini keeps Skeletal RT OFF on High/Epic (@2/@3).
+ *  - Checks the HLOD layer and active WPO cutoff of loaded MainWorld forest components.
  */
 UCLASS()
 class UProject_JCrossAssetEditorValidator : public UEditorValidatorBase

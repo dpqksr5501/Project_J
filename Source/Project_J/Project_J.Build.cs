@@ -33,6 +33,7 @@ public class Project_J : ModuleRules
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {
+			"Project_JMount",
 			"NavigationSystem", // Native navigation readiness used directly by the socket fixture.
 			"OnlineSubsystemUtils",
 			"SQLiteCore",
@@ -47,11 +48,17 @@ public class Project_J : ModuleRules
 			"Niagara",
 			"ClothingSystemRuntimeInterface"
 		});
+		// UE-404796 is fixed upstream after 5.8.4. Only the affected cooked Windows targets need this hook.
+		if (Target.Platform == UnrealTargetPlatform.Win64 && (Target.Type == TargetType.Game || Target.Type == TargetType.Client)
+			&& Target.Version.MajorVersion == 5 && Target.Version.MinorVersion == 8 && Target.Version.PatchVersion == 4)
+		{
+			PrivateDependencyModuleNames.Add("Landscape");
+			PrivateDefinitions.Add("PROJECT_J_LANDSCAPE_PSO_REACTIVATION_WORKAROUND=1");
+		}
 
 		if (Target.bBuildEditor)
 		{
 			PrivateDependencyModuleNames.Add("AnimationBudgetAllocator");
-			PrivateDependencyModuleNames.Add("Project_JMount");
 			PrivateDependencyModuleNames.Add("Project_JAnimationNodes");
 			PrivateDependencyModuleNames.Add("AnimationBlueprintLibrary"); // Public read-only notify copy API for editor diagnostics.
 			PrivateDependencyModuleNames.AddRange(new string[] { "PoseSearch", "Chooser", "BlendStack", "IKRig", "AnimGraphRuntime" });

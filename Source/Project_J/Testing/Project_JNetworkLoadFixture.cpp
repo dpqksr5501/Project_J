@@ -1,4 +1,5 @@
 #include "Testing/Project_JNetworkLoadFixture.h"
+#include "Algo/Count.h"
 #include "Network/Project_JPlayerStateAudienceFilter.h"
 #include "Network/Project_JOwnedPawnScopeComponent.h"
 #include "AIController.h"
@@ -47,6 +48,7 @@
 #include "WorldPartition/HLOD/HLODRuntimeSubsystem.h"
 #include "WorldPartition/HLOD/IWorldPartitionHLODObject.h"
 #include "WorldPartition/HLOD/HLODActor.h"
+#include "Mount/Project_JMountMoverComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
@@ -835,6 +837,26 @@ void UProject_JNetworkFixtureLifetime::Initialize(FSubsystemCollectionBase& Coll
 	const bool bAudit = !UE_BUILD_SHIPPING && FParse::Param(FCommandLine::Get(), TEXT("ProjectJAuditNetwork"));
     const bool bWorldSmoke = !UE_BUILD_SHIPPING && FParse::Param(FCommandLine::Get(), TEXT("ProjectJAuditWorldSmoke"));
 #if !UE_BUILD_SHIPPING
+    if (FParse::Param(FCommandLine::Get(), TEXT("ProjectJMainWorldFlight")))
+    {
+        FString Output;
+        if (bAudit || bWorldSmoke || Enabled()
+            || !FParse::Value(FCommandLine::Get(), TEXT("ProjectJDOutput="), Output) || Output.IsEmpty()
+            || IFileManager::Get().FileExists(*(Output / TEXT("flight.json"))))
+        {
+            UE_LOG(LogProjectJDNetwork, Error, TEXT("MainWorld flight needs an unused -ProjectJDOutput and cannot run with another network fixture."));
+            FPlatformMisc::RequestExitWithStatus(false, 1);
+            return;
+        }
+        TWeakObjectPtr<UProject_JNetworkFixtureLifetime> WeakThis(this);
+        const auto Probe = MakeShared<FProjectJMainWorldFlightProbe>();
+        Timeout = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([WeakThis, Probe](float)
+        {
+            auto* Self = WeakThis.Get();
+            return Self && Probe->Tick(Self->GetWorld());
+        }));
+        return;
+    }
     if (FParse::Param(FCommandLine::Get(), TEXT("ProjectJAuditWorldResidency")))
     {
         FString ArrivalRole;

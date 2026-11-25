@@ -18,6 +18,8 @@ function InitModule(ctx, logger, nk, initializer) {
     initializer.registerRpc("j_world_craft_commit", rpcWorldCraftCommit);
     initializer.registerRpc("j_world_quest_edit", rpcWorldQuestEdit);
     initializer.registerRpc("j_world_quest_progress", rpcWorldQuestProgress);
+    initializer.registerRpc("j_world_quest_history", rpcWorldQuestHistory);
+    initializer.registerRpc("j_world_set_chat_block", rpcWorldSetChatBlock);
     initializer.registerRpc("j_dungeon_clear", rpcDungeonClear);
     initializer.registerRpc("j_dungeon_allocate", rpcDungeonAllocate);
     initializer.registerRpc("j_dungeon_status", rpcDungeonStatus);
@@ -25,6 +27,7 @@ function InitModule(ctx, logger, nk, initializer) {
     initializer.registerRpc("j_dungeon_worker_admission", rpcDungeonWorkerAdmission);
     initializer.registerRpc("j_dungeon_acknowledge", rpcDungeonAcknowledge);
     initializer.registerRpc("j_world_channel_route", rpcWorldChannelRoute);
+    initializer.registerRpc("j_world_player_route", rpcWorldPlayerRoute);
     initializer.registerRpc("j_security_report_violation", rpcSecurityReportViolation);
     initializer.registerRpc("j_maintenance_prune_receipts", rpcMaintenancePruneReceipts);
     logger.info("Project J Nakama MMO module initialized.");
@@ -149,7 +152,14 @@ function rpcBossReward(ctx, logger, nk, payload) {
     var items = req.items.map(function (item) {
         if (!item || typeof item.definition_id !== "string" || item.definition_id.length < 1 || item.definition_id.length > 64
             || !Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 2147483647) throw Error("Invalid reward item");
-        return { definition_id: item.definition_id, quantity: item.quantity };
+        var result = { definition_id: item.definition_id, quantity: item.quantity };
+        // Legacy outbox payloads omitted the field. Preserve their receipt shape on replay.
+        if (item.definition_version !== undefined) {
+            if (!Number.isInteger(item.definition_version) || item.definition_version < 1
+                || item.definition_version > 2147483647) throw Error("Invalid reward definition version");
+            result.definition_version = item.definition_version;
+        }
+        return result;
     });
     var gold = req.gold === 0 || req.gold === "0" ? "0" : readRevision(req.gold);
     return runCommand(nk, "SELECT pj_grant_boss_reward($1::uuid, $2::uuid, $3::jsonb)::text AS result",
@@ -188,8 +198,17 @@ function readWorldChannel(value) {
 function rpcWorldLoginTicket(ctx, logger, nk, payload) {
     if (!ctx.userId || !payload || payload.length > 2048) throw Error("A Nakama player session is required");
     var req = JSON.parse(payload);
-    return runCommand(nk, "SELECT pj_issue_world_login($1, $2::uuid, $3, $4)::text AS result",
+    return runCommand(nk, "SELECT pj_issue_player_exact_login($1, $2::uuid, $3, $4)::text AS result",
         ["nakama:" + readId(ctx.userId), readId(req.character_id), readWorldZone(req.zone), readWorldChannel(req.channel)]);
+}
+
+function rpcWorldPlayerRoute(ctx, logger, nk, payload) {
+    if (!ctx.userId || !payload || payload.length > 2048) throw Error("A Nakama player session is required");
+    var req = JSON.parse(payload);
+    var slot = req.slot == null ? null : readRevision(req.slot);
+    return runCommand(nk, "SELECT pj_player_channel_route($1,$2::uuid,$3,$4,$5::bigint,$6)::text AS result",
+        ["nakama:" + readId(ctx.userId), readId(req.character_id), readWorldZone(req.zone),
+            readWorldChannel(req.channel), slot, req.cancel === true]);
 }
 
 function rpcWorldRedeemLogin(ctx, logger, nk, payload) {
@@ -203,7 +222,7 @@ function rpcWorldRedeemLogin(ctx, logger, nk, payload) {
         intent.return_expires = req.return_expires;
         if (req.return_instance != null) intent.return_instance = readId(req.return_instance);
     }
-    var result = runCommand(nk, "SELECT pj_redeem_world_login($1::jsonb)::text AS result", [JSON.stringify(intent)]);
+    var result = runCommand(nk, "SELECT pj_redeem_world_login_with_social($1::jsonb)::text AS result", [JSON.stringify(intent)]);
     var reason = JSON.parse(result).reason;
     if (reason) logger.warn("World login rejected: %s", reason);
     return result;
@@ -307,6 +326,25 @@ function rpcWorldQuestEdit(ctx, logger, nk, payload) {
         kind: req.kind, quest: req.quest };
     if (req.kind === "accept") intent.row = req.row;
     else if (req.kind === "track") intent.tracked = req.tracked;
+    else if (req.kind === "claim") {
+        if (!Number.isInteger(req.definition_version) || req.definition_version < 1 || req.definition_version > 2147483647
+            || !Number.isInteger(req.reward_level) || req.reward_level < 1 || req.reward_level > 10000
+            || !Array.isArray(req.reward_items) || req.reward_items.length > 8) throw Error("Invalid quest reward");
+        intent.definition_version = req.definition_version;
+        intent.expected_profile_revision = readRevision(req.expected_profile_revision);
+        intent.reward_level = req.reward_level;
+        intent.reward_xp = req.reward_xp === "0" ? "0" : readRevision(req.reward_xp);
+        intent.reward_items = req.reward_items.map(function (reward) {
+            if (!reward || typeof reward.definition !== "string" || reward.definition.length < 1 || reward.definition.length > 64
+                || !Number.isInteger(reward.version) || reward.version < 1 || reward.version > 2147483647
+                || !Number.isInteger(reward.level) || reward.level < 1 || reward.level > 10000
+                || !Number.isInteger(reward.quantity) || reward.quantity < 1 || reward.quantity > 1000000
+                || !Number.isInteger(reward.max_stack) || reward.max_stack < 1 || reward.max_stack > 2147483647)
+                throw Error("Invalid quest reward item");
+            return { definition: reward.definition, version: reward.version, level: reward.level,
+                quantity: reward.quantity, max_stack: reward.max_stack };
+        });
+    }
     else intent.changes = req.changes;
     return runCommand(nk, "SELECT pj_online_quest_edit($1::uuid, $2::jsonb)::text AS result",
         [readId(req.idempotency_key), JSON.stringify(intent)]);
@@ -319,6 +357,21 @@ function rpcWorldQuestProgress(ctx, logger, nk, payload) {
         kind: req.kind, earned_at: readRevision(req.earned_at), changes: req.changes };
     return runCommand(nk, "SELECT pj_online_earned_quest_progress($1::uuid, $2::jsonb)::text AS result",
         [readId(req.idempotency_key), JSON.stringify(intent)]);
+}
+
+function rpcWorldSetChatBlock(ctx, logger, nk, payload) {
+    var req = readServerRequest(ctx, nk, payload);
+    if (typeof req.block !== "boolean") throw Error("Invalid block state");
+    return runCommand(nk, "SELECT pj_set_chat_block($1::uuid,$2::bigint,$3::bigint,$4::uuid,$5::boolean)::text AS result",
+        [readId(req.character_id), readRevision(req.session_epoch), readRevision(req.block_revision), readId(req.target), req.block]);
+}
+
+function rpcWorldQuestHistory(ctx, logger, nk, payload) {
+    var req = readServerRequest(ctx, nk, payload);
+    if (!Number.isInteger(req.count) || req.count < 0 || req.count > 65536
+        || !Number.isInteger(req.ordinal) || req.ordinal < 0 || req.ordinal >= 2048) throw Error("Invalid quest history page");
+    return runCommand(nk, "SELECT pj_online_quest_history_page($1::uuid, $2::bigint, $3::integer, $4::integer)::text AS result",
+        [readId(req.character_id), readRevision(req.session_epoch), req.count, req.ordinal]);
 }
 
 function rpcDungeonClear(ctx, logger, nk, payload) {

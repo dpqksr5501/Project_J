@@ -6,6 +6,7 @@
 #include "Engine/GameInstance.h"
 #include "Gameplay/Project_JProgressionAndLifeSubsystem.h"
 #include "Misc/AutomationTest.h"
+#include "Network/Project_JMMOClientBridgeComponent.h"
 #include "Security/Project_JServerIntegritySubsystem.h"
 #include "Social/Project_JGuildAndSocialExtensions.h"
 #include "UI/Project_JUIWindowStackSubsystem.h"
@@ -166,6 +167,10 @@ bool FProjectJPhase3SocialTest::RunTest(const FString&)
 	}
 
 	// Friends, Block & Chat rate limiting.
+	const UFunction* SendChat = UProject_JMMOClientBridgeComponent::StaticClass()->FindFunctionByName(
+		GET_FUNCTION_NAME_CHECKED(UProject_JMMOClientBridgeComponent, ServerSendChatMessage));
+	TestTrue(TEXT("Authored chat widgets can send through the reliable server RPC"),
+		SendChat && SendChat->HasAllFunctionFlags(FUNC_BlueprintCallable | FUNC_NetServer | FUNC_NetReliable));
 	TestTrue(TEXT("Friend request sent"), Social->SendFriendRequest(Initiate, Member));
 	TestTrue(TEXT("Friend request accepted"), Social->AcceptFriendRequest(Member, Initiate));
 	TestTrue(TEXT("Mutual friendship active"), Social->AreFriends(Initiate, Member));
@@ -173,6 +178,9 @@ bool FProjectJPhase3SocialTest::RunTest(const FString&)
 	TestTrue(TEXT("Member blocks Initiate"), Social->BlockCharacter(Member, Initiate));
 	TestFalse(TEXT("Block terminates friendship"), Social->AreFriends(Initiate, Member));
 	TestFalse(TEXT("Blocked whisper rejected"), Social->AdmitChatMessage(Initiate, Member, EProject_JChatChannel::Whisper, TEXT("Spam"), 20.0));
+	TestFalse(TEXT("Block owner cannot recreate the friendship"), Social->SendFriendRequest(Member, Initiate));
+	TestFalse(TEXT("An unknown channel cannot fall through to world delivery"), Social->AdmitChatMessage(Member, {}, static_cast<EProject_JChatChannel>(250), TEXT("hello"), 20.0));
+	TestFalse(TEXT("Whisper requires an addressee"), Social->AdmitChatMessage(Member, {}, EProject_JChatChannel::Whisper, TEXT("hello"), 20.0));
 	TestTrue(TEXT("First world chat allowed"), Social->AdmitChatMessage(Member, FGuid(), EProject_JChatChannel::World, TEXT("LFG"), 100.0));
 	TestFalse(TEXT("World chat within 10s rate-limited"), Social->AdmitChatMessage(Member, FGuid(), EProject_JChatChannel::World, TEXT("LFG2"), 105.0));
 

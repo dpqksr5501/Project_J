@@ -49,8 +49,9 @@ public:
     /** Computes Stage 1 (Loaded preload) & Stage 2 (Activated) shapes with turn widening and altitude detail suppression. */
     static bool BuildTwoStageVelocityShapes(
         const FVector& Velocity,
+        bool bFlying,
         float YawRateDegPerSec,
-        float AltitudeAboveGroundCm,
+        TOptional<float> AltitudeAboveGroundCm,
         const FProject_JStreamingVelocityProfile& Profile,
         FTwoStageStreamingPlan& OutPlan);
 
@@ -59,7 +60,8 @@ public:
         const FVector& CurrentLocation,
         const FVector& AnchorLocation,
         double ElapsedSeconds,
-        const FProject_JStreamingVelocityProfile& Profile);
+        const FProject_JStreamingVelocityProfile& Profile,
+        bool bFlying = false);
 
     /** Returns a soft speed scale in [UnreadyForwardSpeedClampMin, 1.0] when forward cells lag behind high-speed flight. */
     static float ComputeSafeStreamingSpeedScale(
@@ -131,6 +133,7 @@ public:
 private:
     friend class UProject_JWorldPreloadStreamingComponent;
     friend class FProjectJPhase1HighSpeedStreamingTest;
+    const FProject_JStreamingVelocityProfile& GetVelocityProfile() const;
     FName GetDetailGridName() const;
     bool BuildPawnVelocityPlan(const APawn& Pawn, const FProject_JStreamingVelocityProfile& Profile, FTwoStageStreamingPlan& OutPlan) const;
     mutable TWeakObjectPtr<const APawn> ObservedPawn;
@@ -139,6 +142,7 @@ private:
     mutable double LastObservedVelocityTime = 0.0;
     mutable float ObservedYawRate = 0.0f;
     mutable TOptional<float> ObservedFlightAltitude;
+    mutable bool bObservedFlying = false;
     mutable TWeakObjectPtr<const APawn> FlightReadinessPawn;
     mutable double NextFlightReadinessSample = 0.0;
     mutable float FlightReadinessScale = 1.0f;
@@ -148,7 +152,7 @@ private:
 
 /**
  * Companion Stage-1 (TargetState = Loaded) streaming source attached to AProject_JPlayerController (BP02).
- * Warms disk/Pak/PSO 5-7s ahead during high-speed ground/flying travel without spawning actors early.
+ * Requests packages ahead of activation during high-speed ground or flying travel.
  */
 UCLASS(ClassGroup=(World), meta=(BlueprintSpawnableComponent))
 class PROJECT_J_API UProject_JWorldPreloadStreamingComponent : public UWorldPartitionStreamingSourceComponent
@@ -158,6 +162,8 @@ public:
     UProject_JWorldPreloadStreamingComponent();
     virtual void OnRegister() override;
     virtual bool GetStreamingSource(FWorldPartitionStreamingSource& Out) const override;
+    FName GetStreamingSourceIdentity() const { return StreamingSourceIdentity; }
+    /** Used when no paired activation source is available. */
     UPROPERTY(EditAnywhere, Category="Preparation|HighSpeed") FProject_JStreamingVelocityProfile VelocityProfile;
 private:
     FName StreamingSourceIdentity;

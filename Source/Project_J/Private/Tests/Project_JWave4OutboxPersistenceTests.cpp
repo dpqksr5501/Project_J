@@ -10,6 +10,7 @@
 #include "Engine/Engine.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
+#include "Gameplay/Project_JLootSubsystem.h"
 #include "HAL/FileManager.h"
 #include "Misc/Paths.h"
 #include "Misc/ScopeExit.h"
@@ -99,6 +100,191 @@ TSharedRef<FJsonObject> MakeReply(const FString& Status)
 }
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJBossRewardSettlementTest, "ProjectJ.Online.BossRewardSettlement", Wave4TestFlags)
+bool FProjectJBossRewardSettlementTest::RunTest(const FString&)
+{
+	const FString DbPath = MakeTempOutboxDbPath(TEXT("BossSettlement"));
+	ON_SCOPE_EXIT { CleanupOutboxDbFiles(DbPath); };
+	const FString Scope(TEXT("/game/testfield|1|fieldboss"));
+	const FGuid Defeat = FGuid::NewGuid();
+	constexpr int32 RecipientCount = 200;
+	TArray<FProject_JRolledLootGrant> Grants;
+	TMap<FGuid, TSharedPtr<FJsonObject>> QuestCredits;
+	FGuid QuestRecipient;
+	TSet<FGuid> Recipients;
+	TSet<FGuid> DispatchedKeys;
+	TArray<FDispatchedRecord> Dispatched;
+	const auto RecordDispatch = [&](FName Service, FName Operation, const FGuid& Key, const TArray<uint8>& Payload, auto Reply)
+	{
+		Dispatched.Add({Service, Operation, Key, Payload, MoveTemp(Reply)});
+	};
+	{
+		FTestOutboxHost Boot;
+		Boot.Online->SetOutboxDispatchHookForTest(RecordDispatch);
+		TestTrue(TEXT("Persistent store opens"), Boot.Online->ConfigurePersistentOutbox(DbPath));
+		Boot.Online->FlushPersistentOutboxForTest();
+		auto* Table = NewObject<UProject_JLootTableDefinition>();
+		auto& Entry = Table->Entries.AddDefaulted_GetRef();
+		Entry.ItemDefinitionId = TEXT("BossSword");
+		Entry.ItemDefinitionVersion = 2;
+		Entry.bGuaranteed = true;
+		auto* Loot = Boot.GI->GetSubsystem<UProject_JLootSubsystem>();
+		for (int32 Index = 0; Index < RecipientCount; ++Index)
+		{
+			const FGuid Character = FGuid::NewGuid();
+			Recipients.Add(Character);
+			Grants.Add(Loot->RollPersonalLoot(Table, Character, Index));
+		}
+		TestEqual(TEXT("Version is taken from the server loot table"), Grants[0].Items[0].ItemDefinitionVersion, 2);
+		QuestRecipient = Grants[0].RecipientCharacterId;
+		auto Quest = MakeShared<FJsonObject>();
+		Quest->SetStringField(TEXT("character_id"), UProject_JOnlineWorldSubsystem::GuidText(QuestRecipient));
+		Quest->SetStringField(TEXT("session_epoch"), TEXT("7"));
+		Quest->SetStringField(TEXT("earned_at"), TEXT("123456"));
+		QuestCredits.Add(QuestRecipient, Quest);
+		int32 Commits = 0;
+		int32 Failures = 0;
+		const auto OnCommitted = [&](bool bCommitted, double Remaining)
+		{
+			TestEqual(TEXT("No network dispatch precedes the local commit callback"), Dispatched.Num(), 0);
+			if (bCommitted)
+			{
+				++Commits;
+				TestTrue(TEXT("Cooldown starts after the durable write"), Remaining > 0.0 && Remaining <= 300.0);
+			}
+			else ++Failures;
+		};
+		const TArray<FProject_JRolledLootGrant> Duplicate{Grants[0], Grants[0]};
+		TestFalse(TEXT("Duplicate recipient rejects whole cohort"), UProject_JOnlineWorldSubsystem::EnqueueBossRewards(
+			Boot.World, Scope, Defeat, 300.0, Duplicate, OnCommitted));
+		Boot.Online->FailNextOutboxStoreWriteForTest();
+		AddExpectedError(TEXT("Outbox batch commit failed"), EAutomationExpectedErrorFlags::Contains, 1);
+		TestTrue(TEXT("Admit the 200-recipient cohort as one unit"), UProject_JOnlineWorldSubsystem::EnqueueBossRewards(
+			Boot.World, Scope, Defeat, 300.0, Grants, OnCommitted, QuestCredits));
+		TestFalse(TEXT("Do not submit the same defeat concurrently"), UProject_JOnlineWorldSubsystem::EnqueueBossRewards(
+			Boot.World, Scope, Defeat, 300.0, Grants, OnCommitted, QuestCredits));
+		Boot.Online->FlushPersistentOutboxForTest();
+		TestEqual(TEXT("Single failure for the whole cohort"), Failures, 1);
+		TestEqual(TEXT("Rollback dispatches zero requests"), Dispatched.Num(), 0);
+		double Remaining = -1.0;
+		TestTrue(TEXT("Cooldown state remains readable"), Boot.Online->TryGetBossRewardCooldown(Scope, Remaining));
+		TestEqual(TEXT("Rollback never publishes cooldown"), Remaining, 0.0);
+		TestTrue(TEXT("Same manifest can be retried"), UProject_JOnlineWorldSubsystem::EnqueueBossRewards(
+			Boot.World, Scope, Defeat, 300.0, Grants, OnCommitted, QuestCredits));
+		Boot.Online->FlushPersistentOutboxForTest();
+		TestEqual(TEXT("One durable settlement callback"), Commits, 1);
+		TestEqual(TEXT("Wire ceiling is shared by the whole cohort"), Dispatched.Num(), UProject_JOnlineWorldSubsystem::MaxOutboxInFlight);
+		Dispatched.Reset();
+	}
+	{
+		FTestOutboxHost Boot;
+		Boot.Online->SetOutboxDispatchHookForTest(RecordDispatch);
+		TestTrue(TEXT("Reopen the committed store"), Boot.Online->ConfigurePersistentOutbox(DbPath));
+		Boot.Online->FlushPersistentOutboxForTest();
+		const int32 RowCount = RecipientCount + QuestCredits.Num();
+		TestEqual(TEXT("All committed loot and quest rows recover together after restart"), Boot.Online->GetOutboxStats().RecoveredTotal, int64(RowCount));
+		double Remaining = 0.0;
+		TestTrue(TEXT("Cooldown recovers after restart"), Boot.Online->TryGetBossRewardCooldown(Scope, Remaining) && Remaining > 0.0);
+		int32 RecoveredQuestCredits = 0;
+		for (int32 Index = 0; Index < RowCount && !Dispatched.IsEmpty(); ++Index)
+		{
+			FDispatchedRecord Record = Dispatched.Pop(EAllowShrinking::No);
+			const FUTF8ToTCHAR Payload(reinterpret_cast<const ANSICHAR*>(Record.Payload.GetData()), Record.Payload.Num());
+			TSharedPtr<FJsonObject> Body;
+			if (!TestTrue(TEXT("Read recovered reward JSON"), FJsonSerializer::Deserialize(
+				TJsonReaderFactory<>::Create(FString(Payload.Length(), Payload.Get())), Body) && Body.IsValid())) return false;
+			FGuid Character;
+			FGuid::Parse(Body->GetStringField(TEXT("character_id")), Character);
+			TestFalse(TEXT("Stable transport key is unique"), DispatchedKeys.Contains(Record.Key));
+			DispatchedKeys.Add(Record.Key);
+			if (Record.Operation == TEXT("Quest_Progress"))
+			{
+				TestEqual(TEXT("Quest credit retains the same eligible character"), Character, QuestRecipient);
+				TestEqual(TEXT("Original earned clock survives settlement and restart"), Body->GetStringField(TEXT("earned_at")), FString(TEXT("123456")));
+				++RecoveredQuestCredits;
+			}
+			else
+			{
+				TestEqual(TEXT("All recipients retain the same defeat id"), Body->GetStringField(TEXT("defeat_id")), UProject_JOnlineWorldSubsystem::GuidText(Defeat));
+				TestEqual(TEXT("Each recipient occurs once"), Recipients.Remove(Character), 1);
+				const auto& Items = Body->GetArrayField(TEXT("items"));
+				if (!TestEqual(TEXT("Rolled item preserved"), Items.Num(), 1)) return false;
+				TestEqual(TEXT("Reward wire format retains v2 through restart"), Items[0]->AsObject()->GetNumberField(TEXT("definition_version")), 2.0);
+			}
+			Record.Reply(MakeReply(TEXT("REPLAYED")));
+			if (Dispatched.IsEmpty()) Boot.Online->FlushPersistentOutboxForTest();
+		}
+		Boot.Online->FlushPersistentOutboxForTest();
+		TestEqual(TEXT("Each expected recipient dispatched"), Recipients.Num(), 0);
+		TestEqual(TEXT("Exactly one quest credit dispatched"), RecoveredQuestCredits, 1);
+		TestEqual(TEXT("All stable receipts confirm"), Boot.Online->GetOutboxStats().ConfirmedTotal, int64(RowCount));
+		int32 Replay = 0;
+		TestTrue(TEXT("Reconciles a repeat of an already committed defeat"), UProject_JOnlineWorldSubsystem::EnqueueBossRewards(
+			Boot.World, Scope, Defeat, 300.0, Grants, [&Replay](bool bCommitted, double) { Replay += bCommitted; }, QuestCredits));
+		Boot.Online->FlushPersistentOutboxForTest();
+		TestEqual(TEXT("Stored defeat receipt confirms the replay"), Replay, 1);
+		TestEqual(TEXT("Repeat does not reissue already delivered mail"), Dispatched.Num(), 0);
+		Grants[0].Gold = 1;
+		AddExpectedError(TEXT("Defeat identity was reused with a different reward manifest"), EAutomationExpectedErrorFlags::Contains, 1);
+		int32 Mismatched = 0;
+		TestTrue(TEXT("Sent conflicting content to durable duplicate check"), UProject_JOnlineWorldSubsystem::EnqueueBossRewards(
+			Boot.World, Scope, Defeat, 300.0, Grants, [&Mismatched](bool bCommitted, double) { Mismatched += !bCommitted; }, QuestCredits));
+		Boot.Online->FlushPersistentOutboxForTest();
+		TestEqual(TEXT("Changed manifest is rejected"), Mismatched, 1);
+		TestEqual(TEXT("Conflict has no network side effects"), Dispatched.Num(), 0);
+	}
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJOutboxAgeAndAdmissionTest, "ProjectJ.Online.OutboxAgeAndAdmission", Wave4TestFlags)
+bool FProjectJOutboxAgeAndAdmissionTest::RunTest(const FString&)
+{
+	const FString DbPath = MakeTempOutboxDbPath(TEXT("Age"));
+	ON_SCOPE_EXIT { CleanupOutboxDbFiles(DbPath); };
+	const FGuid Key = FGuid::NewGuid();
+	const FGuid FreshKey = FGuid::NewGuid();
+	auto Seed = SeedPending(Key);
+	Seed.Record.PendingSinceUtcMs = static_cast<int64>((FDateTime::UtcNow() - FDateTime(1970, 1, 1)).GetTotalMilliseconds()) - 120000;
+	const bool bSeeded = Async(EAsyncExecution::ThreadPool, [DbPath, Seed, FreshKey]
+	{
+		FProject_JOnlineOutboxStore Store(DbPath);
+		int32 DeadLetters = 0;
+		const TArray<FProject_JOutboxStoreOp> Ops{Seed, SeedPending(FreshKey)};
+		const bool bSaved = Store.ApplyBatch(Ops, DeadLetters);
+		if (!Store.Close() || !bSaved) return false;
+		// Version 1 already stored a pending row's UTC time in updated_utc_ms.
+		FProject_JProfileDatabase Legacy;
+		const bool bLegacy = Legacy.Open(*DbPath, ESQLiteDatabaseOpenMode::ReadWrite)
+			&& Legacy.Execute(TEXT("DROP TABLE boss_reward_settlements;")) && Legacy.SetUserVersion(1);
+		return Legacy.Close() && bLegacy;
+	}).Get();
+	if (!TestTrue(TEXT("Seed two unresolved mutations in the version 1 schema"), bSeeded)) return false;
+
+	FTestOutboxHost Host;
+	TMap<FGuid, TFunction<void(TSharedPtr<FJsonObject>)>> Confirmations;
+	Host.Online->SetOutboxDispatchHookForTest([&](FName, FName, const FGuid& DispatchedKey, const TArray<uint8>&, auto Reply)
+	{
+		Confirmations.Add(DispatchedKey, MoveTemp(Reply));
+	});
+	if (!TestTrue(TEXT("Open the existing outbox"), Host.Online->ConfigurePersistentOutbox(DbPath))) return false;
+	auto Body = MakeShared<FJsonObject>();
+	Body->SetStringField(TEXT("character_id"), UProject_JOnlineWorldSubsystem::GuidText(FGuid::NewGuid()));
+	TestFalse(TEXT("FIFO progress awaits recovery"), UProject_JOnlineWorldSubsystem::EnqueueDurableMutation(
+		Host.World, TEXT("World"), TEXT("Quest_Progress"), Body, FGuid::NewGuid(), TEXT("startup")));
+	TestEqual(TEXT("Startup backpressure increments the capacity rejection counter"), Host.Online->GetOutboxStats().RejectedCapacityTotal, int64(1));
+	Host.Online->FlushPersistentOutboxForTest();
+	if (!TestTrue(TEXT("Migration preserves both pending keys"), Confirmations.Contains(Key) && Confirmations.Contains(FreshKey))) return false;
+	if (!TestTrue(TEXT("Active age includes the recovered legacy inflight mutation"), Host.Online->GetOutboxStats().OldestActiveAgeSeconds >= 119.0))
+		return false;
+	Confirmations.FindChecked(Key)(MakeReply(TEXT("COMMITTED")));
+	Host.Online->FlushPersistentOutboxForTest();
+	TestTrue(TEXT("The oldest age advances when that key is finalized"), Host.Online->GetOutboxStats().OldestActiveAgeSeconds < 119.0);
+	Confirmations.FindChecked(FreshKey)(MakeReply(TEXT("COMMITTED")));
+	Host.Online->FlushPersistentOutboxForTest();
+	TestEqual(TEXT("Completed durable work leaves no active age"), Host.Online->GetOutboxStats().OldestActiveAgeSeconds, 0.0);
+	return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJOutboxCrashRestartRecoveryTest, "ProjectJ.Online.OutboxCrashRestartRecovery", Wave4TestFlags)
 bool FProjectJOutboxCrashRestartRecoveryTest::RunTest(const FString&)
 {
@@ -123,7 +309,9 @@ bool FProjectJOutboxCrashRestartRecoveryTest::RunTest(const FString&)
 				Dispatched.Add({Service, Operation, Key, Payload, MoveTemp(Reply)});
 			});
 		TestTrue(TEXT("Boot1 configures persistent SQLite outbox"), Boot1.Online->ConfigurePersistentOutbox(DbPath));
+		TestFalse(TEXT("Admission waits for the store open acknowledgement"), Boot1.Online->IsPersistentOutboxReady());
 		Boot1.Online->FlushPersistentOutboxForTest();
+		TestTrue(TEXT("Admission sees the recovered store"), Boot1.Online->IsPersistentOutboxReady());
 
 		for (int32 i = 0; i < TotalRewards; ++i)
 		{

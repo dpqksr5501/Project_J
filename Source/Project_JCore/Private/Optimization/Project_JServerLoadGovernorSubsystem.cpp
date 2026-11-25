@@ -54,6 +54,7 @@ void UProject_JServerLoadGovernorSubsystem::Initialize(FSubsystemCollectionBase&
 	TickRing.SetNumZeroed(SampleWindowSize);
 	TickRingHead = 0;
 	TickRingCount = 0;
+	TickIntervalHistogram = {};
 	TickStartHandle = FWorldDelegates::OnWorldTickStart.AddUObject(this, &ThisClass::OnWorldTickStart);
 	TickEndHandle = FWorldDelegates::OnWorldTickEnd.AddUObject(this, &ThisClass::OnWorldTickEnd);
 }
@@ -63,6 +64,9 @@ void UProject_JServerLoadGovernorSubsystem::Deinitialize()
 	FWorldDelegates::OnWorldTickStart.Remove(TickStartHandle);
 	FWorldDelegates::OnWorldTickEnd.Remove(TickEndHandle);
 	SampledWorld.Reset();
+	TickIntervalWorld.Reset();
+	LastWorldTickStartSeconds = 0.0;
+	SampledTickIntervalSeconds = -1.0;
 	TickRing.Reset();
 	TickRingHead = 0;
 	TickRingCount = 0;
@@ -77,6 +81,10 @@ void UProject_JServerLoadGovernorSubsystem::OnWorldTickStart(UWorld* World, ELev
 	if (NetMode != NM_DedicatedServer && NetMode != NM_ListenServer) return;
 	SampledWorld = World;
 	TickStartedAt = FPlatformTime::Seconds();
+	SampledTickIntervalSeconds = TickIntervalWorld.Get() == World && LastWorldTickStartSeconds > 0.0
+		? TickStartedAt - LastWorldTickStartSeconds : -1.0;
+	TickIntervalWorld = World;
+	LastWorldTickStartSeconds = TickStartedAt;
 }
 
 void UProject_JServerLoadGovernorSubsystem::OnWorldTickEnd(UWorld* World, ELevelTick, float)
@@ -86,15 +94,28 @@ void UProject_JServerLoadGovernorSubsystem::OnWorldTickEnd(UWorld* World, ELevel
 	if (World->bIsTearingDown) return;
 	const double Now = FPlatformTime::Seconds();
 	const AGameStateBase* GS = World->GetGameState();
-	RecordTickSample((Now - TickStartedAt) * 1000., GS ? GS->PlayerArray.Num() : 0, Now);
+	RecordTickSample((Now - TickStartedAt) * 1000., GS ? GS->PlayerArray.Num() : 0, Now, SampledTickIntervalSeconds);
 }
 
-void UProject_JServerLoadGovernorSubsystem::RecordTickSample(double TickDurationMs, int32 CurrentCCU, double NowSeconds)
+void UProject_JServerLoadGovernorSubsystem::RecordTickSample(double TickDurationMs, int32 CurrentCCU, double NowSeconds,
+	double TickIntervalSeconds)
 {
 	check(IsInGameThread());
 	if (!FMath::IsFinite(TickDurationMs) || TickDurationMs < 0.0 || !FMath::IsFinite(NowSeconds))
 	{
 		return;
+	}
+
+	if (TickIntervalSeconds >= 0.0 && FMath::IsFinite(TickIntervalSeconds))
+	{
+		++TickIntervalHistogram.Count;
+		TickIntervalHistogram.SumSeconds += TickIntervalSeconds;
+		for (int32 Index = 0; Index < FProject_JTickIntervalHistogram::BucketCount; ++Index)
+		{
+			if (TickIntervalSeconds > FProject_JTickIntervalHistogram::BoundsSeconds[Index]) continue;
+			++TickIntervalHistogram.BucketCounts[Index];
+			break;
+		}
 	}
 
 	LastTickMs = TickDurationMs;
@@ -272,9 +293,9 @@ int32 UProject_JServerLoadGovernorSubsystem::GetEffectiveCrowdCap(int32 BaseCap)
 	switch (GetCurrentTier())
 	{
 	case EProject_JServerLoadTier::Yellow:
-		return FMath::Max(MinCrowdCapFloor, FMath::RoundToInt(static_cast<float>(BaseCap) * 0.70f));
+		return FMath::Clamp(FMath::RoundToInt(static_cast<float>(BaseCap) * 0.70f), FMath::Min(MinCrowdCapFloor, BaseCap), BaseCap);
 	case EProject_JServerLoadTier::Red:
-		return FMath::Max(MinCrowdCapFloor, FMath::RoundToInt(static_cast<float>(BaseCap) * 0.45f));
+		return FMath::Clamp(FMath::RoundToInt(static_cast<float>(BaseCap) * 0.45f), FMath::Min(MinCrowdCapFloor, BaseCap), BaseCap);
 	case EProject_JServerLoadTier::Green:
 	default:
 		return BaseCap;

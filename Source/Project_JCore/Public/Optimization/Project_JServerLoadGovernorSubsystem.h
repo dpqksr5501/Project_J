@@ -45,6 +45,16 @@ struct PROJECT_JCORE_API FProject_JServerGovernorSnapshot
 	int64 TierTransitionsTotal = 0;
 };
 
+/** Cumulative observations for Prometheus aggregation across server instances. */
+struct PROJECT_JCORE_API FProject_JTickIntervalHistogram
+{
+	static constexpr double BoundsSeconds[] = {0.010, 0.020, 0.030, 0.033333, 0.035, 0.050, 0.075, 0.100, 0.250, 1.000};
+	static constexpr int32 BucketCount = static_cast<int32>(UE_ARRAY_COUNT(BoundsSeconds));
+	int64 BucketCounts[BucketCount]{};
+	int64 Count = 0;
+	double SumSeconds = 0.0;
+};
+
 /**
  * Adaptive 3-tier hysteresis server load governor (AAA MMO survival valve).
  * Monitors authoritative server tick latency against the 30Hz (33.33ms) budget and
@@ -67,7 +77,7 @@ public:
 	virtual void Deinitialize() override;
 
 	/** Records one authoritative world tick sample (in ms) and updates the hysteresis state machine. */
-	void RecordTickSample(double TickDurationMs, int32 CurrentCCU, double NowSeconds);
+	void RecordTickSample(double TickDurationMs, int32 CurrentCCU, double NowSeconds, double TickIntervalSeconds = -1.0);
 
 	/** Forces a specific tier for testing/operator drills (-1 clears forced override). */
 	void SetForcedTierOverride(int32 ForcedTierIndex);
@@ -75,6 +85,7 @@ public:
 
 	EProject_JServerLoadTier GetCurrentTier() const;
 	FProject_JServerGovernorSnapshot GetSnapshot() const;
+	const FProject_JTickIntervalHistogram& GetTickIntervalHistogram() const { return TickIntervalHistogram; }
 
 	/** Scales a base remote-crowd replication cap according to current load tier. */
 	int32 GetEffectiveCrowdCap(int32 BaseCap) const;
@@ -115,8 +126,11 @@ private:
 	FDelegateHandle TickStartHandle;
 	FDelegateHandle TickEndHandle;
 	TWeakObjectPtr<UWorld> SampledWorld;
+	TWeakObjectPtr<UWorld> TickIntervalWorld;
 	double TickStartedAt = 0.;
 	double LastWorldTickStartSeconds = 0.0;
+	double SampledTickIntervalSeconds = -1.0;
+	FProject_JTickIntervalHistogram TickIntervalHistogram;
 
 	TArray<double> TickRing;
 	int32 TickRingHead = 0;

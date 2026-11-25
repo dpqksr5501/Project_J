@@ -124,15 +124,24 @@ void UProject_JServerDrainSubsystem::Deinitialize()
 	Super::Deinitialize();
 }
 
-void UProject_JServerDrainSubsystem::TickAgones(double NowSeconds)
+bool UProject_JServerDrainSubsystem::IsReadyForAdmission() const
 {
-	if (!AgonesSdkPort || AgonesRequest || NowSeconds < NextAgonesReportAt || State == EProject_JServerDrainState::ReadyToExit) return;
 	const auto* GI = GetGameInstance();
 	const UWorld* World = GI ? GI->GetWorld() : nullptr;
 	const auto* Online = GI ? GI->GetSubsystem<UProject_JOnlineWorldSubsystem>() : nullptr;
-	const bool bReportReady = !bAgonesReady && State == EProject_JServerDrainState::InService
-		&& World && !World->bIsTearingDown && World->HasBegunPlay() && World->GetNetDriver()
-		&& (!Online || !Online->HasOutboxStoreFailed());
+	if (IsDraining() || !Online || Online->HasOutboxStoreFailed()
+		|| (Online->HasPersistentOutbox() && !Online->IsPersistentOutboxReady())) return false;
+	if (IsRunningDedicatedServer() && (!World || World->bIsTearingDown || !World->HasBegunPlay() || !World->GetNetDriver()))
+		return false;
+	if (!UProject_JOnlineWorldSubsystem::UsesOnlineBackend(World)) return true;
+	const auto* Mode = World->GetAuthGameMode<AProject_JGameMode>();
+	return Online->IsPersistentOutboxReady() && Mode && Mode->HasOnlineChannelLease();
+}
+
+void UProject_JServerDrainSubsystem::TickAgones(double NowSeconds)
+{
+	if (!AgonesSdkPort || AgonesRequest || NowSeconds < NextAgonesReportAt || State == EProject_JServerDrainState::ReadyToExit) return;
+	const bool bReportReady = !bAgonesReady && IsReadyForAdmission();
 	NextAgonesReportAt = NowSeconds + (bReportReady ? 1. : 2.);
 	AgonesRequest = FHttpModule::Get().CreateRequest();
 	AgonesRequest->SetDelegateThreadPolicy(EHttpRequestDelegateThreadPolicy::CompleteOnGameThread);

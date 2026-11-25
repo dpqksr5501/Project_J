@@ -1,5 +1,6 @@
 #if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
 #include "Backend/Project_JNakamaServicePort.h"
+#include "Components/BoxComponent.h"
 #include "Engine/Engine.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
@@ -87,32 +88,45 @@ bool FProjectJPhase1HighSpeedStreamingTest::RunTest(const FString&)
 
 	// Walking speed (< 600 cm/s) keeps high-speed 2-stage dormant.
 	TestTrue(TEXT("Walking query valid"),
-		UProject_JWorldStreamingComponent::BuildTwoStageVelocityShapes(FVector(300, 0, 0), 0.f, 0.f, Profile, Plan));
+		UProject_JWorldStreamingComponent::BuildTwoStageVelocityShapes(FVector(300, 0, 1400), false, 0.f, {}, Profile, Plan));
 	TestFalse(TEXT("Walking does not engage high-speed 2-stage"), Plan.bHighSpeedActive);
 
 	// High-speed flying (3000 cm/s, altitude 200m, straight) engages Stage 1 Loaded ahead of Stage 2 Activated + detail suppression.
 	TestTrue(TEXT("Flying query valid"),
-		UProject_JWorldStreamingComponent::BuildTwoStageVelocityShapes(FVector(3000, 0, 0), 0.f, 20000.f, Profile, Plan));
+		UProject_JWorldStreamingComponent::BuildTwoStageVelocityShapes(FVector(3000, 0, 0), true, 0.f, 20000.f, Profile, Plan));
 	TestTrue(TEXT("High-speed 2-stage engaged"), Plan.bHighSpeedActive);
 	TestTrue(TEXT("Altitude >= 150m suppresses Grid_Detail"), Plan.bSuppressDetailGrid);
 	TestFalse(TEXT("Straight flight does not fan-widen"), Plan.bTurnWidened);
 	TestTrue(TEXT("Stage 1 Loaded shapes generated"), Plan.Stage1LoadedShapes.Num() > 0);
 	TestTrue(TEXT("Stage 2 Activated shapes generated"), Plan.Stage2ActivatedShapes.Num() > 0);
 	const double MaxLoadedX = Plan.Stage1LoadedShapes.Last().Location.X;
-	const double MaxActivatedX = Plan.Stage2ActivatedShapes[Plan.Stage2ActivatedShapes.Num() - 2].Location.X;
+	const double MaxActivatedX = Plan.Stage2ActivatedShapes.Last().Location.X;
 	TestTrue(TEXT("Stage 1 Loaded reaches further ahead than Stage 2 Activated"), MaxLoadedX > MaxActivatedX);
 
 	// Sharp turn widens into +/-45 deg fan.
 	TestTrue(TEXT("Turning query valid"),
-		UProject_JWorldStreamingComponent::BuildTwoStageVelocityShapes(FVector(2000, 0, 0), 90.f, 5000.f, Profile, Plan));
+		UProject_JWorldStreamingComponent::BuildTwoStageVelocityShapes(FVector(2000, 0, -1000), true, 90.f, 5000.f, Profile, Plan));
 	TestTrue(TEXT("Sharp turn triggers fan widening"), Plan.bTurnWidened);
 	TestFalse(TEXT("Low altitude keeps Grid_Detail active"), Plan.bSuppressDetailGrid);
+	TestTrue(TEXT("Turn fan retains the straight descent and extends both sides"), Plan.Stage2ActivatedShapes.Num() == 3
+		&& Plan.Stage2ActivatedShapes[0].Location.Y == 0.0 && Plan.Stage2ActivatedShapes[0].Location.Z < 0.0
+		&& Plan.Stage2ActivatedShapes[1].Location.Y < 0.0 && Plan.Stage2ActivatedShapes[2].Location.Y > 0.0);
+
+	TestTrue(TEXT("Vertical flight engages both stages without a false heading turn"),
+		UProject_JWorldStreamingComponent::BuildTwoStageVelocityShapes(FVector(0, 0, 3000), true, 90.f, 20000.f, Profile, Plan)
+		&& Plan.bHighSpeedActive && !Plan.bTurnWidened && Plan.Stage1LoadedShapes.Num() > 0 && Plan.Stage2ActivatedShapes.Num() > 0
+		&& Plan.Stage1LoadedShapes.Last().Location.Z > Plan.Stage2ActivatedShapes.Last().Location.Z);
+	TestTrue(TEXT("Descent restores detail before the current clearance crosses the threshold"),
+		UProject_JWorldStreamingComponent::BuildTwoStageVelocityShapes(FVector(0, 0, -2000), true, 0.f, 20000.f, Profile, Plan)
+		&& Plan.bHighSpeedActive && !Plan.bSuppressDetailGrid && Plan.Stage2ActivatedShapes.Num() > 0 && Plan.Stage2ActivatedShapes.Last().Location.Z < 0.0);
 
 	// Unload hysteresis and soft speed safety clamp.
 	TestTrue(TEXT("Anchor held within hysteresis duration"),
 		UProject_JWorldStreamingComponent::ShouldHoldHysteresisAnchor(FVector(50000, 0, 0), FVector::ZeroVector, 3.0, Profile));
 	TestFalse(TEXT("Far anchor released after hysteresis duration"),
 		UProject_JWorldStreamingComponent::ShouldHoldHysteresisAnchor(FVector(50000, 0, 0), FVector::ZeroVector, 10.0, Profile));
+	TestFalse(TEXT("Flight releases an anchor far below it after hysteresis"),
+		UProject_JWorldStreamingComponent::ShouldHoldHysteresisAnchor(FVector(0, 0, 50000), FVector::ZeroVector, 10.0, Profile, true));
 	TestEqual(TEXT("Ready forward cells keep full speed"),
 		UProject_JWorldStreamingComponent::ComputeSafeStreamingSpeedScale(3000.f, true, Profile), 1.0f);
 	const float ClampedScale = UProject_JWorldStreamingComponent::ComputeSafeStreamingSpeedScale(3000.f, false, Profile);
@@ -137,12 +151,23 @@ bool FProjectJPhase1HighSpeedStreamingTest::RunTest(const FString&)
 	FMoverAuxStateContext Aux;
 	Mover->FinalizeFrame(&Flight, &Aux);
 	auto* Source = NewObject<UProject_JWorldStreamingComponent>(Mount);
-	TestTrue(TEXT("High altitude planning uses the actual flying pawn without a loaded ground surface"),
-		Mount->IsFlying() && Source->BuildPawnVelocityPlan(*Mount, Profile, Plan) && Plan.bSuppressDetailGrid);
-	Mount->SetActorLocation(FVector(0, 0, 1000));
+	TestTrue(TEXT("Missing surface retains detail even at high world Z"),
+		Mount->IsFlying() && Source->BuildPawnVelocityPlan(*Mount, Profile, Plan) && Plan.bHighSpeedActive && !Plan.bSuppressDetailGrid);
+	auto* Ridge = World->SpawnActor<AActor>();
+	if (!TestNotNull(TEXT("Loaded static ridge"), Ridge)) return false;
+	auto* RidgeCollision = NewObject<UBoxComponent>(Ridge);
+	Ridge->SetRootComponent(RidgeCollision);
+	RidgeCollision->InitBoxExtent(FVector(1000, 1000, 50));
+	RidgeCollision->SetCollisionProfileName(TEXT("BlockAll"));
+	RidgeCollision->RegisterComponent();
+	Ridge->SetActorLocation(FVector(0, 0, 19000));
 	++GFrameCounter;
-	TestTrue(TEXT("Below the fallback altitude an unloaded ground probe does not suppress details"),
+	TestTrue(TEXT("High-elevation low flight retains detail when the ridge is loaded"),
 		Source->BuildPawnVelocityPlan(*Mount, Profile, Plan) && !Plan.bSuppressDetailGrid);
+	Ridge->SetActorLocation(FVector::ZeroVector);
+	++GFrameCounter;
+	TestTrue(TEXT("Confirmed clearance over a loaded surface permits detail suppression"),
+		Source->BuildPawnVelocityPlan(*Mount, Profile, Plan) && Plan.bSuppressDetailGrid);
 	return true;
 }
 

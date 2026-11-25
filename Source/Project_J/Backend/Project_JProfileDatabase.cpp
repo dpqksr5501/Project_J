@@ -326,14 +326,21 @@ bool FProject_JProfileDatabase::Open(const TCHAR *Filename, ESQLiteDatabaseOpenM
 	if (Handle)
 		return false;
 	FSQLiteDatabase InitializeLibrary; // Public constructor initializes SQLiteCore's allocator/VFS.
+#if PLATFORM_WINDOWS || PLATFORM_LINUX
 #if PLATFORM_WINDOWS
 	if (!Register())
 		return false;
+	const char* VfsName = "projectj-win32-rollback";
+#else
+	const char* VfsName = "unix";
+	if (!sqlite3_vfs_find(VfsName))
+		return false;
+#endif
 	const int Flags =
 		Mode == ESQLiteDatabaseOpenMode::ReadOnly
 			? SQLITE_OPEN_READONLY
 			: SQLITE_OPEN_READWRITE | (Mode == ESQLiteDatabaseOpenMode::ReadWriteCreate ? SQLITE_OPEN_CREATE : 0);
-	if (sqlite3_open_v2(TCHAR_TO_UTF8(Filename), &Handle, Flags, "projectj-win32-rollback") != SQLITE_OK)
+	if (sqlite3_open_v2(TCHAR_TO_UTF8(Filename), &Handle, Flags, VfsName) != SQLITE_OK)
 	{
 		Close();
 		return false;

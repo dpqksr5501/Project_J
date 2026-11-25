@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Project_JGameMode.h"
+#include "Network/Project_JMMOClientBridgeComponent.h"
 #include "Engine/World.h"
 #include "Project_JGameState.h"
 #include "Project_JPlayerState.h"
@@ -141,7 +142,14 @@ void AProject_JGameMode::BeginPlay()
 void AProject_JGameMode::PublishOnlineHeartbeat()
 {
 	if (!OnlineIncarnation.IsValid()) return;
-	NextOnlineHeartbeat = FPlatformTime::Seconds() + 5.;
+	const double SentAt = FPlatformTime::Seconds();
+	const auto* Online = GetGameInstance()->GetSubsystem<UProject_JOnlineWorldSubsystem>();
+	if (!IsServerDraining() && (!Online || !Online->IsPersistentOutboxReady()))
+	{
+		NextOnlineHeartbeat = SentAt + 0.5;
+		return;
+	}
+	NextOnlineHeartbeat = SentAt + 5.;
 	auto Body = MakeShared<FJsonObject>();
 	Body->SetStringField(TEXT("zone"), GetWorld()->GetMapName());
 	Body->SetNumberField(TEXT("channel"), OnlineChannelId);
@@ -152,12 +160,15 @@ void AProject_JGameMode::PublishOnlineHeartbeat()
 	Body->SetBoolField(TEXT("draining"), IsServerDraining());
 	Body->SetBoolField(TEXT("is_dungeon"), bRequireDungeonTicket);
 	UProject_JOnlineWorldSubsystem::Submit(GetWorld(), TEXT("World"), TEXT("Channel_Heartbeat"), Body, {},
-		[WeakThis = TWeakObjectPtr<ThisClass>(this)](const TSharedPtr<FJsonObject>& Ack)
+		[WeakThis = TWeakObjectPtr<ThisClass>(this), SentAt](const TSharedPtr<FJsonObject>& Ack)
 		{
 			auto* Mode = WeakThis.Get();
 			FString Status;
-			if (Mode && !Mode->bSessionsClosing && !Mode->OnlineDungeonId.IsNone()
-				&& Ack && Ack->TryGetStringField(TEXT("status"), Status) && Status == TEXT("OK"))
+			if (!Mode || Mode->IsServerDraining() || !Ack || !Ack->TryGetStringField(TEXT("status"), Status)
+				|| Status != TEXT("OK")) return;
+			// The database grants 30 s from execution. Starting at dispatch is conservative on delayed replies.
+			Mode->OnlineChannelLeaseDeadline = FMath::Max(Mode->OnlineChannelLeaseDeadline, SentAt + 30.);
+			if (Mode->HasOnlineChannelLease() && !Mode->OnlineDungeonId.IsNone())
 				Mode->GetGameInstance()->GetSubsystem<UProject_JDungeonInstanceSubsystem>()->PollOnlineWorker(
 					Mode->GetWorld(), Mode->OnlineIncarnation, Mode->OnlineAdvertisedEndpoint, Mode->OnlineDungeonId);
 		});
@@ -297,6 +308,8 @@ bool AProject_JGameMode::InstallOnlineLogin(APlayerController* PC, const FJsonOb
 		return Mode && Mode->SubmitOnlineQuestProgress(WeakState.Get(), Inputs);
 	};
 	OnlineEpochs.Add(State, Epoch);
+	if (auto* Bridge = PC->FindComponentByClass<UProject_JMMOClientBridgeComponent>())
+		Bridge->InitializeOnlineChat(Character.Value, Epoch, Response);
 	if (bProgressionChanged) State->ProgressionComponent->PublishCommittedExperience(Current);
 	if (!Current()) return false;
 	HandleStartingNewPlayer(PC);
@@ -319,9 +332,9 @@ bool AProject_JGameMode::SubmitOnlineInventoryEdit(AProject_JPlayerState* Player
 	}
 	else if (Edit.Kind == Kind::Claim)
 	{
-		if (Edit.Quest.IsNone()) return false;
-		Body->SetStringField(TEXT("kind"), TEXT("claim"));
-		Body->SetStringField(TEXT("quest"), Edit.Quest.ToString());
+		const auto* Data = GetGameInstance()->GetSubsystem<UProject_JCharacterDataSubsystem>();
+		if (!Data || !ProjectJ::OnlineQuests::PrepareClaim(*Player->QuestComponent, *Player->ProgressionComponent,
+			*Data, Edit.Quest, Player->OnlineProfileRevision, *Body)) return false;
 		Route = TEXT("Quest_Edit");
 	}
 	else if (Edit.Kind == Kind::Craft || Edit.Kind == Kind::StartCraftJob || Edit.Kind == Kind::CollectCraftJob
@@ -455,7 +468,7 @@ bool AProject_JGameMode::SubmitOnlineSnapshotEdit(AProject_JPlayerState* Player,
 				FProject_JProfileDurableResult Result;
 				Result.Request = Key;
 				if (bCommitted) Result.Outcome = EProject_JProfileDurableOutcome::Committed;
-				else if (Status == TEXT("STALE") || Status == TEXT("CONFLICT") || Status == TEXT("INVALID")
+				else if (Status == TEXT("STALE") || Status == TEXT("CONFLICT") || Status == TEXT("INVALID") || Status == TEXT("INVENTORY_FULL")
 					|| Status == TEXT("KEY_REUSED") || Status == TEXT("PRE_DISPATCH_REJECTED"))
 					Result.Outcome = EProject_JProfileDurableOutcome::ProvenAbsent;
 				Durable(Result);
@@ -467,7 +480,7 @@ bool AProject_JGameMode::SubmitOnlineSnapshotEdit(AProject_JPlayerState* Player,
 			if (Mode->OnlineInventoryPending.FindRef(Character) != WeakPlayer || (State && !Current())) return;
 			Mode->ReleaseOnlineSnapshotEdit(Character, WeakPlayer);
 			if (!State) return;
-			const bool bInstalled = (bCommitted || (bAnswered && Status == TEXT("STALE")))
+			const bool bInstalled = (bCommitted || (bAnswered && (Status == TEXT("STALE") || Status == TEXT("INVENTORY_FULL"))))
 				&& UProject_JOnlineWorldSubsystem::ApplyInventory(State, *Response, Current);
 			const bool bOk = bCommitted && bInstalled;
 			if (Done && Current()) Done(bOk, bOk && Status == TEXT("COMMITTED"));
@@ -509,6 +522,15 @@ void AProject_JGameMode::PreLogin(const FString& Options, const FString& Address
 	{
 		ErrorMessage = TEXT("ServerDraining");
 		return;
+	}
+	if (ErrorMessage.IsEmpty() && UProject_JOnlineWorldSubsystem::UsesOnlineBackend(GetWorld()))
+	{
+		const auto* Drain = GetGameInstance()->GetSubsystem<UProject_JServerDrainSubsystem>();
+		if (!Drain || !Drain->IsReadyForAdmission())
+		{
+			ErrorMessage = TEXT("ServerNotReady");
+			return;
+		}
 	}
 	const bool bReturnRequest = UGameplayStatics::HasOption(Options, TEXT("TicketReturn"));
 	if (!ErrorMessage.IsEmpty() || (!bRequireDungeonTicket && !bReturnRequest))

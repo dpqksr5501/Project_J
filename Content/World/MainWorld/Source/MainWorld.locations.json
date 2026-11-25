@@ -413,7 +413,7 @@
         "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld:PersistentLevel.TargetPoint_UAID_1CCE51234579120C03_1954646688"
       ],
       "action": "reuse_and_relocate_to_measured_northwest_ridge",
-      "evidence_note": "Natural64m arena, two approaches and public bypass, safe staging, one region-qualified unbound native encounter; visible guard geometry at native sampled steep faces. Initial spatial only; NPC/AI/art/region road connection pending",
+      "evidence_note": "Natural 64m arena with two approaches, public bypass, safe staging and rim guards. The existing native owner binds the starter boss NPC, cleave and personal loot at a 48m activation radius. Final art, pursuit/reset and regional road connection remain pending.",
       "native_registered": true,
       "generation_record": "MainWorld.generation.json#B01.Boss.Arena.v1",
       "profile_source": "MainWorld.bosses.json#B01",

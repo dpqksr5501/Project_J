@@ -18,12 +18,16 @@ void UProject_JThreatComponent::AddDamageThreat(
 	double SkillThreatMultiplier,
 	double NowSeconds)
 {
-	if (bIsEvading || !IsValid(Source) || !FMath::IsFinite(Damage) || !FMath::IsFinite(SkillThreatMultiplier)
+	check(IsInGameThread());
+	const AActor* Owner = GetOwner();
+	if (!IsValid(Owner) || !Owner->HasAuthority() || Owner->IsActorBeingDestroyed() || bIsEvading
+		|| !IsValid(Source) || Source->GetWorld() != Owner->GetWorld() || !FMath::IsFinite(Damage) || !FMath::IsFinite(SkillThreatMultiplier)
 		|| Damage <= 0.0 || SkillThreatMultiplier <= 0.0)
 	{
 		return;
 	}
 	const double Added = Damage * SkillThreatMultiplier;
+	if (!FMath::IsFinite(Added)) return;
 	ActiveThreat.FindOrAdd(Source) += Added;
 
 	if (CharacterId.IsValid())
@@ -46,7 +50,10 @@ void UProject_JThreatComponent::AddHealingThreat(
 	int32 EngagedMobCount,
 	double NowSeconds)
 {
-	if (bIsEvading || !IsValid(Healer) || !FMath::IsFinite(EffectiveHeal) || EffectiveHeal <= 0.0)
+	check(IsInGameThread());
+	const AActor* Owner = GetOwner();
+	if (!IsValid(Owner) || !Owner->HasAuthority() || Owner->IsActorBeingDestroyed() || bIsEvading
+		|| !IsValid(Healer) || Healer->GetWorld() != Owner->GetWorld() || !FMath::IsFinite(EffectiveHeal) || EffectiveHeal <= 0.0)
 	{
 		return;
 	}
@@ -238,11 +245,16 @@ int32 UProject_JThreatComponent::EvaluateBossPhase(float CurrentHealth, float Ma
 
 TArray<FGuid> UProject_JThreatComponent::GetEligibleContributors(double BossMaxHealth, double MinFraction) const
 {
+	check(IsInGameThread());
 	TArray<FGuid> Out;
+	const AActor* Owner = GetOwner();
+	if (!IsValid(Owner) || !Owner->HasAuthority() || !FMath::IsFinite(BossMaxHealth) || BossMaxHealth <= 0.0
+		|| !FMath::IsFinite(MinFraction)) return Out;
 	const double Threshold = FMath::Max(1.0, BossMaxHealth * FMath::Clamp(MinFraction, 0.0, 1.0));
 	for (const auto& Pair : ContributionMap)
 	{
-		if (Pair.Key.IsValid() && Pair.Value.TotalScore() >= Threshold)
+		const double Score = Pair.Value.TotalScore();
+		if (Pair.Key.IsValid() && FMath::IsFinite(Score) && Score >= Threshold)
 		{
 			Out.Add(Pair.Key);
 		}

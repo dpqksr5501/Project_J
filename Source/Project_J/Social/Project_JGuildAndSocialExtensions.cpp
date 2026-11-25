@@ -134,7 +134,8 @@ int32 UProject_JGuildAndSocialExtensionsSubsystem::GetGuildBankAuditLogCount(con
 
 bool UProject_JGuildAndSocialExtensionsSubsystem::SendFriendRequest(const FGuid& FromCharId, const FGuid& TargetCharId)
 {
-	if (!FromCharId.IsValid() || !TargetCharId.IsValid() || FromCharId == TargetCharId || IsBlockedBy(TargetCharId, FromCharId))
+	if (!FromCharId.IsValid() || !TargetCharId.IsValid() || FromCharId == TargetCharId
+		|| IsBlockedBy(TargetCharId, FromCharId) || IsBlockedBy(FromCharId, TargetCharId))
 	{
 		return false;
 	}
@@ -145,7 +146,8 @@ bool UProject_JGuildAndSocialExtensionsSubsystem::SendFriendRequest(const FGuid&
 bool UProject_JGuildAndSocialExtensionsSubsystem::AcceptFriendRequest(const FGuid& AccepterCharId, const FGuid& RequesterCharId)
 {
 	TSet<FGuid>* Pending = PendingFriendRequests.Find(AccepterCharId);
-	if (!Pending || Pending->Remove(RequesterCharId) == 0 || IsBlockedBy(AccepterCharId, RequesterCharId))
+	if (!Pending || Pending->Remove(RequesterCharId) == 0 || IsBlockedBy(AccepterCharId, RequesterCharId)
+		|| IsBlockedBy(RequesterCharId, AccepterCharId))
 	{
 		return false;
 	}
@@ -170,6 +172,7 @@ bool UProject_JGuildAndSocialExtensionsSubsystem::BlockCharacter(const FGuid& Ow
 	if (TSet<FGuid>* F1 = Friends.Find(OwnerCharId)) F1->Remove(BlockedCharId);
 	if (TSet<FGuid>* F2 = Friends.Find(BlockedCharId)) F2->Remove(OwnerCharId);
 	if (TSet<FGuid>* Pend = PendingFriendRequests.Find(OwnerCharId)) Pend->Remove(BlockedCharId);
+	if (TSet<FGuid>* Pend = PendingFriendRequests.Find(BlockedCharId)) Pend->Remove(OwnerCharId);
 	return true;
 }
 
@@ -192,11 +195,12 @@ bool UProject_JGuildAndSocialExtensionsSubsystem::AdmitChatMessage(
 	const FString& Message,
 	double NowSeconds)
 {
-	if (!SenderCharId.IsValid() || Message.IsEmpty() || Message.Len() > 512)
+	if (!SenderCharId.IsValid() || !FMath::IsFinite(NowSeconds) || Message.IsEmpty() || Message.Len() > 512
+		|| Channel > EProject_JChatChannel::World)
 	{
 		return false;
 	}
-	if (OptionalRecipientCharId.IsValid() && IsBlockedBy(OptionalRecipientCharId, SenderCharId))
+	if (Channel == EProject_JChatChannel::Whisper && (!OptionalRecipientCharId.IsValid() || IsBlockedBy(OptionalRecipientCharId, SenderCharId)))
 	{
 		return false;
 	}

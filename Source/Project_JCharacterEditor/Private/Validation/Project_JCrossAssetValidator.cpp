@@ -15,22 +15,24 @@ FCrossAssetRuleResult ValidateNPCAnimPolicy(FName AssetName, bool bUsesPoseSearc
 	return Res;
 }
 
-FCrossAssetRuleResult ValidateFoliageAssetPolicy(FName AssetName, FName AssignedHLODLayer, float WPODisableDistanceCm, float MaxAllowedWPOCm)
+FCrossAssetRuleResult ValidateFoliageAssetPolicy(
+	const FString& ComponentPath, bool bUsesInstancingHLOD, TOptional<int32> WPODisableDistanceCm)
 {
+	constexpr int32 MaxAllowedWPOCm = 10000;
 	FCrossAssetRuleResult Res;
-	if (AssignedHLODLayer != FName(TEXT("HLODLayer_Foliage_Impostor")))
+	if (!bUsesInstancingHLOD)
 	{
 		Res.bPassed = false;
 		Res.Errors.Add(FString::Printf(
-			TEXT("Foliage asset '%s' must use HLODLayer_Foliage_Impostor (found '%s') to prevent Embree OOM."),
-			*AssetName.ToString(), *AssignedHLODLayer.ToString()));
+			TEXT("Starter forest component '%s' requires an explicit Instancing HLOD layer on its owner."),
+			*ComponentPath));
 	}
-	if (WPODisableDistanceCm <= 0.0f || WPODisableDistanceCm > MaxAllowedWPOCm)
+	if (WPODisableDistanceCm.IsSet() && (*WPODisableDistanceCm <= 0 || *WPODisableDistanceCm > MaxAllowedWPOCm))
 	{
 		Res.bPassed = false;
 		Res.Errors.Add(FString::Printf(
-			TEXT("Foliage asset '%s' has invalid WorldPositionOffsetDisableDistance=%.1f (must be in (0, %.1f] for VSM static cache)."),
-			*AssetName.ToString(), WPODisableDistanceCm, MaxAllowedWPOCm));
+			TEXT("Starter forest component '%s' uses WPO with WorldPositionOffsetDisableDistance=%d cm. Set a cutoff from 1 to %d cm for the VSM cache."),
+			*ComponentPath, *WPODisableDistanceCm, MaxAllowedWPOCm));
 	}
 	return Res;
 }

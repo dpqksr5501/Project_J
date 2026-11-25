@@ -16,6 +16,8 @@ struct FSpatialQueryStats
 	int32 CellsVisited = 0;
 	int32 CandidatesVisited = 0;
 	bool bLinearFallback = false;
+	/** Query restored stable ID order after discovering an inversion. */
+	bool bRequiredSort = false;
 };
 
 /** Value-only snapshot. Build once, then query without modifying it. Returned indices belong to this snapshot. */

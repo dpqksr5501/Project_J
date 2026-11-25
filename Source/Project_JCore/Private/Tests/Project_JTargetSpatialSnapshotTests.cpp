@@ -50,6 +50,7 @@ bool FProjectJSpatialEdgeCasesTest::RunTest(const FString& Parameters)
 	FSpatialQueryStats Stats;
 	Snapshot.Query(FVector::ZeroVector, 1000, 1, Indices, Stats);
 	TestEqual(TEXT("Exact 3D sphere excludes vertical and friendly candidates"), Indices.Num(), 2);
+	TestTrue(TEXT("Mixed cell traversal with an ID inversion restores stable order"), Stats.bRequiredSort);
 	if (Indices.Num() == 2)
 	{
 		TestEqual(TEXT("Stable id order differs from cell visitation"), Snapshot.GetTargets()[Indices[0]].Id, 2);
@@ -58,15 +59,21 @@ bool FProjectJSpatialEdgeCasesTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("Remote cell is pruned"), Stats.CandidatesVisited < Snapshot.GetTargets().Num());
 	Snapshot.Query(FVector::ZeroVector, 1000000, 1, Indices, Stats);
 	TestTrue(TEXT("Large radius falls back without truncation"), Stats.bLinearFallback && Indices.Num() == 4);
+	if (Indices.Num() == 4)
+	{
+		TestTrue(TEXT("Unordered full scan restores stable ID order"), Stats.bRequiredSort
+			&& Snapshot.GetTargets()[Indices[0]].Id == 2 && Snapshot.GetTargets()[Indices[1]].Id == 3
+			&& Snapshot.GetTargets()[Indices[2]].Id == 4 && Snapshot.GetTargets()[Indices[3]].Id == 9);
+	}
 	TestFalse(TEXT("Invalid radius rejected"), Snapshot.Query(FVector::ZeroVector, -1, 1, Indices, Stats));
-	TestTrue(TEXT("Invalid query clears old results"), Indices.IsEmpty());
+	TestTrue(TEXT("Invalid query clears old results and sort stats"), Indices.IsEmpty() && !Stats.bRequiredSort);
 	const FVector Extreme(1.e20, -1.e20, 0);
 	Snapshot.Build({{5, Extreme, 2}});
 	Snapshot.Query(Extreme, 100, 1, Indices, Stats);
 	TestTrue(TEXT("Finite coordinates outside integer grid remain queryable"), Stats.bLinearFallback && Indices.Num() == 1);
 	Snapshot.Build({{5, FVector(10, 0, 0), 2}});
 	Snapshot.Query(FVector::ZeroVector, 100, 1, Indices, Stats);
-	TestEqual(TEXT("Initial nearby target"), Indices.Num(), 1);
+	TestTrue(TEXT("Single match does not need a sort"), Indices.Num() == 1 && !Stats.bRequiredSort);
 	Snapshot.Build({{5, FVector(10000, 0, 0), 2}});
 	Snapshot.Query(FVector::ZeroVector, 100, 1, Indices, Stats);
 	TestTrue(TEXT("Rebuild does not retain moved target's previous cell"), Indices.IsEmpty());
@@ -100,6 +107,19 @@ bool FProjectJSpatialOwnedInputTest::RunTest(const FString& Parameters)
 		const auto& Value = Snapshot.GetTargets()[Id];
 		if (Value.Id != Id || Value.Position != FVector(Id, 0, 0) || Value.Team != Id % 2) { AddError(TEXT("Owned dense input value/order changed")); break; }
 	}
+	TArray<int32> Indices;
+	FSpatialQueryStats Stats;
+	// Match the scheduler's monotonically assigned IDs in one packed cell,
+	// with team filtering still in effect.
+	TestTrue(TEXT("Dense ordered cell query succeeds"), Snapshot.Query(FVector(500, 0, 0), 499, 1, Indices, Stats));
+	TestFalse(TEXT("Dense ordered results skip sorting"), Stats.bRequiredSort);
+	if (TestEqual(TEXT("Dense ordered result retains every hostile match"), Indices.Num(), 499))
+	{
+		for (int32 Slot = 0; Slot < Indices.Num(); ++Slot)
+		{
+			if (Snapshot.GetTargets()[Indices[Slot]].Id != (Slot + 1) * 2) { AddError(TEXT("Dense ordered match changed rank")); break; }
+		}
+	}
 	TArray<FSpatialTarget> Mixed = {
 		{-1, FVector::ZeroVector, 2}, {9, FVector(-1000, 0, 0), 2},
 		{9, FVector::ZeroVector, -1}, {3, FVector::ZeroVector, 2},
@@ -112,8 +132,6 @@ bool FProjectJSpatialOwnedInputTest::RunTest(const FString& Parameters)
 	{
 		TestTrue(TEXT("Compaction retains source order"), Values[0].Id == 9 && Values[1].Id == 3 && Values[2].Id == 1);
 	}
-	TArray<int32> Indices;
-	FSpatialQueryStats Stats;
 	TestTrue(TEXT("Compacted cells remain queryable"), Snapshot.Query(FVector::ZeroVector, 1000, 1, Indices, Stats));
 	if (TestEqual(TEXT("All exact boundary rows returned"), Indices.Num(), 3))
 	{
@@ -131,6 +149,7 @@ bool FProjectJSpatialOwnedInputTest::RunTest(const FString& Parameters)
 		{3, FVector(30, 0, 0), 2}, {2, FVector(std::numeric_limits<double>::quiet_NaN(), 0, 0), 2},
 		{1, FVector(10, 0, 0), 2}}));
 	Snapshot.Query(FVector::ZeroVector, 100, 1, Indices, Stats);
+	TestTrue(TEXT("Single-cell inversions still restore stable ID order"), Stats.bRequiredSort);
 	if (TestEqual(TEXT("Same-cell traversal visits all compacted rows once"), Indices.Num(), 3))
 	{
 		TestTrue(TEXT("Compacted same-cell query retains stable id order"), Snapshot.GetTargets()[Indices[0]].Id == 1

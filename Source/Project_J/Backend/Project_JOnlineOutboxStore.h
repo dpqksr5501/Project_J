@@ -9,6 +9,7 @@ struct FProject_JPersistedOutboxRecord
 {
 	FGuid IdempotencyKey;
 	int64 CreatedSeq = 0;
+	int64 PendingSinceUtcMs = 0;
 	FName Service;
 	FName Operation;
 	TArray<uint8> SerializedPayload;
@@ -31,6 +32,15 @@ struct FProject_JOutboxStoreOp
 	FProject_JPersistedOutboxRecord Record;
 };
 
+struct FProject_JBossRewardSettlement
+{
+	FString EncounterKey;
+	FGuid DefeatId;
+	int64 CooldownMilliseconds = 0;
+	int64 ExpiresUtcMilliseconds = 0;
+	bool bAlreadyCommitted = false;
+};
+
 /**
  * Worker-thread-only crash-safe SQLite store backing UProject_JOnlineWorldSubsystem's durable outbox.
  * Uses Project_J's Win32 rollback-journal VFS (FProject_JProfileDatabase) with batched transactions
@@ -40,7 +50,7 @@ class FProject_JOnlineOutboxStore final
 {
 public:
 	static constexpr int32 ApplicationId = 0x504A4F42; // 'PJOB'
-	static constexpr int32 SchemaVersion = 1;
+	static constexpr int32 SchemaVersion = 2;
 	static constexpr int32 DeadLetterAdmissionLimit = 16384;
 
 	explicit FProject_JOnlineOutboxStore(FString InFilename);
@@ -51,11 +61,12 @@ public:
 
 	/** Open and read a bounded page of pending rows in durable FIFO order. */
 	bool OpenAndLoadPending(int32 MaxPendingToLoad, TArray<FProject_JPersistedOutboxRecord>& OutPending,
-		int32& OutDeadLetterCount, int64 AfterSeq = 0);
+		int32& OutDeadLetterCount, int64 AfterSeq = 0, TMap<FString, int64>* OutBossCooldowns = nullptr);
 
 	/** Applies a batch of UpsertPending / DeleteConfirmed / MarkDeadLetter operations in one atomic transaction. */
 	bool ApplyBatch(TConstArrayView<FProject_JOutboxStoreOp> Ops, int32& OutDeadLetterCount,
-		TMap<FGuid, FProject_JPersistedOutboxRecord>* OutExisting = nullptr);
+		TMap<FGuid, FProject_JPersistedOutboxRecord>* OutExisting = nullptr,
+		FProject_JBossRewardSettlement* BossSettlement = nullptr);
 
 	/** Moves DeadLetter (state=2) rows back to Pending (state=0) atomically and returns them for immediate replay. */
 	bool RedriveDeadLetters(int32 MaxToRedrive, TArray<FProject_JPersistedOutboxRecord>& OutRedriven, int32& OutRemainingDeadLetters);
@@ -74,6 +85,8 @@ public:
 private:
 	bool EnsureOpenLocked();
 	bool ReadDeadLetterCountLocked(int32& OutCount);
+	bool StageBossSettlementLocked(FProject_JBossRewardSettlement& Settlement, const FString& ManifestHash, int64 NowMs);
+	bool ReadBossCooldownsLocked(TMap<FString, int64>& OutCooldowns);
 
 	mutable FCriticalSection Mutex;
 	TUniquePtr<FProject_JProfileDatabase> Database;

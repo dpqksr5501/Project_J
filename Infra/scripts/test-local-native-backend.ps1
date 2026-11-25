@@ -3,6 +3,8 @@ param(
     [Parameter(Mandatory)][string]$NakamaExe,
     [string]$UnrealEditor,
     [switch]$VerifyGameLogin,
+    [switch]$VerifyGameChat,
+    [switch]$RenderLoginClient,
     [switch]$VerifyServerDrain,
     [switch]$VerifyOnlineDungeon,
     [switch]$VerifyAuthoredSandbox,
@@ -174,6 +176,26 @@ function Invoke-ChannelRouting([string]$Account, [string]$Token) {
         !$overflow.ticket -or $queued.status -ne 'QUEUED' -or $queued.position -ne 1) {
         throw 'Nakama HTTP routing failed to share reservations with direct login.'
     }
+    $playerRoute = @{ character_id = $waiting; zone = $zone; channel = 1 }
+    function Send-PlayerRoute {
+        Invoke-RestMethod "$uri/v2/rpc/j_world_player_route?unwrap" -Method Post -Headers @{ Authorization = "Bearer $Token" } `
+            -ContentType 'application/json' -Body ($playerRoute | ConvertTo-Json -Compress) -TimeoutSec 8
+    }
+    $head = Send-PlayerRoute
+    if ($head.status -ne 'QUEUED' -or $head.position -ne 1 -or !$head.slot) { throw 'Player route did not return a FIFO slot.' }
+    $playerRoute.slot = $head.slot
+    if ((Send-PlayerRoute).slot -ne $head.slot) { throw 'Polling changed the queue slot.' }
+    $playerRoute.cancel = $true
+    if ((Send-PlayerRoute).status -ne 'CANCELLED') { throw 'Queue cancellation failed.' }
+    $playerRoute.Remove('cancel')
+    if ((Send-PlayerRoute).status -ne 'EXPIRED') { throw 'Stale poll resurrected a cancelled queue slot.' }
+    $playerRoute.Remove('slot')
+    $nextSlot = (Send-PlayerRoute).slot
+    Invoke-Postgres @('-c', "DELETE FROM pj_world_login_tickets WHERE zone_id = '$zone' AND channel_id = 2;") | Out-Null
+    if ((Request-WorldLogin $Token $second 2 $zone).status -ne 'UNAVAILABLE') { throw 'Exact login bypassed the FIFO queue.' }
+    $playerRoute.slot = $nextSlot
+    $admitted = Send-PlayerRoute
+    if ($admitted.status -ne 'ROUTED' -or $admitted.channel -ne 2 -or !$admitted.ticket) { throw 'Queued player did not receive an overflow ticket.' }
 }
 
 function Invoke-GameLogin([string]$Character, [string]$AccessToken, [string]$ItemId, [switch]$Drain) {
@@ -185,7 +207,9 @@ function Invoke-GameLogin([string]$Character, [string]$AccessToken, [string]$Ite
     $common = @("$root/Project_J.uproject", $map, '-unattended', '-nop4', '-nosound', '-NullRHI', '-NoLiveCoding', '-NoDDCCleanup',
         '-DisablePython', '-DisablePlugins=EditorToolset,AutomationTestToolset,ToolsetRegistry', '-multihome=127.0.0.1', '-ProjectJOnlineLoginFixture')
     if ($Drain) { $common += '-ProjectJOnlineDrainFixture' }
+    else { $common += '-ProjectJVerifyOnlineQuest' }
     $serverArgs = $common + @('-server', "-port=$port", "-UserDir=$scratch/${role}Server", "-ABSLOG=$scratch/${role}Server.log",
+        "-ProjectJOnlineOutboxPath=$scratch/${role}Outbox.sqlite",
         "-ini:Game:[/Script/Project_J.Project_JGatewaySubsystem]:GatewayUrl=$uri",
         '-ini:Game:[/Script/Project_J.Project_JNakamaServicePortSubsystem]:RuntimeMode=LocalDockerNakama',
         "-ini:Game:[/Script/Project_J.Project_JGameMode]:OnlineAdvertisedEndpoint=127.0.0.1:$port",
@@ -209,13 +233,32 @@ function Invoke-GameLogin([string]$Character, [string]$AccessToken, [string]$Ite
     } until ($channelListed -and $inService)
     $authProbe = Request-WorldLogin $AccessToken $Character $channel Entry
     if ($authProbe.status -ne 'OK') { throw "Online world credential preflight failed with status $($authProbe.status)." }
+    if (!$Drain) {
+        # Seed just the queue head. The real UE login must receive a position and poll for its ticket.
+        $queueHead = [guid]::NewGuid().ToString()
+        Invoke-Postgres @('-c', "INSERT INTO pj_characters(character_id,account_id,char_name,class_id) SELECT '$queueHead',account_id,'Queue head probe','Test' FROM pj_characters WHERE character_id='$Character'; INSERT INTO pj_world_login_queue(account_id,character_id,zone_id) SELECT account_id,character_id,'Entry' FROM pj_characters WHERE character_id='$queueHead';") | Out-Null
+    }
     $clientArgs = $common + @('-game', "-UserDir=$scratch/${role}Client", "-ABSLOG=$scratch/${role}Client.log",
         "-ini:Game:[/Script/Project_J.Project_JOnlineWorldSubsystem]:NakamaClientUrl=$uri")
+    if ($RenderLoginClient -and !$Drain) {
+        $clientArgs = @($clientArgs | Where-Object { $_ -ne '-NullRHI' }) +
+            @('-d3d12','-RenderOffscreen','-windowed','-ResX=1280','-ResY=720',"-ProjectJQueueScreenshot=$scratch/LoginQueue.png")
+    }
     $client = Start-Process -FilePath $UnrealEditor -ArgumentList ($clientArgs | ForEach-Object { '"' + $_ + '"' }) -PassThru -WindowStyle Hidden `
         -Environment @{ PROJECT_J_NAKAMA_HTTP_KEY = $null; PGPASSWORD = $null; PROJECT_J_TEST_LOGIN_CHARACTER = $Character
-            PROJECT_J_TEST_LOGIN_ACCESS = $AccessToken; PROJECT_J_TEST_LOGIN_ITEM = $ItemId }
+            PROJECT_J_TEST_LOGIN_ACCESS = $AccessToken; PROJECT_J_TEST_LOGIN_ITEM = $ItemId; PROJECT_J_TEST_CHAT_TARGET = $queueHead }
     $null = $client.Handle
     $drainingObserved = $false
+    if (!$Drain) {
+        $deadline = [DateTime]::UtcNow.AddSeconds(40)
+        $clientLogPath = "$scratch/${role}Client.log"
+        do {
+            Start-Sleep -Milliseconds 200
+            $queued = (Test-Path -LiteralPath $clientLogPath) -and (Select-String -LiteralPath $clientLogPath -SimpleMatch 'ONLINE_FIXTURE_QUEUE_POSITION 2' -Quiet)
+        } until ($queued -or $client.HasExited -or [DateTime]::UtcNow -ge $deadline)
+        Invoke-Postgres @('-c', "DELETE FROM pj_world_login_queue WHERE character_id='$queueHead' AND zone_id='Entry';") | Out-Null
+        if (!$queued) { throw "UE did not observe its FIFO position. See $clientLogPath" }
+    }
     if ($Drain) {
         $deadline = [DateTime]::UtcNow.AddSeconds(55)
         while (!$server.HasExited -and [DateTime]::UtcNow -lt $deadline) {
@@ -231,6 +274,9 @@ function Invoke-GameLogin([string]$Character, [string]$AccessToken, [string]$Ite
     }
     $server.WaitForExit()
     $client.WaitForExit()
+    if ($RenderLoginClient -and !$Drain -and !(Test-Path -LiteralPath "$scratch/LoginQueue.png")) {
+        throw "Rendered queue frame missing. See $scratch/LoginClient.log"
+    }
     if ($server.ExitCode -ne 0 -or $client.ExitCode -ne 0) {
         throw "Online fixture process failed. See $scratch/${role}Server.log and ${role}Client.log"
     }
@@ -245,6 +291,84 @@ function Invoke-GameLogin([string]$Character, [string]$AccessToken, [string]$Ite
         }
     } elseif (!(Select-String -LiteralPath "$scratch/LoginClient.log" -SimpleMatch 'ONLINE_FIXTURE_INVENTORY_REPLICATED' -Quiet)) {
         throw "Replicated inventory failed. See $scratch/LoginClient.log"
+    } elseif ((Invoke-Postgres @('-c', "SELECT EXISTS(SELECT 1 FROM pj_social_relations WHERE owner_char_id='$Character' AND target_char_id='$queueHead' AND relation_type='BLOCKED');")) -ne 't' -or
+        !(Select-String -LiteralPath "$scratch/LoginClient.log" -SimpleMatch 'ONLINE_FIXTURE_CHAT_BLOCK_ROUND_TRIP' -Quiet)) {
+        throw 'The client did not complete block, unblock and re-block through the authoritative server.'
+    }
+}
+
+function Invoke-GameChat([string]$Sender, [string]$SenderToken, [string]$Receiver, [string]$ReceiverToken) {
+    if (!$UnrealEditor) { throw 'VerifyGameChat requires an existing Unreal Editor executable.' }
+    $channel = 5
+    $port = 17993
+    $map = '/Engine/Maps/Entry?game=/Script/Project_J.Project_JOnlineLoginFixture'
+    $common = @("$root/Project_J.uproject", $map, '-unattended', '-nop4', '-nosound', '-NullRHI', '-NoLiveCoding', '-NoDDCCleanup',
+        '-DisablePython', '-DisablePlugins=EditorToolset,AutomationTestToolset,ToolsetRegistry', '-multihome=127.0.0.1',
+        '-ProjectJOnlineLoginFixture', '-ProjectJOnlineChatFixture', '-corelimit=2', '-ExecCmds=t.MaxFPS 30')
+    $serverArgs = $common + @('-server', "-port=$port", "-UserDir=$scratch/ChatServer", "-ABSLOG=$scratch/ChatServer.log",
+        "-ProjectJChatSender=$Sender", "-ProjectJChatReceiver=$Receiver", "-ProjectJOnlineOutboxPath=$scratch/ChatOutbox.sqlite",
+        "-ini:Game:[/Script/Project_J.Project_JGatewaySubsystem]:GatewayUrl=$uri",
+        '-ini:Game:[/Script/Project_J.Project_JNakamaServicePortSubsystem]:RuntimeMode=LocalDockerNakama',
+        "-ini:Game:[/Script/Project_J.Project_JGameMode]:OnlineAdvertisedEndpoint=127.0.0.1:$port",
+        "-ini:Game:[/Script/Project_J.Project_JGameMode]:OnlineChannelId=$channel")
+    $children = @()
+    try {
+        $server = Start-Process -FilePath $UnrealEditor -ArgumentList ($serverArgs | ForEach-Object { '"' + $_ + '"' }) `
+            -PassThru -WindowStyle Hidden -Environment @{ PROJECT_J_NAKAMA_HTTP_KEY = $nakamaKey; PGPASSWORD = $null }
+        $children += $server
+        $null = $server.Handle
+        $deadline = [DateTime]::UtcNow.AddSeconds(90)
+        do {
+            if ($server.HasExited -or [DateTime]::UtcNow -ge $deadline) { throw "Chat server was not ready. See $scratch/ChatServer.log" }
+            Start-Sleep -Milliseconds 300
+            $registry = Invoke-CommandRpc world_channel_list @{ zone = 'Entry' } ''
+        } until (@($registry.channels | Where-Object channel_id -eq $channel).Count -eq 1)
+        foreach ($peer in @(@{ Role = 'ChatSender'; Character = $Sender; Token = $SenderToken },
+                            @{ Role = 'ChatReceiver'; Character = $Receiver; Token = $ReceiverToken })) {
+            $clientArgs = $common + @('-game', "-UserDir=$scratch/$($peer.Role)", "-ABSLOG=$scratch/$($peer.Role).log",
+                "-ini:Game:[/Script/Project_J.Project_JOnlineWorldSubsystem]:NakamaClientUrl=$uri")
+            $client = Start-Process -FilePath $UnrealEditor -ArgumentList ($clientArgs | ForEach-Object { '"' + $_ + '"' }) `
+                -PassThru -WindowStyle Hidden -Environment @{ PROJECT_J_NAKAMA_HTTP_KEY = $null; PGPASSWORD = $null
+                    PROJECT_J_TEST_LOGIN_CHARACTER = $peer.Character; PROJECT_J_TEST_LOGIN_ACCESS = $peer.Token
+                    PROJECT_J_TEST_CHAT_SENDER = $Sender }
+            $children += $client
+            $null = $client.Handle
+        }
+        $serverLogPath = Join-Path $scratch 'ChatServer.log'
+        $startupTime = [System.Diagnostics.Stopwatch]::StartNew()
+        do {
+            if (($children | Where-Object HasExited) -or $startupTime.Elapsed.TotalSeconds -ge 120) {
+                throw "Both chat clients did not become ready in the same world. See $scratch/Chat*.log"
+            }
+            Start-Sleep -Milliseconds 200
+            $chatStarted = (Test-Path -LiteralPath $serverLogPath) -and
+                (Select-String -LiteralPath $serverLogPath -SimpleMatch 'ONLINE_CHAT_SAME_WORLD_STARTED' -Quiet)
+        } until ($chatStarted)
+        $exerciseTime = [System.Diagnostics.Stopwatch]::StartNew()
+        while ($children | Where-Object { !$_.HasExited }) {
+            if (($children | Where-Object { $_.HasExited -and $_.ExitCode -ne 0 }) -or $exerciseTime.Elapsed.TotalSeconds -ge 90) {
+                throw "The two-client chat exchange failed or timed out. See $scratch/Chat*.log"
+            }
+            Start-Sleep -Milliseconds 200
+        }
+        if ($children | Where-Object ExitCode -ne 0) { throw "A chat process failed. See $scratch/Chat*.log" }
+        $senderLog = Get-Content -LiteralPath "$scratch/ChatSender.log" -Raw
+        $receiverLog = Get-Content -LiteralPath "$scratch/ChatReceiver.log" -Raw
+        $received = '(?m)ONLINE_CHAT_WORLD_RECEIVED (Before|WhileBlocked|After)\s*$'
+        $senderMessages = ([regex]::Matches($senderLog, $received) | ForEach-Object { $_.Groups[1].Value }) -join ','
+        $receiverMessages = ([regex]::Matches($receiverLog, $received) | ForEach-Object { $_.Groups[1].Value }) -join ','
+        if ($senderMessages -ne 'Before,WhileBlocked,After' -or $receiverMessages -ne 'Before,After' -or
+            $receiverLog -notmatch '(?s)ONLINE_CHAT_ACK Block.*ONLINE_CHAT_MUTED_CHECKPOINT.*ONLINE_CHAT_ACK Unblock' -or
+            !(Select-String -LiteralPath "$scratch/ChatServer.log" -SimpleMatch 'ONLINE_CHAT_SAME_WORLD_COMPLETE' -Quiet)) {
+            throw "World chat receipt or block/unblock evidence was incomplete. See $scratch/Chat*.log"
+        }
+        $blockRemains = Invoke-Postgres @('-c', "SELECT EXISTS (SELECT 1 FROM pj_social_relations WHERE owner_char_id='$Receiver' AND target_char_id='$Sender' AND relation_type='BLOCKED');")
+        if ($blockRemains -ne 'f') { throw 'The chat fixture unblock did not clear the durable relation.' }
+    } finally {
+        foreach ($child in $children) {
+            if (!$child.HasExited) { Stop-Process -InputObject $child; $child.WaitForExit() }
+            $child.Dispose()
+        }
     }
 }
 
@@ -274,9 +398,11 @@ function Invoke-OnlineDungeon([string]$Character, [string]$AccessToken) {
     }
     $serverEnv = @{ PROJECT_J_NAKAMA_HTTP_KEY = $nakamaKey; PROJECT_J_DUNGEON_TICKET_KEY = $signingKey; PGPASSWORD = $null }
     $source = Start-DungeonRole Source (@($sourceMap) + $serverSettings + @("-port=$sourcePort", '-ProjectJOnlineDungeonSource',
+        "-ProjectJOnlineOutboxPath=$scratch/SourceOutbox.sqlite",
         "-ini:Game:[/Script/Project_J.Project_JGameMode]:OnlineAdvertisedEndpoint=127.0.0.1:$sourcePort",
         '-ini:Game:[/Script/Project_J.Project_JGameMode]:MaxTrustedSessions=48')) $serverEnv
     $destination = Start-DungeonRole Destination (@($destinationMap) + $serverSettings + @("-port=$destinationPort", '-ProjectJOnlineDungeonDestination',
+        "-ProjectJOnlineOutboxPath=$scratch/DestinationOutbox.sqlite",
         "-ini:Game:[/Script/Project_J.Project_JGameMode]:OnlineAdvertisedEndpoint=127.0.0.1:$destinationPort",
         '-ini:Game:[/Script/Project_J.Project_JGameMode]:OnlineChannelId=3',
         '-ini:Game:[/Script/Project_J.Project_JGameMode]:MaxTrustedSessions=256',
@@ -292,6 +418,10 @@ function Invoke-OnlineDungeon([string]$Character, [string]$AccessToken) {
     $capacities = Invoke-Postgres @('-c', "SELECT string_agg(channel_id || ':' || capacity, ',' ORDER BY channel_id) FROM pj_world_channels WHERE endpoint IN ('127.0.0.1:$sourcePort', '127.0.0.1:$destinationPort') AND leased_until > NOW();")
     if ($capacities -ne '1:48,3:127') { throw "The two real channel leases did not advertise their configured and Iris-clamped capacities. Observed $capacities." }
     $beforeEpoch = [long](Invoke-Postgres @('-c', "SELECT session_epoch FROM pj_characters WHERE character_id = '$Character';"))
+    $fieldRewardQuery = "SELECT count(*) FROM pj_boss_reward_receipts r WHERE r.character_id = '$Character' AND NOT EXISTS (SELECT 1 FROM pj_dungeon_instances i WHERE i.instance_id = r.defeat_id) AND jsonb_array_length(r.response_json->'mail_ids') > 0;"
+    $fieldRewardsBefore = [int](Invoke-Postgres @('-c', $fieldRewardQuery))
+    $manaQuantityQuery = "SELECT COALESCE(sum(quantity),0) FROM pj_inventory_items WHERE owner_character_id='$Character' AND owner_scope='CHAR_INV' AND definition_id='ManaPotion';"
+    if ($VerifyAuthoredSandbox) { $manaBefore = [long](Invoke-Postgres @('-c', $manaQuantityQuery)) }
     $client = Start-DungeonRole Client @($sourceMap, '-game', "-ini:Game:[/Script/Project_J.Project_JOnlineWorldSubsystem]:NakamaClientUrl=$uri") `
         @{ PROJECT_J_NAKAMA_HTTP_KEY = $null; PROJECT_J_DUNGEON_TICKET_KEY = $null; PGPASSWORD = $null
             PROJECT_J_TEST_LOGIN_CHARACTER = $Character; PROJECT_J_TEST_LOGIN_ACCESS = $AccessToken; PROJECT_J_TEST_LOGIN_ITEM = $null }
@@ -303,13 +433,16 @@ function Invoke-OnlineDungeon([string]$Character, [string]$AccessToken) {
     if ($client.ExitCode -ne 0 -or $source.ExitCode -ne 0 -or $destination.ExitCode -ne 0 -or $afterEpoch -ne ($beforeEpoch + 3) -or
         $finished -ne 't' -or !(Select-String -LiteralPath "$scratch/DungeonSource.log" -SimpleMatch 'ONLINE_DUNGEON_RETURNED_AT_ANCHOR' -Quiet) -or
         !(Select-String -LiteralPath "$scratch/DungeonDestination.log" -SimpleMatch 'ONLINE_DUNGEON_DESTINATION_JOINED' -Quiet)) {
-        throw "The PostgreSQL-backed dungeon round trip failed. See $scratch/DungeonSource.log, DungeonDestination.log and DungeonClient.log"
+        throw "Dungeon round trip failed. Client/source/destination exit codes $($client.ExitCode)/$($source.ExitCode)/$($destination.ExitCode), epochs $beforeEpoch to $afterEpoch, committed return $finished. See $scratch/DungeonSource.log, DungeonDestination.log and DungeonClient.log"
     }
     if ($VerifyAuthoredSandbox) {
-        $craft = Invoke-Postgres @('-c', "SELECT EXISTS (SELECT 1 FROM pj_quest_states q CROSS JOIN LATERAL jsonb_array_elements(q.progress_json->'objectives') g WHERE q.character_id = '$Character' AND q.quest_id = 'prototype.gatherandcraft' AND g->>'recipe' IS NOT NULL AND (g->>'count')::int = 1) AND EXISTS (SELECT 1 FROM pj_inventory_items WHERE owner_character_id = '$Character' AND owner_scope = 'CHAR_INV' AND definition_id = 'ManaPotion' AND quantity = 1);")
+        $craft = Invoke-Postgres @('-c', "SELECT EXISTS (SELECT 1 FROM pj_quest_states q CROSS JOIN LATERAL jsonb_array_elements(q.progress_json->'objectives') g WHERE q.character_id = '$Character' AND q.quest_id = 'prototype.gatherandcraft' AND g->>'recipe' IS NOT NULL AND (g->>'count')::int = 1);")
+        $manaAfter = [long](Invoke-Postgres @('-c', $manaQuantityQuery))
         $gather = Invoke-Postgres @('-c', "SELECT count(*) FROM pj_idempotency_receipts WHERE operation = 'online_craft_commit' AND request_json->>'kind' = 'gather' AND request_json->>'character_id' = '$Character';")
         $reward = Invoke-Postgres @('-c', "SELECT count(*) FROM pj_boss_reward_receipts r JOIN pj_dungeon_instances i ON i.instance_id = r.defeat_id WHERE i.dungeon_id = '$dungeonId' AND i.cleared_at IS NOT NULL AND r.character_id = '$Character' AND jsonb_array_length(r.response_json->'mail_ids') > 0;")
-        if ($craft -ne 't' -or $gather -ne '2' -or $reward -ne '1' -or
+        if ($craft -ne 't' -or $manaAfter -ne ($manaBefore + 1) -or $gather -ne '2' -or $reward -ne '1' -or
+            ([int](Invoke-Postgres @('-c', $fieldRewardQuery)) -ne (1 + $fieldRewardsBefore)) -or
+            !(Select-String -LiteralPath "$scratch/DungeonSource.log" -SimpleMatch 'ONLINE_SANDBOX_FIELD_HIT hp=0' -Quiet) -or
             !(Select-String -LiteralPath "$scratch/DungeonSource.log" -SimpleMatch 'ONLINE_SANDBOX_CRAFT_PROGRESS 1' -Quiet) -or
             !(Select-String -LiteralPath "$scratch/DungeonDestination.log" -SimpleMatch 'ONLINE_SANDBOX_BOSS_DEFEATED' -Quiet)) {
             throw "The authored sandbox did not prove craft progress and a single durable boss reward. See $scratch."
@@ -366,7 +499,7 @@ console:
         $firstPage.mail[0].mail_id -eq $nextPage.mail[0].mail_id) { throw 'Mailbox pagination did not return two distinct deliveries.' }
     $itemIntent = @{ character_id = $character; mail_id = $reward.mail_ids[0]; session_epoch = $session.character.session_epoch }
     $goldIntent = @{ character_id = $character; mail_id = $reward.mail_ids[1]; session_epoch = $session.character.session_epoch }
-    if ($UnrealEditor -and !$VerifyGameLogin -and !$VerifyOnlineDungeon -and !$VerifyAuthoredSandbox -and !$VerifyServerDrain) {
+    if ($UnrealEditor -and !$VerifyGameLogin -and !$VerifyGameChat -and !$VerifyOnlineDungeon -and !$VerifyAuthoredSandbox -and !$VerifyServerDrain) {
         Invoke-UnrealClaim $character $itemIntent.mail_id $itemKey
         $initialReplay = Invoke-CommandRpc mail_claim $itemIntent $itemKey
         if ($initialReplay.status -ne 'REPLAYED') { throw 'Unreal did not commit the tracked command.' }
@@ -375,6 +508,31 @@ console:
         $item = Invoke-CommandRpc mail_claim $itemIntent $itemKey
     }
     if ($item.status -ne 'COMMITTED' -or !$item.item_instance_id -or $item.quantity -ne 3) { throw 'The item attachment was not claimed.' }
+    $questRow = @{ id = 'native.quest.reward'; count = 0; tracked = $true; required = 1; definition_version = 2
+        event = 'NativeQuestEvent'; objectives = @() }
+    $questAccept = @{ character_id = $character; session_epoch = '1'; kind = 'accept'; quest = $questRow.id; row = $questRow }
+    $questProgress = @{ character_id = $character; session_epoch = '1'; kind = 'progress'
+        changes = @(@{ row = $questRow; deltas = @(@{ id = ''; amount = 1 }) }) }
+    $questClaimKey = [guid]::NewGuid().ToString()
+    $questClaim = @{ character_id = $character; session_epoch = '1'; kind = 'claim'; quest = $questRow.id
+        definition_version = 2; expected_profile_revision = '1'; reward_level = 2; reward_xp = '15'
+        reward_items = @(@{ definition = 'NativeQuestReward'; version = 2; level = 1; quantity = 2; max_stack = 5 }) }
+    if ((Invoke-CommandRpc world_quest_edit $questAccept ([guid]::NewGuid().ToString())).status -ne 'COMMITTED' -or
+        (Invoke-CommandRpc world_quest_edit $questProgress ([guid]::NewGuid().ToString())).status -ne 'COMMITTED') {
+        throw 'The real PostgreSQL quest was not accepted and completed.'
+    }
+    Invoke-Postgres @('-c', "UPDATE pj_characters SET inventory_capacity = 1 WHERE character_id = '$character';") | Out-Null
+    $questFull = Invoke-CommandRpc world_quest_edit $questClaim $questClaimKey
+    if ($questFull.status -ne 'INVENTORY_FULL' -or $questFull.xp -ne '0' -or $questFull.quests[0].id -ne $questRow.id) {
+        throw 'A full bag did not preserve quest completion eligibility and XP.'
+    }
+    Invoke-Postgres @('-c', "UPDATE pj_characters SET inventory_capacity = 256 WHERE character_id = '$character';") | Out-Null
+    $questPaid = Invoke-CommandRpc world_quest_edit $questClaim $questClaimKey
+    $questItem = $questPaid.items | Where-Object definition -eq 'NativeQuestReward'
+    if ($questPaid.status -ne 'COMMITTED' -or $questPaid.level -ne 2 -or $questPaid.xp -ne '15' -or
+        $questPaid.completed_quest -ne $questRow.id -or $questItem.count -ne 2 -or $questItem.version -ne 2) {
+        throw 'The real PostgreSQL quest claim did not commit versioned items and XP.'
+    }
     $principal = New-NakamaPlayer
     $unrelated = New-NakamaPlayer
     $onlineCharacter = [guid]::NewGuid().ToString()
@@ -390,10 +548,37 @@ console:
         return_expires = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds() + 55 }
     $redeemed = Invoke-CommandRpc world_redeem_login $worldIntent $ticket.ticket
     if ($redeemed.status -ne 'OK' -or $redeemed.character -ne $onlineCharacter -or $redeemed.epoch -ne '1') { throw 'Player login did not redeem.' }
+    $muteIntent = @{ character_id=$onlineCharacter; target=$character; block=$true; block_revision=$redeemed.block_revision; session_epoch=$redeemed.epoch }
+    $mute = Invoke-CommandRpc world_set_chat_block $muteIntent ([guid]::NewGuid().ToString())
+    if ($mute.status -ne 'OK' -or $mute.blocked_characters -notcontains $character) { throw 'Private block did not persist.' }
+    if ($VerifyGameLogin) {
+        # A normal, non-travel quest completed before login and before either backend restarts.
+        $priorQuest = @{ id = 'native.quest.ownerhistory'; count = 0; tracked = $true; required = 1; definition_version = 1
+            event = 'NativePriorQuest'; objectives = @() }
+        $priorAccept = @{ character_id = $onlineCharacter; session_epoch = $redeemed.epoch; kind = 'accept'; quest = $priorQuest.id; row = $priorQuest }
+        $priorProgress = @{ character_id = $onlineCharacter; session_epoch = $redeemed.epoch; kind = 'progress'
+            changes = @(@{ row = $priorQuest; deltas = @(@{ id = ''; amount = 1 }) }) }
+        $priorClaim = @{ character_id = $onlineCharacter; session_epoch = $redeemed.epoch; kind = 'claim'; quest = $priorQuest.id
+            definition_version = 1; expected_profile_revision = $redeemed.profile_revision; reward_level = 1; reward_xp = '15'; reward_items = @() }
+        foreach ($command in @($priorAccept, $priorProgress, $priorClaim)) {
+            if ((Invoke-CommandRpc world_quest_edit $command ([guid]::NewGuid().ToString())).status -ne 'COMMITTED') {
+                throw 'The previous-session quest fixture did not commit.'
+            }
+        }
+    }
     Stop-Nakama
     Stop-Postgres
     Start-Postgres
     Start-Nakama
+    $questReplay = Invoke-CommandRpc world_quest_edit $questClaim $questClaimKey
+    $questHistory = Invoke-CommandRpc world_quest_history @{ character_id = $character; session_epoch = '1'; count = 1; ordinal = 0 } ''
+    $staleHistory = Invoke-CommandRpc world_quest_history @{ character_id = $character; session_epoch = '1'; count = 0; ordinal = 0 } ''
+    if ($questReplay.status -ne 'REPLAYED' -or ($questReplay.items | Where-Object definition -eq 'NativeQuestReward').id -ne $questItem.id -or
+        $questReplay.xp -ne '15' -or (Invoke-CommandRpc world_quest_edit $questClaim ([guid]::NewGuid().ToString())).status -ne 'STALE' -or
+        $questHistory.status -ne 'OK' -or $questHistory.count -ne 1 -or $questHistory.ids[0] -ne $questRow.id -or
+        $staleHistory.status -ne 'STALE' -or $staleHistory.count -ne 1) {
+        throw 'The real PostgreSQL quest grant did not survive restart as one claim.'
+    }
     if ((Invoke-CommandRpc world_channel_heartbeat $channel '').status -ne 'OK') { throw 'Channel lease could not renew after restart.' }
     $sharedChannels = Invoke-CommandRpc world_channel_list @{ zone = 'LocalWorld' } ''
     if ($sharedChannels.channels.Count -ne 1 -or $sharedChannels.channels[0].channel_id -ne 2) { throw 'The shared channel was missing after restart.' }
@@ -403,8 +588,16 @@ console:
     $worldIntent.Remove('return_nonce')
     $worldIntent.Remove('return_expires')
     $worldIntent.Remove('return_character')
-    if ((Invoke-CommandRpc world_redeem_login $worldIntent $next.ticket).epoch -ne '2') { throw 'A fresh ordinary login failed after replay rejection.' }
+    $reconnected = Invoke-CommandRpc world_redeem_login $worldIntent $next.ticket
+    if ($reconnected.epoch -ne '2' -or $reconnected.blocked_characters -notcontains $character) { throw 'Login or private block projection failed after restart.' }
+    if ((Invoke-CommandRpc world_set_chat_block $muteIntent ([guid]::NewGuid().ToString())).status -ne 'STALE_SESSION') { throw 'Old chat lease remained writable.' }
     Invoke-ChannelRouting $account $principal.token
+    if ($VerifyGameChat) {
+        $chatAccount = [guid]::NewGuid().ToString()
+        $chatSender = [guid]::NewGuid().ToString()
+        Invoke-Postgres @('-c', "INSERT INTO pj_accounts(account_id,external_sub) VALUES ('$chatAccount','nakama:$($unrelated.id)'); INSERT INTO pj_characters(character_id,account_id,char_name,class_id) VALUES ('$chatSender','$chatAccount','Chat sender','GreatSword');") | Out-Null
+        Invoke-GameChat $chatSender $unrelated.token $onlineCharacter $principal.token
+    }
     if ($VerifyGameLogin) {
         $gameReward = Invoke-CommandRpc reward_boss @{ defeat_id = [guid]::NewGuid().ToString(); character_id = $onlineCharacter; gold = '0'; items = @(@{ definition_id = 'HealthPotion'; quantity = 3 }) } ''
         $gameItem = Invoke-Postgres @('-c', "SELECT attached_item_id FROM pj_mail_messages WHERE mail_id = '$($gameReward.mail_ids[0])';")
@@ -415,8 +608,12 @@ console:
             throw
         }
         if ((Invoke-Postgres @('-c', "SELECT owner_scope || ':' || quantity FROM pj_inventory_items WHERE item_instance_id = '$gameItem';")) -ne 'CHAR_INV:2' -or
-            (Invoke-Postgres @('-c', "SELECT sum(quantity) FROM pj_inventory_items WHERE owner_character_id = '$onlineCharacter' AND owner_scope = 'CHAR_INV';")) -ne '3') {
+            (Invoke-Postgres @('-c', "SELECT sum(quantity) FROM pj_inventory_items WHERE owner_character_id = '$onlineCharacter' AND owner_scope = 'CHAR_INV' AND definition_id = 'HealthPotion';")) -ne '3') {
             throw 'The replicated game split did not match its PostgreSQL rows.'
+        }
+        $gameQuest = Invoke-Postgres @('-c', "SELECT (c.xp = 40 AND c.quest_completion_count = 2) AND EXISTS (SELECT 1 FROM pj_inventory_items WHERE owner_character_id = c.character_id AND definition_id = 'ManaPotion' AND quantity = 2 AND owner_scope = 'CHAR_INV') FROM pj_characters c WHERE c.character_id = '$onlineCharacter';")
+        if ($gameQuest -ne 't' -or !(Select-String -LiteralPath "$scratch/LoginClient.log" -SimpleMatch 'ONLINE_FIXTURE_QUEST_REWARD_AND_HISTORY_REPLICATED' -Quiet)) {
+            throw 'The Unreal client did not claim the item/XP reward and load both completion pages from the normal owner RPC.'
         }
     }
     if ($VerifyOnlineDungeon -or $VerifyAuthoredSandbox) {
@@ -486,7 +683,13 @@ console:
         serverOnlyChannelRouting = $true; directAndRoutedTicketsShareCapacity = $true
         onlineBagSplitCommitted = $true
         onlineEquipmentCommitted = $true; onlineCraftEscrowRestored = $true
+        onlineQuestItemsAndExperienceCommitted = $true; onlineQuestFullBagRolledBack = $true; onlineQuestReplay = $questReplay.status
+        onlineQuestHistoryAfterRestart = $true
+        chatBlockAfterRestartAndFencing = $true
         gameLoginAndReplicatedInventory = [bool]$VerifyGameLogin
+        gameQuestRewardAndHistory = [bool]$VerifyGameLogin
+        gameChatBlockRoundTrip = [bool]$VerifyGameLogin
+        gameWorldChatDeliveredAndMuted = [bool]$VerifyGameChat
         connectedPlayerDrain = [bool]$VerifyServerDrain
         postgresDungeonRoundTrip = ($VerifyOnlineDungeon -or $VerifyAuthoredSandbox)
         authoredSandboxCraftAndBoss = [bool]$VerifyAuthoredSandbox

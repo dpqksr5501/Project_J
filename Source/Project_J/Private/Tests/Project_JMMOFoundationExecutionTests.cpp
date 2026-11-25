@@ -3,7 +3,11 @@
 #include "HAL/PlatformProcess.h"
 #include <limits>
 #include "Misc/DataValidation.h"
+#include "Misc/ScopeExit.h"
+#include "AI/Project_JThreatComponent.h"
+#include "Economy/Project_JEconomySubsystem.h"
 #include "Engine/Engine.h"
+#include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "GameFramework/WorldSettings.h"
 #include "GameFramework/PlayerController.h"
@@ -13,6 +17,8 @@
 #include "Components/Project_JEquipmentManagerComponent.h"
 #include "Components/Project_JEquipmentRuntimeComponent.h"
 #include "GameFramework/Pawn.h"
+#include "GameFramework/Character.h"
+#include "Gameplay/Project_JLootSubsystem.h"
 #include "Inventory/Project_JConsumableDefinition.h"
 #include "Equipment/Project_JEquipmentItemDefinition.h"
 #include "KinematicActorSimulation.h"
@@ -26,6 +32,7 @@
 #include "Combat/Project_JGameplayAbility_NPCAttack.h"
 #include "System/Project_JNPCDecisionSubsystem.h"
 #include "System/Project_JNPCPathSubsystem.h"
+#include "Social/Project_JSocialSubsystem.h"
 #include "Project_JAttributeSet.h"
 #include "AbilitySystemComponent.h"
 #include "Project_JMMOArchitectureReceiver.h"
@@ -572,6 +579,121 @@ bool FProjectJEncounterCombatAdmissionTest::RunTest(const FString&)
 {
     ADD_LATENT_AUTOMATION_COMMAND(ProjectJFoundationTests::FEncounterCombatLifecycle(this));
     return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJFieldBossRewardEligibilityTest,
+    "ProjectJ.Foundation.WorldEvents.FieldBossRewardEligibility", ProjectJFoundationTests::Flags)
+bool FProjectJFieldBossRewardEligibilityTest::RunTest(const FString&)
+{
+    const TStrongObjectPtr<UGameInstance> GI(NewObject<UGameInstance>(GEngine));
+    GI->Init();
+    ON_SCOPE_EXIT { GI->Shutdown(); };
+    ProjectJFoundationTests::FWorld Fixture;
+    UWorld* World = Fixture.World;
+    World->SetGameInstance(GI.Get());
+    Fixture.Start();
+    auto* Social = GI->GetSubsystem<UProject_JSocialSubsystem>();
+    auto* Economy = GI->GetSubsystem<UProject_JEconomySubsystem>();
+    if (!TestNotNull(TEXT("Native party state"), Social) || !TestNotNull(TEXT("Local mail ledger"), Economy)) return false;
+
+    const FVector DefeatLocation(10000, 0, 1000);
+    FActorSpawnParameters Spawn;
+    Spawn.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    auto* Boss = World->SpawnActor<AProject_JNPCCharacter>(DefeatLocation, FRotator::ZeroRotator, Spawn);
+    auto* Encounter = World->SpawnActorDeferred<AProject_JWorldEncounter>(AProject_JWorldEncounter::StaticClass(), FTransform::Identity);
+    if (!TestNotNull(TEXT("Boss"), Boss) || !TestNotNull(TEXT("Encounter"), Encounter)) return false;
+    Encounter->EncounterId = TEXT("Foundation.RewardEligibility");
+    Encounter->NPCClass = AProject_JNPCCharacter::StaticClass();
+    Encounter->PartyRewardRadiusCm = 3000.0f;
+    Encounter->BossLootTable = NewObject<UProject_JLootTableDefinition>(Encounter);
+    Encounter->BossLootTable->MinGold = Encounter->BossLootTable->MaxGold = 25;
+    Encounter->FinishSpawning(FTransform::Identity);
+    Boss->GetAttributeSet()->InitMaxHealth(1000.0f);
+    auto* Threat = Boss->GetThreatComponent();
+    if (!TestNotNull(TEXT("Boss contribution record"), Threat)) return false;
+
+    struct FParticipant
+    {
+        APlayerController* Controller;
+        AProject_JPlayerState* State;
+        ACharacter* Pawn;
+        FGuid Character;
+    };
+    const auto AddParticipant = [&](const FVector& Offset)
+    {
+        FParticipant Player{World->SpawnActor<APlayerController>(), World->SpawnActor<AProject_JPlayerState>(),
+            World->SpawnActor<ACharacter>(DefeatLocation + Offset, FRotator::ZeroRotator, Spawn), FGuid::NewGuid()};
+        Player.State->SetOwner(Player.Controller);
+        Player.State->SetIdentity(FProject_JAccountId::NewId(), FProject_JCharacterId{Player.Character});
+        Player.Controller->SetPlayerState(Player.State);
+        Player.Pawn->SetPlayerState(Player.State);
+        Player.Controller->Possess(Player.Pawn);
+        return Player;
+    };
+    const auto Anchor = AddParticipant(FVector(100, 0, 0));
+    const auto Nearby = AddParticipant(FVector(3000, 0, 0));
+    const auto Remote = AddParticipant(FVector(3001, 0, 0));
+    const auto Above = AddParticipant(FVector(0, 0, 3001));
+    const auto Spectator = AddParticipant(FVector(300, 200, 0));
+    const auto CameraOnly = AddParticipant(FVector(400, 200, 0));
+    const auto Disconnected = AddParticipant(FVector(2000, 100, 0));
+    const auto DisconnectedPeer = AddParticipant(FVector(450, 200, 0));
+    const auto Healer = AddParticipant(FVector(9000, 0, 0));
+    const auto LowDamage = AddParticipant(FVector(600, 300, 0));
+    const auto Party = Social->CreateParty(Anchor.State);
+    const auto OtherParty = Social->CreateParty(Disconnected.State);
+    if (!TestTrue(TEXT("Authoritative parties created"), Party.bSucceeded && OtherParty.bSucceeded)) return false;
+    for (const auto* Participant : {&Nearby, &Remote, &Above, &Spectator, &CameraOnly})
+        if (!TestTrue(TEXT("Join the direct contributor's party"), Social->JoinParty(Participant->State, Party.GroupId).bSucceeded)) return false;
+    if (!TestTrue(TEXT("Join the disconnected contributor's party"), Social->JoinParty(DisconnectedPeer.State, OtherParty.GroupId).bSucceeded)) return false;
+    Spectator.State->SetIsOnlyASpectator(true);
+    CameraOnly.Controller->UnPossess();
+    CameraOnly.Controller->SetViewTarget(Anchor.Pawn);
+
+    Threat->AddDamageThreat(Anchor.Pawn, Anchor.Character, 20.0);
+    Threat->AddDamageThreat(Disconnected.Pawn, Disconnected.Character, 20.0);
+    Threat->AddHealingThreat(Healer.Pawn, Healer.Character, 5.0);
+    Threat->AddDamageThreat(LowDamage.Pawn, LowDamage.Character, 0.5);
+    Threat->RemoveFromActiveAggro(Disconnected.Pawn);
+    Disconnected.Controller->UnPossess();
+    Disconnected.Controller->Destroy();
+    TestTrue(TEXT("Invalid health input does not grant contribution credit"), Threat->GetEligibleContributors(std::numeric_limits<double>::quiet_NaN()).IsEmpty());
+
+    const auto Frozen = Encounter->CollectDefeatContributors(*Boss, *Threat, false);
+    TestEqual(TEXT("Three direct contributors and one nearby party recipient"), Frozen.Num(), 4);
+    TestTrue(TEXT("Defeat origin is the moved boss, and the authored radius is inclusive"), Frozen.Contains(Nearby.Character));
+    TestTrue(TEXT("Direct damage, disconnected damage and effective healing survive location changes"),
+        Frozen.Contains(Anchor.Character) && Frozen.Contains(Disconnected.Character) && Frozen.Contains(Healer.Character));
+    TestFalse(TEXT("Outside radius, above it, spectator and camera-only states produce no party credit"),
+        Frozen.Contains(Remote.Character) || Frozen.Contains(Above.Character) || Frozen.Contains(Spectator.Character) || Frozen.Contains(CameraOnly.Character));
+    TestFalse(TEXT("A disconnected anchor and insufficient damage cannot seed a reward"),
+        Frozen.Contains(DisconnectedPeer.Character) || Frozen.Contains(LowDamage.Character));
+    TestEqual(TEXT("Without an online session authority only direct IDs are retained"),
+        Encounter->CollectDefeatContributors(*Boss, *Threat, true).Num(), 3);
+
+    Anchor.Pawn->SetActorLocation(DefeatLocation + FVector(9000, 300, 0));
+    const auto NoNearbyAnchor = Encounter->CollectDefeatContributors(*Boss, *Threat, false);
+    TestTrue(TEXT("A far contributing player retains direct credit"), NoNearbyAnchor.Contains(Anchor.Character));
+    TestFalse(TEXT("A far contributor cannot extend credit to a nearby party member"), NoNearbyAnchor.Contains(Nearby.Character));
+    TestTrue(TEXT("A captured roster does not change with later moves"), Frozen.Contains(Nearby.Character));
+    Anchor.Pawn->SetActorLocation(DefeatLocation + FVector(100, 0, 0));
+
+    Encounter->PartyRewardRadiusCm = 0.0f;
+    TestEqual(TEXT("Zero radius disables party sharing"), Encounter->CollectDefeatContributors(*Boss, *Threat, false).Num(), 3);
+    Encounter->PartyRewardRadiusCm = std::numeric_limits<float>::quiet_NaN();
+    FDataValidationContext Invalid;
+    TestEqual(TEXT("Invalid authored radius is rejected"), Encounter->IsDataValid(Invalid), EDataValidationResult::Invalid);
+    TestEqual(TEXT("Invalid radius fails closed without losing direct credit"), Encounter->CollectDefeatContributors(*Boss, *Threat, false).Num(), 3);
+    Encounter->PartyRewardRadiusCm = 3000.0f;
+    Encounter->NPC = Boss;
+    Encounter->Phase = EProject_JEncounterPhase::Active;
+    Encounter->EnterCooldown(true);
+    TestEqual(TEXT("Authority moved the local encounter into cooldown"), Encounter->Phase, EProject_JEncounterPhase::Cooldown);
+    for (const auto& Character : Frozen)
+        TestEqual(TEXT("Authoritative defeat creates one local mail per eligible recipient"), Economy->GetInbox(Character).Num(), 1);
+    TestTrue(TEXT("Remote and disconnected-party members do not receive local mail"),
+        Economy->GetInbox(Remote.Character).IsEmpty() && Economy->GetInbox(DisconnectedPeer.Character).IsEmpty());
+    return !HasAnyErrors();
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJEncounterInitialNavigationTest, "ProjectJ.Foundation.WorldEvents.InitialNavigation", ProjectJFoundationTests::Flags)

@@ -63,11 +63,21 @@ bool FTargetSpatialSnapshot::Query(const FVector& Origin, double Radius, int32 E
 	OutIndices.Reset(); Stats = {};
 	if (Origin.ContainsNaN() || !FMath::IsFinite(Radius) || Radius < 0.0 || Radius > 1.e9) return false;
 	const double RadiusSquared = FMath::Square(Radius);
+	int32 PreviousId = INDEX_NONE;
+	bool bNeedsSort = false;
 	const auto Consider = [&](int32 Index)
 	{
 		++Stats.CandidatesVisited;
 		const auto& Target = Targets[Index];
-		if (Target.Team != ExcludedTeam && FVector::DistSquared(Target.Position, Origin) <= RadiusSquared) OutIndices.Add(Index);
+		if (Target.Team != ExcludedTeam && FVector::DistSquared(Target.Position, Origin) <= RadiusSquared)
+		{
+			if (!bNeedsSort)
+			{
+				bNeedsSort = Target.Id < PreviousId;
+				PreviousId = Target.Id;
+			}
+			OutIndices.Add(Index);
+		}
 	};
 	FIntPoint MinCell, MaxCell;
 	if (!QueryCells(Origin, Radius, MinCell, MaxCell))
@@ -86,8 +96,13 @@ bool FTargetSpatialSnapshot::Query(const FVector& Origin, double Radius, int32 E
 			}
 		for (int32 Index : Unindexed) Consider(Index);
 	}
-	// Preserve the equal-score tie break without adding per-candidate virtual calls.
-	OutIndices.Sort([&](int32 A, int32 B) { return Targets[A].Id < Targets[B].Id; });
+	// Dense same-cell results often retain the producer's ID order. Restore it
+	// only when the accepted traversal crossed an inversion.
+	if (bNeedsSort)
+	{
+		Stats.bRequiredSort = true;
+		OutIndices.Sort([&](int32 A, int32 B) { return Targets[A].Id < Targets[B].Id; });
+	}
 	return true;
 }
 

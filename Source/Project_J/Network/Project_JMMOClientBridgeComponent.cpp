@@ -665,20 +665,122 @@ void UProject_JMMOClientBridgeComponent::ServerWithdrawGuildBank_Implementation(
 
 void UProject_JMMOClientBridgeComponent::ServerBlockCharacter_Implementation(FGuid TargetCharacterId)
 {
+	SetChatBlock(TargetCharacterId, true);
+}
+
+void UProject_JMMOClientBridgeComponent::ServerUnblockCharacter_Implementation(FGuid TargetCharacterId)
+{
+	SetChatBlock(TargetCharacterId, false);
+}
+
+bool UProject_JMMOClientBridgeComponent::InstallBlockSnapshot(const FJsonObject& Snapshot)
+{
+	FString RevisionText;
+	int64 Revision = 0;
+	const TArray<TSharedPtr<FJsonValue>>* Rows = nullptr;
+	if (!Snapshot.TryGetStringField(TEXT("block_revision"), RevisionText) || !LexTryParseString(Revision, *RevisionText)
+		|| Revision <= 0 || Revision < BlockRevision || !Snapshot.TryGetArrayField(TEXT("blocked_characters"), Rows)
+		|| !Rows || Rows->Num() > 256) return false;
+	TSet<FGuid> Received;
+	for (const auto& Row : *Rows)
+	{
+		FString Text;
+		FGuid Id;
+		if (!Row || !Row->TryGetString(Text) || !FGuid::Parse(Text, Id) || !Id.IsValid() || Id == ChatOwner || Received.Contains(Id)) return false;
+		Received.Add(Id);
+	}
+	BlockedSenders = MoveTemp(Received);
+	BlockRevision = Revision;
+	return true;
+}
+
+void UProject_JMMOClientBridgeComponent::InitializeOnlineChat(const FGuid& OwnerId, int64 Epoch, const FJsonObject& Login)
+{
+	ChatOwner = OwnerId;
+	ChatEpoch = Epoch;
+	BlockRevision = 0;
+	BlockedSenders.Reset();
+	UnconfirmedMute.Invalidate();
+	bEditingBlock = false;
+	if (!OwnerId.IsValid() || Epoch <= 0 || !InstallBlockSnapshot(Login))
+		UE_LOG(LogTemp, Warning, TEXT("Online chat unavailable: login has no valid private block list."));
+}
+
+bool UProject_JMMOClientBridgeComponent::HasCurrentOnlineChat(const AProject_JGameMode* Mode, const AProject_JPlayerState* Player) const
+{
+	return Mode && IsValid(Player) && ChatOwner.IsValid() && ChatOwner == Player->GetCharacterId().Value
+		&& ChatEpoch > 0 && ChatEpoch == Mode->GetOnlineEpoch(Player) && BlockRevision > 0;
+}
+
+void UProject_JMMOClientBridgeComponent::SetChatBlock(const FGuid& TargetCharacterId, bool bBlock)
+{
+	const FName Action = bBlock ? TEXT("Block") : TEXT("Unblock");
 	FGuid CharId;
-	if (!AdmitAuthoritativePlayer(false, CharId))
+	if (!AdmitAuthoritativePlayer(false, CharId) || !TargetCharacterId.IsValid() || TargetCharacterId == CharId)
 	{
-		ClientNotifyMMOActionResult(TEXT("Block"), false, TEXT("Denied"));
+		ClientNotifyMMOActionResult(Action, false, TEXT("Denied"));
 		return;
 	}
-	if (UProject_JOnlineWorldSubsystem::UsesOnlineBackend(GetWorld()))
+	if (!UProject_JOnlineWorldSubsystem::UsesOnlineBackend(GetWorld()))
 	{
-		ClientNotifyMMOActionResult(TEXT("Block"), false, TEXT("OnlineRoutePending"));
+		auto* Social = GetWorld()->GetGameInstance()->GetSubsystem<UProject_JGuildAndSocialExtensionsSubsystem>();
+		const bool bOk = Social && (bBlock ? Social->BlockCharacter(CharId, TargetCharacterId) : Social->UnblockCharacter(CharId, TargetCharacterId));
+		ClientNotifyMMOActionResult(Action, bOk, bOk ? (bBlock ? TEXT("Blocked") : TEXT("Unblocked")) : TEXT("Denied"));
 		return;
 	}
-	auto* Social = GetWorld()->GetGameInstance() ? GetWorld()->GetGameInstance()->GetSubsystem<UProject_JGuildAndSocialExtensionsSubsystem>() : nullptr;
-	const bool bOk = Social && Social->BlockCharacter(CharId, TargetCharacterId);
-	ClientNotifyMMOActionResult(TEXT("Block"), bOk, bOk ? TEXT("Blocked") : TEXT("BlockFailed"));
+	auto* Player = CastChecked<APlayerController>(GetOwner())->GetPlayerState<AProject_JPlayerState>();
+	auto* Mode = GetWorld()->GetAuthGameMode<AProject_JGameMode>();
+	if (!HasCurrentOnlineChat(Mode, Player) || bEditingBlock
+		|| (UnconfirmedMute.IsValid() && UnconfirmedMute != TargetCharacterId))
+	{
+		ClientNotifyMMOActionResult(Action, false, TEXT("Unavailable"));
+		return;
+	}
+	auto Body = MakeShared<FJsonObject>();
+	Body->SetStringField(TEXT("character_id"), UProject_JOnlineWorldSubsystem::GuidText(CharId));
+	Body->SetStringField(TEXT("target"), UProject_JOnlineWorldSubsystem::GuidText(TargetCharacterId));
+	Body->SetStringField(TEXT("session_epoch"), LexToString(ChatEpoch));
+	Body->SetStringField(TEXT("block_revision"), LexToString(BlockRevision));
+	Body->SetBoolField(TEXT("block"), bBlock);
+	// Until a definitive reply, mute the target even if transport lost the acknowledgement.
+	const FGuid PriorUnconfirmed = UnconfirmedMute;
+	if (bBlock) UnconfirmedMute = TargetCharacterId;
+	bEditingBlock = true;
+	const auto Lease = Player->CaptureServerSession();
+	const int64 SubmittedEpoch = ChatEpoch;
+	const bool bSubmitted = UProject_JOnlineWorldSubsystem::Submit(GetWorld(), TEXT("World"), TEXT("Set_Chat_Block"), Body, FGuid::NewGuid(),
+		[Weak = TWeakObjectPtr<ThisClass>(this), Owner = TWeakObjectPtr<AProject_JPlayerState>(Player), Lease, SubmittedEpoch, Action, TargetCharacterId, PriorUnconfirmed, bBlock](const TSharedPtr<FJsonObject>& Response)
+		{
+			auto* Self = Weak.Get();
+			auto* PS = Owner.Get();
+			auto* PC = Self ? Cast<APlayerController>(Self->GetOwner()) : nullptr;
+			if (!PC || !PS || PC->PlayerState != PS || !PS->IsServerSessionCurrent(Lease)
+				|| Self->ChatEpoch != SubmittedEpoch || Self->ChatOwner != Lease.CharacterId) return;
+			Self->bEditingBlock = false;
+			FString Status;
+			if (Response) Response->TryGetStringField(TEXT("status"), Status);
+			if (Status == TEXT("STALE_SESSION"))
+			{
+				Self->BlockRevision = 0;
+				Self->BlockedSenders.Reset();
+				Self->UnconfirmedMute.Invalidate();
+				Self->ClientNotifyMMOActionResult(Action, false, TEXT("StaleSession"));
+				return;
+			}
+			const bool bKnown = Response && (Status == TEXT("OK") || Status == TEXT("CONFLICT") || Status == TEXT("FULL") || Status == TEXT("INVALID"))
+				&& Self->InstallBlockSnapshot(*Response);
+			if (bKnown) Self->UnconfirmedMute.Invalidate();
+			else if (Status == TEXT("PRE_DISPATCH_REJECTED")) Self->UnconfirmedMute = PriorUnconfirmed;
+			const bool bOk = bKnown && (Status == TEXT("OK") || Status == TEXT("CONFLICT"))
+				&& Self->BlockedSenders.Contains(TargetCharacterId) == bBlock;
+			Self->ClientNotifyMMOActionResult(Action, bOk, bOk ? (bBlock ? TEXT("Blocked") : TEXT("Unblocked")) : TEXT("BlockNotConfirmed"));
+		});
+	if (!bSubmitted)
+	{
+		bEditingBlock = false;
+		UnconfirmedMute = PriorUnconfirmed;
+		ClientNotifyMMOActionResult(Action, false, TEXT("BlockNotConfirmed"));
+	}
 }
 
 void UProject_JMMOClientBridgeComponent::ServerSendChatMessage_Implementation(
@@ -691,6 +793,14 @@ void UProject_JMMOClientBridgeComponent::ServerSendChatMessage_Implementation(
 		return;
 	}
 	UWorld* World = GetWorld();
+	const APlayerController* SenderPC = Cast<APlayerController>(GetOwner());
+	const bool bOnline = UProject_JOnlineWorldSubsystem::UsesOnlineBackend(World);
+	const auto* Mode = bOnline ? World->GetAuthGameMode<AProject_JGameMode>() : nullptr;
+	if (bOnline && !HasCurrentOnlineChat(Mode, SenderPC ? SenderPC->GetPlayerState<AProject_JPlayerState>() : nullptr))
+	{
+		ClientNotifyMMOActionResult(TEXT("Chat"), false, TEXT("Unavailable"));
+		return;
+	}
 	UGameInstance* GI = World ? World->GetGameInstance() : nullptr;
 	auto* Social = GI ? GI->GetSubsystem<UProject_JGuildAndSocialExtensionsSubsystem>() : nullptr;
 	const bool bOk = Social && Social->AdmitChatMessage(CharId, OptionalRecipientCharId, Channel, Message, World->GetTimeSeconds());
@@ -702,7 +812,6 @@ void UProject_JMMOClientBridgeComponent::ServerSendChatMessage_Implementation(
 
 	// Deliver to relevant connected recipients in this world (respecting block list) instead of only echoing to sender.
 	const auto* PartySub = GI ? GI->GetSubsystem<UProject_JSocialSubsystem>() : nullptr;
-	const APlayerController* SenderPC = Cast<APlayerController>(GetOwner());
 	const FName SenderPartyId = PartySub ? PartySub->GetPartyIdForCharacter(CharId) : NAME_None;
 	const FName SenderGuildId = PartySub ? PartySub->GetGuildIdForCharacter(CharId) : NAME_None;
 	const APawn* SenderPawn = SenderPC ? SenderPC->GetPawn() : nullptr;
@@ -715,7 +824,9 @@ void UProject_JMMOClientBridgeComponent::ServerSendChatMessage_Implementation(
 		if (!TargetPS || !TargetBridge || !TargetPS->GetCharacterId().IsValid()) continue;
 
 		const FGuid TargetCharId = TargetPS->GetCharacterId().Value;
-		if (TargetCharId != CharId && Social->IsBlockedBy(TargetCharId, CharId)) continue;
+		if (bOnline && !TargetBridge->HasCurrentOnlineChat(Mode, TargetPS)) continue;
+		if (TargetCharId != CharId && (bOnline ? (TargetBridge->BlockedSenders.Contains(CharId) || TargetBridge->UnconfirmedMute == CharId)
+			: Social->IsBlockedBy(TargetCharId, CharId))) continue;
 
 		bool bShouldDeliver = (TargetCharId == CharId);
 		if (!bShouldDeliver)
@@ -738,8 +849,9 @@ void UProject_JMMOClientBridgeComponent::ServerSendChatMessage_Implementation(
 				}
 				break;
 			case EProject_JChatChannel::World:
-			default:
 				bShouldDeliver = true;
+				break;
+			default:
 				break;
 			}
 		}

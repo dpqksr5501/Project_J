@@ -8288,6 +8288,11 @@
         "source_class": "/Script/Project_J.Project_JWorldEncounter",
         "status": "NPC_UNBOUND_RUNTIME_DISABLED_UNTIL_GAMEPLAY_INTEGRATION"
       },
+      "gameplay_binding": {
+        "profile_source": "MainWorld.bosses.json#B01/encounter",
+        "operation": "Bind-StarterBossGameplay.py",
+        "scope": "Apply and verify NPC, combat, loot and activation properties on the existing encounter actor. The server_owner and validation fields in this pass describe the original spatial bake."
+      },
       "arena": {
         "id": "B01.Arena",
         "center_m": [

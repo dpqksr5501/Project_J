@@ -13,6 +13,8 @@ class FJsonObject;
 struct FProject_JRolledLootGrant;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FProjectJOnlineConnectResult, bool, bDispatched);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FProjectJOnlineQueuePosition, int32, Position);
+DECLARE_MULTICAST_DELEGATE(FProjectJOnlineQueueClosed);
 
 /** Observability counters for the GameInstance durable backend mutation outbox. */
 struct PROJECT_J_API FProject_JOnlineOutboxStats
@@ -22,6 +24,7 @@ struct PROJECT_J_API FProject_JOnlineOutboxStats
 	int32 PersistingCount = 0;
 	int32 FinalizingCount = 0;
 	int32 DeadLetterCount = 0;
+	double OldestActiveAgeSeconds = 0.0;
 	int64 EnqueuedTotal = 0;
 	int64 ConfirmedTotal = 0;
 	int64 RetriedTotal = 0;
@@ -59,6 +62,13 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category="MMO|Login")
 	FProjectJOnlineConnectResult OnConnectDispatched;
+	UPROPERTY(BlueprintAssignable, Category="MMO|Login")
+	FProjectJOnlineQueuePosition OnLoginQueued;
+	UFUNCTION(BlueprintCallable, Category="MMO|Login")
+	void CancelPendingLogin();
+	APlayerController* GetQueuedLoginController() const { return QueuedLoginController.Get(); }
+	int32 GetQueuedLoginPosition() const { return QueuePosition; }
+	FProjectJOnlineQueueClosed OnLoginQueueClosed;
 
 	void SendPendingLogin(APlayerController* Controller);
 	bool HasOnlineClientSession() const { return OnlineCharacter.IsValid() && !OnlineAccessToken.IsEmpty(); }
@@ -84,13 +94,21 @@ public:
 		const FString& DebugContext,
 		TFunction<void(bool /*bConfirmed*/, TSharedPtr<FJsonObject> /*Reply*/)> OnFinished = {});
 
+	/** Writes all reward rows and the encounter cooldown together before dispatch or resolution. */
+	static bool EnqueueBossRewards(UWorld* World, const FString& EncounterKey, FGuid DefeatId, double CooldownSeconds,
+		TConstArrayView<FProject_JRolledLootGrant> Rewards, TFunction<void(bool /*bCommitted*/, double /*RemainingCooldown*/)> OnCommitted,
+		const TMap<FGuid, TSharedPtr<FJsonObject>>& EarnedQuestCredits = {});
+	/** False while the persistent store is unavailable or its cooldown state has not loaded. */
+	bool TryGetBossRewardCooldown(const FString& EncounterKey, double& OutRemainingSeconds) const;
+
 	/** Enables SQLite-backed crash-safe persistence at DatabasePath and loads any pending rows for recovery. */
 	bool ConfigurePersistentOutbox(const FString& DatabasePath);
 	bool HasPersistentOutbox() const { return OutboxStore.IsValid(); }
 	bool HasOutboxStoreFailed() const { return bStoreLoadFailed; }
+	bool IsPersistentOutboxReady() const { return bStoreOpened && !bStoreLoadFailed && !bOutboxClosed; }
 	bool HasOutstandingDrainWork() const
 	{
-		return bStoreWorkerActive || !QueuedStoreOps.IsEmpty() ||
+		return bStoreWorkerActive || !QueuedStoreOps.IsEmpty() || !QueuedBossSettlements.IsEmpty() ||
 			(!bStoreLoadFailed && (!ActiveOutboxKeys.IsEmpty() || bRecoverMore || (OutboxStore && !bStoreOpened)));
 	}
 	bool HasOutstandingQuestProgress(FGuid Character) const;
@@ -121,6 +139,7 @@ private:
 		FString DebugContext;
 		TFunction<void(bool, TSharedPtr<FJsonObject>)> OnFinished;
 		int32 Attempts = 0;
+		int64 PendingSinceUtcMs = 0;
 		double NextAttemptAt = 0.0;
 		uint64 QueueOrder = 0;
 	};
@@ -145,14 +164,22 @@ private:
 	{
 		TArray<FProject_JOutboxStoreOp> Ops;
 		TMap<FGuid, FProject_JPersistedOutboxRecord> Existing;
+		TOptional<FProject_JBossRewardSettlement> BossSettlement;
 		FString Failure;
 		int32 DeadLetters = 0;
 		bool bCommitted = false;
 	};
+	using FBossCommit = TFunction<void(bool, double)>;
+	struct FPendingBossSettlement
+	{
+		FProject_JBossRewardSettlement Settlement;
+		TArray<FOutboxEntry> Entries;
+		FBossCommit OnCommitted;
+	};
 	bool ClosePersistentStoreSync();
 	void HandleStoreOpenLoaded(uint64 ExpectedGeneration, int32 Limit, bool bOk, FString Error,
-		TArray<FProject_JPersistedOutboxRecord> Recovered, int32 DeadLetterCount);
-	void HandleStoreBatchApplied(uint64 ExpectedGeneration, const FStoreBatch& Batch, TArray<FOutboxEntry> Entries);
+		TArray<FProject_JPersistedOutboxRecord> Recovered, int32 DeadLetterCount, TMap<FString, int64> Cooldowns);
+	void HandleStoreBatchApplied(uint64 ExpectedGeneration, const FStoreBatch& Batch, TArray<FOutboxEntry> Entries, FBossCommit OnBossCommitted);
 	void HandleStoreRedriven(uint64 ExpectedGeneration, bool bOk, FString Error,
 		TArray<FProject_JPersistedOutboxRecord> Redriven, int32 RemainingDeadLetters);
 	void ReportDeadLetterCount(int32 Count);
@@ -168,11 +195,23 @@ private:
 	bool RequestLogin(APlayerController* Controller, const FString& AccessToken, FGuid Character,
 		const FString& Zone, int32 Channel, const FString& TravelUrl);
 	uint64 ConnectGeneration = 0;
+	FString QueueSlot;
+	FString QueueZone;
+	int32 QueueChannel = 0;
+	int32 QueuePosition = 0;
+	TWeakObjectPtr<APlayerController> QueuedLoginController;
+	FTSTicker::FDelegateHandle LoginPoll;
+	void ClearLoginQueue();
+	bool DispatchLogin(APlayerController* Controller, const FString& AccessToken, FGuid Character,
+		const FString& Zone, int32 Channel, const FString& TravelUrl, uint64 Generation);
 
 	TArray<FOutboxEntry> PendingOutbox;
 	TArray<FOutboxEntry> QueuedPersistEntries;
 	TArray<FProject_JOutboxStoreOp> QueuedStoreOps;
-	TSet<FGuid> ActiveOutboxKeys;
+	TArray<FPendingBossSettlement> QueuedBossSettlements;
+	TSet<FString> SettlingBossEncounters;
+	TMap<FString, int64> BossRewardCooldowns;
+	TMap<FGuid, int64> ActiveOutboxKeys;
 	struct FQuestProgressLane
 	{
 		int32 ActiveCount = 0;

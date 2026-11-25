@@ -13,6 +13,7 @@
 #include "Engine/PendingNetGame.h"
 #include "Engine/World.h"
 #include "GameFramework/GameSession.h"
+#include "Kismet/GameplayStatics.h"
 #include "GameplayEffect.h"
 #include "HAL/IConsoleManager.h"
 #include "HAL/PlatformMemory.h"
@@ -27,6 +28,10 @@
 #include "Project_JAttributeSet.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "Game/Project_JPlayerState.h"
+#if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
+#include "IPAddress.h"
+#include "Network/Project_JCrowdDensityNetObjectFilter.h"
+#endif
 
 DEFINE_LOG_CATEGORY_STATIC(LogProjectJLoopbackCohort, Log, All);
 
@@ -48,6 +53,38 @@ constexpr double CloseTimeout = 25.;
 // Keep the final witness outside the native pawn's default health of 100.
 constexpr float FinalBossHealth = 731.f;
 bool bCohortGeneratorStarted = false;
+
+bool IsCohortPrivateIpv4(const FString& Address)
+{
+	TArray<FString> Octets;
+	Address.ParseIntoArray(Octets, TEXT("."), false);
+	if (Octets.Num() != 4) return false;
+	int32 Values[4]{};
+	for (int32 Index = 0; Index < 4; ++Index)
+	{
+		if (!LexTryParseString(Values[Index], *Octets[Index]) || Values[Index] < 0 || Values[Index] > 255
+			|| LexToString(Values[Index]) != Octets[Index]) return false;
+	}
+	return Address == TEXT("127.0.0.1") || Values[0] == 10
+		|| (Values[0] == 172 && Values[1] >= 16 && Values[1] <= 31)
+		|| (Values[0] == 192 && Values[1] == 168);
+}
+
+bool IsCohortRunId(const FString& Id)
+{
+	return !Id.IsEmpty() && Id.Len() <= 64 && Algo::AllOf(Id, [](TCHAR C)
+	{
+		return (C >= '0' && C <= '9') || (C >= 'A' && C <= 'Z') || (C >= 'a' && C <= 'z') || C == '_' || C == '-';
+	});
+}
+
+bool IsCohortEndpoint(const FString& Endpoint, const FString& ExpectedAddress)
+{
+	FString Address, PortText;
+	int32 Port = 0;
+	return Endpoint.Split(TEXT(":"), &Address, &PortText) && Address == ExpectedAddress
+		&& LexTryParseString(Port, *PortText) && Port >= 1025 && Port <= 65535 && LexToString(Port) == PortText;
+}
 
 constexpr int32 MeasuredRounds(bool bAuthoredBoss)
 {
@@ -87,11 +124,37 @@ void AProject_JLoopbackCohort::BeginPlay()
 	if (!bFixtureEnabled) return;
 	FParse::Value(CommandLine, TEXT("ProjectJCohortMemoryReserveMiB="), MemoryReserveMiB);
 	if (MemoryReserveMiB < 0 || MemoryReserveMiB > 65536) { FinishCohort(false); return; }
+	bSplitHost = FParse::Param(CommandLine, TEXT("ProjectJCohortSplitHost"));
+	FString SplitHostLocal;
+	if (bSplitHost && (!bBossCombat || !FParse::Value(CommandLine, TEXT("multihome="), SplitHostLocal)
+		|| !FParse::Value(CommandLine, TEXT("ProjectJCohortPeerIpv4="), SplitHostPeer)
+		|| !FParse::Value(CommandLine, TEXT("ProjectJCohortRunId="), SplitHostRunId)
+		|| !IsCohortPrivateIpv4(SplitHostLocal) || !IsCohortPrivateIpv4(SplitHostPeer) || !IsCohortRunId(SplitHostRunId)
+		|| ((SplitHostLocal == TEXT("127.0.0.1")) != (SplitHostPeer == TEXT("127.0.0.1")))))
+	{
+		bFixtureEnabled = false;
+		UE_LOG(LogProjectJLoopbackCohort, Error, TEXT("Split-host cohort requires the authored boss, literal private bind and peer addresses, and a run id."));
+		FinishCohort(false);
+		return;
+	}
 	if (GetNetMode() == NM_DedicatedServer)
 	{
 		if (!GameSession) { FinishCohort(false); return; }
-		const auto* Driver = Cast<UProject_JIpNetDriver>(GetWorld()->GetNetDriver());
+		auto* Driver = Cast<UProject_JIpNetDriver>(GetWorld()->GetNetDriver());
 		if (!Driver) { FinishCohort(false); return; }
+		if (bSplitHost)
+		{
+			const auto ActualBind = Driver->GetLocalAddr();
+			if (!ActualBind || ActualBind->ToString(false) != SplitHostLocal || !FParse::Param(CommandLine, TEXT("ProjectJCohortFieldArena")))
+			{
+				bFixtureEnabled = false;
+				UE_LOG(LogProjectJLoopbackCohort, Error, TEXT("Split-host cohort requires an actual single-IP bind and the authored field arena."));
+				FinishCohort(false);
+				return;
+			}
+			UE_LOG(LogProjectJLoopbackCohort, Display, TEXT("COHORT_SPLIT_HOST role=server local=%s peer=%s run=%s"),
+				*SplitHostLocal, *SplitHostPeer, *SplitHostRunId);
+		}
 		const int32 Capacity = Driver->GetIncomingCapacity();
 		if (Expected > Capacity)
 		{
@@ -135,7 +198,8 @@ void AProject_JLoopbackCohort::BeginPlay()
 		}
 		UE_LOG(LogProjectJLoopbackCohort, Display, TEXT("COHORT_READY count=%d capacity=%d"), Expected, Capacity);
 	}
-	else if (!FParse::Value(CommandLine, TEXT("ProjectJCohortEndpoint="), Endpoint) || !Endpoint.StartsWith(TEXT("127.0.0.1:")))
+	else if (!FParse::Value(CommandLine, TEXT("ProjectJCohortEndpoint="), Endpoint)
+		|| (bSplitHost ? !IsCohortEndpoint(Endpoint, SplitHostPeer) : !Endpoint.StartsWith(TEXT("127.0.0.1:"))))
 	{
 		FinishCohort(false);
 		return;
@@ -145,6 +209,12 @@ void AProject_JLoopbackCohort::BeginPlay()
 		// A failed child can browse to the default map and construct another fixture GameMode.
 		if (bCohortGeneratorStarted) return;
 		bCohortGeneratorStarted = true;
+		if (bSplitHost)
+		{
+			Endpoint += TEXT("?CohortRunId=") + SplitHostRunId;
+			UE_LOG(LogProjectJLoopbackCohort, Display, TEXT("COHORT_SPLIT_HOST role=generator local=%s peer=%s run=%s"),
+				*SplitHostLocal, *SplitHostPeer, *SplitHostRunId);
+		}
 		NetworkFailureHandle = GEngine->OnNetworkFailure().AddWeakLambda(this,
 			[this](UWorld* World, UNetDriver* Driver, ENetworkFailure::Type, const FString& Error)
 			{
@@ -167,6 +237,14 @@ void AProject_JLoopbackCohort::BeginPlay()
 void AProject_JLoopbackCohort::PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& Error)
 {
 	Super::PreLogin(Options, Address, UniqueId, Error);
+#if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
+	if (bFixtureEnabled && bSplitHost)
+	{
+		if (Address != SplitHostPeer || UGameplayStatics::ParseOption(Options, TEXT("CohortRunId")) != SplitHostRunId)
+			Error = TEXT("SplitCohortPeerOrRunMismatch");
+		return;
+	}
+#endif
 	if (!bFixtureEnabled || (Address != TEXT("127.0.0.1") && !Address.StartsWith(TEXT("127.0.0.1:")))) Error = TEXT("LoopbackCohortOnly");
 }
 
@@ -357,7 +435,7 @@ void AProject_JLoopbackCohort::AcknowledgeMeasuredHealth(AProject_JCohortControl
 		++StrikeViolations;
 		return;
 	}
-	if (BossStrikeTimings.IsValidIndex(Participant->BossStrikeIndex) && Observations.Num() <= 512)
+	if (!bSplitHost && BossStrikeTimings.IsValidIndex(Participant->BossStrikeIndex) && Observations.Num() <= 512)
 	{
 		auto& Timing = BossStrikeTimings[Participant->BossStrikeIndex];
 		const double Now = FPlatformTime::Seconds();
@@ -464,6 +542,12 @@ bool AProject_JLoopbackCohort::AdvanceMeasuredCombat(const UNetDriver& Driver, i
 				return Fail(TEXT("timed out waiting for authoritative Mover aim"));
 			}
 			UE_LOG(LogProjectJLoopbackCohort, Display, TEXT("COHORT_BOSS_AIM accepted=%d expected=%d"), Aimed, Expected);
+			if (bSplitHost && FParse::Param(FCommandLine::Get(), TEXT("ProjectJCohortCrowdGroups")))
+			{
+				const auto Crowd = UProject_JCrowdDensityNetObjectFilter::GetLatestStats(GetWorld());
+				UE_LOG(LogProjectJLoopbackCohort, Display, TEXT("COHORT_SPLIT_CROWD ccu=%d tracked=%d effective_cap=%d allowed=%lld culled=%lld"),
+					Ready, Crowd.TrackedObjects, Crowd.EffectiveCap, Crowd.LastPassAllowedPairs, Crowd.LastPassCulledPairs);
+			}
 		}
 		if (bBossCombat && bOwnerOnlyPeers && !CheckBossMulticastAudience(Driver))
 			return Fail(TEXT("owner-only participants would replicate combat multicasts to other clients"));
@@ -603,7 +687,8 @@ bool AProject_JLoopbackCohort::WriteCombatMetrics() const
 		if (BossStrikeTimings.IsValidIndex(Index))
 		{
 			const auto& Timing = BossStrikeTimings[Index];
-			StrikesCsv.Appendf(TEXT(",%.6f,%.6f,%.6f\n"), Timing.HitWindowMs, Timing.AuthorityMs, Timing.ReplicationMs);
+			if (bSplitHost) StrikesCsv.Appendf(TEXT(",%.6f,%.6f,\n"), Timing.HitWindowMs, Timing.AuthorityMs);
+			else StrikesCsv.Appendf(TEXT(",%.6f,%.6f,%.6f\n"), Timing.HitWindowMs, Timing.AuthorityMs, Timing.ReplicationMs);
 		}
 		else StrikesCsv.Append(TEXT(",,,\n"));
 	}

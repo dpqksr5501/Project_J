@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import vm from 'node:vm';
 
@@ -7,10 +7,9 @@ const [packageEntry, testDataPath] = process.argv.slice(2);
 assert(packageEntry && testDataPath, 'Pass the PGlite module entry and a fresh data directory');
 const { PGlite } = await import(pathToFileURL(packageEntry).href);
 let db = new PGlite(testDataPath);
-for (const filename of ['001_mmo_core_schema.sql', '002_durable_mmo_commands.sql', '003_dungeon_reservations.sql',
-    '004_durable_boss_rewards.sql', '005_durable_mail_claims.sql', '006_online_world_sessions.sql', '007_online_bag_edits.sql',
-    '008_online_equipment_and_crafting.sql', '009_online_quest_and_dungeon_completion.sql', '010_online_audit_fixes.sql', '011_durable_quest_progress.sql', '012_audit_partitioning_and_queue.sql']) {
-    const sql = await readFile(new URL('../migrations/' + filename, import.meta.url), 'utf8');
+const migrations = new URL('../migrations/', import.meta.url);
+for (const filename of (await readdir(migrations)).filter(name => /^\d+_.+\.sql$/.test(name)).sort()) {
+    const sql = await readFile(new URL(filename, migrations), 'utf8');
     // gen_random_uuid is provided by PostgreSQL core. The WASM fixture does not ship pgcrypto.
     await db.exec(sql.replace(/^CREATE EXTENSION IF NOT EXISTS "pgcrypto";$/m, ''));
 }
@@ -129,7 +128,7 @@ const principal = 'nakama:' + id(40);
 const worldLease = { zone: 'TestZone', channel: 2, worker: id(41), endpoint: '127.0.0.1:7792', population: 0, capacity: 220, draining: false };
 const pingWorld = (lease) => result('SELECT pj_world_channel_heartbeat($1) AS result', [lease]);
 const worldLogin = (who) => result('SELECT pj_issue_world_login($1, $2, $3, $4) AS result', [who, buyer, worldLease.zone, worldLease.channel]);
-const redeemWorld = (token, extra = {}) => result('SELECT pj_redeem_world_login($1) AS result', [{
+const redeemWorld = (token, extra = {}) => result('SELECT pj_redeem_world_login_with_social($1) AS result', [{
     ticket: token, zone: worldLease.zone, channel: worldLease.channel, worker: worldLease.worker, ...extra }]);
 await exec('UPDATE pj_accounts SET external_sub = $1 WHERE account_id = $2', [principal, account]);
 assert.equal((await pingWorld(worldLease)).status, 'OK');
@@ -149,13 +148,27 @@ login = await worldLogin(principal);
 const loggedIn = await redeemWorld(login.ticket);
 assert.equal(loggedIn.status, 'OK');
 assert.equal(loggedIn.epoch, '6');
+assert.deepEqual(loggedIn.blocked_characters, []);
+const setBlock = (owner, epoch, rev, target, enabled) => result('SELECT pj_set_chat_block($1,$2,$3,$4,$5) AS result',
+    [owner, epoch, rev, target, enabled]);
+await exec("INSERT INTO pj_social_relations(owner_char_id,target_char_id,relation_type) VALUES($1,$2,'FRIEND_PENDING'),($2,$1,'FRIEND')", [buyer, seller]);
+assert.equal((await setBlock(buyer, '5', '1', seller, true)).status, 'STALE_SESSION');
+const mute = await setBlock(buyer, '6', '1', seller, true);
+assert.deepEqual(mute.blocked_characters, [seller]);
+assert.equal(mute.block_revision, '2');
+assert.equal(await result('SELECT count(*)::int AS result FROM pj_social_relations WHERE owner_char_id=$1 AND target_char_id=$2', [seller,buyer]), 0);
+assert.equal((await setBlock(buyer, '6', '1', seller, false)).status, 'CONFLICT');
+assert.deepEqual((await setBlock(buyer, '6', '2', seller, false)).blocked_characters, []);
+assert.equal((await setBlock(buyer, '6', '3', seller, true)).status, 'OK');
 assert.deepEqual(loggedIn.items.map((row) => row.id).sort(), [item, rewardItem.item_instance_id].sort());
 assert.equal((await redeemWorld(login.ticket)).status, 'CONFLICT');
 assert.equal((await result('SELECT pj_online_inventory($1, $2) AS result', [buyer, '5'])).status, 'CONFLICT');
 const returnProof = { return_nonce: id(44), return_expires: Date.now() / 1000 + 55, return_character: buyer };
 login = await worldLogin(principal);
 assert.equal((await redeemWorld(login.ticket, { ...returnProof, return_character: seller })).status, 'CONFLICT');
-assert.equal((await redeemWorld(login.ticket, returnProof)).status, 'OK');
+const returnedWithSocial = await redeemWorld(login.ticket, returnProof);
+assert.equal(returnedWithSocial.status, 'OK');
+assert.deepEqual(returnedWithSocial.blocked_characters, [seller]);
 await db.close();
 db = new PGlite(testDataPath);
 assert.equal((await pingWorld(worldLease)).status, 'OK');
@@ -296,13 +309,14 @@ const finalReturn = await worldLogin(principal);
 const finalProof = { return_nonce: id(66), return_expires: Date.now() / 1000 + 55, return_character: buyer, return_instance: instanceRoute };
 assert.equal((await redeemWorld(finalReturn.ticket, finalProof)).reason, 'DUNGEON_NOT_CLEARED');
 const clearDungeon = (workerId, details) => result('SELECT pj_dungeon_clear($1,$2,$3) AS result', [workerId, instanceRoute, details]);
-const clear = { rewards: { [buyer]: { gold: '0', items: [{ definition_id: 'DungeonLoot', quantity: 1 }] } }, quest_event: 'Clear_Test_Dungeon' };
+const clear = { rewards: { [buyer]: { gold: '0', items: [{ definition_id: 'DungeonLoot', definition_version: 2, quantity: 1 }] } }, quest_event: 'Clear_Test_Dungeon' };
 assert.equal((await clearDungeon(worldLease.worker, clear)).status, 'CONFLICT');
 assert.equal((await clearDungeon(dungeonWorker, { ...clear, rewards: { [seller]: clear.rewards[buyer] } })).status, 'CONFLICT');
 assert.equal((await clearDungeon(dungeonWorker, clear)).status, 'COMMITTED');
 assert.equal((await clearDungeon(dungeonWorker, clear)).status, 'REPLAYED');
 assert.equal(await result('SELECT count(*)::int AS result FROM pj_boss_reward_receipts WHERE defeat_id = $1', [instanceRoute]), 1);
 assert.equal(await result("SELECT count(*)::int AS result FROM pj_mail_messages WHERE recipient_char_id = $1 AND subject_key = 'MAIL_DUNGEON_CLEAR'", [buyer]), 1);
+assert.equal(await result("SELECT definition_version AS result FROM pj_inventory_items WHERE definition_id = 'DungeonLoot'", []), 2);
 const returned = await redeemWorld(finalReturn.ticket, finalProof);
 assert.equal(returned.epoch, '10');
 assert.equal(objective(returned, 'dungeon'), 1);
@@ -333,7 +347,8 @@ assert.equal((await claimGold(id(81))).status, 'REPLAYED');
 assert.equal((await claimGold(id(83))).status, 'CONFLICT');
 assert.equal(await result("SELECT count(*)::int AS result FROM pj_ledger_entries e JOIN pj_ledger_transactions t USING (tx_id) WHERE t.idempotency_key = $1 AND e.account_id = '00000001-0000-0000-0000-000000000001' AND e.delta_amount = -250", [id(81)]), 1);
 assert.equal(await result('SELECT sum(delta_amount)::int AS result FROM pj_ledger_entries', []), 0);
-const questClaim = { character_id: buyer, session_epoch: returned.epoch, kind: 'claim', quest: questRow.id };
+const questClaim = { character_id: buyer, session_epoch: returned.epoch, kind: 'claim', quest: questRow.id,
+    definition_version: 1, expected_profile_revision: returned.profile_revision, reward_level: returned.level, reward_xp: returned.xp, reward_items: [] };
 assert.equal((await editQuest(id(82), { ...questClaim, quest: 'Q_Missing' })).status, 'STALE');
 assert.equal((await editQuest(id(82), questClaim)).status, 'STALE');
 const completeQuest = { character_id: buyer, session_epoch: returned.epoch, kind: 'progress',
@@ -361,6 +376,7 @@ vm.runInContext(await readFile(new URL('../nakama/modules/project_j_mmo.js', imp
 assert.throws(() => sandbox.rpcAuctionBuyout({ userId: buyer }, null, {}, '{}'), /requires runtime authentication/);
 assert.throws(() => sandbox.rpcWorldEquipmentEdit({ userId: buyer }, null, {}, '{}'), /requires runtime authentication/);
 assert.throws(() => sandbox.rpcWorldCraftCommit({ userId: buyer }, null, {}, '{}'), /requires runtime authentication/);
+assert.throws(() => sandbox.rpcWorldQuestEdit({ userId: buyer }, null, {}, JSON.stringify(questClaim)), /requires runtime authentication/);
 const wirePayload = Buffer.from(JSON.stringify(profile), 'utf8').toString('base64');
 const wrappedResult = sandbox.rpcSaveProfile({}, null, {
     binaryToString: (bytes) => bytes.toString('utf8'),
@@ -378,7 +394,7 @@ assert.deepEqual(JSON.parse(wrappedResult), { status: 'COMMITTED' });
 // statement and bound parameters it supplied, against the migrated SQL store.
 const bossIntent = {
     defeat_id: id(8192), character_id: buyer, gold: '25',
-    items: [{ definition_id: 'Wave3Loot', quantity: 2 }],
+    items: [{ definition_id: 'Wave3Loot', definition_version: 2, quantity: 2 }],
 };
 const rewardKey = id(8193);
 function decodeRewardCommand(requestId, intent = bossIntent) {
@@ -399,10 +415,15 @@ function decodeRewardCommand(requestId, intent = bossIntent) {
 }
 const rewardCommand = decodeRewardCommand(id(8194));
 assert.deepEqual(rewardCommand.values.slice(0, 2), [bossIntent.defeat_id, buyer]);
+assert.deepEqual(JSON.parse(rewardCommand.values[2]).items, bossIntent.items);
+const legacyRewardCommand = decodeRewardCommand(id(8194), { ...bossIntent, items: [{ definition_id: 'Wave3Loot', quantity: 2 }] });
+assert.deepEqual(JSON.parse(legacyRewardCommand.values[2]).items, [{ definition_id: 'Wave3Loot', quantity: 2 }]);
+assert.throws(() => decodeRewardCommand(id(8194), { ...bossIntent, items: [{ ...bossIntent.items[0], definition_version: 0 }] }), /Invalid reward definition version/);
 assert.deepEqual(decodeRewardCommand(id(8195)), rewardCommand);
 const committedReward = JSON.parse(await result(rewardCommand.sql, rewardCommand.values));
 assert.equal(committedReward.status, 'COMMITTED');
 assert.equal(committedReward.mail_ids.length, 2);
+assert.equal(await result('SELECT i.definition_version AS result FROM pj_inventory_items i JOIN pj_mail_messages m ON m.attached_item_id = i.item_instance_id WHERE m.mail_id = $1', [committedReward.mail_ids[0]]), 2);
 await db.close();
 db = new PGlite(testDataPath);
 const replayedReward = JSON.parse(await result(rewardCommand.sql, rewardCommand.values));
@@ -453,6 +474,112 @@ assert.equal((await runEarned(id(8204), { ...earnedEvent,
     changes: [{ row: questRow, deltas: [{ id: 'gather', amount: 1 }] }] })).status, 'COMMITTED');
 assert.equal(await result('SELECT state AS result FROM pj_quest_states WHERE character_id = $1 AND quest_id = $2', [buyer, questRow.id]), 'CLAIMED');
 assert.equal(gatherCount(await runEarned(id(8205))), 2);
+
+// Run the trusted Nakama command with an authored quest reward, including a
+// partial stack merge that must be rolled back when there is no second slot.
+const questOwner = id(13000);
+const rewardStack = id(13001);
+const occupiedSlot = id(13002);
+await exec(`INSERT INTO pj_characters(character_id, account_id, char_name, class_id, session_epoch, level, xp, inventory_capacity)
+    VALUES ($1, $2, 'QuestOwner', 'Test', 1, 5, 450, 2)`, [questOwner, account]);
+await exec(`INSERT INTO pj_inventory_items(item_instance_id, owner_character_id, owner_scope, definition_id,
+    definition_version, quantity, enhance_level, slot_index, equipped_slot)
+    VALUES ($1,$3,'CHAR_INV','QuestReward',2,4,1,0,NULL), ($2,$3,'CHAR_INV','QuestReward',2,1,1,1,1)`,
+    [rewardStack, occupiedSlot, questOwner]);
+const travelQuest = { id: 'travel.migration013', count: 0, tracked: true, required: 1, definition_version: 2, objectives: [] };
+const questOwnerIntent = { character_id: questOwner, session_epoch: '1' };
+assert.equal((await editQuest(id(13003), { ...questOwnerIntent, kind: 'accept', quest: travelQuest.id, row: travelQuest })).status, 'COMMITTED');
+assert.equal((await editQuest(id(13004), { ...questOwnerIntent, kind: 'progress',
+    changes: [{ row: travelQuest, deltas: [{ id: '', amount: 1 }] }] })).status, 'COMMITTED');
+const grantQuest = { ...questOwnerIntent, kind: 'claim', quest: travelQuest.id, definition_version: 2,
+    expected_profile_revision: '1', reward_level: 6, reward_xp: '72',
+    reward_items: [{ definition: 'QuestReward', version: 2, level: 1, quantity: 3, max_stack: 5 }] };
+const questGrantKey = id(13005);
+async function runQuestGrant(key, intent = grantQuest) {
+    let command;
+    sandbox.rpcWorldQuestEdit({}, null, {
+        binaryToString: bytes => bytes.toString('utf8'),
+        base64Decode: data => Buffer.from(data, 'base64'),
+        sqlQuery: (sql, values) => {
+            command = { sql, values: [...values] };
+            return [{ result: '{}' }];
+        },
+    }, JSON.stringify({ idempotency_key: key, schema_version: 1,
+        payload_b64: Buffer.from(JSON.stringify(intent), 'utf8').toString('base64') }));
+    return JSON.parse(await result(command.sql, command.values));
+}
+const readQuestOwner = () => result('SELECT pj_online_inventory($1,1) AS result', [questOwner]);
+const bagFull = await runQuestGrant(questGrantKey);
+assert.equal(bagFull.status, 'INVENTORY_FULL');
+assert.equal(bagFull.items.find(row => row.id === rewardStack).count, 4);
+assert.equal(bagFull.items.find(row => row.id === occupiedSlot).count, 1);
+assert.equal(bagFull.level, 5);
+assert.equal(bagFull.xp, '450');
+assert.equal(bagFull.quests[0].id, travelQuest.id);
+assert.equal(await result('SELECT count(*)::int AS result FROM pj_idempotency_receipts WHERE idempotency_key = $1', [questGrantKey]), 0);
+assert.equal((await runQuestGrant(questGrantKey, { ...grantQuest, definition_version: 1 })).status, 'STALE');
+assert.equal((await runQuestGrant(questGrantKey, { ...grantQuest, expected_profile_revision: '2' })).status, 'STALE');
+assert.equal((await runQuestGrant(questGrantKey, { ...grantQuest, session_epoch: '2' })).status, 'CONFLICT');
+await exec("UPDATE pj_inventory_items SET owner_scope = 'DESTROYED', equipped_slot = NULL WHERE item_instance_id = $1", [occupiedSlot]);
+const paidQuest = await runQuestGrant(questGrantKey);
+assert.equal(paidQuest.status, 'COMMITTED');
+assert.equal(paidQuest.level, 6);
+assert.equal(paidQuest.xp, '72');
+assert.equal(paidQuest.profile_revision, '2');
+assert.equal(paidQuest.completed_quest_count, 1);
+assert.equal(paidQuest.completed_quest, travelQuest.id);
+assert.deepEqual(paidQuest.completed_travel_quests, [travelQuest.id]);
+assert.deepEqual(paidQuest.quests, []);
+assert.deepEqual(paidQuest.items.map(row => [row.count, row.version, row.order]), [[5, 2, 0], [2, 2, 1]]);
+assert.equal(paidQuest.items[0].id, rewardStack);
+await db.close();
+db = new PGlite(testDataPath);
+const replayedQuest = await runQuestGrant(questGrantKey);
+assert.equal(replayedQuest.status, 'REPLAYED');
+assert.equal(replayedQuest.completed_quest, travelQuest.id);
+assert.deepEqual(replayedQuest.items, paidQuest.items);
+assert.equal((await runQuestGrant(questGrantKey, { ...grantQuest, reward_xp: '73' })).status, 'KEY_REUSED');
+assert.equal((await runQuestGrant(id(13006))).completed_quest, travelQuest.id);
+assert.equal((await readQuestOwner()).xp, '72');
+
+// Existing completions remain durable and do not consume active capacity.
+await exec(`INSERT INTO pj_quest_states(character_id, quest_id, state, progress_json)
+    SELECT $1, 'past.' || n, 'CLAIMED', '{}'::jsonb FROM generate_series(1,130) n`, [questOwner]);
+await db.exec(await readFile(new URL('013_online_quest_rewards.sql', migrations), 'utf8'));
+const persistedHistory = await readQuestOwner();
+assert.equal(persistedHistory.completed_quest_count, 131);
+assert.equal(persistedHistory.ids, undefined);
+async function questHistory(count, ordinal, epoch = '1') {
+    let command;
+    sandbox.rpcWorldQuestHistory({}, null, {
+        sqlQuery: (sql, values) => {
+            command = { sql, values: [...values] };
+            return [{ result: '{}' }];
+        },
+    }, JSON.stringify({ character_id: questOwner, session_epoch: epoch, count, ordinal }));
+    return JSON.parse(await result(command.sql, command.values));
+}
+assert.throws(() => sandbox.rpcWorldQuestHistory({ userId: questOwner }, null, {}, '{}'), /requires runtime authentication/);
+assert.deepEqual(await questHistory(1, 0), { count: 131, status: 'STALE' });
+assert.equal((await questHistory(131, 0, '2')).status, 'CONFLICT');
+assert.equal((await questHistory(131, 5)).status, 'INVALID');
+const historyPages = await Promise.all([0, 1, 2, 3, 4].map(ordinal => questHistory(131, ordinal)));
+assert.ok(historyPages.every(page => page.status === 'OK' && page.count === 131));
+assert.deepEqual(historyPages.map(page => page.ids.length), [32, 32, 32, 32, 3]);
+const completedIds = historyPages.flatMap(page => page.ids);
+assert.equal(new Set(completedIds).size, 131);
+assert.equal(completedIds.at(-1), travelQuest.id);
+await exec(`INSERT INTO pj_quest_states(character_id, quest_id, state, progress_json)
+    SELECT $1, 'active.' || n, 'ACTIVE', jsonb_build_object('id','active.' || n) FROM generate_series(1,127) n`, [questOwner]);
+const acceptQuest = (key, quest) => editQuest(key, { ...questOwnerIntent, kind: 'accept', quest,
+    row: { ...travelQuest, id: quest, event: 'RealEvent' } });
+assert.equal((await acceptQuest(id(13007), travelQuest.id)).status, 'STALE');
+assert.equal((await acceptQuest(id(13008), 'active.128')).status, 'COMMITTED');
+assert.equal((await acceptQuest(id(13009), 'active.129')).status, 'INVALID');
+assert.equal((await editQuest(id(13010), { ...questOwnerIntent, kind: 'progress',
+    changes: [{ row: travelQuest, deltas: [{ id: '', amount: 1 }] }] })).status, 'COMMITTED');
+assert.equal(await result("SELECT count(*)::int AS result FROM pj_quest_states WHERE character_id = $1 AND state = 'ACTIVE'", [questOwner]), 128);
+console.log('Phase 013 online quest reward, replay, backfill, owner-page, and 128 active-slot checks passed');
 // Phase 012 shares the real ticket issuer between direct and routed callers.
 const routeZone = 'phase_ad_queue';
 const otherAccount = id(12000);
@@ -483,6 +610,8 @@ assert.equal((await route(buyer)).position, 1);
 assert.equal((await createChannel(1, 0, 1)).status, 'OK');
 assert.equal((await route(seller)).status, 'QUEUED');
 assert.equal((await route(buyer)).status, 'ROUTED');
+await createChannel(2, 0, 1, false); // A delayed pre-drain packet from the same incarnation.
+assert.equal(await result('SELECT draining AS result FROM pj_world_channels WHERE zone_id=$1 AND channel_id=2', [routeZone]), true);
 await exec("INSERT INTO pj_idempotency_receipts(idempotency_key, operation, status_code, created_at, expires_at) VALUES ($1,'phase_ad_prune',200,NOW()-interval '21 days',NOW()+interval '6 days'),($2,'phase_ad_prune',200,NOW()-interval '21 days',NOW()-interval '1 day')", [id(12003), id(12004)]);
 assert.equal((await result('SELECT pj_prune_expired_receipts(7, 100) AS result', [])).status, 'OK');
 assert.equal(await result('SELECT count(*)::int AS result FROM pj_idempotency_receipts WHERE idempotency_key = $1', [id(12003)]), 1);

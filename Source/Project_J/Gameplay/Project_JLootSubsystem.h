@@ -20,7 +20,6 @@ struct PROJECT_J_API FProject_JLootTableEntry
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Loot")
 	FName ItemDefinitionId = NAME_None;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Loot", meta = (ClampMin = "1"))
 	int32 MinQuantity = 1;
 
@@ -32,6 +31,9 @@ struct PROJECT_J_API FProject_JLootTableEntry
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Loot")
 	bool bGuaranteed = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Loot", meta = (ClampMin = "1"))
+	int32 ItemDefinitionVersion = 1;
 };
 
 UCLASS(BlueprintType)
@@ -63,6 +65,8 @@ struct PROJECT_J_API FProject_JLootItemStack
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Loot")
 	int32 Quantity = 1;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Loot")
+	int32 ItemDefinitionVersion = 1;
 };
 
 USTRUCT(BlueprintType)

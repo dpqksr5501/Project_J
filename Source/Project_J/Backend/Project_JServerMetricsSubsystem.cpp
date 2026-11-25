@@ -131,18 +131,31 @@ FString UProject_JServerMetricsSubsystem::RenderPrometheusMetricsText() const
 	const auto* Drain = GI ? GI->GetSubsystem<UProject_JServerDrainSubsystem>() : nullptr;
 
 	const FProject_JServerGovernorSnapshot GovSnap = Gov ? Gov->GetSnapshot() : FProject_JServerGovernorSnapshot();
+	const FProject_JTickIntervalHistogram TickIntervals = Gov ? Gov->GetTickIntervalHistogram() : FProject_JTickIntervalHistogram();
 	const FProject_JRuntimeTelemetrySnapshot IntSnap = Integrity ? Integrity->GetTelemetrySnapshot() : FProject_JRuntimeTelemetrySnapshot();
 	const FProject_JOnlineOutboxStats OutboxSnap = Online ? Online->GetOutboxStats() : FProject_JOnlineOutboxStats();
 	const FProject_JCrowdDensityStats CrowdSnap = UProject_JCrowdDensityNetObjectFilter::GetLatestStats(GI ? GI->GetWorld() : nullptr);
 	const int32 DrainState = Drain ? static_cast<int32>(Drain->GetDrainState()) : 0;
 
 	FString Out;
-	Out.Reserve(2048);
+	Out.Reserve(4096);
 	Out += TEXT("# HELP projectj_server_tick_ms Rolling percentile of server world tick elapsed work in milliseconds.\n");
 	Out += TEXT("# TYPE projectj_server_tick_ms gauge\n");
 	Out += FString::Printf(TEXT("projectj_server_tick_ms{quantile=\"0.50\"} %.3f\n"), (FMath::IsFinite(GovSnap.TickP50Ms) ? GovSnap.TickP50Ms : 0.));
 	Out += FString::Printf(TEXT("projectj_server_tick_ms{quantile=\"0.95\"} %.3f\n"), (FMath::IsFinite(GovSnap.TickP95Ms) ? GovSnap.TickP95Ms : 0.));
 	Out += FString::Printf(TEXT("projectj_server_tick_ms{quantile=\"0.99\"} %.3f\n"), (FMath::IsFinite(GovSnap.TickP99Ms) ? GovSnap.TickP99Ms : 0.));
+	Out += TEXT("# HELP projectj_server_tick_interval_seconds Monotonic seconds between successive tick starts in the same authoritative world.\n");
+	Out += TEXT("# TYPE projectj_server_tick_interval_seconds histogram\n");
+	int64 CumulativeTicks = 0;
+	for (int32 Index = 0; Index < FProject_JTickIntervalHistogram::BucketCount; ++Index)
+	{
+		CumulativeTicks += TickIntervals.BucketCounts[Index];
+		Out += FString::Printf(TEXT("projectj_server_tick_interval_seconds_bucket{le=\"%.6f\"} %lld\n"),
+			FProject_JTickIntervalHistogram::BoundsSeconds[Index], CumulativeTicks);
+	}
+	Out += FString::Printf(TEXT("projectj_server_tick_interval_seconds_bucket{le=\"+Inf\"} %lld\n"), TickIntervals.Count);
+	Out += FString::Printf(TEXT("projectj_server_tick_interval_seconds_sum %.9f\n"), TickIntervals.SumSeconds);
+	Out += FString::Printf(TEXT("projectj_server_tick_interval_seconds_count %lld\n"), TickIntervals.Count);
 	Out += TEXT("# HELP projectj_server_over_budget_ticks_total Server over budget ticks total.\n");
 	Out += TEXT("# TYPE projectj_server_over_budget_ticks_total counter\n");
 	Out += FString::Printf(TEXT("projectj_server_over_budget_ticks_total %lld\n"), GovSnap.OverBudgetTicksTotal);
@@ -175,6 +188,12 @@ FString UProject_JServerMetricsSubsystem::RenderPrometheusMetricsText() const
 	Out += TEXT("# HELP projectj_outbox_in_flight Outbox in flight.\n");
 	Out += TEXT("# TYPE projectj_outbox_in_flight gauge\n");
 	Out += FString::Printf(TEXT("projectj_outbox_in_flight %d\n"), OutboxSnap.InFlightCount);
+	Out += TEXT("# HELP projectj_outbox_oldest_active_age_seconds Age of the oldest loaded or newly admitted unresolved mutation. Dead letters are excluded.\n");
+	Out += TEXT("# TYPE projectj_outbox_oldest_active_age_seconds gauge\n");
+	Out += FString::Printf(TEXT("projectj_outbox_oldest_active_age_seconds %.3f\n"), OutboxSnap.OldestActiveAgeSeconds);
+	Out += TEXT("# HELP projectj_outbox_rejected_capacity_total Outbox admissions rejected due to capacity or recovery and quarantine backpressure.\n");
+	Out += TEXT("# TYPE projectj_outbox_rejected_capacity_total counter\n");
+	Out += FString::Printf(TEXT("projectj_outbox_rejected_capacity_total %lld\n"), OutboxSnap.RejectedCapacityTotal);
 	Out += TEXT("# HELP projectj_outbox_dead_letters Outbox dead letters.\n");
 	Out += TEXT("# TYPE projectj_outbox_dead_letters gauge\n");
 	Out += FString::Printf(TEXT("projectj_outbox_dead_letters %d\n"), OutboxSnap.DeadLetterCount);
@@ -212,9 +231,7 @@ bool UProject_JServerMetricsSubsystem::RenderHealthJson(FString& OutJson) const
 
 	const bool bDraining = Drain && Drain->IsDraining();
 	const bool bOutboxBroken = Online && Online->HasOutboxStoreFailed();
-	const UWorld* World = GI ? GI->GetWorld() : nullptr;
-	const bool bListening = !IsRunningDedicatedServer() || (World && World->HasBegunPlay() && World->GetNetDriver() && !World->bIsTearingDown);
-	const bool bHealthy = bListening && !bDraining && !bOutboxBroken;
+	const bool bHealthy = Drain && Drain->IsReadyForAdmission();
 	const int32 Tier = Gov ? static_cast<int32>(Gov->GetCurrentTier()) : 0;
 
 	OutJson = FString::Printf(

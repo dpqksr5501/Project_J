@@ -119,6 +119,7 @@ bool FProjectJGovernorAndCrowdDensity500Test::RunTest(const FString&)
 	}
 	TestEqual(TEXT("Sustained 29ms escalates to Red"), Gov->GetCurrentTier(), EProject_JServerLoadTier::Red);
 	TestEqual(TEXT("Red scales crowd cap 60 -> 27"), Gov->GetEffectiveCrowdCap(60), 27);
+	TestEqual(TEXT("Pressure does not raise a deliberately smaller base cap"), Gov->GetEffectiveCrowdCap(4), 4);
 	TestEqual(TEXT("Red scales NPC decision cadence 2.5x"), Gov->GetNpcDecisionCadenceScale(), 2.5f);
 
 	// 4) Sustained 10ms load recovers back to Green after RecoverHoldSeconds.
@@ -207,6 +208,8 @@ bool FProjectJPrometheusMetricsAndDrainTest::RunTest(const FString&)
 	}
 
 	Gov->RecordTickSample(6.5, 42, FPlatformTime::Seconds());
+	Gov->RecordTickSample(6.5, 42, FPlatformTime::Seconds(), 0.034);
+	Gov->RecordTickSample(6.5, 42, FPlatformTime::Seconds(), 1.200);
 	if (!TestTrue(TEXT("Metrics loopback HTTP listener starts on ephemeral port"), Metrics->StartMetricsEndpoint(0)))
 	{
 		return false;
@@ -244,8 +247,18 @@ bool FProjectJPrometheusMetricsAndDrainTest::RunTest(const FString&)
 	const FString PromText = FetchLocalHttpResponse(Port, TEXT("/metrics"), Metrics);
 	TestTrue(TEXT("/metrics returns HTTP 200 OK"), PromText.Contains(TEXT("200 OK")));
 	TestTrue(TEXT("/metrics contains tick gauge"), PromText.Contains(TEXT("projectj_server_tick_ms{quantile=\"0.95\"}")));
+	TestTrue(TEXT("Fleet histogram uses a fixed cadence bucket and cumulative counts"),
+		PromText.Contains(TEXT("# TYPE projectj_server_tick_interval_seconds histogram\n"))
+		&& PromText.Contains(TEXT("projectj_server_tick_interval_seconds_bucket{le=\"0.030000\"} 0\n"))
+		&& PromText.Contains(TEXT("projectj_server_tick_interval_seconds_bucket{le=\"0.035000\"} 1\n"))
+		&& PromText.Contains(TEXT("projectj_server_tick_interval_seconds_bucket{le=\"+Inf\"} 2\n"))
+		&& PromText.Contains(TEXT("projectj_server_tick_interval_seconds_sum 1.234000000\n"))
+		&& PromText.Contains(TEXT("projectj_server_tick_interval_seconds_count 2\n")));
 	TestTrue(TEXT("/metrics contains CCU=42"), PromText.Contains(TEXT("projectj_server_active_ccu 42")));
 	TestTrue(TEXT("/metrics contains outbox dead letters"), PromText.Contains(TEXT("projectj_outbox_dead_letters")));
+	TestTrue(TEXT("/metrics exports empty age and capacity-rejection series"),
+		PromText.Contains(TEXT("projectj_outbox_oldest_active_age_seconds 0.000\n"))
+		&& PromText.Contains(TEXT("projectj_outbox_rejected_capacity_total 0\n")));
 	TestTrue(TEXT("/metrics contains integrity counter"), PromText.Contains(TEXT("projectj_integrity_movement_violations_total")));
 
 	// 3) BeginGracefulDrain flips /healthz to 503 and transitions to ReadyToExit when 0 players remain.

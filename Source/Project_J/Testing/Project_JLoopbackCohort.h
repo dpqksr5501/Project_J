@@ -67,7 +67,7 @@ private:
 	uint32 LastBossBlocker = 0;
 };
 
-/** Editor-only loopback test. Every client has an actual game net driver and socket. */
+/** Editor-only cohort test. Every client has an actual game net driver and socket. */
 UCLASS(NotBlueprintable)
 class AProject_JLoopbackCohort : public AGameModeBase
 {
@@ -140,6 +140,9 @@ private:
 	FDelegateHandle BossDamageHandle;
 	FDelegateHandle NetworkFailureHandle;
 	FString MetricsPath;
+	FString SplitHostPeer;
+	FString SplitHostRunId;
+	bool bSplitHost = false;
 	ECombatPhase CombatPhase = ECombatPhase::Waiting;
 	double PhaseStarted = 0.;
 	double NextBossPrepare = 0.;

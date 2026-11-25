@@ -37,6 +37,7 @@ FProject_JRolledLootGrant UProject_JLootSubsystem::RollPersonalLoot(
 			FProject_JLootItemStack Stack;
 			Stack.ItemDefinitionId = Entry.ItemDefinitionId;
 			Stack.Quantity = Qty;
+			Stack.ItemDefinitionVersion = Entry.ItemDefinitionVersion;
 			Grant.Items.Add(Stack);
 		}
 	}

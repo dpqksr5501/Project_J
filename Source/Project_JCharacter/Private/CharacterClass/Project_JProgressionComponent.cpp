@@ -515,9 +515,10 @@ bool UProject_JProgressionComponent::GrantExperience(int64 Amount)
 	Publish();
 	return true;
 }
-bool UProject_JProgressionComponent::PlanExperience(int64 Amount, FProject_JProgressionSnapshot &Out) const
+bool UProject_JProgressionComponent::PlanExperience(int64 Amount, FProject_JProgressionSnapshot &Out, bool bTrustedApply) const
 {
-	if (!CanMutate() || State.Revision == 0 || Amount <= 0 || Amount > MAX_int64 - Experience ||
+	const bool bAdmitted = bTrustedApply ? ValidateCommittedExperience(CaptureSnapshot(), true) : CanMutate();
+	if (!bAdmitted || State.Revision == 0 || Amount <= 0 || Amount > MAX_int64 - Experience ||
 		GetNextLevelExperience() <= 0)
 		return false;
 	Out = CaptureSnapshot();

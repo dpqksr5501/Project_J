@@ -8,6 +8,10 @@
 #include "World/Project_JDungeonInstanceSubsystem.h"
 #include "Project_JMMOClientBridgeComponent.generated.h"
 
+class FJsonObject;
+class AProject_JGameMode;
+class AProject_JPlayerState;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FProjectJOnDungeonTicketReceived, const FProject_JDungeonJoinTicket&, Ticket);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FProjectJOnMMOActionResult, FName, ActionName, bool, bSucceeded, FName, ReasonCode);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FProjectJOnChatMessageReceived, FGuid, SenderCharId, EProject_JChatChannel, Channel, const FString&, Message);
@@ -97,10 +101,15 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerWithdrawGuildBank(FGuid GuildId, int32 SlotIndex, int64 ExpectedRevision);
 
-	UFUNCTION(Server, Reliable)
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category="MMO|Social")
 	void ServerBlockCharacter(FGuid TargetCharacterId);
 
-	UFUNCTION(Server, Reliable)
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category="MMO|Social")
+	void ServerUnblockCharacter(FGuid TargetCharacterId);
+
+	void InitializeOnlineChat(const FGuid& OwnerId, int64 Epoch, const FJsonObject& Login);
+
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category="MMO|Social")
 	void ServerSendChatMessage(FGuid OptionalRecipientCharId, EProject_JChatChannel Channel, const FString& Message);
 
 	UFUNCTION(Client, Reliable)
@@ -129,5 +138,14 @@ private:
 	TSet<FGuid> VisibleClaimableMail;
 	bool bReadingInbox = false;
 	bool bClaimingOnlineMail = false;
+	bool InstallBlockSnapshot(const FJsonObject& Snapshot);
+	bool HasCurrentOnlineChat(const AProject_JGameMode* Mode, const AProject_JPlayerState* Player) const;
+	void SetChatBlock(const FGuid& Target, bool bBlock);
+	FGuid ChatOwner;
+	int64 ChatEpoch = 0;
+	int64 BlockRevision = 0;
+	TSet<FGuid> BlockedSenders;
+	FGuid UnconfirmedMute;
+	bool bEditingBlock = false;
 	FTimerHandle OnlineDungeonPollTimer;
 };

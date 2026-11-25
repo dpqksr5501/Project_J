@@ -6,14 +6,14 @@
 
 /**
  * Velocity-driven 2-stage streaming tier for 8x8km high-speed travel (BP02).
- * Stage 1 (Loaded) warms disk/Pak/PSO ahead of Stage 2 (Activated) actor spawn.
+ * Stage 1 (Loaded) requests packages ahead of Stage 2 (Activated) actor registration.
  */
 USTRUCT(BlueprintType)
 struct PROJECT_J_API FProject_JStreamingVelocityProfile
 {
 	GENERATED_BODY()
 
-	/** Minimum 2D speed (cm/s) required to activate 2-stage high-speed prediction. */
+	/** Minimum speed (cm/s) for high-speed prediction: planar travel on ground and 3D travel in flight. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Streaming", meta = (ClampMin = "0.0"))
 	float HighSpeedThresholdCmPerSec = 600.0f;
 
@@ -56,7 +56,7 @@ struct PROJECT_J_API FProject_JStreamingVelocityProfile
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Streaming|Hysteresis", meta = (ClampMin = "0.0", ClampMax = "30.0"))
 	float UnloadHysteresisSeconds = 6.0f;
 
-	/** Altitude above ground (cm) at which Grid_Detail loading is suppressed during flight. */
+	/** Minimum confirmed clearance (cm), accounting for descent over the preload horizon, required to exclude Grid_Detail. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Streaming|Altitude", meta = (ClampMin = "1000.0"))
 	float SuppressDetailAltitudeCm = 15000.0f;
 

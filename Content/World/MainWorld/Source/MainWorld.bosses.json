@@ -804,11 +804,16 @@
       "encounter": {
         "id": "WorldBoss.Starter.Lv1_30.B01",
         "owner_class": "/Script/Project_J.Project_JWorldEncounter",
-        "npc_class": null,
-        "activation_radius_cm": 150000,
+        "owner_package": "/Game/__ExternalActors__/World/MainWorld/Maps/L_MainWorld/3/08/P5E9KW9PU8V0RMUU66CR60",
+        "npc_class": "/Game/DataAssetSets/MMO/BP_FieldBoss_Test.BP_FieldBoss_Test_C",
+        "combat_definition": "/Game/DataAssetSets/MMO/DA_NPC_MMOTestBoss_Activation.DA_NPC_MMOTestBoss_Activation",
+        "combat_team_id": 1,
+        "loot_table": "/Game/DataAssetSets/MMO/DA_LootTable_FieldBoss_Starter.DA_LootTable_FieldBoss_Starter",
+        "quest_kill_event_id": "WorldBoss.Starter.Lv1_30.B01",
+        "activation_radius_cm": 4800,
         "respawn_seconds": 300,
-        "status": "EXISTING_SERVER_OWNER_INTERFACE_ONLY; NPC_UNBOUND",
-        "automatic_rewards": false,
+        "status": "EXISTING_SERVER_OWNER_WITH_STARTER_COMBAT_AND_PERSONAL_LOOT",
+        "automatic_rewards": true,
         "reset_ai_status": "CANDIDATE_ONLY_NOT_BOUND",
         "near_and_ranged_space": "64m-diameter natural melee core and outer standing-stone cover; attack ranges/gameplay tuning pending",
         "local_place_id": "B01",
@@ -826,8 +831,8 @@
       "quest_hooks": [
         {
           "id": "B01.DefeatRidgeGuardian",
-          "owner_event": "OnResolved",
-          "status": "NOT_BOUND",
+          "owner_event": "WorldBoss.Starter.Lv1_30.B01",
+          "status": "OBJECTIVE_EVENT_AVAILABLE; NO_AUTHORED_QUEST",
           "encounter_id": "WorldBoss.Starter.Lv1_30.B01"
         }
       ],

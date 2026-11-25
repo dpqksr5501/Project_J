@@ -45,6 +45,7 @@ public:
 
 	EProject_JServerDrainState GetDrainState() const { return State; }
 	bool IsDraining() const { return State != EProject_JServerDrainState::InService; }
+	bool IsReadyForAdmission() const;
 	const FString& GetDrainReason() const { return DrainReason; }
 	const FString& GetAlternateEndpoint() const { return AlternateEndpoint; }
 	int32 GetEvacuatedPlayerCount() const { return EvacuatedPlayersTotal; }

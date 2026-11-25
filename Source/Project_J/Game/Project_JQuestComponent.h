@@ -31,6 +31,7 @@ struct FProject_JQuestObjectiveState
 	bool operator==(const FProject_JQuestObjectiveState& Other) const { return ObjectiveId == Other.ObjectiveId && Count == Other.Count; }
 };
 struct FProject_JQuestState;
+class AProject_JPlayerState;
 class UProject_JCharacterDataSubsystem;
 
 /** Canonical item terms; stackability stays owned by the registered item definition. */
@@ -204,6 +205,8 @@ class PROJECT_J_API UProject_JQuestComponent : public UActorComponent
 	/** GT trusted server input. True means accepted or a valid no-op (no matching/incomplete objective).
 	 * False means invalid/retired/unavailable; accepted pending progress is not a durable acknowledgement. */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly) bool TryRecordObjective(FName Event, int32 Count = 1);
+	/** Captures the eligible objective inputs without publishing or submitting a mutation. */
+	bool CaptureObjectiveProgress(FName Event, int32 Count, TArray<FProject_JQuestProgressInput>& Out) const;
 	UFUNCTION(BlueprintCallable) void RequestClaim(FName Id);
 	/** Persistent tracking is visible only after commit; a rejected/pending request does not toggle live UI state. */
 	UFUNCTION(BlueprintCallable) void RequestTracking(FName Id, bool bTracked);
@@ -220,6 +223,8 @@ class PROJECT_J_API UProject_JQuestComponent : public UActorComponent
 
   private:
 	friend struct FProject_JNativeQuestRewardCommit;
+	friend class AProject_JPlayerState;
+	friend class UProject_JOnlineWorldSubsystem;
 	friend class FProjectJQuestLifetimeTest;
 	friend class FProjectJQuestExecutionTest;
 	UFUNCTION() void OnRep_States();
@@ -228,6 +233,10 @@ class PROJECT_J_API UProject_JQuestComponent : public UActorComponent
     UFUNCTION(Client, Reliable) void ClientCompletedPage(FGuid Request, int32 Ordinal, FProject_JQuestHistorySummary Summary, const TArray<FName>& Ids, bool bAccepted);
     void RefreshHistorySummary();
     bool GetCompletionPageValues(int32 Ordinal, TArray<FName>& Out) const;
+    bool InstallOnlineCompletionCount(int32 Count);
+    void PublishOnlineCompletionCount();
+    void ResetOnlineCompletionHistory();
+    void RequestOnlineHistoryPage(AProject_JPlayerState& Owner, FGuid Request, int32 Ordinal, FGuid ExpectedRevision);
     ProjectJ::QuestHistory::FViewPtr History;
     int32 SnapshotVersion = 1;
     UPROPERTY(ReplicatedUsing=OnRep_HistorySummary) FProject_JQuestHistorySummary HistorySummary;
@@ -237,7 +246,9 @@ class PROJECT_J_API UProject_JQuestComponent : public UActorComponent
     FGuid PendingHistoryRequest;
     FGuid PendingHistoryRevision;
     FGuid PendingHistoryCharacter;
+    FGuid LatestServerHistoryRequest;
     int32 PendingHistoryOrdinal = 0;
+    int32 OnlineCompletionCount = INDEX_NONE;
     double HistoryRequestStarted = -1, NextHistoryRequestTime = 0;
     bool bRequestingHistoryPage = false;
 	UFUNCTION(Server, Reliable) void ServerClaim(FName Id);

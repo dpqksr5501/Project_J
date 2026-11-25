@@ -11,6 +11,6 @@ namespace ProjectJ::Network
 {
     // Realtime RPC/replication wire contract. Bump for incompatible changes;
     // independent of marketing, persistence schema and backend API versions.
-    // 14: Spellblade montage dash layered move in Mover sync state.
-    inline constexpr uint32 RealtimeProtocolVersion = 14;
+    // 15: MMO bridge now exposes the server-authoritative unblock RPC.
+    inline constexpr uint32 RealtimeProtocolVersion = 15;
 }

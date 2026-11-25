@@ -45,7 +45,7 @@ class PROJECT_JCHARACTER_API UProject_JProgressionComponent : public UActorCompo
 	TFunction<FGuid()> CreatePersistentRequest;
 	TFunction<bool()> PersistentAdmission;
 	/** Same XP rules for preflight and publication; no GAS grant reconstruction. */
-	bool PlanExperience(int64 Amount, FProject_JProgressionSnapshot &Out) const;
+	bool PlanExperience(int64 Amount, FProject_JProgressionSnapshot &Out, bool bTrustedApply = false) const;
 	bool ValidateCommittedExperience(const FProject_JProgressionSnapshot &Snapshot, bool bTrustedApply = false) const;
 	void InstallCommittedExperience(const FProject_JProgressionSnapshot &Snapshot);
 	void PublishCommittedExperience();
@@ -107,6 +107,7 @@ class PROJECT_JCHARACTER_API UProject_JProgressionComponent : public UActorCompo
 
   private:
 	friend struct FProject_JNativeQuestRewardCommit;
+	friend class UProject_JOnlineWorldSubsystem;
 	void InstallPreparedExperience(const FProject_JProgressionSnapshot& Snapshot);
 	void PublishPreparedExperience(TFunctionRef<bool()> IsCurrent);
 	UPROPERTY(ReplicatedUsing = OnRep_Experience) int64 Experience = 0;

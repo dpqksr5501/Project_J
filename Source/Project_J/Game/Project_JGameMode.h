@@ -58,6 +58,7 @@ public:
 	int32 GetOnlineChannelId() const { return OnlineChannelId; }
 	void NotifyServerDraining();
 	bool IsServerDraining() const;
+	bool HasOnlineChannelLease() const { return FPlatformTime::Seconds() < OnlineChannelLeaseDeadline; }
 	bool SubmitOnlineInventoryEdit(AProject_JPlayerState* Player, const FProject_JPersistentEdit& Edit,
 		FProject_JPersistentCompletion Complete = {}, TFunction<void(const FProject_JProfileDurableResult&)> OnDurable = {});
 	/** Opt-in server policy: login waits without prototype identity/Pawn until a
@@ -119,6 +120,7 @@ private:
 	FGuid OnlineIncarnation;
 	FTSTicker::FDelegateHandle OnlineHeartbeat;
 	double NextOnlineHeartbeat = 0.;
+	double OnlineChannelLeaseDeadline = 0.;
 	TSet<TWeakObjectPtr<APlayerController>> OnlineLoginPending;
 	TMap<TWeakObjectPtr<const AProject_JPlayerState>, int64> OnlineEpochs;
 	TMap<FGuid, TWeakObjectPtr<AProject_JPlayerState>> OnlineInventoryPending;

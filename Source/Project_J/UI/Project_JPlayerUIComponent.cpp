@@ -767,6 +767,8 @@ void UProject_JPlayerUIComponent::ApplyInputMode()
 	// Ignore flags are counters. Release only our own contribution, once per transition.
 	if (bOwnsMoveIgnore != bMenuOpen) { PC->SetIgnoreMoveInput(bMenuOpen); bOwnsMoveIgnore = bMenuOpen; }
 	if (bOwnsLookIgnore != bLookIgnore) { PC->SetIgnoreLookInput(bLookIgnore); bOwnsLookIgnore = bLookIgnore; }
+	if (auto* GI = PC->GetGameInstance())
+		if (auto* Stack = GI->GetSubsystem<UProject_JUIWindowStackSubsystem>(); Stack && Stack->DeferHUDInputModeForLoginQueue(PC)) return;
 	PC->bShowMouseCursor = bLookIgnore;
 	if (bMenuOpen && Screen)
 	{

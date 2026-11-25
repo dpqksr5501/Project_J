@@ -1,4 +1,8 @@
 #include "Game/Project_JQuestComponent.h"
+#include "Backend/Project_JOnlineQuests.h"
+#include "Backend/Project_JOnlineWorldSubsystem.h"
+#include "Dom/JsonObject.h"
+#include "Game/Project_JGameMode.h"
 #include "Game/Project_JPlayerState.h"
 #include "Game/Project_JNativeQuestRewardCommit.h"
 #include "CharacterClass/Project_JCharacterDataSubsystem.h"
@@ -225,6 +229,7 @@ void UProject_JQuestComponent::Retire()
 	LastTravelSampleTime = -1; LastTravelSpeed = 0;
 	OnChanged.Clear();
     PendingHistoryRequest.Invalidate(); PendingHistoryRevision.Invalidate();
+    LatestServerHistoryRequest.Invalidate();
     HistoryPage = {};
     OnHistoryPageChanged.Clear();
 }
@@ -347,7 +352,7 @@ bool UProject_JQuestComponent::PlanAcceptance(FName Id, FProject_JQuestSnapshot&
     auto Planned = Proposed;
     const auto* Def = FindDefinition(Id);
     if (!Def || !NormalizeClaimed(Planned) || Planned.States.Num() >= MaxCurrentQuestStates
-        || Planned.HistoryCount + Planned.States.Num() >= ProjectJ::QuestHistory::MaxIds
+        || FMath::Max(Planned.HistoryCount, OnlineCompletionCount) + Planned.States.Num() >= ProjectJ::QuestHistory::MaxIds
         || ProjectJ::QuestHistory::Contains(Planned.History, Id)
         || Planned.States.ContainsByPredicate([Id](const auto& State) { return State.QuestId == Id; })) return false;
     FProject_JQuestState State; State.QuestId = Id;
@@ -429,6 +434,16 @@ void UProject_JQuestComponent::CollectProgressInputs(FName Event, int32 Count,
 void UProject_JQuestComponent::RecordObjective(FName Event, int32 Count)
 {
 	TryRecordObjective(Event, Count);
+}
+bool UProject_JQuestComponent::CaptureObjectiveProgress(FName Event, int32 Count, TArray<FProject_JQuestProgressInput>& Out) const
+{
+	check(IsInGameThread());
+	Out.Reset();
+	if (!CanPublish() || !GetOwner()->HasAuthority() || bChanging || Event.IsNone() || Count <= 0 || Count > 1000000) return false;
+	FProject_JQuestDefinitionIndex Index;
+	BuildDefinitionIndex(Index);
+	CollectProgressInputs(Event, Count, Index, nullptr, Out);
+	return true;
 }
 bool UProject_JQuestComponent::TryRecordObjective(FName Event, int32 Count)
 {
@@ -694,6 +709,7 @@ bool UProject_JQuestComponent::ValidateCommittedQuests(const FProject_JQuestSnap
 int32 UProject_JQuestComponent::GetCompletedCount() const
 {
     if (!GetOwner() || !GetOwner()->HasAuthority()) return HistorySummary.Revision.IsValid() ? HistorySummary.Count : 0;
+    if (OnlineCompletionCount != INDEX_NONE) return OnlineCompletionCount;
     int32 Count = ProjectJ::QuestHistory::Count(History);
     for (const auto& State : States) if (State.bClaimed) ++Count;
     return Count;
@@ -706,6 +722,7 @@ EProject_JQuestCompletionStatus UProject_JQuestComponent::GetCompletionStatus(FN
         if (ProjectJ::QuestHistory::Contains(History, Id)
             || States.ContainsByPredicate([Id](const auto& State) { return State.QuestId == Id && State.bClaimed; }))
             return EProject_JQuestCompletionStatus::Completed;
+        if (OnlineCompletionCount > ProjectJ::QuestHistory::Count(History)) return EProject_JQuestCompletionStatus::Unknown;
         return EProject_JQuestCompletionStatus::NotCompleted;
     }
     if (!HistorySummary.Revision.IsValid()) return EProject_JQuestCompletionStatus::Unknown;
@@ -717,15 +734,64 @@ EProject_JQuestCompletionStatus UProject_JQuestComponent::GetCompletionStatus(FN
 void UProject_JQuestComponent::RefreshHistorySummary()
 {
     if (!CanPublish() || !GetOwner()->HasAuthority()) return;
-    // Legacy rows are bounded128. Paged mode is O(1); never flatten or hash the full history here.
-    TArray<FName> LegacyIds;
-    for (const auto& State : States) if (State.bClaimed) LegacyIds.Add(State.QuestId);
-    const FString& Root = ProjectJ::QuestHistory::RootDigest(History);
-    const int32 Count = ProjectJ::QuestHistory::Count(History) + LegacyIds.Num();
-    if (HistorySummary.Revision.IsValid() && HistorySummary.Count == Count && SummaryRootDigest == Root && SummaryLegacyIds == LegacyIds) return;
-    HistorySummary.Count = Count; HistorySummary.Revision = FGuid::NewGuid();
-    SummaryRootDigest = Root; SummaryLegacyIds = MoveTemp(LegacyIds);
+    if (OnlineCompletionCount != INDEX_NONE)
+    {
+        if (HistorySummary.Revision.IsValid() && HistorySummary.Count == OnlineCompletionCount) return;
+        HistorySummary.Count = OnlineCompletionCount;
+    }
+    else
+    {
+        // Legacy details are bounded. The hydrated local history supplies its root in O(1).
+        TArray<FName> LegacyIds;
+        for (const auto& State : States) if (State.bClaimed) LegacyIds.Add(State.QuestId);
+        const FString& Root = ProjectJ::QuestHistory::RootDigest(History);
+        const int32 Count = ProjectJ::QuestHistory::Count(History) + LegacyIds.Num();
+        if (HistorySummary.Revision.IsValid() && HistorySummary.Count == Count && SummaryRootDigest == Root && SummaryLegacyIds == LegacyIds) return;
+        HistorySummary.Count = Count;
+        SummaryRootDigest = Root;
+        SummaryLegacyIds = MoveTemp(LegacyIds);
+    }
+    HistorySummary.Revision = FGuid::NewGuid();
     if (HistoryPage.bHasPage && !(HistoryPage.Summary == HistorySummary)) HistoryPage.Status = EProject_JQuestHistoryPageStatus::Stale;
+}
+bool UProject_JQuestComponent::InstallOnlineCompletionCount(int32 Count)
+{
+    if (Count < 0 || Count > ProjectJ::QuestHistory::MaxIds || Count <= OnlineCompletionCount) return false;
+    OnlineCompletionCount = Count;
+    RefreshHistorySummary();
+    return true;
+}
+void UProject_JQuestComponent::PublishOnlineCompletionCount()
+{
+    if (!CanPublish() || !GetOwner()->HasAuthority()) return;
+    GetOwner()->ForceNetUpdate();
+    OnRep_HistorySummary();
+}
+void UProject_JQuestComponent::ResetOnlineCompletionHistory()
+{
+    if (OnlineCompletionCount == INDEX_NONE) return;
+    OnlineCompletionCount = INDEX_NONE;
+    History.Reset();
+    HistorySummary = {};
+    HistoryPage = {};
+    LatestServerHistoryRequest.Invalidate();
+    PendingHistoryRequest.Invalidate();
+    PendingHistoryRevision.Invalidate();
+    PendingHistoryCharacter.Invalidate();
+    HistoryRequestStarted = -1;
+    NextHistoryRequestTime = 0;
+    SummaryRootDigest.Reset();
+    SummaryLegacyIds.Reset();
+    SnapshotVersion = 1;
+    States.Reset();
+    for (const UProject_JQuestDefinition* Definition : Definitions)
+    {
+        if (!IsQuestDefinitionValid(Definition) || !Definition->bTravelObjective) continue;
+        auto& Default = States.AddDefaulted_GetRef();
+        Default.QuestId = Definition->QuestId;
+        if (States.Num() >= MaxCurrentQuestStates) break;
+    }
+    ReconcileTravelSampling();
 }
 bool UProject_JQuestComponent::GetCompletionPageValues(int32 Ordinal, TArray<FName>& Out) const
 {
@@ -794,18 +860,70 @@ void UProject_JQuestComponent::ServerRequestCompletedPage_Implementation(FGuid R
     const double Now = FPlatformTime::Seconds();
     if (Now < NextHistoryRequestTime) return;
     NextHistoryRequestTime = Now + 0.5;
+    LatestServerHistoryRequest = Request;
     RefreshHistorySummary();
+    if (OnlineCompletionCount != INDEX_NONE && ExpectedRevision == HistorySummary.Revision)
+    {
+        if (IsCurrent()) RequestOnlineHistoryPage(*KeepState, Request, Ordinal, ExpectedRevision);
+        return;
+    }
     TArray<FName> Ids;
     const bool Accepted = ExpectedRevision == HistorySummary.Revision && GetCompletionPageValues(Ordinal, Ids);
     if (IsCurrent()) ClientCompletedPage(Request, Ordinal, HistorySummary, Ids, Accepted);
+}
+void UProject_JQuestComponent::RequestOnlineHistoryPage(AProject_JPlayerState& Owner, FGuid Request, int32 Ordinal,
+    FGuid ExpectedRevision)
+{
+    const auto* Mode = GetWorld()->GetAuthGameMode<AProject_JGameMode>();
+    const int64 Epoch = Mode ? Mode->GetOnlineEpoch(&Owner) : 0;
+    const int32 ExpectedCount = OnlineCompletionCount;
+    if (Epoch <= 0)
+    {
+        ClientCompletedPage(Request, Ordinal, HistorySummary, {}, false);
+        return;
+    }
+    auto Body = MakeShared<FJsonObject>();
+    Body->SetStringField(TEXT("character_id"), UProject_JOnlineWorldSubsystem::GuidText(Owner.GetCharacterId().Value));
+    Body->SetStringField(TEXT("session_epoch"), LexToString(Epoch));
+    Body->SetNumberField(TEXT("count"), ExpectedCount);
+    Body->SetNumberField(TEXT("ordinal"), Ordinal);
+    const auto Lease = Owner.CaptureServerSession();
+    if (!UProject_JOnlineWorldSubsystem::Submit(GetWorld(), TEXT("World"), TEXT("Quest_History"), Body, {},
+        [WeakQuest = TWeakObjectPtr<ThisClass>(this), WeakOwner = TWeakObjectPtr<AProject_JPlayerState>(&Owner), Lease,
+            Epoch, Request, Ordinal, ExpectedRevision, ExpectedCount](const TSharedPtr<FJsonObject>& Reply)
+        {
+            const TStrongObjectPtr<ThisClass> KeepQuest(WeakQuest.Get());
+            const TStrongObjectPtr<AProject_JPlayerState> KeepState(WeakOwner.Get());
+            auto* Quest = KeepQuest.Get();
+            auto* State = KeepState.Get();
+            const auto Current = [&]
+            {
+                const auto* World = IsValid(Quest) ? Quest->GetWorld() : nullptr;
+                const auto* CurrentMode = World ? World->GetAuthGameMode<AProject_JGameMode>() : nullptr;
+                return IsValid(State) && CurrentMode && Quest->CanPublish() && Quest->GetOwner() == State
+                    && State->IsServerSessionCurrent(Lease) && CurrentMode->GetOnlineEpoch(State) == Epoch
+                    && Quest->LatestServerHistoryRequest == Request;
+            };
+            if (!Current()) return;
+            int32 ObservedCount = INDEX_NONE;
+            TArray<FName> Ids;
+            const bool bDecoded = Reply && ProjectJ::OnlineQuests::ReadHistoryPage(*Reply, Ordinal, ObservedCount, Ids);
+            if (ObservedCount > ExpectedCount && Quest->InstallOnlineCompletionCount(ObservedCount))
+                Quest->PublishOnlineCompletionCount();
+            if (!Current()) return;
+            const bool bAccepted = bDecoded && ObservedCount == ExpectedCount && Quest->HistorySummary.Revision == ExpectedRevision;
+            if (!bAccepted) Ids.Reset();
+            Quest->ClientCompletedPage(Request, Ordinal, Quest->HistorySummary, Ids, bAccepted);
+        })) ClientCompletedPage(Request, Ordinal, HistorySummary, {}, false);
 }
 void UProject_JQuestComponent::ClientCompletedPage_Implementation(FGuid Request, int32 Ordinal,
     FProject_JQuestHistorySummary Summary, const TArray<FName>& Ids, bool bAccepted)
 {
     if (!CanPublish() || !Request.IsValid() || PendingHistoryRequest != Request || PendingHistoryOrdinal != Ordinal) return;
     const auto* ReplyOwner = Cast<AProject_JPlayerState>(GetOwner());
+    const bool bSummaryChanged = PendingHistoryRevision != Summary.Revision || !(Summary == HistorySummary);
     const bool Matches = ReplyOwner && ReplyOwner->GetCharacterId().Value == PendingHistoryCharacter
-        && PendingHistoryRevision == Summary.Revision && Summary == HistorySummary;
+        && !bSummaryChanged;
     PendingHistoryRequest.Invalidate(); PendingHistoryRevision.Invalidate(); HistoryRequestStarted = -1;
     bool ValidIds = Ids.Num() <= ProjectJ::QuestHistory::QueryPageSize;
     TSet<FName> Seen;
@@ -820,7 +938,7 @@ void UProject_JQuestComponent::ClientCompletedPage_Implementation(FGuid Request,
         HistoryPage.Request = Request; HistoryPage.RequestedOrdinal = Ordinal;
         HistoryPage.bHasPage = true; HistoryPage.Status = EProject_JQuestHistoryPageStatus::Fresh;
     }
-    else HistoryPage.Status = HistoryPage.bHasPage && !(HistoryPage.Summary == HistorySummary)
+    else HistoryPage.Status = bSummaryChanged || (HistoryPage.bHasPage && !(HistoryPage.Summary == HistorySummary))
         ? EProject_JQuestHistoryPageStatus::Stale : EProject_JQuestHistoryPageStatus::Rejected;
     OnHistoryPageChanged.Broadcast();
 }

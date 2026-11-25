@@ -415,8 +415,13 @@ bool UProject_JEconomySubsystem::SendBossRewardMail(const FProject_JRolledLootGr
 	Items.Reserve(Grant.Items.Num());
 	for (const FProject_JLootItemStack& Stack : Grant.Items)
 	{
-		Items.Add({FGuid::NewGuid(), Grant.RecipientCharacterId, EItemOwnerScope::MailEscrow,
-			Stack.ItemDefinitionId, Stack.Quantity});
+		FItemOwnershipRecord& Item = Items.Emplace_GetRef();
+		Item.ItemInstanceId = FGuid::NewGuid();
+		Item.OwnerId = Grant.RecipientCharacterId;
+		Item.Scope = EItemOwnerScope::MailEscrow;
+		Item.DefinitionId = Stack.ItemDefinitionId;
+		Item.Quantity = Stack.Quantity;
+		Item.DefinitionVersion = Stack.ItemDefinitionVersion;
 	}
 	FScopeLock Lock(&EconomyMutex);
 	if (!Ledger.RegisterItemInstances(Items)) return false;

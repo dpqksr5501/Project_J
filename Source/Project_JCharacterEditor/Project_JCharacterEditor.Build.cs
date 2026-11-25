@@ -17,6 +17,7 @@ public class Project_JCharacterEditor : ModuleRules
 		PrivateDependencyModuleNames.AddRange(new string[] {
 			"Project_JCore", "Mover", "IKRig", "IKRigEditor", "IKRigDeveloper", "ControlRig", "ControlRigDeveloper",
 			"DataValidation",
+			"RHI",
 			"Landscape",
 			"MeshDescription", "StaticMeshDescription", "SkeletalMeshDescription",
 			"Foliage", // LandscapeEdit's public editing interface includes foliage snapping types.

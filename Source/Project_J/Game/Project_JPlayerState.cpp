@@ -280,6 +280,13 @@ void AProject_JPlayerState::SetIdentity(const FProject_JAccountId& InAccountId, 
 	if (IsActorBeingDestroyed() || !HasAuthority() || AccountId.Value != PreviousAccount.Value || CharacterId.Value != PreviousCharacter.Value) return;
 	AccountId = RequestedAccount;
 	CharacterId = RequestedCharacter;
+	if (RequestedCharacter.Value != PreviousCharacter.Value && OnlineProfileRevision > 0)
+	{
+		OnlineInventoryRevision = 0;
+		OnlineQuestRevision = -1;
+		OnlineProfileRevision = 0;
+		if (QuestComponent) QuestComponent->ResetOnlineCompletionHistory();
+	}
 	if (CraftingJobsComponent) CraftingJobsComponent->NotifyOwnerIdentity(CharacterId.Value);
 	if (IsActorBeingDestroyed() || !HasAuthority() || AccountId.Value != RequestedAccount.Value || CharacterId.Value != RequestedCharacter.Value) return;
 	// The detached identity has no social projection. Membership remains owned

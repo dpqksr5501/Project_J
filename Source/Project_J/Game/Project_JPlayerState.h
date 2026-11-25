@@ -149,6 +149,7 @@ private:
 	friend class UProject_JOnlineWorldSubsystem;
 	int64 OnlineInventoryRevision = 0;
 	int64 OnlineQuestRevision = 0;
+	int64 OnlineProfileRevision = 0;
 	bool OwnsServerSession(const AProject_JGameMode* Authority, const ProjectJ::MMO::FServerSessionLease& Lease) const;
 	bool bServerSessionRequired = false;
 	bool bServerSessionRevoked = false;

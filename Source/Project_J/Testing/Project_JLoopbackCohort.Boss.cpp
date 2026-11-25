@@ -143,7 +143,10 @@ bool AProject_JLoopbackCohort::SpawnBossParticipant(AProject_JCohortController& 
 	Avatar->FinishSpawning(SpawnPose);
 	Player.Possess(Avatar);
 	State->SetPublicCharacterSnapshot(TEXT("Spellblade"), 1);
-	State->SetSocialState(TEXT("Cohort.PvE"), NAME_None, FGuid(), FGuid());
+	// Keep a same-party peer exempt while allowing other parties to exercise Iris Top-K.
+	const FName Party = FParse::Param(FCommandLine::Get(), TEXT("ProjectJCohortCrowdGroups"))
+		? FName(*FString::Printf(TEXT("Cohort.PvE.%d"), Slot / 2)) : FName(TEXT("Cohort.PvE"));
+	State->SetSocialState(Party, NAME_None, FGuid(), FGuid());
 	// Possession installs the avatar's configured starting equipment. Use its
 	// normal attack grants so load tests follow changes to the production loadout.
 	auto* Weapon = Equipment->GetEquippedItemInSlot(EProject_JEquipmentSlot::Weapon);
