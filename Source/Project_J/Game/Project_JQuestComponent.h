@@ -160,7 +160,7 @@ class PROJECT_J_API UProject_JQuestComponent : public UActorComponent
 	bool EnsureDefinitionsResolved();
 	/** Mutates only a captured Proposed value, before the existing native commit. */
 	bool PlanActivityProgress(FProject_JQuestSnapshot& Proposed, EProject_JQuestObjectiveKind Kind,
-		FName TargetId, int32 TargetVersion, int64 Amount, const FProject_JQuestDefinitionIndex& Index) const;
+		FName TargetId, int32 TargetVersion, int64 Amount, const FProject_JQuestDefinitionIndex& Index, FName Event = NAME_None) const;
 	bool PlanAcceptance(FName Id, FProject_JQuestSnapshot& Proposed) const;
 	static bool PlanTracking(FName Id, bool bTracked, FProject_JQuestSnapshot& Proposed);
 	static constexpr int32 MaxObjectivesPerQuest = 8;

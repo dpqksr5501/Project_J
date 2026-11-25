@@ -31,8 +31,10 @@ struct FProject_JProfileDurableResult
 };
 using FProject_JProfileDurableCompletion = TFunction<void(const FProject_JProfileDurableResult&)>;
 
-/** Standalone developer checkpoints, explicitly selected by a local launch flag.
- * Not account authentication, network persistence, or a durable economy service.
+/** Single-host SQLite profile persistence adapter.
+ * OpenProfile is a Standalone-only developer checkpoint entry selected by a local launch flag.
+ * OpenTrustedProfile requires an already verified server-session lease from AProject_JGameMode
+ * (DedicatedServer, ListenServer, or trusted Standalone) and never authenticates callers itself.
  * Existing progression, quest, inventory/equipment and crafting-job components remain the live gameplay writers.
  */
 UCLASS()
@@ -40,12 +42,18 @@ class PROJECT_J_API UProject_JLocalProfileSubsystem : public UGameInstanceSubsys
 {
 	GENERATED_BODY()
   public:
+	static constexpr int32 MaxActiveBindings = 128;
 	virtual void Initialize(FSubsystemCollectionBase &Collection) override;
 	virtual void Deinitialize() override;
 	void OpenProfile(AProject_JPlayerState *Player, const FString &Profile, TFunction<void(bool)> OnReady);
+	/** Server-authoritative hydration/persistence entry bound to a verified AProject_JGameMode session lease. */
+	void OpenTrustedProfile(AProject_JPlayerState *Player, const ProjectJ::MMO::FServerSessionLease &ExpectedLease,
+							TFunction<void(bool)> OnReady);
 	void PlayerBegunPlay(AProject_JPlayerState *Player);
 	void Detach(AProject_JPlayerState *Player);
 	void RequestCheckpoint(AProject_JPlayerState *Player);
+	bool IsBound(const AProject_JPlayerState *Player) const;
+	bool IsOpening(const AProject_JPlayerState *Player) const;
 	bool IsReady(const AProject_JPlayerState *Player) const;
 	bool IsCheckpointPending(const AProject_JPlayerState *Player) const;
 	int64 GetCommittedRevision(const AProject_JPlayerState *Player) const;
@@ -92,6 +100,7 @@ class PROJECT_J_API UProject_JLocalProfileSubsystem : public UGameInstanceSubsys
 	friend class FProjectJProfileRuntimeCoverageTest;
 	friend class FProjectJCraftingExecutionTest;
 	friend class FProjectJGatheringExecutionTest;
+	friend class FProjectJTrustedSessionProfileTest;
 	void CompleteEdit(const TSharedPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe> &Binding, bool Confirmed,
 					  bool FirstApplication, ProjectJ::MMO::ECommitStatus Status,
 					  TSharedPtr<const FProject_JLocalProfileSnapshot, ESPMode::ThreadSafe> Values, int64 ProjectionRevision);
@@ -102,6 +111,9 @@ class PROJECT_J_API UProject_JLocalProfileSubsystem : public UGameInstanceSubsys
 	bool QueueQuestProgress(const TSharedPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe>& Binding,
 		const TArray<FProject_JQuestProgressInput>& Inputs);
 	void CompleteOpen(const TSharedPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe> &Binding);
+	void OpenProfileInternal(AProject_JPlayerState *Player, const FGuid &Account, const FGuid &Character,
+							 bool bTrustedSession, const ProjectJ::MMO::FServerSessionLease &ExpectedLease,
+							 TFunction<void(bool)> OnReady);
 	void BindPersistentCommands(const TSharedPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe> &Binding);
 	bool IsCurrent(const TSharedPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe> &Binding) const;
 	TMap<TWeakObjectPtr<AProject_JPlayerState>, TSharedPtr<FProject_JLocalProfileBinding, ESPMode::ThreadSafe>>

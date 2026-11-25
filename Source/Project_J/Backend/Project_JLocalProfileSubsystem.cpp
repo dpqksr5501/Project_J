@@ -398,7 +398,7 @@ void UProject_JLocalProfileSubsystem::Initialize(FSubsystemCollectionBase &Colle
 {
 	Super::Initialize(Collection);
 	Collection.InitializeDependency<UProject_JCharacterDataSubsystem>();
-	IOGate = MakeShared<FAggregateGate, ESPMode::ThreadSafe>(32);
+	IOGate = MakeShared<FAggregateGate, ESPMode::ThreadSafe>(MaxActiveBindings);
 	DatabasePath = FPaths::ConvertRelativePathToFull(
 		FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("LocalProfiles/Profiles.sqlite")));
 }
@@ -457,28 +457,71 @@ void UProject_JLocalProfileSubsystem::OpenProfile(AProject_JPlayerState *Player,
 {
 	check(IsInGameThread());
 	FGuid Account, Character;
-	if (bClosing || !IOGate || !IsValid(Player) || !Player->HasAuthority() || Player->IsActorBeingDestroyed() ||
-		!Player->GetWorld() || Player->GetWorld()->GetNetMode() != NM_Standalone ||
+	if (!IsValid(Player) || !Player->GetWorld() || Player->GetWorld()->GetNetMode() != NM_Standalone ||
+		!Player->IsServerSessionCurrent({}) || !ResolveLocalIdentity(Profile, Account, Character))
+	{
+		if (OnReady) OnReady(false);
+		return;
+	}
+	OpenProfileInternal(Player, Account, Character, false, {}, MoveTemp(OnReady));
+}
+void UProject_JLocalProfileSubsystem::OpenTrustedProfile(AProject_JPlayerState *Player,
+														 const ProjectJ::MMO::FServerSessionLease &ExpectedLease,
+														 TFunction<void(bool)> OnReady)
+{
+	check(IsInGameThread());
+	if (!IsValid(Player) || !Player->GetWorld() || Player->GetWorld()->GetNetMode() == NM_Client ||
+		!ExpectedLease.IsValid() || !ExpectedLease.AccountId.IsValid() || !ExpectedLease.CharacterId.IsValid() ||
+		!Player->IsServerSessionCurrent(ExpectedLease) ||
+		Player->GetAccountId().Value != ExpectedLease.AccountId ||
+		Player->GetCharacterId().Value != ExpectedLease.CharacterId)
+	{
+		if (OnReady) OnReady(false);
+		return;
+	}
+	OpenProfileInternal(Player, ExpectedLease.AccountId, ExpectedLease.CharacterId, true, ExpectedLease, MoveTemp(OnReady));
+}
+void UProject_JLocalProfileSubsystem::OpenProfileInternal(AProject_JPlayerState *Player, const FGuid &Account,
+														  const FGuid &Character, bool bTrustedSession,
+														  const ProjectJ::MMO::FServerSessionLease &ExpectedLease,
+														  TFunction<void(bool)> OnReady)
+{
+	check(IsInGameThread());
+	auto Fail = [&]() {
+		if (OnReady) OnReady(false);
+	};
+	auto ModeAllowed = [&](const UWorld *World) {
+		return World && !World->bIsTearingDown &&
+			   (bTrustedSession ? World->GetNetMode() != NM_Client : World->GetNetMode() == NM_Standalone);
+	};
+	auto SessionAllowed = [&](const AProject_JPlayerState *Target) {
+		return bTrustedSession
+				   ? (ExpectedLease.IsValid() && Target->IsServerSessionCurrent(ExpectedLease) &&
+					  Target->GetAccountId().Value == Account && Target->GetCharacterId().Value == Character)
+				   : Target->IsServerSessionCurrent({});
+	};
+	if (!OnReady || bClosing || !IOGate || !IsValid(Player) || !Player->HasAuthority() || Player->IsActorBeingDestroyed() ||
+		!ModeAllowed(Player->GetWorld()) || !SessionAllowed(Player) ||
 		Player->GetGameInstance() != GetGameInstance() || Player->GetPawn() ||
+		!Account.IsValid() || !Character.IsValid() ||
 		!Player->FindComponentByClass<UProject_JProgressionComponent>() ||
 		Player->FindComponentByClass<UProject_JProgressionComponent>()->GetState().Revision != 0 ||
-		Bindings.Num() >= 32 || Bindings.Num() >= 32 || Bindings.Contains(Player) ||
-		!ResolveLocalIdentity(Profile, Account, Character))
+		Bindings.Num() >= MaxActiveBindings || Bindings.Contains(Player))
 	{
-		OnReady(false);
+		Fail();
 		return;
 	}
 	for (const auto &Pair : Bindings)
 		if (Pair.Value->Character == Character)
 		{
-			OnReady(false);
+			Fail();
 			return;
-		} // Reject duplicate active local profiles.
+		} // Reject duplicate active profiles for the same character.
 	auto *Definitions = GetGameInstance()->GetSubsystem<UProject_JCharacterDataSubsystem>();
 	// GI bootstrap owns catalog refresh; opening a profile consumes its current publication.
 	if (!Definitions || !Definitions->EnsurePrimaryAssetDefinitions())
 	{
-		OnReady(false);
+		Fail();
 		return;
 	}
 	const TStrongObjectPtr<UProject_JLocalProfileSubsystem> PreparingSelf(this);
@@ -488,29 +531,29 @@ void UProject_JLocalProfileSubsystem::OpenProfile(AProject_JPlayerState *Player,
 	auto* PreparingQuests = Player->FindComponentByClass<UProject_JQuestComponent>();
 	if (!PreparingQuests || !PreparingQuests->PrepareForProfile() || bClosing || !IOGate || !IsValid(Player) ||
 		!Player->HasAuthority() || Player->IsActorBeingDestroyed() || !IsValid(PreparingWorld.Get()) ||
-		PreparingWorld->bIsTearingDown || Player->GetWorld() != PreparingWorld.Get() ||
-		Player->GetWorld()->GetNetMode() != NM_Standalone || GetGameInstance() != PreparingInstance.Get() ||
-		Player->GetGameInstance() != PreparingInstance.Get() || Player->GetPawn() ||
-		Player->FindComponentByClass<UProject_JQuestComponent>() != PreparingQuests ||
+		Player->GetWorld() != PreparingWorld.Get() || !ModeAllowed(PreparingWorld.Get()) || !SessionAllowed(Player) ||
+		GetGameInstance() != PreparingInstance.Get() || Player->GetGameInstance() != PreparingInstance.Get() ||
+		Player->GetPawn() || Player->FindComponentByClass<UProject_JQuestComponent>() != PreparingQuests ||
 		!Player->FindComponentByClass<UProject_JProgressionComponent>() ||
 		Player->FindComponentByClass<UProject_JProgressionComponent>()->GetState().Revision != 0 ||
-		Bindings.Num() >= 32 || Bindings.Contains(Player))
+		Bindings.Num() >= MaxActiveBindings || Bindings.Contains(Player))
 	{
-		OnReady(false); return;
+		Fail();
+		return;
 	}
 	// Default acceptance publishes synchronously. A callback may have opened the
 	// same identity through another PlayerState since the original admission.
 	for (const auto& Pair : Bindings)
-		if (Pair.Value->Character == Character) { OnReady(false); return; }
+		if (Pair.Value->Character == Character) { Fail(); return; }
 	FGuid Ticket;
 	if (IOGate->TryAcquire({ProfileKey(Character)}, Ticket) != EAdmission::Accepted)
 	{
-		OnReady(false);
+		Fail();
 		return;
 	}
 	auto B = MakeShared<FProject_JLocalProfileBinding, ESPMode::ThreadSafe>();
 	B->Player = Player;
-	B->PlayerSession = Player->CaptureServerSession();
+	B->PlayerSession = bTrustedSession ? ExpectedLease : Player->CaptureServerSession();
 	B->Account = Account;
 	B->Character = Character;
 	B->OnReady = MoveTemp(OnReady);
@@ -523,11 +566,14 @@ void UProject_JLocalProfileSubsystem::OpenProfile(AProject_JPlayerState *Player,
 	Work->Session = FGuid::NewGuid();
 	B->Work = Work;
 	Bindings.Add(Player, B);
-	Player->SetIdentity(FProject_JAccountId{Account}, FProject_JCharacterId{Character});
+	if (!bTrustedSession)
+		Player->SetIdentity(FProject_JAccountId{Account}, FProject_JCharacterId{Character});
 	if (!IsCurrent(B))
 	{
+		auto Callback = MoveTemp(B->OnReady);
 		Detach(Player);
 		IOGate->Release(Ticket);
+		if (Callback) Callback(false);
 		return;
 	}
 	TWeakObjectPtr<UProject_JLocalProfileSubsystem> WeakThis(this);
@@ -856,9 +902,9 @@ void UProject_JLocalProfileSubsystem::RequestCheckpoint(AProject_JPlayerState *P
 void UProject_JLocalProfileSubsystem::RequestBackup(TFunction<void(bool, FString)> OnComplete)
 {
 	check(IsInGameThread());
-	if (bClosing || !IOGate || !GetWorld() || GetWorld()->GetNetMode() != NM_Standalone)
+	if (bClosing || !IOGate || !GetWorld() || GetWorld()->bIsTearingDown || GetWorld()->GetNetMode() == NM_Client)
 	{
-		OnComplete(false, {});
+		if (OnComplete) OnComplete(false, {});
 		return;
 	}
 	FGuid Ticket;
@@ -904,6 +950,16 @@ void UProject_JLocalProfileSubsystem::Detach(AProject_JPlayerState *Player)
 			Q->OnChanged.Remove(B->QuestChanged);
 	}
 	Bindings.Remove(Player);
+}
+bool UProject_JLocalProfileSubsystem::IsBound(const AProject_JPlayerState *Player) const
+{
+	const auto *Found = Bindings.Find(const_cast<AProject_JPlayerState *>(Player));
+	return Found && IsCurrent(*Found);
+}
+bool UProject_JLocalProfileSubsystem::IsOpening(const AProject_JPlayerState *Player) const
+{
+	const auto *Found = Bindings.Find(const_cast<AProject_JPlayerState *>(Player));
+	return Found && IsCurrent(*Found) && static_cast<bool>((*Found)->OnReady);
 }
 bool UProject_JLocalProfileSubsystem::IsReady(const AProject_JPlayerState *Player) const
 {
@@ -1187,7 +1243,7 @@ bool UProject_JLocalProfileSubsystem::SubmitEdit(AProject_JPlayerState *Player, 
 				Proposed.Items.Add(Item);
 			}
 			return Edit.Kind != K::Gather || Q->PlanActivityProgress(Proposed.Quests, EProject_JQuestObjectiveKind::GatherItem,
-				Def->ItemId, Def->SchemaVersion, Edit.Amount, QuestIndex);
+				Def->ItemId, Def->SchemaVersion, Edit.Amount, QuestIndex, Edit.Quest);
 		}
 		int32 Index = Find(Edit.Instance);
 		if (Index == INDEX_NONE)

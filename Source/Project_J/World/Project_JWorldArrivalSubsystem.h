@@ -40,6 +40,7 @@ protected:
     virtual bool DoesSupportWorldType(EWorldType::Type Type) const override;
 private:
     friend class UProject_JWorldStreamingComponent;
+    friend class UProject_JWorldPreloadStreamingComponent;
     friend class FProjectJWorldArrivalExecutionBudgetTest;
     friend class FProjectJWorldPreparationLifetimeTest;
     struct FEntry

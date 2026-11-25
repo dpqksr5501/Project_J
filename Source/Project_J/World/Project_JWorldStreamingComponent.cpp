@@ -12,6 +12,8 @@
 #include "Project_JGameplayTags.h"
 #include "Components/Project_JCommandBudgetComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Mount/Project_JFlyingMountCharacter.h"
+#include "Mount/Project_JMountMoverComponent.h"
 #include "Movement/Project_JMovementQueries.h"
 #include "DefaultMovementSet/CharacterMoverComponent.h"
 #include "MoverSimulationTypes.h"
@@ -24,6 +26,23 @@
 #include "EngineUtils.h"
 #include "HAL/PlatformTime.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
+
+namespace
+{
+bool ApplyDetailGridSuppression(FWorldPartitionStreamingSource& Source, FName DetailGrid)
+{
+    if (DetailGrid.IsNone()) return true;
+    if (Source.TargetBehavior == EStreamingSourceTargetBehavior::Include && !Source.TargetGrids.IsEmpty())
+    {
+        Source.TargetGrids.Remove(DetailGrid);
+        // An empty include set would expand to every grid.
+        return !Source.TargetGrids.IsEmpty();
+    }
+    Source.TargetBehavior = EStreamingSourceTargetBehavior::Exclude;
+    Source.TargetGrids.Add(DetailGrid);
+    return true;
+}
+}
 
 UProject_JWorldStreamingComponent::UProject_JWorldStreamingComponent()
 {
@@ -98,6 +117,116 @@ bool UProject_JWorldStreamingComponent::BuildPreparationShapes(const FVector& Ve
     }
     return true;
 }
+
+bool UProject_JWorldStreamingComponent::BuildTwoStageVelocityShapes(
+    const FVector& Velocity,
+    float YawRateDegPerSec,
+    float AltitudeAboveGroundCm,
+    const FProject_JStreamingVelocityProfile& Profile,
+    FTwoStageStreamingPlan& OutPlan)
+{
+    OutPlan = FTwoStageStreamingPlan{};
+    if (Velocity.ContainsNaN() || !FMath::IsFinite(YawRateDegPerSec) || !FMath::IsFinite(AltitudeAboveGroundCm))
+    {
+        return false;
+    }
+
+    const float Speed2D = static_cast<float>(Velocity.Size2D());
+    if (Speed2D < Profile.HighSpeedThresholdCmPerSec)
+    {
+        return true;
+    }
+
+    OutPlan.bHighSpeedActive = true;
+    OutPlan.bSuppressDetailGrid = AltitudeAboveGroundCm >= Profile.SuppressDetailAltitudeCm;
+    OutPlan.bTurnWidened = FMath::Abs(YawRateDegPerSec) >= Profile.TurnWideningYawRateDegPerSec;
+
+    const float Alpha = FMath::GetRangePct(
+        Profile.HighSpeedThresholdCmPerSec,
+        FMath::Max(Profile.HighSpeedThresholdCmPerSec + 1.0f, Profile.FlyingSpeedCmPerSec),
+        Speed2D);
+    const float ClampedAlpha = FMath::Clamp(Alpha, 0.0f, 1.0f);
+
+    const float LoadedLead = FMath::Lerp(Profile.LoadedLeadSecondsMin, Profile.LoadedLeadSecondsMax, ClampedAlpha);
+    const float ActivatedLead = FMath::Lerp(Profile.ActivatedLeadSecondsMin, Profile.ActivatedLeadSecondsMax, ClampedAlpha);
+    const float LoadedCap = FMath::Lerp(Profile.LoadedMaxDistanceCm * 0.5f, Profile.LoadedMaxDistanceCm, ClampedAlpha);
+    const float ActivatedCap = FMath::Lerp(Profile.ActivatedMaxDistanceCm * 0.45f, Profile.ActivatedMaxDistanceCm, ClampedAlpha);
+
+    const FVector Forward2D = FVector(Velocity.X, Velocity.Y, 0.0).GetSafeNormal();
+    auto AppendCorridor = [&](TArray<FStreamingSourceShape>& OutCorridorShapes, const FVector& Dir, float LeadSeconds, float MaxDist, float Radius)
+    {
+        const FVector Offset = PredictOffset(Dir * Speed2D, LeadSeconds, MaxDist);
+        const double Dist = Offset.Size();
+        const int32 Segments = Dist > UE_KINDA_SMALL_NUMBER ? FMath::Clamp(FMath::CeilToInt(Dist / FMath::Max(1000.0f, Radius)), 1, 6) : 1;
+        FStreamingSourceShape Shape;
+        Shape.bUseGridLoadingRange = false;
+        Shape.Radius = Radius;
+        for (int32 i = 1; i <= Segments; ++i)
+        {
+            Shape.Location = Offset * (double(i) / Segments);
+            OutCorridorShapes.Add(Shape);
+        }
+    };
+
+    if (OutPlan.bTurnWidened)
+    {
+        const FVector LeftDir = Forward2D.RotateAngleAxis(-45.0, FVector::UpVector);
+        const FVector RightDir = Forward2D.RotateAngleAxis(45.0, FVector::UpVector);
+        AppendCorridor(OutPlan.Stage1LoadedShapes, LeftDir, LoadedLead * 0.85f, LoadedCap, Profile.LoadedShapeRadiusCm);
+        AppendCorridor(OutPlan.Stage1LoadedShapes, RightDir, LoadedLead * 0.85f, LoadedCap, Profile.LoadedShapeRadiusCm);
+        AppendCorridor(OutPlan.Stage2ActivatedShapes, LeftDir, ActivatedLead * 0.85f, ActivatedCap, Profile.LoadedShapeRadiusCm * 0.75f);
+        AppendCorridor(OutPlan.Stage2ActivatedShapes, RightDir, ActivatedLead * 0.85f, ActivatedCap, Profile.LoadedShapeRadiusCm * 0.75f);
+    }
+    else
+    {
+        AppendCorridor(OutPlan.Stage1LoadedShapes, Forward2D, LoadedLead, LoadedCap, Profile.LoadedShapeRadiusCm);
+        AppendCorridor(OutPlan.Stage2ActivatedShapes, Forward2D, ActivatedLead, ActivatedCap, Profile.LoadedShapeRadiusCm * 0.75f);
+    }
+
+    // Add trailing hysteresis buffer behind current position so boundary turns do not thrash cells.
+    if (Profile.TrailingBufferCm > 0.0f)
+    {
+        FStreamingSourceShape Trail;
+        Trail.bUseGridLoadingRange = false;
+        Trail.Radius = Profile.TrailingBufferCm;
+        Trail.Location = -Forward2D * (Profile.TrailingBufferCm * 0.5);
+        OutPlan.Stage2ActivatedShapes.Add(Trail);
+    }
+    return true;
+}
+
+bool UProject_JWorldStreamingComponent::ShouldHoldHysteresisAnchor(
+    const FVector& CurrentLocation,
+    const FVector& AnchorLocation,
+    double ElapsedSeconds,
+    const FProject_JStreamingVelocityProfile& Profile)
+{
+    if (CurrentLocation.ContainsNaN() || AnchorLocation.ContainsNaN() || ElapsedSeconds < 0.0)
+    {
+        return false;
+    }
+    if (ElapsedSeconds <= static_cast<double>(Profile.UnloadHysteresisSeconds))
+    {
+        return true;
+    }
+    return FVector::DistSquared2D(CurrentLocation, AnchorLocation) <= FMath::Square(static_cast<double>(Profile.TrailingBufferCm));
+}
+
+float UProject_JWorldStreamingComponent::ComputeSafeStreamingSpeedScale(
+    float CurrentSpeedCmPerSec,
+    bool bForwardCellsReady,
+    const FProject_JStreamingVelocityProfile& Profile)
+{
+    if (bForwardCellsReady || !FMath::IsFinite(CurrentSpeedCmPerSec) || CurrentSpeedCmPerSec < Profile.HighSpeedThresholdCmPerSec)
+    {
+        return 1.0f;
+    }
+    const float Alpha = FMath::Clamp(
+        FMath::GetRangePct(Profile.HighSpeedThresholdCmPerSec, FMath::Max(Profile.HighSpeedThresholdCmPerSec + 1.0f, Profile.FlyingSpeedCmPerSec), CurrentSpeedCmPerSec),
+        0.0f,
+        1.0f);
+    return FMath::Lerp(1.0f, FMath::Clamp(Profile.UnreadyForwardSpeedClampMin, 0.1f, 1.0f), Alpha);
+}
 bool UProject_JWorldStreamingComponent::IsPreparedArrivalStarted() const
 {
     if (!ArrivalRequest || !bArrivalPreparationStarted) return false;
@@ -109,6 +238,108 @@ bool UProject_JWorldStreamingComponent::IsPreparedArrivalStarted() const
     const auto* Execution = ArrivalExecutionOwner.Get();
     return Execution && Execution->HasPreparationPermit(ArrivalExecutionToken, this, ArrivalRequest);
 }
+FName UProject_JWorldStreamingComponent::GetDetailGridName() const
+{
+    static const FName DefaultDetailGrid = FProject_JFoliageHLODPolicy{}.DetailGridName;
+    return HighSpeedPolicy ? HighSpeedPolicy->FoliagePolicy.DetailGridName : DefaultDetailGrid;
+}
+
+float UProject_JWorldStreamingComponent::GetLocalFlightStreamingSpeedScale(const APawn& Pawn) const
+{
+    check(IsInGameThread());
+    if (!bEnableHighSpeedTwoStage || !bLimitFlightSpeedForLocalStreaming || !IsRegistered() || !IsStreamingSourceEnabled()) return 1.f;
+    const auto* Mount = Cast<AProject_JMountMoverPawn>(&Pawn);
+    const auto* Mover = Mount ? Mount->GetMountMover() : nullptr;
+    const auto* World = GetWorld();
+    const auto* Partition = World ? World->GetWorldPartition() : nullptr;
+    const auto* Streaming = World ? World->GetSubsystem<UWorldPartitionSubsystem>() : nullptr;
+    if (!Mover || !World || World->bIsTearingDown || !Partition || !Partition->IsInitialized() || !Partition->IsStreamingEnabled()
+        || !Partition->CanStream() || !Partition->RuntimeHash || !Streaming || !Pawn.IsLocallyControlled()) return 1.f;
+
+    const double Now = World->GetTimeSeconds();
+    if (FlightReadinessPawn.Get() == &Pawn && Now < NextFlightReadinessSample) return FlightReadinessScale;
+    FlightReadinessPawn = &Pawn;
+    NextFlightReadinessSample = Now + 0.25;
+    FlightReadinessScale = 1.f;
+
+    const auto& Profile = HighSpeedPolicy ? HighSpeedPolicy->VelocityProfile : VelocityProfile;
+    const auto* Flight = Mover->GetSyncState().SyncStateCollection.FindDataByType<FProject_JMountMoverSyncState>();
+    const FVector Velocity = Pawn.GetVelocity();
+    const FVector Position = Pawn.GetActorLocation();
+    if (!Flight || !FMath::IsFinite(Flight->AirSpeed) || Flight->AirSpeed < Profile.HighSpeedThresholdCmPerSec
+        || Velocity.ContainsNaN() || Position.ContainsNaN() || Velocity.IsNearlyZero()) return 1.f;
+
+    FWorldPartitionStreamingQuerySource Query;
+    FWorldPartitionStreamingSource ConfiguredSource;
+    if (!Super::GetStreamingSource(ConfiguredSource)) return 1.f;
+    // Use nominal airspeed so applying the limit cannot falsely signal that the corridor is ready.
+    Query.Location = Position + Velocity.GetSafeNormal() * FMath::Clamp(Flight->AirSpeed, 1000.f, 12000.f);
+    Query.bUseGridLoadingRange = true;
+    FStreamingSourceShape& Shape = Query.Shapes.AddDefaulted_GetRef();
+    Shape.bUseGridLoadingRange = false;
+    Shape.Radius = FMath::Clamp(Flight->AirSpeed * 0.5f, 1500.f, 6000.f);
+    FTwoStageStreamingPlan Plan;
+    if (BuildPawnVelocityPlan(Pawn, Profile, Plan) && ObservedFlightAltitude.IsSet()
+        && ObservedFlightAltitude.GetValue() >= Profile.SuppressDetailAltitudeCm && !GetDetailGridName().IsNone())
+    {
+        if (!ApplyDetailGridSuppression(ConfiguredSource, GetDetailGridName())) return 1.f;
+    }
+    Query.TargetBehavior = ConfiguredSource.TargetBehavior;
+    Query.TargetGrids = MoveTemp(ConfiguredSource.TargetGrids);
+    const bool bReady = Streaming->IsStreamingCompleted(EWorldPartitionRuntimeCellState::Activated, {Query}, false);
+    FlightReadinessScale = ComputeSafeStreamingSpeedScale(Flight->AirSpeed, bReady, Profile);
+    return FlightReadinessScale;
+}
+
+bool UProject_JWorldStreamingComponent::BuildPawnVelocityPlan(
+    const APawn& Pawn, const FProject_JStreamingVelocityProfile& Profile, FTwoStageStreamingPlan& OutPlan) const
+{
+    const bool bSamePawn = ObservedPawn.Get() == &Pawn;
+    if (!bSamePawn || VelocitySampleFrame != GFrameCounter)
+    {
+        if (!bSamePawn) HysteresisAnchorTime = -1000.0;
+        const double Now = Pawn.GetWorld()->GetTimeSeconds();
+        const FVector Velocity = Pawn.GetVelocity();
+        const double SampleInterval = Now - LastObservedVelocityTime;
+        ObservedYawRate = 0.0f;
+        if (bSamePawn && SampleInterval > 0.0 && SampleInterval < 0.5 && LastObservedVelocity.Size2D() > 10.0)
+        {
+            ObservedYawRate = FRotator::NormalizeAxis(Velocity.Rotation().Yaw - LastObservedVelocity.Rotation().Yaw)
+                / static_cast<float>(FMath::Max(0.01, SampleInterval));
+        }
+        ObservedPawn = &Pawn;
+        VelocitySampleFrame = GFrameCounter;
+        LastObservedVelocityTime = Now;
+        LastObservedVelocity = Velocity;
+        ObservedFlightAltitude.Reset();
+        const auto* MoverMount = Cast<AProject_JMountMoverPawn>(&Pawn);
+        const auto* LegacyMount = Cast<AProject_JFlyingMountCharacter>(&Pawn);
+        const FVector Position = Pawn.GetActorLocation();
+        if (!Position.ContainsNaN() && ((MoverMount && MoverMount->IsFlying()) || (LegacyMount && LegacyMount->IsFlyingMount())))
+        {
+            FCollisionQueryParams Query(SCENE_QUERY_STAT(ProjectJ_StreamingFlightAltitude), false, &Pawn);
+            FHitResult Ground;
+            constexpr double MaxGroundProbeCm = 100000.0;
+            if (Pawn.GetWorld()->LineTraceSingleByObjectType(Ground, Position, Position - FVector(0.0, 0.0, MaxGroundProbeCm),
+                FCollisionObjectQueryParams(ECC_WorldStatic), Query) && !Ground.bStartPenetrating)
+            {
+                ObservedFlightAltitude = static_cast<float>(Ground.Distance);
+            }
+            else if (Position.Z >= Profile.SuppressDetailAltitudeCm)
+            {
+                // Flying high over unloaded terrain or open water: preserve Grid_Detail suppression.
+                ObservedFlightAltitude = Profile.SuppressDetailAltitudeCm;
+            }
+        }
+    }
+    if (!BuildTwoStageVelocityShapes(LastObservedVelocity, ObservedYawRate, ObservedFlightAltitude.Get(0.0f), Profile, OutPlan))
+    {
+        return false;
+    }
+    OutPlan.bSuppressDetailGrid &= ObservedFlightAltitude.IsSet();
+    return true;
+}
+
 bool UProject_JWorldStreamingComponent::GetStreamingSource(FWorldPartitionStreamingSource& Out) const
 {
     check(IsInGameThread());
@@ -155,7 +386,91 @@ bool UProject_JWorldStreamingComponent::GetStreamingSource(FWorldPartitionStream
     Out.Name = SourceIdentity;
     Out.Location = Position;
     Out.Rotation = FRotator::ZeroRotator;
-    return BuildPreparationShapes(Pawn->GetVelocity(), Seconds, Radius, Maximum, Out.Shapes);
+    const FVector Vel = Pawn->GetVelocity();
+    const auto& Profile = HighSpeedPolicy ? HighSpeedPolicy->VelocityProfile : VelocityProfile;
+    if (bEnableHighSpeedTwoStage && Vel.Size2D() >= Profile.HighSpeedThresholdCmPerSec)
+    {
+        const double Now = GetWorld()->GetTimeSeconds();
+        FTwoStageStreamingPlan Plan;
+        if (BuildPawnVelocityPlan(*Pawn, Profile, Plan) && Plan.bHighSpeedActive)
+        {
+            Out.Shapes = MoveTemp(Plan.Stage2ActivatedShapes);
+            if (HysteresisAnchorTime >= 0.0 && ShouldHoldHysteresisAnchor(Position, HysteresisAnchorLocation, Now - HysteresisAnchorTime, Profile))
+            {
+                FStreamingSourceShape HoldShape;
+                HoldShape.bUseGridLoadingRange = false;
+                HoldShape.Radius = Profile.TrailingBufferCm;
+                HoldShape.Location = HysteresisAnchorLocation - Position;
+                Out.Shapes.Add(HoldShape);
+            }
+            else
+            {
+                HysteresisAnchorLocation = Position;
+                HysteresisAnchorTime = Now;
+            }
+            return !Plan.bSuppressDetailGrid || ApplyDetailGridSuppression(Out, GetDetailGridName());
+        }
+    }
+    HysteresisAnchorTime = -1.0;
+    return BuildPreparationShapes(Vel, Seconds, Radius, Maximum, Out.Shapes);
+}
+
+UProject_JWorldPreloadStreamingComponent::UProject_JWorldPreloadStreamingComponent()
+{
+    PrimaryComponentTick.bCanEverTick = false;
+    PrimaryComponentTick.bStartWithTickEnabled = false;
+    TargetState = EStreamingSourceTargetState::Loaded;
+    Priority = EStreamingSourcePriority::Lowest;
+}
+
+void UProject_JWorldPreloadStreamingComponent::OnRegister()
+{
+    StreamingSourceIdentity = NAME_None;
+    Super::OnRegister();
+    if (auto* World = GetWorld())
+    {
+        if (auto* Execution = World->GetSubsystem<UProject_JWorldArrivalSubsystem>())
+            StreamingSourceIdentity = Execution->AllocateStreamingSourceIdentity();
+        else if (World->WorldType != EWorldType::Game && World->WorldType != EWorldType::PIE)
+            StreamingSourceIdentity = FName(*GetPathName());
+    }
+}
+
+bool UProject_JWorldPreloadStreamingComponent::GetStreamingSource(FWorldPartitionStreamingSource& Out) const
+{
+    check(IsInGameThread());
+    const APlayerController* PC = Cast<APlayerController>(GetOwner());
+    const APawn* Pawn = PC ? PC->GetPawn() : nullptr;
+    if (!IsRegistered() || StreamingSourceIdentity.IsNone() || IsBeingDestroyed() || !PC || !PC->IsLocalController() || !IsValid(Pawn)
+        || !GetWorld() || GetWorld()->bIsTearingDown || GetNetMode() == NM_DedicatedServer || !IsStreamingSourceEnabled())
+    {
+        return false;
+    }
+    const auto* Companion = PC->FindComponentByClass<UProject_JWorldStreamingComponent>();
+    const auto& Profile = Companion && Companion->HighSpeedPolicy ? Companion->HighSpeedPolicy->VelocityProfile : VelocityProfile;
+    const FVector Vel = Pawn->GetVelocity();
+    if (Vel.Size2D() < Profile.HighSpeedThresholdCmPerSec)
+    {
+        return false;
+    }
+    UProject_JWorldStreamingComponent::FTwoStageStreamingPlan Plan;
+    if ((Companion && !Companion->bEnableHighSpeedTwoStage)
+        || !(Companion ? Companion->BuildPawnVelocityPlan(*Pawn, Profile, Plan)
+            : UProject_JWorldStreamingComponent::BuildTwoStageVelocityShapes(Vel, 0.0f, 0.0f, Profile, Plan))
+        || !Plan.bHighSpeedActive || Plan.Stage1LoadedShapes.IsEmpty())
+    {
+        return false;
+    }
+    if (!Super::GetStreamingSource(Out))
+    {
+        return false;
+    }
+    Out.Name = StreamingSourceIdentity;
+    Out.Location = Pawn->GetActorLocation();
+    Out.Rotation = FRotator::ZeroRotator;
+    Out.TargetState = EStreamingSourceTargetState::Loaded;
+    Out.Shapes = MoveTemp(Plan.Stage1LoadedShapes);
+    return !Companion || !Plan.bSuppressDetailGrid || ApplyDetailGridSuppression(Out, Companion->GetDetailGridName());
 }
 
 
@@ -313,14 +628,35 @@ bool UProject_JWorldStreamingComponent::FindArrivalPlacement(APawn* Interactor, 
     FCollisionQueryParams Params(SCENE_QUERY_STAT(ProjectJPortalPlacement), false, Interactor);
     const FCollisionResponseParams Responses(Capsule->GetCollisionResponseToChannels());
     auto GroundResponses = Responses; GroundResponses.CollisionResponse.SetResponse(ECC_Pawn, ECR_Ignore);
-    FHitResult Ground;
-    if (!GetWorld()->LineTraceSingleByChannel(Ground, Hint + Up*5000, Hint - Up*15000, Capsule->GetCollisionObjectType(), Params, GroundResponses)
-        || !Ground.bBlockingHit || Ground.bStartPenetrating || Ground.ImpactPoint.ContainsNaN() || Ground.ImpactNormal.ContainsNaN()
-        || !Project_J::Movement::IsWalkable(Interactor, Ground)) return false;
-    const FVector Candidate = Ground.ImpactPoint + Up*(HalfHeight + 2);
-    if (GetWorld()->OverlapBlockingTestByChannel(Candidate, Capsule->GetComponentQuat(), Capsule->GetCollisionObjectType(),
-        FCollisionShape::MakeCapsule(Radius, HalfHeight), Params, Responses)) return false;
-    Placement = Candidate; return true;
+    const FCollisionShape CapsuleShape = FCollisionShape::MakeCapsule(Radius, HalfHeight);
+    const FQuat CapsuleQuat = Capsule->GetComponentQuat();
+    const ECollisionChannel ObjectType = Capsule->GetCollisionObjectType();
+
+    auto TryProbe = [&](const FVector& ProbeHint, FVector& OutCandidate) -> bool
+    {
+        FHitResult Ground;
+        if (!GetWorld()->LineTraceSingleByChannel(Ground, ProbeHint + Up * 5000, ProbeHint - Up * 15000, ObjectType, Params, GroundResponses)
+            || !Ground.bBlockingHit || Ground.bStartPenetrating || Ground.ImpactPoint.ContainsNaN() || Ground.ImpactNormal.ContainsNaN()
+            || !Project_J::Movement::IsWalkable(Interactor, Ground)) return false;
+        const FVector Candidate = Ground.ImpactPoint + Up * (HalfHeight + 2);
+        if (GetWorld()->OverlapBlockingTestByChannel(Candidate, CapsuleQuat, ObjectType, CapsuleShape, Params, Responses)) return false;
+        OutCandidate = Candidate;
+        return true;
+    };
+
+    // Preserve exact authored arrival point when clear; fall back to concentric rings when occupied (e.g. another player).
+    if (TryProbe(Hint, Placement)) return true;
+    const float RingRadii[] = { Radius * 2.5f, Radius * 5.0f };
+    for (const float RingRadius : RingRadii)
+    {
+        for (int32 Slot = 0; Slot < 8; ++Slot)
+        {
+            const double Angle = (2.0 * UE_DOUBLE_PI * Slot) / 8.0;
+            const FVector Offset(FMath::Cos(Angle) * RingRadius, FMath::Sin(Angle) * RingRadius, 0.0);
+            if (TryProbe(Hint + Offset, Placement)) return true;
+        }
+    }
+    return false;
 }
 bool UProject_JWorldStreamingComponent::IsArrivalPlacementValid(APawn* Interactor, const FVector& Origin, const FQuat& Rotation) const
 {

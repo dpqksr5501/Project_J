@@ -267,6 +267,16 @@ bool FProjectJGASPayloadCleanupTest::RunTest(const FString&)
         bLateDropped = !ASC->GetReplicatedDataOfGenericReplicatedEvent(EAbilityGenericReplicatedEvent::GenericConfirm, Owner.Grant, Key).bTriggered;
     });
     ON_SCOPE_EXIT { Ability->OnGameplayAbilityEnded.Remove(EndHandle); ASC->CancelAbilityHandle(Owner.Grant); };
+    auto SessionAuthority = ASC->ClientSessionAuthority;
+    ON_SCOPE_EXIT { ASC->ClientSessionAuthority = MoveTemp(SessionAuthority); };
+    ASC->ClientSessionAuthority.BindLambda([] { return false; });
+    End157(ASC, Owner.Grant);
+    TestTrue(TEXT("Unbatched End cannot alter the execution or payload when session authority rejects it"),
+        Active157(ASC, Owner.Grant) && EndingPayload.IsValid() && !bEndCallback);
+    ASC->ServerCancelAbility_Implementation(Owner.Grant, Ability->GetCurrentActivationInfo());
+    TestTrue(TEXT("Cancel cannot alter the execution or payload when session authority rejects it"),
+        Active157(ASC, Owner.Grant) && EndingPayload.IsValid() && !bEndCallback);
+    ASC->ClientSessionAuthority = SessionAuthority;
     End157(ASC, Owner.Grant);
     TestTrue(TEXT("Actual early End callback cannot recreate payload while native instance still reports active"), bEndCallback && bStillActiveAtCallback && bLateDropped);
     TestTrue(TEXT("Native End releases actual payload, flags and Sprint tag"), !EndingPayload.IsValid() && !Active157(ASC, Owner.Grant)

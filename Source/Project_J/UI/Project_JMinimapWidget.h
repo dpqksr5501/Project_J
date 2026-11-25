@@ -57,6 +57,8 @@ class PROJECT_J_API UProject_JMinimapWidget : public UUserWidget
 	float PlayerYaw = 0;
 	float Zoom = 1;
 	bool bHasPlayer = false;
+	mutable TArray<FVector2f> ReusableArrowPoints;
+	mutable TArray<FVector2f> ReusableGridPoints;
 	UPROPERTY() TObjectPtr<UTexture2D> MapTexture;
 	FProject_JUIIconRequest MapIconRequest;
 	FSlateBrush TextureBrush;

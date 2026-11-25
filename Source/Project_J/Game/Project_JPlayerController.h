@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "Mount/Project_JMountMoverComponent.h"
 #include "Project_JPlayerController.generated.h"
 
 class UInputMappingContext;
@@ -13,24 +14,37 @@ class UProject_JEquipmentClientTestComponent;
 class UProject_JInputLeaseSubsystem;
 class UProject_JPlayerUIComponent;
 class UProject_JWorldStreamingComponent;
+class UProject_JWorldPreloadStreamingComponent;
+class UProject_JMMOClientBridgeComponent;
 
 /**
  *  Basic PlayerController class for a third person game
  *  Manages input mappings
  */
 UCLASS(abstract)
-class AProject_JPlayerController : public APlayerController
+class AProject_JPlayerController : public APlayerController, public IProject_JFlightStreamingInputSource
 {
 	GENERATED_BODY()
 public:
 	virtual bool InputKey(const FInputKeyEventArgs& Params) override;
 	virtual void SetViewTarget(AActor* NewViewTarget,FViewTargetTransitionParams TransitionParams=FViewTargetTransitionParams()) override;
 	virtual void UpdateCameraManager(float DeltaSeconds) override;
+	virtual float GetLocalFlightStreamingSpeedScale(const APawn& Mount) const override;
+	UFUNCTION(Client, Reliable)
+	void ClientRequestOnlineLogin();
+	UFUNCTION(Server, Reliable)
+	void ServerSubmitOnlineLogin(FGuid Ticket);
 
 protected:
 	AProject_JPlayerController();
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="World")
 	TObjectPtr<UProject_JWorldStreamingComponent> WorldStreamingPreparation;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="World")
+	TObjectPtr<UProject_JWorldPreloadStreamingComponent> WorldStreamingPreload;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MMO|Network")
+	TObjectPtr<UProject_JMMOClientBridgeComponent> MMOClientBridge;
 
 	/** Input Mapping Contexts */
 	UPROPERTY(EditAnywhere, Category ="Input|Input Mappings")

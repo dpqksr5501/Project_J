@@ -382,81 +382,89 @@ void UProject_JHandoverManager::TickHandover(float DeltaSeconds)
 	}
 	if (bShuttingDown || Revision != LifetimeRevision) { return; }
 
-	TArray<FGuid> TransfersToDispatch;
-	TArray<FGuid> TransfersToTimeout;
-	TArray<FGuid> RecordsToRemove;
-
-	TArray<FGuid> TransferIds;
-	HandoverStates.GetKeys(TransferIds);
-	for (const FGuid& TransferId : TransferIds)
+	if (!HandoverStates.IsEmpty())
 	{
-		FProject_JHandoverRecord* Found = HandoverStates.Find(TransferId);
-		if (!Found) { continue; }
-		FProject_JHandoverRecord& Record = *Found;
-		Record.StateElapsedTime = static_cast<float>(FMath::Min(double(Record.StateElapsedTime) + double(SafeDeltaSeconds), double(MAX_flt)));
+		TArray<FGuid> TransfersToDispatch;
+		TArray<FGuid> TransfersToTimeout;
+		TArray<FGuid> RecordsToRemove;
 
-		// Commit cancellation before notifying transport or external listeners.
-		if (Record.bHasTrackedActor && !Record.Actor.IsValid() &&
-			Record.State != EProject_JHandoverState::Completed &&
-			Record.State != EProject_JHandoverState::Failed &&
-			Record.State != EProject_JHandoverState::Cancelled)
+		TArray<FGuid> TransferIds;
+		HandoverStates.GetKeys(TransferIds);
+		for (const FGuid& TransferId : TransferIds)
 		{
-			CancelHandoverByTransferId(TransferId);
-			continue;
-		}
+			FProject_JHandoverRecord* Found = HandoverStates.Find(TransferId);
+			if (!Found) { continue; }
+			FProject_JHandoverRecord& Record = *Found;
+			Record.StateElapsedTime = static_cast<float>(FMath::Min(double(Record.StateElapsedTime) + double(SafeDeltaSeconds), double(MAX_flt)));
 
-		// Retain lightweight terminal metadata for diagnostics, then expire it.
-		if (Record.State == EProject_JHandoverState::Completed ||
-			Record.State == EProject_JHandoverState::Failed ||
-			Record.State == EProject_JHandoverState::Cancelled)
-		{
-			if (Record.StateElapsedTime >= FMath::Max(1.0f, TerminalRecordTtlSeconds))
+			// Commit cancellation before notifying transport or external listeners.
+			if (Record.bHasTrackedActor && !Record.Actor.IsValid() &&
+				Record.State != EProject_JHandoverState::Completed &&
+				Record.State != EProject_JHandoverState::Failed &&
+				Record.State != EProject_JHandoverState::Cancelled)
 			{
-				RecordsToRemove.Add(TransferId);
+				CancelHandoverByTransferId(TransferId);
+				continue;
 			}
-			continue;
+
+			// Retain lightweight terminal metadata for diagnostics, then expire it.
+			if (Record.State == EProject_JHandoverState::Completed ||
+				Record.State == EProject_JHandoverState::Failed ||
+				Record.State == EProject_JHandoverState::Cancelled)
+			{
+				if (Record.StateElapsedTime >= FMath::Max(1.0f, TerminalRecordTtlSeconds))
+				{
+					RecordsToRemove.Add(TransferId);
+				}
+				continue;
+			}
+
+			if (Record.State == EProject_JHandoverState::Preparing && Record.RetryDelayRemaining > 0.0f)
+			{
+				Record.RetryDelayRemaining -= SafeDeltaSeconds;
+				if (Record.RetryDelayRemaining <= 0.0f)
+				{
+					TransfersToDispatch.Add(TransferId);
+				}
+			}
+			else if (Record.State == EProject_JHandoverState::AwaitingAck &&
+				Record.StateElapsedTime >= FMath::Max(0.05f, AckTimeoutSeconds))
+			{
+				TransfersToTimeout.Add(TransferId);
+			}
 		}
 
-		if (Record.State == EProject_JHandoverState::Preparing && Record.RetryDelayRemaining > 0.0f)
+		for (const FGuid& TransferId : RecordsToRemove)
 		{
-			Record.RetryDelayRemaining -= SafeDeltaSeconds;
-			if (Record.RetryDelayRemaining <= 0.0f)
-			{
-				TransfersToDispatch.Add(TransferId);
-			}
+			HandoverStates.Remove(TransferId);
 		}
-		else if (Record.State == EProject_JHandoverState::AwaitingAck &&
-			Record.StateElapsedTime >= FMath::Max(0.05f, AckTimeoutSeconds))
+		for (const FGuid& TransferId : TransfersToDispatch)
 		{
-			TransfersToTimeout.Add(TransferId);
+			DispatchTransfer(TransferId);
+		}
+		for (const FGuid& TransferId : TransfersToTimeout)
+		{
+			if (FProject_JHandoverRecord* Record = HandoverStates.Find(TransferId))
+			{
+				if (const auto ActiveTransport = Transport)
+				{
+					ActiveTransport->Cancel(TransferId);
+				}
+				Record = HandoverStates.Find(TransferId);
+				if (Record && Record->State == EProject_JHandoverState::AwaitingAck)
+				{
+					ScheduleRetry(*Record, EProject_JHandoverFailureReason::TimedOut);
+				}
+			}
 		}
 	}
 
-	for (const FGuid& TransferId : RecordsToRemove)
+	ReplayPruneAccumulator += SafeDeltaSeconds;
+	if (!AppliedTransferIds.IsEmpty() && ReplayPruneAccumulator >= 5.0f)
 	{
-		HandoverStates.Remove(TransferId);
+		ReplayPruneAccumulator = 0.0f;
+		PruneReplayWindow();
 	}
-	for (const FGuid& TransferId : TransfersToDispatch)
-	{
-		DispatchTransfer(TransferId);
-	}
-	for (const FGuid& TransferId : TransfersToTimeout)
-	{
-		if (FProject_JHandoverRecord* Record = HandoverStates.Find(TransferId))
-		{
-			if (const auto ActiveTransport = Transport)
-			{
-				ActiveTransport->Cancel(TransferId);
-			}
-			Record = HandoverStates.Find(TransferId);
-			if (Record && Record->State == EProject_JHandoverState::AwaitingAck)
-			{
-				ScheduleRetry(*Record, EProject_JHandoverFailureReason::TimedOut);
-			}
-		}
-	}
-
-	PruneReplayWindow();
 }
 
 bool UProject_JHandoverManager::Tick(float DeltaSeconds)

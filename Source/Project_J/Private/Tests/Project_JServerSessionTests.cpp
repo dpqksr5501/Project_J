@@ -7,11 +7,14 @@
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/PlayerStart.h"
 #include "GameFramework/WorldSettings.h"
 #include "Game/Project_JGameMode.h"
 #include "Game/Project_JPlayerState.h"
 #include "Testing/Project_JNetworkLoadFixture.h"
 #include "Components/Project_JCommandBudgetComponent.h"
+#include "Combat/Project_JCombatQueryTypes.h"
+#include "Network/Project_JMMOClientBridgeComponent.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "Combat/Project_JGameplayAbility_Sprint.h"
 #include "UObject/StrongObjectPtr.h"
@@ -54,6 +57,48 @@ bool FProjectJServerSessionNativeOwnershipTest::RunTest(const FString&)
     TestTrue(TEXT("Trusted-mode native PostLogin holds both Pawns and prototype identities"),
         !FirstPC->GetPawn() && !SecondPC->GetPawn() && !First->GetAccountId().IsValid() && !Second->GetCharacterId().IsValid());
     TestFalse(TEXT("Native starting-player entry is held before verification"), First->CanAcceptSessionCommand());
+
+    auto* DungeonPC = World->SpawnActor<APlayerController>();
+    World->SpawnActor<APlayerStart>();
+    if (!DungeonPC) return false;
+    DungeonPC->SetPlayer(NewObject<UPlayer>(Instance.Get()));
+    if (!DungeonPC->GetPlayerState<AProject_JPlayerState>()) DungeonPC->InitPlayerState();
+    Mode->bRequireDungeonTicket = true;
+    auto* Dungeon = Instance->GetSubsystem<UProject_JDungeonInstanceSubsystem>();
+    Dungeon->RegisterWarmPoolServer(TEXT("127.0.0.1:7788"));
+    const auto DungeonCharacter = FProject_JCharacterId::NewId();
+    FGuid InstanceId;
+    TArray<FProject_JDungeonJoinTicket> Tickets;
+    if (!TestTrue(TEXT("Trusted dungeon admission exists before login"),
+        Dungeon->RequestDungeonEntry(EProject_JDungeonEntrySource::MenuUI, TEXT("TestDungeon"),
+            {DungeonCharacter.Value}, {}, Dungeon->GetCurrentUtcEpochSeconds(), InstanceId, Tickets)) || Tickets.Num() != 1) return false;
+    const FString Travel = UProject_JMMOClientBridgeComponent::BuildDungeonTravelURL(Tickets[0]);
+    const FString Options = Travel.Mid(Travel.Find(TEXT("?")));
+    const FUniqueNetIdRepl NoRemoteIdentity;
+    FString Error;
+    Mode->PreLogin(Options, {}, NoRemoteIdentity, Error);
+    if (!TestTrue(TEXT("PreLogin validates but does not consume the ticket"), Error.IsEmpty()
+        && Dungeon->CanAdmitJoinTicket(Tickets[0], Dungeon->GetCurrentUtcEpochSeconds()))) return false;
+    if (!TestTrue(TEXT("Native login retains the verified ticket for its controller"),
+        Mode->InitNewPlayer(DungeonPC, NoRemoteIdentity, Options).IsEmpty())) return false;
+    Mode->PostLogin(DungeonPC);
+    const auto DungeonAccount = FProject_JAccountId::NewId();
+    FServerSessionAttempt DungeonAttempt;
+    FServerSessionLease DungeonLease;
+    TestTrue(TEXT("A different character can reach the authentication boundary"),
+        Mode->BeginTrustedSession(DungeonPC, DungeonAccount, FProject_JCharacterId::NewId(), DungeonAttempt));
+    TestFalse(TEXT("Other authenticated character cannot consume this dungeon ticket"),
+        Mode->CompleteTrustedSession(DungeonAttempt, true, DungeonLease));
+    TestTrue(TEXT("Ticket remains available to its authenticated character"),
+        Mode->BeginTrustedSession(DungeonPC, DungeonAccount, DungeonCharacter, DungeonAttempt));
+    TestTrue(TEXT("Exact authenticated character consumes and receives its lease"),
+        Mode->CompleteTrustedSession(DungeonAttempt, true, DungeonLease));
+    TestFalse(TEXT("Ticket cannot be consumed twice"), Dungeon->CanAdmitJoinTicket(Tickets[0], Dungeon->GetCurrentUtcEpochSeconds()));
+    TestTrue(TEXT("The ticket owner can rotate an already admitted session"),
+        Mode->BeginTrustedSession(DungeonPC, DungeonAccount, DungeonCharacter, DungeonAttempt)
+        && Mode->CompleteTrustedSession(DungeonAttempt, true, DungeonLease));
+    Mode->bRequireDungeonTicket = false;
+
     const auto Account = FProject_JAccountId::NewId();
     const auto Character = FProject_JCharacterId::NewId();
     FServerSessionAttempt Attempt; FServerSessionLease FirstLease, SecondLease, Rotated;
@@ -81,6 +126,18 @@ bool FProjectJServerSessionNativeOwnershipTest::RunTest(const FString&)
     TestFalse(TEXT("Revoked PlayerState cannot dispatch another command"), UProject_JCommandBudgetComponent::AdmitClientCommand(First));
     TestFalse(TEXT("Delayed logout for old epoch cannot detach the replacement"), Mode->RevokeTrustedSession(First, FirstLease));
     TestTrue(TEXT("New connection remains current"), Second->IsServerSessionCurrent(SecondLease));
+    auto* DungeonPawn = World->SpawnActor<APawn>();
+    auto* DungeonState = DungeonPC->GetPlayerState<AProject_JPlayerState>();
+    DungeonPC->Possess(DungeonPawn);
+    DungeonState->SetSocialState(TEXT("AuditParty"), NAME_None, DungeonCharacter.Value, {});
+    Second->SetSocialState(TEXT("AuditParty"), NAME_None, DungeonCharacter.Value, {});
+    auto* PartyPawn = World->SpawnActor<APawn>();
+    SecondPC->Possess(PartyPawn);
+    TestFalse(TEXT("Server-owned party state prevents friendly combat targeting"),
+        Project_J::Combat::CanAffectCombatTarget(PartyPawn, DungeonPawn, nullptr));
+    Second->SetSocialState(NAME_None, NAME_None, {}, {});
+    TestTrue(TEXT("Unassigned combatants keep their existing target policy"),
+        Project_J::Combat::CanAffectCombatTarget(PartyPawn, DungeonPawn, nullptr));
     const auto UnexpectedCharacter = FProject_JCharacterId::NewId();
     Second->SetIdentity(Account, UnexpectedCharacter);
     TestTrue(TEXT("Managed identity cannot bypass the trusted character lease"), Second->GetCharacterId().Value == Character.Value);

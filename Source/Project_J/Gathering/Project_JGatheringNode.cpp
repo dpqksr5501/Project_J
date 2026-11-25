@@ -3,6 +3,8 @@
 #include "Components/StaticMeshComponent.h"
 #include "Interaction/Project_JInteractionTargetComponent.h"
 #include "Game/Project_JPlayerState.h"
+#include "Components/Project_JInventoryComponent.h"
+#include "Inventory/Project_JItemDefinition.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JAttributeSet.h"
 #include "Engine/World.h"
@@ -29,7 +31,11 @@ AProject_JGatheringNode::AProject_JGatheringNode()
     InteractionTarget->PromptText = NSLOCTEXT("Gathering", "GatherPrompt", "Gather");
 }
 bool AProject_JGatheringNode::HasValidDefinition() const
-{ return !NodeId.IsNone() && !YieldItemId.IsNone() && YieldItemVersion >= 1 && YieldCount > 0 && FMath::IsFinite(CooldownSeconds) && CooldownSeconds > 0; }
+{ return !NodeId.IsNone() && !YieldItemId.IsNone() && YieldItemVersion >= 1 && YieldCount > 0 && RequiredToolTier >= 1 && FMath::IsFinite(CooldownSeconds) && CooldownSeconds > 0; }
+bool AProject_JGatheringNode::UsesPersonalCooldown() const
+{
+    return (bUsePersonalPhaseLifeSkill || GetNetMode() != NM_Standalone) && ResourceNodeMode == EProject_JResourceNodeMode::PersonalPhase;
+}
 bool AProject_JGatheringNode::EnsureRegistration()
 {
     auto* Ledger = GetWorld() ? GetWorld()->GetSubsystem<UProject_JGatheringSubsystem>() : nullptr;
@@ -81,21 +87,37 @@ bool AProject_JGatheringNode::IsSpatiallyAvailable(const APawn* Interactor) cons
     return true;
 }
 bool AProject_JGatheringNode::CanInteract_Implementation(APawn* Interactor) const
-{ return IsSpatiallyAvailable(Interactor) && GetPhase() == EProject_JGatheringPhase::Available; }
+{
+    if (!IsSpatiallyAvailable(Interactor)) return false;
+    if (HasAuthority() && UsesPersonalCooldown())
+    {
+        const auto* Player = Interactor->GetPlayerState<AProject_JPlayerState>();
+        const auto* Ledger = GetWorld()->GetSubsystem<UProject_JGatheringSubsystem>();
+        return Player && Player->GetCharacterId().IsValid() && Ledger
+            && Ledger->GetState(NodeId, this, Player->GetCharacterId().Value).Phase == EProject_JGatheringPhase::Available;
+    }
+    return GetPhase() == EProject_JGatheringPhase::Available;
+}
 void AProject_JGatheringNode::Interact_Implementation(APawn* Interactor) { TryGather(Interactor); }
 bool AProject_JGatheringNode::TryGather(APawn* Interactor)
 {
     check(IsInGameThread());
     const TStrongObjectPtr<ThisClass> KeepSelf(this);
     const TStrongObjectPtr<APawn> KeepInteractor(Interactor);
-    if (!HasAuthority() || GetNetMode() != NM_Standalone || !IsSpatiallyAvailable(Interactor) || !Interactor->HasAuthority()
-        || GetPhase() != EProject_JGatheringPhase::Available) return false;
+    if (!HasAuthority() || !IsSpatiallyAvailable(Interactor) || !Interactor->HasAuthority()) return false;
     auto* Player = Interactor->GetPlayerState<AProject_JPlayerState>();
     auto* ASC = Player ? Player->GetProjectJAbilitySystemComponent() : nullptr;
     if (!IsValid(Player) || Player->IsActorBeingDestroyed() || Player->GetPawn() != Interactor || Player->GetWorld() != GetWorld()
         || !ASC || ASC->IsBeingDestroyed() || ASC->GetAvatarActor() != Interactor || !Player->GetProjectJAttributeSet()
-        || !(Player->GetProjectJAttributeSet()->GetHealth() > 0) || !EnsureRegistration()) return false;
-    return GetWorld()->GetSubsystem<UProject_JGatheringSubsystem>()->SubmitGather(this, Registration, Player);
+        || !(Player->GetProjectJAttributeSet()->GetHealth() > 0)) return false;
+
+    if (RequiredToolTier > 1)
+    {
+        const auto* Inventory = Player->GetInventoryComponent();
+        if (!Inventory || !Inventory->GetItemInstances().ContainsByPredicate([this](const FProject_JItemInstanceData& Item)
+            { return Item.IsValid() && !Item.bIsLocked && Item.ItemDef->GatheringToolTier >= RequiredToolTier; })) return false;
+    }
+    return EnsureRegistration() && GetWorld()->GetSubsystem<UProject_JGatheringSubsystem>()->SubmitGather(this, Registration, Player);
 }
 void AProject_JGatheringNode::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -107,7 +129,7 @@ EDataValidationResult AProject_JGatheringNode::IsDataValid(FDataValidationContex
 {
     const auto ParentResult = Super::IsDataValid(Context);
     if (IsTemplate() && YieldItemId.IsNone()) return ParentResult == EDataValidationResult::Invalid ? ParentResult : EDataValidationResult::Valid;
-    if ((!IsTemplate() && NodeId.IsNone()) || YieldItemId.IsNone() || YieldItemVersion < 1 || YieldCount < 1
+    if ((!IsTemplate() && NodeId.IsNone()) || YieldItemId.IsNone() || YieldItemVersion < 1 || YieldCount < 1 || RequiredToolTier < 1
         || !FMath::IsFinite(CooldownSeconds) || CooldownSeconds <= 0)
     { Context.AddError(NSLOCTEXT("Gathering", "InvalidNode", "Gathering nodes require a stable instance NodeId, canonical yield ID/version/count and finite positive cooldown.")); return EDataValidationResult::Invalid; }
     return ParentResult == EDataValidationResult::Invalid ? ParentResult : EDataValidationResult::Valid;

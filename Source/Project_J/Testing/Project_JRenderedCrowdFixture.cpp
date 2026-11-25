@@ -41,8 +41,10 @@
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
 #include "Misc/Paths.h"
+#include "Misc/ScopeExit.h"
 #include "Misc/FileHelper.h"
 #include "HAL/FileManager.h"
+#include "HAL/PlatformMemory.h"
 #include "HAL/IConsoleManager.h"
 #include "UnrealClient.h"
 #include "ProfilingDebugging/MiscTrace.h"
@@ -69,6 +71,7 @@
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonWriter.h"
 #if WITH_EDITOR
+#include "BoneControllers/AnimNode_RigidBody.h"
 #include "Chooser.h"
 #include "ObjectChooser_Asset.h"
 #include "Animation/AnimationAsset.h"
@@ -82,6 +85,37 @@
 #include "UObject/Package.h"
 #endif
 #include "UObject/StrongObjectPtr.h"
+
+#if WITH_EDITOR
+namespace
+{
+TObjectPtr<UPhysicsAsset>* FindHairTrialAssetSlot(UAnimInstance& Instance, const UPhysicsAsset* Match, bool bVerifyActive)
+{
+	const auto* Interface = IAnimClassInterface::GetFromClass(Instance.GetClass());
+	if (!Interface) return nullptr;
+	TObjectPtr<UPhysicsAsset>* Hair = nullptr;
+	int32 SkirtNodes = 0;
+	for (const FStructProperty* Property : Interface->GetAnimNodeProperties())
+	{
+		if (Property->Struct != FAnimNode_RigidBody::StaticStruct()) continue;
+		auto* Node = Property->ContainerPtrToValuePtr<FAnimNode_RigidBody>(&Instance);
+		const UPhysicsAsset* Asset = Node->OverridePhysicsAsset.Get();
+		if (!Asset || (bVerifyActive && Node->GetPhysicsAsset() != Asset)) return nullptr;
+		if (Asset == Match && !Hair && !Node->bUseDefaultAsSimulated &&
+			!Node->bEnableWorldGeometry && !Node->bUseExternalClothCollision)
+		{
+			Hair = &Node->OverridePhysicsAsset;
+		}
+		else if (Asset->GetPathName() == TEXT("/Game/Characters/Spellblade/Physics/PA_Spellblade_Skirt.PA_Spellblade_Skirt"))
+		{
+			++SkirtNodes;
+		}
+		else return nullptr;
+	}
+	return SkirtNodes == 1 ? Hair : nullptr;
+}
+}
+#endif
 
 void UProject_JRenderedCrowdFixture::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -123,6 +157,46 @@ void UProject_JRenderedCrowdFixture::Initialize(FSubsystemCollectionBase& Collec
 	FParse::Value(FCommandLine::Get(), TEXT("ProjectJRenderedCrowdOutput="), Output);
 	if (Output.IsEmpty()) { Output = FPaths::ProjectSavedDir() / TEXT("Validation/RenderedCrowd"); }
 	IFileManager::Get().MakeDirectory(*Output, true);
+	FParse::Value(FCommandLine::Get(), TEXT("ProjectJRenderedCloakTrial="), CloakTrial);
+#if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
+	FParse::Value(FCommandLine::Get(), TEXT("ProjectJRenderedCloakHz="), CloakTestHertz);
+	bCloakVideo = FParse::Param(FCommandLine::Get(), TEXT("ProjectJRenderedCloakVideo"));
+	bStaggerCloakCadence = FParse::Param(FCommandLine::Get(), TEXT("ProjectJRenderedStaggerCloakCadence"));
+	if ((CloakTestHertz && CloakTestHertz != 10 && CloakTestHertz != 15 && CloakTestHertz != 20 && CloakTestHertz != 30) ||
+		(bStaggerCloakCadence && (!CloakTestHertz || CrowdCount < 2 || bCloakVideo)) ||
+		((CloakTestHertz || bCloakVideo) && (bNetworkObserver || !bSimulateMovement ||
+			(CloakTrial != TEXT("Original") && CloakTrial != TEXT("PhysicsProxy") && (!bCloakVideo || CloakTrial != TEXT("Skinned"))))) ||
+		(bCloakVideo && (!bCloseView || CrowdCount != 1 || !IFileManager::Get().MakeDirectory(*(Output / TEXT("ClipFrames")), true))))
+	{ Finish(false, TEXT("Invalid cloth cadence or close-view recording workload")); return; }
+	if (CloakTestHertz) CloakCadenceRows = TEXT("phase,phase_s,game_s,parts,ticks\n");
+#endif
+	bCloakGroundAttack = FParse::Param(FCommandLine::Get(), TEXT("ProjectJRenderedCloakGroundAttack"));
+	FParse::Value(FCommandLine::Get(), TEXT("ProjectJRenderedHairTrial="), HairTrial);
+	FParse::Value(FCommandLine::Get(), TEXT("ProjectJRenderedMemoryReserveMiB="), MemoryReserveMiB);
+	if (MemoryReserveMiB < 0 || MemoryReserveMiB > 65536 || (MemoryReserveMiB && bNetworkObserver))
+	{
+		Finish(false, TEXT("Memory reserve is for the standalone fixture and must be in 0..65536 MiB"));
+		return;
+	}
+	if (!HairTrial.IsEmpty() && (!WITH_EDITOR || bNetworkObserver || bLeaderBoundsProof ||
+		bSecondaryMotionBudgetExperiment || (CloakTrial != TEXT("Original") && CloakTrial != TEXT("ReducedBodyCollision")) || !bCloakGroundAttack ||
+		(HairTrial != TEXT("Original") && HairTrial != TEXT("Reduced"))))
+	{
+		Finish(false, TEXT("Hair trial requires the standalone Editor workload with original or reduced-collision cloak"));
+		return;
+	}
+	if (!CloakTrial.IsEmpty() && (bNetworkObserver || bLeaderBoundsProof || bClothExecutionExperiment || FXResourceCount ||
+		(CloakTrial != TEXT("Original") && CloakTrial != TEXT("Constrained") && CloakTrial != TEXT("NoBodyCollision") &&
+		CloakTrial != TEXT("ReducedBodyCollision") && CloakTrial != TEXT("Skinned") && CloakTrial != TEXT("PhysicsProxy"))))
+	{
+		Finish(false, TEXT("Cloak trial requires the standalone crowd and a supported cloak condition"));
+		return;
+	}
+	if (bCloakGroundAttack && (CloakTrial.IsEmpty() || !bSimulateMovement))
+	{
+		Finish(false, TEXT("Cloak ground attack requires a movement-enabled cloak trial"));
+		return;
+	}
 	if (bRequirePlayerPoseReadiness)
 	{
 #if !WITH_EDITOR
@@ -163,10 +237,40 @@ void UProject_JRenderedCrowdFixture::Initialize(FSubsystemCollectionBase& Collec
 	Handle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this, &ThisClass::Tick));
 #endif
 }
+bool UProject_JRenderedCrowdFixture::CheckMemoryReserve()
+{
+	if (!MemoryReserveMiB) return true;
+	const FPlatformMemoryStats Memory = FPlatformMemory::GetStats();
+	MinimumFreePhysical = FMath::Min(MinimumFreePhysical, Memory.AvailablePhysical);
+	MinimumFreeCommit = FMath::Min(MinimumFreeCommit, Memory.AvailableVirtual);
+	const uint64 ReserveBytes = uint64(MemoryReserveMiB) * 1024 * 1024;
+	if (Memory.AvailablePhysical >= ReserveBytes && Memory.AvailableVirtual >= ReserveBytes) return true;
+	Finish(false, TEXT("Available physical or commit memory crossed the configured reserve"));
+	return false;
+}
+
 bool UProject_JRenderedCrowdFixture::Setup()
 {
 	auto* World = GetWorld();
 	if (GUsingNullRHI || World->GetNetMode() != NM_Standalone) { return false; }
+	USkeletalMesh* CollisionControl = nullptr;
+	if (CloakTrial == TEXT("NoBodyCollision"))
+	{
+		CollisionControl = LoadObject<USkeletalMesh>(nullptr,
+			TEXT("/Game/Tests/Cloth/SK_Spellblade_Cloak_NoBodyCollision.SK_Spellblade_Cloak_NoBodyCollision"));
+		if (!CollisionControl) return false;
+	}
+	else if (CloakTrial == TEXT("ReducedBodyCollision"))
+	{
+		CollisionControl = LoadObject<USkeletalMesh>(nullptr,
+			TEXT("/Game/Tests/Cloth/SK_Spellblade_Cloak_ReducedBodyCollision.SK_Spellblade_Cloak_ReducedBodyCollision"));
+		if (!CollisionControl) return false;
+	}
+	else if (CloakTrial == TEXT("PhysicsProxy"))
+	{
+		CollisionControl = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Tests/Cloth/SK_Spellblade_Cloak_PhysicsProxy.SK_Spellblade_Cloak_PhysicsProxy"));
+		if (!CollisionControl) return false;
+	}
 	FActorSpawnParameters Params; Params.ObjectFlags |= RF_Transient;
 	if (bSimulateMovement)
 	{
@@ -177,8 +281,29 @@ bool UProject_JRenderedCrowdFixture::Setup()
 		Floor->GetStaticMeshComponent()->SetStaticMesh(Cube);Floor->SetActorScale3D(FVector(150,150,1));
 		Floor->GetStaticMeshComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	}
+#if WITH_EDITOR
+	TObjectPtr<UPhysicsAsset>* HairDefault = nullptr;
+	UPhysicsAsset* OriginalHair = nullptr;
+	UPhysicsAsset* ActiveHair = nullptr;
+	ON_SCOPE_EXIT { if (HairDefault) *HairDefault = OriginalHair; };
+	if (!HairTrial.IsEmpty())
+	{
+		OriginalHair = LoadObject<UPhysicsAsset>(nullptr, TEXT("/Game/Characters/Spellblade/Physics/PA_Spellblade_Hair.PA_Spellblade_Hair"));
+		ActiveHair = HairTrial == TEXT("Reduced")
+			? LoadObject<UPhysicsAsset>(nullptr, TEXT("/Game/Tests/Physics/PA_Spellblade_Hair_CollisionTrial.PA_Spellblade_Hair_CollisionTrial"))
+			: OriginalHair;
+		UClass* Class = LoadClass<UAnimInstance>(nullptr, TEXT("/Game/Characters/Spellblade/Animation/ABP_Spellblade_Body.ABP_Spellblade_Body_C"));
+		if (!OriginalHair || !ActiveHair || !Class) return false;
+		HairDefault = FindHairTrialAssetSlot(*Class->GetDefaultObject<UAnimInstance>(), OriginalHair, false);
+		if (!HairDefault) return false;
+		// Test instances inherit the override before their initial physics setup.
+		// Restore the in-memory class default as soon as the cohort is built.
+		*HairDefault = ActiveHair;
+	}
+#endif
 	for (int32 I = 0; I < CrowdCount; ++I)
 	{
+		if ((I % 16 == 0) && !CheckMemoryReserve()) return false;
 		auto* Controller = World->SpawnActor<AAIController>(Params);
 		auto* State = World->SpawnActor<AProject_JPlayerState>(Params);
 		if (!Controller || !State) { return false; }
@@ -198,7 +323,27 @@ bool UProject_JRenderedCrowdFixture::Setup()
 		}
 		CastChecked<UProject_JAbilitySystemComponent>(Player->GetAbilitySystemComponent())->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_CombatMode);
 		Players.Add(Player);
+		if (!CloakTrial.IsEmpty() && !ApplyCloakTrial(Player, CollisionControl)) return false;
+#if WITH_EDITOR
+		if (ActiveHair)
+		{
+			auto* Source = Player->GetMesh();
+			auto* Body = Source->GetPostProcessInstance();
+			if (!Body || !FindHairTrialAssetSlot(*Body, ActiveHair, true)) return false;
+		}
+#endif
 		RegisterObservedPlayer(Player, I);
+	}
+#if WITH_EDITOR
+	if (ActiveHair)
+	{
+		UE_LOG(LogTemp, Display, TEXT("PROJECT_J_HAIR_TRIAL mode=%s actors=%d asset=%s bodies=%d"),
+			*HairTrial, Players.Num(), *ActiveHair->GetName(), ActiveHair->SkeletalBodySetups.Num());
+	}
+#endif
+	if (!CloakTrial.IsEmpty())
+	{
+		UE_LOG(LogTemp, Display, TEXT("PROJECT_J_CLOAK_TRIAL mode=%s actors=%d"), *CloakTrial, Players.Num());
 	}
 	World->SpawnActor<ADirectionalLight>(FVector(0, 0, 500), FRotator(-40, -45, 0));
 	const FVector Center=bCloseView?Players[0]->GetActorLocation():FVector(1710,900,100);
@@ -213,6 +358,42 @@ bool UProject_JRenderedCrowdFixture::Setup()
 	if (!SetupFXResourceCohort(NPCFailure)) { Finish(false,*NPCFailure); return false; }
 	if (!SetupNPCCombatCohort(NPCFailure)) { Finish(false,*NPCFailure); return false; }
 	return true;
+}
+
+bool UProject_JRenderedCrowdFixture::ApplyCloakTrial(AProject_JPlayerCharacter* Player, USkeletalMesh* CollisionControl)
+{
+	TInlineComponentArray<UProject_JModularMeshComponent*> Parts(Player);
+	auto* const* Slot = Parts.FindByPredicate([](const UProject_JModularMeshComponent* Part)
+	{
+		return Part && Part->GetFName() == TEXT("Cloak");
+	});
+	if (!Slot) return false;
+	auto* Cloak = *Slot;
+	const auto* Original = Cloak->GetSkeletalMeshAsset();
+	const auto* Leader = Cloak->LeaderPoseComponent.Get();
+	if (!Original || Original->GetPathName() != TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_cloak.SK_Spellblade_cloak") ||
+		!Original->HasActiveClothingAssets() || !Leader || Cloak->bDisableClothSimulation) return false;
+	if (CloakTestHertz && (!bWithLocalPlayer || Players.Num() > 1)) CadenceCloaks.Add(Cloak);
+
+	if (CollisionControl)
+	{
+		if (CollisionControl->GetSkeleton() != Original->GetSkeleton() || !CollisionControl->HasActiveClothingAssets()) return false;
+		Cloak->SetSkeletalMesh(CollisionControl);
+		if (CloakTrial == TEXT("PhysicsProxy")) Cloak->SetForcedLOD(1); // Compare the same visible render LOD0.
+		return Cloak->GetSkeletalMeshAsset() == CollisionControl && Cloak->LeaderPoseComponent.Get() == Leader;
+	}
+	if (CloakTrial == TEXT("Constrained"))
+	{
+		const float OriginalScale = Cloak->GetClothMaxDistanceScale();
+		if (!FMath::IsFinite(OriginalScale) || OriginalScale <= 0.f) return false;
+		Cloak->SetClothMaxDistanceScale(0.5f * OriginalScale);
+	}
+	else if (CloakTrial == TEXT("Skinned"))
+	{
+		Cloak->bDisableClothSimulation = true;
+		Cloak->RecreateClothingActors();
+	}
+	return Cloak->LeaderPoseComponent.Get() == Leader;
 }
 void UProject_JRenderedCrowdFixture::RestoreClothExecutionOverrides()
 {
@@ -285,6 +466,11 @@ bool UProject_JRenderedCrowdFixture::Tick(float Delta)
 {
 	if (bFinished) { return false; }
 	const double Now = FPlatformTime::Seconds();
+	if (MemoryReserveMiB && Now >= NextMemoryCheckAt)
+	{
+		if (!CheckMemoryReserve()) return false;
+		NextMemoryCheckAt = Now + 1.0;
+	}
 	if (Now - Started > (ExpectedNaniteMode >= 0 ? 600 : 180)) { Finish(false, TEXT("Bounded rendered fixture timeout")); return false; }
 	auto* World = GetWorld();
 	if (!World || !World->HasBegunPlay() || !World->GetFirstPlayerController()) { return true; }
@@ -311,9 +497,20 @@ bool UProject_JRenderedCrowdFixture::Tick(float Delta)
 	}
 	CSV_SCOPED_TIMING_STAT_EXCLUSIVE(ProjectJRenderedCrowdObserver);
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_RenderedCrowd_Observer);
+	const bool bHairCloseView = bCloseView && !HairTrial.IsEmpty();
 	if(bCloseView && IsValid(ReviewCamera) && Players.Num()==1 && IsValid(Players[0]))
-		ReviewCamera->SetActorLocation(Players[0]->GetActorLocation()+FVector(450,-450,220));
+	{
+		const FVector At = Players[0]->GetActorLocation();
+		if (bHairCloseView)
+		{
+			const FVector Eye = At + FVector(132,-155,105);
+			ReviewCamera->SetActorLocationAndRotation(Eye, (At + FVector(0,0,53) - Eye).Rotation());
+		}
+		else ReviewCamera->SetActorLocation(At + FVector(450,-450,220));
+	}
 	int32 Visible = 0, Montages = 0, Prediction30=0;
+	bool bHairLandingFrame = false;
+	int32 AirborneMontages = 0;
  uint64 TrajectoryCalls = 0, TrajectoryCycles = 0, LocalTrajectoryCalls = 0, LocalTrajectoryCycles = 0;
  uint64 OldestTrajectoryUpdate = MAX_uint64, NewestTrajectoryUpdate = 0;
 	int32 BodyLODs[3]={}, LocalLOD=INDEX_NONE;
@@ -427,7 +624,13 @@ bool UProject_JRenderedCrowdFixture::Tick(float Delta)
 			if (bNetworkObserver) ObserveNetworkMotion(Phase,Index,Player,Position,PhysicalVelocity,PhaseAge);
 			const float Velocity=PhysicalVelocity.X;
 			if(FMath::Abs(Velocity)>5.f) { const float Sign=FMath::Sign(Velocity);if(LastDirection[Index]!=0 && LastDirection[Index]!=Sign) ++Reversals[Index];LastDirection[Index]=Sign; }
-			const bool bInAir=Project_J::Movement::IsInAir(Player);if(WasInAir[Index] && !bInAir) ++Landings[Index];WasInAir[Index]=bInAir;
+			const bool bInAir=Project_J::Movement::IsInAir(Player);
+			if (WasInAir[Index] && !bInAir)
+			{
+				++Landings[Index];
+				bHairLandingFrame |= bHairCloseView;
+			}
+			WasInAir[Index]=bInAir;
 			if (bNetworkObserver && Phase==4) NetworkSawJump[Index]=NetworkSawJump[Index] || bInAir;
 			if (bJumpWitness)
 			{
@@ -554,7 +757,9 @@ bool UProject_JRenderedCrowdFixture::Tick(float Delta)
 			}
 		}
 		Visible += bVisible;
-		Montages += Player->GetMesh()->GetAnimInstance()->IsAnyMontagePlaying();
+		const bool bMontagePlaying = Player->GetMesh()->GetAnimInstance()->IsAnyMontagePlaying();
+		Montages += bMontagePlaying;
+		if (bCloakGroundAttack && Phase == 5 && bMontagePlaying && !Player->GetMover()->IsOnGround()) ++AirborneMontages;
 		if(const auto* Anim=Cast<UProject_JPlayerAnimInstance>(Player->GetMesh()->GetAnimInstance()))
 		{
 			Prediction30+=Anim->GetTrajectoryPredictionRate()==30;
@@ -593,7 +798,30 @@ bool UProject_JRenderedCrowdFixture::Tick(float Delta)
  const uint64 IntervalCycles = bTrajectoryMetrics && bHasTrajectoryCounters ? TrajectoryCycles - PreviousTrajectoryCycles : 0;
  const uint64 LocalIntervalCalls = bTrajectoryMetrics && bHasTrajectoryCounters ? LocalTrajectoryCalls - PreviousLocalTrajectoryCalls : 0;
  const uint64 LocalIntervalCycles = bTrajectoryMetrics && bHasTrajectoryCounters ? LocalTrajectoryCycles - PreviousLocalTrajectoryCycles : 0;
-	const bool bCapture = Phase > 1 && !bShot && PhaseAge > 1;
+	bool bCapture = Phase > 1 && !bShot && PhaseAge > 1;
+#if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
+	if (CloakTestHertz && Phase > 1)
+	{
+		const double GameTime = World->GetTimeSeconds();
+		int32 Ticks = 0;
+		for (const auto& Cloak : CadenceCloaks)
+		{
+			if (!Cloak.IsValid()) { Finish(false, TEXT("A measured cloak retired")); return false; }
+			Ticks += Cloak->GetLastClothIntervalTickForTest() > LastCloakCadenceSampleTime;
+		}
+		CloakCadenceRows += FString::Printf(TEXT("%d,%.6f,%.6f,%d,%d\n"), Phase, PhaseAge, GameTime, CadenceCloaks.Num(), Ticks);
+		LastCloakCadenceSampleTime = GameTime;
+	}
+#endif
+	if (bHairCloseView && !bShot)
+	{
+		if (Phase == 3) bCapture = PhaseAge > 1.26;
+		if (Phase == 4) bCapture = bHairLandingFrame;
+		if (Phase == 5) bCapture = PhaseAge > .32 && Montages == 1;
+		if (bCapture)
+			UE_LOG(LogTemp, Display, TEXT("PROJECT_J_HAIR_TRIAL_CAPTURE phase=%d phase_s=%.3f montage=%d landing=%d"),
+				Phase, PhaseAge, Montages, bHairLandingFrame);
+	}
 	Rows += FString::Printf(TEXT("%d,%.5f,%.6f,%.6f,%d,%d,%d,%d,%d,%d,%d,%d,%.6f,%.6f,%.6f,%d,%d,%d,%d,%d,%d,%.6f,%d,%d,%d,%d,%d,%d,%d\n"), Phase, Now - Started, Delta * 1000,
 		FPlatformTime::ToMilliseconds(RHIGetGPUFrameCycles()), Players.Num(), Visible, Montages, bCapture,BodyLODs[0],BodyLODs[1],BodyLODs[2],LocalLOD,
 		FPlatformTime::ToMilliseconds(GGameThreadTime),FPlatformTime::ToMilliseconds(GRenderThreadTime),FPlatformTime::ToMilliseconds(GRHIThreadTime),Prediction30,
@@ -643,6 +871,11 @@ bool UProject_JRenderedCrowdFixture::Tick(float Delta)
 			NPC.LastTickSnapshotBuilds, NPC.LastTickSpatialCells, NPC.LastTickLinearFallbacks, NPC.LastTickObservers, NPC.LastTickObserverCandidateVisits,
 			NPC.LastTickImportanceUpdates, NPC.LastTickPromotions, NPC.bObserverCoverageIncomplete ? 1 : 0, NPC.LastTickActionVisits, NPC.LastTickActionUpdates,
 			NPC.CompletedBatches, NPC.CompletedComputeMicroseconds, NPC.CompletedCoreDeliveryMilliseconds);
+	}
+	if (bCloakGroundAttack && Phase == 5)
+	{
+		GroundAttackFrames += Montages == CrowdCount && AirborneMontages == 0;
+		AirborneAttackFrames += AirborneMontages > 0;
 	}
  PreviousTrajectoryCalls = TrajectoryCalls; PreviousTrajectoryCycles = TrajectoryCycles;
  PreviousLocalTrajectoryCalls = LocalTrajectoryCalls; PreviousLocalTrajectoryCycles = LocalTrajectoryCycles;
@@ -725,8 +958,39 @@ bool UProject_JRenderedCrowdFixture::Tick(float Delta)
 		{ Finish(false,*ScreenshotError); return false; }
 		bShot = true;
 	}
+	if (bCloakVideo && !bCapture && GFrameCounter % 2 == 0 && ((Phase == 3 && PhaseAge >= .4 && PhaseAge < 2.4) ||
+		((Phase == 4 || Phase == 5) && PhaseAge < 2.0)))
+	{
+		FScreenshotRequest::RequestScreenshot(Output / FString::Printf(TEXT("ClipFrames/%04d.png"), ++CloakVideoFrames), false, false);
+	}
+#if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
+	if (Phase == 1 && CloakTestHertz)
+	{
+		// Admit different garments on successive world ticks during warm-up.
+		// The native interval and the measured motion are identical in both arms.
+		const double Progress = bStaggerCloakCadence ? (PhaseAge - 8.) * CloakTestHertz + 1. : double(PhaseAge >= 8.);
+		const int32 Ready = FMath::FloorToInt(FMath::Clamp(Progress, 0., 1.) * CadenceCloaks.Num());
+		while (ConfiguredCadenceCloaks < Ready)
+		{
+			const auto& Cloak = CadenceCloaks[ConfiguredCadenceCloaks];
+			if (!Cloak.IsValid() || !Cloak->SetClothTickRateForTest(CloakTestHertz))
+			{ Finish(false, TEXT("Native cloak interval not admitted")); return false; }
+			++ConfiguredCadenceCloaks;
+		}
+	}
+#endif
 	if (PhaseAge >= 8)
 	{
+		if (bCloakGroundAttack && Phase == 5)
+		{
+			UE_LOG(LogTemp, Display, TEXT("PROJECT_J_CLOAK_GROUND_ATTACK actors=%d all_grounded_frames=%d airborne_frames=%d"),
+				CrowdCount, GroundAttackFrames, AirborneAttackFrames);
+			if (GroundAttackFrames == 0 || AirborneAttackFrames > 0)
+			{
+				Finish(false, TEXT("Cloak ground attack did not maintain its grounded montage workload"));
+				return false;
+			}
+		}
 #if WITH_EDITOR
 		if (bRequirePlayerPoseReadiness)
 		{
@@ -820,13 +1084,21 @@ bool UProject_JRenderedCrowdFixture::Tick(float Delta)
 #if WITH_EDITOR
 		if (bRequirePlayerPoseReadiness && Phase==1) { bPlayerPoseMeasurementAdmitted=true; PlayerPoseAdmissionFrame=GFrameCounter; PlayerPoseAdmissionAt=FPlatformTime::Seconds(); }
 #endif
+		if (Phase == 1 && CloakTestHertz)
+		{
+			if (!ConfiguredCadenceCloaks) { Finish(false, TEXT("No non-local cloaks for cadence trial")); return false; }
+			UE_LOG(LogTemp, Display, TEXT("PROJECT_J_CLOAK_CADENCE hz=%d parts=%d staggered=%d"),
+				CloakTestHertz, ConfiguredCadenceCloaks, bStaggerCloakCadence);
+		}
 		++Phase; PhaseAt = World->GetTimeSeconds(); Samples = VisibleSamples = 0; bShot = false;
 		TRACE_BOOKMARK(TEXT("ProjectJ.RenderedCrowd Phase=%d Actors=%d"), Phase, Players.Num());
 		if (Phase==5 && !BeginNPCCombatCohort(NPCFailure)) { Finish(false,*NPCFailure); return false; }
 		if (Phase == (bSimulateMovement?5:3)) for (AProject_JPlayerCharacter* Player : Players)
 		{
-			Player->HandleSkillInputTagPressed(FProject_JGameplayTags::Get().InputTag_Skill_R);
-			Player->HandleSkillInputTagReleased(FProject_JGameplayTags::Get().InputTag_Skill_R);
+			const auto& Tags = FProject_JGameplayTags::Get();
+			const FGameplayTag Input = bCloakGroundAttack ? Tags.InputTag_Weapon_LMB : Tags.InputTag_Skill_R;
+			Player->HandleSkillInputTagPressed(Input);
+			Player->HandleSkillInputTagReleased(Input);
 		}
 	}
 	return true;
@@ -835,6 +1107,11 @@ void UProject_JRenderedCrowdFixture::Finish(bool bSuccess, const TCHAR* Reason)
 {
 	if (bFinished) return;
 	bFinished = true;
+	if (MemoryReserveMiB > 0 && MinimumFreePhysical != MAX_uint64)
+	{
+		UE_LOG(LogTemp, Display, TEXT("PROJECT_J_RENDERED_MEMORY_RESERVE reserve_mib=%d min_physical_mib=%llu min_commit_mib=%llu"),
+			MemoryReserveMiB, MinimumFreePhysical / (1024 * 1024), MinimumFreeCommit / (1024 * 1024));
+	}
 	if (bSuccess && NPCCombatCount && (bAwaitingScreenshotPixels || ScreenshotWrite.IsValid() ||
 		ScreenshotWritesStarted!=5 || ScreenshotWritesCompleted!=5 || ScreenshotCompletedMask!=0x7cu || !ScreenshotFailure.IsEmpty()))
 	{ bSuccess=false; Reason=TEXT("Asynchronous screenshot writes incomplete or failed"); }
@@ -862,6 +1139,8 @@ void UProject_JRenderedCrowdFixture::Finish(bool bSuccess, const TCHAR* Reason)
 			WorkloadFailureDetails=FString::Printf(TEXT("; travel_failed=%d reversal_failed=%d landing_failed=%d"),FailedTravel,FailedReversals,FailedLandings);
 	}
 	FFileHelper::SaveStringToFile(Rows, *(Output / TEXT("frames.csv")));
+	if (CloakTestHertz && !FFileHelper::SaveStringToFile(CloakCadenceRows, *(Output / TEXT("cloth-cadence.csv"))))
+	{ bSuccess = false; Reason = TEXT("Could not write native interval evidence"); }
 	if (bNPCMetrics && !FFileHelper::SaveStringToFile(NPCDecisionRows, *(Output / TEXT("npc_decisions.csv"))))
 	{ bSuccess = false; Reason = TEXT("NPC decision metrics evidence write failed"); }
 	if (bCanonicalProof && !FFileHelper::SaveStringToFile(CanonicalRows, *(Output / TEXT("canonical_pose.csv"))))

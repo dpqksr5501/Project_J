@@ -17,7 +17,7 @@ bool CanOwnMapping(UObject* Owner)
 }
 }
 
-bool UProject_JInputLeaseSubsystem::Acquire(UObject* Owner, UInputMappingContext* Context)
+bool UProject_JInputLeaseSubsystem::Acquire(UObject* Owner, UInputMappingContext* Context, int32 Priority)
 {
 	check(IsInGameThread());
 	if (!bAccepting || !CanOwnMapping(Owner) || !IsValid(Context)) { return false; }
@@ -37,7 +37,7 @@ bool UProject_JInputLeaseSubsystem::Acquire(UObject* Owner, UInputMappingContext
 		NewLease.Owners.Add(Owner);
 		const bool bAdd = NewLease.bAddedMapping;
 		Leases.Add(Context, MoveTemp(NewLease));
-		if (bAdd) { Input->AddMappingContext(Context, 0); }
+		if (bAdd) { Input->AddMappingContext(Context, Priority); }
 	}
 	else { Lease->Owners.Add(Owner); }
 	PruneOwners();
@@ -71,6 +71,17 @@ void UProject_JInputLeaseSubsystem::Release(UObject* Owner)
 {
 	check(IsInGameThread());
 	for (auto& Pair : Leases) { Pair.Value.Owners.Remove(Owner); }
+	PruneOwners();
+}
+
+void UProject_JInputLeaseSubsystem::Release(UObject* Owner, UInputMappingContext* Context)
+{
+	check(IsInGameThread());
+	if (!Context) { return; }
+	if (auto* Lease = Leases.Find(Context))
+	{
+		Lease->Owners.Remove(Owner);
+	}
 	PruneOwners();
 }
 

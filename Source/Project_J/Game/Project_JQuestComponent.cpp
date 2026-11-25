@@ -381,7 +381,7 @@ bool UProject_JQuestComponent::PlanTracking(FName Id, bool bTracked, FProject_JQ
 	return true;
 }
 bool UProject_JQuestComponent::PlanActivityProgress(FProject_JQuestSnapshot& Proposed, EProject_JQuestObjectiveKind Kind,
-	FName TargetId, int32 TargetVersion, int64 Amount, const FProject_JQuestDefinitionIndex& Index) const
+	FName TargetId, int32 TargetVersion, int64 Amount, const FProject_JQuestDefinitionIndex& Index, FName Event) const
 {
 	check(IsInGameThread());
 	if ((Kind != EProject_JQuestObjectiveKind::GatherItem && Kind != EProject_JQuestObjectiveKind::CraftRecipe) ||
@@ -394,8 +394,11 @@ bool UProject_JQuestComponent::PlanActivityProgress(FProject_JQuestSnapshot& Pro
 		const auto* Def = Index.FindRef(State.QuestId);
 		if (!Def || !Def->IsStateValid(State)) return false;
 		if (State.bClaimed) continue;
+		if (Def->Objectives.IsEmpty() && !Event.IsNone() && Def->ObjectiveEvent == Event)
+			AddProgress(State.Count, Def->RequiredCount, Amount);
 		for (const auto& O : Def->Objectives)
-			if (O.Kind == Kind && O.TargetId == TargetId && O.TargetVersion == TargetVersion)
+			if ((O.Kind == Kind && O.TargetId == TargetId && O.TargetVersion == TargetVersion)
+				|| (!Event.IsNone() && O.Kind == EProject_JQuestObjectiveKind::Event && O.Event == Event))
 			{
 				auto* S = State.Objectives.FindByPredicate([&](const auto& V) { return V.ObjectiveId == O.ObjectiveId; });
 				AddProgress(S->Count, O.RequiredCount, Amount);

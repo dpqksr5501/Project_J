@@ -1,4 +1,6 @@
 #pragma once
+
+#include "Network/Project_JMMOClientBridgeComponent.h"
 #include "CoreMinimal.h"
 #include "UI/Project_JUIIconRequest.h"
 #include "Blueprint/UserWidget.h"
@@ -257,6 +259,13 @@ class PROJECT_J_API UProject_JPlayerHUDWidget : public UUserWidget
 	UPROPERTY() TObjectPtr<UTextBlock> KeysStatus;
 	UPROPERTY() TObjectPtr<UTextBlock> SplitLabel;
 	UPROPERTY() TObjectPtr<class USpinBox> SplitCount;
+	UPROPERTY() TObjectPtr<class UScrollBox> MailList;
+	UPROPERTY() TObjectPtr<class UTextBlock> MailStatus;
+	TWeakObjectPtr<UProject_JMMOClientBridgeComponent> MailBridge;
+	TArray<FGuid> DisplayedMail;
+	FGuid NextMailPage;
+	UFUNCTION() void ShowMailInbox(const TArray<FProject_JInboxEntry>& Entries, FGuid Next, bool bSucceeded);
+	UFUNCTION() void HandleMailAction(FName Action, bool bSucceeded, FName Reason);
 	UPROPERTY() TObjectPtr<UProject_JInventoryEntry> SplitSource;
 	UPROPERTY() TObjectPtr<UProject_JInventoryEntry> MergeSource;
 	UPROPERTY() TObjectPtr<UTextBlock> NotificationLabel;
@@ -288,6 +297,8 @@ class PROJECT_J_API UProject_JPlayerHUDWidget : public UUserWidget
     void RequestQuestHistoryPage(int32 Ordinal);
 	UPROPERTY() TObjectPtr<UTextBlock> BagSummary;
 	UPROPERTY() TObjectPtr<UTextBlock> SettingsSummary;
+	UPROPERTY() TObjectPtr<class UProject_JGraphicsSettingsWidget> GraphicsSettings;
+	friend class UProject_JPlayerUIComponent; // Standalone UI smoke exercises the normal settings window.
 	UPROPERTY() TObjectPtr<UTextBlock> SaveStatus;
 	UPROPERTY() TObjectPtr<UTextBlock> ProfileSaveStatus;
 	FText LastProfileSaveStatus;

@@ -21,7 +21,7 @@ struct FProject_JGatheringStats
     int32 LastReclaimVisits = 0;
 };
 
-/** GT-only, bounded, no-Tick ownership for exclusive local gathering slots across Actor streaming lifetimes.
+/** GT-only, bounded, no-Tick ownership for shared and personal gathering across Actor streaming lifetimes.
  * Owns no profile state/worker. Pending and unresolved slots never expire by time.
  * World teardown resets cooldowns; this is not a durable/distributed resource transaction. */
 UCLASS()
@@ -30,11 +30,12 @@ class PROJECT_J_API UProject_JGatheringSubsystem : public UWorldSubsystem
     GENERATED_BODY()
 public:
     static constexpr int32 MaxTrackedNodes = 2048;
+    static constexpr int32 MaxPersonalSlots = 16384;
     static constexpr int32 MaxReclaimsPerAdmission = 128;
     uint64 RegisterNode(AProject_JGatheringNode* Node);
     void UnregisterNode(FName Id, AProject_JGatheringNode* Node, uint64 Registration);
-    FProject_JGatheringView GetState(FName Id, const AProject_JGatheringNode* Node) const;
-    int32 GetTrackedCount() const { return Nodes.Num(); }
+    FProject_JGatheringView GetState(FName Id, const AProject_JGatheringNode* Node, FGuid Character = {}) const;
+    int32 GetTrackedCount() const { return Nodes.Num() - PersonalSlotCount; }
     const FProject_JGatheringStats& GetStats() const { return Stats; }
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;
     virtual void Deinitialize() override;
@@ -44,6 +45,7 @@ protected:
 private:
     friend class AProject_JGatheringNode;
     friend class FProjectJGatheringExecutionTest;
+    using FSlotKey = TPair<FName, FGuid>; // Empty character is the shared slot and owns the live registration.
     struct FSlot
     {
         TWeakObjectPtr<AProject_JGatheringNode> Owner;
@@ -56,15 +58,16 @@ private:
     };
     bool IsActive() const;
     void ReclaimExpired();
-    void RemoveSlot(FName Id);
+    void RemoveSlot(const FSlotKey& Key);
     void RemoveSlotAt(int32 Index);
     void Publish(FName Id);
-    uint64 Reserve(AProject_JGatheringNode* Node, uint64 Registration, FGuid Request);
-    void AbortUnsubmitted(FName Id, uint64 Operation, FGuid Request);
-    void Complete(FName Id, uint64 Operation, FGuid Request, const FProject_JProfileDurableResult& Result);
+    uint64 Reserve(AProject_JGatheringNode* Node, uint64 Registration, FGuid Request, FGuid Character = {});
+    void AbortUnsubmitted(FSlotKey Key, uint64 Operation, FGuid Request);
+    void Complete(FSlotKey Key, uint64 Operation, FGuid Request, const FProject_JProfileDurableResult& Result);
     bool SubmitGather(AProject_JGatheringNode* Node, uint64 Registration, AProject_JPlayerState* Player);
-    TMap<FName, FSlot> Nodes;
-    TArray<FName> ReclaimOrder;
+    TMap<FSlotKey, FSlot> Nodes;
+    TArray<FSlotKey> ReclaimOrder;
+    int32 PersonalSlotCount = 0;
     int32 ReclaimCursor = 0;
     uint64 NextRegistration = 0, NextOperation = 0;
     bool bAccepting = false;

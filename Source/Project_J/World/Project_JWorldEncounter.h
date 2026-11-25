@@ -5,6 +5,9 @@
 class AProject_JNPCCharacter;
 class UProject_JWorldEventRegistry;
 class UProject_JNPCActivationDefinition;
+class UProject_JLootTableDefinition;
+class UProject_JDungeonDefinition;
+class UProject_JCameraComponent;
 
 UENUM(BlueprintType)
 enum class EProject_JEncounterPhase : uint8 { Dormant, Preparing, Active, Cooldown, Disabled };
@@ -37,7 +40,18 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Encounter|Combat") TSoftObjectPtr<UProject_JNPCActivationDefinition> CombatDefinition;
     /** Authority-authored faction adapter value; nonnegative when CombatDefinition is selected. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Encounter|Combat", meta=(ClampMin="0")) int32 CombatTeamId = 1;
-    UPROPERTY(Replicated, BlueprintReadOnly, Category="Encounter") EProject_JEncounterPhase Phase = EProject_JEncounterPhase::Dormant;
+    /** Optional personal contribution loot table rolled for all eligible participants on defeat (with Mail overflow). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Encounter|Loot") TObjectPtr<UProject_JLootTableDefinition> BossLootTable;
+    /** Optional quest objective event credited to all eligible contributors on defeat (falls back to NPC QuestKillEventId / EncounterId). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Encounter|Quest") FName QuestKillEventId = NAME_None;
+    /** When true, defeating this boss automatically claims Dungeon Clear rewards & quest credit for active dungeon participants. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Encounter|Dungeon") bool bTriggerDungeonClearOnDefeat = false;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Encounter|Dungeon", meta=(EditCondition="bTriggerDungeonClearOnDefeat"))
+    TObjectPtr<UProject_JDungeonDefinition> DungeonDefinition;
+    /** When enabled (or when BossLootTable is set), nearby local players smoothly enter GiantBossZoomOut camera mode while Active. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Encounter|Camera") bool bEnableBossCameraZoomOut = false;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Encounter|Camera", meta=(ClampMin="500", ClampMax="20000")) float BossCameraRadiusCm = 4500.0f;
+    UPROPERTY(ReplicatedUsing=OnRep_Phase, BlueprintReadOnly, Category="Encounter") EProject_JEncounterPhase Phase = EProject_JEncounterPhase::Dormant;
     UPROPERTY(Replicated, BlueprintReadOnly, Category="Encounter") int32 SpawnRevision = 0;
     UPROPERTY(Replicated, BlueprintReadOnly, Category="Encounter") double NextSpawnServerTime = 0;
     UPROPERTY(BlueprintAssignable, Category="Encounter") FProject_JEncounterResolved OnResolved;
@@ -57,8 +71,13 @@ private:
     void UpdateEncounter();
     void CompletePreparation(uint64 Token);
     UFUNCTION() void OnNPCDestroyed(AActor* Actor);
+    UFUNCTION() void OnRep_Phase();
+    void UpdateLocalBossCameraState();
+    void ClearLocalBossCameraState();
     void EnterCooldown(bool bDefeated);
     TWeakObjectPtr<AProject_JNPCCharacter> NPC;
+    TArray<TWeakObjectPtr<UProject_JCameraComponent>, TInlineAllocator<2>> ActiveBossCameras;
+    FTimerHandle BossCameraTimerHandle;
     uint64 PreparationToken = 0;
     bool bRegistered = false;
     bool bStopping = false;

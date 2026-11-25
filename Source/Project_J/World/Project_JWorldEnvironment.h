@@ -21,7 +21,12 @@ public:
     /** Preserve old authored maps by default; new physical lighting sets its measured lux value. */
     UPROPERTY(EditAnywhere, Category="Environment", meta=(ClampMin="0")) float ClearSunIntensity = 6.f;
     UPROPERTY(EditAnywhere, Category="Environment", meta=(ClampMin="0",ClampMax="1")) float RainSunIntensityMultiplier = 0.25f;
+    /** Minimum angular change (degrees) before rotating the sun, preserving VSM static shadow page cache. */
+    UPROPERTY(EditAnywhere, Category="Environment", meta=(ClampMin="0.0", ClampMax="15.0")) float SunRotationStepDegrees = 1.5f;
     virtual void Tick(float DeltaSeconds) override;
 protected:
     virtual void BeginPlay() override;
+private:
+    bool bHasAppliedSunPitch = false;
+    float LastAppliedSunPitch = 0.f;
 };

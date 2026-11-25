@@ -1,10 +1,26 @@
 #include "World/Project_JWorldEncounter.h"
 #include "World/Project_JWorldEventRegistry.h"
+#include "World/Project_JDungeonInstanceSubsystem.h"
+#include "AI/Project_JThreatComponent.h"
+#include "Backend/Project_JOnlineWorldSubsystem.h"
+#include "Camera/Project_JCameraComponent.h"
+#include "Economy/Project_JEconomySubsystem.h"
+#include "Dom/JsonObject.h"
+#include "Game/Project_JPlayerState.h"
+#include "Game/Project_JQuestComponent.h"
+#include "Gameplay/Project_JLootSubsystem.h"
+#include "Gameplay/Project_JDeathReviveSubsystem.h"
+#include "Social/Project_JSocialSubsystem.h"
+#include "Project_JAttributeSet.h"
 #include "Project_JNPCCharacter.h"
+#include "Project_JPlayerCharacter.h"
 #include "Components/Project_JNPCActivationComponent.h"
 #include "Project_JCombatInterface.h"
+#include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
+#include "TimerManager.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/SceneComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "UObject/StrongObjectPtr.h"
@@ -63,7 +79,7 @@ void AProject_JWorldEncounter::UpdateEncounter()
         const TStrongObjectPtr<ThisClass> KeepSelf(this);
         const TStrongObjectPtr<AProject_JNPCCharacter> CurrentNPC(NPC.Get());
         const int32 Revision = SpawnRevision;
-        if (!IsValid(CurrentNPC.Get())) return;
+        if (!IsValid(CurrentNPC.Get())) { EnterCooldown(false); return; }
         const bool bDefeated = IProject_JCombatInterface::Execute_IsDead(CurrentNPC.Get());
         // Life queries are extensible: destruction may resolve this exact spawn synchronously.
         if (!bStopping && !IsActorBeingDestroyed() && HasAuthority() && GetWorld() && !GetWorld()->bIsTearingDown
@@ -71,7 +87,11 @@ void AProject_JWorldEncounter::UpdateEncounter()
             && bDefeated) { EnterCooldown(true); }
         return;
     }
-    if (Phase == EProject_JEncounterPhase::Cooldown && GetWorld()->GetTimeSeconds() >= NextSpawnServerTime) { Phase = EProject_JEncounterPhase::Dormant; }
+    if (Phase == EProject_JEncounterPhase::Cooldown && GetWorld()->GetTimeSeconds() >= NextSpawnServerTime)
+    {
+        Phase = EProject_JEncounterPhase::Dormant;
+        ForceNetUpdate();
+    }
     if (Phase != EProject_JEncounterPhase::Dormant) { return; }
     bool bDemandKnown = false;
     if (!HasActivationDemand(bDemandKnown)) return;
@@ -140,7 +160,11 @@ void AProject_JWorldEncounter::CompletePreparation(uint64 Token)
         FCollisionQueryParams::DefaultQueryParam, GroundResponses))
     { RetireCandidate(nullptr, PreviousNPC); return; }
     if (!IsPreparing()) { RetireCandidate(nullptr, PreviousNPC); return; }
-    const FTransform Transform(GetActorRotation(), Ground.ImpactPoint+FVector(0,0,200));
+    const auto* DefaultNPC = Class->GetDefaultObject<AProject_JNPCCharacter>();
+    const float SpawnZOffset = (DefaultNPC && DefaultNPC->GetCapsuleComponent())
+        ? FMath::Max(DefaultNPC->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() + 5.0f, 50.0f)
+        : 100.0f;
+    const FTransform Transform(GetActorRotation(), Ground.ImpactPoint + FVector(0, 0, SpawnZOffset));
     AProject_JNPCCharacter* Spawned = GetWorld()->SpawnActorDeferred<AProject_JNPCCharacter>(Class, Transform, this, nullptr, ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding);
     if (!Spawned) { RetireCandidate(nullptr, PreviousNPC); return; }
     const TStrongObjectPtr<AProject_JNPCCharacter> KeepSpawned(Spawned);
@@ -173,10 +197,22 @@ void AProject_JWorldEncounter::CompletePreparation(uint64 Token)
     }
     // The project's Iris grid supports at most 1.5 km; activation and network relevance are separate budgets.
     Spawned->SetNetCullDistanceSquared(FMath::Square(FMath::Clamp(ActivationRadius, 50000.f, 150000.f)));
+    if (BossLootTable != nullptr || !QuestKillEventId.IsNone() || !EncounterId.IsNone())
+    {
+        Spawned->EnableThreatObservation();
+    }
+    if (bTriggerDungeonClearOnDefeat)
+    {
+        if (auto* Revive = GetWorld()->GetSubsystem<UProject_JDeathReviveSubsystem>())
+        {
+            Revive->SetDungeonBossFightActive(true);
+        }
+    }
     Phase = EProject_JEncounterPhase::Active;
     ++SpawnRevision;
     PreparationToken = 0; // Registry releases the completed load after this bounded application.
     ForceNetUpdate();
+    OnRep_Phase();
 }
 void AProject_JWorldEncounter::EnterCooldown(bool bDefeated)
 {
@@ -193,6 +229,129 @@ void AProject_JWorldEncounter::EnterCooldown(bool bDefeated)
     Phase = EProject_JEncounterPhase::Cooldown;
     NextSpawnServerTime = GetWorld()->GetTimeSeconds() + (bDefeated ? FMath::Max(1.f, RespawnSeconds) : 10.f);
     if (auto* Registry = GetWorld()->GetSubsystem<UProject_JWorldEventRegistry>()) Registry->ReleasePreparation(OldPreparation, this);
+    if (bTriggerDungeonClearOnDefeat)
+    {
+        if (auto* Revive = GetWorld()->GetSubsystem<UProject_JDeathReviveSubsystem>())
+        {
+            Revive->SetDungeonBossFightActive(false);
+        }
+    }
+    if (bDefeated && bWasActive && IsValid(OldNPC.Get()))
+    {
+        if (bTriggerDungeonClearOnDefeat)
+        {
+            auto* GI = GetWorld()->GetGameInstance();
+            auto* Dungeon = GI ? GI->GetSubsystem<UProject_JDungeonInstanceSubsystem>() : nullptr;
+            if (Dungeon && DungeonDefinition && Dungeon->ResolveFinalBossDefeat(*DungeonDefinition))
+                Phase = EProject_JEncounterPhase::Disabled;
+            else
+                UE_LOG(LogTemp, Warning, TEXT("Dungeon completion was not admitted for encounter %s"), *ResolvedId.ToString());
+        }
+        if (auto* Threat = OldNPC->FindComponentByClass<UProject_JThreatComponent>())
+        {
+            const double MaxHP = OldNPC->GetAttributeSet() ? static_cast<double>(OldNPC->GetAttributeSet()->GetMaxHealth()) : 1000.0;
+            TArray<FGuid> Contributors = Threat->GetEligibleContributors(MaxHP, 0.001);
+            UGameInstance* GI = GetWorld()->GetGameInstance();
+            // Share boss eligibility with same-world online party members (so healers/supports earn loot & quest credit).
+            if (const auto* Social = GI ? GI->GetSubsystem<UProject_JSocialSubsystem>() : nullptr; Social && !Contributors.IsEmpty())
+            {
+                TSet<FName> EligibleParties;
+                TSet<FGuid> ContributorSet(Contributors);
+                for (const FGuid& CharId : Contributors)
+                {
+                    const FName PartyId = Social->GetPartyIdForCharacter(CharId);
+                    if (!PartyId.IsNone()) EligibleParties.Add(PartyId);
+                }
+                if (!EligibleParties.IsEmpty())
+                {
+                    for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+                    {
+                        const APlayerController* PC = It->Get();
+                        const AProject_JPlayerState* PS = PC ? PC->GetPlayerState<AProject_JPlayerState>() : nullptr;
+                        if (PS && PS->GetCharacterId().IsValid())
+                        {
+                            const FGuid MemberId = PS->GetCharacterId().Value;
+                            if (!ContributorSet.Contains(MemberId) && EligibleParties.Contains(Social->GetPartyIdForCharacter(MemberId)))
+                            {
+                                ContributorSet.Add(MemberId);
+                                Contributors.Add(MemberId);
+                            }
+                        }
+                    }
+                }
+            }
+            auto* Loot = GI ? GI->GetSubsystem<UProject_JLootSubsystem>() : nullptr;
+            auto* Econ = GI ? GI->GetSubsystem<UProject_JEconomySubsystem>() : nullptr;
+            const bool bOnline = UProject_JOnlineWorldSubsystem::UsesOnlineBackend(GetWorld());
+            if (!bTriggerDungeonClearOnDefeat && BossLootTable && Loot && (bOnline || Econ))
+            {
+                const FGuid Defeat = FGuid::NewGuid();
+                for (const FGuid& Contributor : Contributors)
+                {
+                    const int32 Seed = static_cast<int32>(HashCombineFast(GetTypeHash(ResolvedId) ^ uint32(ResolvedRevision), GetTypeHash(Contributor)));
+                    const auto Grant = Loot->RollPersonalLoot(BossLootTable, Contributor, Seed);
+                    if (bOnline)
+                    {
+                        auto Body = UProject_JOnlineWorldSubsystem::WriteLoot(Grant);
+                        Body->SetStringField(TEXT("defeat_id"), UProject_JOnlineWorldSubsystem::GuidText(Defeat));
+                        Body->SetStringField(TEXT("character_id"), UProject_JOnlineWorldSubsystem::GuidText(Contributor));
+                        const FString Context = FString::Printf(TEXT("encounter=%s spawn=%d char=%s"),
+                            *ResolvedId.ToString(), ResolvedRevision, *UProject_JOnlineWorldSubsystem::GuidText(Contributor));
+                        if (!UProject_JOnlineWorldSubsystem::EnqueueDurableMutation(
+                            GetWorld(),
+                            TEXT("Reward"),
+                            TEXT("Boss"),
+                            Body,
+                            FGuid::NewGuid(),
+                            Context,
+                            [ResolvedId, ResolvedRevision](bool bConfirmed, const TSharedPtr<FJsonObject>&)
+                            {
+                                if (!bConfirmed)
+                                {
+                                    UE_LOG(LogTemp, Warning, TEXT("Online field boss mail unconfirmed after outbox retries for encounter %s, spawn %d"),
+                                        *ResolvedId.ToString(), ResolvedRevision);
+                                }
+                            }))
+                        {
+                            UE_LOG(LogTemp, Warning, TEXT("Online field boss mail admission rejected: %s"), *Context);
+                        }
+                    }
+                    else if (!Econ->SendBossRewardMail(Grant))
+                    {
+                        UE_LOG(LogTemp, Warning, TEXT("Boss loot mail rejected for encounter %s, spawn %d"), *ResolvedId.ToString(), ResolvedRevision);
+                    }
+                }
+            }
+
+            // Credit authoritative kill quest objectives to all online contributors.
+            const FName EffectiveQuestEvent = !QuestKillEventId.IsNone()
+                ? QuestKillEventId
+                : (!OldNPC->QuestKillEventId.IsNone() ? OldNPC->QuestKillEventId : ResolvedId);
+            if (!EffectiveQuestEvent.IsNone() && !Contributors.IsEmpty())
+            {
+                const TSet<FGuid> ContributorSet(Contributors);
+                int32 RejectedProgress = 0;
+                for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+                {
+                    APlayerController* PC = It->Get();
+                    AProject_JPlayerState* PS = PC ? PC->GetPlayerState<AProject_JPlayerState>() : nullptr;
+                    if (PS && PS->GetCharacterId().IsValid() && ContributorSet.Contains(PS->GetCharacterId().Value))
+                    {
+                        if (auto* Quests = PS->FindComponentByClass<UProject_JQuestComponent>())
+                        {
+                            RejectedProgress += !Quests->TryRecordObjective(EffectiveQuestEvent, 1);
+                        }
+                    }
+                }
+                if (RejectedProgress > 0)
+                {
+                    UE_LOG(LogTemp, Warning, TEXT("Boss quest progress was not admitted for %d contributors: encounter %s, spawn %d"),
+                        RejectedProgress, *ResolvedId.ToString(), ResolvedRevision);
+                }
+            }
+        }
+
+    }
     if (IsValid(OldNPC.Get()))
     {
         OldNPC->OnDestroyed.RemoveDynamic(this, &ThisClass::OnNPCDestroyed);
@@ -200,6 +359,7 @@ void AProject_JWorldEncounter::EnterCooldown(bool bDefeated)
     }
     if (bStopping || IsActorBeingDestroyed() || !GetWorld() || GetWorld()->bIsTearingDown) return;
     ForceNetUpdate();
+    OnRep_Phase();
     if (bDefeated && bWasActive) { OnResolved.Broadcast(ResolvedId, ResolvedRevision); }
 }
 void AProject_JWorldEncounter::OnNPCDestroyed(AActor* Actor)
@@ -217,9 +377,96 @@ void AProject_JWorldEncounter::OnNPCDestroyed(AActor* Actor)
         EnterCooldown(bDefeated);
 }
 
+void AProject_JWorldEncounter::OnRep_Phase()
+{
+    UWorld* World = GetWorld();
+    if (!World || World->GetNetMode() == NM_DedicatedServer || World->bIsTearingDown)
+    {
+        return;
+    }
+    const bool bShouldMonitorBossCamera = (bEnableBossCameraZoomOut || BossLootTable != nullptr)
+        && Phase == EProject_JEncounterPhase::Active;
+    if (bShouldMonitorBossCamera)
+    {
+        if (!World->GetTimerManager().IsTimerActive(BossCameraTimerHandle))
+        {
+            World->GetTimerManager().SetTimer(BossCameraTimerHandle, this, &ThisClass::UpdateLocalBossCameraState, 0.25f, true);
+        }
+        UpdateLocalBossCameraState();
+    }
+    else
+    {
+        ClearLocalBossCameraState();
+    }
+}
+
+void AProject_JWorldEncounter::UpdateLocalBossCameraState()
+{
+    UWorld* World = GetWorld();
+    if (!World || World->bIsTearingDown || Phase != EProject_JEncounterPhase::Active)
+    {
+        ClearLocalBossCameraState();
+        return;
+    }
+    const FVector BossLoc = NPC.IsValid() ? NPC->GetActorLocation() : GetActorLocation();
+    const double RadiusSq = FMath::Square(static_cast<double>(FMath::Max(500.0f, BossCameraRadiusCm)));
+    decltype(ActiveBossCameras) DesiredCameras;
+    for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
+    {
+        APlayerController* PC = It->Get();
+        if (!PC || !PC->IsLocalController())
+        {
+            continue;
+        }
+        auto* Player = Cast<AProject_JPlayerCharacter>(PC->GetPawn());
+        auto* Cam = Player ? Player->GetCameraComponent() : nullptr;
+        if (IsValid(Cam) && PC->GetViewTarget() == Player && FVector::DistSquared(Player->GetActorLocation(), BossLoc) <= RadiusSq)
+        {
+            DesiredCameras.AddUnique(Cam);
+        }
+    }
+
+    for (const auto& Camera : ActiveBossCameras)
+    {
+        if (Camera.IsValid() && !DesiredCameras.Contains(Camera))
+        {
+            Camera->SetBossCameraSource(this, false);
+        }
+    }
+    for (const auto& Camera : DesiredCameras)
+    {
+        if (!ActiveBossCameras.Contains(Camera))
+        {
+            Camera->SetBossCameraSource(this, true);
+        }
+    }
+    ActiveBossCameras = MoveTemp(DesiredCameras);
+}
+
+void AProject_JWorldEncounter::ClearLocalBossCameraState()
+{
+    if (UWorld* World = GetWorld())
+    {
+        World->GetTimerManager().ClearTimer(BossCameraTimerHandle);
+    }
+    for (const auto& Camera : ActiveBossCameras)
+    {
+        if (Camera.IsValid()) Camera->SetBossCameraSource(this, false);
+    }
+    ActiveBossCameras.Reset();
+}
+
 void AProject_JWorldEncounter::EndPlay(EEndPlayReason::Type Reason)
 {
     bStopping = true;
+    if (bTriggerDungeonClearOnDefeat && HasAuthority())
+    {
+        if (auto* Revive = GetWorld() ? GetWorld()->GetSubsystem<UProject_JDeathReviveSubsystem>() : nullptr)
+        {
+            Revive->SetDungeonBossFightActive(false);
+        }
+    }
+    ClearLocalBossCameraState();
     if (auto* Registry = GetWorld()->GetSubsystem<UProject_JWorldEventRegistry>()) Registry->ReleasePreparation(PreparationToken, this);
     PreparationToken = 0;
     if (NPC.IsValid()) { NPC->OnDestroyed.RemoveDynamic(this, &ThisClass::OnNPCDestroyed); NPC->Destroy(); }
@@ -247,6 +494,8 @@ EDataValidationResult AProject_JWorldEncounter::IsDataValid(FDataValidationConte
     { Context.AddError(FText::FromString(TEXT("Enabled initial navigation requires a finite world-space destination (absolute coordinates <= 1e9) and acceptance radius 1..2000."))); bValid = false; }
     if (!HasValidCombatConfiguration())
     { Context.AddError(FText::FromString(TEXT("Selected encounter combat requires a valid definition path, a nonnegative authoritative team, and initial navigation disabled."))); bValid = false; }
+    if (bTriggerDungeonClearOnDefeat && (!DungeonDefinition || DungeonDefinition->DungeonId.IsNone()))
+    { Context.AddError(FText::FromString(TEXT("A dungeon final boss requires its dungeon definition."))); bValid = false; }
     return bValid ? EDataValidationResult::Valid : EDataValidationResult::Invalid;
 }
 #endif

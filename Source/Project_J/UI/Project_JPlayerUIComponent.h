@@ -114,6 +114,7 @@ class PROJECT_J_API UProject_JPlayerUIComponent : public UActorComponent
 	FTimerHandle TargetTimer;
 	FDelegateHandle ActivationHandle;
 	void RunRuntimeSmoke();
+	void StartGraphicsWorldProbe(const FString& OutputDirectory);
 	void PrepareRuntimeProfile();
 	FTimerHandle RuntimeSmokeTimer;
 	void RunDynamicProfileStep();

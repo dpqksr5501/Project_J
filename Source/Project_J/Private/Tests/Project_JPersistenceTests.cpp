@@ -1229,6 +1229,7 @@ struct FJobProfileRestore : IAutomationLatentCommand
 	~FJobProfileRestore()
 	{
 		auto* World = GI->GetWorld();
+		World->EndPlay(EEndPlayReason::Quit);
 		GI->Shutdown();
 		World->DestroyWorld(false);
 		GEngine->DestroyWorldContext(World);
@@ -1337,16 +1338,16 @@ struct FProfileProgressAdmission : IAutomationLatentCommand
 	}
 	bool ReserveAll()
 	{
-		for (int32 I = 0; I < 32; ++I)
+		for (int32 I = 0; I < UProject_JLocalProfileSubsystem::MaxActiveBindings; ++I)
 		{
 			FGuid Ticket;
 			if (!Check(Gate->TryAcquire({{TEXT("AdmissionFixture"), FGuid::NewGuid()}}, Ticket) == EAdmission::Accepted,
-				TEXT("All 32 actual adapter gate slots are individually reusable"))) return false;
+				TEXT("All actual adapter gate slots are individually reusable"))) return false;
 			Reservations.Add(Ticket);
 		}
 		FGuid Rejected;
 		return Check(Gate->TryAcquire({{TEXT("AdmissionFixture"), FGuid::NewGuid()}}, Rejected) == EAdmission::Capacity && !Rejected.IsValid(),
-			TEXT("The 33rd reservation cannot exceed the real adapter capacity"));
+			TEXT("One reservation past MaxActiveBindings cannot exceed the real adapter capacity"));
 	}
 	bool Update() override
 	{

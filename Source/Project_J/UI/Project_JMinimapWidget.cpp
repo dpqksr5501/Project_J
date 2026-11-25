@@ -125,7 +125,7 @@ int32 UProject_JMinimapWidget::NativePaint(const FPaintArgs &Args, const FGeomet
 	const FVector2D Center = Definition ? Definition->Center : FVector2D::ZeroVector;
 	const FVector2D Extent = Definition ? Definition->HalfExtent : FVector2D(5000, 5000);
 	FVector2D PlayerUV;
-	if (!UProject_JMapDefinition::WorldToUV(PlayerPosition, Center, Extent, PlayerUV))
+	if (!bHasPlayer || !UProject_JMapDefinition::WorldToUV(PlayerPosition, Center, Extent, PlayerUV))
 		return Layer;
 	const FVector2D ViewCenter(FMath::Clamp(PlayerUV.X, 0.5 / Zoom, 1. - 0.5 / Zoom),
 							   FMath::Clamp(PlayerUV.Y, 0.5 / Zoom, 1. - 0.5 / Zoom));
@@ -138,14 +138,19 @@ int32 UProject_JMinimapWidget::NativePaint(const FPaintArgs &Args, const FGeomet
 	}
 	else
 	{
+		ReusableGridPoints.SetNumUninitialized(2, EAllowShrinking::No);
 		for (int32 I = 1; I < 4; ++I)
 		{
 			const float T = I / 4.f;
+			ReusableGridPoints[0] = FVector2f(Size.X * T, 0);
+			ReusableGridPoints[1] = FVector2f(Size.X * T, Size.Y);
 			FSlateDrawElement::MakeLines(Out, Layer + 1, Geometry.ToPaintGeometry(),
-										 {FVector2f(Size.X * T, 0), FVector2f(Size.X * T, Size.Y)},
+										 ReusableGridPoints,
 										 ESlateDrawEffect::None, FLinearColor(0.15f, 0.22f, 0.25f), true);
+			ReusableGridPoints[0] = FVector2f(0, Size.Y * T);
+			ReusableGridPoints[1] = FVector2f(Size.X, Size.Y * T);
 			FSlateDrawElement::MakeLines(Out, Layer + 1, Geometry.ToPaintGeometry(),
-										 {FVector2f(0, Size.Y * T), FVector2f(Size.X, Size.Y * T)},
+										 ReusableGridPoints,
 										 ESlateDrawEffect::None, FLinearColor(0.15f, 0.22f, 0.25f), true);
 		}
 		++Layer;
@@ -196,18 +201,23 @@ int32 UProject_JMinimapWidget::NativePaint(const FPaintArgs &Args, const FGeomet
 		const double Angle = FMath::DegreesToRadians(PlayerYaw);
 		const FVector2D Direction(FMath::Sin(Angle), -FMath::Cos(Angle));
 		const FVector2D Side(Direction.Y, -Direction.X);
-		TArray<FVector2f> Points{FVector2f(P + Direction * 8), FVector2f(P - Direction * 5 + Side * 5),
-								 FVector2f(P - Direction * 5 - Side * 5), FVector2f(P + Direction * 8)};
-		FSlateDrawElement::MakeLines(Out, ++Layer, Geometry.ToPaintGeometry(), Points, ESlateDrawEffect::None,
+		ReusableArrowPoints.SetNumUninitialized(4, EAllowShrinking::No);
+		ReusableArrowPoints[0] = FVector2f(P + Direction * 8);
+		ReusableArrowPoints[1] = FVector2f(P - Direction * 5 + Side * 5);
+		ReusableArrowPoints[2] = FVector2f(P - Direction * 5 - Side * 5);
+		ReusableArrowPoints[3] = ReusableArrowPoints[0];
+		FSlateDrawElement::MakeLines(Out, ++Layer, Geometry.ToPaintGeometry(), ReusableArrowPoints, ESlateDrawEffect::None,
 									 FLinearColor::White, true, 2);
 	}
+	static const FSlateFontInfo CompassFont = FCoreStyle::GetDefaultFontStyle("Regular", 11);
+	static const FSlateFontInfo MapNameFont = FCoreStyle::GetDefaultFontStyle("Regular", 10);
 	FSlateDrawElement::MakeText(
 		Out, ++Layer, Geometry.ToPaintGeometry(FVector2f(Size), FSlateLayoutTransform(FVector2f(5, 3))), TEXT("N"),
-		FCoreStyle::GetDefaultFontStyle("Regular", 11), ESlateDrawEffect::None, FLinearColor::White);
+		CompassFont, ESlateDrawEffect::None, FLinearColor::White);
 	if (Definition)
 		FSlateDrawElement::MakeText(Out, ++Layer,
 									Geometry.ToPaintGeometry(FVector2f(Size), FSlateLayoutTransform(FVector2f(22, 3))),
-									Definition->MapName, FCoreStyle::GetDefaultFontStyle("Regular", 10),
+									Definition->MapName, MapNameFont,
 									ESlateDrawEffect::None, FLinearColor::White);
 	return Layer;
 }

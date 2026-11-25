@@ -213,6 +213,7 @@ EProject_JSocialOperationFailure UProject_JSocialSubsystem::ResolveAuthoritative
 
 	OutCharacterId = Player->GetCharacterId().Value;
 	if (bCheckSession && (Player->bSocialSessionRevoked ||
+		(Player->bServerSessionRequired && !Player->CanAcceptSessionCommand()) ||
 		(OnlinePlayers.FindRef(OutCharacterId).IsValid() && OnlinePlayers.FindRef(OutCharacterId).Get() != Player)))
 		return EProject_JSocialOperationFailure::StaleSession;
 	return OutCharacterId.IsValid() ? EProject_JSocialOperationFailure::None : EProject_JSocialOperationFailure::InvalidCharacterId;

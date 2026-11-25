@@ -341,23 +341,50 @@ bool FProjectJGatheringExecutionTest::RunTest(const FString&)
         auto* Ledger = World->GetSubsystem<UProject_JGatheringSubsystem>();
         auto* Node = SpawnNode(World, TEXT("Native.Gathering.Generation"));
         if (!TestNotNull(TEXT("Real node fixture"), Node)) return false;
-        auto& FirstSlot = Ledger->Nodes.FindChecked(Node->NodeId);
+        const UProject_JGatheringSubsystem::FSlotKey SharedKey(Node->NodeId, FGuid());
+        auto& FirstSlot = Ledger->Nodes.FindChecked(SharedKey);
         const FGuid FirstRequest = FGuid::NewGuid();
         const uint64 First = Ledger->Reserve(Node, FirstSlot.Registration, FirstRequest);
         FProject_JProfileDurableResult Result; Result.Request = FirstRequest; Result.Outcome = EProject_JProfileDurableOutcome::ProvenAbsent;
-        Ledger->Complete(Node->NodeId, First, FirstRequest, Result);
-        TestTrue(TEXT("Proven absent operation is terminal before availability"), Ledger->Nodes.FindChecked(Node->NodeId).bTerminal && Node->GetPhase() == EProject_JGatheringPhase::Available);
-        auto& Current = Ledger->Nodes.FindChecked(Node->NodeId);
+        Ledger->Complete(SharedKey, First, FirstRequest, Result);
+        TestTrue(TEXT("Proven absent operation is terminal before availability"), Ledger->Nodes.FindChecked(SharedKey).bTerminal && Node->GetPhase() == EProject_JGatheringPhase::Available);
+        auto& Current = Ledger->Nodes.FindChecked(SharedKey);
         const FGuid SecondRequest = FGuid::NewGuid(); const uint64 Second = Ledger->Reserve(Node, Current.Registration, SecondRequest);
         Result.Outcome = EProject_JProfileDurableOutcome::Committed;
-        Ledger->Complete(Node->NodeId, First, FirstRequest, Result);
+        Ledger->Complete(SharedKey, First, FirstRequest, Result);
         TestTrue(TEXT("Late old completion cannot consume or release a newer operation"), Node->GetPhase() == EProject_JGatheringPhase::Pending);
         Result.Request = SecondRequest; Result.Outcome = EProject_JProfileDurableOutcome::Unknown; Result.ReceiptStatus = ProjectJ::MMO::ECommitStatus::Expired;
-        Ledger->Complete(Node->NodeId, Second, SecondRequest, Result);
+        Ledger->Complete(SharedKey, Second, SecondRequest, Result);
         const FName Id = Node->NodeId; Node->Destroy(); CollectGarbage(RF_NoFlags, true); Node = SpawnNode(World, Id);
         TestTrue(TEXT("Unknown/Expired reservation survives actor GC/reload and has no timeout release"), Node && Node->GetPhase() == EProject_JGatheringPhase::Unresolved);
         Ledger->OnWorldEndPlay(*World);
         TestEqual(TEXT("World teardown discards nonpersistent cooldown/resource state"), Ledger->GetTrackedCount(), 0);
+    }
+    {
+        auto* World = UWorld::CreateWorld(EWorldType::Game, false);
+        GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
+        ON_SCOPE_EXIT { World->EndPlay(EEndPlayReason::Quit); World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
+        World->InitializeActorsForPlay(FURL()); World->GetWorldSettings()->NotifyBeginPlay(); World->GetWorldSettings()->NotifyMatchStarted();
+        auto* Ledger = World->GetSubsystem<UProject_JGatheringSubsystem>();
+        const FName Id(TEXT("Native.Gathering.Personal"));
+        auto* Node = SpawnNode(World, Id);
+        if (!TestNotNull(TEXT("Personal node fixture"), Node)) return false;
+        const uint64 Registration = Ledger->RegisterNode(Node);
+        const FGuid First = FGuid::NewGuid(), Second = FGuid::NewGuid(), Request = FGuid::NewGuid();
+        const auto Operation = Ledger->Reserve(Node, Registration, Request, First);
+        TestTrue(TEXT("A pending personal grant blocks only its owner"), Operation != 0
+            && Ledger->Reserve(Node, Registration, FGuid::NewGuid(), First) == 0
+            && Ledger->GetState(Id, Node, Second).Phase == EProject_JGatheringPhase::Available);
+        FProject_JProfileDurableResult Result;
+        Result.Request = Request; Result.Outcome = EProject_JProfileDurableOutcome::Committed;
+        const UProject_JGatheringSubsystem::FSlotKey PersonalKey(Id, First);
+        Ledger->Complete(PersonalKey, Operation, Request, Result);
+        Node->Destroy();
+        Node = SpawnNode(World, Id);
+        TestTrue(TEXT("Personal cooldown survives actor replacement without publishing a shared cooldown"), Node
+            && Ledger->GetState(Id, Node, First).Phase == EProject_JGatheringPhase::Cooldown
+            && Ledger->GetState(Id, Node, Second).Phase == EProject_JGatheringPhase::Available
+            && Node->GetPhase() == EProject_JGatheringPhase::Available);
     }
     {
         auto* World = UWorld::CreateWorld(EWorldType::Game, false); GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
@@ -366,8 +393,9 @@ bool FProjectJGatheringExecutionTest::RunTest(const FString&)
         for (int32 Index = 0; Index < Ledger->MaxTrackedNodes; ++Index)
         {
             const FName Id(*FString::Printf(TEXT("Native.Gathering.Capacity.%d"), Index));
-            auto& Slot = Ledger->Nodes.Add(Id); Slot.Phase = EProject_JGatheringPhase::Cooldown; Slot.NextAvailable = Now + 100;
-            Slot.ReclaimIndex = Ledger->ReclaimOrder.Add(Id);
+            const UProject_JGatheringSubsystem::FSlotKey Key(Id, FGuid());
+            auto& Slot = Ledger->Nodes.Add(Key); Slot.Phase = EProject_JGatheringPhase::Cooldown; Slot.NextAvailable = Now + 100;
+            Slot.ReclaimIndex = Ledger->ReclaimOrder.Add(Key);
         }
         auto* Node = SpawnNode(World, TEXT("Native.Gathering.Capacity.New"));
         TestEqual(TEXT("Live logical cooldown capacity rejects new identity without eviction"), Ledger->RegisterNode(Node), uint64(0));

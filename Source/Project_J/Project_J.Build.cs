@@ -34,6 +34,7 @@ public class Project_J : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[] {
 			"NavigationSystem", // Native navigation readiness used directly by the socket fixture.
+			"OnlineSubsystemUtils",
 			"SQLiteCore",
 			"Mover",
 			"NetworkPrediction",

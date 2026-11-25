@@ -2,6 +2,7 @@
 
 
 #include "Project_JPlayerController.h"
+#include "Game/Project_JCheatManager.h"
 #include "Game/Project_JInputLeaseSubsystem.h"
 #include "Testing/Project_JEquipmentClientTestComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -25,6 +26,7 @@
 #include "Project_JPlayerCharacter.h"
 #include "Camera/Project_JCameraComponent.h"
 #include "Mount/Project_JMountComponent.h"
+#include "Mount/Project_JMountMoverComponent.h"
 #include "Project_JLocomotionAnimStateComponent.h"
 #include "Game/Project_JProfilingCrowdComponent.h"
 #include "PoseSearch/PoseSearchDatabase.h"
@@ -34,6 +36,9 @@
 #include "InputKeyEventArgs.h"
 #include "Movement/Project_JMovementQueries.h"
 #include "World/Project_JWorldStreamingComponent.h"
+#include "Network/Project_JMMOClientBridgeComponent.h"
+#include "Backend/Project_JOnlineWorldSubsystem.h"
+#include "Game/Project_JGameMode.h"
 
 namespace
 {
@@ -92,9 +97,20 @@ int32 GetBudgetTierIndex(EProject_JAnimBudgetTier Tier)
 }
 }
 
+float AProject_JPlayerController::GetLocalFlightStreamingSpeedScale(const APawn& Mount) const
+{
+	return IsLocalController() && GetPawn() == &Mount && IsValid(WorldStreamingPreparation)
+		? WorldStreamingPreparation->GetLocalFlightStreamingSpeedScale(Mount) : 1.0f;
+}
+
 AProject_JPlayerController::AProject_JPlayerController()
 {
+#if !UE_BUILD_SHIPPING
+	CheatClass = UProject_JCheatManager::StaticClass();
+#endif
 	WorldStreamingPreparation = CreateDefaultSubobject<UProject_JWorldStreamingComponent>(TEXT("WorldStreamingPreparation"));
+	WorldStreamingPreload = CreateDefaultSubobject<UProject_JWorldPreloadStreamingComponent>(TEXT("WorldStreamingPreload"));
+	MMOClientBridge = CreateDefaultSubobject<UProject_JMMOClientBridgeComponent>(TEXT("MMOClientBridge"));
 	PlayerUI = CreateDefaultSubobject<UProject_JPlayerUIComponent>(TEXT("PlayerUI"));
 #if WITH_EDITOR
 	EquipmentClientTestComponent = CreateEditorOnlyDefaultSubobject<UProject_JEquipmentClientTestComponent>(TEXT("EquipmentClientTest"), true);
@@ -160,6 +176,13 @@ bool AProject_JPlayerController::InputKey(const FInputKeyEventArgs& Params)
 					return true;
 				}
 			}
+			else if (auto* MountPawn = Cast<AProject_JMountMoverPawn>(GetPawn()); MountPawn && GetViewTarget() == MountPawn)
+			{
+				if (MountPawn->ApplyWheelZoom(Params.AmountDepressed))
+				{
+					return true;
+				}
+			}
 		}
 	}
 	return Super::InputKey(Params);
@@ -216,6 +239,19 @@ void AProject_JPlayerController::OnRep_PlayerState()
 void AProject_JPlayerController::ReceivedPlayer()
 {
 	Super::ReceivedPlayer(); if (PlayerUI) PlayerUI->RefreshSources();
+}
+
+void AProject_JPlayerController::ClientRequestOnlineLogin_Implementation()
+{
+	if (auto* Instance = GetGameInstance())
+		if (auto* Online = Instance->GetSubsystem<UProject_JOnlineWorldSubsystem>()) Online->SendPendingLogin(this);
+}
+
+void AProject_JPlayerController::ServerSubmitOnlineLogin_Implementation(FGuid Ticket)
+{
+	auto* Mode = GetWorld() ? GetWorld()->GetAuthGameMode<AProject_JGameMode>() : nullptr;
+	// Login admission lives in GameMode; the gameplay budget requires a session already.
+	if (Mode) Mode->RedeemOnlineLogin(this, Ticket);
 }
 
 bool AProject_JPlayerController::ShouldUseTouchControls() const
@@ -772,7 +808,8 @@ void AProject_JPlayerController::ServerUIPrototypeTest_Implementation(const FStr
 	if (!PS) { return; }
 	auto* Inventory = PS->GetInventoryComponent();
 	auto* ASC = PS->GetProjectJAbilitySystemComponent();
-	if(Inventory&&Inventory->SubmitPersistentEdit){UE_LOG(LogTemp,Warning,TEXT("UI prototype mint/fill fixture is disabled for persistent profiles; use an isolated persistence validation run."));return;}
+	if (!Inventory || !ASC) { return; }
+	if(Inventory->SubmitPersistentEdit){UE_LOG(LogTemp,Warning,TEXT("UI prototype mint/fill fixture is disabled for persistent profiles; use an isolated persistence validation run."));return;}
 	auto* Quests = PS->FindComponentByClass<UProject_JQuestComponent>();
 	auto* Progression = PS->FindComponentByClass<UProject_JProgressionComponent>();
 	if (Action == TEXT("prepare") && UIPrototypeItems.IsEmpty())

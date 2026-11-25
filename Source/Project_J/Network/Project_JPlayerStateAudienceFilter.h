@@ -39,15 +39,19 @@ struct FProjectJPlayerStateAudienceStats
 };
 
 /**
- * Opt-in experiment: supplies conservative Avatar bounds to the existing Iris grid.
- * Unknown history and retired Avatar references keep the previous broad audience.
- * Production enablement requires the separate replacement/mount/loss cohort.
+ * Default-enabled Iris spatial audience filter for AProject_JPlayerState.
+ * Supplies conservative Pawn+Avatar bounds to the shared Iris grid while always
+ * allowing the owning connection. Unknown history, private bootstrap pawns,
+ * unsupported policies, and retired/replaced/mounted sources fail safe to broad
+ * audience containment instead of dropping live references.
+ * Opt out with -DisableProjectJPlayerStateAudience or ProjectJ.Net.PlayerStateAudienceFilter 0.
  */
 UCLASS(Transient)
 class UProject_JPlayerStateAudienceFilter : public UNetObjectGridWorldLocFilter
 {
 	GENERATED_BODY()
 public:
+	static bool IsEnabled();
 	static bool TryBind(AProject_JPlayerState* State);
 	static UProject_JPlayerStateAudienceFilter* Find(UWorld* World);
 	bool QueryBinding(const AProject_JPlayerState* State, FProjectJPlayerStateAudienceBinding& Out) const;

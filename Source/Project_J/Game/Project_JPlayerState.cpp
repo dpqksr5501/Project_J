@@ -19,13 +19,18 @@
 #include "UObject/StrongObjectPtr.h"
 #include "Backend/Project_JLocalProfileSubsystem.h"
 #include "Network/Project_JPlayerStateAudienceFilter.h"
+#include "Gameplay/Project_JDeathReviveSubsystem.h"
+#include "Mount/Project_JMountCharacter.h"
+#include "Mount/Project_JMountMoverComponent.h"
+#include "Project_JGameplayTags.h"
 
 AProject_JPlayerState::AProject_JPlayerState()
 {
 	PartyRoster.OwnerState = this;
 	CreateDefaultSubobject<UProject_JCommandBudgetComponent>(TEXT("CommandBudget"));
 	CompanionComponent = CreateDefaultSubobject<UProject_JCompanionComponent>(TEXT("Companion"));
-	SetNetUpdateFrequency(100.0f);
+	SetNetUpdateFrequency(15.0f);
+	SetMinNetUpdateFrequency(2.0f);
 	QuestComponent = CreateDefaultSubobject<UProject_JQuestComponent>(TEXT("Quests"));
 	CraftingJobsComponent = CreateDefaultSubobject<UProject_JCraftingJobsComponent>(TEXT("CraftingJobs"));
 	ProgressionComponent = CreateDefaultSubobject<UProject_JProgressionComponent>(TEXT("Progression"));
@@ -115,6 +120,8 @@ void AProject_JPlayerState::BeginPlay()
 
 	if (HasAuthority())
 	{
+		DeathTagHandle = AbilitySystemComponent->RegisterGameplayTagEvent(FProject_JGameplayTags::Get().State_Dead,
+			EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::HandleDeathTagChanged);
 		if (UGameInstance* GameInstance = GetGameInstance())
 		{
 			if (UProject_JSocialSubsystem* SocialSubsystem = GameInstance->GetSubsystem<UProject_JSocialSubsystem>())
@@ -128,6 +135,12 @@ void AProject_JPlayerState::BeginPlay()
 
 void AProject_JPlayerState::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	if (DeathTagHandle.IsValid())
+	{
+		AbilitySystemComponent->RegisterGameplayTagEvent(FProject_JGameplayTags::Get().State_Dead,
+			EGameplayTagEventType::NewOrRemoved).Remove(DeathTagHandle);
+		DeathTagHandle.Reset();
+	}
 	if (auto* Authority = ServerSessionAuthority.Get()) Authority->PlayerSessionEnded(this);
 	RetirePartyRoster();
 	if (auto* GI = GetGameInstance()) if (auto* Profiles = GI->GetSubsystem<UProject_JLocalProfileSubsystem>()) Profiles->Detach(this);
@@ -144,6 +157,35 @@ void AProject_JPlayerState::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 
 	Super::EndPlay(EndPlayReason);
+}
+
+void AProject_JPlayerState::HandleDeathTagChanged(FGameplayTag, int32 NewCount)
+{
+	auto* World = GetWorld();
+	if (!HasAuthority() || !World || World->bIsTearingDown) return;
+	if (NewCount <= 0)
+	{
+		if (auto* Revive = World->GetSubsystem<UProject_JDeathReviveSubsystem>())
+			Revive->NotifyCharacterRevived(Cast<AProject_JBaseCharacter>(AbilitySystemComponent->GetAvatarActor()));
+		return;
+	}
+	const TStrongObjectPtr<AProject_JPlayerState> KeepSelf(this);
+	auto* MoverMount = Cast<AProject_JMountMoverPawn>(GetPawn());
+	auto* LegacyMount = Cast<AProject_JMountCharacter>(GetPawn());
+	APawn* MountedRider = MoverMount ? MoverMount->GetRider() : (LegacyMount ? LegacyMount->GetRider() : nullptr);
+	const TStrongObjectPtr<AProject_JBaseCharacter> Character(Cast<AProject_JBaseCharacter>(
+		MountedRider ? MountedRider : AbilitySystemComponent->GetAvatarActor()));
+	if (!Character.IsValid() || Character->IsActorBeingDestroyed()) return;
+	if (auto* Revive = World->GetSubsystem<UProject_JDeathReviveSubsystem>())
+		Revive->NotifyCharacterDied(Character.Get(), World->GetTimeSeconds());
+	if (IsValid(AbilitySystemComponent))
+	{
+		AbilitySystemComponent->CancelAllAbilities();
+	}
+	if (IsValid(MoverMount)) MoverMount->DismountRider(true);
+	else if (IsValid(LegacyMount)) LegacyMount->DismountRider(true);
+	if (auto* Player = Cast<AProject_JPlayerCharacter>(Character.Get()); IsValid(Player) && !Player->IsActorBeingDestroyed())
+		Player->StopSprint();
 }
 
 void AProject_JPlayerState::RequireServerSession(AProject_JGameMode* Authority)

@@ -4,6 +4,8 @@
 #include "Components/Project_JCraftingJobsComponent.h"
 #include "UI/Project_JInventoryViewModel.h"
 #include "UI/Project_JUILayoutSettings.h"
+#include "UI/Project_JUIWindowStackSubsystem.h"
+#include "Engine/GameInstance.h"
 #include "Game/Project_JQuestComponent.h"
 #include "Inventory/Project_JConsumableDefinition.h"
 #include "Inventory/Project_JItemDefinition.h"
@@ -104,7 +106,9 @@ void UProject_JPlayerUIComponent::BeginPlay()
 			nullptr, TEXT("/Game/UI/DA_ProjectJUIProfiles.DA_ProjectJUIProfiles"));
 	RefreshSources();
 #if !UE_BUILD_SHIPPING
-	if (GetWorld() && GetNetMode() == NM_Standalone && FParse::Param(FCommandLine::Get(), TEXT("ProjectJUIRuntimeSmoke")))
+	if (GetWorld() && GetNetMode() == NM_Standalone &&
+		(FParse::Param(FCommandLine::Get(), TEXT("ProjectJUIRuntimeSmoke")) ||
+		 FParse::Param(FCommandLine::Get(), TEXT("ProjectJGraphicsSettingsSmoke"))))
 	{
 		if (FParse::Param(FCommandLine::Get(), TEXT("ProjectJUIProfile")))
 			GetWorld()->GetTimerManager().SetTimer(RuntimeSmokeTimer, this, &ThisClass::PrepareRuntimeProfile, 2.f, false);
@@ -732,6 +736,16 @@ void UProject_JPlayerUIComponent::SetMenuOpen(bool bOpen)
 	{
 		ReleaseAllSkills();
 		Screen->SetMenuOpen(false);
+		if (UGameInstance* GI = GetWorld() ? GetWorld()->GetGameInstance() : nullptr)
+		{
+			if (auto* Stack = GI->GetSubsystem<UProject_JUIWindowStackSubsystem>())
+			{
+				while (Stack->HasOpenModalWindow())
+				{
+					Stack->HandleEscapeCloseTop();
+				}
+			}
+		}
 	}
 	ApplyInputMode();
 }

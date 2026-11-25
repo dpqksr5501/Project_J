@@ -6,8 +6,10 @@
 #include "TimerManager.h"
 #include "Engine/World.h"
 #include "Engine/GameInstance.h"
+#include "HAL/PlatformMisc.h"
 #include "Dom/JsonObject.h"
 #include "JsonObjectConverter.h"
+#include "Misc/Base64.h"
 #include "Serialization/JsonSerializer.h"
 #include "MMO/Coordination.h"
 
@@ -86,16 +88,38 @@ bool IsGatewayRouteValid(const FString& Route)
 	return !Segments.Contains(TEXT("..")) && !Segments.Contains(TEXT("."));
 }
 
+FString JoinGatewayUrl(const FString& BaseUrl, const FString& Endpoint)
+{
+	const bool bBaseEndsSlash = BaseUrl.EndsWith(TEXT("/"));
+	const bool bEndpointStartsSlash = Endpoint.StartsWith(TEXT("/"));
+	if (bBaseEndsSlash && bEndpointStartsSlash)
+	{
+		return BaseUrl + Endpoint.Mid(1);
+	}
+	if (!bBaseEndsSlash && !bEndpointStartsSlash)
+	{
+		return BaseUrl + TEXT("/") + Endpoint;
+	}
+	return BaseUrl + Endpoint;
+}
+
 TSharedPtr<IHttpRequest, ESPMode::ThreadSafe> CreateGatewayRequest(
 	const FString& GatewayUrl,
 	const FString& Endpoint,
 	const FString& Payload,
 	const FProject_JBackendRequestContext& RequestContext,
 	int32 MaxResponseBytes,
-	TFunction<void(const FProject_JBackendResponseEnvelope&)> OnEnvelope)
+	TFunction<void(const FProject_JBackendResponseEnvelope&)> OnEnvelope,
+	const FString& RuntimeAuthorization)
 {
 	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = FHttpModule::Get().CreateRequest();
-	Request->SetURL(GatewayUrl + Endpoint);
+	FString Url = JoinGatewayUrl(GatewayUrl, Endpoint);
+	if (!RuntimeAuthorization.IsEmpty())
+	{
+		Url += TEXT("?unwrap");
+		Request->SetHeader(TEXT("Authorization"), RuntimeAuthorization);
+	}
+	Request->SetURL(Url);
 	Request->SetVerb("POST");
 	Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
 	Request->SetHeader(TEXT("X-ProjectJ-Request-Id"), RequestContext.RequestId.ToString());
@@ -117,13 +141,18 @@ TSharedPtr<IHttpRequest, ESPMode::ThreadSafe> CreateGatewayRequest(
 	Request->OnProcessRequestComplete().BindLambda([RequestContext, OnEnvelope, Buffer](FHttpRequestPtr RequestPtr, FHttpResponsePtr ResponsePtr, bool bConnectedSuccessfully)
 	{
 		auto Envelope = BuildResponseEnvelope(RequestContext, ResponsePtr, bConnectedSuccessfully, false);
-		if (!Buffer->Read(Envelope.ResponseData))
+		FString BufferedBody;
+		if (!Buffer->Read(BufferedBody))
 		{
 			Envelope.bSucceeded = false;
 			Envelope.bRetryable = false;
 			Envelope.FailureKind = EProject_JBackendFailureKind::ResponseTooLarge;
 			Envelope.ResponseData = TEXT("Gateway response exceeded byte limit");
 			ApplyProjectJBackendOutcomePolicy(Envelope, true);
+		}
+		else if (ResponsePtr.IsValid() || !BufferedBody.IsEmpty())
+		{
+			Envelope.ResponseData = MoveTemp(BufferedBody);
 		}
 		OnEnvelope(Envelope);
 	});
@@ -134,7 +163,8 @@ TSharedPtr<IHttpRequest, ESPMode::ThreadSafe> CreateGatewayRequest(
 
 void UProject_JGatewaySubsystem::DispatchTrackedRequest(const FString& Endpoint, const FString& Payload,
 	const FProject_JBackendRequestContext& InContext,
-	TFunction<void(const FProject_JBackendResponseEnvelope&)> Completion)
+	TFunction<void(const FProject_JBackendResponseEnvelope&)> Completion,
+	bool bNakamaRuntimeRequest)
 {
 	check(IsInGameThread());
 	const auto Context = NormalizeRequestContext(InContext);
@@ -154,6 +184,33 @@ void UProject_JGatewaySubsystem::DispatchTrackedRequest(const FString& Endpoint,
 		Response.FailureKind = EProject_JBackendFailureKind::InvalidRequest;
 		Response.ResponseData = TEXT("Mutation requires a stable idempotency key");
 		Completion(Response); return;
+	}
+	FString RuntimeAuthorization;
+	if (bNakamaRuntimeRequest)
+	{
+		const FString Key = FPlatformMisc::GetEnvironmentVariable(TEXT("PROJECT_J_NAKAMA_HTTP_KEY"));
+		const UWorld* World = GetWorld();
+		const FString LoopbackPrefix(TEXT("http://127.0.0.1:"));
+		const FString LocalPort = GatewayUrl.StartsWith(LoopbackPrefix) ? GatewayUrl.Mid(LoopbackPrefix.Len()) : FString();
+		int32 Port = 0;
+		const bool bLoopback = !LocalPort.IsEmpty() && LocalPort.IsNumeric()
+			&& LexTryParseString(Port, *LocalPort) && Port > 0 && Port <= 65535;
+		if (!World || World->GetNetMode() == NM_Client || Key.Len() < 16 || Key.Contains(TEXT(":"))
+			|| GatewayUrl.Contains(TEXT("?")) || GatewayUrl.Contains(TEXT("#"))
+			|| (!bLoopback && !GatewayUrl.StartsWith(TEXT("https://"), ESearchCase::IgnoreCase)))
+		{
+			FProject_JBackendResponseEnvelope Response;
+			Response.RequestContext = Context;
+			Response.FailureKind = EProject_JBackendFailureKind::InvalidRequest;
+			Response.ResponseData = TEXT("Nakama runtime requests require a server, runtime key and secure endpoint");
+			Completion(Response); return;
+		}
+		if (CachedNakamaRawKey != Key)
+		{
+			CachedNakamaRawKey = Key;
+			CachedNakamaAuthHeader = TEXT("Basic ") + FBase64::Encode(Key + TEXT(":"));
+		}
+		RuntimeAuthorization = CachedNakamaAuthHeader;
 	}
 	const int32 ByteLimit = FMath::Clamp(MaxRequestBytes, 1, 16777216);
 	if (!IsGatewayRouteValid(Endpoint) || Payload.Len() > ByteLimit || FTCHARToUTF8(*Payload, Payload.Len()).Length() > ByteLimit)
@@ -189,7 +246,7 @@ void UProject_JGatewaySubsystem::DispatchTrackedRequest(const FString& Endpoint,
 			Completion(Response);
 		}
 	};
-	auto Request = CreateGatewayRequest(GatewayUrl, Endpoint, Payload, Context, MaxResponseBytes, Finish);
+	auto Request = CreateGatewayRequest(GatewayUrl, Endpoint, Payload, Context, MaxResponseBytes, Finish, RuntimeAuthorization);
 	if (!Request)
 	{
 		auto Response = BuildResponseEnvelope(Context, nullptr, false, true);
@@ -230,6 +287,8 @@ void UProject_JGatewaySubsystem::Deinitialize()
 	LogQueue.Reset();
 	PendingLogFlushBatch.Reset();
 	bLogFlushInFlight = false;
+	CachedNakamaRawKey.Reset();
+	CachedNakamaAuthHeader.Reset();
 
 	Super::Deinitialize();
 }

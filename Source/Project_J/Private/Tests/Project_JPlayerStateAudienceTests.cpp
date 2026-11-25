@@ -1,6 +1,8 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Network/Project_JPlayerStateAudienceFilter.h"
+#include "HAL/IConsoleManager.h"
 #include "Misc/AutomationTest.h"
+#include "Misc/ScopeExit.h"
 #include <limits>
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJPlayerStateAudienceBoundsTest, "ProjectJ.MMO.Network.PlayerStateAudienceBounds",
@@ -10,6 +12,20 @@ bool FProjectJPlayerStateAudienceBoundsTest::RunTest(const FString&)
 {
 	FVector Center; float Radius = 0;
 	using Filter = UProject_JPlayerStateAudienceFilter;
+	TestTrue(TEXT("Spatial PlayerState audience filter is enabled by default"), Filter::IsEnabled());
+	if (IConsoleVariable* CVar = IConsoleManager::Get().FindConsoleVariable(TEXT("ProjectJ.Net.PlayerStateAudienceFilter")))
+	{
+		const int32 Original = CVar->GetInt();
+		ON_SCOPE_EXIT { CVar->Set(Original, ECVF_SetByCode); };
+		CVar->Set(0, ECVF_SetByCode);
+		TestFalse(TEXT("CVar 0 disables PlayerState audience filter"), Filter::IsEnabled());
+		CVar->Set(1, ECVF_SetByCode);
+		TestTrue(TEXT("CVar 1 re-enables PlayerState audience filter"), Filter::IsEnabled());
+	}
+	else
+	{
+		AddError(TEXT("ProjectJ.Net.PlayerStateAudienceFilter CVar must be registered."));
+	}
 	TestNull(TEXT("Missing world never creates a replication filter"), Filter::Find(nullptr));
 	TestFalse(TEXT("Missing state cannot bind a filter"), Filter::TryBind(nullptr));
 	const FVector Pawn(234567, -345678, 1234), Avatar = Pawn + FVector(30000, 40000, 12000);

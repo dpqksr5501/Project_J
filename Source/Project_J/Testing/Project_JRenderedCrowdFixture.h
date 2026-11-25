@@ -52,6 +52,16 @@ private:
 	// At most2 phases*200 values. No actor ownership, ticker, timer or per-frame IO.
 	TArray<FNetworkMotionWitnessEntry> NetworkMotionWitness;
 	void RegisterObservedPlayer(AProject_JPlayerCharacter* Player, int32 Index);
+	bool ApplyCloakTrial(AProject_JPlayerCharacter* Player, USkeletalMesh* CollisionControl);
+	bool CheckMemoryReserve();
+	int32 MemoryReserveMiB = 0;
+	double NextMemoryCheckAt = 0.0;
+	uint64 MinimumFreePhysical = MAX_uint64;
+	uint64 MinimumFreeCommit = MAX_uint64;
+	FString CloakTrial;
+	FString HairTrial;
+	bool bCloakGroundAttack = false;
+	int32 GroundAttackFrames = 0, AirborneAttackFrames = 0;
     // Explicit Count1 qualification only; values/weak identities, never a new scheduler.
     struct FLeaderBoundsProofPart
     {
@@ -91,6 +101,14 @@ private:
 	};
 	TArray<FClothExecutionOriginal> ClothExecutionOriginals;
 	bool bClothExecutionExperiment = false;
+	int32 CloakTestHertz = 0;
+	int32 ConfiguredCadenceCloaks = 0;
+	bool bStaggerCloakCadence = false;
+	bool bCloakVideo = false;
+	int32 CloakVideoFrames = 0;
+	FString CloakCadenceRows;
+	double LastCloakCadenceSampleTime = -1.;
+	TArray<TWeakObjectPtr<class UProject_JModularMeshComponent>> CadenceCloaks;
 	bool Tick(float Delta);
 	bool Setup();
 	void Finish(bool bSuccess, const TCHAR* Reason);

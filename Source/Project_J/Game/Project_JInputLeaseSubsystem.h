@@ -12,8 +12,9 @@ class PROJECT_J_API UProject_JInputLeaseSubsystem : public ULocalPlayerSubsystem
 {
 	GENERATED_BODY()
 public:
-	bool Acquire(UObject* Owner, UInputMappingContext* Context);
+	bool Acquire(UObject* Owner, UInputMappingContext* Context, int32 Priority = 0);
 	void Release(UObject* Owner);
+	void Release(UObject* Owner, UInputMappingContext* Context);
 	virtual void Deinitialize() override;
 private:
 	struct FLease { TSet<TWeakObjectPtr<UObject>> Owners; bool bAddedMapping = false; };

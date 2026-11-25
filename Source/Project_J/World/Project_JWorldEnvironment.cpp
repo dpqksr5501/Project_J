@@ -29,16 +29,35 @@ void AProject_JWorldEnvironment::Tick(float DeltaSeconds)
     const float Hour = State->GetHour();
     if (IsValid(Sun))
     {
-        Sun->SetActorRotation(FRotator((Hour-6.f)*-15.f, -25.f, 0));
+        const float TargetPitch = (Hour - 6.f) * -15.f;
+        const float Step = FMath::Max(0.f, SunRotationStepDegrees);
+        const float SnappedPitch = Step > UE_SMALL_NUMBER ? FMath::GridSnap(TargetPitch, Step) : TargetPitch;
+        if (!bHasAppliedSunPitch || !FMath::IsNearlyEqual(SnappedPitch, LastAppliedSunPitch, 1e-3f))
+        {
+            Sun->SetActorRotation(FRotator(SnappedPitch, -25.f, 0));
+            LastAppliedSunPitch = SnappedPitch;
+            bHasAppliedSunPitch = true;
+        }
         const float Daylight = FMath::Clamp(FMath::Sin((Hour-6.f)*PI/12.f)*5.f, 0.f, 1.f);
         const float RainMultiplier = FMath::Lerp(1.f, FMath::Clamp(RainSunIntensityMultiplier, 0.f, 1.f), Rain);
-        CastChecked<UDirectionalLightComponent>(Sun->GetLightComponent())->SetIntensity(Daylight*FMath::Max(0.f, ClearSunIntensity)*RainMultiplier);
+        if (auto* Light = Cast<UDirectionalLightComponent>(Sun->GetLightComponent()))
+        {
+            Light->SetIntensity(Daylight*FMath::Max(0.f, ClearSunIntensity)*RainMultiplier);
+        }
     }
-    if (IsValid(Fog)) { Fog->GetComponent()->SetFogDensity(FMath::Lerp(0.005f, 0.025f, Rain)); }
-    if (Parameters)
+    if (IsValid(Fog))
     {
-        UMaterialParameterCollectionInstance* Instance = GetWorld()->GetParameterCollectionInstance(Parameters);
-        Instance->SetScalarParameterValue(TEXT("Rain"), Rain);
-        Instance->SetScalarParameterValue(TEXT("WorldHour"), Hour);
+        if (auto* FogComp = Fog->GetComponent())
+        {
+            FogComp->SetFogDensity(FMath::Lerp(0.005f, 0.025f, Rain));
+        }
+    }
+    if (Parameters && GetWorld())
+    {
+        if (UMaterialParameterCollectionInstance* Instance = GetWorld()->GetParameterCollectionInstance(Parameters))
+        {
+            Instance->SetScalarParameterValue(TEXT("Rain"), Rain);
+            Instance->SetScalarParameterValue(TEXT("WorldHour"), Hour);
+        }
     }
 }

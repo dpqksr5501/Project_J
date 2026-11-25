@@ -9,6 +9,7 @@
 #include "Iris/ReplicationSystem/ObjectReplicationBridgeConfig.h"
 #include "Iris/ReplicationSystem/ReplicationSystem.h"
 #include "Iris/ReplicationSystem/WorldLocations.h"
+#include "HAL/IConsoleManager.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
 #include "Net/Iris/ReplicationSystem/EngineReplicationBridge.h"
@@ -18,6 +19,12 @@
 namespace
 {
 const FName AudienceName(TEXT("ProjectJPlayerStateAudience"));
+
+TAutoConsoleVariable<int32> CVarProjectJPlayerStateAudienceFilter(
+	TEXT("ProjectJ.Net.PlayerStateAudienceFilter"),
+	1,
+	TEXT("Enable Iris spatial audience filtering for AProject_JPlayerState (1 = enabled by default, 0 = legacy always-relevant fallback)."),
+	ECVF_Default);
 
 bool CurrentSystem(const AProject_JPlayerState* State, UReplicationSystem*& OutSystem, UEngineReplicationBridge*& OutBridge)
 {
@@ -42,9 +49,23 @@ bool HasApplicableForcedConfig(const APawn* Pawn)
 }
 }
 
+bool UProject_JPlayerStateAudienceFilter::IsEnabled()
+{
+	return Enabled();
+}
+
 bool UProject_JPlayerStateAudienceFilter::Enabled()
 {
-	return FParse::Param(FCommandLine::Get(), TEXT("ProjectJPlayerStateAudience"));
+	if (FParse::Param(FCommandLine::Get(), TEXT("DisableProjectJPlayerStateAudience")) ||
+		FParse::Param(FCommandLine::Get(), TEXT("NoProjectJPlayerStateAudience")))
+	{
+		return false;
+	}
+	if (FParse::Param(FCommandLine::Get(), TEXT("ProjectJPlayerStateAudience")))
+	{
+		return true;
+	}
+	return CVarProjectJPlayerStateAudienceFilter.GetValueOnAnyThread() != 0;
 }
 
 UProject_JPlayerStateAudienceFilter* UProject_JPlayerStateAudienceFilter::Find(UWorld* World)

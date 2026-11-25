@@ -1054,8 +1054,8 @@ bool FProjectJNativeFlyingTrajectoryParamsTest::RunTest(const FString&)
   TestFalse(TEXT("CVar0 rejects owning Flying preparation"),Mover->TryPrepareNativeFlyingTrajectory(CaseQuery,Disabled135));
   TestEqual(TEXT("Disabled owning capture leaves caller output unchanged"),Disabled135.NumPredictionSamples,777);
   Enabled->Set(CandidateLevel,ECVF_SetByCode);const auto Candidate=Mover->GetPredictedTrajectory(CaseQuery);
-  bool Same=Reference.Num()==92 && Candidate.Num()==92;
-  for(int32 I=0;Same && I<92;++I)
+  bool Same=Reference.Num()==CaseQuery.NumPredictionSamples && Candidate.Num()==CaseQuery.NumPredictionSamples;
+  for(int32 I=0;Same && I<CaseQuery.NumPredictionSamples;++I)
   {
    const auto& A=Reference[I];const auto& B=Candidate[I];
    Same=!A.Transform.ContainsNaN() && !B.Transform.ContainsNaN() && !A.LinearVelocity.ContainsNaN() && !B.LinearVelocity.ContainsNaN() &&
@@ -1064,7 +1064,7 @@ bool FProjectJNativeFlyingTrajectoryParamsTest::RunTest(const FString&)
    if(CompareOutput) Same=Same && A.Transform.Equals(B.Transform,1.e-6) && A.LinearVelocity.Equals(B.LinearVelocity,1.e-6) &&
     A.InstantaneousAcceleration.Equals(B.InstantaneousAcceleration,1.e-6) && A.AngularVelocity.Equals(B.AngularVelocity,1.e-6) && A.SimTimeMs==B.SimTimeMs;
   }
-  TestTrue(FString::Printf(TEXT("%s: all 92 sample transforms, velocities, derivatives and times are finite%s"),CaseName,
+  TestTrue(FString::Printf(TEXT("%s: all %d sample transforms, velocities, derivatives and times are finite%s"),CaseName,CaseQuery.NumPredictionSamples,
    CompareOutput?TEXT(" and equivalent"):TEXT("; mutable custom-mode tuning is not treated as immutable")),Same);
   TestEqual(FString::Printf(TEXT("%s: actual branch consumption"),CaseName),QueryCounter->GetInt(),CounterBefore+(ExpectReuse?1:0));
   FMoverNativeFlyingTrajectory Owned135;Owned135.NumPredictionSamples=777;Owned135.Location=FVector(123,456,789);
@@ -1102,6 +1102,18 @@ bool FProjectJNativeFlyingTrajectoryParamsTest::RunTest(const FString&)
  Mover->SetGravityOverride(true,FVector(0,-700,-700));FPlanarConstraint Constraint;
  Constraint.bConstrainToPlane=true;Constraint.PlaneConstraintNormal=FVector::RightVector;Mover->SetPlanarConstraint(Constraint);
  Compare(TEXT("Directional tilted-gravity planar"),Fixed,DefaultModeNames::Flying,Query,true);
+ auto RawSingleSample=Query;
+ RawSingleSample.NumPredictionSamples=1;
+ RawSingleSample.bUseVisualComponentRoot=false;
+ Compare(TEXT("Single prediction sample in movement space"),Fixed,DefaultModeNames::Flying,RawSingleSample,true);
+ auto EmptyQuery=RawSingleSample;
+ const int32 QueriesBeforeEmpty=QueryCounter->GetInt();
+ for(int32 Count : {0,-1})
+ {
+  EmptyQuery.NumPredictionSamples=Count;
+  TestTrue(TEXT("Empty prediction exits before entering the movement context"),Mover->GetPredictedTrajectory(EmptyQuery).IsEmpty());
+ }
+ TestEqual(TEXT("Empty predictions do not count as completed native forecasts"),QueryCounter->GetInt(),QueriesBeforeEmpty);
  FixedInput.SetMoveInput(EMoveInputType::Velocity,FVector(140,-60,25));PredictionSettings->bShouldRemainVertical=false;
  PredictionSettings->MaxSpeed=420.f;PredictionSettings->Acceleration=777.f;
  Compare(TEXT("Velocity with fresh tuning next query"),Fixed,DefaultModeNames::Flying,Query,true);

@@ -1,6 +1,7 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "Components/WorldPartitionStreamingSourceComponent.h"
+#include "World/Project_JWorldStreamingPolicy.h"
 #include "Project_JWorldStreamingComponent.generated.h"
 
 class UProject_JWorldArrivalSubsystem;
@@ -34,6 +35,37 @@ public:
     static FVector PredictOffset(const FVector& Velocity, float Seconds, float Maximum);
     static bool BuildPreparationShapes(const FVector& Velocity, float Seconds, float Radius, float Maximum,
         TArray<FStreamingSourceShape>& OutShapes);
+
+    /** BP02 2-stage velocity-predictive streaming output for high-speed ground/flying travel. */
+    struct FTwoStageStreamingPlan
+    {
+        bool bHighSpeedActive = false;
+        bool bSuppressDetailGrid = false;
+        bool bTurnWidened = false;
+        TArray<FStreamingSourceShape> Stage1LoadedShapes;
+        TArray<FStreamingSourceShape> Stage2ActivatedShapes;
+    };
+
+    /** Computes Stage 1 (Loaded preload) & Stage 2 (Activated) shapes with turn widening and altitude detail suppression. */
+    static bool BuildTwoStageVelocityShapes(
+        const FVector& Velocity,
+        float YawRateDegPerSec,
+        float AltitudeAboveGroundCm,
+        const FProject_JStreamingVelocityProfile& Profile,
+        FTwoStageStreamingPlan& OutPlan);
+
+    /** Evaluates whether a trailing hysteresis anchor should remain active to prevent boundary cell thrashing. */
+    static bool ShouldHoldHysteresisAnchor(
+        const FVector& CurrentLocation,
+        const FVector& AnchorLocation,
+        double ElapsedSeconds,
+        const FProject_JStreamingVelocityProfile& Profile);
+
+    /** Returns a soft speed scale in [UnreadyForwardSpeedClampMin, 1.0] when forward cells lag behind high-speed flight. */
+    static float ComputeSafeStreamingSpeedScale(
+        float CurrentSpeedCmPerSec,
+        bool bForwardCellsReady,
+        const FProject_JStreamingVelocityProfile& Profile);
 protected:
     virtual void OnRegister() override;
     virtual void BeginPlay() override;
@@ -49,7 +81,7 @@ private:
     bool TryStartArrivalPreparation();
     void AdvancePreparedArrival(double Now);
     static constexpr double ArrivalTimeoutSeconds = 30;
-    static constexpr int32 MaxArrivalCells = 128;
+    static constexpr int32 MaxArrivalCells = 512;
     bool IsArrivalCurrent(bool bRequireOrigin) const;
     bool IsArrivalRegionReady() const;
     bool TakeArrivalReadySend(double Now);
@@ -90,4 +122,43 @@ public:
     UPROPERTY(EditAnywhere, Category="Preparation", meta=(ClampMin="0",ClampMax="10")) float PredictionSeconds = 3;
     UPROPERTY(EditAnywhere, Category="Preparation", meta=(ClampMin="1000",ClampMax="200000")) float PreparationRadius = 60000;
     UPROPERTY(EditAnywhere, Category="Preparation", meta=(ClampMin="0",ClampMax="200000")) float MaxPredictionDistance = 60000;
+    UPROPERTY(EditAnywhere, Category="Preparation|HighSpeed") FProject_JStreamingVelocityProfile VelocityProfile;
+    UPROPERTY(EditAnywhere, Category="Preparation|HighSpeed") TObjectPtr<const UProject_JWorldStreamingPolicyAsset> HighSpeedPolicy;
+    UPROPERTY(EditAnywhere, Category="Preparation|HighSpeed") bool bEnableHighSpeedTwoStage = true;
+    UPROPERTY(EditAnywhere, Category="Preparation|HighSpeed") bool bLimitFlightSpeedForLocalStreaming = false;
+    float GetLocalFlightStreamingSpeedScale(const APawn& Pawn) const;
+
+private:
+    friend class UProject_JWorldPreloadStreamingComponent;
+    friend class FProjectJPhase1HighSpeedStreamingTest;
+    FName GetDetailGridName() const;
+    bool BuildPawnVelocityPlan(const APawn& Pawn, const FProject_JStreamingVelocityProfile& Profile, FTwoStageStreamingPlan& OutPlan) const;
+    mutable TWeakObjectPtr<const APawn> ObservedPawn;
+    mutable uint64 VelocitySampleFrame = MAX_uint64;
+    mutable FVector LastObservedVelocity = FVector::ZeroVector;
+    mutable double LastObservedVelocityTime = 0.0;
+    mutable float ObservedYawRate = 0.0f;
+    mutable TOptional<float> ObservedFlightAltitude;
+    mutable TWeakObjectPtr<const APawn> FlightReadinessPawn;
+    mutable double NextFlightReadinessSample = 0.0;
+    mutable float FlightReadinessScale = 1.0f;
+    mutable FVector HysteresisAnchorLocation = FVector::ZeroVector;
+    mutable double HysteresisAnchorTime = -1000.0;
+};
+
+/**
+ * Companion Stage-1 (TargetState = Loaded) streaming source attached to AProject_JPlayerController (BP02).
+ * Warms disk/Pak/PSO 5-7s ahead during high-speed ground/flying travel without spawning actors early.
+ */
+UCLASS(ClassGroup=(World), meta=(BlueprintSpawnableComponent))
+class PROJECT_J_API UProject_JWorldPreloadStreamingComponent : public UWorldPartitionStreamingSourceComponent
+{
+    GENERATED_BODY()
+public:
+    UProject_JWorldPreloadStreamingComponent();
+    virtual void OnRegister() override;
+    virtual bool GetStreamingSource(FWorldPartitionStreamingSource& Out) const override;
+    UPROPERTY(EditAnywhere, Category="Preparation|HighSpeed") FProject_JStreamingVelocityProfile VelocityProfile;
+private:
+    FName StreamingSourceIdentity;
 };

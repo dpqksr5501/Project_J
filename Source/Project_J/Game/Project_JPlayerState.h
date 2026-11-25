@@ -16,12 +16,14 @@
 class UProject_JCraftingJobsComponent;
 class UProject_JSocialSubsystem;
 struct FOnAttributeChangeData;
+struct FGameplayTag;
 class UProject_JQuestComponent;
 class UProject_JCompanionComponent;
 class UProject_JProgressionComponent;
 class UProject_JInventoryComponent;
 class UProject_JEquipmentManagerComponent;
 class AProject_JGameMode;
+class UProject_JOnlineWorldSubsystem;
 
 /**
  * Public, replicated player metadata.
@@ -68,6 +70,7 @@ public:
 	virtual void SetHasGrantedDefaultAbilities(bool bGranted) override { bDefaultAbilitiesGranted = bGranted; }
 	virtual FName GetPartyId_Implementation() const override { return PartyId; }
 	virtual FName GetGuildId_Implementation() const override { return GuildId; }
+	virtual FGuid GetAuthoritativeCharacterGuid() const override { return CharacterId.Value; }
 
 	UFUNCTION(BlueprintPure, Category = "MMO|Identity")
 	FProject_JAccountId GetAccountId() const { return AccountId; }
@@ -138,9 +141,14 @@ protected:
 	FGuid GuildLeaderCharacterId;
 
 private:
+	void HandleDeathTagChanged(FGameplayTag Tag, int32 NewCount);
+	FDelegateHandle DeathTagHandle;
 	friend class AProject_JGameMode;
 	void RequireServerSession(AProject_JGameMode* Authority);
 	void InstallServerSession(AProject_JGameMode* Authority, const ProjectJ::MMO::FServerSessionLease& Lease);
+	friend class UProject_JOnlineWorldSubsystem;
+	int64 OnlineInventoryRevision = 0;
+	int64 OnlineQuestRevision = 0;
 	bool OwnsServerSession(const AProject_JGameMode* Authority, const ProjectJ::MMO::FServerSessionLease& Lease) const;
 	bool bServerSessionRequired = false;
 	bool bServerSessionRevoked = false;

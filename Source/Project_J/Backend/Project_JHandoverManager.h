@@ -228,4 +228,6 @@ private:
 
 	UPROPERTY(Config, EditAnywhere, Category = "Handover", meta = (ClampMin = "1.0", Units = "s"))
 	float TerminalRecordTtlSeconds = 300.0f;
+
+	float ReplayPruneAccumulator = 0.0f;
 };

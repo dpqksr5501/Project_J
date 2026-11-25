@@ -44,13 +44,18 @@ private:
 	friend class FProjectJGatewayAdmissionTest;
 	friend class FProjectJGatewayBoundsTest;
 	friend class FProjectJGatewayHTTPTest;
+	friend class FProjectJOutboxGatewayHTTPTest;
+	friend class UProject_JNakamaServicePortSubsystem;
 	void DispatchTrackedRequest(const FString& Endpoint, const FString& Payload,
 		const FProject_JBackendRequestContext& RequestContext,
-		TFunction<void(const FProject_JBackendResponseEnvelope&)> Completion);
+		TFunction<void(const FProject_JBackendResponseEnvelope&)> Completion,
+		bool bNakamaRuntimeRequest = false);
 	TSharedPtr<ProjectJ::MMO::FRequestTracker, ESPMode::ThreadSafe> RequestTracker;
 	TMap<FGuid, TSharedPtr<IHttpRequest, ESPMode::ThreadSafe>> ActiveRequests;
 	UPROPERTY(Config, EditDefaultsOnly, Category = "Backend", meta = (ClampMin = "1", ClampMax = "4096"))
-	int32 MaxInFlightRequests = 128;
+	int32 MaxInFlightRequests = 512;
+	FString CachedNakamaRawKey;
+	FString CachedNakamaAuthHeader;
 	UPROPERTY(Config, EditDefaultsOnly, Category = "Backend", meta = (ClampMin = "1.0"))
 	float RequestTimeoutSeconds = 15.0f;
 	UPROPERTY(Config, EditDefaultsOnly, Category="Backend", meta=(ClampMin="1", ClampMax="16777216"))

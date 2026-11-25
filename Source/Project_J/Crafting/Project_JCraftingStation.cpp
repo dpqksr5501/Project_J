@@ -1,4 +1,6 @@
 #include "Crafting/Project_JCraftingStation.h"
+#include "Backend/Project_JOnlineWorldSubsystem.h"
+#include "Game/Project_JGameMode.h"
 #include "Backend/Project_JLocalProfileSubsystem.h"
 #include "CharacterClass/Project_JCharacterDataSubsystem.h"
 #include "Components/BoxComponent.h"
@@ -84,7 +86,10 @@ bool AProject_JCraftingStation::TryCraft(APawn* Interactor)
 		Player->GetGameInstance() != Instance || !Instance) return false;
 	auto* Profiles = Instance->GetSubsystem<UProject_JLocalProfileSubsystem>();
 	auto* Data = Instance->GetSubsystem<UProject_JCharacterDataSubsystem>();
-	if (!Profiles || !Profiles->IsReady(Player) || Profiles->IsCheckpointPending(Player) || !Data) return false;
+	auto* Mode = GetWorld()->GetAuthGameMode<AProject_JGameMode>();
+	const bool bOnline = UProject_JOnlineWorldSubsystem::UsesOnlineBackend(GetWorld());
+	if (!Data || (bOnline ? !Mode || Mode->GetOnlineEpoch(Player) <= 0
+		: !Profiles || !Profiles->IsReady(Player) || Profiles->IsCheckpointPending(Player))) return false;
 	// A saved job owns its frozen terms even if its recipe/station content changed.
 	// Completion and refund are character-owned; starting still requires this bench.
 	auto* Jobs = Player->GetCraftingJobsComponent();
@@ -98,6 +103,7 @@ bool AProject_JCraftingStation::TryCraft(APawn* Interactor)
 	Edit.Kind = Values.DurationSecondsPerBatch > 0 ? EProject_JPersistentEdit::StartCraftJob : EProject_JPersistentEdit::Craft;
 	Edit.CraftingRecipe = RecipeId; Edit.CraftingRecipeVersion = RecipeVersion;
 	Edit.CraftingBatches = Batches; Edit.CraftingRulesDigest = MoveTemp(Rules);
-	Edit.Request = Profiles->NewRequestId(Player);
+	Edit.Request = bOnline ? FGuid::NewGuid() : Profiles->NewRequestId(Player);
+	if (bOnline) return Mode->SubmitOnlineInventoryEdit(Player, Edit);
 	return Edit.Request.IsValid() && Profiles->SubmitEdit(Player, Edit);
 }

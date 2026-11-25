@@ -1,9 +1,11 @@
 #include "UI/Project_JPlayerHUDWidget.h"
 #include "UI/Project_JPlayerUIComponent.h"
 #include "UI/Project_JCraftingJobsWidget.h"
+#include "UI/Project_JGraphicsSettingsWidget.h"
 #include "UI/Project_JUILayoutSettings.h"
 #include "UI/Project_JHUDWindow.h"
 #include "UI/Project_JMinimapWidget.h"
+#include "UI/Project_JUIWindowStackSubsystem.h"
 #include "Game/Project_JQuestComponent.h"
 #include "Game/Project_JPlayerState.h"
 #include "Backend/Project_JLocalProfileSubsystem.h"
@@ -244,6 +246,7 @@ void UProject_JPlayerHUDWidget::BuildDefaultScreen()
 	BagActions->AddChildToHorizontalBox(Command(TEXT("SplitSelected"), NSLOCTEXT("ProjectJUI", "SplitSelected", "분할")));
 	BagActions->AddChildToHorizontalBox(Command(TEXT("MergeSelected"), NSLOCTEXT("ProjectJUI", "MergeSelected", "합치기")));
 	BagActions->AddChildToHorizontalBox(Command(TEXT("CancelMerge"), NSLOCTEXT("ProjectJUI", "CancelMerge", "선택 취소")));
+	BagActions->AddChildToHorizontalBox(Command(TEXT("Mail"), NSLOCTEXT("ProjectJUI", "MailWindowButton", "우편")));
 	BagActions->SetToolTipText(NSLOCTEXT("ProjectJUI", "BagKeyboard", "방향키: 선택 · Enter: 사용/장착 · Shift+Enter: 분할 · Ctrl+M: 합치기 · Ctrl+F: 검색 · Tab: 버튼 이동"));
 	InventoryList = WidgetTree->ConstructWidget<UProject_JInventoryTileView>(UProject_JInventoryTileView::StaticClass(),
 																			 TEXT("InventoryList"));
@@ -253,6 +256,15 @@ void UProject_JPlayerHUDWidget::BuildDefaultScreen()
 	StatusLabel = Text(FText::GetEmpty(), 11);
 	StatusLabel->SetAutoWrapText(true);
 	Bag->BodyBox->AddChildToVerticalBox(StatusLabel);
+	auto* MailWindow = AddWindow(TEXT("Mail"), NSLOCTEXT("ProjectJUI", "MailTitle", "우편함"), FVector2D(360, 400));
+	auto* MailCommands = WidgetTree->ConstructWidget<UHorizontalBox>();
+	MailWindow->BodyBox->AddChildToVerticalBox(MailCommands);
+	MailCommands->AddChildToHorizontalBox(Command(TEXT("MailRefresh"), NSLOCTEXT("ProjectJUI", "MailRefresh", "새로 고침")));
+	MailCommands->AddChildToHorizontalBox(Command(TEXT("MailNext"), NSLOCTEXT("ProjectJUI", "MailNext", "다음 페이지")));
+	MailStatus = Text(FText::GetEmpty());
+	MailWindow->BodyBox->AddChildToVerticalBox(MailStatus);
+	MailList = WidgetTree->ConstructWidget<UScrollBox>();
+	MailWindow->BodyBox->AddChildToVerticalBox(MailList)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
 	auto *Gear = AddWindow(TEXT("Equipment"), NSLOCTEXT("ProjectJUI", "GearTitle", "장비"), FVector2D(250, 350));
 	EquipmentList = WidgetTree->ConstructWidget<UProject_JInventoryTileView>(UProject_JInventoryTileView::StaticClass(),
 																			 TEXT("EquipmentList"));
@@ -286,11 +298,12 @@ void UProject_JPlayerHUDWidget::BuildDefaultScreen()
 	SkillPalette = WidgetTree->ConstructWidget<UWrapBox>();
 	SkillScroll->AddChild(SkillPalette);
 	auto *Settings =
-		AddWindow(TEXT("Settings"), NSLOCTEXT("ProjectJUI", "SettingsTitle", "UI 설정"), FVector2D(270, 440));
+		AddWindow(TEXT("Settings"), NSLOCTEXT("ProjectJUI", "SettingsTitle", "설정"), FVector2D(270, 465));
 	SettingsSummary = Text(FText::GetEmpty(), 11);
 	Settings->BodyBox->AddChildToVerticalBox(SettingsSummary)->SetPadding(FMargin(0, 0, 0, 8));
 	for (const auto &Pair :
-		 {TPair<FName, FText>(TEXT("Keys"), NSLOCTEXT("ProjectJUI", "KeysButton", "단축키 설정")),
+		 {TPair<FName, FText>(TEXT("Graphics"), NSLOCTEXT("ProjectJUI", "GraphicsButton", "그래픽 설정")),
+	  TPair<FName, FText>(TEXT("Keys"), NSLOCTEXT("ProjectJUI", "KeysButton", "단축키 설정")),
 	  TPair<FName, FText>(TEXT("Skills"), NSLOCTEXT("ProjectJUI", "SkillLibraryButton", "스킬 등록 창")),
 		  TPair<FName, FText>(TEXT("Lock"), NSLOCTEXT("ProjectJUI", "LockToggle", "퀵슬롯 잠금 / 해제")),
 		  TPair<FName, FText>(TEXT("Values"), NSLOCTEXT("ProjectJUI", "ValuesToggle", "자원 수치 표시 / 숨김")),
@@ -307,6 +320,12 @@ void UProject_JPlayerHUDWidget::BuildDefaultScreen()
 	ProfileSaveStatus=Text(FText::GetEmpty(),10);
 	ProfileSaveStatus->SetAutoWrapText(true);
 	Settings->BodyBox->AddChildToVerticalBox(ProfileSaveStatus);
+	auto* Graphics = AddWindow(TEXT("Graphics"), NSLOCTEXT("ProjectJUI", "GraphicsTitle", "그래픽 설정"), FVector2D(420, 470));
+	GraphicsSettings = CreateWidget<UProject_JGraphicsSettingsWidget>(GetOwningPlayer());
+	if (GraphicsSettings)
+	{
+		Graphics->BodyBox->AddChildToVerticalBox(GraphicsSettings)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+	}
 	auto *KeysWindow = AddWindow(TEXT("Keys"), NSLOCTEXT("ProjectJUI", "KeysTitle", "단축키 설정"), FVector2D(310, 410));
 	KeysStatus = Text(NSLOCTEXT("ProjectJUI", "KeysHelp", "변경할 항목 클릭 · 숫자/I/K/O/U/F1~F12"), 11);
 	KeysStatus->SetAutoWrapText(true);
@@ -362,6 +381,12 @@ void UProject_JPlayerHUDWidget::NativeConstruct()
 }
 void UProject_JPlayerHUDWidget::NativeDestruct()
 {
+	if (auto* Bridge = MailBridge.Get())
+	{
+		Bridge->OnMailInbox.RemoveAll(this);
+		Bridge->OnMMOActionResult.RemoveAll(this);
+	}
+	MailBridge.Reset();
     bQuestPresentationRetired = true;
     ClearQuestPresentation();
 	if (ScreenOwner.IsValid()) ScreenOwner->ReleaseCraftingScreen(this);
@@ -436,10 +461,12 @@ void UProject_JPlayerHUDWidget::UpdateCharacter(const FProject_JUIContext &Conte
 {
 	if (CharacterDetailsLabel)
 		CharacterDetailsLabel->SetText(Details);
+	bool bRebuiltResources = false;
 	if (ResourcesBox)
 	{
 		if (ResourceLabels.Num() != Resources.Num())
 		{
+			bRebuiltResources = true;
 			ResourcesBox->ClearChildren();
 			ResourceLabels.Reset();
 			ResourceBars.Reset();
@@ -474,7 +501,9 @@ void UProject_JPlayerHUDWidget::UpdateCharacter(const FProject_JUIContext &Conte
 	}
 	if (CharacterModule)
 		CharacterModule->PresentCharacter(Context, Resources);
-	ApplyPreferences(Preferences);
+	// Only re-run full HUD scale/position layout when resource row count changes (avoids Slate invalidation on every damage tick).
+	if (bRebuiltResources)
+		ApplyPreferences(Preferences);
 }
 void UProject_JPlayerHUDWidget::SetLayoutIdentity(const FGuid &CharacterId, FName ProfileId)
 {
@@ -792,7 +821,9 @@ FReply UProject_JPlayerHUDWidget::NativeOnKeyDown(const FGeometry &Geometry, con
 			CloseMenu();
 		return FReply::Handled();
 	}
-	if ((SearchBox && SearchBox->HasKeyboardFocus()) || (SplitCount && SplitCount->HasFocusedDescendants()))
+	if ((SearchBox && SearchBox->HasKeyboardFocus())
+		|| (SplitCount && SplitCount->HasFocusedDescendants())
+		|| (!WindowStack.IsEmpty() && WindowStack.Last() == TEXT("Split")))
 		return Super::NativeOnKeyDown(Geometry, Event);
 	if (ScreenOwner.IsValid() && ScreenOwner->HandleMenuKey(Event.GetKey())) return FReply::Handled();
 	return Super::NativeOnKeyDown(Geometry, Event);
@@ -886,6 +917,7 @@ void UProject_JPlayerHUDWidget::ToggleWindow(FName Id)
 		CloseWindow(Id);
 		return;
 	}
+	if (Id == TEXT("Graphics") && GraphicsSettings) GraphicsSettings->ReloadAppliedSettings();
 	Window->SetVisibility(ESlateVisibility::Visible);
 	RaiseWindow(Id);
 	if (ScreenOwner.IsValid())
@@ -907,6 +939,13 @@ void UProject_JPlayerHUDWidget::CloseWindow(FName Id)
 	if (UProject_JHUDWindow *Window = Windows.FindRef(Id))
 		Window->SetVisibility(ESlateVisibility::Collapsed);
 	WindowStack.Remove(Id);
+	if (UGameInstance* GI = GetGameInstance())
+	{
+		if (auto* ModalStack = GI->GetSubsystem<UProject_JUIWindowStackSubsystem>())
+		{
+			ModalStack->CloseWindow(Id);
+		}
+	}
 	if (WindowStack.IsEmpty())
 	{
 		if (ScreenOwner.IsValid())
@@ -922,6 +961,13 @@ void UProject_JPlayerHUDWidget::RaiseWindow(FName Id)
 		return;
 	WindowStack.Remove(Id);
 	WindowStack.Add(Id);
+	if (UGameInstance* GI = GetGameInstance())
+	{
+		if (auto* ModalStack = GI->GetSubsystem<UProject_JUIWindowStackSubsystem>())
+		{
+			ModalStack->PushModalWindow(Id);
+		}
+	}
 	for (int32 Index = 0; Index < WindowStack.Num(); ++Index)
 		if (UProject_JHUDWindow *Window = Windows.FindRef(WindowStack[Index]))
 			if (auto *WindowCanvasSlot = Cast<UCanvasPanelSlot>(Window->Slot))
@@ -998,6 +1044,33 @@ void UProject_JPlayerHUDWidget::ApplySearch()
 void UProject_JPlayerHUDWidget::ExecuteCommand(FName Command)
 {
 	const FString Value = Command.ToString();
+	if (Command == TEXT("Mail") || Command == TEXT("MailRefresh") || Command == TEXT("MailNext") || Value.StartsWith(TEXT("MailClaim.")))
+	{
+		if (Command == TEXT("Mail"))
+		{
+			ToggleWindow(Command);
+			if (!WindowStack.Contains(Command)) return;
+		}
+		auto* PC = GetOwningPlayer();
+		auto* Bridge = PC ? PC->FindComponentByClass<UProject_JMMOClientBridgeComponent>() : nullptr;
+		if (!Bridge || !MailList) return;
+		if (auto* Old = MailBridge.Get(); Old && Old != Bridge)
+		{
+			Old->OnMailInbox.RemoveAll(this);
+			Old->OnMMOActionResult.RemoveAll(this);
+		}
+		MailBridge = Bridge;
+		Bridge->OnMailInbox.AddUniqueDynamic(this, &ThisClass::ShowMailInbox);
+		Bridge->OnMMOActionResult.AddUniqueDynamic(this, &ThisClass::HandleMailAction);
+		if (Value.StartsWith(TEXT("MailClaim.")))
+		{
+			const int32 Index = FCString::Atoi(*Value.Mid(10));
+			if (DisplayedMail.IsValidIndex(Index)) Bridge->ServerClaimMail(DisplayedMail[Index]);
+		}
+		else if (Command != TEXT("MailNext") || NextMailPage.IsValid())
+			Bridge->ServerRequestMailInbox(Command == TEXT("MailNext") ? NextMailPage : FGuid());
+		return;
+	}
 	if (Command == TEXT("SplitSelected")) { OpenSplit(InventoryList ? Cast<UProject_JInventoryEntry>(InventoryList->GetSelectedItem()) : nullptr); return; }
 	if (Command == TEXT("CancelMerge")) { MergeSource = nullptr; if (InventoryModel) { InventoryModel->SetLocalStatus(FText::GetEmpty()); } return; }
 	if (Command == TEXT("MergeSelected"))
@@ -1040,7 +1113,8 @@ void UProject_JPlayerHUDWidget::ExecuteCommand(FName Command)
 		return;
 	}
 	if (Command == TEXT("Bag") || Command == TEXT("Equipment") || Command == TEXT("Quests") ||
-		Command == TEXT("Skills") || Command == TEXT("Settings") || Command == TEXT("Keys") || Command == TEXT("Crafting"))
+		Command == TEXT("Skills") || Command == TEXT("Settings") || Command == TEXT("Graphics") ||
+		Command == TEXT("Keys") || Command == TEXT("Crafting"))
 	{
 		ToggleWindow(Command);
 		return;
@@ -1112,6 +1186,43 @@ void UProject_JPlayerHUDWidget::ExecuteCommand(FName Command)
 	}
 	if (ScreenOwner.IsValid())
 		ScreenOwner->ChangePreferences(Command);
+}
+
+void UProject_JPlayerHUDWidget::ShowMailInbox(const TArray<FProject_JInboxEntry>& Entries, FGuid Next, bool bSucceeded)
+{
+	if (!MailList || !MailStatus) return;
+	MailList->ClearChildren();
+	DisplayedMail.Reset();
+	NextMailPage = Next;
+	MailStatus->SetText(!bSucceeded ? NSLOCTEXT("ProjectJUI", "MailLoadError", "우편함을 불러오지 못했습니다.")
+		: Entries.IsEmpty() ? NSLOCTEXT("ProjectJUI", "MailEmpty", "받을 우편이 없습니다.") : FText::GetEmpty());
+	for (const auto& Entry : Entries)
+	{
+		auto* Row = WidgetTree->ConstructWidget<UHorizontalBox>();
+		auto* Label = WidgetTree->ConstructWidget<UTextBlock>();
+		FString Details = Entry.Subject;
+		if (!Entry.Item.IsEmpty()) Details += FString::Printf(TEXT("\n%s ×%d"), *Entry.Item, Entry.Quantity);
+		if (Entry.Amount > 0) Details += FString::Printf(TEXT("\n%lld %s"), Entry.Amount, *Entry.Currency);
+		Label->SetText(FText::FromString(Details));
+		Row->AddChildToHorizontalBox(Label)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+		auto* Claim = WidgetTree->ConstructWidget<UProject_JUICommandButton>();
+		Claim->InitializeCommand(this, FName(*FString::Printf(TEXT("MailClaim.%d"), DisplayedMail.Add(Entry.MailId))),
+			NSLOCTEXT("ProjectJUI", "MailClaimButton", "받기"));
+		Row->AddChildToHorizontalBox(Claim);
+		MailList->AddChild(Row);
+	}
+}
+
+void UProject_JPlayerHUDWidget::HandleMailAction(FName Action, bool bSucceeded, FName Reason)
+{
+	if (Action != TEXT("MailClaim") || !MailStatus) return;
+	if (bSucceeded)
+	{
+		if (auto* Bridge = MailBridge.Get()) Bridge->ServerRequestMailInbox({});
+	}
+	else MailStatus->SetText(Reason == TEXT("InventoryFull") ? NSLOCTEXT("ProjectJUI", "MailBagFull", "가방이 가득 찼습니다.")
+		: Reason == TEXT("RefreshPending") ? NSLOCTEXT("ProjectJUI", "MailRefreshPending", "수령 기록을 확인했습니다. 인벤토리 동기화가 필요합니다.")
+		: NSLOCTEXT("ProjectJUI", "MailClaimError", "우편을 받지 못했습니다."));
 }
 void UProject_JPlayerHUDWidget::RetireQuestRow(const FProject_JQuestJournalRow& Row)
 {
@@ -1479,24 +1590,36 @@ void UProject_JPlayerHUDWidget::OpenSplit(UProject_JInventoryEntry *Entry)
 void UProject_JPlayerHUDWidget::PresentStatusEffects(const TArray<FProject_JStatusEffectState> &States)
 {
 	if (!StatusEffectBox) return;
+	const int32 ActiveCount = FMath::Min(12, States.Num());
 	TArray<FActiveGameplayEffectHandle> Handles;
-	for (int32 I = 0; I < FMath::Min(12, States.Num()); ++I) Handles.Add(States[I].Handle);
+	Handles.Reserve(ActiveCount);
+	for (int32 I = 0; I < ActiveCount; ++I) Handles.Add(States[I].Handle);
 	if (Handles != StatusHandles)
 	{
-		StatusEffectBox->ClearChildren();
-		StatusIcons.Reset();
 		StatusHandles = Handles;
-		for (int32 I = 0; I < Handles.Num(); ++I)
+		// Reuse pooled status icon widgets instead of destroying and recreating UWidgets on every buff tick.
+		while (StatusIcons.Num() < ActiveCount)
 		{
 			auto *Icon = CreateWidget<UProject_JSkillButton>(GetOwningPlayer());
 			Icon->TakeWidget();
 			if (auto *Size = Cast<USizeBox>(Icon->GetRootWidget())) { Size->SetWidthOverride(32); Size->SetHeightOverride(32); }
+			if (StatusOverflow && StatusOverflow->GetParent() == StatusEffectBox)
+			{
+				StatusEffectBox->RemoveChild(StatusOverflow);
+			}
 			StatusEffectBox->AddChildToWrapBox(Icon)->SetPadding(FMargin(0, 0, 4, 4));
 			StatusIcons.Add(Icon);
 		}
-		StatusEffectBox->AddChildToWrapBox(StatusOverflow);
+		if (StatusOverflow && StatusOverflow->GetParent() != StatusEffectBox)
+		{
+			StatusEffectBox->AddChildToWrapBox(StatusOverflow);
+		}
+		for (int32 I = 0; I < StatusIcons.Num(); ++I)
+		{
+			StatusIcons[I]->SetVisibility(I < ActiveCount ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+		}
 	}
-	for (int32 I = 0; I < StatusIcons.Num(); ++I)
+	for (int32 I = 0; I < ActiveCount; ++I)
 	{
 		const auto &Effect = States[I];
 		FProject_JQuickSlotState State;

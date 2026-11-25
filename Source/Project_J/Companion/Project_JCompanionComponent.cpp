@@ -33,8 +33,11 @@ void UProject_JCompanionComponent::BeginPlay()
         Inventory->OnItemChanged.AddUniqueDynamic(this, &ThisClass::OnOwnedItemChanged);
         Inventory->OnItemRemoved.AddUniqueDynamic(this, &ThisClass::OnOwnedItemRemoved);
     }
-    OwnerHealthHandle = State->GetAbilitySystemComponent()->GetGameplayAttributeValueChangeDelegate(
-        UProject_JAttributeSet::GetHealthAttribute()).AddUObject(this, &ThisClass::OnOwnerHealthChanged);
+    if (auto* ASC = State->GetAbilitySystemComponent())
+    {
+        OwnerHealthHandle = ASC->GetGameplayAttributeValueChangeDelegate(
+            UProject_JAttributeSet::GetHealthAttribute()).AddUObject(this, &ThisClass::OnOwnerHealthChanged);
+    }
 }
 void UProject_JCompanionComponent::RequestCompanion(FGuid ItemInstanceId)
 {
@@ -74,8 +77,9 @@ bool UProject_JCompanionComponent::UseCompanionAuthority(FGuid ItemInstanceId)
     auto* CurrentAvatar = ASC ? Cast<AProject_JPlayerCharacter>(ASC->GetAvatarActor()) : nullptr;
     const TStrongObjectPtr<UProject_JAbilitySystemComponent> KeepASC(ASC);
     FProject_JItemInstanceData Item;
+    auto* Inventory = KeepState->GetInventoryComponent();
     if (!IsValid(CurrentAvatar) || CurrentAvatar->IsActorBeingDestroyed() || !IsValid(ASC) || ASC->IsBeingDestroyed() || ASC->GetOwnerActor() != KeepState.Get() || ASC->GetAvatarActor() != CurrentAvatar
-        || !KeepState->GetInventoryComponent()->FindItemInstance(ItemInstanceId, Item) || Item.bIsLocked) return false;
+        || !Inventory || !Inventory->FindItemInstance(ItemInstanceId, Item) || Item.bIsLocked) return false;
     auto* Selected = Cast<UProject_JCompanionItemDefinition>(Item.ItemDef);
     if (!IsValid(Selected) || !Selected->IsFollowDefinitionValid()) return false;
     if (OwnedItem == ItemInstanceId && IsCurrent(Generation) && (PreparationToken || GetActiveCompanion())) return true;
@@ -123,7 +127,12 @@ void UProject_JCompanionComponent::CompletePreparation(uint64 Token, bool bLoadC
         ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding);
     if (!Spawned) { RetireLease(); return; }
     const TStrongObjectPtr<AProject_JNPCCharacter> KeepSpawned(Spawned);
-    if (!IsCurrent(Lease)) { if (IsValid(Spawned) && !Spawned->IsActorBeingDestroyed()) Spawned->Destroy(); return; }
+    if (!IsCurrent(Lease))
+    {
+        if (IsValid(Spawned) && !Spawned->IsActorBeingDestroyed()) Spawned->Destroy();
+        if (Generation == Lease) RetireLease();
+        return;
+    }
     ActiveCompanion = Spawned;
     const auto IsSpawnCurrent = [&] { return IsCurrent(Lease) && ActiveCompanion.Get() == Spawned && IsValid(Spawned) && !Spawned->IsActorBeingDestroyed(); };
     Spawned->OnEndPlay.AddUniqueDynamic(this, &ThisClass::OnLeaseActorEnded);
@@ -139,9 +148,15 @@ void UProject_JCompanionComponent::CompletePreparation(uint64 Token, bool bLoadC
         AI->Possess(Spawned);
         if (!IsSpawnCurrent()) { RetireLease(); return; }
     }
-    auto* Following = NewObject<UProject_JNPCActionComponent>(Spawned);
+    auto* Following = Spawned->FindComponentByClass<UProject_JNPCActionComponent>();
+    if (!Following)
+    {
+        Following = NewObject<UProject_JNPCActionComponent>(Spawned);
+        Spawned->AddInstanceComponent(Following);
+        Following->RegisterComponent();
+    }
     const TStrongObjectPtr<UProject_JNPCActionComponent> KeepFollowing(Following);
-    Spawned->AddInstanceComponent(Following); Following->RegisterComponent(); Action = Following;
+    Action = Following;
     const TWeakObjectPtr<ThisClass> WeakSelf(this);
     if (!IsSpawnCurrent() || !IsValid(Following) || Following->IsBeingDestroyed() || !Following->StartFollowing(KeepAvatar.Get(), KeepState->GetAbilitySystemComponent(), Definition->FollowDistance, [WeakSelf, Lease]
         { if (auto* Self = WeakSelf.Get(); Self && Self->Generation == Lease) Self->DismissCompanionAuthority(); }))

@@ -42,6 +42,7 @@ class FSecondaryPhysicsEquivalence : public IAutomationLatentCommand
 	FAnimNode_RetargetPoseFromMesh* RetargetB = nullptr;
 	TArray<USkeletalMeshComponent*> Components;
 	TArray<TStrongObjectPtr<UPhysicsAsset>> Copies;
+	bool bHairTrial = false;
 	int32 Frame = 0, Samples = 0;
 	double Deadline = 0, MaxPosition = 0, MaxAngle = 0, MaxScale = 0, MaxBasePosition = 0;
 	FString Audit;
@@ -96,11 +97,25 @@ class FSecondaryPhysicsEquivalence : public IAutomationLatentCommand
 			if (Cast<UProject_JRetargetAnimInstance>(Mesh->GetAnimInstance())) Authored = Mesh;
 		}
 		if (!Authored) return false;
+		if (bHairTrial)
+		{
+			UClass* RetargetClass = LoadClass<UAnimInstance>(nullptr, TEXT("/Game/Characters/Spellblade/Animation/ABP_Spellblade_Retarget.ABP_Spellblade_Retarget_C"));
+			auto* TrialMesh = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete.SK_Spellblade_Complete"));
+			if (!RetargetClass || !TrialMesh) return false;
+			Authored->SetSkeletalMeshAsset(TrialMesh);
+			Authored->SetAnimInstanceClass(RetargetClass);
+		}
 		Reference = MakeFreshBody(Authored); Candidate = MakeFreshBody(Authored);
+		if (!Reference->GetAnimInstance() || !Candidate->GetAnimInstance())
+		{
+			Test->AddError(TEXT("Paired secondary-physics mesh cannot instantiate the selected animation class"));
+			return false;
+		}
 		MeshLODCount=Authored->GetSkeletalMeshAsset()->GetLODNum();
 		Reference->SetForcedLOD(1);
 		Test->TestFalse(TEXT("Reference has not updated before data installation"), Reference->GetAnimInstance()->GetUpdateCounter().HasEverBeenUpdated());
 		Test->TestFalse(TEXT("Candidate has not updated before data installation"), Candidate->GetAnimInstance()->GetUpdateCounter().HasEverBeenUpdated());
+		bool bInstalledTrialHair = false;
 		for (auto* Property : IAnimClassInterface::GetFromClass(Authored->GetAnimClass())->GetAnimNodeProperties())
 		{
 			if (Property->Struct == FAnimNode_RetargetPoseFromMesh::StaticStruct())
@@ -112,9 +127,23 @@ class FSecondaryPhysicsEquivalence : public IAutomationLatentCommand
 			{
 				auto* Node = Property->ContainerPtrToValuePtr<FAnimNode_RigidBody>(Candidate->GetAnimInstance());
 				if (!Node->OverridePhysicsAsset) return false;
-				auto* Copy = DuplicateObject<UPhysicsAsset>(Node->OverridePhysicsAsset.Get(),GetTransientPackage());
+				const bool bIsTrialHair = bHairTrial &&
+					Node->OverridePhysicsAsset->GetPathName() == TEXT("/Game/Characters/Spellblade/Physics/PA_Spellblade_Hair.PA_Spellblade_Hair");
+				UPhysicsAsset* Copy = bIsTrialHair
+					? LoadObject<UPhysicsAsset>(nullptr, TEXT("/Game/Tests/Physics/PA_Spellblade_Hair_CollisionTrial.PA_Spellblade_Hair_CollisionTrial"))
+					: DuplicateObject<UPhysicsAsset>(Node->OverridePhysicsAsset.Get(), GetTransientPackage());
 				if (!Copy) return false;
-				Copy->UpdateBodySetupIndexMap(); Copy->UpdateBoundsBodiesArray();
+				if (bIsTrialHair)
+				{
+					if (Node->bUseDefaultAsSimulated || Node->bEnableWorldGeometry || Node->bUseExternalClothCollision ||
+						Copy->SkeletalBodySetups.Num() > Node->OverridePhysicsAsset->SkeletalBodySetups.Num()) return false;
+					// The baseline and tested snapshot have the same population after promotion.
+					bInstalledTrialHair = true;
+				}
+				else
+				{
+					Copy->UpdateBodySetupIndexMap(); Copy->UpdateBoundsBodiesArray();
+				}
 				Audit += FString::Printf(TEXT("PhysicsCopy Source=%s OriginalBodies=%d CopiedBodies=%d\n"), *Node->OverridePhysicsAsset->GetPathName(), Node->OverridePhysicsAsset->SkeletalBodySetups.Num(), Copy->SkeletalBodySetups.Num());
 				Copies.Emplace(Copy); Node->OverridePhysicsAsset = Copy;
 				ExpectedActors+=Copy->SkeletalBodySetups.Num();
@@ -128,7 +157,7 @@ class FSecondaryPhysicsEquivalence : public IAutomationLatentCommand
 		Reference->TickAnimation(0.f,false); Reference->RefreshBoneTransforms();
 		Candidate->TickAnimation(0.f,false); Candidate->RefreshBoneTransforms();
 		Deadline = FPlatformTime::Seconds()+60;
-		return Copies.Num()==2 && RetargetA && RetargetB;
+		return Copies.Num()==2 && RetargetA && RetargetB && (!bHairTrial || bInstalledTrialHair);
 	}
 	void AdvanceInput()
 	{
@@ -203,7 +232,7 @@ class FSecondaryPhysicsEquivalence : public IAutomationLatentCommand
 		++Samples;
 	}
 public:
-	explicit FSecondaryPhysicsEquivalence(FAutomationTestBase* InTest):Test(InTest) {}
+	explicit FSecondaryPhysicsEquivalence(FAutomationTestBase* InTest, bool bInHairTrial = false):Test(InTest), bHairTrial(bInHairTrial) {}
 	~FSecondaryPhysicsEquivalence() { Cleanup(); }
 	virtual bool Update() override
 	{
@@ -212,6 +241,7 @@ public:
 		const uint32 RevisionA=Reference->GetBoneTransformRevisionNumber(), RevisionB=Candidate->GetBoneTransformRevisionNumber();
 		AdvanceInput();
 		const int32 ExpectedLOD=Frame<240 || Frame>=720 ? 0 : Frame<480 ? FMath::Min(1,MeshLODCount-1) : MeshLODCount-1;
+		if (bHairTrial) Reference->SetForcedLOD(ExpectedLOD+1);
 		Candidate->SetForcedLOD(ExpectedLOD+1);
 		for (auto* Component : Components) Component->SetLastRenderTime(World->GetTimeSeconds());
 		World->Tick(LEVELTICK_All,1.f/60);
@@ -241,7 +271,8 @@ public:
 		Test->TestTrue(TEXT("Physics preserves scales"),MaxScale<.000001);
 		Test->TestTrue(TEXT("The retarget base inputs are identical"),MaxBasePosition<.000001);
 		Audit+=FString::Printf(TEXT("Equivalence Samples=%d PositionCm=%.9f AngleDeg=%.9f Scale=%.9f RetargetBaseCm=%.9f Actors=%d Dynamic=%d Motion=%.9f\n"),Samples,MaxPosition,MaxAngle,MaxScale,MaxBasePosition,ActualActors,DynamicActors,DynamicMotion);
-		const FString Path=FPaths::ProjectSavedDir()/TEXT("Validation/SecondaryPhysics/Equivalence.txt");
+		const FString Path=FPaths::ProjectSavedDir()/(bHairTrial
+			? TEXT("Validation/SecondaryPhysics/HairCollisionTrial.txt") : TEXT("Validation/SecondaryPhysics/Equivalence.txt"));
 		IFileManager::Get().MakeDirectory(*FPaths::GetPath(Path),true);
 		Test->TestTrue(TEXT("Equivalence audit saved"),FFileHelper::SaveStringToFile(Audit,*Path));
 		Cleanup(); return true;
@@ -251,4 +282,8 @@ public:
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJSecondaryPhysicsEquivalence,"ProjectJ.Retarget.SecondaryPhysicsEquivalence",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
 bool FProjectJSecondaryPhysicsEquivalence::RunTest(const FString&)
 { ADD_LATENT_AUTOMATION_COMMAND(FSecondaryPhysicsEquivalence(this)); return true; }
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJHairCollisionTrial,"ProjectJ.Retarget.HairCollisionTrial",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FProjectJHairCollisionTrial::RunTest(const FString&)
+{ ADD_LATENT_AUTOMATION_COMMAND(FSecondaryPhysicsEquivalence(this, true)); return true; }
 #endif

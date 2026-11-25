@@ -4,6 +4,11 @@
 #include "UI/Project_JUILayoutSettings.h"
 #include "UI/Project_JStatusEffects.h"
 #include "UI/Project_JMinimapWidget.h"
+#include "UI/Project_JGraphicsSettings.h"
+#include "UI/Project_JGraphicsSettingsWidget.h"
+#include "Components/CheckBox.h"
+#include "Engine/GameInstance.h"
+#include "GameFramework/GameUserSettings.h"
 #include "Game/Project_JPlayerState.h"
 #include "GameFramework/PlayerController.h"
 #include "Engine/LocalPlayer.h"
@@ -12,8 +17,10 @@
 #include "Project_JAttributeSet.h"
 #include "HAL/PlatformProperties.h"
 #include "HAL/PlatformMisc.h"
+#include "HAL/IConsoleManager.h"
 #include "GameplayEffect.h"
 #include "Misc/CommandLine.h"
+#include "Misc/ConfigCacheIni.h"
 #include "Misc/Parse.h"
 #include "Kismet/GameplayStatics.h"
 #include "ProfilingDebugging/CsvProfiler.h"
@@ -96,6 +103,94 @@ void UProject_JPlayerUIComponent::RunRuntimeSmoke()
 	auto *PC = Cast<APlayerController>(GetOwner());
 	if (!PC || !PC->IsLocalPlayerController() || !PC->HasAuthority() || GetNetMode() != NM_Standalone) return;
 	RefreshSources();
+	if (FParse::Param(FCommandLine::Get(), TEXT("ProjectJGraphicsSettingsSmoke")))
+	{
+		FString ProbeOutput;
+		if (FParse::Value(FCommandLine::Get(), TEXT("ProjectJGraphicsWorldProbe="), ProbeOutput))
+		{
+			StartGraphicsWorldProbe(ProbeOutput);
+			return;
+		}
+		FString IsolatedUserDir;
+		bool bSuccess = Screen && FParse::Value(FCommandLine::Get(), TEXT("UserDir="), IsolatedUserDir) && !IsolatedUserDir.IsEmpty();
+		const bool bPresetReload = FParse::Param(FCommandLine::Get(), TEXT("ProjectJGraphicsPresetReloadSmoke"));
+		if (bSuccess)
+		{
+			Screen->ExecuteCommand(TEXT("Settings"));
+			Screen->ExecuteCommand(TEXT("Graphics"));
+			auto* Widget = Screen->GraphicsSettings.Get();
+			auto* Native = UGameUserSettings::GetGameUserSettings();
+			const auto* Crowd = PC->GetGameInstance()->GetSubsystem<UProject_JGraphicsSettings>();
+			bSuccess = Screen->WindowStack.Contains(TEXT("Graphics")) && Widget && Native && Crowd;
+			if (bSuccess && bPresetReload)
+			{
+				bool bSavedCustom = true;
+				bSuccess = GConfig->GetBool(*Crowd->GetClass()->GetPathName(), TEXT("bUseCustomOtherPlayerEffects"),
+					bSavedCustom, GGameUserSettingsIni) && !bSavedCustom && !Crowd->bUseCustomOtherPlayerEffects
+					&& Native->GetVisualEffectQuality() == 3 && FMath::IsNearlyEqual(Crowd->GetEffectiveOtherPlayerEffectOpacity(), .85f)
+					&& Crowd->GetEffectiveShowOtherPlayerOptionalEffects();
+			}
+			else if (bSuccess)
+			{
+				Widget->TakeWidget();
+				const int32 OriginalShadow = Native->GetShadowQuality();
+				Widget->Preset->SetSelectedIndex(1);
+				Widget->SelectPreset({}, ESelectInfo::OnMouseClick);
+				bSuccess &= Native->GetShadowQuality() == OriginalShadow;
+				Widget->QualityRows[0]->SetSelectedIndex(0);
+				Widget->SelectQuality({}, ESelectInfo::OnMouseClick);
+				bSuccess &= Widget->Preset->GetSelectedIndex() == INDEX_NONE;
+				Widget->Preset->SetSelectedIndex(1);
+				Widget->SelectPreset({}, ESelectInfo::OnMouseClick);
+				bSuccess &= Widget->QualityRows[0]->GetSelectedIndex() == 1;
+				Widget->Revert();
+				bSuccess &= Widget->QualityRows[0]->GetSelectedIndex() == OriginalShadow;
+				Widget->Preset->SetSelectedIndex(1);
+				Widget->SelectPreset({}, ESelectInfo::OnMouseClick);
+				Widget->OptionalEffects->SetIsChecked(false);
+				Widget->OtherEffectOpacity->SetSelectedIndex(Widget->Opacities.IndexOfByKey(50.f));
+				Widget->FrameLimit->SetSelectedIndex(Widget->FrameLimits.IndexOfByKey(60.f));
+				Widget->RenderScale->SetSelectedIndex(Widget->RenderFactors.IndexOfByKey(80.f));
+				Widget->Apply();
+				Native->LoadSettings(true);
+				float SavedOpacity = 0.f;
+				bool bSavedOptional = true;
+				const FString Section = Crowd->GetClass()->GetPathName();
+				auto* Opacity = IConsoleManager::Get().FindConsoleVariable(TEXT("ProjectJ.Combat.Presentation.OtherPlayerOpacityScale"));
+				auto* Optional = IConsoleManager::Get().FindConsoleVariable(TEXT("ProjectJ.Combat.Presentation.OtherPlayerOptionalEffects"));
+				bSuccess &= Native->GetShadowQuality() == 1 && Native->GetReflectionQuality() == 1 &&
+					Native->GetFrameRateLimit() == 60.f && FMath::IsNearlyEqual(Native->GetResolutionScaleNormalized(), .8f) &&
+					GConfig->GetFloat(*Section, TEXT("OtherPlayerEffectOpacity"), SavedOpacity, GGameUserSettingsIni) && SavedOpacity == .5f &&
+					GConfig->GetBool(*Section, TEXT("bShowOtherPlayerOptionalEffects"), bSavedOptional, GGameUserSettingsIni) && !bSavedOptional &&
+					Opacity && Opacity->GetFloat() == .5f && Optional && Optional->GetInt() == 0;
+
+				const int32 EffectsRow = 5; // Matches the visual effects entry in the graphics quality rows.
+				Widget->QualityRows[EffectsRow]->SetSelectedIndex(2);
+				Widget->SelectQuality({}, ESelectInfo::OnMouseClick);
+				Widget->Apply();
+				bSuccess &= Native->GetVisualEffectQuality() == 2 && Crowd->bUseCustomOtherPlayerEffects
+					&& FMath::IsNearlyEqual(Crowd->GetEffectiveOtherPlayerEffectOpacity(), .5f);
+
+				for (const int32 EffectsQuality : {1, 2, 3})
+				{
+					const float Expected = EffectsQuality == 1 ? .35f : EffectsQuality == 2 ? .65f : .85f;
+					Widget->Preset->SetSelectedIndex(EffectsQuality);
+					Widget->SelectPreset({}, ESelectInfo::OnMouseClick);
+					Widget->Apply();
+					bSuccess &= !Crowd->bUseCustomOtherPlayerEffects
+						&& FMath::IsNearlyEqual(Crowd->GetEffectiveOtherPlayerEffectOpacity(), Expected);
+					Widget->Apply(); // Re-applying the current percentage must never become a custom edit.
+					bSuccess &= !Crowd->bUseCustomOtherPlayerEffects;
+				}
+				bool bSavedCustom = true;
+				bSuccess &= GConfig->GetBool(*Section, TEXT("bUseCustomOtherPlayerEffects"), bSavedCustom, GGameUserSettingsIni)
+					&& !bSavedCustom;
+			}
+		}
+		UE_LOG(LogTemp, Display, TEXT("PROJECT_J_GRAPHICS_SETTINGS_SMOKE success=%d restart=%d"), bSuccess, bPresetReload);
+		FPlatformMisc::RequestExitWithStatus(false, bSuccess ? 0 : 1);
+		return;
+	}
 	if(BoundState.IsValid()&&BoundState->GetInventoryComponent()->SubmitPersistentEdit){UE_LOG(LogTemp,Warning,TEXT("UI runtime mint/use fixture is disabled for persistent profiles; no persistent items changed."));return;}
 	bool bSuccess = FPlatformProperties::RequiresCookedData() && Screen && Screen->ValidateRuntimeLayout() && BoundState.IsValid();
 	if (FParse::Param(FCommandLine::Get(), TEXT("ProjectJUIDynamicWorkload")))
