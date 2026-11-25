@@ -1,0 +1,82 @@
+apiVersion: agones.dev/v1
+kind: Fleet
+metadata:
+  name: project-j-zone-fleet
+  namespace: default
+spec:
+  replicas: 2
+  scheduling: Packed
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 0
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9100"
+        prometheus.io/path: "/metrics"
+    spec:
+      ports:
+        - name: game
+          portPolicy: Dynamic
+          containerPort: 7777
+          protocol: UDP
+        - name: metrics
+          portPolicy: None
+          containerPort: 9100
+          protocol: TCP
+      health:
+        initialDelaySeconds: 25
+        periodSeconds: 10
+        failureThreshold: 3
+      template:
+        spec:
+          terminationGracePeriodSeconds: 120
+          containers:
+            - name: project-j-server
+              image: project-j-server:latest
+              imagePullPolicy: IfNotPresent
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 10001
+                allowPrivilegeEscalation: false
+              env:
+                - name: PROJECT_J_NAKAMA_HTTP_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: project-j-secrets
+                      key: nakama-http-key
+                - name: PROJECT_J_HANDOVER_SHARED_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: project-j-secrets
+                      key: handover-shared-key
+              resources:
+                requests:
+                  cpu: "2000m"
+                  memory: "2Gi"
+                limits:
+                  cpu: "4000m"
+                  memory: "4Gi"
+              readinessProbe:
+                httpGet:
+                  path: /healthz
+                  port: 9100
+                initialDelaySeconds: 15
+                periodSeconds: 5
+---
+apiVersion: autoscaling.agones.dev/v1
+kind: FleetAutoscaler
+metadata:
+  name: project-j-zone-autoscaler
+  namespace: default
+spec:
+  fleetName: project-j-zone-fleet
+  policy:
+    type: Buffer
+    buffer:
+      bufferSize: 1
+      minReplicas: 2
+      maxReplicas: 10

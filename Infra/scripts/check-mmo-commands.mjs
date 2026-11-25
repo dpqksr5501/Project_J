@@ -9,7 +9,7 @@ const { PGlite } = await import(pathToFileURL(packageEntry).href);
 let db = new PGlite(testDataPath);
 for (const filename of ['001_mmo_core_schema.sql', '002_durable_mmo_commands.sql', '003_dungeon_reservations.sql',
     '004_durable_boss_rewards.sql', '005_durable_mail_claims.sql', '006_online_world_sessions.sql', '007_online_bag_edits.sql',
-    '008_online_equipment_and_crafting.sql', '009_online_quest_and_dungeon_completion.sql', '010_online_audit_fixes.sql', '011_durable_quest_progress.sql']) {
+    '008_online_equipment_and_crafting.sql', '009_online_quest_and_dungeon_completion.sql', '010_online_audit_fixes.sql', '011_durable_quest_progress.sql', '012_audit_partitioning_and_queue.sql']) {
     const sql = await readFile(new URL('../migrations/' + filename, import.meta.url), 'utf8');
     // gen_random_uuid is provided by PostgreSQL core. The WASM fixture does not ship pgcrypto.
     await db.exec(sql.replace(/^CREATE EXTENSION IF NOT EXISTS "pgcrypto";$/m, ''));
@@ -453,6 +453,44 @@ assert.equal((await runEarned(id(8204), { ...earnedEvent,
     changes: [{ row: questRow, deltas: [{ id: 'gather', amount: 1 }] }] })).status, 'COMMITTED');
 assert.equal(await result('SELECT state AS result FROM pj_quest_states WHERE character_id = $1 AND quest_id = $2', [buyer, questRow.id]), 'CLAIMED');
 assert.equal(gatherCount(await runEarned(id(8205))), 2);
+// Phase 012 shares the real ticket issuer between direct and routed callers.
+const routeZone = 'phase_ad_queue';
+const otherAccount = id(12000);
+await exec("UPDATE pj_accounts SET external_sub = 'phase-ad-owner' WHERE account_id = $1", [account]);
+await exec("INSERT INTO pj_accounts(account_id, external_sub) VALUES ($1, 'phase-ad-other')", [otherAccount]);
+const createChannel = (channel, population, capacity, draining = false) => result(
+    'SELECT pj_world_channel_heartbeat($1) AS result', [{zone: routeZone, channel, worker: id(12000 + channel),
+        endpoint: '127.0.0.1:17000', population, capacity, draining}]);
+const route = (character, accountId = account) => result(
+    'SELECT pj_route_or_enqueue_channel($1,$2,$3,1) AS result', [accountId, character, routeZone]);
+assert.equal((await route(buyer, otherAccount)).status, 'CONFLICT');
+assert.equal((await createChannel(1, 0, 1)).status, 'OK');
+assert.equal((await createChannel(2, 0, 1)).status, 'OK');
+const primary = await route(buyer);
+assert.equal(primary.status, 'ROUTED');
+assert.equal(primary.channel, 1);
+assert.ok(primary.ticket);
+assert.equal((await result("SELECT pj_issue_world_login('phase-ad-owner', $1, $2, 1) AS result", [seller, routeZone])).status, 'UNAVAILABLE');
+const overflow = await route(seller);
+assert.equal(overflow.status, 'ROUTED');
+assert.equal(overflow.channel, 2);
+await exec('DELETE FROM pj_world_login_tickets WHERE zone_id = $1', [routeZone]);
+assert.equal((await createChannel(1, 1, 1)).status, 'OK');
+assert.equal((await createChannel(2, 0, 1, true)).status, 'OK');
+assert.equal((await route(buyer)).position, 1);
+assert.equal((await route(seller)).position, 2);
+assert.equal((await route(buyer)).position, 1);
+assert.equal((await createChannel(1, 0, 1)).status, 'OK');
+assert.equal((await route(seller)).status, 'QUEUED');
+assert.equal((await route(buyer)).status, 'ROUTED');
+await exec("INSERT INTO pj_idempotency_receipts(idempotency_key, operation, status_code, created_at, expires_at) VALUES ($1,'phase_ad_prune',200,NOW()-interval '21 days',NOW()+interval '6 days'),($2,'phase_ad_prune',200,NOW()-interval '21 days',NOW()-interval '1 day')", [id(12003), id(12004)]);
+assert.equal((await result('SELECT pj_prune_expired_receipts(7, 100) AS result', [])).status, 'OK');
+assert.equal(await result('SELECT count(*)::int AS result FROM pj_idempotency_receipts WHERE idempotency_key = $1', [id(12003)]), 1);
+assert.equal(await result('SELECT count(*)::int AS result FROM pj_idempotency_receipts WHERE idempotency_key = $1', [id(12004)]), 0);
+for (const rpc of ['rpcWorldChannelRoute', 'rpcSecurityReportViolation', 'rpcMaintenancePruneReceipts']) {
+    assert.throws(() => sandbox[rpc]({userId: 'ordinary-player'}, null, {}, '{}'), /requires runtime authentication/);
+}
+console.log('Phase 012 owner, admission reservation, overflow, FIFO, receipt expiry, and runtime RPC privilege checks passed');
 await db.close();
 console.log('Earned quest RPC preserves the lease fence for direct edits and replays immutable progress once after restart');
 console.log('Nakama reward RPC envelope maps to the same committed SQL receipt across replay and restart');

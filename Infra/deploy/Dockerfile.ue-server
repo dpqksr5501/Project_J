@@ -1,0 +1,26 @@
+# Project J UE 5.8 Linux Headless Dedicated Server Container
+# Build after packaging LinuxServer target:
+#   docker build -f Infra/deploy/Dockerfile.ue-server -t project-j-server:latest ./Saved/StagedBuilds/LinuxServer
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates curl libatomic1 libicu72 && \
+    rm -rf /var/lib/apt/lists/* && \
+    useradd -m -u 10001 ue
+
+WORKDIR /app
+COPY --chown=ue:ue . /app
+
+USER ue
+EXPOSE 7777/udp 9100/tcp
+
+HEALTHCHECK --interval=10s --timeout=3s --start-period=20s --retries=3 \
+    CMD curl -fsS http://127.0.0.1:9100/healthz || exit 1
+
+# Launch the native executable as PID 1 so the UE drain adapter receives SIGTERM.
+# This path is the staged Development LinuxServer binary under the build context.
+RUN test -x /app/Project_J/Binaries/Linux/Project_JServer
+STOPSIGNAL SIGTERM
+ENTRYPOINT ["/app/Project_J/Binaries/Linux/Project_JServer"]
+CMD ["/Game/Maps/Test_MMO_Sandbox", "-log", "-nullrhi", "-nosound", "-useperfthreads", \
+    "-Port=7777", "-ProjectJMetricsPort=9100", "-ProjectJMetricsBindAddress=0.0.0.0", "-ProjectJDrainOnSigterm"]

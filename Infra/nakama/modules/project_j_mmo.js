@@ -24,6 +24,9 @@ function InitModule(ctx, logger, nk, initializer) {
     initializer.registerRpc("j_dungeon_heartbeat", rpcDungeonHeartbeat);
     initializer.registerRpc("j_dungeon_worker_admission", rpcDungeonWorkerAdmission);
     initializer.registerRpc("j_dungeon_acknowledge", rpcDungeonAcknowledge);
+    initializer.registerRpc("j_world_channel_route", rpcWorldChannelRoute);
+    initializer.registerRpc("j_security_report_violation", rpcSecurityReportViolation);
+    initializer.registerRpc("j_maintenance_prune_receipts", rpcMaintenancePruneReceipts);
     logger.info("Project J Nakama MMO module initialized.");
 }
 
@@ -342,4 +345,31 @@ function rpcDungeonAcknowledge(ctx, logger, nk, payload) {
     var req = readServerRequest(ctx, nk, payload);
     return runCommand(nk, "SELECT pj_dungeon_acknowledge($1::uuid, $2::uuid)::text AS result",
         [readId(req.worker_id), readId(req.instance_id)]);
+}
+
+function rpcWorldChannelRoute(ctx, logger, nk, payload) {
+    var req = readServerRequest(ctx, nk, payload);
+    if (typeof req.zone !== "string" || req.zone.length < 1 || req.zone.length > 64) throw Error("Invalid zone");
+    var preferred = Number.isInteger(req.preferred_channel) && req.preferred_channel >= 1 ? req.preferred_channel : 1;
+    return runCommand(nk, "SELECT pj_route_or_enqueue_channel($1::uuid, $2::uuid, $3, $4)::text AS result",
+        [readId(req.account_id), readId(req.character_id), req.zone, preferred]);
+}
+
+function rpcSecurityReportViolation(ctx, logger, nk, payload) {
+    var req = readServerRequest(ctx, nk, payload);
+    if (typeof req.violation_code !== "string" || req.violation_code.length < 1 || req.violation_code.length > 64
+        || !Number.isInteger(req.severity) || req.severity < 1 || req.severity > 3) {
+        throw Error("Invalid security violation report");
+    }
+    var zone = typeof req.zone === "string" && req.zone.length <= 64 ? req.zone : "";
+    var details = req.details && typeof req.details === "object" ? req.details : {};
+    return runCommand(nk, "SELECT pj_record_security_violation($1::uuid, $2, $3, $4, $5::jsonb)::text AS result",
+        [readId(req.character_id), req.violation_code, req.severity, zone, JSON.stringify(details)]);
+}
+
+function rpcMaintenancePruneReceipts(ctx, logger, nk, payload) {
+    var req = readServerRequest(ctx, nk, payload);
+    var days = Number.isInteger(req.retention_days) && req.retention_days >= 7 ? req.retention_days : 7;
+    var limit = Number.isInteger(req.batch_limit) && req.batch_limit >= 100 ? Math.min(req.batch_limit, 50000) : 10000;
+    return runCommand(nk, "SELECT pj_prune_expired_receipts($1, $2)::text AS result", [days, limit]);
 }

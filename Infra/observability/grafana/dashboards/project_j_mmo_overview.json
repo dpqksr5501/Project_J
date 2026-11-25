@@ -1,0 +1,61 @@
+{
+  "title": "Project J · AAA MMO Server & Backend Overview",
+  "uid": "project-j-mmo-overview",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "UE Server World Tick Latency (p50 / p95 / p99 ms)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [{ "expr": "projectj_server_tick_ms", "legendFormat": "p{{quantile}}" }]
+    },
+    {
+      "id": 2,
+      "title": "Active CCU & Server Load Governor Tier",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        { "expr": "projectj_server_active_ccu", "legendFormat": "CCU" },
+        { "expr": "projectj_server_load_tier", "legendFormat": "Governor Tier (0=G,1=Y,2=R)" },
+        { "expr": "projectj_server_drain_state", "legendFormat": "Drain State" }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Iris Crowd Density Filter (Allowed vs Culled Pairs)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        { "expr": "projectj_iris_crowd_allowed_pairs", "legendFormat": "Allowed Pairs" },
+        { "expr": "projectj_iris_crowd_culled_pairs", "legendFormat": "Culled Pairs" },
+        { "expr": "projectj_iris_crowd_effective_cap", "legendFormat": "Effective Cap" }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "SQLite Durable Outbox & Dead-Letter Health",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        { "expr": "projectj_outbox_pending", "legendFormat": "Pending" },
+        { "expr": "projectj_outbox_in_flight", "legendFormat": "InFlight" },
+        { "expr": "projectj_outbox_dead_letters", "legendFormat": "DeadLetters" },
+        { "expr": "increase(projectj_outbox_store_errors_total[5m])", "legendFormat": "Store Errors (5m)" }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Server Integrity Violations & Economy Alerts",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+      "targets": [
+        { "expr": "increase(projectj_integrity_movement_violations_total[5m])", "legendFormat": "Movement Violations (5m)" },
+        { "expr": "increase(projectj_integrity_combat_violations_total[5m])", "legendFormat": "Combat Violations (5m)" },
+        { "expr": "increase(projectj_integrity_economy_alerts_total[5m])", "legendFormat": "Economy Alerts (5m)" }
+      ]
+    }
+  ]
+}

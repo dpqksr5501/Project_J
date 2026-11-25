@@ -3,6 +3,7 @@ param(
     [Parameter(Mandatory)][string]$NakamaExe,
     [string]$UnrealEditor,
     [switch]$VerifyGameLogin,
+    [switch]$VerifyServerDrain,
     [switch]$VerifyOnlineDungeon,
     [switch]$VerifyAuthoredSandbox,
     [ValidateRange(1026,65533)][int]$PostgresPort = 15432,
@@ -147,36 +148,103 @@ function Invoke-UnrealClaim([string]$Character, [string]$Mail, [string]$Key) {
     }
 }
 
-function Invoke-GameLogin([string]$Character, [string]$AccessToken, [string]$ItemId) {
+function Invoke-ChannelRouting([string]$Account, [string]$Token) {
+    $zone = 'LocalNativeRouting'
+    $first = [guid]::NewGuid().ToString()
+    $second = [guid]::NewGuid().ToString()
+    $waiting = [guid]::NewGuid().ToString()
+    Invoke-Postgres @('-c', "INSERT INTO pj_characters(character_id, account_id, char_name, class_id) VALUES ('$first', '$Account', 'Route primary', 'Test'), ('$second', '$Account', 'Route overflow', 'Test'), ('$waiting', '$Account', 'Route queue', 'Test');") | Out-Null
+    foreach ($channel in 1..2) {
+        $lease = @{ worker = [guid]::NewGuid().ToString(); zone = $zone; channel = $channel
+            endpoint = "127.0.0.1:17993"; capacity = 1; population = 0; draining = $false }
+        if ((Invoke-CommandRpc world_channel_heartbeat $lease '').status -ne 'OK') { throw 'Route fixture lease failed.' }
+    }
+    $route = @{ account_id = $Account; character_id = $first; zone = $zone; preferred_channel = 1 }
+    $unauthorized = Invoke-WebRequest "$uri/v2/rpc/j_world_channel_route?unwrap" -Method Post -SkipHttpErrorCheck `
+        -Headers @{ Authorization = "Bearer $Token" } -ContentType 'application/json' -Body (New-RpcBody $route '') -TimeoutSec 8
+    if ($unauthorized.StatusCode -lt 400) { throw 'A player token reached the server-only routing RPC.' }
+    $primary = Invoke-CommandRpc world_channel_route $route ''
+    $route.character_id = $second
+    $direct = Request-WorldLogin $Token $second 1 $zone
+    $overflow = Invoke-CommandRpc world_channel_route $route ''
+    $route.character_id = $waiting
+    $queued = Invoke-CommandRpc world_channel_route $route ''
+    if ($primary.status -ne 'ROUTED' -or $primary.channel -ne 1 -or !$primary.ticket -or
+        $direct.status -ne 'UNAVAILABLE' -or $overflow.status -ne 'ROUTED' -or $overflow.channel -ne 2 -or
+        !$overflow.ticket -or $queued.status -ne 'QUEUED' -or $queued.position -ne 1) {
+        throw 'Nakama HTTP routing failed to share reservations with direct login.'
+    }
+}
+
+function Invoke-GameLogin([string]$Character, [string]$AccessToken, [string]$ItemId, [switch]$Drain) {
     if (!$UnrealEditor) { throw 'VerifyGameLogin requires an existing Unreal Editor executable.' }
-    $port = 17989
+    $port = if ($Drain) { 17991 } else { 17989 }
+    $channel = if ($Drain) { 4 } else { 1 }
+    $role = if ($Drain) { 'Drain' } else { 'Login' }
     $map = '/Engine/Maps/Entry?game=/Script/Project_J.Project_JOnlineLoginFixture'
     $common = @("$root/Project_J.uproject", $map, '-unattended', '-nop4', '-nosound', '-NullRHI', '-NoLiveCoding', '-NoDDCCleanup',
         '-DisablePython', '-DisablePlugins=EditorToolset,AutomationTestToolset,ToolsetRegistry', '-multihome=127.0.0.1', '-ProjectJOnlineLoginFixture')
-    $serverArgs = $common + @('-server', "-port=$port", "-UserDir=$scratch/LoginServer", "-ABSLOG=$scratch/LoginServer.log",
+    if ($Drain) { $common += '-ProjectJOnlineDrainFixture' }
+    $serverArgs = $common + @('-server', "-port=$port", "-UserDir=$scratch/${role}Server", "-ABSLOG=$scratch/${role}Server.log",
         "-ini:Game:[/Script/Project_J.Project_JGatewaySubsystem]:GatewayUrl=$uri",
         '-ini:Game:[/Script/Project_J.Project_JNakamaServicePortSubsystem]:RuntimeMode=LocalDockerNakama',
-        "-ini:Game:[/Script/Project_J.Project_JGameMode]:OnlineAdvertisedEndpoint=127.0.0.1:$port")
+        "-ini:Game:[/Script/Project_J.Project_JGameMode]:OnlineAdvertisedEndpoint=127.0.0.1:$port",
+        "-ini:Game:[/Script/Project_J.Project_JGameMode]:OnlineChannelId=$channel")
+    $health = 'http://127.0.0.1:17992/healthz'
+    if ($Drain) { $serverArgs += '-ProjectJMetricsPort=17992' }
     $server = Start-Process -FilePath $UnrealEditor -ArgumentList ($serverArgs | ForEach-Object { '"' + $_ + '"' }) -PassThru -WindowStyle Hidden `
         -Environment @{ PROJECT_J_NAKAMA_HTTP_KEY = $nakamaKey; PGPASSWORD = $null }
-    $deadline = [DateTime]::UtcNow.AddSeconds(35)
+    $null = $server.Handle
+    $deadline = [DateTime]::UtcNow.AddSeconds(45)
     do {
-        if ($server.HasExited -or [DateTime]::UtcNow -ge $deadline) { throw "Online Unreal server failed to register. See $scratch/LoginServer.log" }
+        if ($server.HasExited -or [DateTime]::UtcNow -ge $deadline) { throw "Online Unreal server was not ready. See $scratch/${role}Server.log" }
         Start-Sleep -Milliseconds 300
         $registry = Invoke-CommandRpc world_channel_list @{ zone = 'Entry' } ''
-    } until ($registry.channels.Count -eq 1)
-    $authProbe = Request-WorldLogin $AccessToken $Character 1 Entry
+        $channelListed = @($registry.channels | Where-Object channel_id -eq $channel).Count -eq 1
+        $inService = !$Drain
+        if ($Drain -and $channelListed) {
+            # The channel lease can publish while the world is still loading and the metrics ticker is idle.
+            try { $inService = (Invoke-WebRequest -Uri $health -TimeoutSec 1 -SkipHttpErrorCheck).StatusCode -eq 200 } catch {}
+        }
+    } until ($channelListed -and $inService)
+    $authProbe = Request-WorldLogin $AccessToken $Character $channel Entry
     if ($authProbe.status -ne 'OK') { throw "Online world credential preflight failed with status $($authProbe.status)." }
-    $clientArgs = $common + @('-game', "-UserDir=$scratch/LoginClient", "-ABSLOG=$scratch/LoginClient.log",
+    $clientArgs = $common + @('-game', "-UserDir=$scratch/${role}Client", "-ABSLOG=$scratch/${role}Client.log",
         "-ini:Game:[/Script/Project_J.Project_JOnlineWorldSubsystem]:NakamaClientUrl=$uri")
     $client = Start-Process -FilePath $UnrealEditor -ArgumentList ($clientArgs | ForEach-Object { '"' + $_ + '"' }) -PassThru -WindowStyle Hidden `
         -Environment @{ PROJECT_J_NAKAMA_HTTP_KEY = $null; PGPASSWORD = $null; PROJECT_J_TEST_LOGIN_CHARACTER = $Character
             PROJECT_J_TEST_LOGIN_ACCESS = $AccessToken; PROJECT_J_TEST_LOGIN_ITEM = $ItemId }
+    $null = $client.Handle
+    $drainingObserved = $false
+    if ($Drain) {
+        $deadline = [DateTime]::UtcNow.AddSeconds(55)
+        while (!$server.HasExited -and [DateTime]::UtcNow -lt $deadline) {
+            try {
+                $response = Invoke-WebRequest -Uri $health -TimeoutSec 1 -SkipHttpErrorCheck
+                if ($response.StatusCode -eq 503 -and (ConvertFrom-Json $response.Content).draining) {
+                    $drainingObserved = $true
+                    break
+                }
+            } catch {}
+            Start-Sleep -Milliseconds 100
+        }
+    }
     $server.WaitForExit()
     $client.WaitForExit()
-    if ($server.ExitCode -ne 0 -or $client.ExitCode -ne 0 -or
-        !(Select-String -LiteralPath "$scratch/LoginClient.log" -SimpleMatch 'ONLINE_FIXTURE_INVENTORY_REPLICATED' -Quiet)) {
-        throw "Online game login or replicated inventory failed. See $scratch/LoginClient.log"
+    if ($server.ExitCode -ne 0 -or $client.ExitCode -ne 0) {
+        throw "Online fixture process failed. See $scratch/${role}Server.log and ${role}Client.log"
+    }
+    if ($Drain) {
+        $drainLog = Get-Content -LiteralPath "$scratch/DrainServer.log" -Raw
+        $clientLog = Get-Content -LiteralPath "$scratch/DrainClient.log" -Raw
+        if (!$drainingObserved -or $drainLog -notmatch 'Graceful Server Drain started.*players=1' -or
+            !$drainLog.Contains('ONLINE_DRAIN_AUTHORIZED_LOGOUT') -or
+            !$drainLog.Contains('Graceful Server Drain completed (evacuated=1 outboxSettled=1)') -or
+            !$clientLog.Contains('ONLINE_DRAIN_CLIENT_POSSESSED') -or !$clientLog.Contains('ONLINE_DRAIN_CLIENT_DISCONNECTED')) {
+            throw "Connected-player drain failed. See $scratch/DrainServer.log and DrainClient.log"
+        }
+    } elseif (!(Select-String -LiteralPath "$scratch/LoginClient.log" -SimpleMatch 'ONLINE_FIXTURE_INVENTORY_REPLICATED' -Quiet)) {
+        throw "Replicated inventory failed. See $scratch/LoginClient.log"
     }
 }
 
@@ -298,7 +366,7 @@ console:
         $firstPage.mail[0].mail_id -eq $nextPage.mail[0].mail_id) { throw 'Mailbox pagination did not return two distinct deliveries.' }
     $itemIntent = @{ character_id = $character; mail_id = $reward.mail_ids[0]; session_epoch = $session.character.session_epoch }
     $goldIntent = @{ character_id = $character; mail_id = $reward.mail_ids[1]; session_epoch = $session.character.session_epoch }
-    if ($UnrealEditor -and !$VerifyGameLogin -and !$VerifyOnlineDungeon -and !$VerifyAuthoredSandbox) {
+    if ($UnrealEditor -and !$VerifyGameLogin -and !$VerifyOnlineDungeon -and !$VerifyAuthoredSandbox -and !$VerifyServerDrain) {
         Invoke-UnrealClaim $character $itemIntent.mail_id $itemKey
         $initialReplay = Invoke-CommandRpc mail_claim $itemIntent $itemKey
         if ($initialReplay.status -ne 'REPLAYED') { throw 'Unreal did not commit the tracked command.' }
@@ -336,6 +404,7 @@ console:
     $worldIntent.Remove('return_expires')
     $worldIntent.Remove('return_character')
     if ((Invoke-CommandRpc world_redeem_login $worldIntent $next.ticket).epoch -ne '2') { throw 'A fresh ordinary login failed after replay rejection.' }
+    Invoke-ChannelRouting $account $principal.token
     if ($VerifyGameLogin) {
         $gameReward = Invoke-CommandRpc reward_boss @{ defeat_id = [guid]::NewGuid().ToString(); character_id = $onlineCharacter; gold = '0'; items = @(@{ definition_id = 'HealthPotion'; quantity = 3 }) } ''
         $gameItem = Invoke-Postgres @('-c', "SELECT attached_item_id FROM pj_mail_messages WHERE mail_id = '$($gameReward.mail_ids[0])';")
@@ -360,6 +429,7 @@ console:
         }
         Invoke-OnlineDungeon $onlineCharacter $principal.token
     }
+    if ($VerifyServerDrain) { Invoke-GameLogin $onlineCharacter $principal.token '' -Drain }
     $restoredInbox = Invoke-CommandRpc mail_inbox @{ character_id = $character; session_epoch = '1' } ''
     if ($restoredInbox.mail.Count -ne 1 -or $restoredInbox.mail[0].mail_id -ne $goldIntent.mail_id) { throw 'The pending mailbox did not survive the restart.' }
     $replay = Invoke-CommandRpc mail_claim $itemIntent $itemKey
@@ -413,9 +483,11 @@ console:
     [ordered]@{ passed = $true; unrealServicePort = [bool]$UnrealEditor; persistedItem = $item.item_instance_id; persistedQuantity = 3; pendingMailRestored = $true
         restartReplay = $replay.status; duplicate = $duplicate.status; competingClaims = $competingStatuses
         authenticatedCharacterLogin = $true; sharedChannelAfterRestart = $true; returnReplayRejectedAfterRestart = $true
+        serverOnlyChannelRouting = $true; directAndRoutedTicketsShareCapacity = $true
         onlineBagSplitCommitted = $true
         onlineEquipmentCommitted = $true; onlineCraftEscrowRestored = $true
         gameLoginAndReplicatedInventory = [bool]$VerifyGameLogin
+        connectedPlayerDrain = [bool]$VerifyServerDrain
         postgresDungeonRoundTrip = ($VerifyOnlineDungeon -or $VerifyAuthoredSandbox)
         authoredSandboxCraftAndBoss = [bool]$VerifyAuthoredSandbox
         currencyBalance = $gold.currency_balance; ledgerNet = $netCurrency } |
