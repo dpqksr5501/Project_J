@@ -141,4 +141,34 @@ bool FProjectJMountControllerReassignedTest::RunTest(const FString&)
 	TestEqual(TEXT("Failed request restores movement"), Rider->GetCharacterMovement()->MovementMode.GetValue(), MOVE_Flying);
 	return true;
 }
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJPhase0FlyingMountForceStopTest, "ProjectJ.Hardening.Phase0.FlyingMountForceStop",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJPhase0FlyingMountForceStopTest::RunTest(const FString&)
+{
+	ProjectJMountTransitionTests::FWorld Scope;
+	auto* Mount = Scope.World->SpawnActorDeferred<AProject_JMountRefinementFixture>(
+		AProject_JMountRefinementFixture::StaticClass(), FTransform::Identity, nullptr, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+	if (Mount)
+	{
+		Mount->SetTestInitialHealth(100.f, 100.f);
+		Mount->FinishSpawning(FTransform::Identity);
+	}
+	auto* Rider = Scope.Spawn<AProject_JMountCallbackRiderFixture>();
+	auto* Controller = Scope.Spawn<APlayerController>();
+	if (!Mount || !Rider || !Controller) { AddError(TEXT("Fixture spawn failed")); return false; }
+
+	Controller->Possess(Rider);
+	if (!TestTrue(TEXT("Rider mounts flying mount"), Mount->TryMountRider(Rider))) return false;
+	Mount->GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+	Mount->SetTestFlightState(EProject_JMountFlightState::Flying);
+	TestTrue(TEXT("Mount is flying before fatal hit"), Mount->IsFlyingMount());
+
+	TestTrue(TEXT("Fatal damage accepted on flying mount"), Mount->ApplyMountDamage(100.f));
+	TestNull(TEXT("Fatal mid-air dismount clears rider"), Mount->GetRider());
+	TestEqual(TEXT("Fatal mid-air dismount resets FlightState to Grounded"), Mount->GetFlightState(), EProject_JMountFlightState::Grounded);
+	TestFalse(TEXT("Fatal mid-air dismount exits MOVE_Flying so mount does not hover forever"), Mount->IsFlyingMount());
+	TestFalse(TEXT("Fatal mid-air dismount disables flight tick"), Mount->IsActorTickEnabled());
+	return true;
+}
 #endif

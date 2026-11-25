@@ -92,7 +92,12 @@ void UProject_JAbilitySystemComponent::InitAbilityActorInfo(AActor* Owner,AActor
 		ClearActorInfo();
 		return;
 	}
-	if (GetAvatarActor()!=Avatar) if (auto* Mover=MontageMover.Get()) Mover->StopGameplayMontageRootMotion();
+	if (GetAvatarActor() != Avatar)
+	{
+		ProtectedAvatar.Reset();
+		HealthLossProtectedUntil = 0.0;
+		if (auto* Mover = MontageMover.Get()) Mover->StopGameplayMontageRootMotion();
+	}
 	Super::InitAbilityActorInfo(Owner,Avatar);
 }
 void UProject_JAbilitySystemComponent::ClearActorInfo()
@@ -111,7 +116,22 @@ void UProject_JAbilitySystemComponent::ClearActorInfo()
 	if (ActorInfoRevision != Revision || !IsValid(this) || IsBeingDestroyed()) return;
 	if (auto* Mover=MontageMover.Get()) Mover->StopGameplayMontageRootMotion();
 	MontageMover.Reset();
+	ProtectedAvatar.Reset();
+	HealthLossProtectedUntil = 0.0;
 	Super::ClearActorInfo();
+}
+
+void UProject_JAbilitySystemComponent::ProtectAvatarHealthLoss(const AActor* Avatar, double UntilWorldSeconds)
+{
+	check(IsInGameThread());
+	if (!IsValid(Avatar) || !Avatar->HasAuthority() || Avatar != GetAvatarActor() || !FMath::IsFinite(UntilWorldSeconds)) return;
+	ProtectedAvatar = Avatar;
+	HealthLossProtectedUntil = UntilWorldSeconds;
+}
+
+bool UProject_JAbilitySystemComponent::IsAvatarHealthLossProtected(const AActor* Avatar, double NowWorldSeconds) const
+{
+	return Avatar && Avatar == ProtectedAvatar.Get() && Avatar == GetAvatarActor() && NowWorldSeconds < HealthLossProtectedUntil;
 }
 
 void UProject_JAbilitySystemComponent::PublishSettledActorInfo()
@@ -484,11 +504,25 @@ void UProject_JAbilitySystemComponent::ServerSetReplicatedEventWithPayload_Imple
 void UProject_JAbilitySystemComponent::ServerEndAbility_Implementation(FGameplayAbilitySpecHandle AbilityToEnd,
 	FGameplayAbilityActivationInfo ActivationInfo, FPredictionKey PredictionKey)
 {
-	if (ActiveBatchCommandAdmission && ActiveBatchCommandAdmission->Handle == AbilityToEnd
+	const bool bBatchEnd = ActiveBatchCommandAdmission && ActiveBatchCommandAdmission->Handle == AbilityToEnd
 		&& ActiveBatchCommandAdmission->PredictionKey == PredictionKey
-		&& ActiveBatchCommandAdmission->PredictionKey == ActivationInfo.GetActivationPredictionKey()
-		&& !IsClientCommandContextAuthorized(ActiveBatchCommandAdmission->Context)) return;
+		&& ActiveBatchCommandAdmission->PredictionKey == ActivationInfo.GetActivationPredictionKey();
+	const FClientCommandContext Context = bBatchEnd ? ActiveBatchCommandAdmission->Context : CaptureClientCommandContext();
+	const TStrongObjectPtr<ThisClass> KeepSelf(this);
+	const TStrongObjectPtr<AActor> KeepOwner(Context.Owner.Get()), KeepAvatar(Context.Avatar.Get());
+	// Ending authorized work must remain available when the admission budget is exhausted.
+	if (!IsClientCommandContextAuthorized(Context)) return;
 	Super::ServerEndAbility_Implementation(AbilityToEnd, ActivationInfo, PredictionKey);
+}
+
+void UProject_JAbilitySystemComponent::ServerCancelAbility_Implementation(FGameplayAbilitySpecHandle AbilityToCancel,
+	FGameplayAbilityActivationInfo ActivationInfo)
+{
+	const FClientCommandContext Context = CaptureClientCommandContext();
+	const TStrongObjectPtr<ThisClass> KeepSelf(this);
+	const TStrongObjectPtr<AActor> KeepOwner(Context.Owner.Get()), KeepAvatar(Context.Avatar.Get());
+	if (!IsClientCommandContextAuthorized(Context)) return;
+	Super::ServerCancelAbility_Implementation(AbilityToCancel, ActivationInfo);
 }
 
 UProject_JAbilitySystemComponent::UProject_JAbilitySystemComponent()

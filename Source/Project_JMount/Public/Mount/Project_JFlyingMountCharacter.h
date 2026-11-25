@@ -43,6 +43,7 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void UnPossessed() override;
+	virtual void HandleHealthDepleted() override;
 	virtual void PawnClientRestart() override;
 	void RestoreFlightInputBindings(UInputComponent* PlayerInputComponent);
 	virtual void OnRep_Controller() override;
@@ -63,6 +64,8 @@ protected:
 	void HandleTakeOff();
 	virtual void HandleDismount() override;
 	UFUNCTION(Server, Reliable) void ServerRequestBeginFlight();
+	UFUNCTION(Server, Reliable) void ServerSetGliding(bool bNewGliding);
+	void ResetFlightStateOnForceStop();
 	UFUNCTION()
 	void OnRep_FlightState(EProject_JMountFlightState PreviousState);
 	UFUNCTION(BlueprintImplementableEvent, Category="Mount|Flight")

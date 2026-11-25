@@ -36,6 +36,8 @@ public:
 	UProject_JAbilitySystemComponent();
 	virtual void InitAbilityActorInfo(AActor* InOwnerActor,AActor* InAvatarActor) override;
 	virtual void ClearActorInfo() override;
+	void ProtectAvatarHealthLoss(const AActor* Avatar, double UntilWorldSeconds);
+	bool IsAvatarHealthLossProtected(const AActor* Avatar, double NowWorldSeconds) const;
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 	virtual void NotifyAbilityActivated(const FGameplayAbilitySpecHandle Handle, UGameplayAbility* Ability) override;
 	virtual void NotifyAbilityEnded(FGameplayAbilitySpecHandle Handle, UGameplayAbility* Ability, bool bWasCancelled) override;
@@ -60,6 +62,8 @@ public:
 		FVector_NetQuantize100 VectorPayload) override;
 	virtual void ServerEndAbility_Implementation(FGameplayAbilitySpecHandle AbilityToEnd,
 		FGameplayAbilityActivationInfo ActivationInfo, FPredictionKey PredictionKey) override;
+	virtual void ServerCancelAbility_Implementation(FGameplayAbilitySpecHandle AbilityToCancel,
+		FGameplayAbilityActivationInfo ActivationInfo) override;
 	/** Weak native PlayerState owner fence. Unbound NPC/prototype behavior is unchanged. */
 	FProject_JGASClientSessionAuthority ClientSessionAuthority;
 	/** Tracked execution/reservation headroom for NEW client activations. Actual trusted activation remains unconstrained. */
@@ -93,6 +97,8 @@ protected:
 	virtual void CancelAbilitySpec(FGameplayAbilitySpec& Spec, UGameplayAbility* Ignore) override;
 
 private:
+	TWeakObjectPtr<const AActor> ProtectedAvatar;
+	double HealthLossProtectedUntil = 0.0;
 	struct FClientCommandContext
 	{
 		TWeakObjectPtr<AActor> Owner, Avatar;

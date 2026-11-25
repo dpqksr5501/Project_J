@@ -24,4 +24,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "MMO|Social")
 	FName GetGuildId() const;
+
+	/** Returns the server-authoritative Character GUID for cross-module combat/threat/integrity tracking. */
+	virtual FGuid GetAuthoritativeCharacterGuid() const { return FGuid(); }
 };

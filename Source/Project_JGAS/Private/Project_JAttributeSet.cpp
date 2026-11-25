@@ -2,10 +2,12 @@
 
 #include "Project_JAttributeSet.h"
 #include "Project_JAbilitySystemComponent.h"
+#include "Project_JGameplayTags.h"
 #include "GameplayEffectAggregator.h"
 #include "Net/UnrealNetwork.h"
 #include "GameplayEffectExtension.h"
 #include "GameFramework/Actor.h"
+#include "Engine/World.h"
 #include "UObject/StrongObjectPtr.h"
 
 namespace
@@ -113,6 +115,25 @@ void UProject_JAttributeSet::PostAttributeChange(const FGameplayAttribute& Attri
 	}
 	Super::PostAttributeChange(Attribute, OldValue, NewValue);
 	if (!GetOwningActor() || !GetOwningActor()->HasAuthority()) { return; }
+	if (Attribute == GetHealthAttribute())
+	{
+		if (auto* ProjectASC = Cast<UProject_JAbilitySystemComponent>(GetOwningAbilitySystemComponent()))
+		{
+			const FGameplayTag DeadTag = FProject_JGameplayTags::Get().State_Dead;
+			if (DeadTag.IsValid())
+			{
+				const bool bHasDeadTag = ProjectASC->HasMatchingGameplayTag(DeadTag);
+				if (NewValue <= 0.0f && (OldValue > 0.0f || HasInitializedDefaults()))
+				{
+					if (!bHasDeadTag) ProjectASC->AddProjectJLooseGameplayTag(DeadTag, true);
+				}
+				else if (NewValue > 0.0f && bHasDeadTag)
+				{
+					ProjectASC->RemoveProjectJLooseGameplayTag(DeadTag, true);
+				}
+			}
+		}
+	}
 	// Absolute resource amounts are preserved on a maximum increase and clamped
 	// on a decrease, including duration/infinite GE removal (which is not execute).
 	if (Attribute == GetMaxHealthAttribute() && GetHealth() > NewValue) { SetHealth(NewValue); }
@@ -123,6 +144,16 @@ bool UProject_JAttributeSet::PreGameplayEffectExecute(FGameplayEffectModCallback
 {
 	if (!Super::PreGameplayEffectExecute(Data) || !FMath::IsFinite(Data.EvaluatedData.Magnitude)) return false;
 	if (Data.EvaluatedData.Attribute != GetHealthAttribute()) return true;
+	if (const auto* ASC = Cast<UProject_JAbilitySystemComponent>(&Data.Target))
+	{
+		const auto* World = ASC->GetWorld();
+		if (GetHealth() <= 0.f || (World && ASC->IsAvatarHealthLossProtected(ASC->GetAvatarActor(), World->GetTimeSeconds())))
+		{
+			const float Base = ASC->GetNumericAttributeBase(GetHealthAttribute());
+			if (FAggregator::StaticExecModOnBaseValue(Base, Data.EvaluatedData.ModifierOp, Data.EvaluatedData.Magnitude) < Base)
+				return false;
+		}
+	}
 	bool bObserve = OnConfirmedHealthGELoss.IsBound() || OnHealthGEObservationFailed.IsBound();
 	// Keep pairing nested executions until an existing observed execution unwinds, even if listeners detach.
 	if (!bObserve && HealthGEExecutions.IsEmpty() && SuppressedHealthGEDepth == 0) return true;

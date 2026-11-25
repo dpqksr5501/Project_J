@@ -259,7 +259,7 @@ bool UProject_JGroundWalkingMode::TryCaptureTrajectory(UProject_JMoverComponent&
         !UsesNativeEvent(*this, WalkName) || Query.NumPredictionSamples <= 0 ||
         !Query.OptionalInputCmds.IsEmpty() ||
         Query.OptionalStartTime.IsSet() || Query.OptionalStartSyncState.IsSet() || Query.OptionalStartAuxState.IsSet() ||
-        !FMath::IsFinite(Query.SecondsPerSample) || !FMath::IsFinite(FirstStep.StepMs) ||
+        !FMath::IsFinite(Query.SecondsPerSample) || Query.SecondsPerSample <= FLT_EPSILON || !FMath::IsFinite(FirstStep.StepMs) ||
         FirstStep.StepMs * 0.001f <= FLT_EPSILON || !FMath::IsFinite(FirstStep.BaseSimTimeMs)) return false;
 
     const auto* Sync = StartState.SyncState.SyncStateCollection.FindDataByType<FMoverDefaultSyncState>();

@@ -186,7 +186,7 @@ bool UProject_JTargetScoringSubsystem::IsPending(FProject_JGameplayAsyncRequestT
 	return Jobs.ContainsByPredicate([Token](const auto& Job) { return Job->Token.Value == Token.Value && !!Job->Completion; });
 }
 
-bool UProject_JTargetScoringSubsystem::IsTickable() const { return IsInitialized() && !Jobs.IsEmpty(); }
+bool UProject_JTargetScoringSubsystem::IsTickable() const { return IsInitialized() && (!Jobs.IsEmpty() || !TrackedTasks.IsEmpty()); }
 TStatId UProject_JTargetScoringSubsystem::GetStatId() const { RETURN_QUICK_DECLARE_CYCLE_STAT(ProjectJ_TargetScoring, STATGROUP_Tickables); }
 
 void UProject_JTargetScoringSubsystem::Tick(float DeltaTime)
@@ -198,7 +198,7 @@ void UProject_JTargetScoringSubsystem::Tick(float DeltaTime)
 	TrackedTasks.RemoveAll([](const FTrackedTask& Entry) { return Entry.Task.IsCompleted(); });
 	struct FReady { TSharedPtr<FProjectJTargetScoringJob> Job; FProjectJTargetScoringBatchCompletion Completion; };
 	TArray<FReady, TInlineAllocator<MaxCompletionsPerTick>> Ready;
-	for (int32 Index = 0; Index < Jobs.Num() && Ready.Num() < MaxCompletionsPerTick;)
+	for (int32 Index = 0; Index < Jobs.Num();)
 	{
 		const auto Job = Jobs[Index];
 		if (!IsLiveOwner(Job->Owner.Get())) { Job->Completion = nullptr; Job->Work->Cancelled.store(true, std::memory_order_relaxed); }
@@ -207,20 +207,34 @@ void UProject_JTargetScoringSubsystem::Tick(float DeltaTime)
 			Job->bExpired = true;
 			Job->Work->Cancelled.store(true, std::memory_order_relaxed);
 		}
+		// Reclaim cancelled/orphaned jobs immediately once no worker task is pending
+		// so they do not consume MaxCompletionsPerTick or MaxPendingRequests slots.
+		if (!Job->Completion)
+		{
+			if (!Job->Task.IsValid() || Job->Task.IsCompleted())
+			{
+				Jobs.RemoveAt(Index);
+				continue;
+			}
+			++Index;
+			continue;
+		}
 		ProjectJ::TargetScoring::FBatchResult Result;
 		if (Job->Task.IsValid())
 		{
-			if (!Job->Task.IsCompleted()) { ++Index; continue; }
+			if (!Job->Task.IsCompleted() || Ready.Num() >= MaxCompletionsPerTick) { ++Index; continue; }
 			// GetResult contains Wait internally; only call after completion is published.
 			Result = Job->Task.GetResult();
 		}
 		else if (Job->Work->Cancelled.load(std::memory_order_relaxed))
 		{
+			if (Ready.Num() >= MaxCompletionsPerTick) { ++Index; continue; }
 			Result.Results.SetNum(Job->Work->Snapshots.Num());
 			for (auto& Entry : Result.Results) { Entry.Status = ProjectJ::TargetScoring::EStatus::Cancelled; }
 		}
 		else if (Job->Mode == EProject_JTargetScoringExecution::Serial)
 		{
+			if (Ready.Num() >= MaxCompletionsPerTick) { ++Index; continue; }
 			Result = ProjectJ::TargetScoring::EvaluateBatch(Job->Work->Snapshots, false, Job->Work->Cancelled);
 		}
 		else

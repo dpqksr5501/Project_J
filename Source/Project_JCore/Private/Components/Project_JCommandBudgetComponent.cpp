@@ -15,10 +15,21 @@ bool UProject_JCommandBudgetComponent::AdmitClientCommand(AActor* Source)
 	check(IsInGameThread());
 	if (!IsValid(Source) || Source->IsActorBeingDestroyed() || !Source->HasAuthority()) return false;
 	AActor* BudgetOwner = Source;
-	if (const auto* Pawn = Cast<APawn>(Source))
+	if (const auto* Controller = Cast<AController>(Source))
+	{
+		if (auto* State = Controller->PlayerState.Get()) BudgetOwner = State;
+		else if (Controller->IsPlayerController()) return false;
+	}
+	else if (const auto* Pawn = Cast<APawn>(Source))
 	{
 		if (auto* State = Pawn->GetPlayerState()) BudgetOwner = State;
 		else if (Pawn->IsPlayerControlled()) return false;
+		else if (const auto* AttachParent = Cast<APawn>(Pawn->GetAttachParentActor()))
+		{
+			// Mounted riders temporarily lose direct possession while attached to a mount pawn.
+			if (auto* MountState = AttachParent->GetPlayerState()) BudgetOwner = MountState;
+			else if (AttachParent->IsPlayerControlled()) return false;
+		}
 	}
 	if (auto* Budget = BudgetOwner->FindComponentByClass<UProject_JCommandBudgetComponent>())
 		return Budget->TryConsume();

@@ -55,6 +55,39 @@ void AProject_JFlyingMountCharacter::UnPossessed()
 	ClearFlightInputBindings();
 	ClearPendingTakeOffRequest();
 	Super::UnPossessed();
+	// If forced dismount/unpossess happened mid-air when voluntary air-dismount is disallowed,
+	// drop out of hovering MOVE_Flying so an unmounted flying mount never stalls in mid-air.
+	if (HasAuthority() && !GetRider() && !bAllowAirDismount && FlightState != EProject_JMountFlightState::Grounded)
+	{
+		ResetFlightStateOnForceStop();
+	}
+}
+
+void AProject_JFlyingMountCharacter::HandleHealthDepleted()
+{
+	Super::HandleHealthDepleted();
+	if (HasAuthority() && FlightState != EProject_JMountFlightState::Grounded)
+	{
+		ResetFlightStateOnForceStop();
+	}
+}
+
+void AProject_JFlyingMountCharacter::ResetFlightStateOnForceStop()
+{
+	bIsGliding = false;
+	bLandingTouchdownConfirmed = false;
+	bLandingTouchdownCueReached = false;
+	if (UCharacterMovementComponent* Movement = GetCharacterMovement())
+	{
+		if (Movement->IsFlying())
+		{
+			Movement->SetMovementMode(MOVE_Falling);
+		}
+	}
+	SetFlightState(EProject_JMountFlightState::Grounded);
+	RefreshFlightMovementSettings();
+	RefreshFlightTickEnabled();
+	ForceNetUpdate();
 }
 
 void AProject_JFlyingMountCharacter::OnRep_Controller()
@@ -172,7 +205,15 @@ bool AProject_JFlyingMountCharacter::AbortLanding(EProject_JMountLandingFailure 
 
 void AProject_JFlyingMountCharacter::SetGliding(bool bNewGliding)
 {
-	if (!HasAuthority() || FlightState != EProject_JMountFlightState::Flying)
+	if (!HasAuthority())
+	{
+		if (IsLocallyControlled() && FlightState == EProject_JMountFlightState::Flying)
+		{
+			ServerSetGliding(bNewGliding);
+		}
+		return;
+	}
+	if (FlightState != EProject_JMountFlightState::Flying)
 	{
 		return;
 	}
@@ -180,6 +221,15 @@ void AProject_JFlyingMountCharacter::SetGliding(bool bNewGliding)
 	bIsGliding = bNewGliding;
 	RefreshFlightMovementSettings();
 	ForceNetUpdate();
+}
+
+void AProject_JFlyingMountCharacter::ServerSetGliding_Implementation(bool bNewGliding)
+{
+	if (!AdmitClientMountCommand())
+	{
+		return;
+	}
+	SetGliding(bNewGliding);
 }
 
 void AProject_JFlyingMountCharacter::HandleFlightAnimationCue(EProject_JMountFlightAnimationCue Cue)
@@ -269,22 +319,26 @@ bool AProject_JFlyingMountCharacter::HasVerticalClearance(float Distance) const
 
 	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(MountTakeOffClearance), false, this);
 	QueryParams.AddIgnoredActor(GetRider());
+	const FCollisionResponseParams Responses(Capsule->GetCollisionResponseToChannels());
 	FHitResult Hit;
 	const FCollisionShape Shape = FCollisionShape::MakeCapsule(Capsule->GetScaledCapsuleRadius(), Capsule->GetScaledCapsuleHalfHeight());
-	return !GetWorld()->SweepSingleByChannel(Hit, GetActorLocation(), GetActorLocation() + FVector::UpVector * Distance, FQuat::Identity, ECC_Visibility, Shape, QueryParams);
+	return !GetWorld()->SweepSingleByChannel(Hit, GetActorLocation(), GetActorLocation() + FVector::UpVector * Distance, FQuat::Identity, Capsule->GetCollisionObjectType(), Shape, QueryParams, Responses);
 }
 
 bool AProject_JFlyingMountCharacter::FindLandingSurface(FHitResult& OutHit) const
 {
-	if (!GetWorld())
+	const UCapsuleComponent* Capsule = GetCapsuleComponent();
+	if (!GetWorld() || !Capsule)
 	{
 		return false;
 	}
 
-	const float ProbeDistance = GetCapsuleComponent()->GetScaledCapsuleHalfHeight() + LandingCompletionTolerance + 60.0f;
+	const float ProbeDistance = Capsule->GetScaledCapsuleHalfHeight() + LandingCompletionTolerance + 60.0f;
 	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(MountLandingProbe), false, this);
 	QueryParams.AddIgnoredActor(GetRider());
-	if (!GetWorld()->LineTraceSingleByChannel(OutHit, GetActorLocation(), GetActorLocation() - FVector::UpVector * ProbeDistance, ECC_Visibility, QueryParams) || !OutHit.bBlockingHit)
+	FCollisionResponseParams Responses(Capsule->GetCollisionResponseToChannels());
+	Responses.CollisionResponse.SetResponse(ECC_Pawn, ECR_Ignore);
+	if (!GetWorld()->LineTraceSingleByChannel(OutHit, GetActorLocation(), GetActorLocation() - FVector::UpVector * ProbeDistance, Capsule->GetCollisionObjectType(), QueryParams, Responses) || !OutHit.bBlockingHit)
 	{
 		return false;
 	}

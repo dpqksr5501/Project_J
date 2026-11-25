@@ -257,7 +257,9 @@ void UProject_JMoverComponent::BeginPlay()
 
 void UProject_JMoverComponent::EndPlay(const EEndPlayReason::Type Reason)
 {
- StopGameplayMontageRootMotion();
+ // Do not call CancelFeaturesWithTag during EndPlay: BackendLiaisonComp::EndPlay
+ // may already have uninitialized Simulation->ModeFSM in non-deterministic TSet order.
+ ReleaseGameplayMontageTracking();
  OnPostFinalize.RemoveAll(this);
  Super::EndPlay(Reason);
 }
@@ -348,7 +350,17 @@ void UProject_JMoverComponent::QueueGameplayFacing(FRotator Facing)
 void UProject_JMoverComponent::StopGameplayMontageRootMotion(UAnimMontage* ExpectedMontage)
 {
  if (ExpectedMontage && RootMotionMontage!=ExpectedMontage) return;
- CancelFeaturesWithTag(Mover_AnimRootMotion_Montage,false);
+ const UActorComponent* LiaisonComp = Cast<UActorComponent>(BackendLiaisonComp.GetObject());
+ const bool bLiaisonEndedPlay = HasBegunPlay() && (!LiaisonComp || !LiaisonComp->HasBegunPlay());
+ const bool bSimulationActive = !IsBeingDestroyed()
+  && LiaisonComp && LiaisonComp->IsRegistered() && LiaisonComp->HasBeenInitialized() && !LiaisonComp->IsBeingDestroyed()
+  && !bLiaisonEndedPlay
+  && GetWorld() && !GetWorld()->bIsTearingDown
+  && (!GetOwner() || !GetOwner()->IsActorBeingDestroyed());
+ if (bSimulationActive)
+ {
+  CancelFeaturesWithTag(Mover_AnimRootMotion_Montage, false);
+ }
  ReleaseGameplayMontageTracking();
 }
 

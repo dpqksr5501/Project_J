@@ -602,9 +602,13 @@ bool AProject_JMountCharacter::AttachRider(APawn* NewRider)
 	const TStrongObjectPtr<APawn> KeepRider(NewRider);
 	if (!bHasRiderRestoreState)
 	{
-		RiderCollisionBeforeMount = Project_J::Movement::FindCapsule(NewRider)->GetCollisionEnabled();
-		RiderMovementBeforeMount = Project_J::Movement::ReadPhysicalFrame(NewRider).Mode;
-		RiderCustomMovementBeforeMount = Project_J::Movement::ReadPhysicalFrame(NewRider).CustomMode;
+		const auto ObservedFrame = Project_J::Movement::ReadPhysicalFrame(NewRider);
+		const ECollisionEnabled::Type ObservedCollision = Project_J::Movement::FindCapsule(NewRider)->GetCollisionEnabled();
+		// Late-relevancy clients may first observe the rider already attached (NoCollision/MOVE_None).
+		// Fall back to safe playable defaults so a subsequent dismount never leaves the rider frozen.
+		RiderCollisionBeforeMount = ObservedCollision == ECollisionEnabled::NoCollision ? ECollisionEnabled::QueryAndPhysics : ObservedCollision;
+		RiderMovementBeforeMount = ObservedFrame.Mode == MOVE_None ? MOVE_Walking : ObservedFrame.Mode;
+		RiderCustomMovementBeforeMount = ObservedFrame.Mode == MOVE_None ? 0 : ObservedFrame.CustomMode;
 		bHasRiderRestoreState = true;
 	}
 

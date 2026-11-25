@@ -96,9 +96,10 @@ USkeletalMeshComponent* FindPoseSource(const AActor* Owner)
 {
 	if (const auto* Character = Cast<ACharacter>(Owner)) return Character->GetMesh();
 	if (!Owner) return nullptr;
+	static const FName PoseSourceTag(TEXT("ProjectJ.PoseSource"));
 	USkeletalMeshComponent* Source = nullptr;
 	for (UActorComponent* Component : Owner->GetComponents())
-		if (auto* Mesh = Cast<USkeletalMeshComponent>(Component); Mesh && Mesh->ComponentTags.Contains(TEXT("ProjectJ.PoseSource")))
+		if (auto* Mesh = Cast<USkeletalMeshComponent>(Component); Mesh && Mesh->ComponentTags.Contains(PoseSourceTag))
 		{
 			if (Source) return nullptr;
 			Source = Mesh;

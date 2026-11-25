@@ -13,6 +13,7 @@ struct FProjectJVisualAssetGroup
 	FSoftObjectPath Path;
 	TSharedPtr<FStreamableHandle> Handle;
 	int32 Consumers = 0;
+	double StartedAt = 0;
 	bool bStarted = false, bReady = false;
 };
 struct FProjectJVisualAssetLease
@@ -49,7 +50,7 @@ uint64 UProject_JVisualAssetSubsystem::Request(UObject* Owner, FSoftObjectPath P
 {
 	check(IsInGameThread());
 	if (!bAccepting || !IsVisualOwnerAlive(Owner) || !GetWorld() || GetWorld()->bIsTearingDown
-		|| Owner->GetWorld() != GetWorld() || GetWorld()->GetNetMode() == NM_DedicatedServer
+		|| Owner->GetWorld() != GetWorld() || GetWorld()->GetNetMode() == NM_DedicatedServer || IsRunningDedicatedServer()
 		|| !Path.IsValid() || Leases.Num() >= MaxLeases) { ++Stats.Rejected; return 0; }
 	const double Now = FPlatformTime::Seconds();
 	// A healthy arrival must not sweep unrelated failures for every visual lease.
@@ -148,9 +149,10 @@ void UProject_JVisualAssetSubsystem::Tick(float DeltaTime)
 	else if (!bIdleSweep) IdleSweepRemaining = 0;
 	bGroupCleanupNeeded = false;
 	const auto WithinBudget = [&]() { return (FPlatformTime::Seconds() - Started) * 1000.0 < ApplyBudgetMilliseconds; };
-	Groups.RemoveAll([](const auto& G)
+	Groups.RemoveAll([Started, MaxLifetime = RequestLifetimeSeconds](const auto& G)
 	{
-		if (G->Consumers == 0 && G->bReady)
+		const bool bOrphanTimedOut = G->Consumers == 0 && G->bStarted && !G->bReady && (Started - G->StartedAt) >= MaxLifetime;
+		if (G->Consumers == 0 && (G->bReady || bOrphanTimedOut))
 		{
 			if (G->Handle) { G->Handle->CancelHandle(); }
 			return true;
@@ -163,7 +165,7 @@ void UProject_JVisualAssetSubsystem::Tick(float DeltaTime)
 	{
 		if (G->bStarted) { continue; }
 		if (InFlight >= MaxLoadsInFlight || Starts >= MaxStartsPerTick || !WithinBudget()) { break; }
-		G->bStarted = true; ++InFlight; ++Starts; ++Stats.Loads;
+		G->bStarted = true; G->StartedAt = Started; ++InFlight; ++Starts; ++Stats.Loads;
 		TWeakPtr<FProjectJVisualAssetGroup> WeakGroup(G);
 		TWeakObjectPtr<ThisClass> WeakThis(this);
 		G->Handle = UProject_JAssetManager::Get().GetStreamableManager().RequestAsyncLoad(G->Path,
@@ -174,6 +176,7 @@ void UProject_JVisualAssetSubsystem::Tick(float DeltaTime)
 				if (auto* Self = WeakThis.Get(); Self && Self->bAccepting) Self->bGroupCleanupNeeded = true;
 			}));
 		if (!G->Handle) { G->bReady = true; }
+		if (G->bReady) { --InFlight; }
 	}
 	Stats.InFlight = InFlight; Stats.PeakInFlight = FMath::Max(Stats.PeakInFlight, InFlight);
 	Stats.LastTickApplications = 0;
@@ -193,7 +196,11 @@ void UProject_JVisualAssetSubsystem::Tick(float DeltaTime)
 		const auto Group = Lease->Group; // pins the handle even if Apply releases the token.
 		UObject* Asset = !bExpired && Group->Handle ? Group->Handle->GetLoadedAsset() : nullptr;
 		TStrongObjectPtr<UObject> PinnedAsset(Asset);
-		if (!Asset)
+		if (Asset)
+		{
+			FailedUntil.Remove(Group->Path);
+		}
+		else
 		{
 			++Stats.Failed; Stats.TimedOut += bExpired ? 1 : 0;
 			// Bound the negative cache; record before callbacks can request the same missing asset again.

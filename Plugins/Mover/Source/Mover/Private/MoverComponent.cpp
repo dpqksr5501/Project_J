@@ -2447,8 +2447,7 @@ bool UMoverComponent::WithPredictionContext(const FMoverPredictTrajectoryParams&
 
 namespace
 {
-// Stronger value/output validation belongs only to owning capture/compute.
-// The existing synchronous fast path retains its original fallback admission.
+// Native value prediction publishes only a complete, finite forecast.
 bool AreNativeFlyingParamsFinite(const FFreeMoveParams& Params)
 {
     return (Params.MoveInputType == EMoveInputType::DirectionalIntent ||
@@ -2658,6 +2657,7 @@ TArray<FTrajectorySampleInfo> UMoverComponent::GetPredictedTrajectory(FMoverPred
 {
     TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_Trajectory_GetPredictedTrajectory);
     TArray<FTrajectorySampleInfo> OutSamples;
+    if (PredictionParams.NumPredictionSamples <= 0) return OutSamples;
     const bool bPredicted = WithPredictionContext(PredictionParams,
         [&](const UBaseMovementMode& Mode, const FMoverSimContext& SimContext, FMoverTickStartData& StepState,
             const FMoverTimeStep& FirstStep, URollbackBlackboard&)
@@ -2669,13 +2669,6 @@ TArray<FTrajectorySampleInfo> UMoverComponent::GetPredictedTrajectory(FMoverPred
 
 		FRotator PriorOrientation = StepSyncState->GetOrientation_WorldSpace();
 		FVector PriorVelocity = StepSyncState->GetVelocity_WorldSpace();
-
-		// Rebuild for every query. No state/input is borrowed as writable and no
-		// BP or custom mode is bypassed. Zero facing follows evolving sync state.
-        FMoverNativeFlyingTrajectory NativeFlying;
-        TOptional<FFreeMoveParams> NativeFlyingParams;
-        if (TryCaptureNativeFlyingTrajectory(Mode, StepState, FutureTimeStep, PredictionParams, NativeFlying))
-            NativeFlyingParams.Emplace(NativeFlying.MoveParams);
 
 		bool bPreparedPrediction = false;
 		if (IsInGameThread() && !IsBackendAsync() && PredictionParams.NumPredictionSamples > 0)
@@ -2689,10 +2682,30 @@ TArray<FTrajectorySampleInfo> UMoverComponent::GetPredictedTrajectory(FMoverPred
 
 		if (!bPreparedPrediction)
 		{
-			// This label describes admission before the loop; the existing native
-			// candidate may still fall back if an evolving state becomes invalid.
-			TRACE_CPUPROFILER_EVENT_SCOPE_TEXT(NativeFlyingParams.IsSet() ?
-				TEXT("ProjectJ_Trajectory_NativeFlyingCandidateLoop") : TEXT("ProjectJ_Trajectory_GenericLoop"));
+			FMoverNativeFlyingTrajectory NativeFlying;
+			if (TryCaptureNativeFlyingTrajectory(Mode, StepState, FutureTimeStep, PredictionParams, NativeFlying))
+			{
+				TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_Trajectory_NativeFlyingValueLoop);
+				// Exact native Flying consumes captured values only. The per-step
+				// blackboard and sync writes belong to the GenerateMove path below.
+				bPreparedPrediction = UE::MoverUtils::ComputeNativeFlyingTrajectory(NativeFlying, OutSamples);
+#if !UE_BUILD_SHIPPING
+				if (bPreparedPrediction && MoverComponentCVars::NativeFlyingPredictionQueries < MAX_int32)
+				{
+					MoverComponentCVars::CVarNativeFlyingPredictionQueries->Set(
+						MoverComponentCVars::NativeFlyingPredictionQueries + 1,
+						EConsoleVariableFlags(ECVF_SetByCode | ECVF_Set_SetOnly_Unsafe));
+				}
+#endif
+			}
+		}
+
+		if (!bPreparedPrediction)
+		{
+			TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_Trajectory_GenericLoop);
+			// A rejected value forecast clears its partial output. StepState has
+			// not been advanced, so the ordinary mode starts at the original step.
+			OutSamples.SetNumUninitialized(PredictionParams.NumPredictionSamples);
 			for (int32 i = 0; i < PredictionParams.NumPredictionSamples; ++i)
 			{
 				Simulation->RollbackBlackboard->BeginPredictionFrame(FutureTimeStep);
@@ -2714,32 +2727,7 @@ TArray<FTrajectorySampleInfo> UMoverComponent::GetPredictedTrajectory(FMoverPred
 
 				// Generate next move from current step state
 				FProposedMove StepMove;
-				if (NativeFlyingParams.IsSet())
-				{
-                    FFreeMoveParams& Params = NativeFlyingParams.GetValue();
-                    if (ComputeNativeFlyingMove(Params, NativeFlying.bUsesSyncFacing, NativeFlying.bRemainVertical,
-                        SampleVelocity, SampleOrientation, FutureTimeStep, StepMove))
-                    {
-	#if !UE_BUILD_SHIPPING
-						if (i == 0 && MoverComponentCVars::NativeFlyingPredictionQueries < MAX_int32)
-						{
-							// Keep the CVar's main value and referenced value in sync, without sinks/callbacks.
-							MoverComponentCVars::CVarNativeFlyingPredictionQueries->Set(
-								MoverComponentCVars::NativeFlyingPredictionQueries + 1,
-								EConsoleVariableFlags(ECVF_SetByCode | ECVF_Set_SetOnly_Unsafe));
-						}
-	#endif
-                    }
-					else
-					{
-						NativeFlyingParams.Reset();
-						CurrentMovementMode->GenerateMove(SimContext, StepState, FutureTimeStep, StepMove);
-					}
-				}
-				else
-				{
-					CurrentMovementMode->GenerateMove(SimContext, StepState, FutureTimeStep, StepMove);
-				}
+				CurrentMovementMode->GenerateMove(SimContext, StepState, FutureTimeStep, StepMove);
 
 				// Advance state based on move
                 FVector NextLocation;
@@ -2762,7 +2750,6 @@ TArray<FTrajectorySampleInfo> UMoverComponent::GetPredictedTrajectory(FMoverPred
 		{
 			if (const USceneComponent* VisualComp = GetPrimaryVisualComponent())
 			{
-				const FVector VisualCompOffset = VisualComp->GetRelativeLocation();
 				const FTransform VisualCompRelativeTransform = VisualComp->GetRelativeTransform();
 
 				for (int32 i=0; i < PredictionParams.NumPredictionSamples; ++i)
