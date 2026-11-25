@@ -105,7 +105,7 @@ class PROJECT_JCHARACTER_API AProject_JBaseCharacter : public AProject_JMoverPaw
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void TeleportSucceeded(bool bIsATest) override;
 	/** Successful physical discontinuities retire geometry, not the active ability/window. */
-	void ResetCombatSpatialHistory();
+	virtual void ResetCombatSpatialHistory();
 	UFUNCTION()
 	void OnMoverTeleportSucceeded(const FVector& FromLocation, const FQuat& FromRotation,
 		const FVector& ToLocation, const FQuat& ToRotation);

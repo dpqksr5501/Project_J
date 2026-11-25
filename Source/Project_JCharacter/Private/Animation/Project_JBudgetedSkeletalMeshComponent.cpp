@@ -230,6 +230,8 @@ bool UProject_JBudgetedSkeletalMeshComponent::IsHiddenMontageOnlySafe(bool bAfte
 		return Part.WasRecentlyRendered(.25f) || !Service->IsOutsideEveryLocalView(Part.Bounds);
 	};
 	// LeaderPose consumers may be attached to a sibling instead of the source.
+	TArray<const USceneComponent*, TInlineAllocator<24>> Children;
+	Children.Add(this);
 	for (const auto* Component : GetOwner()->GetComponents())
 	{
 		const auto* Part = Cast<USkinnedMeshComponent>(Component);
@@ -238,12 +240,11 @@ bool UProject_JBudgetedSkeletalMeshComponent::IsHiddenMontageOnlySafe(bool bAfte
 		// The managed modular parts and native cloth have source prerequisites.
 		// An unknown consumer can run before the late source: keep full pose.
 		if (!Part->IsA<UProject_JModularMeshComponent>() || IsDemanding(*Part)) return false;
+		Children.AddUnique(Part);
 		bHasFollower = true;
 	}
 	// Include weapons and other mesh children (including ChildActorComponent
 	// descendants) whose socket position is driven by this pose or a follower.
-	TArray<const USceneComponent*, TInlineAllocator<24>> Children;
-	Children.Add(this);
 	for (int32 Index = 0; Index < Children.Num(); ++Index)
 	{
 		const auto* Parent = Children[Index];

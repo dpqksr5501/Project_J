@@ -22,11 +22,11 @@
 #include "Combat/Project_JServerSideRewindComponent.h"
 #include "Combat/Project_JMultiPartHitComponent.h"
 #include "Network/Project_JNetObjectPrioritizer_Combat.h"
+#include "Network/Project_JCrowdDensityNetObjectFilter.h"
 #include "Project_JGameplayTags.h"
 #include "TimerManager.h"
 #include "Project_JCCResistanceComponent.h"
 #include "Project_JSocialStateInterface.h"
-#include "Security/Project_JServerIntegritySubsystem.h"
 #include "Engine/GameInstance.h"
 #include "DefaultMovementSet/CharacterMoverComponent.h"
 #include "UObject/StrongObjectPtr.h"
@@ -163,23 +163,6 @@ void AProject_JBaseCharacter::ResetCombatSpatialHistory()
 	if (auto* Rewind = FindComponentByClass<UProject_JServerSideRewindComponent>()) { Rewind->ResetHistory(); }
 	if (auto* MultiPart = FindComponentByClass<UProject_JMultiPartHitComponent>()) { MultiPart->ResetHistory(); }
 	if (auto* Hit = FindComponentByClass<UProject_JCombatHitValidationComponent>()) { Hit->ResetSpatialHistory(); }
-	if (HasAuthority() && GetWorld())
-	{
-		if (const IProject_JSocialStateInterface* Identity = Cast<IProject_JSocialStateInterface>(GetPlayerState()))
-		{
-			const FGuid CharId = Identity->GetAuthoritativeCharacterGuid();
-			if (CharId.IsValid())
-			{
-				if (UGameInstance* GI = GetWorld()->GetGameInstance())
-				{
-					if (auto* Integrity = GI->GetSubsystem<UProject_JServerIntegritySubsystem>())
-					{
-						Integrity->GrantMovementWhitelist(CharId, 2.0, GetWorld()->GetTimeSeconds());
-					}
-				}
-			}
-		}
-	}
 }
 
 void AProject_JBaseCharacter::PossessedBy(AController *NewController)
@@ -658,6 +641,7 @@ void AProject_JBaseCharacter::OnReplicationStartedForIris(const FOnReplicationSt
 	Super::OnReplicationStartedForIris(Params);
 	AppliedIrisPrioritizerName = NAME_None;
 	SyncIrisCombatPrioritizer();
+	UProject_JCrowdDensityNetObjectFilter::AssignActorToCrowdFilter(this);
 }
 
 void AProject_JBaseCharacter::OnStopReplicationForIris(const FOnStopReplicationParams& Params)

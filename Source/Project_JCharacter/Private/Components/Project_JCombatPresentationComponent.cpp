@@ -1,4 +1,5 @@
 #include "Components/Project_JCombatPresentationComponent.h"
+#include "Optimization/Project_JServerLoadGovernorSubsystem.h"
 
 #include "Combat/Project_JCombatPresentationSet.h"
 #include "Combat/Project_JCombatStyleDefinition.h"
@@ -323,7 +324,22 @@ void UProject_JCombatPresentationComponent::PlayCue(const FGameplayTag CueTag)
 		if (CanAcceptPresentation() && GetOwner() == Owner.Get() && Owner->HasAuthority() &&
 			ActiveAttackInstance == Instance && ActiveAttackTag == Attack && ReplicatedPresentationState.Revision == Revision)
 		{
-			MulticastPlayPresentationCue(Attack, CueTag, true, ++NextPresentationEventOrder, Instance, ReplicatedPresentationState);
+			bool bThrottleCosmeticBroadcast = false;
+			if (!bWarning && (!Cue || !Cue->bLooping))
+			{
+				if (UGameInstance* GI = GetWorld() ? GetWorld()->GetGameInstance() : nullptr)
+				{
+					if (const auto* Gov = GI->GetSubsystem<UProject_JServerLoadGovernorSubsystem>();
+						Gov && Gov->ShouldThrottleNonCriticalCosmetics())
+					{
+						bThrottleCosmeticBroadcast = true;
+					}
+				}
+			}
+			if (!bThrottleCosmeticBroadcast)
+			{
+				MulticastPlayPresentationCue(Attack, CueTag, true, ++NextPresentationEventOrder, Instance, ReplicatedPresentationState);
+			}
 		}
 		return;
 	}
