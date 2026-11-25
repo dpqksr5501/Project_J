@@ -1,6 +1,7 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
 #include "Project_JPlayerCharacter.h"
+#include "Combat/Project_JGameplayAbility_Sprint.h"
 #include "Animation/Project_JPlayerAnimInstance.h"
 #include "Animation/Project_JHandContact.h"
 #include "Animation/Project_JRetargetAnimInstance.h"
@@ -29,7 +30,7 @@ bool FProjectJPlayerMasterHierarchy::RunTest(const FString&)
 		!TestNotNull(TEXT("Existing production child identity"), Child) ||
 		!TestNotNull(TEXT("Shared animation master"), Anim)) return false;
 	TestEqual(TEXT("Master retains the player native contract"), Master->ParentClass.Get(), AProject_JPlayerCharacter::StaticClass());
-	TestEqual(TEXT("Greatsword inherits the shared BP"), Child->ParentClass.Get(), Master->GeneratedClass.Get());
+	TestEqual(TEXT("Spellblade inherits the shared BP"), Child->ParentClass.Get(), Master->GeneratedClass.Get());
 	for (auto* BP : {Master, Child})
 	{
 		TestTrue(TEXT("Saved player BP compiled cleanly"), BP->Status == BS_UpToDate);
@@ -48,8 +49,17 @@ bool FProjectJPlayerMasterHierarchy::RunTest(const FString&)
 		TestNotNull(TEXT("Existing animation profile provides movement policy"), Defaults->GetLocomotionProfile());
 		TestNull(TEXT("No avatar-local attribute object inherited from test BP"), Defaults->GetAttributeSet());
 		const auto* Abilities = FindFProperty<FArrayProperty>(BP->GeneratedClass, TEXT("DefaultAbilities"));
-		if (TestNotNull(TEXT("Ability authoring contract"), Abilities))
-			TestEqual(TEXT("PlayerState/class owns ability grants"), FScriptArrayHelper(Abilities, Abilities->ContainerPtrToValuePtr<void>(Defaults)).Num(), 0);
+		const auto* AbilityClass = Abilities ? CastField<FClassProperty>(Abilities->Inner) : nullptr;
+		if (TestNotNull(TEXT("Avatar defaults provide ability classes for the authoritative ASC"), AbilityClass))
+		{
+			FScriptArrayHelper Authored(Abilities, Abilities->ContainerPtrToValuePtr<void>(Defaults));
+			if (TestEqual(TEXT("Exactly one common avatar default is authored"), Authored.Num(), 1))
+			{
+				TestEqual(TEXT("Both player avatars supply the same common Sprint grant"),
+					Cast<UClass>(AbilityClass->GetObjectPropertyValue(Authored.GetRawPtr(0))),
+					UProject_JGameplayAbility_Sprint::StaticClass());
+			}
+		}
 	}
 	TestTrue(TEXT("Master owns typed native animation calculations"), Anim->ParentClass->IsChildOf(UProject_JPlayerAnimInstance::StaticClass()));
 	TestEqual(TEXT("Master animation has no duplicate BP-owned state"), Anim->NewVariables.Num(), 0);

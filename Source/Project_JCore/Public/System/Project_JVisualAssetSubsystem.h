@@ -55,6 +55,7 @@ private:
 	friend class FProjectJVisualResidencyCommand;
 	friend class FProjectJVisualLeaseChurnCommand;
 	void ExpireForTest(uint64 Token);
+	void AgeOrphanForTest(const FSoftObjectPath& Path);
 #endif
 	void Stop();
 	void OnTearDown(UWorld* World);
@@ -73,6 +74,7 @@ private:
 	uint64 LeaseCursorToken = 0;
 	int32 PendingLeases = 0, IdleSweepRemaining = 0;
 	double NextIdleSweep = 0;
+	double NextOrphanExpiry = TNumericLimits<double>::Max();
 	bool bGroupCleanupNeeded = false;
 	bool bAccepting = false;
 	bool bTicking = false;

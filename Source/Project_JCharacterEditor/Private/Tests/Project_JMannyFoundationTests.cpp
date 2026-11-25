@@ -106,7 +106,16 @@ bool FProjectJMannyFoundation::RunTest(const FString&)
    for(const auto& Group:Manny->GetSlotGroups())for(FName Slot:Group.SlotNames)
     TestEqual(TEXT("Compatible body preserves each montage slot group"),Body->GetSlotGroupName(Slot),Group.GroupName);
   }
-  TestEqual(TEXT("One shared master class"),Pawn->GetMesh()->GetAnimClass(),BP->GeneratedClass.Get());
+  UClass* AnimClass=Pawn->GetMesh()->GetAnimClass();
+  if (Class->IsChildOf(AProject_JNPCCharacter::StaticClass()))
+  {
+   TestTrue(TEXT("NPC animation stays independent of the native player Motion Matching driver"),
+    AnimClass && !AnimClass->IsChildOf(UProject_JPlayerAnimInstance::StaticClass()));
+  }
+  else
+  {
+   TestEqual(FString::Printf(TEXT("%s uses the shared player master"),Path),AnimClass,BP->GeneratedClass.Get());
+  }
  }
  for(const auto& Compatible:Manny->GetCompatibleSkeletons())
   TestFalse(TEXT("Canonical playback cannot bypass conversion through UEFN compatibility"),Compatible.ToSoftObjectPath().ToString().Contains(TEXT("UEFN_Mannequin")));

@@ -168,6 +168,12 @@ bool FProjectJVisualPressureTest::RunTest(const FString& Parameters)
  TestEqual(TEXT("The full-live-cache timeout callback runs exactly once"), OverflowCalls, 1);
  TestEqual(TEXT("Only existing native unfinished work retains reservations"), S->GetGroupCount(), 2);
  TestEqual(TEXT("Both actual timeout deliveries retain diagnostics"), S->GetStats().TimedOut, uint64(2));
+ TestFalse(TEXT("Unexpired orphan reservations do not require idle ticks"), S->IsTickable());
+ S->AgeOrphanForTest(OverflowPath);
+ TestTrue(TEXT("An orphan deadline wakes cleanup even with no leases"), S->IsTickable());
+ S->Tick(0);
+ TestEqual(TEXT("Only the expired orphan releases its reservation"), S->GetGroupCount(), 1);
+ TestFalse(TEXT("The remaining orphan sleeps until its own deadline"), S->IsTickable());
  AddInfo(TEXT("VisualNegativeAdmission warm_burst=32 bounded_failed_entries=256 requested_expiry=1 full_expired_reclaim=1 full_active_no_eviction=1; no per-healthy-request full-cache sweep or CPU/FPS percentage claim."));
  S->OnWorldEndPlay(*World);
  TestEqual(TEXT("World end drains reserved work"), S->GetGroupCount(), 0);

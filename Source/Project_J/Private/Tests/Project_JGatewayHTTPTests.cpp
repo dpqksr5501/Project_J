@@ -1,6 +1,7 @@
 #if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
 #include "Backend/Project_JGatewaySubsystem.h"
+#include "Backend/Project_JHttpHandoverTransport.h"
 #include "Backend/Project_JNakamaServicePort.h"
 #include "Backend/Project_JOnlineWorldSubsystem.h"
 #include "Dom/JsonObject.h"
@@ -23,6 +24,7 @@ struct FGatewayHTTPState
 {
 	TStrongObjectPtr<UGameInstance> GameInstance;
 	TStrongObjectPtr<UProject_JGatewaySubsystem> Gateway;
+	TSharedPtr<FProject_JHttpHandoverTransport> Handover;
 	std::atomic<bool> Stop {false}, ServerDone {false};
 	int32 Completed = 0;
 	double Started = FPlatformTime::Seconds();
@@ -38,11 +40,12 @@ public:
 		{
 			State->Stop = true;
 			State->Gateway->Deinitialize();
+			State->Handover.Reset();
 			if (!State->ServerDone) return false; // Native listener finishes its bounded wait normally.
-			Test->AddError(TEXT("Local HTTP integration did not complete four real requests"));
+			Test->AddError(TEXT("Local HTTP integration did not complete five real requests"));
 			return true;
 		}
-		if (State->Completed != 4 || !State->ServerDone) return false;
+		if (State->Completed != 5 || !State->ServerDone) return false;
 		State->Gateway->Deinitialize();
 		return true;
 	}
@@ -61,7 +64,7 @@ bool FProjectJGatewayHTTPTest::RunTest(const FString&)
 	if (!Listener) { AddError(TEXT("Cannot create local integration listener")); return false; }
 	auto Address = Sockets->CreateInternetAddr();
 	bool Valid = false; Address->SetIp(TEXT("127.0.0.1"), Valid); Address->SetPort(0);
-	if (!Valid || !Listener->Bind(*Address) || !Listener->Listen(4))
+	if (!Valid || !Listener->Bind(*Address) || !Listener->Listen(5))
 	{
 		Listener->Close(); Sockets->DestroySocket(Listener);
 		AddError(TEXT("Cannot bind local integration listener")); return false;
@@ -77,12 +80,25 @@ bool FProjectJGatewayHTTPTest::RunTest(const FString&)
 	Gateway->RequestTimeoutSeconds = 5;
 	Gateway->RequestTracker = MakeShared<ProjectJ::MMO::FRequestTracker, ESPMode::ThreadSafe>(4);
 	const auto Tracker = Gateway->RequestTracker;
+	const FString HandoverSecret = TEXT("local-handover-automation-key");
+	FProject_JHandoverTransportRequest HandoverRequest;
+	auto& Envelope = HandoverRequest.Envelope;
+	Envelope.TransferId = FGuid::NewGuid();
+	Envelope.SourceNodeId = TEXT("LocalSource");
+	Envelope.TargetNodeId = TEXT("LocalTarget");
+	Envelope.ActorClassPath = TEXT("/Script/Engine.Actor");
+	Envelope.Timestamp = FDateTime(FDateTime::UtcNow().GetTicks() | 1);
+	Envelope.Payload = {0x51, 0xFF};
+	Envelope.PayloadChecksum = GetDefault<UProject_JHandoverManager>()->CalculatePayloadChecksum(Envelope.Payload);
+	State->Handover = MakeShared<FProject_JHttpHandoverTransport>(HandoverSecret);
+	TestTrue(TEXT("Signed handover uses the real loopback HTTP listener"), State->Handover->RegisterNodeEndpoint(
+		Envelope.TargetNodeId, FString::Printf(TEXT("http://127.0.0.1:%d/handover"), Address->GetPort())));
 	// Real TCP/HTTP transport. Worker handles native socket bytes only; all UObject completion stays on GT.
-	Async(EAsyncExecution::Thread, [State, Listener, Sockets]
+	Async(EAsyncExecution::Thread, [State, Listener, Sockets, HandoverSecret, Envelope]
 	{
 		int32 Connections = 0;
 		const double Deadline = FPlatformTime::Seconds() + 12;
-		while (!State->Stop && Connections < 4 && FPlatformTime::Seconds() < Deadline)
+		while (!State->Stop && Connections < 5 && FPlatformTime::Seconds() < Deadline)
 		{
 			bool Pending = false;
 			Listener->WaitForPendingConnection(Pending, FTimespan::FromMilliseconds(50));
@@ -93,6 +109,7 @@ bool FProjectJGatewayHTTPTest::RunTest(const FString&)
 			Client->SetNonBlocking(true);
 			TArray<uint8> Request;
 			FString RequestText;
+			bool bHandoverAccepted = false;
 			const double ClientDeadline = FPlatformTime::Seconds() + 2;
 			while (Request.Num() < 8192 && FPlatformTime::Seconds() < ClientDeadline)
 			{
@@ -103,14 +120,43 @@ bool FProjectJGatewayHTTPTest::RunTest(const FString&)
 				{
 					FUTF8ToTCHAR Text(reinterpret_cast<const ANSICHAR*>(Request.GetData()), Request.Num());
 					RequestText = FString(Text.Length(), Text.Get());
-					if (RequestText.Contains(TEXT("\r\n\r\n"))) break;
+					const int32 HeaderEnd = RequestText.Find(TEXT("\r\n\r\n"));
+					if (HeaderEnd == INDEX_NONE) continue;
+					if (!RequestText.StartsWith(TEXT("POST /handover "))) break;
+					const auto Header = [&](const TCHAR* Name)
+					{
+						const int32 Start = RequestText.Find(Name, ESearchCase::IgnoreCase);
+						if (Start == INDEX_NONE || Start >= HeaderEnd) return FString();
+						const int32 Value = Start + FCString::Strlen(Name);
+						const int32 End = RequestText.Find(TEXT("\r\n"), ESearchCase::CaseSensitive, ESearchDir::FromStart, Value);
+						return End >= Value ? RequestText.Mid(Value, End - Value).TrimStartAndEnd() : FString();
+					};
+					int32 ContentLength = 0;
+					if (!LexTryParseString(ContentLength, *Header(TEXT("\r\nContent-Length:"))) ||
+						ContentLength <= 0 || ContentLength >= 8192) break;
+					// The fixture sends an ASCII JSON envelope. HeaderEnd is therefore a byte offset.
+					const int32 BodyStart = HeaderEnd + 4;
+					if (Request.Num() - BodyStart < ContentLength) continue;
+					int64 SignedAt = 0;
+					FString Failure;
+					FProject_JHandoverEnvelope Parsed;
+					bHandoverAccepted = LexTryParseString(SignedAt, *Header(TEXT("\r\nX-ProjectJ-Timestamp:"))) &&
+						FProject_JHttpHandoverTransport::VerifyAndParseSignedEnvelope(HandoverSecret,
+							Header(TEXT("\r\nX-ProjectJ-Signature:")), SignedAt,
+							TArray<uint8>(Request.GetData() + BodyStart, ContentLength),
+							FDateTime::UtcNow().ToUnixTimestamp(), Parsed, Failure) &&
+						Parsed.TransferId == Envelope.TransferId && Parsed.Payload == Envelope.Payload &&
+						Parsed.Timestamp == Envelope.Timestamp && Parsed.TargetNodeId == Envelope.TargetNodeId;
+					break;
 				}
 			}
 			const bool Large = RequestText.Contains(TEXT(" /large "));
 			const bool Error = RequestText.Contains(TEXT(" /error "));
 			const FString Body = Large ? FString::ChrN(2048, 'x') : TEXT("{\"ok\":true}");
+			const bool bRejectHandover = RequestText.StartsWith(TEXT("POST /handover ")) && !bHandoverAccepted;
+			const TCHAR* Status = bRejectHandover ? TEXT("403 Forbidden") : Error ? TEXT("503 Unavailable") : TEXT("200 OK");
 			const FString Response = FString::Printf(TEXT("HTTP/1.1 %s\r\nContent-Type: application/json\r\nContent-Length: %d\r\nConnection: close\r\n\r\n%s"),
-				Error ? TEXT("503 Unavailable") : TEXT("200 OK"), Body.Len(), *Body);
+				Status, Body.Len(), *Body);
 			FTCHARToUTF8 Wire(*Response); int32 Sent = 0;
 			while (Sent < Wire.Length() && FPlatformTime::Seconds() < ClientDeadline)
 			{
@@ -145,10 +191,20 @@ bool FProjectJGatewayHTTPTest::RunTest(const FString&)
 				TestEqual(TEXT("Only dispatched mutations require reconciliation"), Response.bRequiresReconciliation, Case >= 2);
 				if (Case >= 2) TestEqual(TEXT("Replay retains original mutation key"), Response.RequestContext.IdempotencyKey.Value, Mutation.IdempotencyKey.Value);
 			}
-			++State->Completed;
-			if (State->Completed == 4) TestEqual(TEXT("Completion frees every real HTTP ticket"), Tracker->Num(), 0);
+			if (++State->Completed == 5) TestEqual(TEXT("Completion frees every real HTTP ticket"), Tracker->Num(), 0);
 		});
 	}
+	TestTrue(TEXT("Handover dispatch starts a signed HTTP request"), State->Handover->Send(HandoverRequest,
+		[this, WeakState = TWeakPtr<FGatewayHTTPState, ESPMode::ThreadSafe>(State), Tracker, TransferId = Envelope.TransferId](const auto& Response)
+	{
+		const auto Pinned = WeakState.Pin();
+		if (!Pinned) return;
+		TestTrue(TEXT("Signed handover completion is on the game thread"), IsInGameThread());
+		TestEqual(TEXT("Receiver verified the wire bytes before returning success"),
+			Response.Outcome, EProject_JHandoverTransportOutcome::Accepted);
+		TestEqual(TEXT("Transfer identity survives the real HTTP exchange"), Response.TransferId, TransferId);
+		if (++Pinned->Completed == 5) TestEqual(TEXT("Completion frees every real HTTP ticket"), Tracker->Num(), 0);
+	}));
 	ADD_LATENT_AUTOMATION_COMMAND(FWaitForGatewayHTTP(this, State));
 	return true;
 }

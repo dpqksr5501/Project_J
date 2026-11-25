@@ -27,6 +27,7 @@
     [ValidateSet(0,10,15,20,30)][int]$CloakHz=0,
     [switch]$VerifyRemoteCloak,
     [ValidateRange(1,200)][int]$CloseBatchSize = 200,
+    [ValidateRange(0,65535)][int]$ServerMetricsPort = 0,
     [ValidateRange(1025,65535)][int]$Port = 17976,
     [string]$UnrealEditor = 'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
 )
@@ -54,6 +55,9 @@ if ($RenderedClothProbe -eq 'ParkOptInRemote' -and $ClothVertexCap -gt 0) { thro
 $busy = @(Get-CimInstance Win32_Process | Where-Object Name -match '^(UnrealEditor|Project_J|UnrealBuildTool|dotnet|LiveCoding|MSBuild|ShaderCompileWorker|Uba).*')
 if ($busy.Count) { throw 'An engine or build process is still active.' }
 if (Get-NetUDPEndpoint -LocalPort $Port -ErrorAction SilentlyContinue) { throw 'The loopback port is already in use.' }
+if ($ServerMetricsPort -and (Get-NetTCPConnection -State Listen -LocalPort $ServerMetricsPort -ErrorAction SilentlyContinue)) {
+    throw 'The loopback metrics port is already in use.'
+}
 if ($RenderedClient) {
     if (!$MemoryReserveMiB) { $MemoryReserveMiB = 4096 }
     $memory = Get-CimInstance Win32_OperatingSystem
@@ -98,6 +102,7 @@ function Start-CohortRole([string]$Role, [int]$Count, [string[]]$RoleArgs, [bool
 
 $serverArgs = @($map, '-server', '-DisablePython', "-port=$Port")
 if ($UsePerfThreads) { $serverArgs += '-useperfthreads' }
+if ($ServerMetricsPort) { $serverArgs += "-ProjectJMetricsPort=$ServerMetricsPort" }
 if ($MeasureCombat) { $serverArgs += @("-ProjectJCohortCombatMetrics=$report", "-ProjectJCohortCloseBatchSize=$CloseBatchSize") }
 if ($BossCombat) { $serverArgs += '-ProjectJCohortBossCombat' }
 if ($StableBossLayout) { $serverArgs += '-ProjectJCohortStableBossLayout' }
@@ -199,6 +204,7 @@ foreach ($entry in $generatorCounts.GetEnumerator()) {
 }
 Write-Output "Started one server and $($processes.Count - 1) client host(s) for $Clients game connections. $report"
 $hostSamples = [Collections.Generic.List[object]]::new()
+$metricsSnapshot = $null
 if ($MeasureCombat) {
     $timer = [Diagnostics.Stopwatch]::StartNew()
     while (@($processes.Values | Where-Object { !$_.HasExited }).Count) {
@@ -214,6 +220,16 @@ if ($MeasureCombat) {
             } catch [InvalidOperationException] { }
         }
         $hostSamples.Add($sample)
+        if ($ServerMetricsPort -and !$metricsSnapshot -and !$server.HasExited -and
+            (Select-String -LiteralPath "$report/Server.log" -SimpleMatch 'COHORT_BOSS_AIM' -Quiet)) {
+            try {
+                $body = (Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:$ServerMetricsPort/metrics" -TimeoutSec 1).Content
+                if ($body -match '(?m)^projectj_iris_crowd_tracked_objects (\d+)$' -and [int]$Matches[1] -gt 0) {
+                    $metricsSnapshot = $body
+                    Set-Content -LiteralPath "$report/server-metrics.prom" -Value $body -Encoding utf8NoBOM -NoNewline
+                }
+            } catch [System.Net.Http.HttpRequestException] {} catch [System.Threading.Tasks.TaskCanceledException] {}
+        }
         Start-Sleep -Milliseconds 1000
     }
     ConvertTo-Json -InputObject $hostSamples.ToArray() | Set-Content -LiteralPath "$report/host-samples.json" -Encoding utf8
@@ -329,11 +345,11 @@ if ($MeasureCombat) {
                     else { 'NullRHI loopback with one replicated native GAS target, synthetic instant damage and no player pawns.' }
             hardware = (Get-CimInstance Win32_Processor | Select-Object -First 1 -ExpandProperty Name)
             driverTickRate = $tickRate
-            strikeTimingClock = if ($BossCombat) { 'Same-host FPlatformTime::Seconds (Windows QPC). Replication uses the first client GAS Health update crossing its strike threshold. Stage one starts at server request dispatch.' }
+            strikeTimingClock = if ($BossCombat) { 'Same-host FPlatformTime::Seconds (Windows QPC). Replication uses the first client GAS Health update crossing its strike threshold. Stage one starts at server request dispatch.' } else { $null }
             strikeTimingComplete = if ($BossCombat) {
                 $phases.Burst.attackToHitWindowMs.samples -eq $expected -and
                     $phases.Burst.serverAuthorityHitMs.samples -eq $expected -and $phases.Burst.damageReplicationMs.samples -eq $expected
-            }
+            } else { $null }
             finalBossHealth = $bossHealth
             authoredBoss = $boss
             connectionClose = $close
@@ -407,6 +423,7 @@ if ($RenderedClient) {
     $passed = $passed -and $rendered.verified
 }
 [ordered]@{ passed = $passed; serverVerified = $serverVerified; generatorVerified = $generatorVerified
+    serverMetricsObserved = if ($ServerMetricsPort) { [bool]$metricsSnapshot } else { $null }
     replication = $(if ($irisObserved) { 'Iris' } else { 'Generic' }); replicationVerified = $replicationVerified
     requested = $Clients; peakGameConnections = $peak; confirmedStrikes = $strikes; expectedStrikes = $expected
     serverExit = $server.ExitCode; generatorExit = [int]$generatorExit; generators = $generators; combat = $combat

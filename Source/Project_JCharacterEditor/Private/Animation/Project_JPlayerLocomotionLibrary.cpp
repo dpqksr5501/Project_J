@@ -23,6 +23,7 @@
 #include "AnimGraphNode_LinkedAnimLayer.h"
 #include "AnimGraphNode_SaveCachedPose.h"
 #include "AnimGraphNode_UseCachedPose.h"
+#include "AnimGraphNode_LayeredBoneBlend.h"
 #include "AnimGraphNode_Slot.h"
 #include "AnimGraphNode_PoseSearchHistoryCollector.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -504,8 +505,26 @@ bool UProject_JPlayerLocomotionLibrary::RepairFullBodyMontageOrder(UAnimBlueprin
  auto* ProceduralOutput = FullBody->FindPin(TEXT("Pose"));
  auto* GroundInput = Ground->FindPin(TEXT("Pose"));
  if (!Input || !Output || !ProceduralOutput || !GroundInput) return false;
- const bool bOrdered = Input->LinkedTo.Num() == 1 && Input->LinkedTo[0] == ProceduralOutput &&
-     Output->LinkedTo.Num() == 1 && Output->LinkedTo[0] == GroundInput;
+ const auto HasPeer = [](const UEdGraphPin* Pin, const UEdGraphPin* Peer)
+ {
+  return Pin && Peer && Pin->LinkedTo.Num() == 1 && Pin->LinkedTo[0] == Peer;
+ };
+ const auto PeerOwner = [](const UEdGraphPin* Pin) -> UEdGraphNode*
+ {
+  return Pin && Pin->LinkedTo.Num() == 1 ? Pin->LinkedTo[0]->GetOwningNode() : nullptr;
+ };
+ // The optional leg handoff blends back to the same corrected base that feeds the montage.
+ const auto* MontageBase = Cast<UAnimGraphNode_UseCachedPose>(PeerOwner(Input));
+ const auto* Handoff = Cast<UAnimGraphNode_LayeredBoneBlend>(PeerOwner(GroundInput));
+ const auto* ReleasedLegs = Handoff
+     ? Cast<UAnimGraphNode_UseCachedPose>(PeerOwner(Handoff->FindPin(TEXT("BlendPoses_0")))) : nullptr;
+ const auto* CorrectedBase = MontageBase ? MontageBase->SaveCachedPoseNode.Get() : nullptr;
+ const bool bOrderedWithLegHandoff = CorrectedBase && ReleasedLegs &&
+     ReleasedLegs->SaveCachedPoseNode.Get() == CorrectedBase &&
+     HasPeer(CorrectedBase->FindPin(TEXT("Pose")), ProceduralOutput) &&
+     HasPeer(Output, Handoff->FindPin(TEXT("BasePose")));
+ const bool bOrdered = bOrderedWithLegHandoff ||
+     (HasPeer(Input, ProceduralOutput) && HasPeer(Output, GroundInput));
  if (bOrdered && Slot->Node.bAlwaysUpdateSourcePose) return Target->Status != BS_Error;
  if (!bOrdered && (Input->LinkedTo.Num() != 1 || Output->LinkedTo.Num() != 1 ||
      GroundInput->LinkedTo.Num() != 1 || GroundInput->LinkedTo[0] != ProceduralOutput)) return false;

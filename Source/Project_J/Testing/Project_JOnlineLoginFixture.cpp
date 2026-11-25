@@ -1,12 +1,15 @@
 #include "Testing/Project_JOnlineLoginFixture.h"
 
 #include "Backend/Project_JOnlineWorldSubsystem.h"
+#include "Backend/Project_JServerDrainSubsystem.h"
 #include "AbilitySystemComponent.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Components/Project_JInventoryComponent.h"
 #include "Containers/Ticker.h"
 #include "Crafting/Project_JCraftingStation.h"
 #include "Engine/GameInstance.h"
+#include "Engine/NetConnection.h"
+#include "Engine/NetDriver.h"
 #include "EngineUtils.h"
 #include "Game/Project_JPlayerState.h"
 #include "Game/Project_JQuestComponent.h"
@@ -27,6 +30,13 @@ DEFINE_LOG_CATEGORY_STATIC(LogProjectJOnlineLoginFixture, Log, All);
 
 #if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
 static const FName OnlineDungeonFixtureId(TEXT("LocalOnlineDungeon"));
+static constexpr int32 DrainFixtureChannel = 4;
+
+static bool IsOnlineDrainFixture()
+{
+	return FParse::Param(FCommandLine::Get(), TEXT("ProjectJOnlineLoginFixture"))
+		&& FParse::Param(FCommandLine::Get(), TEXT("ProjectJOnlineDrainFixture"));
+}
 #endif
 
 AProject_JOnlineLoginFixture::AProject_JOnlineLoginFixture()
@@ -68,10 +78,22 @@ void AProject_JOnlineLoginFixture::HandleStartingNewPlayer_Implementation(APlaye
 {
 	Super::HandleStartingNewPlayer_Implementation(NewPlayer);
 #if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
-	if (!bDungeonSource && !bDungeonDestination) return;
+	const bool bDrain = IsOnlineDrainFixture();
+	if (!bDungeonSource && !bDungeonDestination && !bDrain) return;
 	auto* PC = Cast<AProject_JOnlineLoginFixtureController>(NewPlayer);
 	auto* State = PC ? PC->GetPlayerState<AProject_JPlayerState>() : nullptr;
-	if (GetOnlineEpoch(State) <= 0 || !PC->GetPawn()) return;
+	if (!PC || GetOnlineEpoch(State) <= 0 || !PC->GetPawn()) return;
+	if (bDrain)
+	{
+		// Start outside the login stack so the normal join and possession messages are sent.
+		GetWorldTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [this]
+		{
+			auto* Drain = GetGameInstance()->GetSubsystem<UProject_JServerDrainSubsystem>();
+			if (!Drain || !Drain->BeginGracefulDrain(TEXT("LocalVerification"), 5.f, FString(), true))
+				FPlatformMisc::RequestExitWithStatus(false, 15);
+		}));
+		return;
+	}
 	auto* Dungeon = GetGameInstance()->GetSubsystem<UProject_JDungeonInstanceSubsystem>();
 	if (bDungeonSource && bDungeonOutbound)
 	{
@@ -200,6 +222,11 @@ void AProject_JOnlineLoginFixture::Logout(AController* Exiting)
 #endif
 	Super::Logout(Exiting);
 #if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
+	if (bVerified && IsOnlineDrainFixture())
+	{
+		UE_LOG(LogProjectJOnlineLoginFixture, Display, TEXT("ONLINE_DRAIN_AUTHORIZED_LOGOUT"));
+		return; // The real drain subsystem owns final shutdown after its outbox check.
+	}
 	if (bVerified && (!bDungeonSource || bDungeonReturned)) FPlatformMisc::RequestExit(false);
 #endif
 }
@@ -233,7 +260,8 @@ void AProject_JOnlineLoginFixtureController::BeginPlay()
 	const auto WeakThis = TWeakObjectPtr<ThisClass>(this);
 	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([WeakThis, Online, LoginCharacter, Access, FixtureZone](float)
 	{
-		if (auto* Controller = WeakThis.Get(); Controller && !Online->ConnectCharacter(Controller, Access, LoginCharacter, FixtureZone, 1))
+		const int32 Channel = IsOnlineDrainFixture() ? DrainFixtureChannel : 1;
+		if (auto* Controller = WeakThis.Get(); Controller && !Online->ConnectCharacter(Controller, Access, LoginCharacter, FixtureZone, Channel))
 			FPlatformMisc::RequestExitWithStatus(false, 4);
 		return false;
 	}), 1.f);
@@ -251,6 +279,21 @@ void AProject_JOnlineLoginFixtureController::AcknowledgePossession(APawn* InPawn
 	Super::AcknowledgePossession(InPawn);
 #if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
 	if (!InPawn || GetNetMode() != NM_Client || !FParse::Param(FCommandLine::Get(), TEXT("ProjectJOnlineLoginFixture"))) return;
+	if (IsOnlineDrainFixture())
+	{
+		const auto* Driver = GetWorld()->GetNetDriver();
+		auto* Connection = Driver ? Driver->ServerConnection.Get() : nullptr;
+		if (!Connection) { FPlatformMisc::RequestExitWithStatus(false, 16); return; }
+		UE_LOG(LogProjectJOnlineLoginFixture, Display, TEXT("ONLINE_DRAIN_CLIENT_POSSESSED"));
+		FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([Peer = TWeakObjectPtr<UNetConnection>(Connection)](float)
+		{
+			if (const auto* Live = Peer.Get(); Live && Live->GetConnectionState() != USOCK_Closed) return true;
+			UE_LOG(LogProjectJOnlineLoginFixture, Display, TEXT("ONLINE_DRAIN_CLIENT_DISCONNECTED"));
+			FPlatformMisc::RequestExit(false);
+			return false;
+		}), 0.05f);
+		return;
+	}
 	if (!FGuid::Parse(FPlatformMisc::GetEnvironmentVariable(TEXT("PROJECT_J_TEST_LOGIN_ITEM")), ExpectedItem)) return;
 	if (auto* Bridge = FindComponentByClass<UProject_JMMOClientBridgeComponent>())
 	{

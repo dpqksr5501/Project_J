@@ -132,6 +132,10 @@ void UProject_JVisualAssetSubsystem::Release(uint64 Token)
 			Groups.RemoveSingle(Group);
 			if (Groups.IsEmpty()) Stats.InFlight = 0;
 		}
+		else
+		{
+			NextOrphanExpiry = FMath::Min(NextOrphanExpiry, Group->StartedAt + RequestLifetimeSeconds);
+		}
 	}
 }
 void UProject_JVisualAssetSubsystem::Tick(float DeltaTime)
@@ -149,14 +153,17 @@ void UProject_JVisualAssetSubsystem::Tick(float DeltaTime)
 	else if (!bIdleSweep) IdleSweepRemaining = 0;
 	bGroupCleanupNeeded = false;
 	const auto WithinBudget = [&]() { return (FPlatformTime::Seconds() - Started) * 1000.0 < ApplyBudgetMilliseconds; };
-	Groups.RemoveAll([Started, MaxLifetime = RequestLifetimeSeconds](const auto& G)
+	NextOrphanExpiry = TNumericLimits<double>::Max();
+	Groups.RemoveAll([this, Started](const auto& Group)
 	{
-		const bool bOrphanTimedOut = G->Consumers == 0 && G->bStarted && !G->bReady && (Started - G->StartedAt) >= MaxLifetime;
-		if (G->Consumers == 0 && (G->bReady || bOrphanTimedOut))
+		if (Group->Consumers != 0) { return false; }
+		const double ExpiresAt = Group->StartedAt + RequestLifetimeSeconds;
+		if (Group->bReady || (Group->bStarted && Started >= ExpiresAt))
 		{
-			if (G->Handle) { G->Handle->CancelHandle(); }
+			if (Group->Handle) { Group->Handle->CancelHandle(); }
 			return true;
 		}
+		if (Group->bStarted) { NextOrphanExpiry = FMath::Min(NextOrphanExpiry, ExpiresAt); }
 		return false;
 	});
 	int32 InFlight = 0, Starts = 0;
@@ -234,20 +241,44 @@ void UProject_JVisualAssetSubsystem::Stop()
 	Leases.Empty(); LeaseSlots.Empty(); OwnerLeaseCounts.Empty(); Groups.Empty(); FailedUntil.Empty();
 	LeaseCursorToken = 0; Stats.InFlight = 0;
 	PendingLeases = IdleSweepRemaining = 0; NextIdleSweep = 0; bGroupCleanupNeeded = false;
+	NextOrphanExpiry = TNumericLimits<double>::Max();
 }
 void UProject_JVisualAssetSubsystem::OnTearDown(UWorld* World) { if (World == GetWorld()) { Stop(); } }
 void UProject_JVisualAssetSubsystem::OnWorldEndPlay(UWorld& World) { Stop(); Super::OnWorldEndPlay(World); }
 void UProject_JVisualAssetSubsystem::Deinitialize() { Stop(); FWorldDelegates::OnWorldBeginTearDown.Remove(TearDownHandle); Super::Deinitialize(); }
 bool UProject_JVisualAssetSubsystem::IsTickable() const
 {
-	return !IsTemplate() && bAccepting && !Groups.IsEmpty() && (PendingLeases > 0 || bGroupCleanupNeeded ||
-		IdleSweepRemaining > 0 || (!Leases.IsEmpty() && FPlatformTime::Seconds() >= NextIdleSweep));
+	if (IsTemplate() || !bAccepting || Groups.IsEmpty()) { return false; }
+	if (PendingLeases > 0 || bGroupCleanupNeeded || IdleSweepRemaining > 0) { return true; }
+	const double NextWake = Leases.IsEmpty() ? NextOrphanExpiry : FMath::Min(NextIdleSweep, NextOrphanExpiry);
+	return NextWake != TNumericLimits<double>::Max() && FPlatformTime::Seconds() >= NextWake;
 }
 TStatId UProject_JVisualAssetSubsystem::GetStatId() const { RETURN_QUICK_DECLARE_CYCLE_STAT(ProjectJVisualAssets, STATGROUP_Tickables); }
 
 #if WITH_DEV_AUTOMATION_TESTS
 void UProject_JVisualAssetSubsystem::ExpireForTest(uint64 Token)
 {
-	for (const auto& Lease : Leases) { if (Lease->Token == Token) { Lease->Deadline = -1; Lease->Group->bStarted = true; } }
+	const int32* Slot = LeaseSlots.Find(Token);
+	if (!Slot) { return; }
+	const auto& Lease = Leases[*Slot];
+	Lease->Deadline = -1;
+	if (!Lease->Group->bStarted)
+	{
+		Lease->Group->StartedAt = FPlatformTime::Seconds();
+		Lease->Group->bStarted = true;
+	}
+}
+
+void UProject_JVisualAssetSubsystem::AgeOrphanForTest(const FSoftObjectPath& Path)
+{
+	for (const auto& Group : Groups)
+	{
+		if (Group->Path == Path && Group->Consumers == 0 && Group->bStarted && !Group->bReady)
+		{
+			Group->StartedAt = FPlatformTime::Seconds() - RequestLifetimeSeconds;
+			NextOrphanExpiry = Group->StartedAt + RequestLifetimeSeconds;
+			return;
+		}
+	}
 }
 #endif
