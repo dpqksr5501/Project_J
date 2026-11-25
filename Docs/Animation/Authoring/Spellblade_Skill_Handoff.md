@@ -36,7 +36,7 @@
 | 전투 입력·데이터 | `/Game/DataAssetSets/Skill_Input_Mapping_Data/Spellblade/DA_Spellblade_Mapping_Data`, `/Game/DataAssetSets/CombatStyle/Spellblade/DA_CombatStyle_SpellbladeKit`, `/Game/DataAssetSets/AttackDefinition/Spellblade/CombatKit` |
 | 제작 자료 | [401개 원본 조사](Greatsword_A_Animation_Survey_2026-11-03.md), [포즈·연계 후보 미리보기](Data/GreatswordA_20261103/Review.html), [원본 파일명·해시·프로젝트 경로](Data/SpellbladeCombatKit/MotionProvenance.json) |
 
-기존 Greatsword 시퀀스 45개와 몽타주 15개는 `/Game/Anim_Assets/Great_Sword/Animations/Sword`와 그 아래 `Montage`로 복원했다. `AM_Spellblade_*`였던 기존 대검 몽타주 13개는 원래 `AM_Greatsword_*` 이름을 사용한다. 두 직업 레이어가 공유하는 `Sword_Idle_Seq`는 대검 폴더에서 참조한다. Spellblade 전용 시퀀스와 몽타주의 위치는 위 표의 `CombatKit/Sequences`와 `Montage/CombatKit`이다. 이전 패키지와 참조 복구 묶음은 로컬 중앙 보관소의 `GreatswordAnimationRestoreBefore.zip`이다.
+기존 Greatsword 시퀀스 45개와 몽타주 15개는 `/Game/Anim_Assets/Great_Sword/Animations/Sword`와 그 아래 `Montage`로 복원했다. `AM_Spellblade_*`였던 기존 대검 몽타주 13개는 원래 `AM_Greatsword_*` 이름을 사용한다. `Sword_Idle_Seq`는 `ABP_Greatsword_Basic`과 `BS_Greatsword_Legacy`가 참조한다. 2026-11-24에 `ABP_Spellblade`의 `CombatUpperBody`에서 이 시퀀스를 참조하던 고립된 플레이어 노드를 제거했다. 저장 전후 컴파일된 애니메이션 노드 5개의 이름과 타입이 일치했고, 새 Editor에서 연결 없는 노드가 사라진 것을 확인했다. Spellblade 전용 시퀀스·몽타주는 `CombatKit/Sequences`와 `Montage/CombatKit`에 있다. 기존 참조 복구 묶음과 ABP 변경 전 백업은 로컬 중앙 보관소에 있다.
 
 ## 현재 플레이에서 사용 중
 

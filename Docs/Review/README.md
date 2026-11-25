@@ -6,7 +6,8 @@
 
 | 확인할 내용 | 기준 기록 |
 | --- | --- |
-| MMORPG 아키텍처 실제 구현·검증 | [현재 작업](../Architecture/Planning/Project_J_MMO_Architecture_Work_2026-10-26.md). 감사 이후의 수명·요청·변경분 복제·저장 worker·서버 이벤트와 검증 결과를 이어 읽는다. 전체 콘텐츠/운영 서비스 완료와 구분한다. |
+| 첨부 `점검.md`의 후속 구현·검증 | [11월 24일 현황과 200인 병목](../Architecture/Planning/Project_J_MMO_Audit_Followup_2026-11-24.md) · [11월 23일 초기 발견과 단계별 검증](../Architecture/Planning/Project_J_MMO_Independent_Audit_2026-11-23.md). 온라인 저장·월드 이동·런타임 수정과 근거가 있는 성능 판정을 연결한다. |
+| MMORPG 아키텍처 167차까지의 기반 구현 | [단계별 작업 기록](../Architecture/Planning/Project_J_MMO_Architecture_Work_2026-10-26.md). 수명·요청·변경분 복제·저장 worker·서버 이벤트와 해당 단계의 검증. |
 | 전체 MMORPG 실행·확장 기반 감사 | [2026-10-26 전체 구조 감사](Audits/Project_J_MMO_Foundation_Audit_2026-10-26.md). 현재 실행 흐름·20개 영역·우선 발견·설계 순서를 대조했다. Mover GC 묶음 회귀 크래시와 단독 통과, 실제 에셋 조회·빌드 성공 및 부하 미검증을 구분한다. 생산 코드/에셋 수정은 없다. |
 | Mover·애니메이션 전환 후 소스 | [입력 승인·숫자/소유권 경계와 확장 회귀](Audits/Project_J_Mover_Animation_Source_Reaudit_2026-10-20.md). 실제 수정과 유지 이유·검증 한계를 구분한다. |
 | MMORPG 구조 권고와 현재 실행 경계 | [현재40항목 상태표](Architecture/Project_J_MMO_Remaining_2026-10-19.md) · [최종 검증 요약](Architecture/Project_J_MMO_Validation_2026-10-19.json). 장기 저장·이관·직업/전직의 내부 완료와 운영 인증/서비스·Server 환경 차단을 구분한다. [앞 단계 ZIP 대조](Architecture/Project_J_MMO_Architecture_2026-10-19.md)는 이력이다. |
@@ -29,7 +30,7 @@
 | 유지 | TIP·OTM/Strafe·Run/Sprint·Pivot·단발/MM 복귀·Land·전투·장비·리타깃, 지속 곡선 0.35초·100cm·3도·85%, R19/R20 수정과 기존 시험·제작 자산. |
 | 도입 보류 | Mirror 후보 일괄 확대. 구체적인 발·자세 연결 문제가 확인됐을 때만 해당 구간을 검토한다. |
 | 기존 미확인 경계 | 공중 방향 재선택 pending 순서 후보, preview 설정·시험 CSV 의미, Traversal 설치, 독립 원격 및 전수 시각·오디오 품질. 자세한 범위와 담당 경계는 R19/R20 및 PC 에셋 검토 기록을 따른다. |
-| 조사 보류 | CPU/GPU 원인 분석·반복 성능 비교·대규모 부하·운영 검증. 기존 CPU 증가와 렌더 차이가 해결됐다고 하지 않는다. |
+| 진행 중인 성능 진단 | [200인 필드 보스 후속](../Architecture/Planning/Project_J_MMO_Audit_Followup_2026-11-24.md#다음-측정에서-분리할-원인). 서버 CPU·생성기 경합·타격 타임라인 분리와 운영 규모 검증이 남아 있다. |
 
 이 표는 모든 미확인 항목을 즉시 다시 수행하라는 작업 지시가 아니다. 이전 인계·Prompt의 전체 감사 요청은 작성 당시 범위로 읽고, 재개 범위는 현재 사용자의 요청으로 정한다. 전체 함수·에셋 무결성 보증과 명시 범위의 구조 정리 마감을 구분한다.
 

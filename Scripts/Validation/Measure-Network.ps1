@@ -34,6 +34,7 @@ param(
     [string]$Executable,
     [switch]$RenderedCrowd,
     [switch]$RenderedClientCSV,
+    [switch]$RenderedClientTrace,
     [switch]$RenderedClothExecutionObservation,
     [ValidateRange(-1,4000000)][int]$RenderedClothVertexBudget = -1,
     [ValidateSet('hnh','nnn')][string]$RenderedClothTaskPriority,
@@ -118,6 +119,7 @@ if ($CraftingJobs -and ($ClientCount -ne 2 -or !$NoTrace -or $Animation -or $Com
 if ($PartyUI -and !$PartyRoster) { throw 'PartyUI renders/captures only the explicit PartyRoster cohort.' }
 if ($RenderedCrowd -and (!$Animation -or !$NoTrace -or $ClientCount -ne 2 -or $Cleave -or $CombatInput -or $Companion -or $EquipmentInterest -or $PartyRoster -or $Quests -or $AttributeAudience -or $MoverBuffers)) { throw 'RenderedCrowd requires two authored owners, NoTrace, and a separate cohort without buffer capture.' }
 if ($RenderedClientCSV -and !$RenderedCrowd) { throw 'RenderedClientCSV requires the existing RenderedCrowd/NoTrace cohort.' }
+if ($RenderedClientTrace -and !$RenderedCrowd) { throw 'RenderedClientTrace requires RenderedCrowd.' }
 if ($RenderedClothExecutionObservation -and !$RenderedClientCSV) { throw 'RenderedClothExecutionObservation requires the actual Client1 RHI CSV cohort.' }
 if ($RenderedClothVertexBudget -ge 0 -and !$RenderedClothExecutionObservation) { throw 'RenderedClothVertexBudget requires the actual cloth observation/RHI CSV cohort.' }
 if ($RenderedClothTaskPriority -and !$RenderedClientCSV) { throw 'RenderedClothTaskPriority requires the existing Client1 RHI CSV cohort.' }
@@ -260,6 +262,9 @@ function Start-Fixture($arguments) {
         if($role -notmatch '^(Server|Client[1-8])$'){throw 'Unexpected network fixture log role.'}
         if ($ServerBaseline -and $role -eq 'Server') {
             $actualArguments += @('-trace=frame,region', "-tracefile=$runRoot/Server.utrace")
+        }
+        if ($RenderedClientTrace -and $role -eq 'Client1') {
+            $actualArguments += @('-trace=cpu,frame,bookmark,task', "-tracefile=$runRoot/Client1.utrace", '-statnamedevents')
         }
         $actualArguments|ConvertTo-Json|Set-Content -LiteralPath "$runRoot/$role-effective-arguments.json" -Encoding utf8
     }
@@ -1262,6 +1267,11 @@ if ($ServerBaseline) {
 $passed=$passed -and (!$networkBudgetValidation -or $networkBudgetValidation.passed)
 $passed=$passed -and (!$RenderedClientCSV -or $clientCSVValidation.passed) -and (!$RenderedClothTaskPriority -or $renderedClothTaskPriorityValidation.passed)
 $passed=$passed -and ($RenderedClothVertexBudget -lt 0 -or $renderedClothExecutionValidation.passed)
+if ($RenderedClientTrace) {
+    $clientTrace = Get-Item -LiteralPath "$runRoot/Client1.utrace" -ErrorAction SilentlyContinue
+    $renderedValidation.clientTraceBytes = if ($clientTrace) { $clientTrace.Length } else { 0 }
+    $passed = $passed -and $renderedValidation.clientTraceBytes -gt 0
+}
 [ordered]@{passed=$passed;canonicalMeleeValidation=$canonicalMeleeValidation;fanoutValidation=$fanoutValidation;craftingValidation=$craftingValidation;scratchRoot=$scratch.Root;networkBudgetValidation=$networkBudgetValidation;irisCSVValidation=$irisCSVValidation;clientCSVValidation=$clientCSVValidation;renderedClothTaskPriorityValidation=$renderedClothTaskPriorityValidation;serverNetworkMode=$serverNetworkMode;serverModeVerified=$serverModeVerified;excludedLocalHosts=$excludedLocalHosts;packaged=[bool]$Executable;executable=$exe;executableSHA256=$executableSHA256;runtimeBinaryUnchanged=$runtimeBinaryUnchanged;results=$results;exitCodes=$exitCodes;bufferValidations=$bufferValidations;authorityEncodeValidation=$authorityEncodeValidation;renderedValidation=$renderedValidation;cleaveValidation=$cleaveValidation;cleaveThreatValidation=$cleaveThreatValidation;cleaveSourceUnchanged=$cleaveSourceUnchanged;cleaveAssetsUnchanged=$cleaveAssetsUnchanged;attributeAudienceValidation=$attributeAudienceValidation;companionValidation=$companionValidation;equipmentInterestValidation=$equipmentInterestValidation;ownerCommandValidation=$ownerCommandValidation;partyValidation=$partyValidation;partyScreenshotValidation=$partyScreenshotValidation;bufferDiagnostics=$bufferDiagnostics;nativeHandleCapturedBeforeWait=$true;timeouts=$timeouts.Count;startupPythonErrors=$startupErrors;note='Fixture assertions and exit codes are authoritative. Client buffer capture starts after all clients pass Stage 1; optional authority encode capture starts on server startup and is separately typed; every later NP diagnostic fails CSV/log validation. Raw bufferDiagnostics also retains pre-capture startup diagnostics. A passing fixture does not mean the whole startup log is clean.'} | ConvertTo-Json -Depth 5 | Set-Content "$runRoot/verification.json" -Encoding utf8
 if (!$passed) { throw "Network fixture failed. Inspect $runRoot/verification.json and logs." }
 Write-Output "All processes completed: $runRoot"

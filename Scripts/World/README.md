@@ -9,6 +9,8 @@
 - `WorldVisualHarness.py <새 label> --cameras panorama montane user_far`: 고정 Editor 화면과 설정 기록. `Capture-StarterPerformance.py`는 PIE 성능 캡처이며 별도 실행 조건이 있다.
 - MCP 연결과 콘솔 입력은 `Scripts/Editor/World-MCP.py`, `WorldEditorConsole.py`를 사용한다. 연결 상태와 실행 완료는 별개다.
 
+2026-11-18에 완료된 최초 설정 스크립트 두 개를 퇴역했다. `Scripts/World/Configure-StarterPCG.py`는 숲 롤아웃 전 팔레트 설정용이었다. 현재 숲 제작기는 저장된 `PCG_MainWorldForest` 그래프를 사용한다. `Scripts/Editor/Migrate-WorldEnvironment.py`는 `Map_Resource`로 이관할 때 사용했으며, 전용 `AssetStaging` 프로젝트는 폐기됐다. 두 스크립트 원본은 Git `f379c739`의 기존 경로에서 확인할 수 있다.
+
 제작기 일부는 로컬 `Saved/Validation/StarterWorld` 체크포인트를 입력·중복 실행 방지에 사용한다. Saved는 Git 제외이므로 새 PC에서 초기 저작을 그대로 재실행할 수 있다고 보장하지 않는다. 현재 Source·Native 상태를 먼저 조사한다. 이미 적용한 일회성 이행·보정, 반복 진단/캡처, 철회한 물 시험, 퇴역 Region A 제작기는 커밋 전 정리에서 제거했다. HLOD 등록 수정 후 프록시 빌드·PIE 전환은 아직 미검증이며 기존 실패 경로를 재실행하지 않는다.
 
 2026-10-18 감사 범위: 현행 읽기 전용 World 검증은 manifest의 MainWorld를 따른다. Source 경로와 논리 ID는 Starter를 유지한다. Build/Apply 등 초기 Starter 제작기는 단계별 이력·체크포인트용이며 MainWorld 재생성/이행기로 지원하지 않는다. 재사용하려면 대상 맵, 실제 에셋·redirector, 정확한 변경 패키지와 실패 복구를 작업 사본에서 재검토해야 한다. 공용 Settlement/Forest/Lighting 저장은 시작 dirty 상태와 동시 외부 dirty 상태를 거절하고 명시적으로 소유한 패키지만 저장한다.

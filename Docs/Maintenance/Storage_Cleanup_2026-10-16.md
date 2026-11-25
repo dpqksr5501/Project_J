@@ -76,6 +76,10 @@
 
 ### Region A 판단과 보존 범위
 
+2026-11-17에 사용자 요청으로 `Saved/WorldRegionA/AssetStaging`과 `VillageAssetStaging`을 삭제했다. 3,075개 파일, 14,753,091,996 bytes(약 13.74 GiB)다. 수정 전 백업과 Recovery는 유지했다. 과거 이관 스크립트를 다시 실행하려면 staging 입력을 원본 라이브러리에서 재구성해야 한다. 당시 작업본의 바이트 단위 복원은 확인되지 않았다. 삭제 범위 및 전후 여유 공간은 중앙 관리 폴더의 `WorldRegionAStagingRemoval_20261117.json`에 기록했다.
+
+후속 정리에서 Region A의 월드 변경 전 스냅샷 10곳에 NTFS 압축을 적용했다. 경로와 크기를 유지했고, 파일 17,609개의 전후 SHA-256이 일치했다. C: 여유 공간은 작업 전후 88,621,056 bytes 증가했다. 적용 루트와 해시는 `Saved/StorageCleanup_20261104/WorldRegionABackupCompression_20261117.json`에 있다. 기존 경로에서 그대로 읽을 수 있다. 압축 속성을 되돌릴 때는 기록의 각 루트에 `compact.exe /U /A /Q "/S:<기록의 절대 경로>"`를 실행한다.
+
 `Saved/WorldRegionA`는 MainWorld 실행 맵이 아니라 과거 월드 제작의 변경 전 백업과 에셋 이행용 scratch 프로젝트다. 정리 당시 `Scripts/Editor/Migrate-WorldEnvironment.py`는 이 경로의 `AssetStaging` 프로젝트를 명시적으로 입력으로 사용했다. 현재 게임 실행에 직접 필요하지 않다는 사실만으로 이 안의 고유 에셋·복구본까지 삭제하지 않았다.
 
 `AssetStaging/Content`와 `VillageAssetStaging/Content`에서 정리 당시 프로젝트 `Content`에 같은 바이트의 생존 사본이 확인된 항목만 정리했다. 월드 제작 백업·작업 메타데이터 **1.92GiB**, 당시 별도 원본이나 동일 사본을 확인하지 못한 staging 콘텐츠 **13.74GiB**를 보존했다. 정리 후 Region A 논리 크기는 약 **15.65GiB**다. `MainWorld` 및 기존 `Content`, `AssetIntake`, 에셋 원본·월드 백업, root `Binaries`·`Intermediate`·`DerivedDataCache`, `Source`·`Config`는 삭제 범위 밖이다. 제작 도구의 체크포인트 입력인 `Saved/Validation/StarterWorld`도 유지했다.

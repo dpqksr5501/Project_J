@@ -273,34 +273,34 @@
 | Content/GASP58Native/Audio/ | [Content/GASP58Native/Audio/DefaultAttenuation.uasset](../../Content/GASP58Native/Audio/DefaultAttenuation.uasset) |
 | Content/Anim_Assets/Riding/ | [Content/Anim_Assets/Riding/ANIM_Rider_Idle.uasset](../../Content/Anim_Assets/Riding/ANIM_Rider_Idle.uasset) |
 
-## 환경 팩: 폴더별 현재 파일 수와 정확한 표본
+## 환경 팩: 2026-11-01 정리 전 파일 수와 표본
 
-수량은 현재 디스크의 `rg --files` 목록을 센 값으로 메시 개수·라이선스 종류·LFS 수신 개수가 아니다. 숨김/ignore 파일은 제외될 수 있다. 팩 이름으로 제작자나 상업 이용 허용을 확정하지 않는다.
+이 표는 2026-11-01 당시 디스크의 `rg --files` 집계와 원래 경로다. 프로젝트에서 사용하는 에셋은 이후 `Content/Map_Resource/main_1` 구조로 통합됐다. 현재 경로와 검증 결과는 [Map_Resource 정리 기록](../Maintenance/Map_Resource_Cleanup_2026-11-22.md)에서 확인한다. 당시 파일 수에는 숨김·ignore 파일이 빠질 수 있으며, 라이선스와 LFS 수신 여부는 각 자료에서 별도로 확인한다.
 
-| 정확한 디렉터리 | 현재 파일 수 | 정확한 현존 표본 |
+| 당시 디렉터리 | 당시 파일 수 | 당시 표본 경로 |
 | --- | ---: | --- |
-| `Content/Map_Resource/AncientTempleRuins/` | 507 | [Content/Map_Resource/AncientTempleRuins/Blueprints/Gameplay/BP_Door_Double_01.uasset](../../Content/Map_Resource/AncientTempleRuins/Blueprints/Gameplay/BP_Door_Double_01.uasset) |
-| `Content/Map_Resource/Brushify/` | 437 | [Content/Map_Resource/Brushify/AlphaBrushes/T_Brushify_DesertCliffs_A.uasset](../../Content/Map_Resource/Brushify/AlphaBrushes/T_Brushify_DesertCliffs_A.uasset) |
-| `Content/Map_Resource/Effects/` | 1 | [Content/Map_Resource/Effects/VolumeFog/Materials/T_Swirly_Noise_D1.uasset](../../Content/Map_Resource/Effects/VolumeFog/Materials/T_Swirly_Noise_D1.uasset) |
-| `Content/Map_Resource/ElderboomVillage/` | 411 | [Content/Map_Resource/ElderboomVillage/Meshes/SM_02_04.uasset](../../Content/Map_Resource/ElderboomVillage/Meshes/SM_02_04.uasset) |
-| `Content/Map_Resource/Iceland_Environment/` | 78 | [Content/Map_Resource/Iceland_Environment/Materials/LandscapeGrass/LG_A.uasset](../../Content/Map_Resource/Iceland_Environment/Materials/LandscapeGrass/LG_A.uasset) |
-| `Content/Map_Resource/LevelPrototyping/` | 27 | [Content/Map_Resource/LevelPrototyping/Interactable/Door/Meshes/SM_Door.uasset](../../Content/Map_Resource/LevelPrototyping/Interactable/Door/Meshes/SM_Door.uasset) |
-| `Content/Map_Resource/MWLandscapeAutoMaterial/` | 88 | [Content/Map_Resource/MWLandscapeAutoMaterial/Meshes/Background/SM_MWAM_Clouds.uasset](../../Content/Map_Resource/MWLandscapeAutoMaterial/Meshes/Background/SM_MWAM_Clouds.uasset) |
-| `Content/Map_Resource/MainWorld/` | 41 | [Content/Map_Resource/MainWorld/Generated/Review/T_LakeShoreDelta.uasset](../../Content/Map_Resource/MainWorld/Generated/Review/T_LakeShoreDelta.uasset) |
-| `Content/Map_Resource/Materials/` | 37 | [Content/Map_Resource/Materials/Functions/MF_Alebdo.uasset](../../Content/Map_Resource/Materials/Functions/MF_Alebdo.uasset) |
-| `Content/Map_Resource/MedCastle/` | 1311 | [Content/Map_Resource/MedCastle/Blueprints/BP_SplineLayoutWithDeform.uasset](../../Content/Map_Resource/MedCastle/Blueprints/BP_SplineLayoutWithDeform.uasset) |
-| `Content/Map_Resource/MedievalVillage/` | 951 | [Content/Map_Resource/MedievalVillage/Meshes/Background/SM_Background_village_001.uasset](../../Content/Map_Resource/MedievalVillage/Meshes/Background/SM_Background_village_001.uasset) |
-| `Content/Map_Resource/Megascans/` | 1137 | [Content/Map_Resource/Megascans/3D_Assets/Axe/MI_Axe.uasset](../../Content/Map_Resource/Megascans/3D_Assets/Axe/MI_Axe.uasset) |
-| `Content/Map_Resource/Meshes/` | 574 | [Content/Map_Resource/Meshes/Arrow/SM_Arrow.uasset](../../Content/Map_Resource/Meshes/Arrow/SM_Arrow.uasset) |
-| `Content/Map_Resource/Nanite_Env_Bundle_1/` | 286 | [Content/Map_Resource/Nanite_Env_Bundle_1/StunningNaturalPlace/Materials/Landscape/LayerInfo/Layer_1_LayerInfo.uasset](../../Content/Map_Resource/Nanite_Env_Bundle_1/StunningNaturalPlace/Materials/Landscape/LayerInfo/Layer_1_LayerInfo.uasset) |
-| `Content/Map_Resource/PhysMat/` | 5 | [Content/Map_Resource/PhysMat/PM_Cobblestone.uasset](../../Content/Map_Resource/PhysMat/PM_Cobblestone.uasset) |
-| `Content/Map_Resource/ProceduralNaturePack/` | 220 | [Content/Map_Resource/ProceduralNaturePack/EPIC_StarterContent/Blueprints/Assets/FogBrightnessLUT.uasset](../../Content/Map_Resource/ProceduralNaturePack/EPIC_StarterContent/Blueprints/Assets/FogBrightnessLUT.uasset) |
-| `Content/Map_Resource/SkyTown/` | 1188 | [Content/Map_Resource/SkyTown/Meshes/SM_AutumnTree01.uasset](../../Content/Map_Resource/SkyTown/Meshes/SM_AutumnTree01.uasset) |
-| `Content/Map_Resource/ThirdParty/` | 151 | [Content/Map_Resource/ThirdParty/PN_interactiveSpruceForest/Materials/MasterMaterials/MA_Imposter.uasset](../../Content/Map_Resource/ThirdParty/PN_interactiveSpruceForest/Materials/MasterMaterials/MA_Imposter.uasset) |
-| `Content/Map_Resource/ThirdPerson/` | 1 | [Content/Map_Resource/ThirdPerson/MI_ThirdPersonColWay.uasset](../../Content/Map_Resource/ThirdPerson/MI_ThirdPersonColWay.uasset) |
-| `Content/Map_Resource/UnrealNormandy/` | 468 | [Content/Map_Resource/UnrealNormandy/Blueprints/BP_Cloud_Master.uasset](../../Content/Map_Resource/UnrealNormandy/Blueprints/BP_Cloud_Master.uasset) |
-| `Content/Map_Resource/Variants/` | 555 | [Content/Map_Resource/Variants/Assets/LevelPrototyping/Interactable/Door/Meshes/SM_Door.uasset](../../Content/Map_Resource/Variants/Assets/LevelPrototyping/Interactable/Door/Meshes/SM_Door.uasset) |
-| `Content/Map_Resource/VillageScan/` | 175 | [Content/Map_Resource/VillageScan/Blueprints/CommentaryBox/Meshes/SM_TextBox_Border_Background.uasset](../../Content/Map_Resource/VillageScan/Blueprints/CommentaryBox/Meshes/SM_TextBox_Border_Background.uasset) |
+| `Content/Map_Resource/AncientTempleRuins/` | 507 | `Content/Map_Resource/AncientTempleRuins/Blueprints/Gameplay/BP_Door_Double_01.uasset` |
+| `Content/Map_Resource/Brushify/` | 437 | `Content/Map_Resource/Brushify/AlphaBrushes/T_Brushify_DesertCliffs_A.uasset` |
+| `Content/Map_Resource/Effects/` | 1 | `Content/Map_Resource/Effects/VolumeFog/Materials/T_Swirly_Noise_D1.uasset` |
+| `Content/Map_Resource/ElderboomVillage/` | 411 | `Content/Map_Resource/ElderboomVillage/Meshes/SM_02_04.uasset` |
+| `Content/Map_Resource/Iceland_Environment/` | 78 | `Content/Map_Resource/Iceland_Environment/Materials/LandscapeGrass/LG_A.uasset` |
+| `Content/Map_Resource/LevelPrototyping/` | 27 | `Content/Map_Resource/LevelPrototyping/Interactable/Door/Meshes/SM_Door.uasset` |
+| `Content/Map_Resource/MWLandscapeAutoMaterial/` | 88 | `Content/Map_Resource/MWLandscapeAutoMaterial/Meshes/Background/SM_MWAM_Clouds.uasset` |
+| `Content/Map_Resource/MainWorld/` | 41 | `Content/Map_Resource/MainWorld/Generated/Review/T_LakeShoreDelta.uasset` |
+| `Content/Map_Resource/Materials/` | 37 | `Content/Map_Resource/Materials/Functions/MF_Alebdo.uasset` |
+| `Content/Map_Resource/MedCastle/` | 1311 | `Content/Map_Resource/MedCastle/Blueprints/BP_SplineLayoutWithDeform.uasset` |
+| `Content/Map_Resource/MedievalVillage/` | 951 | `Content/Map_Resource/MedievalVillage/Meshes/Background/SM_Background_village_001.uasset` |
+| `Content/Map_Resource/Megascans/` | 1137 | `Content/Map_Resource/Megascans/3D_Assets/Axe/MI_Axe.uasset` |
+| `Content/Map_Resource/Meshes/` | 574 | `Content/Map_Resource/Meshes/Arrow/SM_Arrow.uasset` |
+| `Content/Map_Resource/Nanite_Env_Bundle_1/` | 286 | `Content/Map_Resource/Nanite_Env_Bundle_1/StunningNaturalPlace/Materials/Landscape/LayerInfo/Layer_1_LayerInfo.uasset` |
+| `Content/Map_Resource/PhysMat/` | 5 | `Content/Map_Resource/PhysMat/PM_Cobblestone.uasset` |
+| `Content/Map_Resource/ProceduralNaturePack/` | 220 | `Content/Map_Resource/ProceduralNaturePack/EPIC_StarterContent/Blueprints/Assets/FogBrightnessLUT.uasset` |
+| `Content/Map_Resource/SkyTown/` | 1188 | `Content/Map_Resource/SkyTown/Meshes/SM_AutumnTree01.uasset` |
+| `Content/Map_Resource/ThirdParty/` | 151 | `Content/Map_Resource/ThirdParty/PN_interactiveSpruceForest/Materials/MasterMaterials/MA_Imposter.uasset` |
+| `Content/Map_Resource/ThirdPerson/` | 1 | `Content/Map_Resource/ThirdPerson/MI_ThirdPersonColWay.uasset` |
+| `Content/Map_Resource/UnrealNormandy/` | 468 | `Content/Map_Resource/UnrealNormandy/Blueprints/BP_Cloud_Master.uasset` |
+| `Content/Map_Resource/Variants/` | 555 | `Content/Map_Resource/Variants/Assets/LevelPrototyping/Interactable/Door/Meshes/SM_Door.uasset` |
+| `Content/Map_Resource/VillageScan/` | 175 | `Content/Map_Resource/VillageScan/Blueprints/CommentaryBox/Meshes/SM_TextBox_Border_Background.uasset` |
 
 ## 원격 공개 관측과 로컬 Git blob 표본
 

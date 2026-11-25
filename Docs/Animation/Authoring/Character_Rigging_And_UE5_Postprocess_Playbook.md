@@ -6,6 +6,8 @@
 
 공통 골격/애니메이션 계약은 [휴머노이드 표준](HumanoidSkeletonRetargetingStandards.md), 실제 연결·소유권과 최신 검증은 [플레이어 마스터](../../Architecture/Runtime/Player_Character_Master.md), GreatSword의 수정 blend/FBX/비교 장면은 [제작 원본](../../../SourceArt/Characters/Spellblade/UE5/README.md)을 따른다. 이 문서가 그 자원이나 런타임 설정의 두 번째 권위가 되지 않도록 한다.
 
+의상·머리카락·장식의 충돌 형상과 파츠별 비용 검증은 [보조 움직임 제작과 검증](Secondary_Motion_Authoring.md)을 사용한다.
+
 ## 1. 먼저 고정할 제작 계약
 
 | 결정 | 직접 재생 | 실시간 리타깃 |

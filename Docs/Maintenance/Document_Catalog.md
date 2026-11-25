@@ -4,7 +4,7 @@
 
 목록은 파일 위치와 문서 종류를 안내한다. 구현 완료·현재 성능을 판정하는 표가 아니며, 각 문서의 날짜·범위·후속 기록을 함께 읽는다. 통합 문서 안내는 이전 링크를 이어주는 진입점이고 상세 본문은 통합 가이드에 있다.
 
-문서 폴더 파일 3491개, Markdown 290개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
+문서 폴더 파일 3712개, Markdown 308개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
 
 ## 주제별 목록
 
@@ -26,12 +26,24 @@
 
 | 문서 | 종류 | 경로 |
 | --- | --- | --- |
+| [BP01: 백엔드 · 영속성 · Dedicated Server 스트리핑 · 던전/필드 보스 · 경제/소셜](../Architecture/Blueprints/BP01_Backend_Persistence_Dungeon_FieldBoss.md) | 구조·계약 | Architecture/Blueprints/BP01_Backend_Persistence_Dungeon_FieldBoss.md |
+| [BP02: 8×8km 고속 이동 팝인 방지 · 원거리 식생(나무/식물) · 렌더링/VSM/PSO/Substrate](../Architecture/Blueprints/BP02_OpenWorld_HighSpeedStreaming_Foliage_Rendering.md) | 구조·계약 | Architecture/Blueprints/BP02_OpenWorld_HighSpeedStreaming_Foliage_Rendering.md |
+| [BP03: 탈것(지상·비행) Mover 통합 아키텍처](../Architecture/Blueprints/BP03_Mount_Mover_Unification.md) | 구조·계약 | Architecture/Blueprints/BP03_Mount_Mover_Unification.md |
+| [BP04: 전투(A09) · 모션 매칭 전투 연계 · 군중 LOD & Mass(A03)](../Architecture/Blueprints/BP04_Combat_MotionMatching_CrowdLOD_A03_A09.md) | 구조·계약 | Architecture/Blueprints/BP04_Combat_MotionMatching_CrowdLOD_A03_A09.md |
+| [BP05: PvE · AI(StateTree) · 어그로 · 루팅 · 사망/부활 · 성장 · 퀘스트 · 생활](../Architecture/Blueprints/BP05_PvE_AI_Progression_Quest_LifeSkills.md) | 구조·계약 | Architecture/Blueprints/BP05_PvE_AI_Progression_Quest_LifeSkills.md |
+| [BP06: 운영 · 관측성 · 안티치트 · 오디오 · 에디터/CI · 로컬라이제이션/접근성](../Architecture/Blueprints/BP06_Operations_Observability_AntiCheat_Audio_QA.md) | 구조·계약 | Architecture/Blueprints/BP06_Operations_Observability_AntiCheat_Audio_QA.md |
+| [Project J 콘텐츠 제작 & 시스템 연결 실전 가이드 (Authoring & Integration Playbook)](../Architecture/Blueprints/Content_Authoring_Integration_Guide.md) | 구조·계약 | Architecture/Blueprints/Content_Authoring_Integration_Guide.md |
+| [Project J 핵심 시스템 상세 설계 청사진 (길 B 마스터 인덱스)](../Architecture/Blueprints/README.md) | 목차·문서 관리 | Architecture/Blueprints/README.md |
 | [직업·전직·전투 콘텐츠 확장 기반 — 2026-09-19](../Architecture/Extensions/Extension_Foundation_2026-09-19.md) | 기반 계약·당시 검증 | Architecture/Extensions/Extension_Foundation_2026-09-19.md |
 | [MMORPG 콘텐츠 확장 카탈로그](../Architecture/Extensions/MMO_Content_Catalog.md) | 기반 계약·당시 검증 | Architecture/Extensions/MMO_Content_Catalog.md |
 | [MMORPG 확장 기반과 콘텐츠 경계](../Architecture/Extensions/MMO_Foundation_2026-09-12.md) | 기반 계약·당시 검증 | Architecture/Extensions/MMO_Foundation_2026-09-12.md |
 | [콘텐츠와 MMORPG 확장 기반](../Architecture/Extensions/README.md) | 목차·문서 관리 | Architecture/Extensions/README.md |
 | [Deferred MMORPG Systems](../Architecture/Planning/DeferredMMORPGSystems.md) | 계획·제안 | Architecture/Planning/DeferredMMORPGSystems.md |
 | [MMORPG 아키텍처 구현·검증 작업 — 2026-10-26](../Architecture/Planning/Project_J_MMO_Architecture_Work_2026-10-26.md) | 계획·제안 | Architecture/Planning/Project_J_MMO_Architecture_Work_2026-10-26.md |
+| [독립 기술 감사 후속 현황과 200인 필드 보스 검증](../Architecture/Planning/Project_J_MMO_Audit_Followup_2026-11-24.md) | 계획·제안 | Architecture/Planning/Project_J_MMO_Audit_Followup_2026-11-24.md |
+| [Project J 전면 감사 기반 안정화(길 A) 및 핵심 시스템 청사진(길 B) 작업 계획 — 2026-11-22](../Architecture/Planning/Project_J_MMO_Hardening_And_Blueprint_2026-11-22.md) | 계획·제안 | Architecture/Planning/Project_J_MMO_Hardening_And_Blueprint_2026-11-22.md |
+| [Project J 독립 기술 감사와 후속 검증 자료](../Architecture/Planning/Project_J_MMO_Independent_Audit_2026-11-23.md) | 계획·제안 | Architecture/Planning/Project_J_MMO_Independent_Audit_2026-11-23.md |
+| [Project J Wave 3·4 독립 감사 결과 인계](../Architecture/Planning/Project_J_Wave3_Wave4_Audit_Handoff_2026-11-25.md) | 계획·제안 | Architecture/Planning/Project_J_Wave3_Wave4_Audit_Handoff_2026-11-25.md |
 | [Project_J MMORPG Execution Roadmap](../Architecture/Planning/ProjectJ_Mmorpg_Execution_Roadmap_2026-09-03.md) | 계획·제안 | Architecture/Planning/ProjectJ_Mmorpg_Execution_Roadmap_2026-09-03.md |
 | [전체 실행 계획](../Architecture/Planning/README.md) | 목차·문서 관리 | Architecture/Planning/README.md |
 | [아키텍처](../Architecture/README.md) | 목차·문서 관리 | Architecture/README.md |
@@ -86,10 +98,12 @@
 | [플레이어 애니메이션 라이브러리와 추가 수입](../Animation/Authoring/Player_Animation_Library.md) | 제작 가이드 | Animation/Authoring/Player_Animation_Library.md |
 | [애니메이션 제작 가이드](../Animation/Authoring/README.md) | 목차·문서 관리 | Animation/Authoring/README.md |
 | [보조 손 접촉과 직업별 파지 설정](../Animation/Authoring/Secondary_Hand_Contact.md) | 통합 문서 안내 | Animation/Authoring/Secondary_Hand_Contact.md |
+| [보조 움직임 제작과 검증](../Animation/Authoring/Secondary_Motion_Authoring.md) | 제작 가이드 | Animation/Authoring/Secondary_Motion_Authoring.md |
 | [Spellblade 전투 세트](../Animation/Authoring/Spellblade_CombatKit.md) | 제작 가이드 | Animation/Authoring/Spellblade_CombatKit.md |
 | [Spellblade 이름·무기 이주](../Animation/Authoring/Spellblade_Migration_2026-11-01.md) | 제작 가이드 | Animation/Authoring/Spellblade_Migration_2026-11-01.md |
 | [Spellblade 스킬 구현·개선 인계](../Animation/Authoring/Spellblade_Skill_Handoff.md) | 제작 가이드 | Animation/Authoring/Spellblade_Skill_Handoff.md |
 | [무기 파지와 손 접촉 통합 가이드](../Animation/Authoring/Weapon_Hand_Contact_System.md) | 통합 상세 가이드 | Animation/Authoring/Weapon_Hand_Contact_System.md |
+| [Winger UE5 제작과 플레이 검증](../Animation/Authoring/Winger_UE5_Export_2026-11-11.md) | 제작 가이드 | Animation/Authoring/Winger_UE5_Export_2026-11-11.md |
 | [마우스 회전 끊김 콘솔 진단](../Animation/Debug/Mouse_Turn_Trace_2026-10-06.md) | 구조·계약 | Animation/Debug/Mouse_Turn_Trace_2026-10-06.md |
 | [애니메이션 소스 수명과 Strafe 출발 점검 — 2026-10-23](../Animation/Diagnostics/Animation_Source_Review_2026-10-23.md) | 진단·수정 기록 | Animation/Diagnostics/Animation_Source_Review_2026-10-23.md |
 | [EarlyTransition 누락 복원 — 2026-10-10](../Animation/Diagnostics/EarlyTransition_Recovery_2026-10-10.md) | 진단·수정 기록 | Animation/Diagnostics/EarlyTransition_Recovery_2026-10-10.md |
@@ -99,6 +113,7 @@
 | [GASP Foley 재생 구조 조사 — 2026-10-08](../Animation/Diagnostics/GASP_Foley_Investigation_2026-10-08.md) | 진단·수정 기록 | Animation/Diagnostics/GASP_Foley_Investigation_2026-10-08.md |
 | [제자리 회전(TIP) 순간 튐 진단](../Animation/Diagnostics/Project_J_TIP_Visual_Pop_Trace_2026-09-24.md) | 진단·수정 기록 | Animation/Diagnostics/Project_J_TIP_Visual_Pop_Trace_2026-09-24.md |
 | [애니메이션 진단 기록](../Animation/Diagnostics/README.md) | 목차·문서 관리 | Animation/Diagnostics/README.md |
+| [Regina 골격·모션매칭 사전 점검](../Animation/Diagnostics/Regina_Skeleton_Review_2026-11-11.md) | 진단·수정 기록 | Animation/Diagnostics/Regina_Skeleton_Review_2026-11-11.md |
 | [무기 파지 재현·측정 기록 — 2026-10-02](../Animation/Diagnostics/Weapon_Grip_Trace_2026-10-02.md) | 진단·수정 기록 | Animation/Diagnostics/Weapon_Grip_Trace_2026-10-02.md |
 | [GASP ↔ Project_J Locomotion / State Controller 대응표](../Animation/Locomotion/GASP_ProjectJ_Locomotion_Parity.md) | 구조·계약 | Animation/Locomotion/GASP_ProjectJ_Locomotion_Parity.md |
 | [이동 애니메이션](../Animation/Locomotion/README.md) | 목차·문서 관리 | Animation/Locomotion/README.md |
@@ -243,7 +258,9 @@
 | [Mover 구조 결함 수정과 200명 재검증 — 2026-10-22](../Performance/Reports/ProjectJ_Mover_200_2026-10-22.md) | 시점별 보고·검증 | Performance/Reports/ProjectJ_Mover_200_2026-10-22.md |
 | [Project_J Profiling Baseline Results](../Performance/Reports/ProjectJ_Profiling_Baseline_Results_2026-09-03.md) | 시점별 결과 | Performance/Reports/ProjectJ_Profiling_Baseline_Results_2026-09-03.md |
 | [Project_J Profiling Consolidated Summary](../Performance/Reports/ProjectJ_Profiling_Consolidated_Summary_2026-09-06.md) | 시점별 보고·검증 | Performance/Reports/ProjectJ_Profiling_Consolidated_Summary_2026-09-06.md |
+| [스펠블레이드 망토·머리카락 충돌 최적화](../Performance/Reports/ProjectJ_Spellblade_Secondary_Motion_2026-11-24.md) | 시점별 보고·검증 | Performance/Reports/ProjectJ_Spellblade_Secondary_Motion_2026-11-24.md |
 | [Project_J 시스템 현대화 및 단계적 리팩토링 — 2026-09-08](../Performance/Reports/ProjectJ_Systems_Modernization_Refactor_2026-09-08.md) | 시점별 보고·검증 | Performance/Reports/ProjectJ_Systems_Modernization_Refactor_2026-09-08.md |
+| [Project J 성능 트레이스 검증 결과](../Performance/Reports/ProjectJ_Trace_Findings_2026-11-18.md) | 시점별 보고·검증 | Performance/Reports/ProjectJ_Trace_Findings_2026-11-18.md |
 | [기본 대검 200명 렌더 부하 측정 — 2026-10-24](../Performance/Reports/ProjectJ_Weapon200_2026-10-24.md) | 시점별 보고·검증 | Performance/Reports/ProjectJ_Weapon200_2026-10-24.md |
 
 ### 벤치마크
@@ -351,6 +368,7 @@
 | [변경 마감·중복과 레거시 관리](Change_Completion_Policy.md) | 목차·문서 관리 | Maintenance/Change_Completion_Policy.md |
 | [전체 문서 목록](Document_Catalog.md) | 목차·문서 관리 | Maintenance/Document_Catalog.md |
 | [로컬 분석·보관 자료의 중앙 관리](Local_Archive_Policy.md) | 목차·문서 관리 | Maintenance/Local_Archive_Policy.md |
+| [Map_Resource 정리 및 단일 구조 통합 기록 (2026-11-22)](Map_Resource_Cleanup_2026-11-22.md) | 목차·문서 관리 | Maintenance/Map_Resource_Cleanup_2026-11-22.md |
 | [문서 분류·본문 통합 결과 — 2026-10-03](Organization_Result_2026-10-03.md) | 목차·문서 관리 | Maintenance/Organization_Result_2026-10-03.md |
 | [문서 관리와 보존 규칙](README.md) | 목차·문서 관리 | Maintenance/README.md |
 | [로컬 검증 산출물 정리와 최적화 근거 보존 — 2026-10-16](Storage_Cleanup_2026-10-16.md) | 목차·문서 관리 | Maintenance/Storage_Cleanup_2026-10-16.md |
@@ -429,6 +447,7 @@
 | [Maintenance]() | 5 | 문서 이동·보존 기록 |
 | [Media](../Media) | 1 | 문서 이동·보존 기록 |
 | [Performance/Reports](../Performance/Reports) | 2 | 문서 이동·보존 기록 |
+| [Performance/Reports/Data](../Performance/Reports/Data) | 1 | 문서 이동·보존 기록 |
 | [Performance/Reports/Data/ClothBudget200_20261025](../Performance/Reports/Data/ClothBudget200_20261025) | 21 | 문서 이동·보존 기록 |
 | [Performance/Reports/Data/ClothBudget200_20261025/ClothBudget_Local_Follow_NoBlur_20261026](../Performance/Reports/Data/ClothBudget200_20261025/ClothBudget_Local_Follow_NoBlur_20261026) | 7 | 문서 이동·보존 기록 |
 | [Performance/Reports/Data/ClothBudget200_20261025/ClothBudget_Off_A_20261026](../Performance/Reports/Data/ClothBudget200_20261025/ClothBudget_Off_A_20261026) | 7 | 문서 이동·보존 기록 |

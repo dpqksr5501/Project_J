@@ -6,8 +6,8 @@
 
 1. [프로젝트 맥락](Overview/ProjectContext.md): 시스템·권위·상태 소유권과 실제 사용 구조.
 2. [애니메이션](Animation/README.md): Mover·native 상태/핀 계산·공용 포즈 재생·골격/몸체 제작의 현재 기준. 이전 MM/CMC 이력과 mirror 메타데이터를 구분한다.
-3. [검토 목차](Review/README.md): main 통합·R19/R20·소스/BP/DA 정리와 이전 감사의 구분, 유지·보류 범위.
-4. [성능](Performance/README.md): **기존 최적화 → Mover 전환 → 이번 재최적화**의 구조와 비교 가능한 수치를 읽는다. [200명 수정·재측정](Performance/Reports/ProjectJ_Mover_200_2026-10-22.md)은 기존 최적화 위의 추가 효과이며, 동시 공격은 기존 품질을 유지한다.
+3. [독립 기술 감사 후속 현황](Architecture/Planning/Project_J_MMO_Audit_Followup_2026-11-24.md) · [Wave 3·4 및 A-1~A-3 감사 인계](Architecture/Planning/Project_J_Wave3_Wave4_Audit_Handoff_2026-11-25.md). `점검.md`에서 시작한 수정·검증과 Wave 1~4·A-1~A-3 로컬 마감 결과.
+4. [성능](Performance/README.md). 화면에 보이는 군중, 실제 접속, 확정 타격과 서버 틱을 측정 조건별로 확인한다.
 
 과거 인계의 미완료 목록과 Prompt는 현재 작업 지시가 아니다. 이미 구현한 기능을 다시 만들지 않고, 재개 범위는 최신 사용자 요청으로 정한다. 전체 감사 요약을 여러 README에 복제하지 않으며 통합 전 안내는 [보관 자료](Archive/README.md)에 남겼다.
 
@@ -29,11 +29,11 @@
 | 자유 비행 오픈 월드·강·마을·이전 A 지역 이력 | [레벨 설계와 확장 계획](Gameplay/Planning/Open_World_Level_Design.md) → [조사 자료](Gameplay/Planning/Open_World_Research_References.md) |
 | HUD·가방·장비 조작과 UI 아트 교체 | [UI](UI/README.md) |
 | 런타임 책임과 MMO 확장 기반 확인 | [아키텍처](Architecture/README.md) |
+| **새 콘텐츠(보스·던전·탈것·스킬·월드) 제작 & 시스템 연결** | **[콘텐츠 제작 & 시스템 연결 실전 가이드](Architecture/Blueprints/Content_Authoring_Integration_Guide.md)** → [청사진 인덱스](Architecture/Blueprints/README.md) |
 | 현재 소스·BP·DA 정리와 유지 이유 | [검토 목차의 현재 통합 기준](Review/README.md#현재-통합-기준과-결정) |
-| 감사 단계별 변경·재현·검증·보류 | [현재 결정과 단계별 이력](Review/README.md) |
+| 감사 단계별 변경·재현·검증·보류 | [검토 기록](Review/README.md) |
 | 복제 구조와 원격 동작 검증 | [네트워크](Networking/README.md) |
 | 성능 수집·측정·최적화 판단 | [성능](Performance/README.md) → [벤치마크](Benchmarks/README.md) |
-| 감사 요청과 후속 결과 확인 | [검토 기록](Review/README.md) |
 | 이전 작업 이어받기 | [작업 인계](Handoffs/README.md) |
 | 원본 메모와 이전 안내 찾기 | [참고](Reference/README.md) · [보관 자료](Archive/README.md) |
 

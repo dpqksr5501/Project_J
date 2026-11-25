@@ -1,6 +1,7 @@
 param(
     [Parameter(Mandatory = $true)][string]$RunRoot,
     [switch]$Network,
+    [switch]$CohortCombat,
     [switch]$Animation,
     [switch]$AnimationEvents,
     [switch]$NotifyCounters,
@@ -11,11 +12,11 @@ param(
 $ErrorActionPreference = 'Stop'
 if (@(Get-Process UnrealEditor*,UnrealBuildTool,dotnet,LiveCoding*,MSBuild,ShaderCompileWorker,UnrealInsights -ErrorAction SilentlyContinue).Count) { throw 'Wait until engine and trace analysis processes finish.' }
 $RunRoot = (Resolve-Path -LiteralPath $RunRoot).Path.Replace('\','/')
-if ($Network -and $Animation) { throw 'Select one trace workload.' }
+if (@($Network, $CohortCombat, $Animation | Where-Object { $_ }).Count -gt 1) { throw 'Select one trace workload.' }
 if ($AnimationEvents -and !$Animation) { throw 'AnimationEvents requires Animation.' }
 if ($NotifyCounters -and !$Animation) { throw 'NotifyCounters requires Animation.' }
 if ($NotifyLifecycle -and !$Animation) { throw 'NotifyLifecycle requires Animation.' }
-$trace = if ($Network) { "$RunRoot/Server.utrace" } elseif ($Animation) { "$RunRoot/CPU.utrace" } else { "$RunRoot/Run.utrace" }
+$trace = if ($Network -or $CohortCombat) { "$RunRoot/Server.utrace" } elseif ($Animation) { "$RunRoot/CPU.utrace" } else { "$RunRoot/Run.utrace" }
 if (!(Test-Path -LiteralPath $trace)) { throw "Missing trace: $trace" }
 $outputRoot = "$RunRoot/$OutputName"
 if (Test-Path -LiteralPath $outputRoot) { throw 'Trace export already exists; preserve original evidence.' }
@@ -42,6 +43,8 @@ if ($NotifyCounters) {
 if ($Network) {
     $commands += ('TimingInsights.ExportTimerStatistics "{0}/Timers-{{region}}.csv" -region="ProjectJ.Network.*"' -f $outputRoot)
     $commands += ('TimingInsights.ExportTimingEvents "{0}/Events-{{region}}.csv" -region="ProjectJ.Network.*" -timers="*NetDriver*,*Connection*,*Replication*,*Filtering*" -columns="ThreadId,TimerId,TimerName,StartTime,EndTime,Depth"' -f $outputRoot)
+} elseif ($CohortCombat) {
+    $commands += ('TimingInsights.ExportTimingEvents "{0}/CohortGameThread.csv" -threads="GameThread" -timers="*CohortMeasuredTick*,*UWorld*Tick*,*FEngineLoop*Tick*,*TickGroup*,*TickTaskManager*,*PlayerCharacterTick*,*Wait*Tasks*,*TickFlush*,*TickDispatch*,*Iris*,*Replication*,*PreSendUpdate*,*Serialize*,*NetDriver*,*GarbageCollect*,*Mover*,*NetworkPrediction*,*ProjectJ*Combat*,*SkeletalMesh*,*Chaos*" -columns="ThreadName,TimerName,StartTime,EndTime,Depth"' -f $outputRoot)
 } elseif ($Animation) {
     if ($NotifyLifecycle) {
         $commands += ('TimingInsights.ExportTimerStatistics "{0}/Timers-{{region}}.csv" -region="ProjectJ.NotifyLifecycle.*"' -f $outputRoot)
@@ -64,6 +67,7 @@ $quoted = @($arguments | ForEach-Object {
 $analysis = Start-Process -FilePath "$EngineRoot/Engine/Binaries/Win64/UnrealInsights.exe" -ArgumentList $quoted -WindowStyle Hidden -Wait -PassThru
 if ($analysis.ExitCode -ne 0 -or !(Test-Path "$outputRoot/AllTimers.csv") -or !(Test-Path "$outputRoot/Threads.csv")) { throw 'Insights export failed; inspect Insights.log.' }
 if ($Network -and @(Get-ChildItem -LiteralPath $outputRoot -Filter 'Events-*.csv').Count -ne 5) { throw 'Expected all five measured network regions.' }
+if ($CohortCombat -and !(Test-Path -LiteralPath "$outputRoot/CohortGameThread.csv")) { throw 'Missing cohort game thread export.' }
 if ($Animation -and @(Get-ChildItem -LiteralPath $outputRoot -Filter 'Timers-*.csv').Count -eq 0) { throw 'No authored CPU measurement regions were exported.' }
 if ($AnimationEvents) {
     $timerRegions = @(Get-ChildItem -LiteralPath $outputRoot -Filter 'Timers-ProjectJ.AuthoredCPU_*.csv')

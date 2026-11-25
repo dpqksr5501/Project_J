@@ -1,5 +1,19 @@
 # 플레이어 UI
 
+## 그래픽 설정
+
+게임 HUD에서 **설정 → 그래픽 설정**을 연다. 렌더 해상도 비율, 최대 프레임, 수직 동기화와 함께 그림자, 반사, 간접 조명, 텍스처, 안티앨리어싱, 효과, 표시 거리, 초목, 지형, 후처리, 셰이딩의 품질을 바꿀 수 있다. 품질 일괄 선택은 품질 항목에만 적용한다. 적용을 누르면 현재 실행과 다음 실행에 반영한다. 변경 취소는 마지막 적용값을 다시 불러온다.
+
+화면·품질 옵션은 언리얼 `UGameUserSettings`와 프로젝트의 `DefaultScalability.ini`를 사용한다. 낮음·중간에서는 프로젝트의 Lumen 간접 조명과 반사가 빠지고, 효과 품질은 기존 원격 망토 시뮬레이션 예산도 조정한다. 렌더 해상도 비율은 화면 모드나 모니터 해상도와 독립적이다. 인게임 품질 항목은 [언리얼 Scalability](https://dev.epicgames.com/documentation/unreal-engine/scalability-reference-for-unreal-engine)와 [파이널 판타지 XIV 그래픽 설정](https://na.finalfantasyxiv.com/lodestone/topics/detail/c807875c5f8f7529887c86d2955f709eae0231ef)을 참고했다.
+
+프리셋을 고르면 11개 품질 항목의 편집값을 채운다. 개별 품질을 바꿔 서로 다른 수준을 선택하면 일괄 선택 표시를 비워 같은 프리셋을 다시 고를 수 있다. 렌더 비율과 FPS, 수직 동기화, 다른 플레이어 이펙트 설정은 독립적으로 지정한다. 적용 버튼은 `ApplyNonResolutionSettings`에서 `Scalability`를 갱신하고 `SaveSettings`에서 저장한다. 그림자·GI·반사 정책을 조정할 때는 `Config/DefaultScalability.ini`의 해당 수준을 바꾼다. Device Profile이나 콘솔 값으로 덮인 환경에서는 저장값과 실제 렌더러 값이 달라질 수 있으므로 검증에서는 두 값을 함께 확인한다. [UGameUserSettings](https://dev.epicgames.com/documentation/unreal-engine/API/Runtime/Engine/UGameUserSettings?application_version=5.8) · [언리얼 CVar 우선순위](https://dev.epicgames.com/documentation/unreal-engine/console-variables-cplusplus-in-unreal-engine)
+
+간접 조명을 낮추고 반사만 높이면 Lumen 반사의 단독 사용은 하드웨어 레이 트레이싱 지원 여부에 따라 달라진다. [언리얼 Lumen 반사 요구사항](https://dev.epicgames.com/documentation/unreal-engine/lumen-global-illumination-and-reflections-in-unreal-engine#usinglumenreflectionswithbakedstaticlighting)
+
+다른 플레이어 이펙트 불투명도는 `User.OpacityScale`을 사용하는 Niagara 효과에 적용한다. 장식 이펙트 표시를 끄면 원격 플레이어의 예산 관리 대상으로 지정된 일회성 효과 생성을 줄인다. 보스 경고, 로컬 플레이어 효과, NPC 효과와 루프 효과는 이 표시 옵션에서 제외한다. 이 두 항목은 같은 `GameUserSettings.ini`의 프로젝트 섹션에 저장한다. 서버의 피해 판정과 복제는 클라이언트 설정에 영향을 받지 않는다. [파이널 판타지 XIV 전투 효과 설정](https://na.finalfantasyxiv.com/uiguide/faq/faq-other/setting_bteffect.html)
+
+2026-11-24 검증에서 Development Editor 증분 빌드와 HUD·전투 집중 회귀 31개가 통과했다. 1280×720 D3D12에서 실제 HUD 메뉴 경로와 적용·취소·저장을 실행했고, 두 번째 게임 프로세스가 시작 시 저장 설정을 읽어 적용하는 것을 확인했다. 증거는 `Saved/Validation/GraphicsAndCombatSettings_20261124`의 `GraphicsSmoke.log`, `GraphicsRestart.log`, `Automation/index.json`에 있다. 그래픽 프리셋별 FPS와 장면별 육안 비교는 이 검증 범위에 포함하지 않았다.
+
 이동 대시의 가장자리 비네트는 로컬 HUD에서 그리고, 질주와 대시의 시야각은 로컬 카메라 컴포넌트가 제어한다. 현재 강도와 실제 입력·검증 범위는 [Spellblade 스킬 인계](../Animation/Authoring/Spellblade_Skill_Handoff.md#이어서-작업할-때-유지할-계약)를 따른다.
 
 2026-10-26 퀵슬롯 후속은 갱신별 source/ActorInfo 세대와 콜백 뒤 유효성 검사, 중복 슬롯의 spec별1회 조회, GAS 회수 후 stale 결과 폐기를 보강했다. native165개와 새 Development 패키지의 기본/동적 UI 두 해상도4실행이 오류 없이 통과했다. 패키지 검수에서 발견한 Mover private archetype export·native 공통 설정 identity도 공통 로드·생성자/제작 경계에서 수정했다. [실행 근거와 미확정 trace 종료 등 현재 경계](../Architecture/Planning/Project_J_MMO_Architecture_Work_2026-10-26.md)를 따른다. 기존 packaged 결과를 최신 변경의 통과로 재사용하지 않는다.

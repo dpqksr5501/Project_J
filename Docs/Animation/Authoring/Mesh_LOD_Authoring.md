@@ -32,9 +32,10 @@
 | --- | --- |
 | 메시·LOD | `Inspect Mesh LODs`로 원본의 단계 수와 수동 검수 대상을 확인한다. 캐릭터 BP에서 표시 메시의 Forced LOD, Leader Pose와 부모 LOD 동기화를 확인하고, 원격 카메라 거리 변화로 실제 전환을 본다. |
 | Cloth | 의상 컴포넌트의 `Allow Cloth Quality Budget`, 유효한 Leader Pose와 `NoVisualBudget` 태그를 확인한다. 실행 예산에서 정지·복귀까지 허용하는 옵션은 품질 예산과 별도다. 메인 메시 자체의 Cloth는 메시의 Cloth LOD 매핑과 실제 평가 비용을 검수한다. |
+| 본 기반 움직임과 Cloth 충돌 | 파츠의 실제 Physics Asset, 시뮬레이션 본·앵커·충돌 조합과 Cloth 바인딩을 [보조 움직임 제작 기준](Secondary_Motion_Authoring.md)으로 점검한다. |
 | 전투 FX | 실제 공격에서 사용하는 `AttackPresentationProfile`의 큐를 열어 `Use Remote Spawn Budget`, Niagara System의 Effect Type 및 반복 효과 종료 정책을 확인한다. 생성 예산과 이미 활성화된 Niagara의 거리·수량 제한은 각각 확인한다. GameplayWarning은 기존 필수 경고 경로에서 검수한다. |
 
-대표 읽기 전용 확인에서 Spellblade 몸체와 Winger 메인 메시는 각각 3개 LOD가 있었다. Spellblade 망토의 1개 LOD는 Cloth 수동 검수 대상으로 분류됐다. Spellblade 100/200개 기준선의 동시 공격 표본에서 관리 망토는 100/200개, 원격 품질 축소는 99/199개, 로컬 축소는 0개였다. Winger는 LOD0에서 메인 메시 Cloth를 사용하고 LOD1·2에서 해제한다. 현행 모듈러 의상 예산의 등록 범위는 Leader Pose가 있는 모듈러 파츠다. [최신 렌더 기준선](../../Performance/README.md#2026-11-18-기반-작업-기준선) · [Winger Cloth 제작](Winger_UE5_Export_2026-11-11.md#긴-뒤쪽-천의-chaos-cloth)
+대표 읽기 전용 확인에서 Spellblade 몸체와 Winger 메인 메시는 각각 3개 LOD가 있었다. Spellblade 망토의 1개 LOD는 Cloth 수동 검수 대상으로 분류됐다. 2026-11-18 Spellblade 100/200체 기준의 동시 공격에서 관리 망토는 100/200개, 원격 품질 축소는 99/199개, 로컬 축소는 0개였다. Winger는 LOD0에서 메인 메시 Cloth를 사용하고 LOD1·2에서 해제한다. 현행 모듈러 의상 예산의 등록 범위는 Leader Pose가 있는 모듈러 파츠다. [현재 Spellblade 200체 검증](../../Performance/Reports/ProjectJ_Spellblade_Secondary_Motion_2026-11-24.md) · [Winger Cloth 제작](Winger_UE5_Export_2026-11-11.md#긴-뒤쪽-천의-chaos-cloth)
 
 저장된 `DA_AP_SpellbladeKit_SwordCues`에서 원격 생성 예산이 큐 2개에 모두 활성화됐고, `NS_CombatTrail`은 `NET_CombatTrail`을 사용했다. 이 확인은 설정과 참조의 증거다. 활성 FX 개별 비용과 필수 경고 도달은 별도의 관측 대상이다. 원자료는 `ArchiveStore/02_Measurements/NPCFoundation_20261118_SpellbladeFX.json`에 있다.
 

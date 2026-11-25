@@ -21,6 +21,7 @@ flowchart LR
 | 캐릭터 임포트·스켈레톤 리타깃 설정 | [휴머노이드 리타깃 표준](HumanoidSkeletonRetargetingStandards.md) |
 | Blender 리깅·실제 UE 마네킹 비교·후처리·실패 사례와 캐릭터별 검수 | [리깅·UE5 후처리 작업 가이드](Character_Rigging_And_UE5_Postprocess_Playbook.md) |
 | 캐릭터·의상·장비의 기존 LOD 보존·공통 설정 생성/검증 | [메시 LOD 제작](Mesh_LOD_Authoring.md) |
+| 머리카락·의상·장식의 충돌 제작, 품질 비교 및 군중 비용 확인 | [보조 움직임 제작과 검증](Secondary_Motion_Authoring.md) |
 | 플레이어 로코모션 클립·Chooser·native/ABP 책임 | [현재 로코모션 구조](../Architecture/Player_Locomotion_Architecture.md) |
 | 몸체 보정·Idle 부착·오른팔·왼팔·공격 구간·복귀 | [무기 파지와 손 접촉 통합 가이드](Weapon_Hand_Contact_System.md) |
 

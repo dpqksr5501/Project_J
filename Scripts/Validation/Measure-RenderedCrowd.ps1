@@ -3,7 +3,10 @@ param([Parameter(Mandatory=$true)][ValidatePattern('^[A-Za-z0-9_-]+$')][string]$
  [ValidateRange(0,32)][int]$NPCCombatCount=0,[switch]$MixedFXResources,[switch]$NPCAuthoredPath,
  [ValidateRange(-1,1)][int]$NaniteMode=-1,
  [ValidateRange(-1,1)][int]$WeaponVisibility=-1,[string]$ExpectedWeaponMesh='',
- [ValidateRange(1,16384)][int]$ResolutionX=1280,[ValidateRange(1,16384)][int]$ResolutionY=720,[switch]$ForceResolution,[switch]$PlayerPoseReadiness,[switch]$LeaderBoundsProof,[switch]$SharedPhysicsBoundsProof)
+ [ValidateRange(1,16384)][int]$ResolutionX=1280,[ValidateRange(1,16384)][int]$ResolutionY=720,[switch]$ForceResolution,[switch]$PlayerPoseReadiness,[switch]$LeaderBoundsProof,[switch]$SharedPhysicsBoundsProof,
+ [ValidateSet('Original','Constrained','NoBodyCollision','ReducedBodyCollision','Skinned','PhysicsProxy')][string]$CloakTrial,[switch]$CloakGroundAttack,
+ [ValidateSet('Original','Reduced')][string]$HairTrial,[ValidateRange(0,65536)][int]$MemoryReserveMiB=0,
+ [ValidateSet(0,10,15,20,30)][int]$CloakHz=0,[switch]$CloakVideo,[switch]$StaggerCloakTicks)
 $ErrorActionPreference='Stop'
 if($NPCAuthoredPath -and !$NPCCombatCount){throw 'Authored NPC path requires the actual NPC combat cohort.'}
 if($MixedFXResources -and ($Count -ne 200 -or $NPCCombatCount -ne 32 -or !$Movement -or !$LocalPlayer -or $CloseView -or $LeaderBoundsProof -or $SharedPhysicsBoundsProof -or $SecondaryMotionBudgetExperiment -or $CanonicalProof -or $NaniteMode -ne -1 -or $WeaponVisibility -ne -1 -or $ExpectedWeaponMesh)){throw 'Mixed FX requires the unchanged 200-player/32-NPC local movement workload and ordinary quality.'}
@@ -19,6 +22,15 @@ if(($LeaderBoundsProof -or $SharedPhysicsBoundsProof) -and ($Executable -or $Cou
 if($PlayerPoseReadiness -and $Executable){throw 'Player PoseSearch readiness currently requires the default Editor host; cooked Game uses its existing prepared data contract.'}
 if($CloseView -and $Count -ne 1){throw 'Close-view quality review requires Count=1.'}
 if($CloseView -and !$Movement){throw 'Close-view quality review requires Movement for the floor and live Mover workload.'}
+if(($CloakHz -or $CloakVideo) -and ($Executable -or !$Movement -or ($CloakTrial -notin @('Original','PhysicsProxy') -and (!$CloakVideo -or $CloakTrial -ne 'Skinned')))){throw 'Cadence and recording require a supported cloak in the Editor movement fixture.'}
+if($CloakHz -and $CloakTrial -eq 'Skinned'){throw 'A skinned cloak has no native cloth tick.'}
+if($StaggerCloakTicks -and (!$CloakHz -or $Count -lt 2 -or $CloakVideo)){throw 'StaggerCloakTicks requires a multi-actor cadence timing run.'}
+if($CloakVideo -and (!$CloseView -or $Count -ne 1 -or $Trace -or $CanonicalProof)){throw 'Capture requires a separate one-character close view.'}
+if($CloakTrial -and ($Executable -or $LeaderBoundsProof -or $SharedPhysicsBoundsProof -or $MixedFXResources)){throw 'CloakTrial requires the standalone Editor fixture.'}
+if($CloakGroundAttack -and (!$CloakTrial -or !$Movement)){throw 'CloakGroundAttack requires a movement-enabled cloak trial.'}
+if($HairTrial -and ($Executable -or $SecondaryMotionBudgetExperiment -or $CloakTrial -notin @('Original','ReducedBodyCollision') -or !$CloakGroundAttack)){
+ throw 'HairTrial requires the standalone Editor ground-attack workload, ordinary quality and original or reduced-collision cloak.'
+}
 . "$PSScriptRoot/Source-Provenance.ps1"
 if(@(Get-Process UnrealEditor*,Project_J,UnrealBuildTool,dotnet,LiveCoding*,MSBuild,ShaderCompileWorker -ErrorAction SilentlyContinue).Count){throw 'Wait for engine/build completion.'}
 $root=(Resolve-Path (Join-Path $PSScriptRoot '../..')).Path.Replace('\','/')
@@ -49,6 +61,13 @@ if ($WeaponVisibility -ge 0) {
 if (!$Executable) { $arguments = @("$root/Project_J.uproject") + $arguments }
 if ($DisableEditorPython -and !$Executable) { $arguments += '-DisablePython' }
 if ($LocalPlayer) { $arguments += '-ProjectJRenderedCrowdLocalPlayer' }
+if ($CloakTrial) { $arguments += "-ProjectJRenderedCloakTrial=$CloakTrial" }
+if ($CloakGroundAttack) { $arguments += '-ProjectJRenderedCloakGroundAttack' }
+if ($CloakHz) { $arguments += "-ProjectJRenderedCloakHz=$CloakHz" }
+if ($StaggerCloakTicks) { $arguments += '-ProjectJRenderedStaggerCloakCadence' }
+if ($CloakVideo) { $arguments += @('-ProjectJRenderedCloakVideo','-Deterministic','-FPS=60') }
+if ($HairTrial) { $arguments += "-ProjectJRenderedHairTrial=$HairTrial" }
+if ($MemoryReserveMiB) { $arguments += "-ProjectJRenderedMemoryReserveMiB=$MemoryReserveMiB" }
 if ($CloseView) { $arguments += '-ProjectJRenderedCrowdCloseView' }
 if ($SecondaryMotionBudgetExperiment) { $arguments += '-ProjectJRenderedCrowdSecondaryMotionBudgetExperiment' }
 if ($TrajectoryMetrics) { $arguments += '-ProjectJRenderedCrowdTrajectoryMetrics' }
@@ -60,9 +79,18 @@ if ($PlayerPoseReadiness) { $arguments += '-ProjectJRenderedCrowdPlayerPoseReadi
 if ($LeaderBoundsProof) { $arguments += '-ProjectJRenderedCrowdLeaderBoundsProof' }
 if ($SharedPhysicsBoundsProof) { $arguments += '-ProjectJRenderedCrowdSharedPhysicsBoundsProof' }
 if ($CanonicalProof) { $arguments += @('-ProjectJRenderedCrowdCanonicalProof','-Deterministic','-FPS=60') }
-if($Trace){$arguments+=@('-trace=cpu,frame,gpu,bookmark,region,counters,task',"-tracefile=$out/Render.utrace")}
+if($Trace){
+ $traceChannels=if($HairTrial){'cpu,frame,bookmark'}else{'cpu,frame,gpu,bookmark,region,counters,task'}
+ $arguments+=@("-trace=$traceChannels","-tracefile=$out/Render.utrace")
+}
 $files=@('Project_J.uproject','Content/Character_BPs/Spellblade/BP_Spellblade.uasset',
  'Content/Animation_Logic/ABPs/Spellblade/ABP_Spellblade_Woman_RunTIme.uasset','Content/Animation_Logic/ABPs/ABP_Player_Master.uasset')
+if ($CloakTrial -eq 'NoBodyCollision') { $files += 'Content/Tests/Cloth/SK_Spellblade_Cloak_NoBodyCollision.uasset' }
+if ($CloakTrial -eq 'PhysicsProxy') { $files += 'Content/Tests/Cloth/SK_Spellblade_Cloak_PhysicsProxy.uasset' }
+if ($CloakTrial -eq 'ReducedBodyCollision') {
+ $files += @('Content/Tests/Cloth/SK_Spellblade_Cloak_ReducedBodyCollision.uasset','Content/Tests/Cloth/PA_Spellblade_Cloak_ReducedBodyCollision.uasset')
+}
+if ($HairTrial -eq 'Reduced') { $files += 'Content/Tests/Physics/PA_Spellblade_Hair_CollisionTrial.uasset' }
 # Current compatible body route and its contact/physics assets are part of the measured workload.
 foreach ($folder in @('Animation','Materials','Meshes','Physics','Profiles','Rigs')) {
  $files += @(Get-ChildItem -LiteralPath "$root/Content/Characters/Spellblade/$folder" -Recurse -Filter '*.uasset' -File | Sort-Object FullName | ForEach-Object { $_.FullName.Substring($root.Length+1).Replace('\','/') })
@@ -88,7 +116,7 @@ if($NPCAuthoredPath){$files+=@('Content/DataAssetSets/AttackDefinition/NPC/DA_At
 $files=@($files|Sort-Object -Unique)
 $hashes=@($files|ForEach-Object{[ordered]@{path=$_;sha256=(Get-FileHash -LiteralPath "$root/$_").Hash}})
 [ordered]@{head=(& git -C $root -c core.fsmonitor=false rev-parse HEAD);cpu=(Get-CimInstance Win32_Processor).Name;gpu=(Get-CimInstance Win32_VideoController).Name;
- closeView=[bool]$CloseView;
+ closeView=[bool]$CloseView; hairTrial=$HairTrial; cloakTrial=$CloakTrial; memoryReserveMiB=$MemoryReserveMiB;
  npcAuthoredPath=[bool]$NPCAuthoredPath;npcGameplayGeometry=if($NPCAuthoredPath){'Saved canonical mesh-local path mapped through observed physical-root endpoints'}else{'Legacy live finalized pose chord'};
  npcCombatCount=$NPCCombatCount;passiveNativeRecipients=$NPCCombatCount;npcCombatScope='Opt-in authored non-MM NPC and separate passive native recipients. Natural combat/animation budget lifecycle; no NPC Nav, networking or cosmetic playback qualification.';
  screenshotEncoding=if($NPCCombatCount -gt 0){'Engine ImageWriteQueue; same requested frame; one inflight immutable BGRA buffer; five future-confirmed PNG writes'}else{'Engine default synchronous screenshot encoding'};
@@ -112,6 +140,16 @@ if($null -eq $p.ExitCode){throw "Rendered crowd exit code unavailable: $out"}
 if($p.ExitCode -ne 0 -or !(Test-Path "$out/result.txt")){throw "Rendered crowd process failed: $out"}
 $result=Get-Content "$out/result.txt" -Raw
 if($result -notmatch 'success=1' -or !(Test-Path "$out/phase2.png") -or !(Test-Path "$out/phase3.png")){throw "Rendered crowd assertions/captures failed: $result"}
+if ($CloakTrial -and !(Select-String -LiteralPath "$out/Run.log" -SimpleMatch "PROJECT_J_CLOAK_TRIAL mode=$CloakTrial actors=$Count" -Quiet)) { throw "Missing cloak trial activation in $out/Run.log" }
+if ($CloakGroundAttack -and !(Select-String -LiteralPath "$out/Run.log" -Pattern "PROJECT_J_CLOAK_GROUND_ATTACK actors=$Count all_grounded_frames=[1-9][0-9]* airborne_frames=0$" -Quiet)) { throw "Missing grounded attack proof in $out/Run.log" }
+if ($CloakHz -and !(Test-Path -LiteralPath "$out/cloth-cadence.csv")) { throw "Missing native tick evidence in $out" }
+if ($HairTrial -and !(Select-String -LiteralPath "$out/Run.log" -SimpleMatch "PROJECT_J_HAIR_TRIAL mode=$HairTrial actors=$Count" -Quiet)) { throw "Missing hair trial activation in $out/Run.log" }
+if ($MemoryReserveMiB -and !(Select-String -LiteralPath "$out/Run.log" -SimpleMatch "PROJECT_J_RENDERED_MEMORY_RESERVE reserve_mib=$MemoryReserveMiB" -Quiet)) { throw "Missing physical/commit reserve evidence in $out/Run.log" }
+if ($HairTrial -and $CloseView) {
+ foreach ($phase in 3,4,5) { if (!(Test-Path -LiteralPath "$out/phase$phase.png")) { throw "Missing close-view hair capture at phase $phase." } }
+ if (!(Select-String -LiteralPath "$out/Run.log" -Pattern 'PROJECT_J_HAIR_TRIAL_CAPTURE phase=4 .*landing=1$' -Quiet) -or
+     !(Select-String -LiteralPath "$out/Run.log" -Pattern 'PROJECT_J_HAIR_TRIAL_CAPTURE phase=5 .*montage=1 ' -Quiet)) { throw 'Missing close-view landing or attack witness.' }
+}
 $observedOutput=@('phase2.png','phase3.png'|ForEach-Object {
  $bytes=[IO.File]::ReadAllBytes("$out/$_")
  if($bytes.Length -lt 24 -or [BitConverter]::ToString($bytes,0,8) -cne '89-50-4E-47-0D-0A-1A-0A' -or [Text.Encoding]::ASCII.GetString($bytes,12,4) -cne 'IHDR'){throw "Invalid viewport PNG: $_"}
