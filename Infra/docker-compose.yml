@@ -1,0 +1,63 @@
+# Project J Local MMO Backend Stack (100% Free Open-Source: Nakama + PostgreSQL + Valkey)
+# Usage: docker compose -f Infra/docker-compose.yml up -d
+# Reset: powershell -ExecutionPolicy Bypass -File Infra/scripts/dev-reset.ps1
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: project_j_postgres
+    environment:
+      POSTGRES_DB: project_j
+      POSTGRES_USER: project_j
+      POSTGRES_PASSWORD: project_j_dev_password
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - project_j_pgdata:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U project_j -d project_j"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  valkey:
+    image: valkey/valkey:8-alpine
+    container_name: project_j_valkey
+    command: ["valkey-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  nakama:
+    image: registry.heroiclabs.com/heroiclabs/nakama:3.25.0
+    container_name: project_j_nakama
+    environment:
+      PROJECT_J_NAKAMA_HTTP_KEY: "${PROJECT_J_NAKAMA_HTTP_KEY:?Set the local Nakama runtime key before starting this stack}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    entrypoint:
+      - "/bin/sh"
+      - "-ec"
+      - >
+        /nakama/nakama migrate up --database.address project_j:project_j_dev_password@postgres:5432/project_j &&
+        exec /nakama/nakama --name project_j_nakama --database.address project_j:project_j_dev_password@postgres:5432/project_j
+        --logger.level INFO --session.token_expiry_sec 7200 --runtime.js_entrypoint "project_j_mmo.js"
+        --runtime.http_key "$${PROJECT_J_NAKAMA_HTTP_KEY}"
+    ports:
+      - "127.0.0.1:7349:7349" # gRPC
+      - "127.0.0.1:7350:7350" # HTTP / WebSocket API
+      - "127.0.0.1:7351:7351" # Nakama Admin Console
+    volumes:
+      - ./nakama/modules:/nakama/data/modules:ro
+    restart: unless-stopped
+
+volumes:
+  project_j_pgdata:
