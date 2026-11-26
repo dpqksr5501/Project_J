@@ -1,5 +1,7 @@
 # BP02: 8×8km 고속 이동 팝인 방지 · 원거리 식생(나무/식물) · 렌더링/VSM/PSO/Substrate
 
+이 문서의 3단 그리드·거리·빌더 구성은 8×8km 월드의 설계 제안이다. 실제 지역에서 사용하는 그리드·레이어와 검증된 이동 소스는 [맵 신설·교체 절차](../../World/World_Map_Authoring_and_Replacement.md)와 [구현·시험 기록](../Planning/Project_J_OpenWorld_Sol_Implementation.md)을 따른다.
+
 > 연계 코드/설정: [Project_JWorldStreamingComponent.h](../../../Source/Project_J/World/Project_JWorldStreamingComponent.h), [Project_JWorldEnvironment.h](../../../Source/Project_J/World/Project_JWorldEnvironment.h), [DefaultEngine.ini](../../../Config/DefaultEngine.ini), [DefaultScalability.ini](../../../Config/DefaultScalability.ini).
 
 ---

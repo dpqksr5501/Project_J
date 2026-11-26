@@ -1,6 +1,6 @@
 # 메인 오픈 월드 — 레벨 디자이너 인계
 
-2026-10-19 환경 라이브러리 이관 작업 사본 기준. 레벨 제작을 인계하기 위한 안내다. **라이브러리 반입과 월드의 최종 아트 품질은 별개다.** 원경 숲·산·도시·마을·물·최종 성능은 기존 보류 상태다. 현재 자산 검증과 과거 월드 검증을 구분한다. 세부 상태는 [최신 인수인계](WORLD_HANDOFF_2026-10-18.md)가 기준이다.
+이 문서는 2026-10-19 환경 라이브러리 이관 당시의 MainWorld 좌표·ID·제작 자산을 보존한다. 새 맵 제작이나 전면 교체에는 [공통 맵 제작 절차](World_Map_Authoring_and_Replacement.md)를 사용한다. 10월의 보류 항목 중 원경 숲과 B01 전투는 11월에 후속 검증이 이뤄졌다. [10월 제작 이력](WORLD_HANDOFF_2026-10-18.md) · [11월 독립 검증](../Architecture/Planning/Project_J_OpenWorld_Astra_Independent_Review_Handoff_2026-11-26.md#독립-검증-결과)
 
 ## 1. 먼저 열어볼 곳과 현재 전환 상태
 
@@ -11,7 +11,7 @@
 | 이전 제작 맵 | Legacy는 현재 월드와의 배치/참조 대조 및 백업 후 엔진에서 삭제했다. 복구용 원형은 로컬 `Saved/Maintenance/AssetCleanup_20261019/LegacyRetired.zip`이며 일반 제작 대상으로 열지 않는다. 초기 생성기는 삭제된 Legacy 대상 guard와 지원 제한을 유지한다. |
 | 이전 미사용 맵 | `/Game/Level/Main_World`, `/Game/Level/Main_World_WP`. 사용자 삭제 승인은 받았으나 아직 삭제되지 않았다. 이름이 비슷해도 현재 제작할 메인 월드로 선택하지 않는다. |
 | 기본 진입점 | 현재 `Config/DefaultEngine.ini`의 GameDefaultMap/EditorStartupMap은 ThirdPerson이다. 프로젝트를 열었을 때 메인 월드가 자동으로 열리는 상태가 아니다. |
-| Cook·DA 검색 | 소스 감사에서 `Config/DefaultGame.ini`의 MapsToCook과 WorldDefinition 검색 폴더를 MainWorld로 갱신했다. 기본 시작 맵은 ThirdPerson이다. 감사 검증과 이후 에셋 반입 검증은 구분한다. |
+| Cook·DA 검색 | 11월 설정에서 명시적 MapsToCook은 L_MainWorld이고 WorldDefinition 검색 루트는 `/Game/World`다. 기본 시작 맵은 ThirdPerson이다. |
 | 제작 원천 | `Content/World/MainWorld/Source`. 입력 파일명은 `MainWorld.*`·`HM_MainWorld.r16`·`T_MainWorld*.png`이며 높이/수치와 `Starter.Lv1_30` 등 안정 식별자는 유지한다. |
 | 환경 라이브러리 | 기존 흩어진 환경 자원과 MainWorld 전용 렌더 자원 41개를 `/Game/Map_Resource`에 통합했다. 최초 충돌 59개 중 동일한 48개는 재사용하고 다른 11개는 `Variants/ProjectExisting`에 유지한다. 추가 Door Blueprint 변형도 별도 보존한다. 실제 맵·DA·HLOD 설정·PCG 그래프·제작 원천은 `World/MainWorld`에 둔다. |
 
@@ -41,7 +41,7 @@ Python/JSON은 **오프라인 제작 입력과 도구**다. 게임은 이미 저
 | [WorldEncounter](../../Source/Project_J/World/Project_JWorldEncounter.h) | 항상 로드되는 서버 보스 이벤트 소유자. NPC·단계·종료 정리를 소유하며 class 준비와 실행 예산은 Registry를 소비한다. | 같은 EncounterId 소유자를 복제 배치하지 않는다. 선택 UTC 기간과 실행 계약은 [권위 월드 이벤트](World_Event_Runtime.md)를 따른다. 보스 전투 자체는 NPC의 기존 GAS/AI가 담당한다. |
 | [WorldAuthoringLibrary](../../Source/Project_JCharacterEditor/Public/Project_JWorldAuthoringLibrary.h) | 에디터 전용 Landscape 가져오기·높이 재가져오기·visibility patch·스플라인 리본 제작 보조다. | 게임 중 지형 생성기가 아니다. `ReimportRegionHeightmap`은 base edit layer 교체이므로 독립 레이어 편집으로 오인하지 않는다. |
 
-보스 두 곳은 기존 인계 기준 NPCClass 미지정 상태이며 활성 전투·보상 완료가 아니다. 사냥터의 스폰·순찰 후보와 NoCollision 미리보기 경계도 실제 AI/리스폰/전투 봉쇄벽이 아니다. 연결 세부 사항은 [게임플레이 공간 통합](../WorldGen/07_GAMEPLAY_SPATIAL_INTEGRATION.md)을 따른다. 이번 폴더 정리에서는 게임 동작을 바꾸지 않았고, 이동한 Door Blueprint의 C++ 테스트 경로와 기존 테스트의 누락 include만 갱신해 에디터 빌드·집중 회귀를 통과했다.
+10월 인계 당시 보스 두 곳의 NPCClass가 미지정이었다. 이후 B01의 실행 결과는 위의 11월 독립 검증에서 확인한다. 사냥터의 스폰·순찰 후보와 NoCollision 미리보기 경계도 실제 AI/리스폰/전투 봉쇄벽이 아니다. 연결 세부 사항은 [게임플레이 공간 통합](../WorldGen/07_GAMEPLAY_SPATIAL_INTEGRATION.md)을 따른다. 이번 폴더 정리에서는 게임 동작을 바꾸지 않았고, 이동한 Door Blueprint의 C++ 테스트 경로와 기존 테스트의 누락 include만 갱신해 에디터 빌드·집중 회귀를 통과했다.
 
 ## 4. 안전하게 편집하는 순서
 
@@ -71,7 +71,7 @@ Python/JSON은 **오프라인 제작 입력과 도구**다. 게임은 이미 저
 
 수목 cull 변경 스크립트의 출력 경로 오류로 외부 액터 한 패키지에 JSON이 기록된 문제를 발견해 유효 백업으로 복구했다. 정책 JSON은 올바른 Source 위치로 분리했다. **복구한 액터는 변경 전 cull 값일 수 있으므로 해당 액터의 cull 0/0 재적용과 수량 보존 확인이 남아 있다.** 대상은 이전 맵의 `C/LL/S6WI6M7W1QA7CE59LOV348.uasset`이며 새 맵 대응 액터를 엔진에서 확인한다. 파일을 직접 덮어써서 다시 수정하지 않는다.
 
-기존 WP는 RuntimeHashSet / MainGrid, 셀 252m·원본 로딩 768m라는 인계 기록이 있다. Forest HLOD의 허용 목록 등록 누락은 수정했지만 이후 프록시 빌드·PIE 전환은 미검증이다. HLODLayer의 legacy loading_range=5km를 HashSet의 실제 로딩 거리로 해석하지 않는다. 전체 HLOD 빌드는 Embree/MeshUtilities 메모리 고갈로 크래시한 이력이 있으므로, 메모리 여유와 대표 구역 시험 없이 전역 빌드를 반복하지 않는다.
+기존 WP는 RuntimeHashSet / MainGrid, 셀 252m·원본 로딩 768m라는 인계 기록이 있다. Forest HLOD의 허용 목록 등록 누락은 수정했지만 10월 당시 프록시 빌드·PIE 전환은 미검증이었다. 11월에는 셀 참조를 바로잡고 프록시 666개를 빌드해 세 바이옴의 왕복 전환을 확인했다. HLODLayer의 legacy loading_range=5km를 HashSet의 실제 로딩 거리로 해석하지 않는다. 전체 HLOD 빌드는 Embree/MeshUtilities 메모리 고갈로 크래시한 이력이 있으므로, 메모리 여유와 대표 구역 시험 없이 전역 빌드를 반복하지 않는다.
 
 지피는 기존 인계 기준 180~300m 거리 범위이며 중원경 전환 품질이 부족하다. 후속 아트에서는 가까운 풀 메시, 중경 군집·관목, 먼 지표 색·법선·숲 덩어리를 함께 설계한다. 모든 풀을 수 km까지 표시하는 것을 기본 해법으로 삼지 않는다.
 

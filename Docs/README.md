@@ -8,6 +8,7 @@
 2. [애니메이션](Animation/README.md): Mover·native 상태/핀 계산·공용 포즈 재생·골격/몸체 제작의 현재 기준. 이전 MM/CMC 이력과 mirror 메타데이터를 구분한다.
 3. [Phase A~D 독립 감사·마감](Architecture/Planning/Project_J_PhaseAD_Codex_Audit_2026-11-25.md) · [Wave 3·4 및 A-1~A-3 감사 인계](Architecture/Planning/Project_J_Wave3_Wave4_Audit_Handoff_2026-11-25.md) · [독립 기술 감사 후속 현황](Architecture/Planning/Project_J_MMO_Audit_Followup_2026-11-24.md). Phase A~D 서버·백엔드 인프라 구축, 589/589 전체 회귀 마감 및 Windows 실전 운영 검증 결과.
 4. [성능](Performance/README.md). 화면에 보이는 군중, 실제 접속, 확정 타격과 서버 틱을 측정 조건별로 확인한다.
+5. [오픈월드·MMORPG 통합 인계](Architecture/Planning/Project_J_OpenWorld_Project_Handoff.md). 전체 대화와 조사 자료, Astra 설계, Sol 구현, 독립 검증 결과, 출시 인수 과제를 분야별로 찾는다.
 
 과거 인계의 미완료 목록과 Prompt는 현재 작업 지시가 아니다. 이미 구현한 기능을 다시 만들지 않고, 재개 범위는 최신 사용자 요청으로 정한다. 전체 감사 요약을 여러 README에 복제하지 않으며 통합 전 안내는 [보관 자료](Archive/README.md)에 남겼다.
 
@@ -25,7 +26,7 @@
 | 측정 원자료 수신·압축 검증·복원 | [Git LFS 검증 자료 보관소](../Archives/Validation/README.md) |
 | 공격·콤보·전투 VFX 제작 | [전투](Combat/README.md) |
 | 직업·스킬·장비·탈것 확장 | [게임플레이](Gameplay/README.md) |
-| 시작 권역 8×8km 재제작·MCP 에셋 조사 | [현재 월드 제작](World/README.md) → [최신 중단·인수인계](World/WORLD_HANDOFF_2026-10-18.md) |
+| 새 지역 제작·메인 맵 교체·기존 8×8km 월드 편집 | [맵 신설·교체 절차](World/World_Map_Authoring_and_Replacement.md) · [기존 월드 제작 자료](World/README.md) |
 | 자유 비행 오픈 월드·강·마을·이전 A 지역 이력 | [레벨 설계와 확장 계획](Gameplay/Planning/Open_World_Level_Design.md) → [조사 자료](Gameplay/Planning/Open_World_Research_References.md) |
 | HUD·가방·장비 조작과 UI 아트 교체 | [UI](UI/README.md) |
 | 런타임 책임과 MMO 확장 기반 확인 | [아키텍처](Architecture/README.md) |

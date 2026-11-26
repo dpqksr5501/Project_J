@@ -1,5 +1,13 @@
 # 전체 실행 계획
 
+- [오픈월드·MMORPG 통합 인계](Project_J_OpenWorld_Project_Handoff.md) · [독립 검증 결과](Project_J_OpenWorld_Astra_Independent_Review_Handoff_2026-11-26.md). 조사·설계부터 실제 제작·배포 검증까지의 현재 판단과 남은 작업.
+
+- [Sol 오픈월드 세부 구현과 시험](Project_J_OpenWorld_Sol_Implementation.md). 두 번째 지역의 패키지 입장·지상 주행, 신규 스킬의 경고·비용, 한 대에서의 군중 검증 순서와 완료 기준.
+
+- [오픈월드 기반 구현 인계 — 2026-11-26](Project_J_OpenWorld_Foundation_Handoff_2026-11-26.md). 새 지역·탈것·공격의 연결 방법, 검증 범위와 다음 구현 단위.
+
+- [오픈월드·MMORPG 확장 설계 — 2026-11-26](Project_J_OpenWorld_MMO_System_Design_2026-11-26.md). 새 월드·탈것·공격의 제작 계약, 원경과 필수 경고, 단일 PC 검증 기준 및 구현 순서.
+
 - [Wave 3·4 독립 감사 및 A-1~A-3 마감 인계 — 2026-11-25](Project_J_Wave3_Wave4_Audit_Handoff_2026-11-25.md). SQLite 영속 Outbox·크래시 복구, 퀘스트/던전 통합(011), Hidden Leader 원격 최적화, 3구간 전투 지연 실측과 운영 배포 게이트 요약.
 - [독립 기술 감사 후속 현황과 200인 필드 보스 검증 — 2026-11-24](Project_J_MMO_Audit_Followup_2026-11-24.md). 첨부 `점검.md`에서 시작한 감사, 실제 연결·저장 검증, Wave 1~4 및 A-1~A-3 상세 기록과 호스트 분리 계획.
 - [독립 기술 감사와 후속 검증 자료 — 2026-11-23](Project_J_MMO_Independent_Audit_2026-11-23.md). 최초 발견 사항과 단계별 작업의 재현 근거.

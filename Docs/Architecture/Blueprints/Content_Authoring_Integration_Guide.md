@@ -66,17 +66,13 @@ MainWorld B01은 기존 테스트 보스 모델·클리브·경고와 초기 골
   - **대장간 / 연금 / 요리 / 목공 제작대**: 단일 공통 부모 **`AProject_JCraftingStation`** 상속.
   - **오디오**: 전투/보스/파티/월드 SFX는 `UProject_JAudioBudgetSubsystem::PlayBudgetedSoundAtLocation(...)`으로 재생해 48보이스 캡·25m 컬링·그룹 덕킹·자동 보이스 해제를 일괄 보장.
 
-### 2.5 8×8km 오픈월드 지역 · 나무/식물(Foliage) 배치 (`BP02`)
-1. **3-Tier World Partition 그리드 규율 (배치 전 필수)**:
-   - `Grid_Macro` (512m / 2,000m): 지형 랜드마크, 거대 바위, 성 외곽, 다리
-   - `Grid_Main` (256m / 800m): 건물, 던전 포탈, NPC 스포너, 주요 숲
-   - `Grid_Detail` (128m / 280m): 소품, 채집 노드, 근거리 데칼/라이트 (비행 고도 150m 이상 시 자동 억제 대상)
-2. **나무·식물 배치 철칙 (91GB Embree OOM & VSM 캐시 파괴 방지)**:
-   - 모든 수목/식생에 **`Content/World/MainWorld/HLOD/HLODLayer_Foliage_Impostor`** (`HLODLayerType=Instancing`) 지정. 일반 `MeshMerge`/`MeshSimplify` HLOD 절대 금지!
-   - 모든 나무/식물 인스턴스에 **`WorldPositionOffsetDisableDistance = 8000` (80m, 최대 100m)** 설정 — `0`으로 두면 원거리 바람 때문에 VSM 정적 그림자 캐시가 매 프레임 깨진다.
-   - `Config/DefaultScalability.ini`의 `@2`/`@3`에서 `r.RayTracing.Geometry.SkeletalMeshes=0`, `r.MeshCardRepresentation.SkeletalMesh=0` 유지 (`ProjectJ.Systems.Phase3.CrossAssetValidator`가 자동 감시).
-3. **고속 이동 스트리밍 정책**:
-   - `Content/DataAssetSets/MMO/DA_WorldStreamingPolicy_Default`의 `VelocityProfile`로 지상 질주/비행 선행 거리·히스테리시스·안전 감속 비율 튜닝.
+### 2.5 야외 지역 · 나무와 식생 배치 (`BP02`)
+
+맵을 처음부터 만들거나 기존 MainWorld를 교체하는 순서는 [맵 신설·교체 절차](../../World/World_Map_Authoring_and_Replacement.md)에 있다.
+
+1. 원경에 남길 수관·랜드마크와 근경 전용 소품을 정한다. 월드의 기본 HLOD 레이어를 상속하거나 적합한 레이어를 직접 지정한다. 수관 인스턴싱과 건축물 병합은 같은 맵 안에서도 함께 사용할 수 있다.
+2. 원경 수관은 WPO 종료 거리와 그림자 비용을 확인한다. 현재 수관 검사의 공통 상한은 10,000cm다. 선택한 배치를 검증하고 원본이 언로드되는 구간의 프록시와 실제 수관을 왕복 확인한다. [공통 상한과 메시 역할](../../../Source/Project_JCore/Public/World/Project_JDistantMeshPolicy.h)
+3. 지역 정의와 컨트롤러가 소비하는 이동 프로필을 확인한다. 지상 탈것은 다리와 급선회, 비행은 강하와 착지를 대표 경로로 사용한다. 기존 8×8km의 그리드·거리 제안과 고밀도 식생의 빌드 메모리 이력은 [BP02 설계](BP02_OpenWorld_HighSpeedStreaming_Foliage_Rendering.md)에 있다.
 
 ### 2.6 UI · 로컬라이제이션 · 사운드 · 밸런스 · 개발 테스트 규율 (`BP06`)
 - **UI 모달 창**: 인벤토리·던전 메뉴·거래소·우편·길드 창을 열 때 `UProject_JUIWindowStackSubsystem::PushModalWindow(WindowId)` 호출, ESC 입력은 `HandleEscapeCloseTop()`으로 단일 라우팅.
@@ -111,7 +107,7 @@ MainWorld B01은 기존 테스트 보스 모델·클리브·경고와 초기 골
 
 ## 4. 새 콘텐츠 추가 후 최종 점검 체크리스트
 
-콘텐츠를 추가하면 아래 검사와 실제 소비 경로를 함께 확인한다. 적용 사례별 관측값은 [다시 검증하기 전에](../Planning/Project_J_MMO_Audit_Followup_2026-11-24.md#다시-검증하기-전에)에 있다.
+제작 중에는 [바꾼 콘텐츠에 맞는 가장 작은 검사](../Planning/Project_J_OpenWorld_Astra_Independent_Review_Handoff_2026-11-26.md#콘텐츠-추가-시-가장-작은-검사)부터 실행한다. 아래는 구조 변경·회귀·메모리 증가처럼 확인할 조건이 생겼을 때 고르는 도구다. 직업·스킬의 실제 입력과 늦은 경고, 탈것의 이동과 군중·오디오·VFX의 실행 결과는 [오픈월드·MMORPG 통합 인계](../Planning/Project_J_OpenWorld_Project_Handoff.md)에서 찾는다.
 
 1. **에디터 DataValidation 실행**: `UProject_JAbilityAuthoringAssetValidator` + `UProject_JCrossAssetEditorValidator` 오류 0.
 2. **아키텍처 DAG 검증**: `python Scripts/Validation/Validate-MMOArchitecture.py` 통과(`passed: true`).
