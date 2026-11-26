@@ -2094,7 +2094,7 @@ Baseline01/02/Diagnostic03은 solid cube 내부에 생긴 단절 Nav polygon을 
 
 D/E/F는 아직 미완료다. C 이후 Mass/복제, 표현·PSO·cold loading, 독립 병렬/비동기 실험 순서와 보류 영역은 누적 Architecture 문서를 따른다.
 
-근거 절대 경로: `C:/Users/I/Documents/GitHub/Project_J/Saved/Worktrees/SystemsModernization/Saved/Validation/GroupC_20260909`. [최종 비교 결과](C:/Users/I/Documents/GitHub/Project_J/Saved/Worktrees/SystemsModernization/Saved/Validation/GroupC_20260909/Comparison/결과.md), [CSV](C:/Users/I/Documents/GitHub/Project_J/Saved/Worktrees/SystemsModernization/Saved/Validation/GroupC_20260909/Comparison/comparison.csv), [JSON](C:/Users/I/Documents/GitHub/Project_J/Saved/Worktrees/SystemsModernization/Saved/Validation/GroupC_20260909/Comparison/comparison.json), [회귀 판정](C:/Users/I/Documents/GitHub/Project_J/Saved/Worktrees/SystemsModernization/Saved/Validation/GroupC_20260909/Regression02/verification.json).
+당시 로컬 검증 폴더는 `Saved/Worktrees/SystemsModernization/Saved/Validation/GroupC_20260909`다. 최종 비교 결과 (`Saved/Worktrees/SystemsModernization/Saved/Validation/GroupC_20260909/Comparison/결과.md`), CSV (`Saved/Worktrees/SystemsModernization/Saved/Validation/GroupC_20260909/Comparison/comparison.csv`), JSON (`Saved/Worktrees/SystemsModernization/Saved/Validation/GroupC_20260909/Comparison/comparison.json`), 회귀 판정 (`Saved/Worktrees/SystemsModernization/Saved/Validation/GroupC_20260909/Regression02/verification.json`).
 
 ## D 격리 구현·검증 완료 — 2026-09-10
 

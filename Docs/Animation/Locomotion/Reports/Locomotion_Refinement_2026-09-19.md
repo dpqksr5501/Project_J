@@ -30,7 +30,7 @@
   - `ABP_Humanoid_Master`의 착지 및 낙하 취소 애니메이션 디스패치 로직 점검 완료.
 
 ### 2) 공중 마우스 추종 및 전투 공중 회전 스냅 버그 해결
-- **관련 파일**: [`Project_JPlayerCharacter.cpp`](file:///C:/Users/I/Documents/GitHub/Project_J/Source/Project_JCharacter/Private/Project_JPlayerCharacter.cpp)
+- **관련 파일**: [`Project_JPlayerCharacter.cpp`](../../../../Source/Project_JCharacter/Private/Project_JPlayerCharacter.cpp)
 - **문제점**:
   - 전투 모드 공중 체공(`bShouldUseCombatRotation && bIsInAir`) 시 컨트롤러 Yaw와의 각도 차이가 0.5도 이하가 되면 `bUseControllerRotationYaw = true`로 토글되고, 마우스가 움직이면 다시 `false`로 꺼지면서 매 프레임마다 회전이 덜컥거리는(Snapping/Flickering) 현상 발생.
 - **해결 방안**:
@@ -39,7 +39,7 @@
   - OTM 모드(비전투 이동) 및 지상 Strafe(Turn In Place 포함) 동작에는 일체 간섭 없이 완벽한 호환성 유지.
 
 ### 3) 탈것 하차 시 원격 클라이언트 분리(Detach) 누락 동기화
-- **관련 파일**: [`Project_JMountCharacter.cpp`](file:///C:/Users/I/Documents/GitHub/Project_J/Source/Project_JMount/Private/Mount/Project_JMountCharacter.cpp)
+- **관련 파일**: [`Project_JMountCharacter.cpp`](../../../../Source/Project_JMount/Private/Mount/Project_JMountCharacter.cpp)
 - **문제점**:
   - `OnRep_Rider(ACharacter* PreviousRider)`에서 `if (Rider)` 분기만 존재하여, 탑승만 복제되고 하차 시에는 원격 클라이언트에서 `PreviousRider`가 탈것 소켓에 충돌이 꺼진 채 그대로 붙어있는 디싱크 버그 발생.
 - **해결 방안**:
@@ -47,15 +47,15 @@
 
 ### 4) FastArray OwnerComponent 생성자 조기 초기화
 - **관련 파일**: 
-  - [`Project_JEquipmentManagerComponent.cpp`](file:///C:/Users/I/Documents/GitHub/Project_J/Source/Project_JCharacter/Private/Components/Project_JEquipmentManagerComponent.cpp)
-  - [`Project_JInventoryComponent.cpp`](file:///C:/Users/I/Documents/GitHub/Project_J/Source/Project_JCharacter/Private/Components/Project_JInventoryComponent.cpp)
+  - [`Project_JEquipmentManagerComponent.cpp`](../../../../Source/Project_JCharacter/Private/Components/Project_JEquipmentManagerComponent.cpp)
+  - [`Project_JInventoryComponent.cpp`](../../../../Source/Project_JCharacter/Private/Components/Project_JInventoryComponent.cpp)
 - **문제점**:
   - `OwnerComponent = this;` 할당이 `BeginPlay()`에서만 수행되어, 액터 스폰 직후 네트워크 복제 패킷이 `BeginPlay()`보다 먼저 도착하면 `PostReplicatedAdd` 콜백에서 `OwnerComponent`가 null이어 UI/장비 갱신 이벤트가 누락될 위험 존재.
 - **해결 방안**:
   - 두 컴포넌트의 생성자(`UProject_JEquipmentManagerComponent()`, `UProject_JInventoryComponent()`)에서 `EquipmentArray.OwnerComponent = this;`, `InventoryArray.OwnerComponent = this;`를 조기 할당하도록 보강.
 
 ### 5) 타겟 스코어링 서브시스템 약참조 널체크 방어
-- **관련 파일**: [`Project_JTargetScoringComponent.cpp`](file:///C:/Users/I/Documents/GitHub/Project_J/Source/Project_JCharacter/Private/Components/Project_JTargetScoringComponent.cpp)
+- **관련 파일**: [`Project_JTargetScoringComponent.cpp`](../../../../Source/Project_JCharacter/Private/Components/Project_JTargetScoringComponent.cpp)
 - **해결 방안**:
   - `RequestTargets`에서 `QuerySubsystem` 약참조를 직접 역참조하던 위험을 방어하기 위해 `UProject_JTargetScoringSubsystem* Subsystem = QuerySubsystem.Get()` 및 `if (!Subsystem) return false;` 방어 코드 추가.
 
@@ -70,7 +70,7 @@
   - `LeanAmount.Y`: 캐릭터의 전/후 가속도.
 
 ### 2) C++ 데이터 에셋 및 제어 정책 확장
-- **관련 파일**: [`Project_JLocomotionProfile.h`](file:///C:/Users/I/Documents/GitHub/Project_J/Source/Project_JCharacter/Public/Animation/Project_JLocomotionProfile.h)
+- **관련 파일**: [`Project_JLocomotionProfile.h`](../../../../Source/Project_JCharacter/Public/Animation/Project_JLocomotionProfile.h)
 - `FProject_JLocomotionPresentationPolicy`에 프로퍼티 추가:
   - `bEnableLeanInAir` (기본값: `true`): 공중 체공 중 Lean 활성화 허용 여부 (어색할 경우 에디터 체크박스 하나로 즉시 비활성화 가능).
   - `AirLeanMultiplier` (기본값: `1.0f`): 공중 체공 중 Lean 적용 배율.
@@ -80,7 +80,7 @@
   - `SprintLeanMinSpeedThreshold` (기본값: `550.0f` cm/s): 판정 적용 최소 속도.
 
 ### 3) C++ 스냅샷 단계에서 예외 상황 일원화 (`FinalizeThreadSafeData`)
-- **관련 파일**: [`Project_JCharacterAnimInstance.cpp`](file:///C:/Users/I/Documents/GitHub/Project_J/Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp)
+- **관련 파일**: [`Project_JCharacterAnimInstance.cpp`](../../../../Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp)
 - **방어된 예외 상황 및 설계**:
   1. **제자리 Shift 누름 방어**: 가만히 서서 Shift를 눌러도 `bIsMoving`이 거짓이면 Lean이 작동하지 않음.
   2. **벽 비비기 방어**: 벽을 보고 전진 키를 눌러도 실제 전진 속도가 없으면 비활성화.

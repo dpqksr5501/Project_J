@@ -8,7 +8,7 @@
 
 | 무엇을 이어받는가 | 기준 문서 |
 |---|---|
-| 처음 조사한 기법·출처, 사용자 요구와 정정, 모델 전환, 작업별 완료 보고, 패키지 용량 토의 | [조사 출처와 대화 기록](References/Project_J_OpenWorld_Conversation_2026-11-26.md). 레벨 제작 문서까지 갱신한 시점의 사용자 메시지 32개와 그전 완료 응답 25개를 수록했다. 설계 전 원자료는 로컬의 [최초 인계](<C:/Users/I/Desktop/Project_J_오픈월드_MMO_최적화_인계_2026-11-26.md>)와 [사용자 TXT](<C:/Users/I/Desktop/설계전 모든 내용을 담은 문서.txt>)다. |
+| 처음 조사한 기법·출처, 사용자 요구와 정정, 모델 전환, 작업별 완료 보고, 패키지 용량 토의 | [조사 출처와 대화 기록](References/Project_J_OpenWorld_Conversation_2026-11-26.md). 레벨 제작 문서까지 갱신한 시점의 사용자 메시지 32개와 그전 완료 응답 25개를 수록했다. 설계 전 원자료는 로컬의 최초 인계 (`Desktop/Project_J_오픈월드_MMO_최적화_인계_2026-11-26.md`)와 사용자 TXT (`Desktop/설계전 모든 내용을 담은 문서.txt`)다. |
 | GPT-6.2 Astra가 결정한 책임·데이터 흐름과 대안 | [시스템 설계안](Project_J_OpenWorld_MMO_System_Design_2026-11-26.md). 권위·수명·호환성 계약이 달라지면 재현 근거와 대안을 가지고 설계를 다시 판단한다. |
 | 처음 전달한 두 인계 문서, 기반에서 고친 누락, GPT-6.2 Sol의 구현·디버깅·버그 수정·시험 | [기반 구현 인계](Project_J_OpenWorld_Foundation_Handoff_2026-11-26.md) · [세부 구현과 두 인계 대조표](Project_J_OpenWorld_Sol_Implementation.md). 표의 진행 상태는 작성 시점에 해당한다. |
 | 독립 검증, 실패 재현, 수정 뒤 재시험, 패키지와 원자료 | [Astra 독립 검증 인계](Project_J_OpenWorld_Astra_Independent_Review_Handoff_2026-11-26.md). 상단의 재검증·독립 결과가 아래의 이전 기준선을 갱신한다. |

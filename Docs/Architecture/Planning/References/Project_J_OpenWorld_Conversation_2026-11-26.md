@@ -2,6 +2,8 @@
 
 2026-11-26에 확인한 작업 이력이다. 앞부분은 설계 전 수집한 자료이며, 뒷부분은 이 채팅에서 사용자가 요청한 내용과 각 작업의 완료 응답을 시간순으로 보존한다. 인용문의 ‘현재’, 수치, 남은 작업은 해당 응답 시점을 가리킨다. 오늘 이어갈 범위와 후속 수정 사항은 [통합 인계](../Project_J_OpenWorld_Project_Handoff.md)를 따른다. 도구 출력·중간 진행 메시지·이미지는 이 부록에 전재하지 않았다. 시험 로그와 캡처는 각 보고서에서 찾을 수 있다.
 
+`Saved/`와 `Desktop/` 경로는 당시 검증 PC에 남긴 원자료 위치다. ‘당시 N행’은 해당 응답에서 인용한 줄 번호다. 검증 산출물의 조회·복원 방법은 [중앙 보관 규칙](../../../Maintenance/Local_Archive_Policy.md)을 따른다.
+
 ## 외부 자료와 연결할 판단
 
 출처가 설명하는 공개 기술과 Project J의 적용 여부를 구분한다. 일부 Epic 최신 문서는 5.9로 표시된다. 우리 기존 패키지인 5.8.4와 기능·기본값·실험 여부를 대조하고 더 새로운 기능을 설치만 되어 있다고 가정하지 않는다.
@@ -48,7 +50,7 @@
 
 **당시 완료 응답**
 
-> **Project J에는 대규모 월드와 다인 전투를 위한 최적화가 이미 들어가 있고, 일부는 실제 패키지와 전용 서버에서 작동을 확인했습니다.** 가장 강한 증거는 MainWorld의 **578m 고속 비행 패키지 3회**와 **Iris 전용 서버 24인 필드 보스전**입니다. 아직 입증이 필요한 핵심은 **장거리 비행 중 나무·지형·텍스처의 시각적 연속성**, **100~200명이 같은 장소에서 반복 교전할 때의 서버와 클라이언트 성능**, **최소 사양에서 숲·군중·전투 이펙트가 동시에 보이는 장면**입니다. [Project J 최신 적용·실측 기록](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_PhaseAD_Codex_Audit_2026-11-25.md:130)
+> **Project J에는 대규모 월드와 다인 전투를 위한 최적화가 이미 들어가 있고, 일부는 실제 패키지와 전용 서버에서 작동을 확인했습니다.** 가장 강한 증거는 MainWorld의 **578m 고속 비행 패키지 3회**와 **Iris 전용 서버 24인 필드 보스전**입니다. 아직 입증이 필요한 핵심은 **장거리 비행 중 나무·지형·텍스처의 시각적 연속성**, **100~200명이 같은 장소에서 반복 교전할 때의 서버와 클라이언트 성능**, **최소 사양에서 숲·군중·전투 이펙트가 동시에 보이는 장면**입니다. [Project J 최신 적용·실측 기록](../Project_J_PhaseAD_Codex_Audit_2026-11-25.md) (당시 130행)
 >
 > 이번 조사는 현재 소스·설정, 기존 실측 원자료, 외부 기술 자료를 대조했습니다. 새 실행 측정이나 코드·에셋 변경은 없었습니다.
 >
@@ -56,14 +58,14 @@
 >
 > | 영역 | 적용과 작동 근거 | 남은 검증 |
 > |---|---|---|
-> | **고속 이동·월드 스트리밍** | World Partition에 이동 방향과 상승·하강 속도를 반영하는 `Loaded` → `Activated` 예측 소스가 연결돼 있습니다. 이전 572m 비행에서 Landscape PSO 재등록 문제와 **최대 702.46ms** 프레임이 관측됐습니다. 프로젝트 측 호환 처리 후 약 33m/s로 578m씩 비행한 패키지 3회에서 해당 엔진 오류가 사라졌고, 프레임 **p99 11.08~11.48ms, 최대 13.71~16.94ms, 50ms 초과 0회**를 기록했습니다. | 한 경로의 D3D12 Development 결과입니다. 첫 반복에 스트리밍 미완료 표본 1개가 있었고, 감속은 세 번 모두 발동하지 않았습니다. 장거리 비행, 급선회, 지형·텍스처 팝인, 저사양 SSD는 별도 검증이 필요합니다. [패키지 반복 결과](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_PhaseAD_Codex_Audit_2026-11-25.md:149) · [Epic Landscape PSO 이슈](https://issues.unrealengine.com/issue/UE-404796) |
-> | **숲·원거리 배경** | MainWorld에 인스턴싱 식생과 HLOD 에셋이 있습니다. 선택한 한 셀에서 원본이 내려가고 **502개 인스턴스가 포함된 HLOD 프록시**가 표시되는 경로를 확인했습니다. 최신 제작 검사에서는 가문비나무 컴포넌트가 Instancing HLOD를 쓰면서 바람 변형 중지 거리 값이 `0cm`인 사례도 찾았습니다. | 수종별 바람·그림자 예산, 전역 HLOD 재빌드 피크 메모리, 원경 숲의 실루엣과 전환 품질은 미확인입니다. BP02의 거리별 임포스터·RVT 설계에는 아직 적용을 확인할 항목이 있습니다. [선택 셀의 HLOD 전환](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_MMO_Architecture_Work_2026-10-26.md:749) · [실제 식생 검사](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_PhaseAD_Codex_Audit_2026-11-25.md:147) · [BP02 설계](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Blueprints/BP02_OpenWorld_HighSpeedStreaming_Foliage_Rendering.md:71) |
-> | **다인 서버·복제** | Iris의 연결별 군중 필터, 전투 우선순위, 실측 틱 기반 부하 단계가 연결돼 있습니다. 같은 PC의 경량 클라이언트 **24인 전원이 접속·타격·체력 수신·종료**했고, 전투 집중 구간 서버 월드 처리 **p95 5.165ms**였습니다. 별도 최신 12인 혼합 파티에서는 필터가 **84개 연결–객체 쌍을 허용하고 72개를 제외**했습니다. 그 실행의 월드 처리 p95는 3.262ms, 실제 틱 시작 간격 p95는 34.008ms였습니다. | 최신 100~200인 분리 호스트 실전 교전은 미측정입니다. 이전 제작 보스 200인 시험은 확정 피해 0건이었고, Generic 200소켓 통과는 단순 합성 부하였습니다. 설치형 Iris에서 관측한 유효 슬롯 127개도 별도 제약입니다. [24인 실측](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_PhaseAD_Codex_Audit_2026-11-25.md:39) · [혼합 파티 필터 실측](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_PhaseAD_Codex_Audit_2026-11-25.md:162) · [200인 시험 이력](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_MMO_Audit_Followup_2026-11-24.md:31) |
-> | **캐릭터·NPC 군중** | 원격 애니메이션 예산, 긴급 포즈 갱신, 몸체 LOD, 경량 망토가 실제 캐릭터 경로에 있습니다. 스펠블레이드 원격 망토는 화면용 LOD0을 유지하면서 **물리 메시 정점 2,534→678개**로 줄였습니다. Mass 이동·간격 계산도 구현돼 있고, 2,048개 합성 이동의 해당 계산 p95는 **0.634→0.241ms**였습니다. | 현재 Mover NPC는 Mass 강등 대상에서 제외됩니다. VAT의 일반 제작 콘텐츠 사용 범위도 미확인입니다. 실제 플레이어가 많은 장면에서는 애니메이션 외에 **Cloth 작업 완료 대기**, 그림자, 장비, 이름표까지 함께 봐야 합니다. [망토와 CPU 추적](C:/Users/I/Documents/GitHub/Project_J/Docs/Performance/README.md:7) · [Mass 벤치마크](C:/Users/I/Documents/GitHub/Project_J/Docs/Benchmarks/SystemsModernization.md:25) · [제작 적용 범위](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_PhaseAD_Codex_Audit_2026-11-25.md:136) |
-> | **전투 VFX·그래픽 품질 단계** | Niagara 컴포넌트 풀링, 원격 생성 예산, 일부 저장된 트레일의 Effect Type 거리·활성 수 정책이 있습니다. 기존 비교에서 풀링 적용 시 **생성 CPU p95 4.57→3.35ms**였습니다. 그래픽 단계별로 식생 밀도, 텍스처 풀, Lumen, VSM, 원격 Cloth도 조절합니다. | 풀링 측정은 생성 비용에 해당합니다. 같은 순간 활성화된 시스템 수, 파티클 GPU 시간, 반투명 오버드로, 동적 조명·왜곡, 보스 경고 가독성은 각각 측정해야 합니다. 반복 충격을 공유 Niagara 시스템으로 배치 처리하는 방식은 이번 조사에서 실사용 근거를 확인하지 못했습니다. [VFX 구조](C:/Users/I/Documents/GitHub/Project_J/Docs/Combat/Architecture/CombatVFXArchitecture.md:36) · [풀링 측정](C:/Users/I/Documents/GitHub/Project_J/Docs/Benchmarks/SystemsModernization.md:42) · [그래픽 설정](C:/Users/I/Documents/GitHub/Project_J/Config/DefaultScalability.ini:3) |
-> | **MMO 운영·혼잡 처리** | Windows 로컬 환경에서 실제 Nakama·PostgreSQL·UE 서버로 로그인, 대기열, 보상, 던전 왕복, 연결 드레인과 Prometheus 수집을 확인했습니다. MainWorld B01도 별도 단독 PIE에서 접근 시 생성, 경고 표시, 처치·개인 보상까지 연결됐습니다. | B01에서 다인 렌더링·반복 교전·재생성까지 이어지는 부하, Linux/Agones 실기동과 장애 복구, 여러 채널 동시 피크는 검증 범위에 남아 있습니다. [운영 검증](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_PhaseAD_Codex_Audit_2026-11-25.md:78) · [B01 제작 검증](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_PhaseAD_Codex_Audit_2026-11-25.md:145) |
+> | **고속 이동·월드 스트리밍** | World Partition에 이동 방향과 상승·하강 속도를 반영하는 `Loaded` → `Activated` 예측 소스가 연결돼 있습니다. 이전 572m 비행에서 Landscape PSO 재등록 문제와 **최대 702.46ms** 프레임이 관측됐습니다. 프로젝트 측 호환 처리 후 약 33m/s로 578m씩 비행한 패키지 3회에서 해당 엔진 오류가 사라졌고, 프레임 **p99 11.08~11.48ms, 최대 13.71~16.94ms, 50ms 초과 0회**를 기록했습니다. | 한 경로의 D3D12 Development 결과입니다. 첫 반복에 스트리밍 미완료 표본 1개가 있었고, 감속은 세 번 모두 발동하지 않았습니다. 장거리 비행, 급선회, 지형·텍스처 팝인, 저사양 SSD는 별도 검증이 필요합니다. [패키지 반복 결과](../Project_J_PhaseAD_Codex_Audit_2026-11-25.md) (당시 149행) · [Epic Landscape PSO 이슈](https://issues.unrealengine.com/issue/UE-404796) |
+> | **숲·원거리 배경** | MainWorld에 인스턴싱 식생과 HLOD 에셋이 있습니다. 선택한 한 셀에서 원본이 내려가고 **502개 인스턴스가 포함된 HLOD 프록시**가 표시되는 경로를 확인했습니다. 최신 제작 검사에서는 가문비나무 컴포넌트가 Instancing HLOD를 쓰면서 바람 변형 중지 거리 값이 `0cm`인 사례도 찾았습니다. | 수종별 바람·그림자 예산, 전역 HLOD 재빌드 피크 메모리, 원경 숲의 실루엣과 전환 품질은 미확인입니다. BP02의 거리별 임포스터·RVT 설계에는 아직 적용을 확인할 항목이 있습니다. [선택 셀의 HLOD 전환](../Project_J_MMO_Architecture_Work_2026-10-26.md) (당시 749행) · [실제 식생 검사](../Project_J_PhaseAD_Codex_Audit_2026-11-25.md) (당시 147행) · [BP02 설계](../../Blueprints/BP02_OpenWorld_HighSpeedStreaming_Foliage_Rendering.md) (당시 71행) |
+> | **다인 서버·복제** | Iris의 연결별 군중 필터, 전투 우선순위, 실측 틱 기반 부하 단계가 연결돼 있습니다. 같은 PC의 경량 클라이언트 **24인 전원이 접속·타격·체력 수신·종료**했고, 전투 집중 구간 서버 월드 처리 **p95 5.165ms**였습니다. 별도 최신 12인 혼합 파티에서는 필터가 **84개 연결–객체 쌍을 허용하고 72개를 제외**했습니다. 그 실행의 월드 처리 p95는 3.262ms, 실제 틱 시작 간격 p95는 34.008ms였습니다. | 최신 100~200인 분리 호스트 실전 교전은 미측정입니다. 이전 제작 보스 200인 시험은 확정 피해 0건이었고, Generic 200소켓 통과는 단순 합성 부하였습니다. 설치형 Iris에서 관측한 유효 슬롯 127개도 별도 제약입니다. [24인 실측](../Project_J_PhaseAD_Codex_Audit_2026-11-25.md) (당시 39행) · [혼합 파티 필터 실측](../Project_J_PhaseAD_Codex_Audit_2026-11-25.md) (당시 162행) · [200인 시험 이력](../Project_J_MMO_Audit_Followup_2026-11-24.md) (당시 31행) |
+> | **캐릭터·NPC 군중** | 원격 애니메이션 예산, 긴급 포즈 갱신, 몸체 LOD, 경량 망토가 실제 캐릭터 경로에 있습니다. 스펠블레이드 원격 망토는 화면용 LOD0을 유지하면서 **물리 메시 정점 2,534→678개**로 줄였습니다. Mass 이동·간격 계산도 구현돼 있고, 2,048개 합성 이동의 해당 계산 p95는 **0.634→0.241ms**였습니다. | 현재 Mover NPC는 Mass 강등 대상에서 제외됩니다. VAT의 일반 제작 콘텐츠 사용 범위도 미확인입니다. 실제 플레이어가 많은 장면에서는 애니메이션 외에 **Cloth 작업 완료 대기**, 그림자, 장비, 이름표까지 함께 봐야 합니다. [망토와 CPU 추적](../../../Performance/README.md) (당시 7행) · [Mass 벤치마크](../../../Benchmarks/SystemsModernization.md) (당시 25행) · [제작 적용 범위](../Project_J_PhaseAD_Codex_Audit_2026-11-25.md) (당시 136행) |
+> | **전투 VFX·그래픽 품질 단계** | Niagara 컴포넌트 풀링, 원격 생성 예산, 일부 저장된 트레일의 Effect Type 거리·활성 수 정책이 있습니다. 기존 비교에서 풀링 적용 시 **생성 CPU p95 4.57→3.35ms**였습니다. 그래픽 단계별로 식생 밀도, 텍스처 풀, Lumen, VSM, 원격 Cloth도 조절합니다. | 풀링 측정은 생성 비용에 해당합니다. 같은 순간 활성화된 시스템 수, 파티클 GPU 시간, 반투명 오버드로, 동적 조명·왜곡, 보스 경고 가독성은 각각 측정해야 합니다. 반복 충격을 공유 Niagara 시스템으로 배치 처리하는 방식은 이번 조사에서 실사용 근거를 확인하지 못했습니다. [VFX 구조](../../../Combat/Architecture/CombatVFXArchitecture.md) (당시 36행) · [풀링 측정](../../../Benchmarks/SystemsModernization.md) (당시 42행) · [그래픽 설정](../../../../Config/DefaultScalability.ini) (당시 3행) |
+> | **MMO 운영·혼잡 처리** | Windows 로컬 환경에서 실제 Nakama·PostgreSQL·UE 서버로 로그인, 대기열, 보상, 던전 왕복, 연결 드레인과 Prometheus 수집을 확인했습니다. MainWorld B01도 별도 단독 PIE에서 접근 시 생성, 경고 표시, 처치·개인 보상까지 연결됐습니다. | B01에서 다인 렌더링·반복 교전·재생성까지 이어지는 부하, Linux/Agones 실기동과 장애 복구, 여러 채널 동시 피크는 검증 범위에 남아 있습니다. [운영 검증](../Project_J_PhaseAD_Codex_Audit_2026-11-25.md) (당시 78행) · [B01 제작 검증](../Project_J_PhaseAD_Codex_Audit_2026-11-25.md) (당시 145행) |
 >
-> 기존 프로젝트 자료의 **200개 캐릭터 렌더링**, **200소켓 접속**, **200명분 보상 트랜잭션**은 각각 화면·네트워크·저장소에 대한 근거입니다. 목표가 **실제 200명이 같은 보스에게 달려들고, 모든 필수 전투 정보가 보이며, 프레임과 서버 틱이 유지되는 것**이라면 그 조건을 한 실행에서 검증해야 합니다. [렌더링 측정 범위](C:/Users/I/Documents/GitHub/Project_J/Docs/Performance/README.md:375) · [200인 접속 이력](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_MMO_Audit_Followup_2026-11-24.md:31) · [보상 트랜잭션 검증](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_PhaseAD_Codex_Audit_2026-11-25.md:105)
+> 기존 프로젝트 자료의 **200개 캐릭터 렌더링**, **200소켓 접속**, **200명분 보상 트랜잭션**은 각각 화면·네트워크·저장소에 대한 근거입니다. 목표가 **실제 200명이 같은 보스에게 달려들고, 모든 필수 전투 정보가 보이며, 프레임과 서버 틱이 유지되는 것**이라면 그 조건을 한 실행에서 검증해야 합니다. [렌더링 측정 범위](../../../Performance/README.md) (당시 375행) · [200인 접속 이력](../Project_J_MMO_Audit_Followup_2026-11-24.md) (당시 31행) · [보상 트랜잭션 검증](../Project_J_PhaseAD_Codex_Audit_2026-11-25.md) (당시 105행)
 >
 > ## 2. AAA 오픈월드·MMO 자료에서 가져올 기법
 >
@@ -116,24 +118,24 @@
 >
 > | 영역 | 언리얼과 Project J의 역할 | 이번 확인 결과 |
 > |---|---|---|
-> | **먼 나무·배경** | 언리얼의 World Partition, 인스턴싱, HLOD, Nanite를 사용합니다. Project J는 어떤 식생을 어느 레이어에 배치할지, 거리별 표현·바람·그림자 예산을 어떻게 정할지 맡습니다. | Win64 D3D12 패키지에서 원본 셀이 내려간 뒤 **27개 메시 컴포넌트, 502개 인스턴스**를 담은 HLOD가 표시됐습니다. 그중 **오리나무 36개**는 렌더링된 상태까지 확인했습니다. 관측한 화면 갱신 시점에서 원본과 대체 표현이 동시에 꺼진 경우는 없었습니다. [전환 기록](C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/AAAOverall_20261126_PackagedHLODRead/world-hlod-handover.json) · [도착 화면](C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/AAAOverall_20261126_PackagedHLODRead/hlod-destination.png) |
-> | **고속 이동** | 언리얼이 셀을 로드하고 활성화합니다. Project J가 Mover의 방향과 상승·하강을 읽어 `Loaded` 사전 로드와 `Activated` 활성화 범위를 미리 요청합니다. | **578m, 최고 33.0m/s** 패키지 비행을 다시 통과했습니다. 3,229프레임에서 **p95 10.65ms, p99 10.99ms, 최대 13.22ms**였습니다. 두 스트리밍 소스가 실제로 소비됐고 Landscape PSO 재등록 보완도 작동했습니다. [비행 원자료](C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/AAAOverall_20261126_PackagedFlightNative/flight.json) |
-> | **40인 전용 서버** | 언리얼 Iris가 상태를 복제합니다. Project J가 연결별 관심 대상, 전투 우선순위, 과부하 단계와 서버 권위 판정을 관리합니다. | **40/40 접속·타격·체력 수신·종료**, 서버와 생성기 모두 정상 종료했습니다. 전투 집중 구간의 **월드 처리 p95는 7.27ms**, 실제 **틱 시작 간격 p95는 34.01ms**였습니다. 같은 PC의 경량 클라이언트 시험으로, 이전에 메모리 보호선에 걸렸던 규모를 이번에는 완주했습니다. [40인 원자료](C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/AAAOverall_20261126_Field40/verification.json) |
-> | **군중 렌더링·전투 VFX** | 언리얼의 애니메이션 예산, Cloth, Niagara를 사용합니다. Project J가 원격 경량 망토, 포즈 갱신 우선순위, 이펙트 풀링과 원격 생성 예산을 적용합니다. | **16인 Iris 필드 보스**를 렌더링 클라이언트 1개와 함께 통과했습니다. D3D12 720p에서 화면 인원 중앙값은 16명, 공격 구간 프레임 **p95 14.69ms, p99 16.72ms, 최대 46.39ms**였습니다. 원격 경량 망토도 확인했습니다. 최장 프레임에서 게임 스레드는 **33.52ms**, GPU는 **2.26ms**로 기록돼, 그 프레임의 원인을 좁히려면 CPU 추적이 우선입니다. [16인 원자료](C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/AAAOverall_20261126_Field16RenderedRetry/verification.json) · [프레임별 측정](C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/AAAOverall_20261126_Field16RenderedRetry/Rendered/frames.csv) |
+> | **먼 나무·배경** | 언리얼의 World Partition, 인스턴싱, HLOD, Nanite를 사용합니다. Project J는 어떤 식생을 어느 레이어에 배치할지, 거리별 표현·바람·그림자 예산을 어떻게 정할지 맡습니다. | Win64 D3D12 패키지에서 원본 셀이 내려간 뒤 **27개 메시 컴포넌트, 502개 인스턴스**를 담은 HLOD가 표시됐습니다. 그중 **오리나무 36개**는 렌더링된 상태까지 확인했습니다. 관측한 화면 갱신 시점에서 원본과 대체 표현이 동시에 꺼진 경우는 없었습니다. 전환 기록 (`Saved/Validation/Continuation_20261014/AAAOverall_20261126_PackagedHLODRead/world-hlod-handover.json`) · 도착 화면 (`Saved/Validation/Continuation_20261014/AAAOverall_20261126_PackagedHLODRead/hlod-destination.png`) |
+> | **고속 이동** | 언리얼이 셀을 로드하고 활성화합니다. Project J가 Mover의 방향과 상승·하강을 읽어 `Loaded` 사전 로드와 `Activated` 활성화 범위를 미리 요청합니다. | **578m, 최고 33.0m/s** 패키지 비행을 다시 통과했습니다. 3,229프레임에서 **p95 10.65ms, p99 10.99ms, 최대 13.22ms**였습니다. 두 스트리밍 소스가 실제로 소비됐고 Landscape PSO 재등록 보완도 작동했습니다. 비행 원자료 (`Saved/Validation/Continuation_20261014/AAAOverall_20261126_PackagedFlightNative/flight.json`) |
+> | **40인 전용 서버** | 언리얼 Iris가 상태를 복제합니다. Project J가 연결별 관심 대상, 전투 우선순위, 과부하 단계와 서버 권위 판정을 관리합니다. | **40/40 접속·타격·체력 수신·종료**, 서버와 생성기 모두 정상 종료했습니다. 전투 집중 구간의 **월드 처리 p95는 7.27ms**, 실제 **틱 시작 간격 p95는 34.01ms**였습니다. 같은 PC의 경량 클라이언트 시험으로, 이전에 메모리 보호선에 걸렸던 규모를 이번에는 완주했습니다. 40인 원자료 (`Saved/Validation/Continuation_20261014/AAAOverall_20261126_Field40/verification.json`) |
+> | **군중 렌더링·전투 VFX** | 언리얼의 애니메이션 예산, Cloth, Niagara를 사용합니다. Project J가 원격 경량 망토, 포즈 갱신 우선순위, 이펙트 풀링과 원격 생성 예산을 적용합니다. | **16인 Iris 필드 보스**를 렌더링 클라이언트 1개와 함께 통과했습니다. D3D12 720p에서 화면 인원 중앙값은 16명, 공격 구간 프레임 **p95 14.69ms, p99 16.72ms, 최대 46.39ms**였습니다. 원격 경량 망토도 확인했습니다. 최장 프레임에서 게임 스레드는 **33.52ms**, GPU는 **2.26ms**로 기록돼, 그 프레임의 원인을 좁히려면 CPU 추적이 우선입니다. 16인 원자료 (`Saved/Validation/Continuation_20261014/AAAOverall_20261126_Field16RenderedRetry/verification.json`) · 프레임별 측정 (`Saved/Validation/Continuation_20261014/AAAOverall_20261126_Field16RenderedRetry/Rendered/frames.csv`) |
 >
 > ## AAA 목표에 맞춰 더 봐야 할 부분
 >
-> 1. **먼 숲을 보여주는 구조는 작동합니다. 이제 숲의 비용과 전환 품질을 확인해야 합니다.** 저장된 식생 액터 4개는 실제로 `HLOD_MainWorldForest`의 Instancing 레이어를 사용했습니다. 표본의 **10개 컴포넌트 모두 실제 바람 변형을 쓰면서 WPO 중지 거리 값이 `0cm`**였습니다. 멀리서 형태가 충분히 작은 나무까지 바람 변형이 남으면 VSM 그림자 캐시 비용이 커질 수 있습니다. 먼저 수종별로 수관 실루엣·색·그림자를 보존하는 바람 범위를 비교하고, 근거리 원본 → 중거리 LOD → 원거리 HLOD의 전환을 같은 카메라에서 연속으로 확인할 가치가 있습니다. 문서에 있는 전용 임포스터 구성을 숲 전역에서 사용 중이라는 근거는 아직 없습니다. [식생 표본](C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/AAAOverall_20261126_FoliageScan/foliage.json) · [검사 로그](C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/AAAOverall_20261126_FoliageScan/Run.log:2398) · [Epic VSM 가이드](https://dev.epicgames.com/documentation/unreal-engine/virtual-shadow-maps-in-unreal-engine?lang=it)
+> 1. **먼 숲을 보여주는 구조는 작동합니다. 이제 숲의 비용과 전환 품질을 확인해야 합니다.** 저장된 식생 액터 4개는 실제로 `HLOD_MainWorldForest`의 Instancing 레이어를 사용했습니다. 표본의 **10개 컴포넌트 모두 실제 바람 변형을 쓰면서 WPO 중지 거리 값이 `0cm`**였습니다. 멀리서 형태가 충분히 작은 나무까지 바람 변형이 남으면 VSM 그림자 캐시 비용이 커질 수 있습니다. 먼저 수종별로 수관 실루엣·색·그림자를 보존하는 바람 범위를 비교하고, 근거리 원본 → 중거리 LOD → 원거리 HLOD의 전환을 같은 카메라에서 연속으로 확인할 가치가 있습니다. 문서에 있는 전용 임포스터 구성을 숲 전역에서 사용 중이라는 근거는 아직 없습니다. 식생 표본 (`Saved/Validation/Continuation_20261014/AAAOverall_20261126_FoliageScan/foliage.json`) · 검사 로그 (`Saved/Validation/Continuation_20261014/AAAOverall_20261126_FoliageScan/Run.log:2398`) · [Epic VSM 가이드](https://dev.epicgames.com/documentation/unreal-engine/virtual-shadow-maps-in-unreal-engine?lang=it)
 >
-> 2. **비행이 매끄러운 것과 첫 진입·팝인이 해결된 것은 각각 확인해야 합니다.** 이번 비행에서 PSO 누락 **68건이 모두 이륙 전**에 기록됐습니다. 비행 감속은 코드 기본값이 꺼져 있고, 이번 시험에서는 켰지만 발동은 0회였습니다. 다음 월드 검증은 숲·능선·정착지를 이어 달리면서 급선회와 재진입을 포함하고, 프레임 시간과 별도로 **지형·충돌 준비, 텍스처 밉 도착, 원거리 숲 전환**을 봐야 합니다. 기존 BP02의 검증 조건도 정정할 지점이 있습니다. **30m/s로 3분이면 5.4km**이고, 8×8km 정사각형의 대각선은 약 **11.3km**입니다. [비행 로그](C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/AAAOverall_20261126_PackagedFlightNative/Run.log) · [감속 기본값](C:/Users/I/Documents/GitHub/Project_J/Source/Project_J/World/Project_JWorldStreamingComponent.h:128) · [BP02 검증 조건](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Blueprints/BP02_OpenWorld_HighSpeedStreaming_Foliage_Rendering.md:135)
+> 2. **비행이 매끄러운 것과 첫 진입·팝인이 해결된 것은 각각 확인해야 합니다.** 이번 비행에서 PSO 누락 **68건이 모두 이륙 전**에 기록됐습니다. 비행 감속은 코드 기본값이 꺼져 있고, 이번 시험에서는 켰지만 발동은 0회였습니다. 다음 월드 검증은 숲·능선·정착지를 이어 달리면서 급선회와 재진입을 포함하고, 프레임 시간과 별도로 **지형·충돌 준비, 텍스처 밉 도착, 원거리 숲 전환**을 봐야 합니다. 기존 BP02의 검증 조건도 정정할 지점이 있습니다. **30m/s로 3분이면 5.4km**이고, 8×8km 정사각형의 대각선은 약 **11.3km**입니다. 비행 로그 (`Saved/Validation/Continuation_20261014/AAAOverall_20261126_PackagedFlightNative/Run.log`) · [감속 기본값](../../../../Source/Project_J/World/Project_JWorldStreamingComponent.h) (당시 128행) · [BP02 검증 조건](../../Blueprints/BP02_OpenWorld_HighSpeedStreaming_Foliage_Rendering.md) (당시 135행)
 >
-> 3. **40인에서는 틱이 여유로워도 피해 결과 수신이 밀릴 수 있습니다.** 이번 40인 시험에서 서버 피해 확정 뒤 클라이언트가 체력 변화를 확인하기까지 **p95 318ms**였습니다. 같은 PC에서 잰 해당 구간의 지연이며, 복제 스케줄링과 생성기 처리 중 어느 쪽의 영향인지는 아직 분리하지 못했습니다. 코드상 같은 길드와 파티는 군중 상한 예외이므로, 혼합 파티뿐 아니라 **같은 길드가 한 보스에 몰리는 경우**도 따로 볼 필요가 있습니다. 당분간 **40인은 한 PC에서 확인한 경량 전투 규모**, **16인은 한 화면까지 확인한 규모**로 쓰는 게 정확합니다. [40인 지연 원자료](C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/AAAOverall_20261126_Field40/verification.json) · [군중 필터 예외](C:/Users/I/Documents/GitHub/Project_J/Source/Project_JCharacter/Private/Network/Project_JCrowdDensityNetObjectFilter.cpp:383)
+> 3. **40인에서는 틱이 여유로워도 피해 결과 수신이 밀릴 수 있습니다.** 이번 40인 시험에서 서버 피해 확정 뒤 클라이언트가 체력 변화를 확인하기까지 **p95 318ms**였습니다. 같은 PC에서 잰 해당 구간의 지연이며, 복제 스케줄링과 생성기 처리 중 어느 쪽의 영향인지는 아직 분리하지 못했습니다. 코드상 같은 길드와 파티는 군중 상한 예외이므로, 혼합 파티뿐 아니라 **같은 길드가 한 보스에 몰리는 경우**도 따로 볼 필요가 있습니다. 당분간 **40인은 한 PC에서 확인한 경량 전투 규모**, **16인은 한 화면까지 확인한 규모**로 쓰는 게 정확합니다. 40인 지연 원자료 (`Saved/Validation/Continuation_20261014/AAAOverall_20261126_Field40/verification.json`) · [군중 필터 예외](../../../../Source/Project_JCharacter/Private/Network/Project_JCrowdDensityNetObjectFilter.cpp) (당시 383행)
 >
-> 4. **실제 제작 장면에서는 성능과 가독성을 같이 봐야 합니다.** 이번 16인 화면은 붉은 공격 트레일이 크게 겹쳐, 그 한 장으로 보스 경고의 가독성을 판정하기 어려웠습니다. 시험 장소도 MainWorld B01과 별개인 필드 샌드박스였습니다. **B01에서 숲·지형·그림자·망토·이펙트·이름표·오디오가 겹치는 장면**이 다음 비교에 더 적합합니다. 반복 스파크와 먼지처럼 비슷한 효과의 활성 시스템 수가 병목으로 확인되면 Niagara Data Channels 기반 배치를 검토할 수 있습니다. 필수 경고는 그 장면에서 식별 가능해야 합니다. [16인 공격 화면](C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/AAAOverall_20261126_Field16RenderedRetry/Rendered/Strike.png) · [기존 B01 검증](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_PhaseAD_Codex_Audit_2026-11-25.md:145) · [Epic Niagara 최적화](https://dev.epicgames.com/documentation/unreal-engine/scalability-and-best-practices-for-niagara)
+> 4. **실제 제작 장면에서는 성능과 가독성을 같이 봐야 합니다.** 이번 16인 화면은 붉은 공격 트레일이 크게 겹쳐, 그 한 장으로 보스 경고의 가독성을 판정하기 어려웠습니다. 시험 장소도 MainWorld B01과 별개인 필드 샌드박스였습니다. **B01에서 숲·지형·그림자·망토·이펙트·이름표·오디오가 겹치는 장면**이 다음 비교에 더 적합합니다. 반복 스파크와 먼지처럼 비슷한 효과의 활성 시스템 수가 병목으로 확인되면 Niagara Data Channels 기반 배치를 검토할 수 있습니다. 필수 경고는 그 장면에서 식별 가능해야 합니다. 16인 공격 화면 (`Saved/Validation/Continuation_20261014/AAAOverall_20261126_Field16RenderedRetry/Rendered/Strike.png`) · [기존 B01 검증](../Project_J_PhaseAD_Codex_Audit_2026-11-25.md) (당시 145행) · [Epic Niagara 최적화](https://dev.epicgames.com/documentation/unreal-engine/scalability-and-best-practices-for-niagara)
 >
 > **앞서 찾은 자료는 이 구성에 맞습니다.** 붉은사막에서는 원경과 랜드마크를 살리는 월드 제작·스트리밍 판단을, Fortnite에서는 Project J에도 직접 적용되는 **원거리 수관 보존과 나무 그림자 비용**을, 대규모 MMO 사례에서는 **같은 지점에 몰릴 때 어떤 정보와 표현을 우선할지**를 가져올 수 있습니다. Project J에서 우선순위가 높은 것은 **숲의 전환 품질과 WPO·그림자 비용**, **40인 피해 수신 지연**, **MainWorld B01의 복합 장면**입니다. [펄어비스 개발 발표](https://www.pearlabyss.com/ko-kr/Board/Detail?_boardNo=15224) · [Epic Fortnite 식생 기술](https://www.unrealengine.com/tech-blog/bringing-nanite-to-fortnite-battle-royale-in-chapter-4?lang=en-US) · [ArenaNet 월드 보스 운영](https://www.guildwars2.com/en-gb/news/the-megaserver-system-world-bosses-and-events/)
 >
-> 이번 검증은 기존 Development 패키지와 저장된 맵을 사용했습니다. 초기 패키지 실행 오류, HLOD 진단 입력 누락, 16인 실행기의 서버 준비 시간 초과는 재실행으로 분리했고, 표에는 최종 결과 파일이 생성된 실행만 반영했습니다. 프로젝트 소스·설정·에셋 변경 없이 원자료 33개를 기존 중앙 보관소에 등록했습니다. [검증 원자료 목록](C:/Users/I/Documents/GitHub/Project_J/Saved/StorageCleanup_20261104/ArchiveStore/INDEX.csv)
+> 이번 검증은 기존 Development 패키지와 저장된 맵을 사용했습니다. 초기 패키지 실행 오류, HLOD 진단 입력 누락, 16인 실행기의 서버 준비 시간 초과는 재실행으로 분리했고, 표에는 최종 결과 파일이 생성된 실행만 반영했습니다. 프로젝트 소스·설정·에셋 변경 없이 원자료 33개를 기존 중앙 보관소에 등록했습니다. 검증 원자료 목록 (`Saved/StorageCleanup_20261104/ArchiveStore/INDEX.csv`)
 
 ## 3. 원경·탈것·캐릭터의 범용성
 
@@ -151,19 +153,19 @@
 >
 > **네. 새 구역의 나무가 같은 World Partition과 식생 HLOD 규칙을 사용하면, 기존 구역처럼 원본 셀이 내려간 뒤 먼 거리에서 가벼운 대체 표현을 표시할 수 있습니다.** HLOD를 만들고 전환하는 역할은 언리얼이 맡습니다. 앞서 패키지에서 확인한 502개 인스턴스 전환도 언리얼의 실제 HLOD 경로였습니다. 언리얼은 액터, Data Layer, World Settings에서 HLOD 레이어를 지정할 수 있고, PCG로 생성한 액터에도 설정된 레이어를 이어줄 수 있습니다. 새 구역에서 그 배치 규칙을 재사용하고 HLOD를 생성해 패키지에 포함하면 됩니다. [Epic World Partition HLOD](https://dev.epicgames.com/documentation/unreal-engine/world-partition-hierarchical-level-of-detail-in-unreal-engine) · [Epic PCG와 World Partition](https://dev.epicgames.com/documentation/unreal-engine/using-pcg-with-world-partition-in-unreal-engine)
 >
-> **현재 확장할 때 가장 조심해야 할 부분은 자동 검사입니다.** 식생 검증기는 `L_MainWorld`와 기존 제작 태그 두 개를 조건으로 사용합니다. 같은 MainWorld라도 새 나무를 수동 배치하거나 새 생성 도구가 다른 태그를 쓰면, HLOD나 바람 설정이 빠져도 기존 검사가 잡지 못할 수 있습니다. Landscape PSO 재등록 보완도 현재 `L_MainWorld`에 한정되어 있어, 같은 맵 안의 확장 구역에는 적용 범위가 이어지지만 별도 대륙 맵에는 그대로 넘어가지 않습니다. [식생 검증기](C:/Users/I/Documents/GitHub/Project_J/Source/Project_JCharacterEditor/Private/Validation/Project_JCrossAssetEditorValidator.cpp:23) · [Landscape PSO 보완](C:/Users/I/Documents/GitHub/Project_J/Source/Project_J/Project_J.cpp:22)
+> **현재 확장할 때 가장 조심해야 할 부분은 자동 검사입니다.** 식생 검증기는 `L_MainWorld`와 기존 제작 태그 두 개를 조건으로 사용합니다. 같은 MainWorld라도 새 나무를 수동 배치하거나 새 생성 도구가 다른 태그를 쓰면, HLOD나 바람 설정이 빠져도 기존 검사가 잡지 못할 수 있습니다. Landscape PSO 재등록 보완도 현재 `L_MainWorld`에 한정되어 있어, 같은 맵 안의 확장 구역에는 적용 범위가 이어지지만 별도 대륙 맵에는 그대로 넘어가지 않습니다. [식생 검증기](../../../../Source/Project_JCharacterEditor/Private/Validation/Project_JCrossAssetEditorValidator.cpp) (당시 23행) · [Landscape PSO 보완](../../../../Source/Project_J/Project_J.cpp) (당시 22행)
 >
 > 설계는 **숲·랜드마크·근거리 소품처럼 콘텐츠 역할별로 재사용할 제작 규칙을 두는 방향**이 맞습니다. 예를 들어 새 바이옴은 수종과 밀도를 바꾸면서도 숲용 HLOD 레이어를 재사용할 수 있습니다. 이후 식생 검증도 맵 경로나 기존 태그 대신 **해당 월드가 선택한 정책과 액터의 제작 설정**을 읽도록 확장하면, 새 구역을 추가해도 같은 기준으로 확인할 수 있습니다.
 >
 > ### 2. 나중에 빠른 지상 탈것을 추가해도 되나요?
 >
-> **네. 두 단계 예측 스트리밍은 현재도 지상 이동을 처리합니다.** 컨트롤러가 현재 조종 중인 Pawn의 실제 속도를 읽고, 지상에서는 수평 속도로 전방의 로드·활성화 범위를 계산합니다. 비행에서는 상승·하강 속도까지 포함합니다. 따라서 새 지상 탈것이 기존 `AProject_JMountMoverPawn` 경로를 사용하고 속도를 정상 제공하면, 말이나 탈것마다 스트리밍 코드를 추가할 필요가 없습니다. 기본 고속 진입 기준은 **6m/s**이고, 기존 지상 질주 프로필은 **14m/s**입니다. 공통 스트리밍이 적용되려면 해당 월드에 Project J 컨트롤러와 월드 정의도 연결돼 있어야 합니다. [속도 기반 예측](C:/Users/I/Documents/GitHub/Project_J/Source/Project_J/World/Project_JWorldStreamingComponent.cpp:172) · [지상 탈것 프로필](C:/Users/I/Documents/GitHub/Project_J/Source/Project_JMount/Public/Mount/Project_JMountMoverTypes.h:154)
+> **네. 두 단계 예측 스트리밍은 현재도 지상 이동을 처리합니다.** 컨트롤러가 현재 조종 중인 Pawn의 실제 속도를 읽고, 지상에서는 수평 속도로 전방의 로드·활성화 범위를 계산합니다. 비행에서는 상승·하강 속도까지 포함합니다. 따라서 새 지상 탈것이 기존 `AProject_JMountMoverPawn` 경로를 사용하고 속도를 정상 제공하면, 말이나 탈것마다 스트리밍 코드를 추가할 필요가 없습니다. 기본 고속 진입 기준은 **6m/s**이고, 기존 지상 질주 프로필은 **14m/s**입니다. 공통 스트리밍이 적용되려면 해당 월드에 Project J 컨트롤러와 월드 정의도 연결돼 있어야 합니다. [속도 기반 예측](../../../../Source/Project_J/World/Project_JWorldStreamingComponent.cpp) (당시 172행) · [지상 탈것 프로필](../../../../Source/Project_JMount/Public/Mount/Project_JMountMoverTypes.h) (당시 154행)
 >
-> 다만 **앞길 셀이 준비되지 않았을 때 속도를 낮추는 보호 기능은 현재 비행 전용**입니다. 그리고 지난번 패키지에서 실측한 경로도 비행이었습니다. 빠른 지상 탈것을 제작하면 울타리·다리·경사면·좁은 길에서 **지면과 충돌이 제때 준비되는지**를 먼저 확인하는 게 맞습니다. 기존 예측으로 부족하다는 근거가 나오면, 그때 공통 준비 상태를 지상 이동에도 연결하는 방향이 좋습니다. [비행 준비 상태 및 감속 코드](C:/Users/I/Documents/GitHub/Project_J/Source/Project_J/World/Project_JWorldStreamingComponent.cpp:299) · [기존 검증 범위](C:/Users/I/Documents/GitHub/Project_J/Source/Project_J/Private/Tests/Project_JPhase1SystemTests.cpp:82)
+> 다만 **앞길 셀이 준비되지 않았을 때 속도를 낮추는 보호 기능은 현재 비행 전용**입니다. 그리고 지난번 패키지에서 실측한 경로도 비행이었습니다. 빠른 지상 탈것을 제작하면 울타리·다리·경사면·좁은 길에서 **지면과 충돌이 제때 준비되는지**를 먼저 확인하는 게 맞습니다. 기존 예측으로 부족하다는 근거가 나오면, 그때 공통 준비 상태를 지상 이동에도 연결하는 방향이 좋습니다. [비행 준비 상태 및 감속 코드](../../../../Source/Project_J/World/Project_JWorldStreamingComponent.cpp) (당시 299행) · [기존 검증 범위](../../../../Source/Project_J/Private/Tests/Project_JPhase1SystemTests.cpp) (당시 82행)
 >
 > ### 3. 새 캐릭터와 스킬도 공통 최적화를 받나요?
 >
-> **공용 부모와 데이터 연결을 사용하면 받습니다.** 캐릭터의 애니메이션 예산은 공용 기본 메시 컴포넌트에 들어 있고, 전투 VFX는 `AttackTag`와 연출 프로필을 통해 공용 컴포넌트로 들어갑니다. 새 직업이 별도 검술과 이펙트를 써도, 이 경로를 사용하면 풀링·원격 생성 예산·취소 시 정리를 재사용할 수 있습니다. 근접·장판·투사체에도 각각 공용 제작 경로가 있습니다. [캐릭터 공용 메시](C:/Users/I/Documents/GitHub/Project_J/Source/Project_JCharacter/Private/Project_JBaseCharacter.cpp:35) · [전투 VFX 구조](C:/Users/I/Documents/GitHub/Project_J/Docs/Combat/Architecture/CombatVFXArchitecture.md:5) · [새 스킬 제작 가이드](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Blueprints/Content_Authoring_Integration_Guide.md:57)
+> **공용 부모와 데이터 연결을 사용하면 받습니다.** 캐릭터의 애니메이션 예산은 공용 기본 메시 컴포넌트에 들어 있고, 전투 VFX는 `AttackTag`와 연출 프로필을 통해 공용 컴포넌트로 들어갑니다. 새 직업이 별도 검술과 이펙트를 써도, 이 경로를 사용하면 풀링·원격 생성 예산·취소 시 정리를 재사용할 수 있습니다. 근접·장판·투사체에도 각각 공용 제작 경로가 있습니다. [캐릭터 공용 메시](../../../../Source/Project_JCharacter/Private/Project_JBaseCharacter.cpp) (당시 35행) · [전투 VFX 구조](../../../Combat/Architecture/CombatVFXArchitecture.md) (당시 5행) · [새 스킬 제작 가이드](../../Blueprints/Content_Authoring_Integration_Guide.md) (당시 57행)
 >
 > **새 콘텐츠마다 정해야 하는 건 품질과 비용이 달라지는 부분**입니다. 새 스켈레톤의 메시 LOD와 소켓, 새 스킬의 타격 창, Niagara Effect Type과 컬링, 보스 경고의 보호 등은 해당 에셋에 맞춰 설정하고 확인해야 합니다. 예를 들어 공용 경로를 써도 새 망토에 스펠블레이드의 경량 물리 메시가 생기거나, 새 스킬이 스펠블레이드의 트레일 예산을 자동으로 이어받지는 않습니다. [Niagara Effect Type 예산](https://dev.epicgames.com/documentation/en-us/unreal-engine/performance-budgeting-using-effect-types-in-niagara-for-unreal-engine)
 >
@@ -197,21 +199,21 @@
 >
 > | 분야 | 현재 있는 방어 | 현재 남은 구멍 |
 > |---|---|---|
-> | **월드·원거리 HLOD** | 언리얼은 액터에 지정된 레이어와 Data Layer·World Settings 기본값을 사용할 수 있습니다. Project J도 특정 식생의 Instancing HLOD와 바람 변형 거리 설정을 검사합니다. | 기본 레이어까지 빠졌거나 대체 메시를 빌드·Cook하지 않으면, 원본 셀이 내려갈 때 원경에서 사라질 수 있습니다. 현재 식생 검사는 **MainWorld와 기존 제작 태그**에 묶여 있어, 같은 맵의 새 배치도 태그에 따라 놓칠 수 있습니다. 제작 문서에 적힌 레이어와 실제 표본이 사용한 `HLOD_MainWorldForest`도 다릅니다. 제작자가 따라야 할 기준을 먼저 일치시킬 필요가 있습니다. [Epic HLOD 레이어와 빌드](https://dev.epicgames.com/documentation/unreal-engine/world-partition-hierarchical-level-of-detail-in-unreal-engine) · [식생 검사 코드](C:/Users/I/Documents/GitHub/Project_J/Source/Project_JCharacterEditor/Private/Validation/Project_JCrossAssetEditorValidator.cpp:23) · [실제 식생 표본](C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/AAAOverall_20261126_FoliageScan/foliage.json) |
-> | **월드 인스턴싱** | 식생 외에도 마을의 계단·울타리와 광산 구조물 같은 반복 배치에 HISM을 사용하는 제작 경로가 있습니다. | 레벨 작업자가 같은 소품을 개별 액터로 대량 배치했을 때 일괄 검출하거나 변환한다는 근거는 확인하지 못했습니다. 반대로 상호작용·파괴·복제·저장 상태가 있는 물체까지 한꺼번에 합치면 게임플레이가 달라질 수 있습니다. **반복 장식은 인스턴싱, 상태를 가진 오브젝트는 기존 게임플레이 경로**를 쓰고, 셀별 배치 밀도와 충돌 비용을 확인하는 방향이 맞습니다. [정착지 제작 경로](C:/Users/I/Documents/GitHub/Project_J/Scripts/World/Starter-SettlementAuthoring.py:54) · [Epic ISM/HISM](https://dev.epicgames.com/documentation/unreal-engine/instanced-static-mesh-component-in-unreal-engine) |
-> | **탈것·팝인** | 두 단계 예측은 **현재 조종 중인 Pawn의 속도**를 씁니다. 빠른 지상 이동은 수평 속도, 비행은 수직 속도까지 사용합니다. 특정 말이나 용의 에셋 이름으로 팝인을 처리하는 코드는 아닙니다. | 비행 여부는 현재 지원하는 탈것 부모 클래스에서 읽고, 미준비 셀에 대한 감속은 **기존 Mover 비행 전용이며 기본값은 꺼져 있습니다.** 새 이동 방식이나 별도 컨트롤러가 공통 경로를 우회하면 같은 보장을 받지 못합니다. 월드 정의가 빠지면 Project J의 `Activated` 예측 소스도 제공되지 않습니다. [공통 이동 예측](C:/Users/I/Documents/GitHub/Project_J/Source/Project_J/World/Project_JWorldStreamingComponent.cpp:337) · [활성화 소스 조건](C:/Users/I/Documents/GitHub/Project_J/Source/Project_J/World/Project_JWorldStreamingComponent.cpp:417) |
-> | **VFX·보스 경고** | 공용 Cue 경로는 Niagara 풀링, 원격 생성 예산, 취소 시 정리를 제공합니다. **이미 활성화된 필수 경고**는 Niagara 프로필을 찾지 못해도 기본 경고 마커를 표시할 수 있습니다. 등록된 경고 Notify의 서버 실행·필터 설정도 검사합니다. | **필수 경고 Notify 자체를 빼먹으면** 현재 경고 검사기는 그 Notify가 필요했던 공격이라는 사실을 알아내지 못합니다. 또한 Effect Type이 없는 새 Cue에 공용 비용 정책을 자동으로 달아주는 구조는 아닙니다. 반복 스파크 등을 공유 시스템으로 묶는 Data Channels 배치도 현재 공용 적용 근거를 확인하지 못했습니다. [경고 대체 표시](C:/Users/I/Documents/GitHub/Project_J/Source/Project_JCharacter/Private/Components/Project_JCombatPresentationComponent.cpp:391) · [경고 검사 조건](C:/Users/I/Documents/GitHub/Project_J/Source/Project_JCharacterEditor/Private/Validation/Project_JCombatWarningAssetValidator.cpp:6) · [Epic Niagara 최적화](https://dev.epicgames.com/documentation/unreal-engine/scalability-and-best-practices-for-niagara) |
-> | **캐릭터·전투·애니메이션** | 직업 Data Asset이 능력 세트와 전투 스타일을 연결합니다. 공용 캐릭터의 기본 메시에는 애니메이션 예산 경로가 있고, 공격 정의·몽타주·베이크 타격 궤적에 검사와 실행 중 방어가 있습니다. 예를 들어 베이크 궤적이 현재 스켈레톤과 맞지 않으면 해당 공격을 중단합니다. | 새 메시의 LOD, Cloth 물리 메시, 소켓, AnimBP의 실제 전환, 스킬의 타격·경고 타이밍은 제작해서 연결해야 합니다. **Data Asset은 어떤 정책과 에셋을 쓸지 연결하는 곳**이고, 실제 메시·VFX 최적화는 그 데이터를 소비하는 컴포넌트에서 실행됩니다. 배경 군중의 Mass·VAT와 실제 플레이어의 애니메이션 예산도 별도로 봐야 합니다. [직업 Data Asset](C:/Users/I/Documents/GitHub/Project_J/Source/Project_JCharacter/Public/CharacterClass/Project_JCharacterClassDefinition.h:21) · [공용 메시](C:/Users/I/Documents/GitHub/Project_J/Source/Project_JCharacter/Private/Project_JBaseCharacter.cpp:35) · [공격 실행 방어](C:/Users/I/Documents/GitHub/Project_J/Source/Project_JCharacter/Private/Combat/Project_JGameplayAbility_Melee.cpp:453) |
-> | **서버·복제·보상** | 온라인 서버는 월드·NetDriver·저장소 복구·채널 등록이 준비되어야 입장을 허용합니다. 과부하 제어와 보상 재시도 경로도 있습니다. | 서버가 입장 준비를 마쳤다는 결과만으로 **신규 NPC에 복제 우선순위가 실제로 붙었는지**, **새 보스의 경고와 보상이 재접속 후에도 맞는지**까지 알 수는 없습니다. 새 직업·펫·보스처럼 복제 대상이 늘어나는 변경은 실제 객체 등록, 필수 상태 수신, 종료·재접속을 확인해야 합니다. 지난 40인 시험도 서버 틱과 피해 수신 지연이 별개라는 걸 보여줬습니다. [서버 준비 조건](C:/Users/I/Documents/GitHub/Project_J/Source/Project_J/Backend/Project_JServerDrainSubsystem.cpp:127) · [40인 실측](C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/AAAOverall_20261126_Field40/verification.json) |
+> | **월드·원거리 HLOD** | 언리얼은 액터에 지정된 레이어와 Data Layer·World Settings 기본값을 사용할 수 있습니다. Project J도 특정 식생의 Instancing HLOD와 바람 변형 거리 설정을 검사합니다. | 기본 레이어까지 빠졌거나 대체 메시를 빌드·Cook하지 않으면, 원본 셀이 내려갈 때 원경에서 사라질 수 있습니다. 현재 식생 검사는 **MainWorld와 기존 제작 태그**에 묶여 있어, 같은 맵의 새 배치도 태그에 따라 놓칠 수 있습니다. 제작 문서에 적힌 레이어와 실제 표본이 사용한 `HLOD_MainWorldForest`도 다릅니다. 제작자가 따라야 할 기준을 먼저 일치시킬 필요가 있습니다. [Epic HLOD 레이어와 빌드](https://dev.epicgames.com/documentation/unreal-engine/world-partition-hierarchical-level-of-detail-in-unreal-engine) · [식생 검사 코드](../../../../Source/Project_JCharacterEditor/Private/Validation/Project_JCrossAssetEditorValidator.cpp) (당시 23행) · 실제 식생 표본 (`Saved/Validation/Continuation_20261014/AAAOverall_20261126_FoliageScan/foliage.json`) |
+> | **월드 인스턴싱** | 식생 외에도 마을의 계단·울타리와 광산 구조물 같은 반복 배치에 HISM을 사용하는 제작 경로가 있습니다. | 레벨 작업자가 같은 소품을 개별 액터로 대량 배치했을 때 일괄 검출하거나 변환한다는 근거는 확인하지 못했습니다. 반대로 상호작용·파괴·복제·저장 상태가 있는 물체까지 한꺼번에 합치면 게임플레이가 달라질 수 있습니다. **반복 장식은 인스턴싱, 상태를 가진 오브젝트는 기존 게임플레이 경로**를 쓰고, 셀별 배치 밀도와 충돌 비용을 확인하는 방향이 맞습니다. [정착지 제작 경로](../../../../Scripts/World/Starter-SettlementAuthoring.py) (당시 54행) · [Epic ISM/HISM](https://dev.epicgames.com/documentation/unreal-engine/instanced-static-mesh-component-in-unreal-engine) |
+> | **탈것·팝인** | 두 단계 예측은 **현재 조종 중인 Pawn의 속도**를 씁니다. 빠른 지상 이동은 수평 속도, 비행은 수직 속도까지 사용합니다. 특정 말이나 용의 에셋 이름으로 팝인을 처리하는 코드는 아닙니다. | 비행 여부는 현재 지원하는 탈것 부모 클래스에서 읽고, 미준비 셀에 대한 감속은 **기존 Mover 비행 전용이며 기본값은 꺼져 있습니다.** 새 이동 방식이나 별도 컨트롤러가 공통 경로를 우회하면 같은 보장을 받지 못합니다. 월드 정의가 빠지면 Project J의 `Activated` 예측 소스도 제공되지 않습니다. [공통 이동 예측](../../../../Source/Project_J/World/Project_JWorldStreamingComponent.cpp) (당시 337행) · [활성화 소스 조건](../../../../Source/Project_J/World/Project_JWorldStreamingComponent.cpp) (당시 417행) |
+> | **VFX·보스 경고** | 공용 Cue 경로는 Niagara 풀링, 원격 생성 예산, 취소 시 정리를 제공합니다. **이미 활성화된 필수 경고**는 Niagara 프로필을 찾지 못해도 기본 경고 마커를 표시할 수 있습니다. 등록된 경고 Notify의 서버 실행·필터 설정도 검사합니다. | **필수 경고 Notify 자체를 빼먹으면** 현재 경고 검사기는 그 Notify가 필요했던 공격이라는 사실을 알아내지 못합니다. 또한 Effect Type이 없는 새 Cue에 공용 비용 정책을 자동으로 달아주는 구조는 아닙니다. 반복 스파크 등을 공유 시스템으로 묶는 Data Channels 배치도 현재 공용 적용 근거를 확인하지 못했습니다. [경고 대체 표시](../../../../Source/Project_JCharacter/Private/Components/Project_JCombatPresentationComponent.cpp) (당시 391행) · [경고 검사 조건](../../../../Source/Project_JCharacterEditor/Private/Validation/Project_JCombatWarningAssetValidator.cpp) (당시 6행) · [Epic Niagara 최적화](https://dev.epicgames.com/documentation/unreal-engine/scalability-and-best-practices-for-niagara) |
+> | **캐릭터·전투·애니메이션** | 직업 Data Asset이 능력 세트와 전투 스타일을 연결합니다. 공용 캐릭터의 기본 메시에는 애니메이션 예산 경로가 있고, 공격 정의·몽타주·베이크 타격 궤적에 검사와 실행 중 방어가 있습니다. 예를 들어 베이크 궤적이 현재 스켈레톤과 맞지 않으면 해당 공격을 중단합니다. | 새 메시의 LOD, Cloth 물리 메시, 소켓, AnimBP의 실제 전환, 스킬의 타격·경고 타이밍은 제작해서 연결해야 합니다. **Data Asset은 어떤 정책과 에셋을 쓸지 연결하는 곳**이고, 실제 메시·VFX 최적화는 그 데이터를 소비하는 컴포넌트에서 실행됩니다. 배경 군중의 Mass·VAT와 실제 플레이어의 애니메이션 예산도 별도로 봐야 합니다. [직업 Data Asset](../../../../Source/Project_JCharacter/Public/CharacterClass/Project_JCharacterClassDefinition.h) (당시 21행) · [공용 메시](../../../../Source/Project_JCharacter/Private/Project_JBaseCharacter.cpp) (당시 35행) · [공격 실행 방어](../../../../Source/Project_JCharacter/Private/Combat/Project_JGameplayAbility_Melee.cpp) (당시 453행) |
+> | **서버·복제·보상** | 온라인 서버는 월드·NetDriver·저장소 복구·채널 등록이 준비되어야 입장을 허용합니다. 과부하 제어와 보상 재시도 경로도 있습니다. | 서버가 입장 준비를 마쳤다는 결과만으로 **신규 NPC에 복제 우선순위가 실제로 붙었는지**, **새 보스의 경고와 보상이 재접속 후에도 맞는지**까지 알 수는 없습니다. 새 직업·펫·보스처럼 복제 대상이 늘어나는 변경은 실제 객체 등록, 필수 상태 수신, 종료·재접속을 확인해야 합니다. 지난 40인 시험도 서버 틱과 피해 수신 지연이 별개라는 걸 보여줬습니다. [서버 준비 조건](../../../../Source/Project_J/Backend/Project_JServerDrainSubsystem.cpp) (당시 127행) · 40인 실측 (`Saved/Validation/Continuation_20261014/AAAOverall_20261126_Field40/verification.json`) |
 >
-> 참고로 같은 **인스턴싱**이라는 말도 역할이 다릅니다. 월드의 ISM/HISM은 반복 메시를 묶어 그리고, Niagara 풀링은 컴포넌트를 재사용하며, Data Channels는 여러 효과 이벤트를 공유 시스템으로 모을 수 있습니다. GAS의 `InstancingPolicy`는 능력 실행 상태의 소유 방식을 정합니다. 새 직업 Data Asset 하나로 이 네 가지가 동시에 켜지는 구조는 아닙니다. [Epic ISM/HISM](https://dev.epicgames.com/documentation/unreal-engine/instanced-static-mesh-component-in-unreal-engine) · [Epic Niagara Data Channels](https://dev.epicgames.com/documentation/unreal-engine/niagara-data-channels-overview) · [Project J 스킬 제작 규칙](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Blueprints/Content_Authoring_Integration_Guide.md:57)
+> 참고로 같은 **인스턴싱**이라는 말도 역할이 다릅니다. 월드의 ISM/HISM은 반복 메시를 묶어 그리고, Niagara 풀링은 컴포넌트를 재사용하며, Data Channels는 여러 효과 이벤트를 공유 시스템으로 모을 수 있습니다. GAS의 `InstancingPolicy`는 능력 실행 상태의 소유 방식을 정합니다. 새 직업 Data Asset 하나로 이 네 가지가 동시에 켜지는 구조는 아닙니다. [Epic ISM/HISM](https://dev.epicgames.com/documentation/unreal-engine/instanced-static-mesh-component-in-unreal-engine) · [Epic Niagara Data Channels](https://dev.epicgames.com/documentation/unreal-engine/niagara-data-channels-overview) · [Project J 스킬 제작 규칙](../../Blueprints/Content_Authoring_Integration_Guide.md) (당시 57행)
 >
 > ## 확장할 때 적용할 설계
 >
 > **기본값으로 누락을 줄이고, 필수 연결은 저장·Cook에서 잡고, 실행 중에는 영향에 따라 처리하는 방식**이 Project J에 맞습니다.
 >
 > 1. **제작 기본값은 콘텐츠 역할에 붙입니다.** 새 숲은 숲용 Data Layer·PCG·HLOD 레이어를, 새 탈것은 공통 Mover와 이동 프로필을, 새 스킬은 공용 공격·연출 프로필을 사용합니다. 특별한 경우에는 에셋별로 명시적으로 조정합니다. 여러 맵으로 확장할 때는 식생 검사 대상을 `L_MainWorld`나 기존 태그 두 개에서 **월드가 선택한 정책과 콘텐츠 역할**로 옮기면 됩니다. [Epic PCG와 World Partition](https://dev.epicgames.com/documentation/unreal-engine/using-pcg-with-world-partition-in-unreal-engine)
-> 2. **검사 대상은 에셋 하나에서 실제 연결까지 넓힙니다.** 숲 액터의 레이어가 유효한지 외에 HLOD가 생성되고 패키지에 들어가는지, 스킬의 Cue가 유효한지 외에 **그 공격이 요구하는 경고가 몽타주에 존재하는지** 확인해야 합니다. 기존 선택 에셋 검증과 Cook 게이트를 재사용할 수 있습니다. 현재 게이트는 선언한 입력의 검증을 보장하며, 월드 외부 액터 전체나 Cook 의존성 전체에 대한 검증은 별도입니다. [기존 검증·Cook 기준](C:/Users/I/Documents/GitHub/Project_J/Docs/Maintenance/Change_Completion_Policy.md:59) · [Epic Asset Manager](https://dev.epicgames.com/documentation/unreal-engine/asset-management-in-unreal-engine)
+> 2. **검사 대상은 에셋 하나에서 실제 연결까지 넓힙니다.** 숲 액터의 레이어가 유효한지 외에 HLOD가 생성되고 패키지에 들어가는지, 스킬의 Cue가 유효한지 외에 **그 공격이 요구하는 경고가 몽타주에 존재하는지** 확인해야 합니다. 기존 선택 에셋 검증과 Cook 게이트를 재사용할 수 있습니다. 현재 게이트는 선언한 입력의 검증을 보장하며, 월드 외부 액터 전체나 Cook 의존성 전체에 대한 검증은 별도입니다. [기존 검증·Cook 기준](../../../Maintenance/Change_Completion_Policy.md) (당시 59행) · [Epic Asset Manager](https://dev.epicgames.com/documentation/unreal-engine/asset-management-in-unreal-engine)
 > 3. **실행 중 대체 정책은 기능의 중요도에 맞춥니다.** 장식 트레일이 빠지면 안전하게 생략할 수 있습니다. 필수 공격 경고는 기본 표시가 남아야 합니다. 지면·충돌이 필요한 이동은 준비를 기다리거나, 검증된 경우 감속할 수 있습니다. 피해 판정이나 보상 저장의 필수 데이터가 빠졌으면 실행을 중단하거나 안전하게 재시도해야 합니다. 특히 **HLOD가 화면에 보이는 상태와 실제 지형·충돌·Nav가 준비된 상태**는 따로 확인해야 합니다.
 >
 > 추가로 놓치기 쉬운 건 **셀을 가로지르는 액터 참조, 패키지에서 빠진 Soft Reference, 종료 뒤 늦게 오는 비동기 콜백, 이름표·오디오·Cloth가 한 장면에 몰리는 비용**입니다. 언리얼은 서로 참조하는 월드 액터를 함께 로드할 수 있어서, 새 정착지가 겉으로는 잘 나뉘어 보여도 참조 하나로 멀리 있는 셀까지 같이 로드될 수 있습니다. 그리고 새 콘텐츠를 한 번 보이는 것만 확인하면, 반복 진입·이탈 후 메모리와 작업 큐가 돌아오는지는 놓치게 됩니다. [Epic World Partition의 액터 참조](https://dev.epicgames.com/documentation/en-us/unreal-engine/world-partition-in-unreal-engine) · [Epic 성능 프로파일링](https://dev.epicgames.com/documentation/unreal-engine/introduction-to-performance-profiling-and-configuration-in-unreal-engine)
@@ -254,7 +256,7 @@
 
 **당시 완료 응답**
 
-> 바탕화면에 [Project J 오픈월드·MMO 최적화 인계 문서](C:/Users/I/Desktop/Project_J_오픈월드_MMO_최적화_인계_2026-11-26.md)를 저장했습니다.
+> 바탕화면에 Project J 오픈월드·MMO 최적화 인계 문서 (`Desktop/Project_J_오픈월드_MMO_최적화_인계_2026-11-26.md`)를 저장했습니다.
 >
 > 문서 첫머리에 **GPT‑6.2 Astra가 설계하고, 설계 이후 사용자가 구현을 요청하면 GPT‑6.2 Sol이 구현한다**고 명시했습니다. 기존 제안은 설계 후보로 남겼고, Astra가 대안을 비교해 더 나은 구조를 선택할 수 있도록 각 후보의 판단 근거와 미검증 항목을 적었습니다.
 >
@@ -270,7 +272,7 @@
 
 **당시 완료 응답**
 
-> 재점검을 마쳤고, 바탕화면의 [Project J 오픈월드·MMO 최적화 인계 문서](C:/Users/I/Desktop/Project_J_오픈월드_MMO_최적화_인계_2026-11-26.md)를 갱신했습니다.
+> 재점검을 마쳤고, 바탕화면의 Project J 오픈월드·MMO 최적화 인계 문서 (`Desktop/Project_J_오픈월드_MMO_최적화_인계_2026-11-26.md`)를 갱신했습니다.
 >
 > **제공하신 TXT는 290줄, 55,545바이트 전체를 부록과 대조했고 누락이 없었습니다.** TXT 작성 이후의 요청도 추가했습니다. **GPT‑6.2 Astra가 설계하고, 설계 이후 사용자가 요청하면 GPT‑6.2 Sol이 구현**한다는 역할을 첫머리에 유지했습니다.
 >
@@ -290,7 +292,7 @@
 
 **당시 완료 응답**
 
-> 다시 점검하고 [바탕화면의 Project J 인계 문서](C:/Users/I/Desktop/Project_J_오픈월드_MMO_최적화_인계_2026-11-26.md)를 갱신했습니다. 기존 문서에는 Sol의 역할이 **구현**으로만 적혀 있었고, 이번에 담당 범위를 모두 명시했습니다.
+> 다시 점검하고 바탕화면의 Project J 인계 문서 (`Desktop/Project_J_오픈월드_MMO_최적화_인계_2026-11-26.md`)를 갱신했습니다. 기존 문서에는 Sol의 역할이 **구현**으로만 적혀 있었고, 이번에 담당 범위를 모두 명시했습니다.
 >
 > - **GPT‑6.2 Astra**는 설계와 설계 관련 작업을 맡습니다. 현재 구조 검토, 대안 비교, 제작 누락 대응, 수용 기준과 검증 계획까지 포함합니다. 인계 문서의 제안은 후보이며, Astra가 더 적합한 구조를 선택할 수 있습니다.
 > - **GPT‑6.2 Sol**은 설계가 끝나고 사용자가 실행을 요청한 뒤 **구현·세부 구현·버그 탐지·재현·디버깅·수정·회귀 검증**을 맡습니다.
@@ -309,7 +311,7 @@
 
 > 네, **TXT에 빠진 내용이 실제로 있었습니다.** Codex 앱에서 이 채팅의 **10개 턴을 직접 조회**해 대조했고, TXT 작성 이후의 사용자 메시지 **5개**, 중간 진행 메시지 **19개**, 외부 링크 주소가 TXT에 빠져 있음을 확인했습니다.
 >
-> [바탕화면의 Project J 인계 문서](C:/Users/I/Desktop/Project_J_오픈월드_MMO_최적화_인계_2026-11-26.md)를 갱신했습니다. **9절에는 제공하신 TXT를 그대로 유지**했고, **10절에는 앱에서 확인한 사용자·진행·완료 메시지 42개와 외부 링크 주소 43개**를 원래 순서로 담았습니다. 실패한 시험과 재시도 과정은 본문에도 원자료를 연결했습니다.
+> 바탕화면의 Project J 인계 문서 (`Desktop/Project_J_오픈월드_MMO_최적화_인계_2026-11-26.md`)를 갱신했습니다. **9절에는 제공하신 TXT를 그대로 유지**했고, **10절에는 앱에서 확인한 사용자·진행·완료 메시지 42개와 외부 링크 주소 43개**를 원래 순서로 담았습니다. 실패한 시험과 재시도 과정은 본문에도 원자료를 연결했습니다.
 >
 > 10절은 이번 재검토의 첫 안내까지 조회한 텍스트 기록입니다. 별도 도구 출력과 이미지 파일은 본문의 원자료 링크로 확인할 수 있습니다. **Astra는 설계, Sol은 이후 구현·디버깅·버그 탐지·세부 구현**이라는 역할은 문서 첫머리에 유지했습니다.
 
@@ -328,7 +330,7 @@
 
 **당시 완료 응답**
 
-> [Project J 오픈월드·MMORPG 시스템 설계서](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_OpenWorld_MMO_System_Design_2026-11-26.md)를 프로젝트에 저장했습니다. 인계 문서와 이 채팅의 요구를 현재 소스·설정과 대조해 작성했습니다. 이번 변경은 설계 문서와 프로젝트 문서 색인까지입니다.
+> [Project J 오픈월드·MMORPG 시스템 설계서](../Project_J_OpenWorld_MMO_System_Design_2026-11-26.md)를 프로젝트에 저장했습니다. 인계 문서와 이 채팅의 요구를 현재 소스·설정과 대조해 작성했습니다. 이번 변경은 설계 문서와 프로젝트 문서 색인까지입니다.
 >
 > **핵심 결정은 언리얼이 스트리밍·렌더링·복제를 실행하고, Project J가 콘텐츠의 의도와 실제 플레이 결과를 연결하는 구조입니다.** 새 콘텐츠를 추가할 때 무엇을 상속하고, 무엇을 지정해야 하며, 빠뜨리면 어디서 발견할지를 정했습니다.
 >
@@ -342,7 +344,7 @@
 >
 > **Sol의 첫 구현 단위는 월드 제작 누락 탐지와 필수 전투 경고 누락 탐지입니다.** 현재 코드는 각각 ‘MainWorld의 지정 태그가 있는 액터’와 ‘이미 경고 Notify가 있는 애니메이션’에서 검사를 시작합니다. 작업자가 설정 자체를 빠뜨리면 검사 대상에서도 사라질 수 있어, 두 부분을 먼저 고치는 편이 이후 콘텐츠 전체에 효과가 큽니다.
 >
-> 설계서 [7절의 검증 기준](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_OpenWorld_MMO_System_Design_2026-11-26.md:104)과 [8절의 Sol 구현 순서](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_OpenWorld_MMO_System_Design_2026-11-26.md:120)에 단계별 완료·롤백 조건을 담았습니다. 출시 최소 사양, 목표 해상도·FPS, 최고 이동 속도, 공격별 최소 반응 시간은 제품 결정으로 열어 두었습니다. 새 지상 탈것의 연속 주행과 제작 B01의 다인 교전은 구현 후 실제로 검증해야 할 항목입니다.
+> 설계서 [7절의 검증 기준](../Project_J_OpenWorld_MMO_System_Design_2026-11-26.md) (당시 104행)과 [8절의 Sol 구현 순서](../Project_J_OpenWorld_MMO_System_Design_2026-11-26.md) (당시 120행)에 단계별 완료·롤백 조건을 담았습니다. 출시 최소 사양, 목표 해상도·FPS, 최고 이동 속도, 공격별 최소 반응 시간은 제품 결정으로 열어 두었습니다. 새 지상 탈것의 연속 주행과 제작 B01의 다인 교전은 구현 후 실제로 검증해야 할 항목입니다.
 
 ## 12. 설계 재검토
 
@@ -352,7 +354,7 @@
 
 **당시 완료 응답**
 
-> [오픈월드·MMORPG 시스템 설계서](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_OpenWorld_MMO_System_Design_2026-11-26.md)를 **설계안 2**로 갱신했습니다. 현재 소스와 대조하면서, 초안대로 구현하면 놓칠 수 있는 네 가지를 보강했습니다.
+> [오픈월드·MMORPG 시스템 설계서](../Project_J_OpenWorld_MMO_System_Design_2026-11-26.md)를 **설계안 2**로 갱신했습니다. 현재 소스와 대조하면서, 초안대로 구현하면 놓칠 수 있는 네 가지를 보강했습니다.
 >
 > | 분야 | 설계에 반영한 내용 |
 > |---|---|
@@ -361,7 +363,7 @@
 > | **새 스킬·필수 경고** | NPC는 기본 공격을 다른 공격 정의로 교체할 수 있고, 일부 투사체는 공격 데이터 에셋을 거치지 않고 생성됩니다. 실제로 선택된 스킬까지 검사를 따라가도록 했습니다. 투사체 풀이 가득 찼을 때 비용·쿨다운·경고만 남는 경우도 검증 대상에 넣었습니다. |
 > | **군중·서버 부하** | Iris의 군중 한도는 관찰자마다 처리하는 비면제 후보 액터 수에 적용됩니다. 따라서 40인 시험에서도 NPC 수와 서버 부하 단계에 따라 한도에 걸릴 수 있습니다. 같은 인원이 보스 앞에 모일 때와 여러 지역에 흩어질 때를 비교해 전송량·후보 탐색 비용·서버 상주 메모리를 각각 보도록 했습니다. |
 >
-> 특히 **개별 기능은 통과하지만 한 장면에서 함께 실패하는 경우**를 추가했습니다. 파티가 포털과 지상 탈것으로 동시에 정착지에 도착해 첫 스킬을 쓰는 장면이 대표적입니다. 여기서는 지면 준비, 첫 프레임의 멈춤, 필수 경고를 실제로 읽을 수 있었던 시간을 함께 봅니다. [복합 상황 인수 기준](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_OpenWorld_MMO_System_Design_2026-11-26.md:130)
+> 특히 **개별 기능은 통과하지만 한 장면에서 함께 실패하는 경우**를 추가했습니다. 파티가 포털과 지상 탈것으로 동시에 정착지에 도착해 첫 스킬을 쓰는 장면이 대표적입니다. 여기서는 지면 준비, 첫 프레임의 멈춤, 필수 경고를 실제로 읽을 수 있었던 시간을 함께 봅니다. [복합 상황 인수 기준](../Project_J_OpenWorld_MMO_System_Design_2026-11-26.md) (당시 130행)
 >
 > **구현 우선순위는 월드 제작 누락 탐지와 필수 경고 누락 탐지를 먼저 두는 것이 여전히 적절합니다.** 둘 다 기존 제작 경로에서 해결할 수 있고 이후 추가되는 콘텐츠에도 적용됩니다. 이번 점검에서는 설계서만 수정했고 로컬 근거 링크 34개를 확인했습니다. 추가한 시나리오의 실제 플레이·성능 결과는 Sol 구현 단계에서 검증할 항목입니다.
 
@@ -386,7 +388,7 @@
 >
 > **검증 결과:** UE 5.8.4 Win64 에디터·게임 빌드가 모두 성공했고, 집중 회귀 **12개가 통과**했습니다. MainWorld와 이름이 다른 임시 WP 맵에서 원경 설정 상속과 누락 검출을 확인했습니다. 실제 MainWorld B01의 D3D12 단독 플레이에서는 경고 생성·해제, 공격 10회로 처치, 개인 우편 **1,625골드** 지급까지 확인했습니다.
 >
-> 이번 결과가 입증하는 범위는 기반 연결과 위 장면까지입니다. 새 지상 탈것의 장거리 패키지 주행과 연속 팝인, 방향·범위까지 전달하는 공간 경고, 변경 후 40인 교전 성능은 후속 검증으로 남겼습니다. 새 콘텐츠를 연결하는 방법과 다음 구현의 인수 기준은 [기반 구현 인계 문서](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_OpenWorld_Foundation_Handoff_2026-11-26.md)에 정리했습니다.
+> 이번 결과가 입증하는 범위는 기반 연결과 위 장면까지입니다. 새 지상 탈것의 장거리 패키지 주행과 연속 팝인, 방향·범위까지 전달하는 공간 경고, 변경 후 40인 교전 성능은 후속 검증으로 남겼습니다. 새 콘텐츠를 연결하는 방법과 다음 구현의 인수 기준은 [기반 구현 인계 문서](../Project_J_OpenWorld_Foundation_Handoff_2026-11-26.md)에 정리했습니다.
 
 ## 14. 설계안과 기반 대조
 
@@ -396,7 +398,7 @@
 
 **당시 완료 응답**
 
-> 설계안과 실제 호출 경로를 대조해 **새 콘텐츠를 추가할 때 검사가 빠지거나 이전 상태가 남을 수 있는 부분**을 수정했습니다. 새 월드·탈것·스킬은 기존 UE 기능과 프로젝트 공용 코드를 통해 확장할 수 있습니다. 제작자가 연결해야 하는 데이터와 실제 플레이로 확인해야 하는 품질 기준도 인계 문서에 구분해 두었습니다. [갱신한 기반 구현 인계 문서](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_OpenWorld_Foundation_Handoff_2026-11-26.md)
+> 설계안과 실제 호출 경로를 대조해 **새 콘텐츠를 추가할 때 검사가 빠지거나 이전 상태가 남을 수 있는 부분**을 수정했습니다. 새 월드·탈것·스킬은 기존 UE 기능과 프로젝트 공용 코드를 통해 확장할 수 있습니다. 제작자가 연결해야 하는 데이터와 실제 플레이로 확인해야 하는 품질 기준도 인계 문서에 구분해 두었습니다. [갱신한 기반 구현 인계 문서](../Project_J_OpenWorld_Foundation_Handoff_2026-11-26.md)
 >
 > | 영역 | 수정하고 확인한 내용 |
 > |---|---|
@@ -404,7 +406,7 @@
 > | **새 탈것·고속 이동** | 기본 컨트롤러에서 월드 정의가 없거나 활성화 제공자를 껐을 때 선행 로드만 계속되는 문제를 수정했습니다. **탈것 전용 코드가 없는 일반 Character**도 속도만으로 고속 지상 예측을 사용했습니다. 같은 프레임에 비행 탈것에서 지상 Pawn으로 바꿔도 이전 고도·방향·후방 앵커·준비도 캐시가 섞이지 않았습니다. |
 > | **새 스킬·전투 경고** | 몽타주에서 마지막 필수 경고를 지워도 해당 몽타주를 참조하는 공격 정의를 따라 누락을 검출합니다. 같은 몽타주를 재사용하는 플레이어 콤보가 이미 지나간 경고 뒤에서 계속 재생되는 문제도 수정했습니다. 기존 B01과 별도의 플레이어 공격 표본에서 확인했습니다. |
 >
-> **검증 결과는 UE 5.8.4 Win64 Development 에디터·게임 빌드 성공, D3D12 집중 회귀 14/14 통과**입니다. 실패·경고 동반 성공·미실행은 모두 0건입니다. 제작 MainWorld의 B01 독립 PIE에서도 경고 표식 생성·해제, 공격 입력 10회, HP 100→0, 개인 보상 우편 1,881골드를 확인했습니다. [자동화 결과](C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/OpenWorldFoundation_Reaudit_20261126/Verified/Automation/index.json) · [B01 실행 결과](C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/OpenWorldFoundation_Reaudit_20261126/B01PIE/verification.json)
+> **검증 결과는 UE 5.8.4 Win64 Development 에디터·게임 빌드 성공, D3D12 집중 회귀 14/14 통과**입니다. 실패·경고 동반 성공·미실행은 모두 0건입니다. 제작 MainWorld의 B01 독립 PIE에서도 경고 표식 생성·해제, 공격 입력 10회, HP 100→0, 개인 보상 우편 1,881골드를 확인했습니다. 자동화 결과 (`Saved/Validation/OpenWorldFoundation_Reaudit_20261126/Verified/Automation/index.json`) · B01 실행 결과 (`Saved/Validation/OpenWorldFoundation_Reaudit_20261126/B01PIE/verification.json`)
 >
 > **남은 최우선 검증은 두 번째 지역을 패키징해 빠른 지상 탈것으로 실제 주행하는 것입니다.** 현재 기반은 선언된 수관의 HLOD 설정 누락을 잡지만, 역할 표시가 없는 임의의 수동 메시를 나무로 식별하거나 Cook된 프록시가 원하는 프레임에 그려졌음을 보장하지는 않습니다. 인계 문서에 원경 전환·다리 충돌·급선회·재진입의 판정 기준을 남겼습니다. 독립 장판·투사체의 경고 수명, 비용 있는 콤보의 GAS 확정 시점, Niagara·애니메이션·서버 병목도 후속 과제로 정리했습니다. 이번에는 한 대에서 40인 부하를 다시 측정하지 않았습니다.
 
@@ -425,9 +427,9 @@
 > - **탈것·원경** — 이동 예측은 범용이지만 기존 비행 측정기는 MainWorld와 시작 탈것을 직접 지정합니다. 두 번째 맵과 지상 탈것 검증에는 시험 입력도 바꿔야 합니다. WPO 거리 정책의 편집값과 실제 검사 상한이 따로 있다는 점도 기록했습니다.
 > - **전투·군중** — 플레이어 콤보는 경고가 잘못된 노드를 거절하기 전에 비용이 확정될 수 있습니다. 독립 투사체·장판의 경고 수명과 기본 캐릭터를 상속하지 않는 액터의 Iris 등록도 해당 경로에서 검증해야 합니다.
 >
-> **첫 작업은 작은 두 번째 야외 지역을 패키지의 일반 입구로 열고, 빠른 지상 탈것으로 다리·급선회·재진입을 시험하는 것**으로 정리했습니다. 소스 셀이 내려간 뒤 원경이 실제로 보이는 프레임과 지면 충돌이 준비된 시각을 따로 확인하면, 문제가 생겼을 때 HLOD 제작·Cook·스트리밍·렌더 중 어디를 고칠지 좁힐 수 있습니다. 이후 신규 공격 한 개의 공간 경고와 비용을 검증하고, 단일 PC 군중 시험에서 병목이 확인된 항목을 최적화하는 순서입니다. [Sol 세부 구현·시험 문서](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_OpenWorld_Sol_Implementation.md)
+> **첫 작업은 작은 두 번째 야외 지역을 패키지의 일반 입구로 열고, 빠른 지상 탈것으로 다리·급선회·재진입을 시험하는 것**으로 정리했습니다. 소스 셀이 내려간 뒤 원경이 실제로 보이는 프레임과 지면 충돌이 준비된 시각을 따로 확인하면, 문제가 생겼을 때 HLOD 제작·Cook·스트리밍·렌더 중 어디를 고칠지 좁힐 수 있습니다. 이후 신규 공격 한 개의 공간 경고와 비용을 검증하고, 단일 PC 군중 시험에서 병목이 확인된 항목을 최적화하는 순서입니다. [Sol 세부 구현·시험 문서](../Project_J_OpenWorld_Sol_Implementation.md)
 >
-> 이번 작업에서는 문서를 추가·갱신하고 코드 및 보관 원자료를 재대조했습니다. **D3D12 회귀 14/14와 B01 경고 생성·해제는 직전 실행 기록**이며, 이번에 새 빌드나 40인 부하 시험을 실행한 결과는 아닙니다. [갱신한 기반 인계 문서](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_OpenWorld_Foundation_Handoff_2026-11-26.md)
+> 이번 작업에서는 문서를 추가·갱신하고 코드 및 보관 원자료를 재대조했습니다. **D3D12 회귀 14/14와 B01 경고 생성·해제는 직전 실행 기록**이며, 이번에 새 빌드나 40인 부하 시험을 실행한 결과는 아닙니다. [갱신한 기반 인계 문서](../Project_J_OpenWorld_Foundation_Handoff_2026-11-26.md)
 
 ## 16. 두 번째 지역 구현·시험
 
@@ -437,9 +439,9 @@
 
 **당시 완료 응답**
 
-> 두 인계 문서를 바탕으로 **두 번째 World Partition 맵에서 원경 HLOD, 고속 지상·비행, 패키지 입장까지 구현하고 검증했습니다.** 검증용 `RidgeRoute03`은 프로젝트의 기존 게임 모드·탈것·스트리밍 경로를 사용합니다. [세부 구현과 검증 기록](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_OpenWorld_Sol_Implementation.md)
+> 두 인계 문서를 바탕으로 **두 번째 World Partition 맵에서 원경 HLOD, 고속 지상·비행, 패키지 입장까지 구현하고 검증했습니다.** 검증용 `RidgeRoute03`은 프로젝트의 기존 게임 모드·탈것·스트리밍 경로를 사용합니다. [세부 구현과 검증 기록](../Project_J_OpenWorld_Sol_Implementation.md)
 >
-> 새 맵을 제작하면서 **HLOD 설정 누락을 실제로 재현했습니다.** 에디터에서 수관 레이어가 지정돼 있어도 그 레이어가 런타임 파티션에 등록되지 않으면, UE 빌더가 종료 코드 0으로 프록시를 0개 만들 수 있었습니다. 에디터 검사가 엔진의 등록 여부를 확인하도록 보강했고, 저장 맵 검사에는 예상 프록시 수를 확인하는 옵션을 추가했습니다. [에디터 검사 코드](C:/Users/I/Documents/GitHub/Project_J/Source/Project_JCharacterEditor/Private/Validation/Project_JCrossAssetEditorValidator.cpp)
+> 새 맵을 제작하면서 **HLOD 설정 누락을 실제로 재현했습니다.** 에디터에서 수관 레이어가 지정돼 있어도 그 레이어가 런타임 파티션에 등록되지 않으면, UE 빌더가 종료 코드 0으로 프록시를 0개 만들 수 있었습니다. 에디터 검사가 엔진의 등록 여부를 확인하도록 보강했고, 저장 맵 검사에는 예상 프록시 수를 확인하는 옵션을 추가했습니다. [에디터 검사 코드](../../../../Source/Project_JCharacterEditor/Private/Validation/Project_JCrossAssetEditorValidator.cpp)
 >
 > | 검증 | 결과 |
 > |---|---|
@@ -447,7 +449,7 @@
 > | **고속 지상·비행** | 지상은 약 26m/s로 좁은 다리를 왕복하고 180도 선회했습니다. 최종 약 559m 주행에서 노면 트레이스 누락은 0프레임이었고, 엔진 로그에서 `Loaded`와 `Activated` 요청을 모두 확인했습니다. 같은 맵에서 약 579m 비행하며 상승·선회·급강하도 검증했습니다. |
 > | **패키지·회귀** | Win64 Development Cook·Stage 성공. 패키지의 Entry에서 `open` 명령으로 새 맵에 들어가 정상 종료했습니다. 직접 에디터 빌드와 집중 회귀 14개도 통과했습니다. |
 >
-> 이번 원경과 주행 관찰은 PIE에서 했고, 패키지에서는 개발 콘솔을 통한 맵 입장을 확인했습니다. **실제 게임 입구에서의 이동, 패키지 안에서의 연속 주행과 팝인 측정, 신규 스킬의 공간 경고·비용, 16·40인 혼잡 시험**은 남은 작업입니다. 재현 입력과 판정 기준을 인계 문서에 갱신했습니다. [기반 구현 인계](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_OpenWorld_Foundation_Handoff_2026-11-26.md)
+> 이번 원경과 주행 관찰은 PIE에서 했고, 패키지에서는 개발 콘솔을 통한 맵 입장을 확인했습니다. **실제 게임 입구에서의 이동, 패키지 안에서의 연속 주행과 팝인 측정, 신규 스킬의 공간 경고·비용, 16·40인 혼잡 시험**은 남은 작업입니다. 재현 입력과 판정 기준을 인계 문서에 갱신했습니다. [기반 구현 인계](../Project_J_OpenWorld_Foundation_Handoff_2026-11-26.md)
 
 ## 17. 두 인계 문서의 진행 범위
 
@@ -462,7 +464,7 @@
 > - **완료** — 검증용 WP 맵 제작, HLOD 레이어 등록 누락 검사 보강, 원본이 언로드된 뒤 원거리 수관 프록시가 표시되는지 확인, 고속 지상·비행 PIE 시험, Cook·Stage와 패키지에서 개발 콘솔로 맵 입장, 집중 회귀 14개 통과.
 > - **남음** — 실제 게임 입구를 통한 지역 이동, 패키지에서 연속 주행하며 팝인과 충돌 준비 시점 측정, 새 탈것 BP 적용 검증, 신규 스킬의 공간 경고·비용 처리, 16·40인 혼잡 시험과 병목별 최적화.
 >
-> 이전 답변에서 완료라고 한 범위는 **두 번째 월드 검증 단계**입니다. 각 과제의 결과와 남은 조건은 [Sol 세부 구현 문서](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_OpenWorld_Sol_Implementation.md)와 [기반 인계 문서](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_OpenWorld_Foundation_Handoff_2026-11-26.md)에 반영했습니다.
+> 이전 답변에서 완료라고 한 범위는 **두 번째 월드 검증 단계**입니다. 각 과제의 결과와 남은 조건은 [Sol 세부 구현 문서](../Project_J_OpenWorld_Sol_Implementation.md)와 [기반 인계 문서](../Project_J_OpenWorld_Foundation_Handoff_2026-11-26.md)에 반영했습니다.
 
 ## 18. 패키지 용량과 남은 작업
 
@@ -482,7 +484,7 @@
 > 2. **전투** — 새 공격 하나로 공간 경고의 표시·취소·재진입과 GAS 비용 처리를 검증합니다. 이 부분은 실제 세부 구현이 남아 있습니다.
 > 3. **군중** — 한 PC에서 16인부터 확인하고 여유가 있으면 40 경량 연결로 올립니다. 측정에서 확인된 병목부터 수정합니다.
 >
-> 즉, 목록이 짧아진 이유는 **공용 기반을 이미 연결했고 두 번째 맵에서 실제 동작도 확인했기 때문**입니다. 남은 과제는 항목 수는 적어도 각각 패키지·전투·다인 환경에서 확인해야 할 범위가 있습니다. [세부 구현과 시험 기준](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_OpenWorld_Sol_Implementation.md)
+> 즉, 목록이 짧아진 이유는 **공용 기반을 이미 연결했고 두 번째 맵에서 실제 동작도 확인했기 때문**입니다. 남은 과제는 항목 수는 적어도 각각 패키지·전투·다인 환경에서 확인해야 할 범위가 있습니다. [세부 구현과 시험 기준](../Project_J_OpenWorld_Sol_Implementation.md)
 
 ## 19. 일반 입구와 전투·부하 검증
 
@@ -501,7 +503,7 @@
 >
 > **아직 확인이 필요한 범위도 있습니다.** 원경 전환에서 원본과 프록시 모두 최근 렌더를 보고하지 않은 3샘플이 반복됐습니다. HLOD 준비 시간을 늘린 비교에서도 같았으므로, 실제 화면에서 팝인이 없는지는 프레임 캡처로 판별해야 합니다. 제작 MainWorld의 16·40인 실측은 이 PC의 메모리 한계로 완료하지 못했습니다. 온라인 지역 이동·영속 데이터 이관과 신규 원형 공격의 출시용 스킬 부여·늦은 진입 검증도 인계에 남겼습니다.
 >
-> [Sol 구현·검증 인계](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_OpenWorld_Sol_Implementation.md) · [기반 인계](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_OpenWorld_Foundation_Handoff_2026-11-26.md) · [최종 패키지 실행 결과](C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/OpenWorldCompletion/PackagedFinal/result.json)
+> [Sol 구현·검증 인계](../Project_J_OpenWorld_Sol_Implementation.md) · [기반 인계](../Project_J_OpenWorld_Foundation_Handoff_2026-11-26.md) · 최종 패키지 실행 결과 (`Saved/Validation/OpenWorldCompletion/PackagedFinal/result.json`)
 
 ## 20. 두 인계 문서 재감사
 
@@ -520,7 +522,7 @@
 >
 > **남은 항목**은 제작 MainWorld의 16·40인 실측, 출시 맵의 여러 바이옴에서 원경 전환 품질 확인, 신규 원형 스킬의 실제 캐릭터 부여·비용·늦은 진입 검증, 온라인 지역 이동과 영속 배치 이관입니다. 제작 맵 16인 시험은 독립 클라이언트 방식의 메모리 사전 검사에서 차단됐습니다.
 >
-> [Sol 구현·재감사 결과](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_OpenWorld_Sol_Implementation.md) · [기반 인계 문서](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_OpenWorld_Foundation_Handoff_2026-11-26.md) · [최종 패키지 실행 증거](C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/OpenWorldReaudit/PackagedAudit/result.json)
+> [Sol 구현·재감사 결과](../Project_J_OpenWorld_Sol_Implementation.md) · [기반 인계 문서](../Project_J_OpenWorld_Foundation_Handoff_2026-11-26.md) · 최종 패키지 실행 증거 (`Saved/Validation/OpenWorldReaudit/PackagedAudit/result.json`)
 
 ## 21. 독립 검토 인계
 
@@ -530,7 +532,7 @@
 
 **당시 완료 응답**
 
-> [Astra 독립 검증 인계 문서](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_OpenWorld_Astra_Independent_Review_Handoff_2026-11-26.md)를 저장했습니다.
+> [Astra 독립 검증 인계 문서](../Project_J_OpenWorld_Astra_Independent_Review_Handoff_2026-11-26.md)를 저장했습니다.
 >
 > 두 원본 인계 문서와 갱신한 구현·설계 문서의 경로, 핵심 코드, 재현 명령, 패키지·회귀·다인 시험 증거를 한곳에 모았습니다. **GPT‑6.2 Astra는 독립 검증과 설계 판단을 맡고, GPT‑6.2 Sol은 후속 구현·디버깅·회귀를 맡도록** 명시했습니다. 기존 설계보다 나은 대안이 있다면 책임, 호환성, 제작 비용을 비교해 판단할 수 있게 했습니다.
 >
@@ -552,16 +554,16 @@
 >
 > | 항목 | 확인한 결과 |
 > |---|---|
-> | **MainWorld와 40인 전투** | 제작 MainWorld B01에서 독립 클라이언트 2명이 새 스킬로 2/2 타격했습니다. 별도 전투 맵에서는 40명이 동시에 시전해 **40/40 타격, 총 400 피해, 40/40 체력 복제 확인·연결 해제**를 기록했습니다. 이때 서버 월드 틱 p95는 **5.873ms**였습니다. MainWorld 16·40인 실행은 가용 메모리 약 19GiB에서 사전 검사로 중단됐습니다. 실행기의 예정량은 각각 74GiB와 170GiB입니다. [제작 B01](</C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/AstraMainGroundPulse2/verification.json>) · [40접속 실측](</C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/AstraGroundPulseCrowd40/verification.json>) |
-> | **원경·고속 이동** | MainWorld 초지·산지·호수 계곡에서 800m 이탈·복귀한 15개 장면을 비교했습니다. 산지에서는 멀어지면서 수목 밀도가 낮아졌고 능선은 유지됐습니다. 최종 패키지의 별도 지상·비행 경로에서는 **노면 5,937샘플 중 누락 0건**이었습니다. 원본과 HLOD의 최근 렌더 이력이 동시에 비었던 두 시점에도 캡처에는 수관이 보였습니다. [바이옴 비교 화면](</C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/OpenWorldAstraReview/BiomeViews/contact.jpg>) · [최종 패키지 실행](</C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/OpenWorldAstraReview/FinalPackaged/result.json>) |
-> | **제작 스킬·원격 경고** | 패키지의 일반 MainWorld에서 Spellblade가 `Ground Pulse`를 실제로 부여받았습니다. 입력은 **CapsLock을 누른 채 T**, 비용은 마나 10, 쿨다운은 4초입니다. 마나 부족·취소·재시전·서버 피해를 확인했습니다. 4접속 최저 이펙트 품질에서 늦게 들어온 클라이언트는 남은 시간만큼 경고를 보았고, 만료 후 진입한 경우에는 경고가 뜨지 않았습니다. [원격 경고 검증](</C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/AstraSlopeLate4/verification.json>) |
-> | **온라인 이동·영속 배치** | 기존 로컬 Nakama·PostgreSQL과 UE 서버로 제작 샌드박스→던전→원래 위치 복귀를 확인했습니다. 별도 3서버 시험에서는 던전에서 연결을 끊고 새 클라이언트로 재접속한 뒤 원래 지역의 다른 서버로 복귀했습니다. 보스 배치의 맵·ID 변경을 위한 오프라인 이관 도구도 추가했고, **대기 중인 보상·퀘스트 201건**과 처치 기록·쿨다운 만료 시각이 보존됐습니다. [실제 백엔드 왕복](</C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/OpenWorldAstraReview/NativeBackend.json>) · [재접속](</C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/AstraDistinctMapsReconnect/verification.json>) · [이관 검증](</C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/OpenWorldAstraReview/Migration.json>) |
+> | **MainWorld와 40인 전투** | 제작 MainWorld B01에서 독립 클라이언트 2명이 새 스킬로 2/2 타격했습니다. 별도 전투 맵에서는 40명이 동시에 시전해 **40/40 타격, 총 400 피해, 40/40 체력 복제 확인·연결 해제**를 기록했습니다. 이때 서버 월드 틱 p95는 **5.873ms**였습니다. MainWorld 16·40인 실행은 가용 메모리 약 19GiB에서 사전 검사로 중단됐습니다. 실행기의 예정량은 각각 74GiB와 170GiB입니다. 제작 B01 (`Saved/Validation/Continuation_20261014/AstraMainGroundPulse2/verification.json`) · 40접속 실측 (`Saved/Validation/Continuation_20261014/AstraGroundPulseCrowd40/verification.json`) |
+> | **원경·고속 이동** | MainWorld 초지·산지·호수 계곡에서 800m 이탈·복귀한 15개 장면을 비교했습니다. 산지에서는 멀어지면서 수목 밀도가 낮아졌고 능선은 유지됐습니다. 최종 패키지의 별도 지상·비행 경로에서는 **노면 5,937샘플 중 누락 0건**이었습니다. 원본과 HLOD의 최근 렌더 이력이 동시에 비었던 두 시점에도 캡처에는 수관이 보였습니다. 바이옴 비교 화면 (`Saved/Validation/OpenWorldAstraReview/BiomeViews/contact.jpg`) · 최종 패키지 실행 (`Saved/Validation/OpenWorldAstraReview/FinalPackaged/result.json`) |
+> | **제작 스킬·원격 경고** | 패키지의 일반 MainWorld에서 Spellblade가 `Ground Pulse`를 실제로 부여받았습니다. 입력은 **CapsLock을 누른 채 T**, 비용은 마나 10, 쿨다운은 4초입니다. 마나 부족·취소·재시전·서버 피해를 확인했습니다. 4접속 최저 이펙트 품질에서 늦게 들어온 클라이언트는 남은 시간만큼 경고를 보았고, 만료 후 진입한 경우에는 경고가 뜨지 않았습니다. 원격 경고 검증 (`Saved/Validation/Continuation_20261014/AstraSlopeLate4/verification.json`) |
+> | **온라인 이동·영속 배치** | 기존 로컬 Nakama·PostgreSQL과 UE 서버로 제작 샌드박스→던전→원래 위치 복귀를 확인했습니다. 별도 3서버 시험에서는 던전에서 연결을 끊고 새 클라이언트로 재접속한 뒤 원래 지역의 다른 서버로 복귀했습니다. 보스 배치의 맵·ID 변경을 위한 오프라인 이관 도구도 추가했고, **대기 중인 보상·퀘스트 201건**과 처치 기록·쿨다운 만료 시각이 보존됐습니다. 실제 백엔드 왕복 (`Saved/Validation/OpenWorldAstraReview/NativeBackend.json`) · 재접속 (`Saved/Validation/Continuation_20261014/AstraDistinctMapsReconnect/verification.json`) · 이관 검증 (`Saved/Validation/OpenWorldAstraReview/Migration.json`) |
 >
 > 검증 중 **혼합 목적지 포털이 정상 던전 정의를 덮어쓰는 문제**, **원형 전조가 렌더 경계에서 잘리는 문제**, **경사면에서 전조 한쪽이 지면에 묻히는 문제**를 재현해 수정했습니다. 경사 수정은 공통 원형 공격 경로에 적용했습니다. 18도 경사에서 수평 피해 반경 350cm를 유지했고, 늦게 진입한 원격 클라이언트도 같은 기울기로 표시했습니다.
 >
 > 최종 Win64 Development Editor·Game 빌드, 선택 에셋 9개·선언 입력 47개 검증, 네 지도 Cook·Stage와 패키지 실행을 마쳤습니다. **네이티브 회귀는 51건 통과, 실패·미실행 0건**입니다. 애니메이션 관찰 시험 1건에는 PoseSearch 인덱스 준비 경고가 있었습니다.
 >
-> 남은 출시 검증은 **실제 MainWorld 16·40인 밀집·분산 전투**, **최소 사양에서 바이옴 전환 중의 연속 프레임과 끊김**, **절벽·계단에 걸친 전조**, **전용 HUD·사운드**, **두 공개 야외 지역의 운영 라우팅과 Shipping 구성**입니다. 두 원래 인계 문서에도 최신 결과를 연결했고, 항목별 근거와 남은 합격 조건은 [Astra 독립 검증 인계 문서](</C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_OpenWorld_Astra_Independent_Review_Handoff_2026-11-26.md>)에 정리했습니다.
+> 남은 출시 검증은 **실제 MainWorld 16·40인 밀집·분산 전투**, **최소 사양에서 바이옴 전환 중의 연속 프레임과 끊김**, **절벽·계단에 걸친 전조**, **전용 HUD·사운드**, **두 공개 야외 지역의 운영 라우팅과 Shipping 구성**입니다. 두 원래 인계 문서에도 최신 결과를 연결했고, 항목별 근거와 남은 합격 조건은 [Astra 독립 검증 인계 문서](../Project_J_OpenWorld_Astra_Independent_Review_Handoff_2026-11-26.md)에 정리했습니다.
 
 ## 23. 패키지·원경·실제 서비스 검증
 
@@ -571,19 +573,19 @@
 
 **당시 완료 응답**
 
-> 한 PC에서 메인 월드, 전투, 온라인 지역 이동, 영속 데이터 이관, Shipping 패키지까지 다시 검증했습니다. **메인 월드의 원경 프록시 참조 오류 2개와 Shipping 빌드 오류를 수정했고, 관련 자동화 테스트는 52건 모두 통과했습니다.** 애니메이션 관찰자 테스트 1건에는 PoseSearch 인덱스 준비 경고가 남았습니다. [전체 검증·인계 문서](C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_OpenWorld_Astra_Independent_Review_Handoff_2026-11-26.md)
+> 한 PC에서 메인 월드, 전투, 온라인 지역 이동, 영속 데이터 이관, Shipping 패키지까지 다시 검증했습니다. **메인 월드의 원경 프록시 참조 오류 2개와 Shipping 빌드 오류를 수정했고, 관련 자동화 테스트는 52건 모두 통과했습니다.** 애니메이션 관찰자 테스트 1건에는 PoseSearch 인덱스 준비 경고가 남았습니다. [전체 검증·인계 문서](../Project_J_OpenWorld_Astra_Independent_Review_Handoff_2026-11-26.md)
 >
 > | 영역 | 실제로 확인한 결과 |
 > |---|---|
-> | **원거리 나무·바이옴** | 메인 월드에서 존재하지 않는 셀을 가리켜 엔진이 숨기던 HLOD 2개를 찾았습니다. 셀 구성을 갱신하고 프록시 666개를 재생성했습니다. 초지·산지·호수 계곡의 800m 왕복을 두 번 실행한 결과, 30개 관측점 모두 오래된 참조가 0개였습니다. [이동 중·정착 화면 27장](C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/OpenWorldLocalReview/FreshMotion/Contact.jpg) |
-> | **새 월드로의 확장** | 별도 월드에 나무 3개가 든 하위 레벨을 배치했습니다. 가까이서는 원본 3개, 중간 거리에서는 인스턴스 프록시, 800m에서는 병합 프록시로 수관이 보였고 복귀하면 원본 3개가 다시 표시됐습니다. 새 월드도 HLOD 생성이 필요하며, 이제 원경 검사에서 오래된 셀 참조와 예상 프록시 누락을 잡습니다. [중첩 레벨 검증](C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/OpenWorldLocalReview/NestedCapture/transitions.json) |
-> | **스킬·HUD·전투 경고** | 기존 퀵슬롯 순서와 저장 배치를 보존하면서 직업별 스킬을 추가하도록 수정했습니다. 제작 Spellblade의 키 조합과 HUD 슬롯으로 지면 파동을 각각 사용해 마나 **100→90→80**, 아이콘과 효과음 재생을 확인했습니다. 계단·절벽 표시를 회귀했고, 저옵션 4접속에서는 늦게 들어온 유효 경고만 남은 시간 동안 표시됐습니다. [실제 HUD](C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/OpenWorldLocalReview/InputHUD/result.png) |
-> | **온라인 지역 이동·영속 이관** | **한 PC에서도 실제 지역 서버 왕복이 됐습니다.** UE 서버 2개와 Nakama·PostgreSQL을 띄워 같은 클라이언트가 샌드박스→릿지→샌드박스로 이동했습니다. 매번 캐릭터 제어권을 받았고 서버 세션은 **1→2→3**으로 전진했습니다. 던전 완료 후 원위치 복귀도 통과했습니다. 별도 보스 배치 DB 이관에서는 보상·퀘스트 201행 보존과 잘못된 이관 5종 거절을 확인했습니다. [온라인 왕복](C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/OpenWorldLocalReview/NativeBackend2.json) · [DB 이관](C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/OpenWorldLocalReview/Migration.json) |
-> | **다인 전투·배포** | 제작 메인 월드 B01은 독립 클라이언트 **2/2**, 격리 전투 맵은 **40/40**이 타격·체력 복제·연결 해제까지 통과했습니다. Shipping 패키지는 약 **2.78GiB**였고, 실제 컨테이너에서 메인 월드와 스킬 리소스 포함, 검증 전용 월드 제외를 확인했습니다. 같은 Shipping 실행 파일을 두 번 시작해 게임 창 응답과 정상 종료도 확인했습니다. [40접속 결과](C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/LocalWorldCrowd40/verification.json) · [패키지 구성](C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/OpenWorldLocalReview/ShippingClosure.json) |
+> | **원거리 나무·바이옴** | 메인 월드에서 존재하지 않는 셀을 가리켜 엔진이 숨기던 HLOD 2개를 찾았습니다. 셀 구성을 갱신하고 프록시 666개를 재생성했습니다. 초지·산지·호수 계곡의 800m 왕복을 두 번 실행한 결과, 30개 관측점 모두 오래된 참조가 0개였습니다. 이동 중·정착 화면 27장 (`Saved/Validation/OpenWorldLocalReview/FreshMotion/Contact.jpg`) |
+> | **새 월드로의 확장** | 별도 월드에 나무 3개가 든 하위 레벨을 배치했습니다. 가까이서는 원본 3개, 중간 거리에서는 인스턴스 프록시, 800m에서는 병합 프록시로 수관이 보였고 복귀하면 원본 3개가 다시 표시됐습니다. 새 월드도 HLOD 생성이 필요하며, 이제 원경 검사에서 오래된 셀 참조와 예상 프록시 누락을 잡습니다. 중첩 레벨 검증 (`Saved/Validation/OpenWorldLocalReview/NestedCapture/transitions.json`) |
+> | **스킬·HUD·전투 경고** | 기존 퀵슬롯 순서와 저장 배치를 보존하면서 직업별 스킬을 추가하도록 수정했습니다. 제작 Spellblade의 키 조합과 HUD 슬롯으로 지면 파동을 각각 사용해 마나 **100→90→80**, 아이콘과 효과음 재생을 확인했습니다. 계단·절벽 표시를 회귀했고, 저옵션 4접속에서는 늦게 들어온 유효 경고만 남은 시간 동안 표시됐습니다. 실제 HUD (`Saved/Validation/OpenWorldLocalReview/InputHUD/result.png`) |
+> | **온라인 지역 이동·영속 이관** | **한 PC에서도 실제 지역 서버 왕복이 됐습니다.** UE 서버 2개와 Nakama·PostgreSQL을 띄워 같은 클라이언트가 샌드박스→릿지→샌드박스로 이동했습니다. 매번 캐릭터 제어권을 받았고 서버 세션은 **1→2→3**으로 전진했습니다. 던전 완료 후 원위치 복귀도 통과했습니다. 별도 보스 배치 DB 이관에서는 보상·퀘스트 201행 보존과 잘못된 이관 5종 거절을 확인했습니다. 온라인 왕복 (`Saved/Validation/OpenWorldLocalReview/NativeBackend2.json`) · DB 이관 (`Saved/Validation/OpenWorldLocalReview/Migration.json`) |
+> | **다인 전투·배포** | 제작 메인 월드 B01은 독립 클라이언트 **2/2**, 격리 전투 맵은 **40/40**이 타격·체력 복제·연결 해제까지 통과했습니다. Shipping 패키지는 약 **2.78GiB**였고, 실제 컨테이너에서 메인 월드와 스킬 리소스 포함, 검증 전용 월드 제외를 확인했습니다. 같은 Shipping 실행 파일을 두 번 시작해 게임 창 응답과 정상 종료도 확인했습니다. 40접속 결과 (`Saved/Validation/Continuation_20261014/LocalWorldCrowd40/verification.json`) · 패키지 구성 (`Saved/Validation/OpenWorldLocalReview/ShippingClosure.json`) |
 >
-> **아직 남은 성능 문제는 초지의 순간 지연입니다.** 이동 중 캡처를 끈 에디터 시험에서 초지 프레임 간격은 p95 **21.81ms**, 최대 **89.55ms**였습니다. 반복해서 지목된 셀에는 지형 렌더 컴포넌트 4개와 충돌 컴포넌트 4개가 있었습니다. 등록 묶음을 10에서 2로 줄여도 p95가 개선되지 않아 기본값 10을 유지했습니다. 실제 패키지에서 해당 셀을 로드한 시험은 시작 직후를 포함해 p95 **14.03ms**, 최대 **125.59ms**였습니다. 두 시험은 이동 방식이 다르며 최대 지연의 원인은 아직 확정되지 않았습니다. [바이옴별 측정](C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/OpenWorldLocalReview/MotionSummary.json) · [패키지 실측](C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/OpenWorldLocalReview/CookedMeadow.json)
+> **아직 남은 성능 문제는 초지의 순간 지연입니다.** 이동 중 캡처를 끈 에디터 시험에서 초지 프레임 간격은 p95 **21.81ms**, 최대 **89.55ms**였습니다. 반복해서 지목된 셀에는 지형 렌더 컴포넌트 4개와 충돌 컴포넌트 4개가 있었습니다. 등록 묶음을 10에서 2로 줄여도 p95가 개선되지 않아 기본값 10을 유지했습니다. 실제 패키지에서 해당 셀을 로드한 시험은 시작 직후를 포함해 p95 **14.03ms**, 최대 **125.59ms**였습니다. 두 시험은 이동 방식이 다르며 최대 지연의 원인은 아직 확정되지 않았습니다. 바이옴별 측정 (`Saved/Validation/OpenWorldLocalReview/MotionSummary.json`) · 패키지 실측 (`Saved/Validation/OpenWorldLocalReview/CookedMeadow.json`)
 >
-> **추후 인수 항목**은 제작 메인 월드의 독립 클라이언트 **16·40인 실측**, 출시 최소 사양에서의 팝인·프레임 판정, 실제 출시 지역의 출입·정원·복귀 정책입니다. 현재 PC에서는 메인 월드 16·40인 시험이 메모리 사전 검사에서 보류됐습니다. 또한 Shipping의 기본 시작 맵은 현재 `Lvl_ThirdPerson`입니다. 메인 월드는 패키지에 포함됐고, 메인 월드를 지정한 Development 패키지에서 실행까지 확인했습니다. [메인 월드 인원별 메모리 근거](C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/OpenWorldAstraReview/MainWorldCapacity.json)
+> **추후 인수 항목**은 제작 메인 월드의 독립 클라이언트 **16·40인 실측**, 출시 최소 사양에서의 팝인·프레임 판정, 실제 출시 지역의 출입·정원·복귀 정책입니다. 현재 PC에서는 메인 월드 16·40인 시험이 메모리 사전 검사에서 보류됐습니다. 또한 Shipping의 기본 시작 맵은 현재 `Lvl_ThirdPerson`입니다. 메인 월드는 패키지에 포함됐고, 메인 월드를 지정한 Development 패키지에서 실행까지 확인했습니다. 메인 월드 인원별 메모리 근거 (`Saved/Validation/OpenWorldAstraReview/MainWorldCapacity.json`)
 
 ## 24. 예외·병렬 처리·에셋 검사
 
@@ -599,14 +601,14 @@
 > |---|---|
 > | **전투·병렬 처리** | 다른 월드에서 생성한 투사체 1발이 현재 월드의 80발에 섞여 81발이 되는 문제를 재현했습니다. 이제 생성과 다단 적중 재사용 대기시간 등록에서 월드 소유권을 확인합니다. 적중 콜백 도중 월드가 종료되면 남은 콜백도 중단합니다. 80발 병렬 탄도 계산, 동기 충돌, 비동기 충돌, 취소와 종료를 시험했습니다. |
 > | **스킬·HUD·NPC** | 새 직업·전직·장비·전투 스타일에 원형 스킬을 넣고 기본 공격 정의를 빠뜨리면 제작 단계에서 알려줍니다. GAS가 공격 정의를 직접 전달하는 방식도 지원합니다. HUD는 중복 ID, 빈 프로필, 같은 직업의 입력 충돌, 잘못 연결된 게이지를 잡습니다. NPC 설정은 무한대나 유효하지 않은 추격·귀환 수치도 검사합니다. |
-> | **원거리 나무·HLOD** | 메인 월드의 저장 프록시 **666개**와 월드 정의 연결을 확인했습니다. 초지·산지·호숫가 왕복 **9,787회**, 별도 중첩 레벨 **3,360회** 관측에서 엔진이 오래됐다고 판정한 HLOD는 **0개**였습니다. 중첩 레벨에서는 같은 경로에서 근경 나무 원본 3개가 중간 거리 프록시 1개로 바뀌고 복귀 시 원본 3개가 다시 표시됐습니다. [초지 원경 화면](/C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/OpenWorldLocalReview/ExtensionField/Main/meadow_eye-far.png) |
+> | **원거리 나무·HLOD** | 메인 월드의 저장 프록시 **666개**와 월드 정의 연결을 확인했습니다. 초지·산지·호숫가 왕복 **9,787회**, 별도 중첩 레벨 **3,360회** 관측에서 엔진이 오래됐다고 판정한 HLOD는 **0개**였습니다. 중첩 레벨에서는 같은 경로에서 근경 나무 원본 3개가 중간 거리 프록시 1개로 바뀌고 복귀 시 원본 3개가 다시 표시됐습니다. 초지 원경 화면 (`Saved/Validation/OpenWorldLocalReview/ExtensionField/Main/meadow_eye-far.png`) |
 > | **애니메이션** | 아직 시작되지 않은 PoseSearch 인덱스를 검사가 동기적으로 기다리면서 에디터가 종료됐습니다. 엔진이 비동기 빌드를 마친 뒤 포즈를 읽도록 수정했습니다. 전환 테이블 **40개·활성 행 312개**를 확인했고, 새 에디터에서 관련 검사만 반복해 **3/3, 경고 0건**이었습니다. |
 >
-> **평소에는 변경한 BP·데이터 에셋을 선택하고 `Asset Actions → Validate Assets`를 실행하면 됩니다.** 원경 배치를 바꿨다면 해당 맵을 열고 변경한 액터에서 `Validate`를 실행하세요. 생성된 프록시의 존재는 저장 월드 검사로, 이동 중 전환은 왕복 검사로 확인할 수 있습니다. 이동 중 추가한 검사는 촬영할 때만 엔진의 기존 카운터를 읽으므로 플레이 중 매 프레임 월드 전체를 훑는 비용이 없습니다. [프로젝트별 검사 절차와 인계 문서](/C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_OpenWorld_Astra_Independent_Review_Handoff_2026-11-26.md) · [Epic 선택 에셋 검증 API](https://dev.epicgames.com/documentation/unreal-engine/API/Plugins/DataValidation/IDataValidationModule/ValidateAssets)
+> **평소에는 변경한 BP·데이터 에셋을 선택하고 `Asset Actions → Validate Assets`를 실행하면 됩니다.** 원경 배치를 바꿨다면 해당 맵을 열고 변경한 액터에서 `Validate`를 실행하세요. 생성된 프록시의 존재는 저장 월드 검사로, 이동 중 전환은 왕복 검사로 확인할 수 있습니다. 이동 중 추가한 검사는 촬영할 때만 엔진의 기존 카운터를 읽으므로 플레이 중 매 프레임 월드 전체를 훑는 비용이 없습니다. [프로젝트별 검사 절차와 인계 문서](../Project_J_OpenWorld_Astra_Independent_Review_Handoff_2026-11-26.md) · [Epic 선택 에셋 검증 API](https://dev.epicgames.com/documentation/unreal-engine/API/Plugins/DataValidation/IDataValidationModule/ValidateAssets)
 >
-> **최종 결과는 Editor·Development·Shipping 빌드 성공, 자동화 66건 통과, 저장 에셋 15/15 통과**입니다. 자동화 중 1건에서 캐릭터 초기화 시 PoseSearch 준비 전 검색 두 번을 건너뛴 경고가 기록됐습니다. 실패·미실행은 0건입니다. [자동화 결과](/C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/OpenWorldLocalReview/ExtensionAuditClosure/Automation/index.json) · [에셋 검증 로그](/C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/OpenWorldLocalReview/ExtensionAuditClosure/Selected.log)
+> **최종 결과는 Editor·Development·Shipping 빌드 성공, 자동화 66건 통과, 저장 에셋 15/15 통과**입니다. 자동화 중 1건에서 캐릭터 초기화 시 PoseSearch 준비 전 검색 두 번을 건너뛴 경고가 기록됐습니다. 실패·미실행은 0건입니다. 자동화 결과 (`Saved/Validation/OpenWorldLocalReview/ExtensionAuditClosure/Automation/index.json`) · 에셋 검증 로그 (`Saved/Validation/OpenWorldLocalReview/ExtensionAuditClosure/Selected.log`)
 >
-> **성능 판단이 남은 부분은 있습니다.** 기존 Development 패키지를 두 번 새로 실행해 기동과 지역 이동을 분리했을 때, 여섯 번의 이동 직후 총 360프레임에서 최대 **28.51ms**, 33.33ms 초과는 **0회**였습니다. 반면 에디터 초지 연속 이동에서는 최대 **87.43ms** 간격이 남았습니다. 이번 결과로 전역 스트리밍 설정을 바꾸지는 않았습니다. 제작 메인 월드의 16~40인 실접속, 최소 사양 장시간 주행, 이번 코드로 새로 Cook한 패키지 실측은 여전히 별도 검증 대상입니다. [패키지 측정 1](/C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/OpenWorldLocalReview/ExtensionField/Trip1/windows.json) · [패키지 측정 2](/C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/OpenWorldLocalReview/ExtensionField/Trip2/windows.json)
+> **성능 판단이 남은 부분은 있습니다.** 기존 Development 패키지를 두 번 새로 실행해 기동과 지역 이동을 분리했을 때, 여섯 번의 이동 직후 총 360프레임에서 최대 **28.51ms**, 33.33ms 초과는 **0회**였습니다. 반면 에디터 초지 연속 이동에서는 최대 **87.43ms** 간격이 남았습니다. 이번 결과로 전역 스트리밍 설정을 바꾸지는 않았습니다. 제작 메인 월드의 16~40인 실접속, 최소 사양 장시간 주행, 이번 코드로 새로 Cook한 패키지 실측은 여전히 별도 검증 대상입니다. 패키지 측정 1 (`Saved/Validation/OpenWorldLocalReview/ExtensionField/Trip1/windows.json`) · 패키지 측정 2 (`Saved/Validation/OpenWorldLocalReview/ExtensionField/Trip2/windows.json`)
 
 ## 25. 메인 월드 교체 토의
 
@@ -616,7 +618,7 @@
 
 **당시 완료 응답**
 
-> **레벨 디자이너가 `L_MainWorld`를 전면 재제작하거나, 다른 이름의 맵을 새 메인 월드로 만들어도 됩니다.** 월드 스트리밍, 고속 지상·비행 이동, 전투·VFX·애니메이션 예산의 공통 코드는 재사용할 수 있습니다. 실제로 `RidgeRoute03`이라는 별도 맵에서 지상 주행·비행·원경 전환을 검증했고, 중첩 레벨로 만든 다른 맵에서도 나무 원본과 원경 프록시가 전환되는 것을 확인했습니다. [별도 맵 검증 기록](/C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_OpenWorld_Sol_Implementation.md) · [중첩 레벨 검증 결과](/C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/OpenWorldLocalReview/ExtensionField/Nested/transitions.json)
+> **레벨 디자이너가 `L_MainWorld`를 전면 재제작하거나, 다른 이름의 맵을 새 메인 월드로 만들어도 됩니다.** 월드 스트리밍, 고속 지상·비행 이동, 전투·VFX·애니메이션 예산의 공통 코드는 재사용할 수 있습니다. 실제로 `RidgeRoute03`이라는 별도 맵에서 지상 주행·비행·원경 전환을 검증했고, 중첩 레벨로 만든 다른 맵에서도 나무 원본과 원경 프록시가 전환되는 것을 확인했습니다. [별도 맵 검증 기록](../Project_J_OpenWorld_Sol_Implementation.md) · 중첩 레벨 검증 결과 (`Saved/Validation/OpenWorldLocalReview/ExtensionField/Nested/transitions.json`)
 >
 > 다만 **새 맵에 HLOD만 배치하면 완성되는 구조는 아닙니다.** HLOD는 멀리 있는 나무·건물·산을 어떻게 보여줄지 담당합니다. 플레이어가 어디서 시작하고, 빠르게 이동할 때 어느 범위를 미리 준비하고, 포털이 어디로 연결되는지는 다른 설정이 담당합니다.
 >
@@ -625,9 +627,9 @@
 > | **기존 맵에서 지형·숲·도시를 전부 새로 제작** | 기존 `WorldState`와 월드 정의 연결을 유지합니다. 전부 삭제했다면 `WorldState` 하나를 항상 로드되게 복원하고 정의를 다시 연결합니다. 새 지형에 맞춰 시작점·포털 도착점·보스 배치·내비게이션을 점검하고 HLOD를 다시 빌드합니다. |
 > | **완전히 다른 맵을 새 메인 월드로 제작** | 스트리밍할 야외 맵이면 World Partition 스트리밍을 켜고, 그 지역에 맞는 월드 정의를 `WorldState`에 연결합니다. 프로젝트의 플레이어 컨트롤러가 사용되는지 확인하고, 원경이 필요한 콘텐츠에 HLOD 레이어를 지정하거나 월드 기본값을 상속시킨 뒤 프록시를 빌드합니다. 출시할 때는 패키징 목록과 실제 입장·포털 경로도 새 맵으로 연결합니다. |
 >
-> 나무마다 디자이너가 원경용 나무를 하나씩 수동 배치할 필요는 없습니다. **나무 메시와 배치가 원경 생성에 참여하도록 설정하고, 해당 맵에서 프록시를 생성**하는 방식입니다. 반대로 실내 던전이나 가까이서만 보일 소품까지 일괄적으로 HLOD를 요구할 이유도 없습니다. [프로젝트 제작 검사 절차](/C:/Users/I/Documents/GitHub/Project_J/Docs/Architecture/Planning/Project_J_OpenWorld_Astra_Independent_Review_Handoff_2026-11-26.md) · [Epic의 World Partition HLOD 설명](https://dev.epicgames.com/documentation/unreal-engine/world-partition-hierarchical-level-of-detail-in-unreal-engine)
+> 나무마다 디자이너가 원경용 나무를 하나씩 수동 배치할 필요는 없습니다. **나무 메시와 배치가 원경 생성에 참여하도록 설정하고, 해당 맵에서 프록시를 생성**하는 방식입니다. 반대로 실내 던전이나 가까이서만 보일 소품까지 일괄적으로 HLOD를 요구할 이유도 없습니다. [프로젝트 제작 검사 절차](../Project_J_OpenWorld_Astra_Independent_Review_Handoff_2026-11-26.md) · [Epic의 World Partition HLOD 설명](https://dev.epicgames.com/documentation/unreal-engine/world-partition-hierarchical-level-of-detail-in-unreal-engine)
 >
-> **현재 맵 이름에 묶인 예외도 실제로 있습니다.** 패키징 목록에는 `L_MainWorld` 경로가 명시돼 있고, 패키지의 D3D12 환경에서 지형 셀이 다시 보일 때 렌더링 준비를 보완하는 코드도 그 경로를 직접 비교합니다. 새 이름의 맵에서는 이 보완이 자동 적용되지 않습니다. 또 현재 설정상 게임과 에디터의 기본 시작 맵은 `Lvl_ThirdPerson`입니다. 새 맵을 만들었다고 접속 목적지까지 자동으로 바뀌지는 않습니다. [지형 렌더링 보완 코드](/C:/Users/I/Documents/GitHub/Project_J/Source/Project_J/Project_J.cpp:24) · [패키징 목록](/C:/Users/I/Documents/GitHub/Project_J/Config/DefaultGame.ini:115) · [시작 맵 설정](/C:/Users/I/Documents/GitHub/Project_J/Config/DefaultEngine.ini:31)
+> **현재 맵 이름에 묶인 예외도 실제로 있습니다.** 패키징 목록에는 `L_MainWorld` 경로가 명시돼 있고, 패키지의 D3D12 환경에서 지형 셀이 다시 보일 때 렌더링 준비를 보완하는 코드도 그 경로를 직접 비교합니다. 새 이름의 맵에서는 이 보완이 자동 적용되지 않습니다. 또 현재 설정상 게임과 에디터의 기본 시작 맵은 `Lvl_ThirdPerson`입니다. 새 맵을 만들었다고 접속 목적지까지 자동으로 바뀌지는 않습니다. [지형 렌더링 보완 코드](../../../../Source/Project_J/Project_J.cpp) (당시 24행) · [패키징 목록](../../../../Config/DefaultGame.ini) (당시 115행) · [시작 맵 설정](../../../../Config/DefaultEngine.ini) (당시 31행)
 >
 > 제 의견은, **디자이너가 크게 갈아엎을 계획이면 새 맵에서 자유롭게 제작하고, 준비됐을 때 메인 월드 역할을 넘기는 방식**이 지금 프로젝트에 잘 맞습니다. 기존 맵을 비교 기준으로 남겨 둔 채 새 맵에서 입장 → 빠른 지상 이동 → 비행 → 원경 왕복 → 포털 복귀를 확인할 수 있습니다. 이미 저장 캐릭터나 영속 배치가 생겼다면 기존 위치를 새 지형의 안전한 지점으로 옮기는 것도 이 전환에 포함하면 됩니다. 즉, 디자이너에게 필요한 것은 기존 맵의 지형이나 이름을 보존하는 일이 아니라 **새 맵을 플레이 가능한 지역으로 연결하는 짧고 명확한 제작 절차**입니다.
 

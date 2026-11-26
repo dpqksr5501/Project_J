@@ -58,4 +58,8 @@ jobs:
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           node Infra/scripts/check-mmo-commands.mjs "$env:RUNNER_TEMP/mmo-db-test/node_modules/@electric-sql/pglite/dist/index.js" "$env:RUNNER_TEMP/mmo-db-test/data"
       - name: Documentation links
-        run: node Scripts/Validation/Validate-DocLinks.mjs
+        shell: pwsh
+        run: |
+          node --test Scripts/Validation/Validate-DocLinks.test.mjs
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          node Scripts/Validation/Validate-DocLinks.mjs
