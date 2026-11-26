@@ -139,8 +139,9 @@ void AProject_JCohortController::BeginPlay()
 	Super::BeginPlay();
 	FString Output;
 	const TCHAR* CommandLine = FCommandLine::Get();
-	if (!IsLocalController() || GetNetMode() != NM_Client ||
-		!FParse::Value(CommandLine, TEXT("ProjectJCohortRenderedOutput="), Output)) return;
+	if (!IsLocalController() || GetNetMode() != NM_Client) return;
+	bStandaloneCohortClient = FParse::Param(CommandLine, TEXT("ProjectJCohortStandaloneClient"));
+	if (!FParse::Value(CommandLine, TEXT("ProjectJCohortRenderedOutput="), Output)) return;
 	RenderedBossSample = MakeShared<FProject_JRenderedBossSample>();
 	auto& Sample = *RenderedBossSample;
 	Sample.Path = Output;
@@ -163,6 +164,13 @@ void AProject_JCohortController::MarkRenderedStrike()
 void AProject_JCohortController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
+	if (bStandaloneCohortClient && PollMeasuredRelease())
+	{
+		bStandaloneCohortClient = false;
+		UE_LOG(LogTemp, Display, TEXT("COHORT_STANDALONE_CLIENT_FINISHED passed=1"));
+		FPlatformMisc::RequestExitWithStatus(false, 0);
+		return;
+	}
 	if (!RenderedBossSample) return;
 	auto& Sample = *RenderedBossSample;
 	const bool bReleased = PollMeasuredRelease();

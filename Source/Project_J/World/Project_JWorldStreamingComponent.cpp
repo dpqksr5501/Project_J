@@ -12,7 +12,7 @@
 #include "Project_JGameplayTags.h"
 #include "Components/Project_JCommandBudgetComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "Mount/Project_JFlyingMountCharacter.h"
+#include "World/Project_JStreamingMovementSource.h"
 #include "Mount/Project_JMountMoverComponent.h"
 #include "Movement/Project_JMovementQueries.h"
 #include "DefaultMovementSet/CharacterMoverComponent.h"
@@ -43,11 +43,10 @@ bool ApplyDetailGridSuppression(FWorldPartitionStreamingSource& Source, FName De
     return true;
 }
 
-bool IsFlyingMount(const APawn& Pawn)
+bool UsesAirbornePrediction(const APawn& Pawn)
 {
-    if (const auto* Mount = Cast<AProject_JMountMoverPawn>(&Pawn)) return Mount->IsFlying();
-    if (const auto* Mount = Cast<AProject_JFlyingMountCharacter>(&Pawn)) return Mount->IsFlyingMount();
-    return false;
+    return Pawn.GetClass()->ImplementsInterface(UProject_JStreamingMovementSource::StaticClass())
+        && IProject_JStreamingMovementSource::Execute_UsesAirborneStreamingPrediction(&Pawn);
 }
 
 bool AreFlightRouteCellsReady(const UWorldPartition& Partition, const FWorldPartitionStreamingSource& Source)
@@ -105,6 +104,8 @@ UProject_JWorldStreamingComponent::UProject_JWorldStreamingComponent()
 }
 void UProject_JWorldStreamingComponent::OnRegister()
 {
+    ObservedPawn.Reset();
+    FlightReadinessPawn.Reset();
     StreamingSourceIdentity = NAME_None;
     Super::OnRegister();
     auto* World = GetWorld();
@@ -310,19 +311,21 @@ float UProject_JWorldStreamingComponent::GetLocalFlightStreamingSpeedScale(const
         || !Pawn.IsLocallyControlled() || !ResolveWorldDefinition()) return 1.f;
 
     const double Now = World->GetTimeSeconds();
-    if (FlightReadinessPawn.Get() == &Pawn && Now < NextFlightReadinessSample) return FlightReadinessScale;
-    FlightReadinessPawn = &Pawn;
-    NextFlightReadinessSample = Now + 0.25;
+    const FVector Position = Pawn.GetActorLocation();
+    if (FlightReadinessPawn.Get() == &Pawn && Now < NextFlightReadinessSample
+        && !HasDiscontinuousPosition(Pawn, Position, Now)) return FlightReadinessScale;
     FlightReadinessScale = 1.f;
 
     const auto& Profile = GetVelocityProfile();
     const auto* Flight = Mover->GetSyncState().SyncStateCollection.FindDataByType<FProject_JMountMoverSyncState>();
-    const FVector Position = Pawn.GetActorLocation();
     if (!Flight || Position.ContainsNaN()) return 1.f;
 
     FTwoStageStreamingPlan Plan;
     FWorldPartitionStreamingSource ForwardSource;
-    if (!BuildPawnVelocityPlan(Pawn, Profile, Plan) || !Plan.bHighSpeedActive || !Super::GetStreamingSource(ForwardSource)
+    const bool bHasPlan = BuildPawnVelocityPlan(Pawn, Profile, Plan);
+    FlightReadinessPawn = &Pawn;
+    NextFlightReadinessSample = Now + 0.25;
+    if (!bHasPlan || !Plan.bHighSpeedActive || !Super::GetStreamingSource(ForwardSource)
         || ForwardSource.TargetState != EStreamingSourceTargetState::Activated) return 1.f;
     ForwardSource.Location = Position;
     ForwardSource.Rotation = FRotator::ZeroRotator;
@@ -334,15 +337,34 @@ float UProject_JWorldStreamingComponent::GetLocalFlightStreamingSpeedScale(const
     return FlightReadinessScale;
 }
 
+bool UProject_JWorldStreamingComponent::HasDiscontinuousPosition(const APawn& Pawn, const FVector& Position, double Now) const
+{
+    if (ObservedPawn.Get() != &Pawn) return false;
+    if (Position.ContainsNaN() || LastObservedPosition.ContainsNaN()) return true;
+    // Generic Pawns need no Mover dependency. Allow ordinary replication corrections
+    // and avoid treating movement during a long frame as an instantaneous jump.
+    constexpr double CorrectionAllowanceCm = 1000.0;
+    const double Elapsed = FMath::Clamp(Now - LastObservedVelocityTime, 0.0, 0.5);
+    const double Speed = FMath::Max(Pawn.GetVelocity().Size(), LastObservedVelocity.Size());
+    const double ExpectedTravelCm = FMath::IsFinite(Speed) ? 2.0 * Speed * Elapsed : 0.0;
+    return FVector::DistSquared(Position, LastObservedPosition) > FMath::Square(CorrectionAllowanceCm + ExpectedTravelCm);
+}
+
 bool UProject_JWorldStreamingComponent::BuildPawnVelocityPlan(
     const APawn& Pawn, const FProject_JStreamingVelocityProfile& Profile, FTwoStageStreamingPlan& OutPlan) const
 {
     const bool bSamePawn = ObservedPawn.Get() == &Pawn;
-    const bool bFlying = IsFlyingMount(Pawn);
-    if (!bSamePawn || bObservedFlying != bFlying || VelocitySampleFrame != GFrameCounter)
+    const bool bFlying = UsesAirbornePrediction(Pawn);
+    const double Now = Pawn.GetWorld()->GetTimeSeconds();
+    const FVector Position = Pawn.GetActorLocation();
+    const bool bResetHistory = !bSamePawn || bObservedFlying != bFlying || HasDiscontinuousPosition(Pawn, Position, Now);
+    if (bResetHistory || VelocitySampleFrame != GFrameCounter)
     {
-        if (!bSamePawn || bObservedFlying != bFlying) HysteresisAnchorTime = -1000.0;
-        const double Now = Pawn.GetWorld()->GetTimeSeconds();
+        if (bResetHistory)
+        {
+            HysteresisAnchorTime = -1000.0;
+            FlightReadinessPawn.Reset();
+        }
         FVector Velocity = Pawn.GetVelocity();
         if (bFlying && bLimitFlightSpeedForLocalStreaming && !Velocity.ContainsNaN() && !Velocity.IsNearlyZero())
         {
@@ -355,7 +377,7 @@ bool UProject_JWorldStreamingComponent::BuildPawnVelocityPlan(
         }
         const double SampleInterval = Now - LastObservedVelocityTime;
         ObservedYawRate = 0.0f;
-        if (bSamePawn && bObservedFlying == bFlying && SampleInterval > 0.0 && SampleInterval < 0.5
+        if (!bResetHistory && SampleInterval > 0.0 && SampleInterval < 0.5
             && !LastObservedVelocity.ContainsNaN() && !Velocity.ContainsNaN()
             && LastObservedVelocity.SizeSquared2D() > FMath::Square(10.0) && Velocity.SizeSquared2D() > FMath::Square(10.0))
         {
@@ -365,10 +387,10 @@ bool UProject_JWorldStreamingComponent::BuildPawnVelocityPlan(
         ObservedPawn = &Pawn;
         VelocitySampleFrame = GFrameCounter;
         LastObservedVelocityTime = Now;
+        LastObservedPosition = Position;
         LastObservedVelocity = Velocity;
         bObservedFlying = bFlying;
         ObservedFlightAltitude.Reset();
-        const FVector Position = Pawn.GetActorLocation();
         if (bFlying && !Position.ContainsNaN() && !Velocity.ContainsNaN() && Velocity.Size() >= Profile.HighSpeedThresholdCmPerSec)
         {
             FCollisionQueryParams Query(SCENE_QUERY_STAT(ProjectJ_StreamingFlightAltitude), false, &Pawn);
@@ -496,17 +518,19 @@ bool UProject_JWorldPreloadStreamingComponent::GetStreamingSource(FWorldPartitio
     TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_WorldPreloadSource);
     const APlayerController* PC = Cast<APlayerController>(GetOwner());
     const APawn* Pawn = PC ? PC->GetPawn() : nullptr;
-    if (!IsRegistered() || StreamingSourceIdentity.IsNone() || IsBeingDestroyed() || !PC || !PC->IsLocalController() || !IsValid(Pawn)
+    if (!IsRegistered() || StreamingSourceIdentity.IsNone() || IsBeingDestroyed() || !PC || PC->IsActorBeingDestroyed()
+        || !PC->IsLocalController() || !IsValid(Pawn) || Pawn->IsActorBeingDestroyed()
         || !GetWorld() || GetWorld()->bIsTearingDown || GetNetMode() == NM_DedicatedServer || !IsStreamingSourceEnabled())
     {
         return false;
     }
     const auto* Companion = PC->FindComponentByClass<UProject_JWorldStreamingComponent>();
+    if (Companion && (!Companion->IsRegistered() || Companion->IsBeingDestroyed() || !Companion->IsStreamingSourceEnabled()
+        || !Companion->bEnableHighSpeedTwoStage || !Companion->ResolveWorldDefinition())) return false;
     const auto& Profile = Companion ? Companion->GetVelocityProfile() : VelocityProfile;
     UProject_JWorldStreamingComponent::FTwoStageStreamingPlan Plan;
-    if ((Companion && !Companion->bEnableHighSpeedTwoStage)
-        || !(Companion ? Companion->BuildPawnVelocityPlan(*Pawn, Profile, Plan)
-            : UProject_JWorldStreamingComponent::BuildTwoStageVelocityShapes(Pawn->GetVelocity(), IsFlyingMount(*Pawn), 0.0f, {}, Profile, Plan))
+    if (!(Companion ? Companion->BuildPawnVelocityPlan(*Pawn, Profile, Plan)
+            : UProject_JWorldStreamingComponent::BuildTwoStageVelocityShapes(Pawn->GetVelocity(), UsesAirbornePrediction(*Pawn), 0.0f, {}, Profile, Plan))
         || !Plan.bHighSpeedActive || Plan.Stage1LoadedShapes.IsEmpty())
     {
         return false;

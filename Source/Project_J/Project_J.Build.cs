@@ -45,6 +45,7 @@ public class Project_J : ModuleRules
 			"RHI",
 			"RenderCore",
 			"ImageWriteQueue",
+			"AssetRegistry",
 			"Niagara",
 			"ClothingSystemRuntimeInterface"
 		});

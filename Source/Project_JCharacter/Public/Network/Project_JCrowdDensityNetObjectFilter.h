@@ -17,7 +17,14 @@ struct PROJECT_JCHARACTER_API FProject_JCrowdDensityCandidate
 	FVector Location = FVector::ZeroVector;
 	double MaxCullDistanceSq = 12000.0 * 12000.0;
 	float CombatWeight = 1.0f;
-	bool bAlwaysExempt = false; // Owner, Boss, Party, Guild, Target
+	bool bAlwaysExempt = false;
+};
+
+struct FProject_JCrowdDensitySelectionCounts
+{
+	int32 Exempt = 0;
+	int32 OutsideDistance = 0;
+	int32 OverCap = 0;
 };
 
 struct PROJECT_JCHARACTER_API FProject_JCrowdDensityStats
@@ -26,12 +33,13 @@ struct PROJECT_JCHARACTER_API FProject_JCrowdDensityStats
 	int32 EffectiveCap = 60;
 	int64 LastPassAllowedPairs = 0;
 	int64 LastPassCulledPairs = 0;
+	int64 LastPassExemptPairs = 0;
+	int64 LastPassOverCapPairs = 0;
 };
 
 /**
  * Pure Top-K crowd-density budget solver with hysteresis retention.
- * Prevents O(N^2) replication blowup when 200-500 players gather around a field boss or town plaza
- * while guaranteeing zero culling of Bosses, Party/Guild members, Owners, and active Targets.
+ * Caps selected in-range non-exempt actors per viewer. Candidate enumeration still visits tracked actors.
  */
 struct PROJECT_JCHARACTER_API FProject_JCrowdDensityBudgetSolver
 {
@@ -42,7 +50,8 @@ struct PROJECT_JCHARACTER_API FProject_JCrowdDensityBudgetSolver
 		int32 MaxNonExemptAllowed,
 		float HysteresisBonus,
 		TSet<uint32>& OutAllowed,
-		int32& OutCulledCount);
+		int32& OutCulledCount,
+		FProject_JCrowdDensitySelectionCounts* OutCounts = nullptr);
 };
 
 UCLASS(Transient, Config = Engine)
@@ -127,4 +136,6 @@ private:
 	int32 ActiveEffectiveCap = 60;
 	int64 PassAllowedPairs = 0;
 	int64 PassCulledPairs = 0;
+	int64 PassExemptPairs = 0;
+	int64 PassOverCapPairs = 0;
 };

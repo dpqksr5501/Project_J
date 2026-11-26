@@ -66,6 +66,7 @@ FName UProject_JGameplayAbility_NPCAttack::ValidateAttackContext(const AProject_
 	if (!Anim) { return TEXT("MissingAnimInstance"); }
 	if (!NPC->FindComponentByClass<UProject_JCombatHitValidationComponent>()) { return TEXT("MissingHitValidationComponent"); }
 	if (!Attack || !Attack->AttackTag.IsValid() || !Attack->Montage || !Attack->DamageEffect) { return TEXT("IncompleteAttackDefinition"); }
+	if (!Attack->GetWarningContractFailure().IsEmpty()) { return TEXT("InvalidRequiredWarning"); }
 	if (!Attack->GetMeleeTrajectoryFailure(NPC->GetMesh()->GetSkeletalMeshAsset()).IsEmpty()) { return TEXT("InvalidAuthoredMeleeTrajectory"); }
 	if (!HitEventTag.IsValid()) { return TEXT("MissingHitEventTag"); }
 	if (Attack->NPCMaxMeleeTargets < 1 || Attack->NPCMaxMeleeTargets > UProject_JAttackDefinition::MaxNPCMeleeTargets) { return TEXT("InvalidMeleeTargetLimit"); }
@@ -110,6 +111,7 @@ void UProject_JGameplayAbility_NPCAttack::ActivateAbility(FGameplayAbilitySpecHa
 	const TWeakObjectPtr<AActor> RequestedTarget = Action ? Action->GetIntentTarget() : nullptr;
 	const TWeakObjectPtr<UProject_JAttackDefinition> RequestedAttack = ResolveAttack(Handle, Info);
 	if (!NPC || !NPC->HasAuthority() || !Action
+		|| !RequestedAttack.IsValid() || !RequestedAttack->GetWarningContractFailure().IsEmpty()
 		|| !Action->PrepareForAttack(RequestedTarget.Get())
 		|| !CommitAbility(Handle, Info, ActivationInfo))
 	{
@@ -154,7 +156,7 @@ void UProject_JGameplayAbility_NPCAttack::ActivateAbility(FGameplayAbilitySpecHa
 	HitEventDelegate = EventSource->GenericGameplayEventCallbacks.FindOrAdd(RegisteredHitEventTag).AddUObject(
 		this, &ThisClass::OnHitEvent, ActivationRevision, RegisteredHitEventTag);
 	auto* Montage = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None,
-		ActiveDefinition->Montage, ActiveDefinition->PlayRate, ActiveDefinition->MontageSectionName);
+		ActiveDefinition->Montage, ActiveDefinition->PlayRate, ActiveDefinition->GetPlaybackEntrySection());
 	if (!Montage)
 	{
 		EndAbility(Handle, Info, ActivationInfo, true, true);

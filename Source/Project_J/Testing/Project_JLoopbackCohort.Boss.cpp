@@ -60,12 +60,16 @@ bool AProject_JLoopbackCohort::PrepareBossCombat()
 	}
 	const bool bDungeonArena = FParse::Param(FCommandLine::Get(), TEXT("ProjectJCohortDungeonCombat"));
 	const bool bFieldArena = FParse::Param(FCommandLine::Get(), TEXT("ProjectJCohortFieldArena"));
+	FString ExplicitEncounter;
+	FParse::Value(FCommandLine::Get(), TEXT("ProjectJCohortEncounterId="), ExplicitEncounter);
+	if (!ExplicitEncounter.IsEmpty() && (bDungeonArena || bFieldArena)) return false;
 	if (bDungeonArena && bFieldArena) return false;
 	AProject_JWorldEncounter* PlacedEncounter = nullptr;
-	const FName EncounterId = bDungeonArena ? FName(TEXT("Dungeon_Starter_Boss")) : FName(TEXT("Sandbox_FieldBoss_01"));
-	if (bDungeonArena || bFieldArena)
+	const FName EncounterId = !ExplicitEncounter.IsEmpty() ? FName(*ExplicitEncounter)
+		: (bDungeonArena ? FName(TEXT("Dungeon_Starter_Boss")) : FName(TEXT("Sandbox_FieldBoss_01")));
+	if (bDungeonArena || bFieldArena || !ExplicitEncounter.IsEmpty())
 	{
-		if (!GetWorld()->GetMapName().EndsWith(bDungeonArena ? TEXT("Test_MMO_Dungeon") : TEXT("Test_MMO_Sandbox"))) return false;
+		if (ExplicitEncounter.IsEmpty() && !GetWorld()->GetMapName().EndsWith(bDungeonArena ? TEXT("Test_MMO_Dungeon") : TEXT("Test_MMO_Sandbox"))) return false;
 		for (TActorIterator<AProject_JWorldEncounter> It(GetWorld()); It; ++It)
 		{
 			if (It->EncounterId != EncounterId) continue;
@@ -112,7 +116,13 @@ bool AProject_JLoopbackCohort::SpawnBossParticipant(AProject_JCohortController& 
 
 	// The cohort owns real pawns. Ignore overlap among the tightly spaced test melee lanes.
 	float Angle = Slot * (2.f * UE_PI / Expected);
-	if (bStableBossLayout)
+	const bool bGroundPulse = FParse::Param(FCommandLine::Get(), TEXT("ProjectJCohortGroundPulse"));
+	if (bGroundPulse)
+	{
+		// Idle Mover pawns can face +X even when their cameras turn. Stage their forward circles over the target.
+		Angle = UE_PI + FMath::DegreesToRadians(30.f * ((Slot + .5f) / Expected - .5f));
+	}
+	else if (bStableBossLayout)
 	{
 		// Keep the 32 control transforms and progressively fill their gaps around the ring.
 		constexpr int32 GapsWithinQuadrant[] = {0, 4, 2, 6, 1, 5, 3, 7};
@@ -121,7 +131,8 @@ bool AProject_JLoopbackCohort::SpawnBossParticipant(AProject_JCohortController& 
 		Angle = Position * (2.f * UE_PI / 32);
 	}
 	const FVector Outward(FMath::Cos(Angle), FMath::Sin(Angle), 0);
-	const float Distance = Boss->GetCapsuleComponent()->GetScaledCapsuleRadius() + 65.f;
+	// Melee needs the capsule edge. The authored Ground Pulse projects its circle 400 cm forward.
+	const float Distance = bGroundPulse ? 400.f : Boss->GetCapsuleComponent()->GetScaledCapsuleRadius() + 65.f;
 	FVector Ground;
 	if (!FindBossCohortGround(*GetWorld(), Boss->GetActorLocation() + Outward * Distance, Ground)) return false;
 	const auto* DefaultAvatar = BossPlayerClass->GetDefaultObject<AProject_JPlayerCharacter>();
@@ -156,6 +167,12 @@ bool AProject_JLoopbackCohort::SpawnBossParticipant(AProject_JCohortController& 
 	{
 		UE_LOG(LogTemp, Display, TEXT("COHORT_BOSS_LOADOUT avatar=%s weapon=%s"),
 			*GetNameSafe(Avatar->GetClass()), *GetNameSafe(Weapon));
+	}
+	if (FParse::Param(FCommandLine::Get(), TEXT("ProjectJCohortGroundPulse")))
+	{
+		// Supply a known initial resource balance. Possession owns the actual skill grant.
+		ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetMaxManaAttribute(), 100.f);
+		ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetManaAttribute(), 30.f);
 	}
 
 	// Start with weapons drawn, as in the canonical network combat fixture.
@@ -293,6 +310,15 @@ void AProject_JCohortController::PollBossReadiness()
 void AProject_JCohortController::PressBossCombatAttack()
 {
 	if (!bBossCombatReady || !ObservedBoss.IsValid()) return;
+	if (FParse::Param(FCommandLine::Get(), TEXT("ProjectJCohortGroundPulse")))
+	{
+		auto* Avatar = Cast<AProject_JPlayerCharacter>(GetPawn());
+		if (!Avatar) return;
+		const FGameplayTag Input = FGameplayTag::RequestGameplayTag(TEXT("InputTag.Skill.Caps.T"));
+		Avatar->HandleSkillInputTagPressed(Input);
+		Avatar->HandleSkillInputTagReleased(Input);
+		return;
+	}
 	if (const APawn* Avatar = GetPawn())
 	{
 		if (auto* Router = Avatar->FindComponentByClass<UProject_JSkillInputRouterComponent>())

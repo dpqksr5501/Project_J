@@ -16,6 +16,8 @@ public:
     /** Native authoring validation reads the one timing producer classification. */
     bool IsGameplayWarning() const { return Purpose == EProject_JCombatCuePurpose::GameplayWarning; }
     FGameplayTag GetCueTag() const { return CueTag; }
+	/** Returns the first reason this authored event cannot publish a deterministic warning. */
+	FString GetWarningEventFailure(const FAnimNotifyEvent& Event) const;
 	virtual void BeginDestroy() override;
 	virtual void NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference) override;
 	virtual void NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override;

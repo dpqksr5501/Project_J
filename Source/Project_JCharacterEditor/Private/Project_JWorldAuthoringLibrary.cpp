@@ -5,6 +5,7 @@
 #include "LandscapeSubsystem.h"
 #include "Misc/FileHelper.h"
 #include "WorldPartition/WorldPartition.h"
+#include "WorldPartition/HLOD/HLODRuntimeSubsystem.h"
 #include "WorldPartition/WorldPartitionRuntimeHash.h"
 #include "LandscapeEdit.h"
 #include "LandscapeEditLayer.h"
@@ -14,6 +15,12 @@
 #include "Engine/World.h"
 #include "NavigationSystem.h"
 #include "UObject/StrongObjectPtr.h"
+
+int32 UProject_JWorldAuthoringLibrary::GetOutdatedRuntimeHLODCount(UWorld* World)
+{
+    const auto* Subsystem = IsValid(World) ? World->GetSubsystem<UWorldPartitionHLODRuntimeSubsystem>() : nullptr;
+    return Subsystem ? static_cast<int32>(Subsystem->GetNumOutdatedHLODObjects()) : INDEX_NONE;
+}
 
 bool UProject_JWorldAuthoringLibrary::BuildEditorNavigation()
 {
@@ -171,6 +178,12 @@ bool UProject_JWorldAuthoringLibrary::EnableRegionStreaming()
     World->MarkPackageDirty();
     return Partition->IsStreamingEnabled();
 }
+bool UProject_JWorldAuthoringLibrary::IsRegionStreamingEnabled(const UWorld* World)
+{
+    const UWorldPartition* Partition = World ? World->GetWorldPartition() : nullptr;
+    return Partition && Partition->IsStreamingEnabled();
+}
+
 FString UProject_JWorldAuthoringLibrary::GetRegionRuntimeHashName()
 {
     UWorld* World = GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;

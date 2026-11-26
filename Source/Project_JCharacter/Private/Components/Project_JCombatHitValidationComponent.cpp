@@ -1488,7 +1488,7 @@ int32 UProject_JCombatHitValidationComponent::ServerExecuteHitQuery(
 		}
 		else
 		{
-			bMatched = Project_J::Combat::IsPointInsideAoESpec(Spec, CheckLocation, 45.0f);
+			bMatched = Project_J::Combat::IsPointInsideAoESpec(Spec, CheckLocation, FMath::Clamp(Spec.TargetPaddingCm, 0.0f, 100.0f));
 		}
 
 		if (!bMatched)

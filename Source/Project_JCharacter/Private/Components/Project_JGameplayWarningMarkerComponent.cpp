@@ -1,5 +1,7 @@
 #include "Components/Project_JGameplayWarningMarkerComponent.h"
+#include "Combat/Project_JCombatQueryTypes.h"
 #include "Engine/EngineTypes.h"
+#include "Engine/World.h"
 #include "PrimitiveSceneProxy.h"
 #include "PrimitiveViewRelevance.h"
 #include "MeshElementCollector.h"
@@ -76,6 +78,7 @@ UProject_JGameplayWarningMarkerComponent::UProject_JGameplayWarningMarkerCompone
     BatchedLines.Emplace(Center + FVector(-5, 0, 5), Center + FVector(5, 0, 5), Color, -1, 6, SDPG_Foreground);
     BatchedLines.Emplace(Center + FVector(0, -5, 5), Center + FVector(0, 5, 5), Color, -1, 6, SDPG_Foreground);
     BatchedLines.Emplace(Center, Center + FVector(0, 0, 10), Color, -1, 6, SDPG_Foreground);
+    CacheLocalLineBounds();
 }
 
 FPrimitiveSceneProxy* UProject_JGameplayWarningMarkerComponent::CreateSceneProxy()
@@ -83,7 +86,61 @@ FPrimitiveSceneProxy* UProject_JGameplayWarningMarkerComponent::CreateSceneProxy
     return new FProjectJWarningMarkerSceneProxy(this);
 }
 
+void UProject_JGameplayWarningMarkerComponent::SetGroundCircle(float Radius, const FTransform& Surface)
+{
+    check(!IsRegistered());
+    BatchedLines.Reset();
+    constexpr int32 SegmentCount = 32;
+    const FLinearColor Color(1.0f, 0.3f, 0.0f);
+    // Intersect each ray on the impact plane with the authoritative circle's horizontal and vertical limits.
+    const double HalfHeight = Project_J::Combat::GetCircleHalfHeight(Radius);
+    struct FEdgePoint { FVector Position; bool bSupported; };
+    UWorld* World = GetOwner() ? GetOwner()->GetWorld() : nullptr;
+    const FCollisionQueryParams Query(SCENE_QUERY_STAT(ProjectJGroundWarningSupport), false, GetOwner());
+    const auto PointOnSurface = [&](int32 Segment) -> FEdgePoint
+    {
+        const double Angle = Segment * UE_DOUBLE_TWO_PI / SegmentCount;
+        const FVector Tangent(FMath::Cos(Angle), FMath::Sin(Angle), 0);
+        const FVector WorldDirection = Surface.TransformVectorNoScale(Tangent);
+        const double Distance = FMath::Min(Radius / FMath::Max(WorldDirection.Size2D(), UE_DOUBLE_SMALL_NUMBER),
+            HalfHeight / FMath::Max(FMath::Abs(WorldDirection.Z), UE_DOUBLE_SMALL_NUMBER));
+        const FVector Predicted = Surface.TransformPosition(Tangent * Distance);
+        // A short probe follows treads near the cast plane without jumping to a different storey.
+        // Unloaded collision and unsupported edges keep a dashed range outline.
+        const FVector Probe(0, 0, 50);
+        FHitResult Hit;
+        if (World && World->LineTraceSingleByObjectType(Hit, Predicted + Probe, Predicted - Probe,
+            FCollisionObjectQueryParams(ECC_WorldStatic), Query) && !Hit.bStartPenetrating && Hit.ImpactNormal.Z > 0)
+        {
+            return {Surface.InverseTransformPosition(Hit.ImpactPoint + FVector(0, 0, GroundClearanceCm)), true};
+        }
+        return {Tangent * Distance, false};
+    };
+    const FEdgePoint First = PointOnSurface(0);
+    FEdgePoint Start = First;
+    for (int32 Segment = 1; Segment <= SegmentCount; ++Segment)
+    {
+        const FEdgePoint End = Segment == SegmentCount ? First : PointOnSurface(Segment);
+        const FVector VisibleEnd = Start.bSupported && End.bSupported ? End.Position
+            : FMath::Lerp(Start.Position, End.Position, 0.4);
+        BatchedLines.Emplace(Start.Position, VisibleEnd, Color, -1, 5, SDPG_World);
+        Start = End;
+    }
+    CacheLocalLineBounds();
+}
+
+void UProject_JGameplayWarningMarkerComponent::CacheLocalLineBounds()
+{
+    FBox Box(ForceInit);
+    for (const FBatchedLine& Line : BatchedLines)
+    {
+        Box += Line.Start;
+        Box += Line.End;
+    }
+    LocalLineBounds = FBoxSphereBounds(Box.ExpandBy(1.0));
+}
+
 FBoxSphereBounds UProject_JGameplayWarningMarkerComponent::CalcBounds(const FTransform& LocalToWorld) const
 {
-    return FBoxSphereBounds(FBox(FVector(-45, -45, 100), FVector(45, 45, 175))).TransformBy(LocalToWorld);
+    return LocalLineBounds.TransformBy(LocalToWorld);
 }

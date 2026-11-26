@@ -3,7 +3,9 @@ param(
     [ValidateRange(1025,65535)][int]$SourcePort = 17951,
     [ValidateRange(1025,65535)][int]$DestinationPort = 17952,
     [ValidateRange(0,65535)][int]$SiblingPort = 0,
-    [switch]$Reconnect
+    [switch]$Reconnect,
+    [ValidatePattern('^/(?:Game|Engine)/(?:[A-Za-z0-9_-]+/)*[A-Za-z0-9_-]+$')][string]$SourceMap = '/Engine/Maps/Entry',
+    [ValidatePattern('^/(?:Game|Engine)/(?:[A-Za-z0-9_-]+/)*[A-Za-z0-9_-]+$')][string]$DestinationMap = '/Engine/Maps/Entry'
 )
 $ErrorActionPreference = 'Stop'
 if ($SourcePort -eq $DestinationPort) { throw 'Choose two distinct loopback ports.' }
@@ -49,21 +51,21 @@ function Wait-FixtureMarker($role, $marker, $process) {
     }
 }
 
-$serverMap = '/Engine/Maps/Entry?game=/Script/Project_J.Project_JLocalDungeonFixture'
+$fixtureMode = '?game=/Script/Project_J.Project_JLocalDungeonFixture'
 $shared = @('-server', "-ProjectJLocalDungeonRun=$runId", "-ProjectJLocalDungeonDirectory=$($scratch.Root)",
     "-ProjectJLocalDungeonSourcePort=$SourcePort", "-ProjectJLocalDungeonDestinationPort=$DestinationPort")
 if ($Reconnect) { $shared += '-ProjectJLocalDungeonReconnect' }
 if ($SiblingPort) { $shared += "-ProjectJLocalDungeonSiblingPort=$SiblingPort" }
-$source = Start-FixtureProcess Source $serverMap ($shared + @('-ProjectJLocalDungeonRole=Source', "-port=$SourcePort"))
-Wait-FixtureMarker Source 'DUNGEON_FIXTURE_READY Source' $source
-$destination = Start-FixtureProcess Destination $serverMap ($shared + @('-ProjectJLocalDungeonRole=Destination', "-port=$DestinationPort"))
-Wait-FixtureMarker Destination 'DUNGEON_FIXTURE_READY Destination' $destination
+$source = Start-FixtureProcess Source ($SourceMap + $fixtureMode) ($shared + @('-ProjectJLocalDungeonRole=Source', "-port=$SourcePort"))
+Wait-FixtureMarker Source "DUNGEON_FIXTURE_READY Source map=$SourceMap" $source
+$destination = Start-FixtureProcess Destination ($DestinationMap + $fixtureMode) ($shared + @('-ProjectJLocalDungeonRole=Destination', "-port=$DestinationPort"))
+Wait-FixtureMarker Destination "DUNGEON_FIXTURE_READY Destination map=$DestinationMap" $destination
 $returnServer = $source
 $returnServerRole = 'Source'
 if ($SiblingPort) {
-    $returnServer = Start-FixtureProcess Sibling $serverMap ($shared + @('-ProjectJLocalDungeonRole=Sibling', "-port=$SiblingPort"))
+    $returnServer = Start-FixtureProcess Sibling ($SourceMap + $fixtureMode) ($shared + @('-ProjectJLocalDungeonRole=Sibling', "-port=$SiblingPort"))
     $returnServerRole = 'Sibling'
-    Wait-FixtureMarker Sibling 'DUNGEON_FIXTURE_READY Sibling' $returnServer
+    Wait-FixtureMarker Sibling "DUNGEON_FIXTURE_READY Sibling map=$SourceMap" $returnServer
 }
 $client = Start-FixtureProcess Client "127.0.0.1:$SourcePort" @('-game')
 Write-Output "Started local dungeon travel $($source.Id) → $($destination.Id), client PID $($client.Id)"
@@ -88,6 +90,7 @@ foreach ($process in $completed) {
     if (!$process.WaitForExit(15000) -or $process.ExitCode -ne 0) { throw "PID $($process.Id) did not exit cleanly." }
 }
 [ordered]@{ passed = $true; sourcePort = $SourcePort; destinationPort = $DestinationPort
+    sourceMap = $SourceMap; destinationMap = $DestinationMap
     sourceExit = $source.ExitCode; destinationExit = $destination.ExitCode; clientExit = $client.ExitCode
     destinationTicketAccepted = $true; originalAnchorRestored = $true
     returnServer = $returnServerRole; returnServerExit = $returnServer.ExitCode

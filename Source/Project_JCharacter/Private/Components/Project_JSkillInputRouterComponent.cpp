@@ -55,7 +55,6 @@ EDataValidationResult UProject_JSkillInputMappingData::IsDataValid(FDataValidati
 		SeenInputTags.Add(Chord.InputTag);
 	}
 
-	TSet<const UInputAction*> SeenDirectActions;
 	TMap<const UInputAction*, TSet<int32>> DirectActionPriorities;
 	for (int32 BindingIndex = 0; BindingIndex < DirectSkillBindings.Num(); ++BindingIndex)
 	{
@@ -76,7 +75,6 @@ EDataValidationResult UProject_JSkillInputMappingData::IsDataValid(FDataValidati
 				FText::AsNumber(BindingIndex)));
 		}
 		PrioritiesForAction.Add(Binding.Priority);
-		SeenDirectActions.Add(Binding.InputAction);
 	}
 
 	TSet<const UInputAction*> SeenModifierActions;
@@ -92,7 +90,8 @@ EDataValidationResult UProject_JSkillInputMappingData::IsDataValid(FDataValidati
 			continue;
 		}
 
-		if (SeenDirectActions.Contains(Binding.InputAction) || SeenModifierActions.Contains(Binding.InputAction) || SeenModifierTags.Contains(Binding.ModifierTag))
+		// The input binder supports pressing a direct action and holding it as a chord modifier.
+		if (SeenModifierActions.Contains(Binding.InputAction) || SeenModifierTags.Contains(Binding.ModifierTag))
 		{
 			Project_J::DataValidation::AddError(Context, bHasError, FText::Format(
 				NSLOCTEXT("ProjectJSkillInputMappingData", "DuplicateModifierBinding", "ModifierBindings[{0}] reuses an InputAction or ModifierTag already bound by this mapping asset."),

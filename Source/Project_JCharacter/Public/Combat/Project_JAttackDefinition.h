@@ -11,6 +11,16 @@ class UAnimMontage;
 class UGameplayEffect;
 struct FAnimNotifyEvent;
 
+/** Legacy leaves existing content untouched. MontageAttention promises a producer in the entry section. */
+UENUM(BlueprintType)
+enum class EProject_JAttackWarningPolicy : uint8
+{
+	Legacy,
+	NoWarningRequired,
+	MontageAttention,
+	GroundArea
+};
+
 /** How an authored attack is allowed to move the character. */
 UENUM(BlueprintType)
 enum class EProject_JAttackMovementPolicy : uint8
@@ -56,6 +66,17 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Execution")
 	bool bMontageDriven = true;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Execution|Warning")
+	EProject_JAttackWarningPolicy WarningPolicy = EProject_JAttackWarningPolicy::Legacy;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Execution|Warning", meta=(EditCondition="WarningPolicy == EProject_JAttackWarningPolicy::MontageAttention"))
+	FGameplayTag RequiredWarningCue;
+
+	/** Checks the selected warning producer without loading cosmetic assets. Empty on success. */
+	FString GetWarningContractFailure() const;
+	/** A required warning must replay its entry even when a combo reuses a running montage. */
+	FName GetPlaybackEntrySection() const;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
 	TObjectPtr<UAnimMontage> Montage = nullptr;

@@ -1,4 +1,5 @@
 #include "Validation/Project_JCrossAssetValidator.h"
+#include "World/Project_JDistantMeshPolicy.h"
 
 namespace Project_J::EditorValidation
 {
@@ -15,23 +16,15 @@ FCrossAssetRuleResult ValidateNPCAnimPolicy(FName AssetName, bool bUsesPoseSearc
 	return Res;
 }
 
-FCrossAssetRuleResult ValidateFoliageAssetPolicy(
-	const FString& ComponentPath, bool bUsesInstancingHLOD, TOptional<int32> WPODisableDistanceCm)
+FCrossAssetRuleResult ValidateCanopyWindDistance(const FString& ComponentPath, TOptional<int32> WPODisableDistanceCm)
 {
-	constexpr int32 MaxAllowedWPOCm = 10000;
+	constexpr int32 MaxAllowedWPOCm = Project_J::World::MaxCanopyWPODisableDistanceCm;
 	FCrossAssetRuleResult Res;
-	if (!bUsesInstancingHLOD)
-	{
-		Res.bPassed = false;
-		Res.Errors.Add(FString::Printf(
-			TEXT("Starter forest component '%s' requires an explicit Instancing HLOD layer on its owner."),
-			*ComponentPath));
-	}
 	if (WPODisableDistanceCm.IsSet() && (*WPODisableDistanceCm <= 0 || *WPODisableDistanceCm > MaxAllowedWPOCm))
 	{
 		Res.bPassed = false;
 		Res.Errors.Add(FString::Printf(
-			TEXT("Starter forest component '%s' uses WPO with WorldPositionOffsetDisableDistance=%d cm. Set a cutoff from 1 to %d cm for the VSM cache."),
+			TEXT("Canopy component '%s' uses WPO with WorldPositionOffsetDisableDistance=%d cm. Set a cutoff from 1 to %d cm for the VSM cache."),
 			*ComponentPath, *WPODisableDistanceCm, MaxAllowedWPOCm));
 	}
 	return Res;

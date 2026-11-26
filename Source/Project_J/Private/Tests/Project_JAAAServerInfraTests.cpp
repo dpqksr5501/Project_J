@@ -151,8 +151,12 @@ bool FProjectJGovernorAndCrowdDensity500Test::RunTest(const FString&)
 	TSet<uint32> PrevAllowed;
 	TSet<uint32> AllowedGreen;
 	int32 CulledGreen = 0;
+	FProject_JCrowdDensitySelectionCounts GreenCounts;
 	FProject_JCrowdDensityBudgetSolver::EvaluateForViewer(
-		FVector::ZeroVector, Crowd, PrevAllowed, 60, 1.35f, AllowedGreen, CulledGreen);
+		FVector::ZeroVector, Crowd, PrevAllowed, 60, 1.35f, AllowedGreen, CulledGreen, &GreenCounts);
+	TestEqual(TEXT("Five exempt pairs bypass both limits"), GreenCounts.Exempt, 5);
+	TestEqual(TEXT("All 440 losses are due to K"), GreenCounts.OverCap, 440);
+	TestEqual(TEXT("No non-exempt candidates outside distance"), GreenCounts.OutsideDistance, 0);
 
 	TestTrue(TEXT("Boss always allowed"), AllowedGreen.Contains(1u));
 	for (uint32 Id = 2; Id <= 5; ++Id)

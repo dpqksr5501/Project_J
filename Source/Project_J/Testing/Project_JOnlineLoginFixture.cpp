@@ -67,6 +67,7 @@ void AProject_JOnlineLoginFixture::BeginPlay()
 	bAuthoredSandbox = FParse::Param(FCommandLine::Get(), TEXT("ProjectJOnlineAuthoredSandbox"));
 	if (GetNetMode() == NM_DedicatedServer)
 	{
+		FParse::Value(FCommandLine::Get(), TEXT("ProjectJPublicVisits="), RemainingPublicVisits);
 		bDungeonSource = FParse::Param(FCommandLine::Get(), TEXT("ProjectJOnlineDungeonSource"));
 		bDungeonDestination = FParse::Param(FCommandLine::Get(), TEXT("ProjectJOnlineDungeonDestination"));
 		if ((bDungeonSource || bDungeonDestination) && !bAuthoredSandbox)
@@ -97,6 +98,14 @@ void AProject_JOnlineLoginFixture::HandleStartingNewPlayer_Implementation(APlaye
 #if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
 	const bool bDrain = IsOnlineDrainFixture();
 	const bool bVerifyQuest = FParse::Param(FCommandLine::Get(), TEXT("ProjectJVerifyOnlineQuest"));
+	if (RemainingPublicVisits > 0)
+	{
+		const auto* State = NewPlayer ? NewPlayer->GetPlayerState<AProject_JPlayerState>() : nullptr;
+		if (State && NewPlayer->GetPawn() && GetOnlineEpoch(State) > 0)
+			UE_LOG(LogProjectJOnlineLoginFixture, Display, TEXT("PUBLIC_REGION_ADMISSION zone=%s epoch=%lld"),
+				*GetWorld()->GetMapName(), static_cast<long long>(GetOnlineEpoch(State)));
+		return;
+	}
 	if (!bDungeonSource && !bDungeonDestination && !bDrain && !bVerifyQuest) return;
 	auto* PC = Cast<AProject_JOnlineLoginFixtureController>(NewPlayer);
 	auto* State = PC ? PC->GetPlayerState<AProject_JPlayerState>() : nullptr;
@@ -300,6 +309,11 @@ void AProject_JOnlineLoginFixture::Logout(AController* Exiting)
 #endif
 	Super::Logout(Exiting);
 #if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
+	if (bVerified && RemainingPublicVisits > 0)
+	{
+		if (--RemainingPublicVisits == 0) FPlatformMisc::RequestExit(false);
+		return;
+	}
 	if (bVerified && IsOnlineDrainFixture())
 	{
 		UE_LOG(LogProjectJOnlineLoginFixture, Display, TEXT("ONLINE_DRAIN_AUTHORIZED_LOGOUT"));
@@ -338,8 +352,31 @@ void AProject_JOnlineLoginFixtureController::BeginPlay()
 	}), IsOnlineChatFixture() ? 240.f : 58.f);
 	auto* Online = GetGameInstance()->GetSubsystem<UProject_JOnlineWorldSubsystem>();
 	const FString Access = FPlatformMisc::GetEnvironmentVariable(TEXT("PROJECT_J_TEST_LOGIN_ACCESS"));
-	const FString FixtureZone = FParse::Param(FCommandLine::Get(), TEXT("ProjectJOnlineAuthoredSandbox"))
+	FString FixtureZone = FParse::Param(FCommandLine::Get(), TEXT("ProjectJOnlineAuthoredSandbox"))
 		? TEXT("Test_MMO_Sandbox") : TEXT("Entry");
+	FString Route;
+	if (FParse::Value(FCommandLine::Get(), TEXT("ProjectJPublicRoute="), Route, false))
+	{
+		TArray<FString> Zones;
+		Route.ParseIntoArray(Zones, TEXT(","), false);
+		if (Zones.Num() != 3 || Zones[0].IsEmpty() || Zones[1].IsEmpty() || Zones[0] == Zones[1] || Zones[0] != Zones[2])
+		{ FPlatformMisc::RequestExitWithStatus(false, 4); return; }
+		FixtureZone = Zones[0];
+		// GameInstance and its real login service survive absolute travel; each controller is reacquired.
+		FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda(
+			[GI = TWeakObjectPtr<UGameInstance>(GetGameInstance()), Zones, LoginCharacter, Access, Hop = 0](float) mutable
+		{
+			if (!GI.IsValid()) return false;
+			UWorld* World = GI->GetWorld();
+			auto* PC = World ? GI->GetFirstLocalPlayerController(World) : nullptr;
+			if (!PC || World->GetNetMode() != NM_Client || !PC->GetPawn() || World->GetMapName() != Zones[Hop]) return true;
+			UE_LOG(LogProjectJOnlineLoginFixture, Display, TEXT("PUBLIC_REGION_POSSESSED hop=%d zone=%s"), Hop + 1, *Zones[Hop]);
+			if (++Hop == Zones.Num()) { FPlatformMisc::RequestExit(false); return false; }
+			if (GI->GetSubsystem<UProject_JOnlineWorldSubsystem>()->ConnectCharacter(PC, Access, LoginCharacter, Zones[Hop], 1)) return true;
+			FPlatformMisc::RequestExitWithStatus(false, 4);
+			return false;
+		}), .5f);
+	}
 	Online->OnConnectDispatched.AddUniqueDynamic(this, &ThisClass::ObserveConnection);
 	Online->OnLoginQueued.AddUniqueDynamic(this, &ThisClass::ObserveQueuePosition);
 	const auto WeakThis = TWeakObjectPtr<ThisClass>(this);

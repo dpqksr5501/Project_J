@@ -6,9 +6,15 @@
     [switch]$BossCombat,
     [switch]$StableBossLayout,
     [switch]$BossHitDiagnostics,
+    [switch]$GroundWarningProbe,
+    [switch]$GroundPulse,
+    [switch]$LateGroundWarning,
     [switch]$DungeonCombat,
     [switch]$FieldArena,
+    [ValidatePattern('^/Game/(?:[A-Za-z0-9_-]+/)*[A-Za-z0-9_-]+$')][string]$EncounterMap,
+    [ValidatePattern('^[A-Za-z0-9_.-]{1,128}$')][string]$EncounterId,
     [switch]$RenderedClient,
+    [ValidateRange(0,4)][int]$RenderedEffectsQuality,
     [switch]$OwnerOnlyPeers,
     [switch]$SplitGenerators,
     [switch]$ServerTrace,
@@ -17,6 +23,7 @@
     [switch]$RenderedTrace,
     [ValidateSet('Off','SerialChaos','LargerClothBatches','ReducedRemote','FixedClothIterations','ParkOptInRemote')][string]$RenderedClothProbe,
     [ValidateRange(2,64)][int]$HeadlessCoreLimit,
+    [ValidateRange(0,240)][int]$HeadlessFrameCap = 0,
     [ValidateRange(0,65536)][int]$MemoryReserveMiB=0,
     [switch]$ThinClient,
     [switch]$UsePerfThreads,
@@ -44,8 +51,16 @@ if ($VerifyCrowdCap -and (!$BossCombat -or $LegacyReplication -or !$ServerMetric
 }
 if ($StableBossLayout -and (!$BossCombat -or $Clients -lt 32 -or $Clients -gt 64)) { throw 'StableBossLayout requires the 32–64-client authored boss workload.' }
 if ($BossHitDiagnostics -and !$BossCombat) { throw 'BossHitDiagnostics requires the authored boss workload.' }
+if ($GroundWarningProbe -and (!$RenderedClient -or !$BossCombat)) { throw 'GroundWarningProbe requires a rendered boss cohort.' }
+if ($GroundPulse -and !$BossCombat) { throw 'GroundPulse requires a boss combat run.' }
+if ($PSBoundParameters.ContainsKey('RenderedEffectsQuality') -and !$RenderedClient) { throw 'RenderedEffectsQuality requires a rendered client.' }
+if ($LateGroundWarning -and (!$GroundWarningProbe -or $LegacyReplication)) { throw 'LateGroundWarning requires GroundWarningProbe with Iris.' }
 if (($DungeonCombat -or $FieldArena) -and !$BossCombat) { throw 'A placed arena requires the authored BossCombat workload.' }
 if ($DungeonCombat -and $FieldArena) { throw 'Choose one placed arena.' }
+if ([bool]$EncounterMap -ne [bool]$EncounterId -or ($EncounterMap -and (!$BossCombat -or $DungeonCombat -or $FieldArena))) {
+    throw 'An explicit placed encounter requires BossCombat, EncounterMap and EncounterId.'
+}
+if ($EncounterMap -and $SplitGenerators) { throw 'A placed encounter uses independent game client processes.' }
 if ($OwnerOnlyPeers -and (!$BossCombat -or !$LegacyReplication)) { throw 'OwnerOnlyPeers requires Generic replication and the authored boss workload.' }
 if ($RenderedClient -and (!$BossCombat -or $Clients -lt 2 -or $OwnerOnlyPeers)) { throw 'RenderedClient requires at least two boss owners with peer visibility.' }
 $clothExperiment = $PSBoundParameters.ContainsKey('ClothVertexCap')
@@ -65,12 +80,20 @@ if (Get-NetUDPEndpoint -LocalPort $Port -ErrorAction SilentlyContinue) { throw '
 if ($ServerMetricsPort -and (Get-NetTCPConnection -State Listen -LocalPort $ServerMetricsPort -ErrorAction SilentlyContinue)) {
     throw 'The loopback metrics port is already in use.'
 }
-if ($RenderedClient) {
+$headlessCount = $Clients - [int][bool]$RenderedClient
+if ($RenderedClient -or $EncounterMap) {
     if (!$MemoryReserveMiB) { $MemoryReserveMiB = 4096 }
     $memory = Get-CimInstance Win32_OperatingSystem
     $freeMiB = [Math]::Min($memory.FreePhysicalMemory, $memory.FreeVirtualMemory) / 1KB
-    if ($freeMiB -lt ($MemoryReserveMiB + 8192)) {
-        throw "Insufficient memory to start an RHI client and the cohort. Available: $([int]$freeMiB) MiB."
+    $requiredMiB = $MemoryReserveMiB + 8192
+    if ($EncounterMap) {
+        # Uncooked WP clients cannot share editor world contexts with the dedicated server.
+        # Budget separately for each complete NullRHI game process.
+        $requiredMiB = $MemoryReserveMiB + 6144 + (4096 * $headlessCount)
+        if ($RenderedClient) { $requiredMiB += 10240 }
+    }
+    if ($freeMiB -lt $requiredMiB) {
+        throw "Insufficient memory to start the cohort. Available: $([int]$freeMiB) MiB, planned: $requiredMiB MiB."
     }
 }
 $root = (Resolve-Path "$PSScriptRoot/../..").Path
@@ -82,10 +105,15 @@ $map = '/Engine/Maps/Entry?game=/Script/Project_J.Project_JLoopbackCohort'
 if ($BossCombat) { $map = '/Game/Tests/Combat/L_CanonicalNetwork?game=/Script/Project_J.Project_JLoopbackCohort' }
 if ($DungeonCombat) { $map = '/Game/Maps/Test_MMO_Dungeon?game=/Script/Project_J.Project_JLoopbackCohort' }
 if ($FieldArena) { $map = '/Game/Maps/Test_MMO_Sandbox?game=/Script/Project_J.Project_JLoopbackCohort' }
+if ($EncounterMap) { $map = "$EncounterMap" + '?game=/Script/Project_J.Project_JLoopbackCohort' }
 $common = @("$root/Project_J.uproject", '-unattended', '-nosound', '-nop4', '-NullRHI', '-NoLiveCoding', '-NoDDCCleanup',
     '-DisablePlugins=EditorToolset,AutomationTestToolset,ToolsetRegistry', '-multihome=127.0.0.1')
 if ($LegacyReplication) { $common += '-UseIrisReplication=0' }
 if ($MemoryReserveMiB) { $common += "-ProjectJCohortMemoryReserveMiB=$MemoryReserveMiB" }
+if ($EncounterId) { $common += "-ProjectJCohortEncounterId=$EncounterId" }
+if ($GroundWarningProbe) { $common += '-ProjectJGroundWarningProbe' }
+if ($GroundPulse) { $common += '-ProjectJCohortGroundPulse' }
+if ($LateGroundWarning) { $common += '-ProjectJLateGroundWarning' }
 
 $appliedAffinity = [ordered]@{}
 function Start-CohortRole([string]$Role, [int]$Count, [string[]]$RoleArgs, [bool]$Render = $false, [long]$AffinityMask = 0) {
@@ -113,14 +141,16 @@ if ($ServerMetricsPort) { $serverArgs += "-ProjectJMetricsPort=$ServerMetricsPor
 if ($MeasureCombat) { $serverArgs += @("-ProjectJCohortCombatMetrics=$report", "-ProjectJCohortCloseBatchSize=$CloseBatchSize") }
 if ($BossCombat) { $serverArgs += '-ProjectJCohortBossCombat' }
 if ($StableBossLayout) { $serverArgs += '-ProjectJCohortStableBossLayout' }
+$abilityDiagnostics = 'LogAbilitySystem VeryVerbose,LogProjectJCombatCombo Verbose'
 if ($BossHitDiagnostics) {
-    $serverArgs += @('-ProjectJCohortBossHitDiagnostics', '-LogCmds=LogProjectJCombatHitValidation VeryVerbose,LogProjectJAuthoredMelee VeryVerbose')
+    $serverArgs += @('-ProjectJCohortBossHitDiagnostics', "-LogCmds=$abilityDiagnostics,LogProjectJCombatHitValidation VeryVerbose,LogProjectJAuthoredMelee VeryVerbose,LogProjectJGroundAttack Verbose")
 }
 if ($DungeonCombat) { $serverArgs += '-ProjectJCohortDungeonCombat' }
 if ($FieldArena) { $serverArgs += '-ProjectJCohortFieldArena' }
 if ($OwnerOnlyPeers) { $serverArgs += '-ProjectJCohortOwnerOnlyPeers' }
 if ($ServerTrace) { $serverArgs += @('-trace=cpu,frame,bookmark', '-statnamedevents', "-tracefile=$report/Server.utrace") }
 $serverExec = @()
+if ($BossHitDiagnostics) { $serverExec += 'Project_J.Combat.ComboDebug 1' }
 if ($VerifyCrowdCap) {
     $serverArgs += '-ProjectJCohortCrowdGroups'
     $serverExec += "ProjectJ.Net.MaxVisibleRemoteActors $VerifyCrowdCap"
@@ -168,13 +198,24 @@ $generatorArgs = @("-ExecutePythonScript=$root/Scripts/Validation/Start-Loopback
 if ($MeasureCombat) { $generatorArgs += '-ProjectJCohortMeasuredClient' }
 if ($BossCombat) { $generatorArgs += '-ProjectJCohortBossClient' }
 if ($OwnerOnlyPeers) { $generatorArgs += '-ProjectJCohortOwnerOnlyPeers' }
+$generatorExec = @()
 if ($ThinClient) {
     # Strip purely cosmetic client work on headless load-generator bots to reduce single-PC CPU/RAM contention.
-    $generatorArgs += '-ExecCmds=p.ClothPhysics 0,ProjectJ.ClothBudget.Enabled 0,a.URO.Enable 1,a.URO.ForceInterpolation 1,DDCvar.FootPlacementMode 0'
+    $generatorExec += 'p.ClothPhysics 0,ProjectJ.ClothBudget.Enabled 0,a.URO.Enable 1,a.URO.ForceInterpolation 1,DDCvar.FootPlacementMode 0'
 }
-$headlessCount = $Clients - [int][bool]$RenderedClient
+if ($BossHitDiagnostics) {
+    $generatorArgs += "-LogCmds=$abilityDiagnostics"
+    $generatorExec += 'Project_J.Combat.ComboDebug 1'
+}
+if ($HeadlessFrameCap) { $generatorExec += "t.MaxFPS $HeadlessFrameCap,t.MaxFPS" }
+if ($generatorExec.Count) { $generatorArgs += "-ExecCmds=$($generatorExec -join ',')" }
 $generatorCounts = [ordered]@{ Clients = $headlessCount }
-if ($SplitGenerators -and $headlessCount -gt 1) {
+if ($EncounterMap) {
+    $generatorCounts = [ordered]@{}
+    for ($owner = 1; $owner -le $headlessCount; ++$owner) {
+        $generatorCounts["Client$owner"] = 1
+    }
+} elseif ($SplitGenerators -and $headlessCount -gt 1) {
     $firstCount = [int][Math]::Floor($headlessCount / 2)
     $generatorCounts = [ordered]@{ Clients = $firstCount; Clients2 = $headlessCount - $firstCount }
 }
@@ -190,8 +231,15 @@ $clothProbeSettings = @{
 if ($RenderedClient) {
     New-Item -ItemType Directory -Path "$report/Rendered" | Out-Null
     $commands = 't.MaxFPS 0,r.VSync 0'
+    if ($PSBoundParameters.ContainsKey('RenderedEffectsQuality')) {
+        $commands += ",sg.EffectsQuality $RenderedEffectsQuality,sg.EffectsQuality"
+    }
     $renderArgs = @("127.0.0.1:$Port", '-game', '-DisablePython', '-d3d12', '-RenderOffscreen', '-windowed',
         '-ForceRes', '-ResX=1280', '-ResY=720', '-SaveToUserDir', '-Seconds=145', "-ProjectJCohortRenderedOutput=$report/Rendered")
+    if ($BossHitDiagnostics) {
+        $renderArgs += "-LogCmds=$abilityDiagnostics"
+        $commands += ',Project_J.Combat.ComboDebug 1'
+    }
     if ($clothExperiment) {
         $commands += ",ProjectJ.ClothBudget.ExecutionVertexCap $ClothVertexCap"
         $renderArgs += "-ProjectJCohortClothVertexCap=$ClothVertexCap"
@@ -211,7 +259,12 @@ if ($RenderedClient) {
     $processes.RenderedClient = Start-CohortRole RenderedClient $Clients $renderArgs $true $RenderedAffinityMask
 }
 foreach ($entry in $generatorCounts.GetEnumerator()) {
-    $processes[$entry.Key] = Start-CohortRole $entry.Key $entry.Value $generatorArgs $false $GeneratorAffinityMask
+    $clientArgs = $generatorArgs
+    if ($EncounterMap) {
+        $clientArgs = @("127.0.0.1:$Port", '-game', '-DisablePython', '-Seconds=150', '-ProjectJCohortStandaloneClient')
+        $clientArgs += @($generatorArgs | Where-Object { $_.StartsWith('-ExecCmds=') -or $_.StartsWith('-LogCmds=') })
+    }
+    $processes[$entry.Key] = Start-CohortRole $entry.Key $entry.Value $clientArgs $false $GeneratorAffinityMask
 }
 Write-Output "Started one server and $($processes.Count - 1) client host(s) for $Clients game connections. $report"
 $hostSamples = [Collections.Generic.List[object]]::new()
@@ -265,9 +318,13 @@ $serverVerified = $result -and $result.Matches[0].Groups[1].Value -eq '1'
 $irisObserved = [bool](Select-String -LiteralPath "$report/Server.log" -Pattern 'LogIris: Display: Iris ReplicationSystem\[\d+\].* is created' -Quiet)
 $replicationVerified = $irisObserved -eq !$LegacyReplication
 $generators = @(foreach ($entry in $generatorCounts.GetEnumerator()) {
+    $clientLog = "$report/$($entry.Key).log"
+    $readyPattern = if ($EncounterMap) { 'COHORT_STANDALONE_CLIENT_FINISHED passed=1' } else {
+        "COHORT_FINISHED passed=1 peak=0 strikes=0 clients=$($entry.Value)\s*$"
+    }
     [ordered]@{
         role = $entry.Key; clients = $entry.Value; processExit = $processes[$entry.Key].ExitCode
-        verified = [bool](Select-String -LiteralPath "$report/$($entry.Key).log" -Pattern "COHORT_FINISHED passed=1 peak=0 strikes=0 clients=$($entry.Value)\s*$" -Quiet)
+        verified = (Test-Path -LiteralPath $clientLog) -and [bool](Select-String -LiteralPath $clientLog -Pattern $readyPattern -Quiet)
     }
 })
 $generatorVerified = @($generators | Where-Object { !$_.verified }).Count -eq 0
@@ -361,7 +418,9 @@ if ($MeasureCombat) {
         }
         $steady = if ($BossCombat) { $phases.Drain } else { $phases.Sustained }
         $combat = [ordered]@{
-            scope = if ($RenderedClient) { 'Dedicated NullRHI server, one RHI player and headless peer owners. One synchronized authored melee attack per owner with confirmed GAS health loss.' }
+            scope = if ($GroundPulse) { 'Client-owned Spellblade class grant, Ground Pulse tagged input, authoritative boss health loss and replicated owner mana/cooldown.' }
+                    elseif ($EncounterMap) { 'Placed world encounter class and arena in a dedicated fixture, with independent game clients and confirmed GAS health loss.' }
+                    elseif ($RenderedClient) { 'Dedicated NullRHI server, one RHI player and headless peer owners. One synchronized authored melee attack per owner with confirmed GAS health loss.' }
                     elseif ($FieldArena) { 'NullRHI loopback in Test_MMO_Sandbox with its authored boss class and arena placement. Client-owned attacks, native validation and GAS health loss.' }
                     elseif ($DungeonCombat) { 'NullRHI loopback in Test_MMO_Dungeon with its authored boss class and arena placement. Client-owned attacks, native validation and GAS health loss. Combat timing only.' }
                     elseif ($BossCombat) { 'NullRHI loopback. One simultaneous client-owned Spellblade melee attack per player against BP_FieldBoss_Test, with native ability, hit validation and confirmed GAS health loss. Latency includes ability playback.' }
@@ -394,6 +453,16 @@ if ($DungeonCombat) {
 }
 if ($FieldArena) {
     $passed = $passed -and [bool](Select-String -LiteralPath "$report/Server.log" -SimpleMatch 'COHORT_FIELD_ARENA encounter=Sandbox_FieldBoss_01' -Quiet)
+}
+$encounterReplicationVerified = $null
+if ($EncounterMap) {
+    $encounterPattern = 'COHORT_FIELD_ARENA encounter=' + [regex]::Escape($EncounterId) + ' map=' +
+        [regex]::Escape(($EncounterMap -split '/')[-1]) + ' boss='
+    $roleLogs = @($processes.Keys | ForEach-Object { "$report/$_.log" })
+    $encounterReplicationVerified = @($roleLogs | Where-Object { !(Test-Path -LiteralPath $_) }).Count -eq 0 -and
+        !(Select-String -LiteralPath $roleLogs -Pattern 'Broken NetHandle|MissingLevelPackage|Could not find static actor' -Quiet)
+    $passed = $passed -and $encounterReplicationVerified -and
+        [bool](Select-String -LiteralPath "$report/Server.log" -Pattern $encounterPattern -Quiet)
 }
 if ($BossCombat) {
     $passed = $passed -and [bool](Select-String -LiteralPath "$report/Server.log" -SimpleMatch "COHORT_BOSS_AIM accepted=$Clients expected=$Clients" -Quiet)
@@ -437,6 +506,11 @@ if ($RenderedClient) {
             $rendered.verified = $rendered.verified -and
                 [bool](Select-String -LiteralPath "$report/RenderedClient.log" -Pattern $readback -Quiet)
         }
+        if ($PSBoundParameters.ContainsKey('RenderedEffectsQuality')) {
+            $qualityReadback = ('sg\.EffectsQuality = "{0}"\s+LastSetBy: Console' -f $RenderedEffectsQuality)
+            $rendered.effectsQualityVerified = [bool](Select-String -LiteralPath "$report/RenderedClient.log" -Pattern $qualityReadback -Quiet)
+            $rendered.verified = $rendered.verified -and $rendered.effectsQualityVerified
+        }
         if ($RenderedClothProbe -eq 'ParkOptInRemote') {
             $rendered.verified = $rendered.verified -and $rendered.phases.Strike.clothUnsuspended.p50 -gt 0 -and
                 $rendered.phases.Strike.clothSuspended.p50 -gt 0 -and
@@ -446,6 +520,26 @@ if ($RenderedClient) {
             $pattern = "COHORT_REMOTE_CLOAK verified=1 owner_original=1 remote_proxy=$($Clients - 1) native_cadence=1"
             $rendered.remoteCloakVerified = [bool](Select-String -LiteralPath "$report/RenderedClient.log" -Pattern $pattern -Quiet)
             $rendered.verified = $rendered.verified -and $rendered.remoteCloakVerified
+        }
+        if ($GroundWarningProbe) {
+            $markerLog = Get-Content -Raw -LiteralPath "$report/RenderedClient.log"
+            $warningMatches = @([regex]::Matches($markerLog, 'PROJECTJ_GROUND_WARNING visible actor=(?<actor>[^ ]+) remaining=[0-9.]+ radius=(?<radius>350|220)[.]0 render_state=1 caster_owner=0'))
+            $natural = $warningMatches | Where-Object { $_.Groups['radius'].Value -eq '350' } | Select-Object -First 1
+            $cancel = $warningMatches | Where-Object { $_.Groups['radius'].Value -eq '220' } | Select-Object -First 1
+            $rendered.groundWarningVerified = $natural -and $cancel -and
+                $markerLog.Contains('PROJECTJ_GROUND_WARNING expired actor=' + $natural.Groups['actor'].Value) -and
+                $markerLog.Contains('PROJECTJ_GROUND_WARNING retired actor=' + $cancel.Groups['actor'].Value)
+            $rendered.verified = $rendered.verified -and $rendered.groundWarningVerified
+            if ($LateGroundWarning) {
+                $arrivals = [regex]::Matches($markerLog, 'PROJECTJ_GROUND_WARNING visible actor=\S+ remaining=([0-9.]+) radius=480\.0 render_state=1 caster_owner=0 surface_up_z=([0-9.]+)')
+                $rendered.lateWarningVerified = $arrivals.Count -eq 2 -and
+                    [Math]::Abs([double]$arrivals[0].Groups[2].Value - [Math]::Cos([Math]::PI / 10)) -lt 0.002 -and
+                    [Math]::Abs([double]$arrivals[1].Groups[2].Value - [Math]::Cos([Math]::PI / 10)) -lt 0.002 -and
+                    [double]$arrivals[1].Groups[1].Value -lt [double]$arrivals[0].Groups[1].Value -and
+                    $markerLog.Contains('PROJECTJ_GROUND_WARNING arrived_expired radius=490.0') -and
+                    $markerLog -notmatch 'PROJECTJ_GROUND_WARNING visible [^\r\n]+radius=490\.0'
+                $rendered.verified = $rendered.verified -and $rendered.lateWarningVerified
+            }
         }
     }
     $passed = $passed -and $rendered.verified
@@ -459,11 +553,14 @@ if ($RenderedClient) {
     requested = $Clients; peakGameConnections = $peak; confirmedStrikes = $strikes; expectedStrikes = $expected
     serverExit = $server.ExitCode; generatorExit = [int]$generatorExit; generators = $generators; combat = $combat
     dungeonArena = [bool]$DungeonCombat; fieldArena = [bool]$FieldArena; stableBossLayout = [bool]$StableBossLayout; renderedClient = $rendered
+    encounterMap = $EncounterMap; encounterId = $EncounterId; encounterReplicationVerified = $encounterReplicationVerified
+    groundPulse = [bool]$GroundPulse
+    requestedEffectsQuality = if ($PSBoundParameters.ContainsKey('RenderedEffectsQuality')) { $RenderedEffectsQuality } else { $null }
     bossHitDiagnostics = [bool]$BossHitDiagnostics; memoryReserveMiB = $MemoryReserveMiB
     thinClient = [bool]$ThinClient; usePerfThreads = [bool]$UsePerfThreads
     serverAffinityMask = $ServerAffinityMask; generatorAffinityMask = $GeneratorAffinityMask; renderedAffinityMask = $RenderedAffinityMask
     affinityVerified = $affinityVerified; appliedAffinity = $appliedAffinity
-    headlessCoreLimit = $HeadlessCoreLimit; renderedClothProbe = $RenderedClothProbe; cloakHz = $CloakHz } |
+    headlessCoreLimit = $HeadlessCoreLimit; headlessFrameCap = $HeadlessFrameCap; renderedClothProbe = $RenderedClothProbe; cloakHz = $CloakHz } |
     ConvertTo-Json -Depth 7 | Set-Content -LiteralPath "$report/verification.json" -Encoding utf8
 Get-Content -Raw -LiteralPath "$report/verification.json"
 if (!$passed) { exit 1 }

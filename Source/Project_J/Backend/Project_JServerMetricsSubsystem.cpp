@@ -181,6 +181,10 @@ FString UProject_JServerMetricsSubsystem::RenderPrometheusMetricsText() const
 	Out += TEXT("# HELP projectj_iris_crowd_culled_pairs Iris crowd culled pairs.\n");
 	Out += TEXT("# TYPE projectj_iris_crowd_culled_pairs gauge\n");
 	Out += FString::Printf(TEXT("projectj_iris_crowd_culled_pairs %lld\n"), CrowdSnap.LastPassCulledPairs);
+	Out += TEXT("# HELP projectj_iris_crowd_exempt_pairs Viewer-actor pairs exempt from distance and cap in the last filter pass.\n# TYPE projectj_iris_crowd_exempt_pairs gauge\n");
+	Out += FString::Printf(TEXT("projectj_iris_crowd_exempt_pairs %lld\n"), CrowdSnap.LastPassExemptPairs);
+	Out += TEXT("# HELP projectj_iris_crowd_over_cap_pairs In-range non-exempt pairs excluded by Top-K in the last filter pass.\n# TYPE projectj_iris_crowd_over_cap_pairs gauge\n");
+	Out += FString::Printf(TEXT("projectj_iris_crowd_over_cap_pairs %lld\n"), CrowdSnap.LastPassOverCapPairs);
 
 	Out += TEXT("# HELP projectj_outbox_pending Outbox pending.\n");
 	Out += TEXT("# TYPE projectj_outbox_pending gauge\n");

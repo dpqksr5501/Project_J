@@ -166,3 +166,14 @@ void UProject_JAnimNotifyState_CombatPresentationCue::NotifyEnd(USkeletalMeshCom
     EndDetachedLease(Lease);
     Super::NotifyEnd(MeshComp, Animation, EventReference);
 }
+
+FString UProject_JAnimNotifyState_CombatPresentationCue::GetWarningEventFailure(const FAnimNotifyEvent& Event) const
+{
+	if (!CueTag.IsValid()) return TEXT("Gameplay Warning requires a valid cue tag.");
+	if (!FMath::IsFinite(Event.GetDuration()) || Event.GetDuration() <= 0.f) return TEXT("Gameplay Warning requires a finite positive duration.");
+	if (!Event.bTriggerOnDedicatedServer) return TEXT("Enable Trigger On Dedicated Server for the warning producer.");
+	if (Event.NotifyTriggerChance != 1.f) return TEXT("Gameplay Warning trigger chance must be 1.");
+	if (Event.NotifyFilterType != ENotifyFilterType::NoFiltering || Event.bCanBeFilteredViaRequest)
+		return TEXT("Disable LOD and request filtering for the warning producer.");
+	return {};
+}

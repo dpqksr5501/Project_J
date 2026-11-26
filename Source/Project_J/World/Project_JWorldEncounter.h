@@ -75,6 +75,7 @@ protected:
 private:
     friend class UProject_JWorldEventRegistry;
     friend class FProjectJFieldBossRewardEligibilityTest;
+    friend class FProjectJBossRewardSettlementTest;
     bool HasActivationDemand(bool& bKnown) const;
     bool HasValidInitialNavigation() const;
     bool HasValidCombatConfiguration() const;

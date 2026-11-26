@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Mount/Project_JMountCharacter.h"
 #include "InputAction.h"
+#include "World/Project_JStreamingMovementSource.h"
 #include "Project_JFlyingMountCharacter.generated.h"
 
 UENUM(BlueprintType)
@@ -10,7 +11,7 @@ enum class EProject_JMountLandingFailure : uint8 { None, Blocked, TimedOut, Canc
 
 /** Shared aerial movement rules for wyverns, griffins, and dragons. */
 UCLASS(Abstract, Blueprintable)
-class PROJECT_JMOUNT_API AProject_JFlyingMountCharacter : public AProject_JMountCharacter
+class PROJECT_JMOUNT_API AProject_JFlyingMountCharacter : public AProject_JMountCharacter, public IProject_JStreamingMovementSource
 {
 	GENERATED_BODY()
 public:
@@ -34,6 +35,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Mount|Flight") void SetGliding(bool bNewGliding);
 	UFUNCTION(BlueprintPure, Category="Mount|Flight") bool IsGliding() const { return bIsGliding; }
 	UFUNCTION(BlueprintPure, Category="Mount|Flight") bool IsFlyingMount() const;
+	virtual bool UsesAirborneStreamingPrediction_Implementation() const override { return IsFlyingMount(); }
 	UFUNCTION(BlueprintPure, Category="Mount|Flight") EProject_JMountFlightState GetFlightState() const { return FlightState; }
 	UFUNCTION(BlueprintPure, Category="Mount|Flight") bool IsFlightInputLocked() const;
 	UFUNCTION(BlueprintPure, Category="Mount|Flight") bool IsTakingOff() const { return FlightState == EProject_JMountFlightState::TakingOff || FlightState == EProject_JMountFlightState::AutoAscending; }

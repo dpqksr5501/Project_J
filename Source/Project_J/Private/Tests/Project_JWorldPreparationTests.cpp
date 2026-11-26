@@ -15,6 +15,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include <limits>
 #include "World/Project_JWorldPortal.h"
+#include "World/Project_JDungeonInstanceSubsystem.h"
 #include "World/Project_JPreparedArrivalEffect.h"
 #include "Game/Project_JPlayerState.h"
 #include "Project_JSpellbladeCharacter.h"
@@ -89,13 +90,27 @@ bool FProjectJWorldPreparationLifetimeTest::RunTest(const FString&)
 	auto* Pawn = World->SpawnActor<ACharacter>(); PC->Possess(Pawn);
 	auto* Source = NewObject<UProject_JWorldStreamingComponent>(PC); PC->AddInstanceComponent(Source); Source->RegisterComponent();
 	Source->BeginPlay(); Source->EnableStreamingSource();
+	auto* Preload = NewObject<UProject_JWorldPreloadStreamingComponent>(PC);
+	PC->AddInstanceComponent(Preload);
+	Preload->RegisterComponent();
+	Preload->EnableStreamingSource();
+	Pawn->GetCharacterMovement()->Velocity = FVector(3000, 0, 700);
 	FWorldPartitionStreamingSource Result;
 	TestFalse(TEXT("No definition means no additional source"), Source->GetStreamingSource(Result));
+	TestFalse(TEXT("Fast ground travel cannot request preload without a region definition"), Preload->GetStreamingSource(Result));
 	auto* State = World->SpawnActor<AProject_JWorldState>();
 	Source->NextDefinitionSearch = 0;
 	TestFalse(TEXT("Present owner with an unready definition remains closed"), Source->GetStreamingSource(Result));
 	auto* Definition = NewObject<UProject_JWorldDefinition>(State); Definition->RegionId = TEXT("Test.World");
 	State->Definition = Definition;
+	if (!TestTrue(TEXT("Late definition enables preload for an ordinary fast character"), Preload->GetStreamingSource(Result))) return false;
+	TestTrue(TEXT("Ground preload requests ahead horizontally"), Result.TargetState == EStreamingSourceTargetState::Loaded
+		&& !Result.Shapes.IsEmpty() && Result.Shapes.Last().Location.X > 0 && Result.Shapes.Last().Location.Z == 0);
+	Source->DisableStreamingSource();
+	TestFalse(TEXT("Disabled activation companion also withdraws paired preload"), Preload->GetStreamingSource(Result));
+	Source->EnableStreamingSource();
+	Pawn->GetCharacterMovement()->Velocity = FVector::ZeroVector;
+	++GFrameCounter;
 	if (!TestTrue(TEXT("Definition arriving after component BeginPlay becomes usable"), Source->GetStreamingSource(Result))) return false;
 	TestEqual(TEXT("Late definition supplies authored radius"), Result.Shapes[0].Radius, Definition->PreparationRadius);
 	TestEqual(TEXT("Actual stationary pawn uses one sphere"), Result.Shapes.Num(), 1);
@@ -221,6 +236,46 @@ bool FProjectJWorldPreparedArrivalTest::RunTest(const FString&)
     ASC->InitAbilityActorInfo(PlayerState, Avatar); ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetHealthAttribute(), 100);
     auto* Definition = NewObject<UProject_JWorldDefinition>(WorldState); WorldState->Definition = Definition;
     FProject_JWorldPlace Place; Place.PlaceId = TEXT("S01"); Place.Location = FVector(2000,0,20); Definition->Places.Add(Place);
+    Portal->StandaloneDestination = TSoftObjectPtr<UWorld>(FSoftObjectPath(TEXT("/Game/World/Validation/L_PortalDestinationMissing.L_PortalDestinationMissing")));
+    FDataValidationContext MissingDestination;
+    TestEqual(TEXT("Missing standalone destination is an authoring error"), Portal->IsDataValid(MissingDestination), EDataValidationResult::Invalid);
+    TestFalse(TEXT("Missing standalone destination is unavailable for interaction"), Portal->CanInteract_Implementation(Avatar));
+    Portal->StandaloneDestination = TSoftObjectPtr<UWorld>(FSoftObjectPath(TEXT("/Engine/BasicShapes/Cube.Cube")));
+    FDataValidationContext NonMapDestination;
+    TestEqual(TEXT("A package containing a static mesh cannot be a standalone destination"), Portal->IsDataValid(NonMapDestination), EDataValidationResult::Invalid);
+    TestFalse(TEXT("An existing non-map is unavailable for interaction"), Portal->CanInteract_Implementation(Avatar));
+    Portal->StandaloneDestination = TSoftObjectPtr<UWorld>(FSoftObjectPath(TEXT("/Engine/Maps/Entry.Entry")));
+    FDataValidationContext ExistingDestination;
+    TestEqual(TEXT("A saved map resolves without loading it"), Portal->IsDataValid(ExistingDestination), EDataValidationResult::Valid);
+    auto* Dungeons = Instance->GetSubsystem<UProject_JDungeonInstanceSubsystem>();
+    if (!TestNotNull(TEXT("Dungeon allocator"), Dungeons)) return false;
+    auto* Registered = NewObject<UProject_JDungeonDefinition>(Instance.Get());
+    Registered->DungeonId = TEXT("Test.PortalRegistration");
+    const auto SpawnDungeonPortal = [&](UProject_JDungeonDefinition* Dungeon, bool bAlsoStandalone, FName ExplicitId = NAME_None)
+    {
+        auto* Placed = TestWorld->SpawnActorDeferred<AProject_JWorldPortal>(
+            AProject_JWorldPortal::StaticClass(), FTransform::Identity);
+        Placed->DungeonDefinition = Dungeon;
+        Placed->DungeonId = ExplicitId;
+        if (bAlsoStandalone) Placed->StandaloneDestination = Portal->StandaloneDestination;
+        Placed->FinishSpawning(FTransform::Identity);
+        return Placed;
+    };
+    SpawnDungeonPortal(Registered, false);
+    TestTrue(TEXT("Valid dungeon portal registers its definition during map entry"),
+        Dungeons->FindDungeonDefinition(Registered->DungeonId) == Registered);
+    auto* Conflicting = NewObject<UProject_JDungeonDefinition>(Instance.Get());
+    Conflicting->DungeonId = Registered->DungeonId;
+    auto* Mixed = SpawnDungeonPortal(Conflicting, true);
+    TestTrue(TEXT("Rejected standalone portal cannot replace another portal's dungeon metadata"),
+        Dungeons->FindDungeonDefinition(Registered->DungeonId) == Registered);
+    TestTrue(TEXT("Rejected standalone portal cannot publish a replicated dungeon ID"), Mixed->DungeonId.IsNone());
+    auto* Mismatched = SpawnDungeonPortal(Conflicting, false, TEXT("Test.OtherDungeon"));
+    FDataValidationContext MismatchedContext;
+    TestEqual(TEXT("Conflicting dungeon IDs give an authoring error"), Mismatched->IsDataValid(MismatchedContext), EDataValidationResult::Invalid);
+    TestFalse(TEXT("A mismatched dungeon is unavailable for travel"), Mismatched->CanInteract_Implementation(Avatar));
+    TestTrue(TEXT("A mismatched ID cannot overwrite the registered dungeon"), Dungeons->FindDungeonDefinition(Registered->DungeonId) == Registered);
+    Portal->StandaloneDestination.Reset();
     Portal->DestinationPlaceId = Place.PlaceId;
     auto* Preparation = NewObject<UProject_JWorldStreamingComponent>(Controller);
     Controller->AddInstanceComponent(Preparation); Preparation->RegisterComponent();

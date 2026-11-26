@@ -1,28 +1,106 @@
 #include "UI/Project_JCharacterUIProfile.h"
 #include "AbilitySystemComponent.h"
+#include "Validation/Project_JDataValidation.h"
+
+namespace
+{
+struct FProfileIssue
+{
+	const TCHAR* Reason = nullptr;
+	int32 Index = INDEX_NONE;
+#if WITH_EDITOR
+	FString Describe() const
+	{
+		return Index == INDEX_NONE ? FString(Reason) : FString::Printf(TEXT("%s (entry %d)"), Reason, Index);
+	}
+#endif
+};
+
+FProfileIssue FindProfileIssue(const UProject_JCharacterUIProfile& Profile)
+{
+	if (Profile.ProfileId.IsNone()) return {TEXT("ProfileId is missing")};
+	if (Profile.bOverrideSkills && Profile.bAppendSkills) return {TEXT("Choose either Override Skills or Append Skills")};
+	TMap<FGameplayTag, TSet<FName>> InputClasses;
+	if (Profile.bOverrideSkills || Profile.bAppendSkills)
+	{
+		if (Profile.Skills.Num() > 64) return {TEXT("Skills exceeds 64 entries")};
+		for (int32 Index = 0; Index < Profile.Skills.Num(); ++Index)
+		{
+			const auto& Slot = Profile.Skills[Index];
+			if (!Slot.InputTag.IsValid()) return {TEXT("Skills has an unassigned InputTag"), Index};
+			auto& Classes = InputClasses.FindOrAdd(Slot.InputTag);
+			if (Classes.Contains(NAME_None) || Classes.Contains(Slot.ClassId)
+				|| (Slot.ClassId.IsNone() && !Classes.IsEmpty()))
+				return {TEXT("Skills reuses an InputTag for overlapping classes"), Index};
+			Classes.Add(Slot.ClassId);
+		}
+	}
+	if (Profile.bOverrideResources)
+	{
+		if (Profile.Resources.Num() > 6) return {TEXT("Resources exceeds 6 entries")};
+		TSet<FName> IDs;
+		for (int32 Index = 0; Index < Profile.Resources.Num(); ++Index)
+		{
+			const auto& Resource = Profile.Resources[Index];
+			if (Resource.ResourceId.IsNone() || IDs.Contains(Resource.ResourceId))
+				return {TEXT("Resources needs a unique ResourceId"), Index};
+			if (!Resource.Current.IsValid() || !Resource.Maximum.IsValid())
+				return {TEXT("Resources needs both Current and Maximum attributes"), Index};
+			IDs.Add(Resource.ResourceId);
+		}
+	}
+	return {};
+}
+}
 
 bool UProject_JCharacterUIProfile::IsUsable() const
 {
-	if (ProfileId.IsNone() || (bOverrideSkills && Skills.Num() > 64) || (bOverrideResources && Resources.Num() > 6))
-		return false;
-	TSet<FGameplayTag> Inputs;
-	if (bOverrideSkills)
-		for (const auto &Slot : Skills)
-		{
-			if (!Slot.InputTag.IsValid() || Inputs.Contains(Slot.InputTag))
-				return false;
-			Inputs.Add(Slot.InputTag);
-		}
+	return FindProfileIssue(*this).Reason == nullptr;
+}
+
+#if WITH_EDITOR
+EDataValidationResult UProject_JCharacterUIProfile::IsDataValid(FDataValidationContext& Context) const
+{
+	const auto Parent = Super::IsDataValid(Context);
+	const FProfileIssue Issue = FindProfileIssue(*this);
+	if (Issue.Reason) Context.AddError(FText::FromString(Issue.Describe()));
+	return Project_J::DataValidation::MakeResult(Parent, Issue.Reason != nullptr);
+}
+
+EDataValidationResult UProject_JUIProfileCatalog::IsDataValid(FDataValidationContext& Context) const
+{
+	const auto Parent = Super::IsDataValid(Context);
+	bool bInvalid = false;
 	TSet<FName> IDs;
-	if (bOverrideResources)
-		for (const auto &Resource : Resources)
+	for (int32 Index = 0; Index < Profiles.Num(); ++Index)
+	{
+		const auto* Profile = Profiles[Index].Get();
+		FString Problem;
+		if (!Profile) Problem = TEXT("assign a profile or remove the empty entry");
+		else
 		{
-			if (Resource.ResourceId.IsNone() || IDs.Contains(Resource.ResourceId) || !Resource.Current.IsValid() ||
-				!Resource.Maximum.IsValid())
-				return false;
-			IDs.Add(Resource.ResourceId);
+			const FProfileIssue Issue = FindProfileIssue(*Profile);
+			if (Issue.Reason) Problem = Profile->GetPathName() + TEXT(" - ") + Issue.Describe();
+			else if (IDs.Contains(Profile->ProfileId))
+				Problem = FString::Printf(TEXT("duplicate ProfileId '%s' on %s"), *Profile->ProfileId.ToString(), *Profile->GetPathName());
+			IDs.Add(Profile->ProfileId);
 		}
-	return true;
+		if (!Problem.IsEmpty())
+			Project_J::DataValidation::AddError(Context, bInvalid, FText::FromString(FString::Printf(TEXT("Profiles[%d] - %s"), Index, *Problem)));
+	}
+	return Project_J::DataValidation::MakeResult(Parent, bInvalid);
+}
+#endif
+TArray<FProject_JUISkillSlot> UProject_JCharacterUIProfile::ResolveSkills(const TArray<FProject_JUISkillSlot>& Base, FName CurrentClass) const
+{
+	TArray<FProject_JUISkillSlot> Result = bOverrideSkills ? Skills : Base;
+	Result.RemoveAll([CurrentClass](const auto& Slot) { return !Slot.ClassId.IsNone() && Slot.ClassId != CurrentClass; });
+	if (bAppendSkills)
+		for (const FProject_JUISkillSlot& Slot : Skills)
+			if ((Slot.ClassId.IsNone() || Slot.ClassId == CurrentClass)
+				&& !Result.ContainsByPredicate([&](const auto& Existing) { return Slot.InputTag == Existing.InputTag; }))
+				Result.Add(Slot);
+	return Result;
 }
 bool UProject_JCharacterUIProfile::Matches(const FProject_JUIContext &Context) const
 {

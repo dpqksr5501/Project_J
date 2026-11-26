@@ -9,22 +9,30 @@
 #include "EdGraph/EdGraphNode.h"
 #include "Engine/Blueprint.h"
 #include "Engine/Level.h"
+#include "Engine/StaticMesh.h"
+#include "FoliageInstancedStaticMeshComponent.h"
 #include "Engine/SCS_Node.h"
 #include "Engine/SimpleConstructionScript.h"
 #include "Engine/World.h"
 #include "Materials/MaterialInterface.h"
 #include "Misc/DataValidation.h"
 #include "Project_JNPCCharacter.h"
+#include "Project_JWorldAuthoringLibrary.h"
 #include "RHIGlobals.h"
 #include "Validation/Project_JCrossAssetValidator.h"
 #include "WorldPartition/HLOD/HLODLayer.h"
+#include "WorldPartition/HLOD/HLODActor.h"
+#include "WorldPartition/IWorldPartitionEditorModule.h"
+#include "WorldPartition/WorldPartition.h"
+#include "WorldPartition/RuntimeHashSet/WorldPartitionRuntimeHashSet.h"
+#include "World/Project_JDistantMeshPolicy.h"
 
 namespace
 {
-bool IsMainWorld(const UWorld* World)
+bool IsPartitionedAuthoringWorld(const UWorld* World)
 {
-	static const FName MainWorldPackage(TEXT("/Game/World/MainWorld/Maps/L_MainWorld"));
-	return World && World->GetOutermost()->GetFName() == MainWorldPackage;
+	const UWorldPartition* Partition = World && !World->IsGameWorld() ? World->GetWorldPartition() : nullptr;
+	return Partition && (!Partition->IsInitialized() || UProject_JWorldAuthoringLibrary::IsRegionStreamingEnabled(World));
 }
 
 bool IsAuthoredForestActor(const AActor* Actor)
@@ -34,7 +42,20 @@ bool IsAuthoredForestActor(const AActor* Actor)
 	return IsValid(Actor) && (Actor->ActorHasTag(ForestTag) || Actor->ActorHasTag(NaturalDiversityTag));
 }
 
-TOptional<int32> GetActiveWPODisableDistance(const UInstancedStaticMeshComponent& Component, EShaderPlatform ShaderPlatform)
+bool IsDistantMeshCandidate(const AActor* Actor)
+{
+	if (!IsValid(Actor) || Actor->IsA<AWorldPartitionHLOD>() || Actor->IsEditorOnly()) return false;
+	if (IsAuthoredForestActor(Actor)) return true;
+	for (const auto* Component : TInlineComponentArray<UStaticMeshComponent*>(Actor))
+	{
+		UStaticMesh* Mesh = Component->GetStaticMesh();
+		if (!Component->IsEditorOnly() && Mesh && (Component->IsA<UFoliageInstancedStaticMeshComponent>()
+			|| Mesh->GetAssetUserDataOfClass(UProject_JDistantMeshPolicy::StaticClass()))) return true;
+	}
+	return false;
+}
+
+TOptional<int32> GetActiveWPODisableDistance(const UStaticMeshComponent& Component, EShaderPlatform ShaderPlatform)
 {
 	if (Component.bEvaluateWorldPositionOffset && ShaderPlatform != SP_NumPlatforms)
 	{
@@ -85,17 +106,18 @@ bool UProject_JCrossAssetEditorValidator::CanValidateAsset_Implementation(const 
 {
 	if (const AActor* Actor = Cast<AActor>(Object))
 	{
-		return IsAuthoredForestActor(Actor) && IsMainWorld(Actor->GetWorld());
+		return IsPartitionedAuthoringWorld(Actor->GetWorld()) && IsDistantMeshCandidate(Actor);
 	}
-	if (const UWorld* World = Cast<UWorld>(Object); IsMainWorld(World))
+	if (const UWorld* World = Cast<UWorld>(Object); IsPartitionedAuthoringWorld(World))
 	{
 		const TConstArrayView<FAssetData> ExternalObjects = Context.GetAssociatedExternalObjects();
 		if (!ExternalObjects.IsEmpty())
 		{
 			for (const FAssetData& ExternalObject : ExternalObjects)
 			{
-				const AActor* Actor = Cast<AActor>(ExternalObject.FastGetAsset(false));
-				if (IsAuthoredForestActor(Actor) && Actor->GetWorld() == World)
+				UObject* External = ExternalObject.FastGetAsset(false);
+				const AActor* Actor = Cast<AActor>(External);
+				if (!External || (IsDistantMeshCandidate(Actor) && Actor->GetWorld() == World))
 				{
 					return true;
 				}
@@ -104,7 +126,7 @@ bool UProject_JCrossAssetEditorValidator::CanValidateAsset_Implementation(const 
 		}
 		for (const ULevel* Level : World->GetLevels())
 		{
-			if (Level && Level->Actors.ContainsByPredicate([](const AActor* Actor) { return IsAuthoredForestActor(Actor); }))
+			if (Level && Level->Actors.ContainsByPredicate([](const AActor* Actor) { return IsDistantMeshCandidate(Actor); }))
 			{
 				return true;
 			}
@@ -136,28 +158,70 @@ EDataValidationResult UProject_JCrossAssetEditorValidator::ValidateLoadedAsset_I
 {
 	const AActor* ForestActor = Cast<AActor>(Object);
 	const UWorld* World = ForestActor ? ForestActor->GetWorld() : Cast<UWorld>(Object);
-	if (IsMainWorld(World))
+	if (IsPartitionedAuthoringWorld(World))
 	{
-		const EShaderPlatform ShaderPlatform = GetFeatureLevelShaderPlatform(World->GetFeatureLevel());
-		const auto ValidateForestActor = [this, Object, World, ShaderPlatform](const AActor* Actor)
+		if (!World->GetWorldPartition()->IsInitialized())
 		{
-			if (!IsAuthoredForestActor(Actor) || Actor->GetWorld() != World || !Actor->IsHLODRelevant())
-			{
-				return;
-			}
+			AssetWarning(Object, FText::FromString(World->GetPathName() + TEXT(": open the owning map to verify streaming and distant-mesh placement.")));
+			AssetPasses(Object);
+			return EDataValidationResult::Valid;
+		}
+		bool bInvalid = false;
+		const EShaderPlatform ShaderPlatform = GetFeatureLevelShaderPlatform(World->GetFeatureLevel());
+		const auto* RuntimeHash = Cast<UWorldPartitionRuntimeHashSet>(World->GetWorldPartition()->RuntimeHash);
+		const bool bRequireLayerRegistration = IWorldPartitionEditorModule::Get().GetRequireExplicitHLODLayerPartitionAssignation();
+		const auto ValidateForestActor = [this, Object, World, ShaderPlatform, RuntimeHash, bRequireLayerRegistration, &bInvalid](const AActor* Actor)
+		{
+			if (!IsValid(Actor) || Actor->GetWorld() != World || Actor->IsA<AWorldPartitionHLOD>() || Actor->IsEditorOnly()) return;
+			const bool bLegacyForest = IsAuthoredForestActor(Actor);
+			TOptional<bool> OwnerParticipates;
 			const UHLODLayer* Layer = Actor->GetHLODLayer();
-			const bool bUsesInstancingHLOD = Layer && Layer->GetLayerType() == EHLODLayerType::Instancing;
-			const TInlineComponentArray<UInstancedStaticMeshComponent*> Components(Actor);
-			for (const UInstancedStaticMeshComponent* Component : Components)
+			const bool bRootContainer = Actor->GetLevel() == World->PersistentLevel && !Actor->IsInLevelInstance();
+			if (!Layer && bRootContainer) Layer = World->GetWorldPartition()->GetDefaultHLODLayer();
+			for (const auto* Component : TInlineComponentArray<UStaticMeshComponent*>(Actor))
 			{
-				if (Component && Component->IsHLODRelevant())
+				UStaticMesh* Mesh = Component->GetStaticMesh();
+				if (!Mesh || Component->IsEditorOnly()) continue;
+				const auto* Policy = Cast<UProject_JDistantMeshPolicy>(Mesh->GetAssetUserDataOfClass(UProject_JDistantMeshPolicy::StaticClass()));
+				const bool bLegacyComponent = bLegacyForest && Component->IsA<UInstancedStaticMeshComponent>();
+				if (!Policy && !bLegacyComponent && !Component->IsA<UFoliageInstancedStaticMeshComponent>()) continue;
+				static const FName NearOnly(TEXT("ProjectJ.World.NearOnly"));
+				if (Component->ComponentHasTag(NearOnly) || (Policy && Policy->Role == EProject_JDistantMeshRole::NearOnly)) continue;
+				const FString Path = Component->GetPathName();
+				if (!Policy && !bLegacyComponent)
 				{
-					const auto Result = Project_J::EditorValidation::ValidateFoliageAssetPolicy(
-						Component->GetPathName(), bUsesInstancingHLOD, GetActiveWPODisableDistance(*Component, ShaderPlatform));
-					for (const FString& Error : Result.Errors)
-					{
-						AssetWarning(Object, FText::FromString(Error));
-					}
+					AssetWarning(Object, FText::FromString(Path + TEXT(": classify the foliage mesh with Project J Distant Mesh Policy or mark this placement NearOnly.")));
+					continue;
+				}
+				if (!OwnerParticipates.IsSet()) OwnerParticipates = Actor->GetIsSpatiallyLoaded() && Actor->IsHLODRelevant();
+				if (!OwnerParticipates.GetValue() || !Component->IsHLODRelevant())
+				{
+					AssetFails(Object, FText::FromString(Path + TEXT(": distant representation requires spatial loading and actor/component HLOD participation.")));
+					bInvalid = true;
+					continue;
+				}
+				if (!Layer && !bRootContainer)
+				{
+					AssetWarning(Object, FText::FromString(Path + TEXT(": inherited container HLOD layer requires streaming-generation validation.")));
+					continue;
+				}
+				const bool bCanopy = !Policy || Policy->Role == EProject_JDistantMeshRole::InstancedCanopy;
+				if (!Layer || (bCanopy && Layer->GetLayerType() != EHLODLayerType::Instancing))
+				{
+					AssetFails(Object, FText::FromString(Path + (bCanopy ? TEXT(": assign an effective Instancing HLOD layer.") : TEXT(": assign a distant HLOD layer."))));
+					bInvalid = true;
+				}
+				else if (bRootContainer && bRequireLayerRegistration && RuntimeHash && !RuntimeHash->IsValidHLODLayer(Actor->GetRuntimeGrid(), FSoftObjectPath(Layer)))
+				{
+					const FName Grid = Actor->GetRuntimeGrid();
+					AssetFails(Object, FText::FromString(FString::Printf(TEXT("%s: HLOD layer '%s' is not registered for runtime grid '%s'. Check the world's HLOD Partitions."),
+						*Path, *Layer->GetPathName(), Grid.IsNone() ? TEXT("<default>") : *Grid.ToString())));
+					bInvalid = true;
+				}
+				if (bCanopy)
+				{
+					const auto Result = Project_J::EditorValidation::ValidateCanopyWindDistance(Path, GetActiveWPODisableDistance(*Component, ShaderPlatform));
+					for (const FString& Message : Result.Errors) AssetWarning(Object, FText::FromString(Message));
 				}
 			}
 		};
@@ -170,7 +234,8 @@ EDataValidationResult UProject_JCrossAssetEditorValidator::ValidateLoadedAsset_I
 			// OFPA saves are validated through the owning map with only the saved actors in the context.
 			for (const FAssetData& ExternalObject : ExternalObjects)
 			{
-				ValidateForestActor(Cast<AActor>(ExternalObject.FastGetAsset(false)));
+				if (UObject* External = ExternalObject.FastGetAsset(false)) ValidateForestActor(Cast<AActor>(External));
+				else AssetWarning(Object, FText::FromString(ExternalObject.PackageName.ToString() + TEXT(": external object unavailable for distant-mesh validation.")));
 			}
 		}
 		else
@@ -186,16 +251,20 @@ EDataValidationResult UProject_JCrossAssetEditorValidator::ValidateLoadedAsset_I
 				}
 			}
 		}
+		if (bInvalid) return EDataValidationResult::Invalid;
 		AssetPasses(Object);
 		return EDataValidationResult::Valid;
 	}
 
 	if (const UProject_JNPCBrainDefinition* Brain = Cast<UProject_JNPCBrainDefinition>(Object))
 	{
-		if (Brain->SightRadiusCm <= 0.0f || Brain->LeashRadiusCm < Brain->SightRadiusCm * 0.5f || Brain->MaxChaseZDeltaCm <= 0.0f)
+		if (!FMath::IsFinite(Brain->SightRadiusCm) || !FMath::IsFinite(Brain->LeashRadiusCm)
+			|| !FMath::IsFinite(Brain->MaxChaseZDeltaCm) || !FMath::IsFinite(Brain->UnreachableEvadeSeconds)
+			|| Brain->SightRadiusCm <= 0.0f || Brain->LeashRadiusCm < Brain->SightRadiusCm * 0.5f
+			|| Brain->MaxChaseZDeltaCm <= 0.0f || Brain->UnreachableEvadeSeconds <= 0.0f)
 		{
 			AssetFails(Object, NSLOCTEXT("ProjectJCrossAssetValidator", "InvalidBrain",
-				"UProject_JNPCBrainDefinition requires positive SightRadiusCm/MaxChaseZDeltaCm and LeashRadiusCm >= 0.5 * SightRadiusCm."));
+				"NPC sensing and evade values must be finite. SightRadiusCm, MaxChaseZDeltaCm and UnreachableEvadeSeconds must be positive. LeashRadiusCm must be at least half of SightRadiusCm."));
 			return EDataValidationResult::Invalid;
 		}
 		AssetPasses(Object);

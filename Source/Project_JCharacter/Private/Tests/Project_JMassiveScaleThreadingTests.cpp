@@ -270,6 +270,14 @@ bool FProjectJProjectileParallelAndPruneTest::RunTest(const FString&)
 
 	AActor* Instigator = Scope.World->SpawnActor<AActor>(FVector::ZeroVector, FRotator::ZeroRotator);
 	constexpr int32 SpawnCount = 80; // Exceeds default ProjectJ.Projectile.ParallelThreshold (64)
+	{
+		FMassiveScaleTestWorld Other;
+		AActor* ForeignSource = Other.World->SpawnActor<AActor>();
+		TestEqual(TEXT("An actor from another world cannot own a projectile here"),
+			ProjectileSubsystem->SpawnProjectile(ForeignSource, FVector::ZeroVector, FVector::ForwardVector, 8.f, 1.f, 0, 0.f, {}), uint64(0));
+		TestFalse(TEXT("Another world's target cannot occupy a local cooldown channel"),
+			ProjectileSubsystem->AdmitMultiHitTarget(42, ForeignSource, 10.0, 0.5f));
+	}
 	TArray<uint64> Ids;
 	Ids.Reserve(SpawnCount);
 	for (int32 i = 0; i < SpawnCount; ++i)
@@ -380,6 +388,29 @@ bool FProjectJProjectileAsyncSweepTest::RunTest(const FString&)
 		Scope.Step(0.1f);
 		TestEqual(TEXT("Destroying the source retires any pending projectile"), Projectiles->GetActiveProjectileCount(), 0);
 		TestEqual(TEXT("Retired projectile did not dispatch a hit"), Hits.Num(), 1);
+		// Both hits are collected in one tick. Teardown from the first callback retires
+		// the rest of that world's delivery batch in both collision modes.
+		int32 TeardownHits = 0;
+		for (int32 Index = 0; Index < 2; ++Index)
+		{
+			Projectiles->SpawnProjectile(nullptr, FVector(200, 0, 100), FVector(1000, 0, 0), 8.f, 1.f, 0, 0.f,
+				FProjectJOnProjectileHit::CreateLambda([&](uint64, AActor*, const FHitResult&)
+				{
+					++TeardownHits;
+					Scope.World->BeginTearingDown();
+				}));
+		}
+		// Issue the asynchronous traces on a normal world tick. Dispatch the terminal
+		// callback outside UWorld::Tick so engine tick functions can retire safely.
+		if (Mode)
+		{
+			Scope.Step(0.1f);
+			++GFrameCounter;
+		}
+		Projectiles->Tick(0.1f);
+		TestEqual(TEXT("Only the callback that begins teardown is delivered"), TeardownHits, 1);
+		TestEqual(TEXT("World teardown closes admission even for ownerless projectiles"),
+			Projectiles->SpawnProjectile(nullptr, FVector::ZeroVector, FVector::ForwardVector, 8.f, 1.f, 0, 0.f, {}), uint64(0));
 	}
 	return !HasAnyErrors();
 }

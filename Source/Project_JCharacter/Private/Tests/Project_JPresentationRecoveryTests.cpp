@@ -1,5 +1,6 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
+#include "Algo/AllOf.h"
 #include "NativeGameplayTags.h"
 #include "Components/Project_JCombatPresentationComponent.h"
 #include "Combat/Project_JCombatPresentationSet.h"
@@ -33,6 +34,15 @@
 #include "Animation/Project_JAnimNotifyState_CombatPresentationCue.h"
 #include "GameFramework/WorldSettings.h"
 #include "GameFramework/Controller.h"
+#include "Combat/Project_JGroundAttack.h"
+#include "Combat/Project_JAttackDefinition.h"
+#include "Components/BoxComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "Components/Project_JCombatHitValidationComponent.h"
+#include "EngineUtils.h"
+#include "Project_JAbilitySystemComponent.h"
+#include "Project_JAttributeSet.h"
+#include "Project_JGameplayTags.h"
 
 UE_DEFINE_GAMEPLAY_TAG_STATIC(TestAttackTag, "ProjectJ.Tests.Presentation.Attack");
 UE_DEFINE_GAMEPLAY_TAG_STATIC(TestCueTag, "ProjectJ.Tests.Presentation.Cue");
@@ -88,6 +98,170 @@ public:
 private:
 	TFunction<bool()> Body;
 };
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJGroundAttackLifecycleTest, "ProjectJ.Integrated.GroundAttackLifecycle",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJGroundAttackLifecycleTest::RunTest(const FString&)
+{
+	FSoftCueWorld S;
+	auto* Floor = S.World->SpawnActor<AActor>();
+	auto* Box = NewObject<UBoxComponent>(Floor);
+	Floor->SetRootComponent(Box);
+	Box->InitBoxExtent(FVector(2000, 2000, 25));
+	Box->SetCollisionProfileName(TEXT("BlockAll"));
+	Box->RegisterComponent();
+	Floor->SetActorLocation(FVector(0, 0, -25));
+	auto* Hit = NewObject<UProject_JCombatHitValidationComponent>(S.NPC);
+	S.NPC->AddInstanceComponent(Hit);
+	Hit->RegisterComponent();
+
+	const auto SpawnVictim = [&S](double X, double Y, double Z = 100.0)
+	{
+		FActorSpawnParameters Params;
+		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		auto* Victim = S.World->SpawnActor<AProject_JNPCCharacter>(AProject_JNPCCharacter::StaticClass(), FVector(X, Y, Z), FRotator::ZeroRotator, Params);
+		Victim->GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		Victim->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Ignore);
+		return Victim;
+	};
+	auto* Inside = SpawnVictim(400, 100);
+	auto* Outside = SpawnVictim(400, 380);
+	auto* UpperFloor = S.World->SpawnActor<AActor>();
+	auto* Slab = NewObject<UBoxComponent>(UpperFloor);
+	UpperFloor->SetRootComponent(Slab);
+	Slab->InitBoxExtent(FVector(80, 65, 8));
+	Slab->SetCollisionProfileName(TEXT("BlockAll"));
+	Slab->RegisterComponent();
+	UpperFloor->SetActorLocation(FVector(400, 0, 160));
+	auto* Above = SpawnVictim(400, 0, 265);
+	S.World->InitializeActorsForPlay(FURL());
+	S.World->GetWorldSettings()->NotifyBeginPlay();
+	for (auto* Character : {S.NPC, Inside, Outside, Above})
+	{
+		Character->GetAbilitySystemComponent()->InitAbilityActorInfo(Character, Character);
+		Character->GetAttributeSet()->InitMaxHealth(100);
+		Character->GetAttributeSet()->InitHealth(100);
+	}
+
+	const auto* Fight = LoadObject<UProject_JAttackDefinition>(nullptr, TEXT("/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1.DA_Attack_Greatsword_LMB1"));
+	if (!TestNotNull(TEXT("Authored damage fixture"), Fight) || !Fight->DamageEffect) return false;
+	auto* Attack = NewObject<UProject_JAttackDefinition>(S.NPC);
+	Attack->AttackTag = TestAttackTag;
+	Attack->bMontageDriven = false;
+	Attack->WarningPolicy = EProject_JAttackWarningPolicy::GroundArea;
+	Attack->DamageEffect = Fight->DamageEffect;
+	auto* ASC = S.NPC->GetAbilitySystemComponent();
+	const auto Handle = ASC->GiveAbility(FGameplayAbilitySpec(UProject_JGameplayAbility_GroundAttack::StaticClass(), 1, INDEX_NONE, Attack));
+	const auto CountWarnings = [&]()
+	{
+		int32 Count = 0;
+		for (TActorIterator<AProject_JGroundAttackWarning> It(S.World); It; ++It) ++Count;
+		return Count;
+	};
+	const auto Advance = [&]()
+	{
+		for (int32 Tick = 0; Tick < 20; ++Tick)
+		{
+			++GFrameCounter;
+			S.World->Tick(LEVELTICK_All, 0.1f);
+		}
+	};
+	const auto* PulseClass = LoadClass<UGameplayAbility>(nullptr,
+		TEXT("/Game/DataAssetSets/AttackDefinition/Spellblade/GroundPulse/GA_Spellblade_GroundPulse.GA_Spellblade_GroundPulse_C"));
+	if (!TestNotNull(TEXT("Saved playable Ground Pulse ability"), PulseClass)) return false;
+	const auto PulseHandle = ASC->GiveAbility(FGameplayAbilitySpec(PulseClass->GetDefaultObject<UGameplayAbility>()));
+	const auto Mana = UProject_JAttributeSet::GetManaAttribute();
+	ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetMaxManaAttribute(), 100.f);
+	ASC->SetNumericAttributeBase(Mana, 9.f);
+	TestFalse(TEXT("Insufficient mana rejects the authored skill"), ASC->TryActivateAbility(PulseHandle));
+	TestEqual(TEXT("Rejected cast publishes no hazard"), CountWarnings(), 0);
+	ASC->SetNumericAttributeBase(Mana, 20.f);
+	TestTrue(TEXT("The saved skill activates with enough mana"), ASC->TryActivateAbility(PulseHandle));
+	TestEqual(TEXT("Server commits one authored cost"), ASC->GetNumericAttribute(Mana), 10.f);
+	ASC->CancelAbilityHandle(PulseHandle);
+	TestFalse(TEXT("Cooldown survives cancellation"), ASC->TryActivateAbility(PulseHandle));
+	TestEqual(TEXT("Cooldown rejection does not charge again"), ASC->GetNumericAttribute(Mana), 10.f);
+	Advance(); Advance(); Advance();
+	TestTrue(TEXT("Recast is accepted after the authored cooldown expires"), ASC->TryActivateAbility(PulseHandle));
+	TestEqual(TEXT("A new execution pays the exact remaining balance"), ASC->GetNumericAttribute(Mana), 0.f);
+	ASC->CancelAbilityHandle(PulseHandle);
+	ASC->ClearAbility(PulseHandle);
+	Floor->SetActorRotation(FRotator(0, 0, 18));
+	TestTrue(TEXT("Uses the actual GAS activation"), ASC->TryActivateAbility(Handle));
+	TestEqual(TEXT("A separate network actor owns the warning"), CountWarnings(), 1);
+	for (TActorIterator<AProject_JGroundAttackWarning> It(S.World); It; ++It)
+	{
+		const auto* Ring = It->FindComponentByClass<UProject_JGameplayWarningMarkerComponent>();
+		if (!TestNotNull(TEXT("Published warning registers its marker"), Ring)) return false;
+		const FBox BoxBounds = Ring->Bounds.GetBox().ExpandBy(0.01);
+		const bool bContainsRing = !Ring->BatchedLines.IsEmpty() && Algo::AllOf(Ring->BatchedLines, [&](const FBatchedLine& Line)
+		{
+			return BoxBounds.IsInsideOrOn(Ring->GetComponentTransform().TransformPosition(Line.Start))
+				&& BoxBounds.IsInsideOrOn(Ring->GetComponentTransform().TransformPosition(Line.End));
+		});
+		TestTrue(TEXT("Renderer culling bounds include the full published ground ring"), bContainsRing);
+		const FVector FloorNormal = Box->GetUpVector();
+		const bool bTracksSlope = !Ring->BatchedLines.IsEmpty() && Algo::AllOf(Ring->BatchedLines, [&](const FBatchedLine& Line)
+		{
+			const FVector Delta = Ring->GetComponentTransform().TransformVector(Line.Start);
+			return FMath::Abs(FVector::DotProduct(Delta, FloorNormal)) < 1.0
+				&& FMath::IsNearlyEqual(Delta.Size2D(), 350.0, 1.0);
+		});
+		TestTrue(TEXT("On a ramp the warning follows the ground plane and preserves the horizontal damage radius"), bTracksSlope);
+	}
+	Floor->SetActorRotation(FRotator::ZeroRotator);
+	TestEqual(TEXT("No damage during the warning"), Inside->GetAttributeSet()->GetHealth(), 100.f);
+	ASC->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_Dead);
+	TestEqual(TEXT("Caster death retires the warning"), CountWarnings(), 0);
+	Advance();
+	TestEqual(TEXT("Cancelled warning has no damage"), Inside->GetAttributeSet()->GetHealth(), 100.f);
+	ASC->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_Dead);
+	TestTrue(TEXT("The skill may be reused after death cleanup"), ASC->TryActivateAbility(Handle));
+	ASC->InitAbilityActorInfo(S.NPC, S.NPC);
+	TestEqual(TEXT("Changing the ASC binding immediately retires the obsolete warning"), CountWarnings(), 0);
+	Advance();
+	TestEqual(TEXT("An isolated prior binding cannot hit later"), Inside->GetAttributeSet()->GetHealth(), 100.f);
+	TestTrue(TEXT("The skill may be reused after binding cleanup"), ASC->TryActivateAbility(Handle));
+	Advance();
+	const float FirstDamage = Inside->GetAttributeSet()->GetHealth();
+	TestTrue(TEXT("The target inside the visible ring receives authority damage"), FirstDamage < 100.f);
+	TestEqual(TEXT("The target just outside the ring receives no padding hit"), Outside->GetAttributeSet()->GetHealth(), 100.f);
+	TestTrue(TEXT("Upper-floor control remains above the slab but inside the circle's vertical reach"),
+		Above->GetActorLocation().Z > 168.0 && Above->GetActorLocation().Z < 350.0 && FVector::Dist2D(Above->GetActorLocation(), UpperFloor->GetActorLocation()) < 65.0);
+	TestEqual(TEXT("A floor blocking visibility protects a target over the center of the ring"), Above->GetAttributeSet()->GetHealth(), 100.f);
+	TestEqual(TEXT("Warning is gone after the pulse"), CountWarnings(), 0);
+	Advance();
+	TestEqual(TEXT("No second pulse occurs"), Inside->GetAttributeSet()->GetHealth(), FirstDamage);
+	TestTrue(TEXT("Another cast starts before the actor is retired"), ASC->TryActivateAbility(Handle));
+	TestEqual(TEXT("The warning exists before the source ends play"), CountWarnings(), 1);
+	S.NPC->Destroy();
+	TestEqual(TEXT("Avatar end play immediately retires its warning"), CountWarnings(), 0);
+	Advance();
+	TestEqual(TEXT("Retired actor's last cast cannot hit"), Inside->GetAttributeSet()->GetHealth(), FirstDamage);
+	const auto AddTread = [&](FVector Center, FVector Extent)
+	{
+		auto* Platform = S.World->SpawnActor<AActor>();
+		auto* Tread = NewObject<UBoxComponent>(Platform);
+		Platform->SetRootComponent(Tread);
+		Tread->InitBoxExtent(Extent);
+		Tread->SetCollisionProfileName(TEXT("BlockAll"));
+		Tread->RegisterComponent();
+		Platform->SetActorLocation(Center);
+	};
+	AddTread(FVector(2940, 0, -10), FVector(65, 200, 10));
+	AddTread(FVector(3000, 100, 12.5), FVector(32, 32, 12.5));
+	auto* Edge = S.World->SpawnActor<AProject_JGroundAttackWarning>(FVector(3000, 0, 8), FRotator::ZeroRotator);
+	Edge->Publish(100, S.World->GetTimeSeconds() + 3);
+	const auto* EdgeRing = Edge->FindComponentByClass<UProject_JGameplayWarningMarkerComponent>();
+	if (!TestNotNull(TEXT("Stair/ledge warning has a renderable ring"), EdgeRing)) return false;
+	TestTrue(TEXT("Warning vertices rise onto the 25 cm tread"), EdgeRing->BatchedLines.ContainsByPredicate(
+		[](const FBatchedLine& Line) { return Line.Start.Y > 99 && FMath::IsNearlyEqual(Line.Start.Z, 25.0, 1.0); }));
+	TestTrue(TEXT("Supported ground keeps a continuous perimeter"), EdgeRing->BatchedLines.ContainsByPredicate(
+		[](const FBatchedLine& Line) { return Line.Start.X < -99 && FVector::Dist2D(Line.Start, Line.End) > 18; }));
+	TestTrue(TEXT("Missing ground draws a dashed range at the cliff"), EdgeRing->BatchedLines.ContainsByPredicate(
+		[](const FBatchedLine& Line) { return Line.Start.X > 99 && FVector::Dist2D(Line.Start, Line.End) < 10; }));
+	return !HasAnyErrors();
 }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJPresentationRecoveryTest, "ProjectJ.Integrated.PresentationRecovery",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter | EAutomationTestFlags::NonNullRHI)

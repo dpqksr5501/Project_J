@@ -78,7 +78,7 @@ bool UProject_JRenderedCrowdFixture::SetupFXResourceCohort(FString& Failure)
     { Failure=TEXT("Mixed FX requires fresh standalone200/local/movement/NPC32 and exactly132 cosmetic owners"); return false; }
 #if !WITH_NIAGARA_DEBUGGER
     Failure=TEXT("Native read-only Niagara cull-reason observation is unavailable"); return false;
-#endif
+#else
     const TStrongObjectPtr<ThisClass> Self(this);
     FXResourceWorld=GetWorld(); FXResourceViewer=GetWorld()->GetFirstPlayerController();
     FXResourceCamera=FXResourceViewer.IsValid()?Cast<ACameraActor>(FXResourceViewer->GetViewTarget()):nullptr;
@@ -107,6 +107,7 @@ bool UProject_JRenderedCrowdFixture::SetupFXResourceCohort(FString& Failure)
     FXResourceViewTick.RegisterTickFunction(GetWorld()->PersistentLevel); FXResourceViewTick.SetTickFunctionEnable(true);
     RecordFXResourceCheckpoint(TEXT("setup_warm"));
     return true;
+#endif
 }
 void UProject_JRenderedCrowdFixture::CaptureFXResourceView(uint64 Epoch)
 {

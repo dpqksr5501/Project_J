@@ -12,5 +12,5 @@ namespace ProjectJ::Network
     // Realtime RPC/replication wire contract. Bump for incompatible changes;
     // independent of marketing, persistence schema and backend API versions.
     // 15: MMO bridge now exposes the server-authoritative unblock RPC.
-    inline constexpr uint32 RealtimeProtocolVersion = 15;
+    inline constexpr uint32 RealtimeProtocolVersion = 16;
 }

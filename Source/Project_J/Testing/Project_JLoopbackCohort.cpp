@@ -13,6 +13,7 @@
 #include "Engine/PendingNetGame.h"
 #include "Engine/World.h"
 #include "GameFramework/GameSession.h"
+#include "GameFramework/GameStateBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameplayEffect.h"
 #include "HAL/IConsoleManager.h"
@@ -29,6 +30,12 @@
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "Game/Project_JPlayerState.h"
 #if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
+#include "Combat/Project_JGroundAttack.h"
+#include "Project_JPlayerCharacter.h"
+#include "Iris/ReplicationSystem/ReplicationSystem.h"
+#include "Iris/ReplicationSystem/Filtering/NetObjectFilter.h"
+#include "Net/Iris/ReplicationSystem/ReplicationSystemUtil.h"
+#include "Net/Iris/ReplicationSystem/EngineReplicationBridge.h"
 #include "IPAddress.h"
 #include "Network/Project_JCrowdDensityNetObjectFilter.h"
 #endif
@@ -551,6 +558,49 @@ bool AProject_JLoopbackCohort::AdvanceMeasuredCombat(const UNetDriver& Driver, i
 		}
 		if (bBossCombat && bOwnerOnlyPeers && !CheckBossMulticastAudience(Driver))
 			return Fail(TEXT("owner-only participants would replicate combat multicasts to other clients"));
+		if (FParse::Param(FCommandLine::Get(), TEXT("ProjectJGroundWarningProbe")))
+		{
+			const auto* State = GetWorld()->GetGameState();
+			if (!State || !IsValid(Boss)) return Fail(TEXT("missing ground-warning probe origin or server clock"));
+			const double ServerTime = State->GetServerWorldTimeSeconds();
+			const FVector Center = Boss->GetActorLocation() - FVector(0, 0, Boss->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() - 8);
+			auto* Expires = GetWorld()->SpawnActor<AProject_JGroundAttackWarning>(Center, FRotator::ZeroRotator);
+			auto* Cancels = GetWorld()->SpawnActor<AProject_JGroundAttackWarning>(Center + FVector(0, 50, 0), FRotator::ZeroRotator);
+			if (!Expires || !Cancels) return Fail(TEXT("could not create ground warnings"));
+			Expires->Publish(350.f, ServerTime + 1.2);
+			Expires->SetLifeSpan(2.0f);
+			Cancels->Publish(220.f, ServerTime + 3.0);
+			Cancels->SetLifeSpan(0.8f);
+			if (FParse::Param(FCommandLine::Get(), TEXT("ProjectJLateGroundWarning")))
+			{
+				auto* System = Driver.GetReplicationSystem();
+				if (!System) return Fail(TEXT("late warning requires Iris"));
+				auto Group = System->CreateGroup(NAME_None);
+				if (!System->AddExclusionFilterGroup(Group)) return Fail(TEXT("could not restrict warning relevance"));
+				System->SetGroupFilterStatus(Group, UE::Net::ENetFilterStatus::Disallow);
+				for (const float Radius : {480.f, 490.f})
+				{
+					auto* Hazard = GetWorld()->SpawnActor<AProject_JGroundAttackWarning>(Center, FRotator(0, 0, 18));
+					const auto* Bridge = Hazard ? UE::Net::FReplicationSystemUtil::GetActorReplicationBridge(Hazard) : nullptr;
+					if (!Bridge || !Bridge->GetReplicatedRefHandle(Hazard).IsValid()) return Fail(TEXT("late warning has no Iris handle"));
+					System->AddToGroup(Group, Bridge->GetReplicatedRefHandle(Hazard));
+					Hazard->Publish(Radius, ServerTime + (Radius == 480.f ? 4.0 : 0.5));
+					Hazard->SetLifeSpan(5.0f);
+				}
+				const TWeakObjectPtr<UReplicationSystem> WeakSystem(System);
+				const auto SetVisibility = [Group, WeakSystem](bool bAllow)
+				{
+					if (auto* Live = WeakSystem.Get()) Live->SetGroupFilterStatus(Group,
+						bAllow ? UE::Net::ENetFilterStatus::Allow : UE::Net::ENetFilterStatus::Disallow);
+				};
+				FTimerHandle Timer;
+				GetWorldTimerManager().SetTimer(Timer, [SetVisibility]{ SetVisibility(true); }, 1.1f, false);
+				Timer.Invalidate();
+				GetWorldTimerManager().SetTimer(Timer, [SetVisibility]{ SetVisibility(false); }, 2.1f, false);
+				Timer.Invalidate();
+				GetWorldTimerManager().SetTimer(Timer, [WeakSystem, Group]{ if (auto* Live = WeakSystem.Get()) Live->DestroyGroup(Group); }, 3.0f, false);
+			}
+		}
 		SetPhase(ECombatPhase::Burst);
 		for (auto& [Player, Participant] : Participants)
 		{
@@ -857,7 +907,21 @@ bool AProject_JCohortController::HasCohortCompleted() const
 bool AProject_JCohortController::PollMeasuredRelease()
 {
 	PollBossReadiness();
-	if (!bAcknowledgedHealth && bCheckReplicatedHealth && HasCohortCompleted())
+#if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
+	if (!bObservedPulseCost && bBossCombatReady && FParse::Param(FCommandLine::Get(), TEXT("ProjectJCohortGroundPulse")))
+	{
+		const auto* Avatar = Cast<AProject_JPlayerCharacter>(GetPawn());
+		const auto* ASC = Avatar ? Avatar->GetAbilitySystemComponent() : nullptr;
+		if (ASC && ASC->GetNumericAttribute(UProject_JAttributeSet::GetManaAttribute()) == 20.f
+			&& ASC->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(TEXT("Cooldown.Spellblade.GroundPulse"))))
+		{
+			bObservedPulseCost = true;
+			UE_LOG(LogProjectJLoopbackCohort, Display, TEXT("COHORT_GROUND_PULSE owner_cost=10 mana=20 cooldown=1"));
+		}
+	}
+#endif
+	if (!bAcknowledgedHealth && bCheckReplicatedHealth && HasCohortCompleted()
+		&& (!FParse::Param(FCommandLine::Get(), TEXT("ProjectJCohortGroundPulse")) || bObservedPulseCost))
 	{
 		bAcknowledgedHealth = true;
 #if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS

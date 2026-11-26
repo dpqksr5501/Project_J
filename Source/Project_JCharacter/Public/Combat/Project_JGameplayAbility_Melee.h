@@ -100,6 +100,7 @@ private:
 	FDelegateHandle WeaponRevokedHandle;
 	uint64 AttackWeaponRevision = 0;
 	bool bEndingAttack = false;
+	bool bCommittingOpeningNode = false;
 	FGameplayTag CurrentComboNodeTag;
 	FGameplayTag QueuedInputTag;
 	TObjectPtr<UProject_JComboDefinition> ActiveComboDefinition = nullptr;

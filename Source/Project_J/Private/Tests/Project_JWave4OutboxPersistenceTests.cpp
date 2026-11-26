@@ -11,6 +11,7 @@
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "Gameplay/Project_JLootSubsystem.h"
+#include "World/Project_JWorldEncounter.h"
 #include "HAL/FileManager.h"
 #include "Misc/Paths.h"
 #include "Misc/ScopeExit.h"
@@ -104,8 +105,18 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJBossRewardSettlementTest, "ProjectJ.On
 bool FProjectJBossRewardSettlementTest::RunTest(const FString&)
 {
 	const FString DbPath = MakeTempOutboxDbPath(TEXT("BossSettlement"));
-	ON_SCOPE_EXIT { CleanupOutboxDbFiles(DbPath); };
-	const FString Scope(TEXT("/game/testfield|1|fieldboss"));
+	ON_SCOPE_EXIT
+	{
+		if (FParse::Param(FCommandLine::Get(), TEXT("ProjectJKeepBossLayoutFixture")))
+		{
+			UE_LOG(LogTemp, Display, TEXT("BOSS_LAYOUT_FIXTURE %s"), *FPaths::ConvertRelativePathToFull(DbPath));
+		}
+		else
+		{
+			CleanupOutboxDbFiles(DbPath);
+		}
+	};
+	FString Scope, MovedScope, CopyScope;
 	const FGuid Defeat = FGuid::NewGuid();
 	constexpr int32 RecipientCount = 200;
 	TArray<FProject_JRolledLootGrant> Grants;
@@ -120,6 +131,19 @@ bool FProjectJBossRewardSettlementTest::RunTest(const FString&)
 	};
 	{
 		FTestOutboxHost Boot;
+		// Model a layout patch before closing the old database. Query those placements on the next boot.
+		auto* Old = Boot.World->SpawnActor<AProject_JWorldEncounter>();
+		Old->EncounterId = TEXT("Test.Boss.A");
+		Scope = Old->GetBossSettlementKey();
+		Old->Destroy();
+		auto* Moved = Boot.World->SpawnActor<AProject_JWorldEncounter>(FVector(8000, 0, 0), FRotator::ZeroRotator);
+		Moved->EncounterId = TEXT("Test.Boss.A");
+		MovedScope = Moved->GetBossSettlementKey();
+		auto* Copy = Boot.World->SpawnActor<AProject_JWorldEncounter>();
+		Copy->EncounterId = TEXT("Test.Boss.B");
+		CopyScope = Copy->GetBossSettlementKey();
+		TestEqual(TEXT("Replacing and moving a placement within its map preserves its settlement identity"), MovedScope, Scope);
+		TestNotEqual(TEXT("A copy at the original location with a new ID has its own settlement scope"), CopyScope, Scope);
 		Boot.Online->SetOutboxDispatchHookForTest(RecordDispatch);
 		TestTrue(TEXT("Persistent store opens"), Boot.Online->ConfigurePersistentOutbox(DbPath));
 		Boot.Online->FlushPersistentOutboxForTest();
@@ -176,6 +200,12 @@ bool FProjectJBossRewardSettlementTest::RunTest(const FString&)
 		TestEqual(TEXT("Wire ceiling is shared by the whole cohort"), Dispatched.Num(), UProject_JOnlineWorldSubsystem::MaxOutboxInFlight);
 		Dispatched.Reset();
 	}
+	if (FParse::Param(FCommandLine::Get(), TEXT("ProjectJKeepBossLayoutFixture")))
+	{
+		const FString Snapshot = DbPath + TEXT(".prepatch.sqlite");
+		TestEqual(TEXT("Export closed settlement with pending deliveries for offline migration verification"),
+			IFileManager::Get().Copy(*Snapshot, *DbPath, false), uint32(COPY_OK));
+	}
 	{
 		FTestOutboxHost Boot;
 		Boot.Online->SetOutboxDispatchHookForTest(RecordDispatch);
@@ -184,7 +214,9 @@ bool FProjectJBossRewardSettlementTest::RunTest(const FString&)
 		const int32 RowCount = RecipientCount + QuestCredits.Num();
 		TestEqual(TEXT("All committed loot and quest rows recover together after restart"), Boot.Online->GetOutboxStats().RecoveredTotal, int64(RowCount));
 		double Remaining = 0.0;
-		TestTrue(TEXT("Cooldown recovers after restart"), Boot.Online->TryGetBossRewardCooldown(Scope, Remaining) && Remaining > 0.0);
+		TestTrue(TEXT("Moved placement recovers its cooldown after database restart"), Boot.Online->TryGetBossRewardCooldown(MovedScope, Remaining) && Remaining > 0.0);
+		TestTrue(TEXT("A replacement with a fresh ID cannot inherit the removed placement's cooldown"),
+			Boot.Online->TryGetBossRewardCooldown(CopyScope, Remaining) && Remaining == 0.0);
 		int32 RecoveredQuestCredits = 0;
 		for (int32 Index = 0; Index < RowCount && !Dispatched.IsEmpty(); ++Index)
 		{

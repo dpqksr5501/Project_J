@@ -8,6 +8,7 @@ param(
     [switch]$VerifyServerDrain,
     [switch]$VerifyOnlineDungeon,
     [switch]$VerifyAuthoredSandbox,
+    [switch]$VerifyPublicRegions,
     [ValidateRange(1026,65533)][int]$PostgresPort = 15432,
     [ValidateRange(1026,65533)][int]$NakamaPort = 17350
 )
@@ -196,6 +197,29 @@ function Invoke-ChannelRouting([string]$Account, [string]$Token) {
     $playerRoute.slot = $nextSlot
     $admitted = Send-PlayerRoute
     if ($admitted.status -ne 'ROUTED' -or $admitted.channel -ne 2 -or !$admitted.ticket) { throw 'Queued player did not receive an overflow ticket.' }
+
+    # Public region A -> B -> A uses routed admission and a fresh fenced session at each destination.
+    # These are disposable service leases. The authored dungeon check below also runs actual UE servers.
+    $traveler = [guid]::NewGuid().ToString()
+    Invoke-Postgres @('-c', "INSERT INTO pj_characters(character_id, account_id, char_name, class_id) VALUES ('$traveler','$Account','Region traveler','Test');") | Out-Null
+    $regions = @(
+        @{zone='FieldNorth';channel=1;worker=[guid]::NewGuid().ToString();endpoint='127.0.0.1:17994';capacity=4;population=0;draining=$false},
+        @{zone='FieldSouth';channel=1;worker=[guid]::NewGuid().ToString();endpoint='127.0.0.1:17995';capacity=4;population=0;draining=$false}
+    )
+    foreach ($region in $regions) {
+        if ((Invoke-CommandRpc world_channel_heartbeat $region '').status -ne 'OK') { throw 'Public region lease failed.' }
+    }
+    $epoch = 0
+    foreach ($region in @($regions[0],$regions[1],$regions[0])) {
+        $playerRoute = @{character_id=$traveler;zone=$region.zone;channel=$region.channel}
+        $hop = Send-PlayerRoute
+        if ($hop.status -ne 'ROUTED' -or $hop.endpoint -ne $region.endpoint -or !$hop.ticket) { throw 'Public region route returned the wrong destination.' }
+        $intent = @{ticket=$hop.ticket;zone=$region.zone;channel=$region.channel;worker=$region.worker}
+        $session = Invoke-CommandRpc world_redeem_login $intent $hop.ticket
+        ++$epoch
+        if ($session.status -ne 'OK' -or $session.character -ne $traveler -or [long]$session.epoch -ne $epoch) { throw 'Public region transfer did not advance the character session.' }
+        [long]$session.epoch
+    }
 }
 
 function Invoke-GameLogin([string]$Character, [string]$AccessToken, [string]$ItemId, [switch]$Drain) {
@@ -372,6 +396,62 @@ function Invoke-GameChat([string]$Sender, [string]$SenderToken, [string]$Receive
     }
 }
 
+function Invoke-PublicRegionTravel([string]$Character, [string]$AccessToken) {
+    if (!$UnrealEditor) { throw 'Public region travel requires the local Unreal executable.' }
+    $regions = @(
+        @{zone='Test_MMO_Sandbox';map='/Game/Maps/Test_MMO_Sandbox';port=17994;visits=2},
+        @{zone='L_RidgeRoute03';map='/Game/World/Validation/RidgeRoute03/L_RidgeRoute03';port=17995;visits=1}
+    )
+    $common = @("$root/Project_J.uproject", '-unattended', '-nop4', '-nosound', '-NullRHI', '-NoLiveCoding', '-NoDDCCleanup',
+        '-DisablePython', '-DisablePlugins=EditorToolset,AutomationTestToolset,ToolsetRegistry', '-ProjectJOnlineLoginFixture', '-multihome=127.0.0.1')
+    function Start-PublicRole([string]$Role, [string[]]$Options, [hashtable]$Environment) {
+        $arguments = $common + $Options + @("-UserDir=$scratch/Public$Role", "-ABSLOG=$scratch/Public$Role.log")
+        $child = Start-Process -FilePath $UnrealEditor -WindowStyle Hidden -PassThru -Environment $Environment `
+            -ArgumentList (($arguments | ForEach-Object {'"' + $_ + '"'}) -join ' ')
+        $null = $child.Handle
+        return $child
+    }
+    $epochSQL = "SELECT session_epoch FROM pj_characters WHERE character_id='$Character';"
+    $before = [long](Invoke-Postgres @('-c', $epochSQL))
+    $servers = @()
+    $client = $null
+    try {
+        foreach ($region in $regions) {
+            $servers += Start-PublicRole $region.zone @("$($region.map)?game=/Script/Project_J.Project_JOnlineLoginFixture",
+                '-server', "-port=$($region.port)", "-ProjectJPublicVisits=$($region.visits)", "-ProjectJOnlineOutboxPath=$scratch/$($region.zone).sqlite",
+                "-ini:Game:[/Script/Project_J.Project_JGameMode]:OnlineAdvertisedEndpoint=127.0.0.1:$($region.port)",
+                "-ini:Game:[/Script/Project_J.Project_JGatewaySubsystem]:GatewayUrl=$uri",
+                '-ini:Game:[/Script/Project_J.Project_JNakamaServicePortSubsystem]:RuntimeMode=LocalDockerNakama') `
+                @{PROJECT_J_NAKAMA_HTTP_KEY=$nakamaKey;PGPASSWORD=$null}
+        }
+        $deadline = [DateTime]::UtcNow.AddSeconds(45)
+        do {
+            if (($servers | Where-Object HasExited) -or [DateTime]::UtcNow -gt $deadline) { throw "Public region workers failed to register. $scratch" }
+            Start-Sleep -Milliseconds 250
+            $leases = Invoke-Postgres @('-c', "SELECT COUNT(*) FROM pj_world_channels WHERE (zone_id,endpoint) IN (('Test_MMO_Sandbox','127.0.0.1:17994'),('L_RidgeRoute03','127.0.0.1:17995')) AND NOT is_dungeon AND leased_until>NOW();")
+        } until ($leases -eq '2')
+        $client = Start-PublicRole Client @('/Engine/Maps/Entry?game=/Script/Project_J.Project_JOnlineLoginFixture', '-game',
+            '-ProjectJPublicRoute=Test_MMO_Sandbox,L_RidgeRoute03,Test_MMO_Sandbox',
+            "-ini:Game:[/Script/Project_J.Project_JOnlineWorldSubsystem]:NakamaClientUrl=$uri") `
+            @{PROJECT_J_TEST_LOGIN_CHARACTER=$Character;PROJECT_J_TEST_LOGIN_ACCESS=$AccessToken;PROJECT_J_NAKAMA_HTTP_KEY=$null;PGPASSWORD=$null}
+    } finally {
+        # Each owned fixture has its own normal engine watchdog, including startup failures.
+        foreach ($role in @($client) + $servers) { if ($role) { $role.WaitForExit() } }
+    }
+    if ($client.ExitCode -ne 0 -or ($servers | Where-Object ExitCode -ne 0)) { throw "Public region process failed. $scratch" }
+    $hops = @(Select-String -LiteralPath "$scratch/PublicClient.log" -Pattern 'PUBLIC_REGION_POSSESSED hop=(\d+) zone=(\w+)' |
+        ForEach-Object {$_.Matches[0].Groups[2].Value})
+    $epochs = @(foreach ($region in $regions) {
+        Select-String -LiteralPath "$scratch/Public$($region.zone).log" -Pattern 'PUBLIC_REGION_ADMISSION zone=(\w+) epoch=(\d+)' |
+            ForEach-Object {[long]$_.Matches[0].Groups[2].Value}
+    })
+    if (($hops -join ',') -ne 'Test_MMO_Sandbox,L_RidgeRoute03,Test_MMO_Sandbox' -or
+        ($epochs -join ',') -ne (@(($before+1),($before+3),($before+2)) -join ',') -or [long](Invoke-Postgres @('-c', $epochSQL)) -ne $before+3) {
+        throw "Public region possession or session fencing mismatch. $scratch"
+    }
+    return @{zones=$hops;epochs=@($epochs[0],$epochs[2],$epochs[1]);clientExit=$client.ExitCode;serverExits=@($servers.ExitCode)}
+}
+
 function Invoke-OnlineDungeon([string]$Character, [string]$AccessToken) {
     if (!$UnrealEditor) { throw 'VerifyOnlineDungeon requires an existing Unreal Editor executable.' }
     $sourcePort = 17987
@@ -499,7 +579,7 @@ console:
         $firstPage.mail[0].mail_id -eq $nextPage.mail[0].mail_id) { throw 'Mailbox pagination did not return two distinct deliveries.' }
     $itemIntent = @{ character_id = $character; mail_id = $reward.mail_ids[0]; session_epoch = $session.character.session_epoch }
     $goldIntent = @{ character_id = $character; mail_id = $reward.mail_ids[1]; session_epoch = $session.character.session_epoch }
-    if ($UnrealEditor -and !$VerifyGameLogin -and !$VerifyGameChat -and !$VerifyOnlineDungeon -and !$VerifyAuthoredSandbox -and !$VerifyServerDrain) {
+    if ($UnrealEditor -and !$VerifyGameLogin -and !$VerifyGameChat -and !$VerifyOnlineDungeon -and !$VerifyAuthoredSandbox -and !$VerifyServerDrain -and !$VerifyPublicRegions) {
         Invoke-UnrealClaim $character $itemIntent.mail_id $itemKey
         $initialReplay = Invoke-CommandRpc mail_claim $itemIntent $itemKey
         if ($initialReplay.status -ne 'REPLAYED') { throw 'Unreal did not commit the tracked command.' }
@@ -591,7 +671,12 @@ console:
     $reconnected = Invoke-CommandRpc world_redeem_login $worldIntent $next.ticket
     if ($reconnected.epoch -ne '2' -or $reconnected.blocked_characters -notcontains $character) { throw 'Login or private block projection failed after restart.' }
     if ((Invoke-CommandRpc world_set_chat_block $muteIntent ([guid]::NewGuid().ToString())).status -ne 'STALE_SESSION') { throw 'Old chat lease remained writable.' }
-    Invoke-ChannelRouting $account $principal.token
+    $publicRegionEpochs = @(Invoke-ChannelRouting $account $principal.token)
+    $publicTravel = if ($VerifyPublicRegions) {
+        $fieldCharacter = [guid]::NewGuid().ToString()
+        Invoke-Postgres @('-c', "INSERT INTO pj_characters(character_id,account_id,char_name,class_id) VALUES ('$fieldCharacter','$account','Field traveler','GreatSword');") | Out-Null
+        Invoke-PublicRegionTravel $fieldCharacter $principal.token
+    }
     if ($VerifyGameChat) {
         $chatAccount = [guid]::NewGuid().ToString()
         $chatSender = [guid]::NewGuid().ToString()
@@ -680,7 +765,8 @@ console:
     [ordered]@{ passed = $true; unrealServicePort = [bool]$UnrealEditor; persistedItem = $item.item_instance_id; persistedQuantity = 3; pendingMailRestored = $true
         restartReplay = $replay.status; duplicate = $duplicate.status; competingClaims = $competingStatuses
         authenticatedCharacterLogin = $true; sharedChannelAfterRestart = $true; returnReplayRejectedAfterRestart = $true
-        serverOnlyChannelRouting = $true; directAndRoutedTicketsShareCapacity = $true
+        serverOnlyChannelRouting = $true; directAndRoutedTicketsShareCapacity = $true; publicRegionRoundTripEpochs = $publicRegionEpochs
+        publicRegionGameTravel = $publicTravel
         onlineBagSplitCommitted = $true
         onlineEquipmentCommitted = $true; onlineCraftEscrowRestored = $true
         onlineQuestItemsAndExperienceCommitted = $true; onlineQuestFullBagRolledBack = $true; onlineQuestReplay = $questReplay.status

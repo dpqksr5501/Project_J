@@ -3,6 +3,7 @@ param([Parameter(Mandatory)][ValidateSet('Cook','Stage')][string]$Mode,
  [string]$CookDirectory,
  [ValidatePattern('^/(Game|Engine)/[A-Za-z0-9_/-]+$')][string[]]$Maps=@('/Game/ThirdPerson/Lvl_ThirdPerson','/Engine/Maps/Entry'),
  [ValidateSet('Development','Shipping')][string]$StageConfiguration='Development',
+ [switch]$ExcludeValidationWorlds,
  [string]$SelectionManifest,
  [ValidatePattern('^[A-Za-z0-9_-]+$')][string]$AssetValidation)
 $ErrorActionPreference='Stop'
@@ -10,6 +11,10 @@ $projectRoot=(Resolve-Path "$PSScriptRoot/../..").Path.Replace('\','/')
 . "$PSScriptRoot/Continuation-ScratchPaths.ps1"
 . "$PSScriptRoot/AssetValidation-Provenance.ps1"
 $scratchContext=Get-ContinuationScratchContext $projectRoot
+$validationRoots=@('World/Validation','__ExternalActors__/World/Validation','__ExternalObjects__/World/Validation')
+if($ExcludeValidationWorlds -and $Mode -eq 'Cook' -and (!$PSBoundParameters.ContainsKey('Maps') -or @($Maps -match '^/Game/World/Validation(/|$)').Count)){
+ throw 'A release-world cook requires explicit maps outside the validation world directory.'
+}
 if($Mode -eq 'Cook' -and $StageConfiguration -ne 'Development'){throw 'StageConfiguration selects native Stage products; this Cook helper uses an explicit asset closure without a native configuration switch.'}
 $active=@(Get-CimInstance Win32_Process -ErrorAction Stop|Where-Object {$_.Name -match '^(UnrealEditor|Project_J|UnrealBuildTool|dotnet|LiveCoding|MSBuild|ShaderCompileWorker|UnrealInsights|Uba).*'})
 if($active.Count){throw 'Wait for normal engine/build completion.'}
@@ -24,6 +29,7 @@ if($Mode -eq 'Stage'){
  if($cookRunName -notmatch '^[A-Za-z0-9_-]+$'){throw 'Cook run identity is invalid.'}
  $cookReceipt="$projectRoot/Saved/Validation/Continuation_20261014/$cookRunName/process.json"
  $cookProcess=Get-Content -LiteralPath $cookReceipt -Raw|ConvertFrom-Json
+ if($ExcludeValidationWorlds -and !$cookProcess.excludedValidationWorlds){throw 'This Cook has no verified validation-world exclusion.'}
  if($null -eq $cookProcess.exitCode -or $cookProcess.exitCode -ne 0 -or !$cookProcess.hasExited -or
     [IO.Path]::GetFullPath($cookProcess.output) -ine [IO.Path]::GetFullPath($CookDirectory) -or
     !$cookProcess.assetValidation -or $cookProcess.assetValidation.status -ne 'passed'){throw 'Cook has no matching completed strict validation admission.'}
@@ -34,6 +40,10 @@ New-Item -ItemType Directory -Path $out | Out-Null
 if($Mode -eq 'Cook'){
  if(!$Maps.Count){throw 'Cook requires explicit nonempty map targets.'}
  $arguments=@("$projectRoot/Project_J.uproject",'-run=Cook','-TargetPlatform=Windows',"-Map=$($Maps -join '+')","-OutputDir=$($scratch.CookDirectory)/[Platform]",'-unattended','-nop4','-NoDDCCleanup','-NoLiveCoding',"-UserDir=$($scratch.UserDirectory)","-ABSLOG=$out/Cook.log",'-UTF8Output')
+ if($ExcludeValidationWorlds){
+  $absoluteRoots=@($validationRoots|ForEach-Object{"$projectRoot/Content/$_"}|Where-Object{Test-Path -LiteralPath $_})
+  if($absoluteRoots.Count){$arguments+="-NeverCookDir=$($absoluteRoots -join '+')"}
+ }
  $arguments|ConvertTo-Json|Set-Content "$out/arguments.json" -Encoding utf8
  $process=Start-Process 'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe' -ArgumentList (($arguments|ForEach-Object {'"'+$_+'"'}) -join ' ') -WindowStyle Hidden -PassThru
  $nativeHandle=$process.Handle
@@ -52,5 +62,12 @@ if($Mode -eq 'Cook'){
 # Keep the native exit receipt even if inputs changed during Cook/Stage. Only
 # publish validation admission after the read-only completion recheck succeeds.
 $completed=Get-Content -LiteralPath "$out/process.json" -Raw|ConvertFrom-Json
+if($Mode -eq 'Cook' -and $ExcludeValidationWorlds){
+ $inventory=@(Get-Content -LiteralPath "$($scratch.CookDirectory)/Windows/Project_J/Metadata/ReferencedSet.txt")
+ foreach($map in $Maps){if($inventory -notcontains $map){throw "Cook is missing requested map $map"}}
+ foreach($dir in $validationRoots){if($inventory -like "/Game/$dir/*"){throw "Cook contains a validation package under $dir"}}
+}
+$excluded=if($Mode -eq 'Stage'){[bool]$cookProcess.excludedValidationWorlds}else{[bool]$ExcludeValidationWorlds}
+$completed|Add-Member -NotePropertyName excludedValidationWorlds -NotePropertyValue $excluded
 $completed.assetValidation=Assert-ProjectJSelectedAssetValidation -ProjectRoot $projectRoot -ValidationRunDirectory $validationRun -SelectionManifest $SelectionManifest
 $completed|ConvertTo-Json -Depth 8|Set-Content -LiteralPath "$out/process.json" -Encoding utf8

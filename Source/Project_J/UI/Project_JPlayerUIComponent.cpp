@@ -263,6 +263,7 @@ void UProject_JPlayerUIComponent::RefreshPresentation()
 {
 	if (!Screen || bEnding)
 		return;
+	const FName PreviousClass = UIContext.ClassId;
 	UIContext = {};
 	if (BoundState.IsValid())
 		UIContext.ClassId = BoundState->GetPublicClassId();
@@ -277,12 +278,13 @@ void UProject_JPlayerUIComponent::RefreshPresentation()
 	if (BoundASC.IsValid())
 		BoundASC->GetOwnedGameplayTags(UIContext.OwnedTags);
 	auto *NextProfile = ProfileCatalog ? ProfileCatalog->Resolve(UIContext) : nullptr;
-	if (!bPresentationInitialized || NextProfile != ActiveProfile)
+	const bool bRefreshSlots = !bPresentationInitialized || NextProfile != ActiveProfile || PreviousClass != UIContext.ClassId;
+	if (bRefreshSlots)
 	{
 		ReleaseAllSkills();
 		ActiveProfile = NextProfile;
 		bPresentationInitialized = true;
-		PresentedSkills = ActiveProfile && ActiveProfile->bOverrideSkills ? ActiveProfile->Skills : SkillSlots;
+		PresentedSkills = (ActiveProfile ? ActiveProfile.Get() : GetDefault<UProject_JCharacterUIProfile>())->ResolveSkills(SkillSlots, UIContext.ClassId);
 		PresentedResources =
 			ActiveProfile && ActiveProfile->bOverrideResources
 				? ActiveProfile->Resources
@@ -298,7 +300,7 @@ void UProject_JPlayerUIComponent::RefreshPresentation()
 	}
 	Screen->SetLayoutIdentity(BoundState.IsValid() ? BoundState->GetCharacterId().Value : FGuid(),
 							  ActiveProfile ? ActiveProfile->ProfileId : FName(TEXT("Default")));
-	LoadPreferences();
+	LoadPreferences(bRefreshSlots);
 	UpdateHUD();
 	UpdateSkills();
 }
@@ -834,12 +836,12 @@ void UProject_JPlayerUIComponent::EndPlay(const EEndPlayReason::Type Reason)
 	Super::EndPlay(Reason);
 }
 
-void UProject_JPlayerUIComponent::LoadPreferences()
+void UProject_JPlayerUIComponent::LoadPreferences(bool bRefreshSlots)
 {
 	const FString Key =
 		UProject_JUILayoutSave::MakeKey(BoundState.IsValid() ? BoundState->GetCharacterId().Value : FGuid(),
 										ActiveProfile ? ActiveProfile->ProfileId : FName(TEXT("Default")));
-	if (PreferencesKey == Key && HUDPreferences.Slots.Num() == 10)
+	if (!bRefreshSlots && PreferencesKey == Key && HUDPreferences.Slots.Num() == 10)
 		return;
 	ReleaseAllSkills();
 	PreferencesKey = Key;

@@ -46,6 +46,7 @@ bool FProjectJMeleeLifetimeTest::RunTest(const FString& Parameters)
  Player->FindComponentByClass<UProject_JEquipmentRuntimeComponent>()->BindToEquipmentManager(Equipment);
  auto* Item = NewObject<UProject_JEquipmentItemDefinition>(Player); Item->EquipmentSlot = EProject_JEquipmentSlot::Weapon;
  auto* EquippedStyle = DuplicateObject(Style, Item); EquippedStyle->AbilitySets.Reset(); Item->CombatStyleDefinition = EquippedStyle;
+ EquippedStyle->ComboDefinition = DuplicateObject(Style->ComboDefinition.Get(), EquippedStyle);
  Equipment->EquipItem(Item);
  const auto& Tags = FProject_JGameplayTags::Get();
  ASC->AddLooseGameplayTag(Tags.State_CombatMode);
@@ -58,7 +59,29 @@ bool FProjectJMeleeLifetimeTest::RunTest(const FString& Parameters)
  const auto FirstHandle = ASC->GiveAbility(FirstSpec); const auto SecondHandle = ASC->GiveAbility(SecondSpec);
  auto* First = CastChecked<UProject_JGameplayAbility_Melee>(ASC->FindAbilitySpecFromHandle(FirstHandle)->GetPrimaryInstance());
  auto* Second = CastChecked<UProject_JGameplayAbility_Melee>(ASC->FindAbilitySpecFromHandle(SecondHandle)->GetPrimaryInstance());
+ int32 Commits = 0;
+ const FDelegateHandle CommitObserver = ASC->AbilityCommittedCallbacks.AddLambda([&Commits](UGameplayAbility*) { ++Commits; });
+ TestTrue(TEXT("A combo can wait for its first input"), ASC->TryActivateAbility(FirstHandle));
+ TestEqual(TEXT("Waiting without a selected attack does not commit"), Commits, 0);
+ ASC->CancelAbilityHandle(FirstHandle);
+ FGameplayTagContainer InitialTags;
+ ASC->GetOwnedGameplayTags(InitialTags);
+ InitialTags.AddTag(Tags.State_Attacking);
+ const auto* Selected = EquippedStyle->ComboDefinition->FindStartNode(Tags.InputTag_Weapon_LMB, InitialTags);
+ if (TestNotNull(TEXT("Equipped starting attack"), Selected))
+ {
+  auto& Opening = EquippedStyle->ComboDefinition->Nodes[Selected - EquippedStyle->ComboDefinition->Nodes.GetData()];
+  auto* Invalid = DuplicateObject(Opening.AttackDefinition.Get(), EquippedStyle);
+  Invalid->WarningPolicy = EProject_JAttackWarningPolicy::MontageAttention;
+  Invalid->RequiredWarningCue = FGameplayTag();
+  TGuardValue<TObjectPtr<UProject_JAttackDefinition>> ReplaceOpening(Opening.AttackDefinition, Invalid);
+  Input->HandleInputTagPressed(Tags.InputTag_Weapon_LMB);
+  TestFalse(TEXT("Malformed required warning rejects the opening swing"), First->IsActive());
+  TestEqual(TEXT("Invalid opening attack does not commit any cost or cooldown"), Commits, 0);
+ }
+ Input->ClearCommandInputHistory();
  Input->HandleInputTagPressed(Tags.InputTag_Weapon_LMB);
+ TestEqual(TEXT("The accepted opening commits once"), Commits, 1);
  TestTrue(TEXT("First combo owns the attack"), First->IsActive());
  TestFalse(TEXT("Second grant cannot interrupt the same input's attack"), Second->IsActive());
  TestTrue(TEXT("Presentation remains active before the authored trail notify"), Presentation->GetActiveAttackTag().IsValid());
@@ -129,6 +152,7 @@ bool FProjectJMeleeLifetimeTest::RunTest(const FString& Parameters)
  Equipment->EquipItem(Item);
  TestFalse(TEXT("Replacing with the same definition still revokes the old swing"), First->IsActive());
  ASC->CancelAllAbilities();
+ ASC->AbilityCommittedCallbacks.Remove(CommitObserver);
  World->DestroyWorld(false); GEngine->DestroyWorldContext(World);
  return true;
 }

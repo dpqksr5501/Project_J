@@ -59,6 +59,7 @@ private:
 	TWeakObjectPtr<AProject_JOnlineLoginFixtureController> ChatReceiver;
 	FName ChatFixturePhase;
 	int32 ChatFixtureLogouts = 0;
+	int32 RemainingPublicVisits = 0;
 	FTimerHandle DungeonProbe;
 	FTimerHandle OnlineQuestProbe;
 	UPROPERTY()

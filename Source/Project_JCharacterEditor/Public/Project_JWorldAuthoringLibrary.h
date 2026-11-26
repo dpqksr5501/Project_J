@@ -21,6 +21,11 @@ public:
     UFUNCTION(BlueprintCallable, Category="Project J|World Authoring")
     static bool EnableRegionStreaming();
     UFUNCTION(BlueprintPure, Category="Project J|World Authoring")
+    static bool IsRegionStreamingEnabled(const UWorld* World);
+    /** Current runtime HLODs whose source cells no longer exist. INDEX_NONE without a runtime subsystem. */
+    UFUNCTION(BlueprintPure, Category="Project J|World Authoring")
+    static int32 GetOutdatedRuntimeHLODCount(UWorld* World);
+    UFUNCTION(BlueprintPure, Category="Project J|World Authoring")
     static FString GetRegionRuntimeHashName();
     /** Replaces the base edit layer only; preserves landscape identity, paint and streaming proxies. */
     UFUNCTION(BlueprintCallable, Category="Project J|World Authoring")

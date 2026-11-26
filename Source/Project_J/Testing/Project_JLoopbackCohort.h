@@ -51,6 +51,7 @@ private:
 	void MarkRenderedStrike();
 	TSharedPtr<FProject_JRenderedBossSample> RenderedBossSample;
 	TArray<FProject_JCohortHealthObservation> BossHealthObservations;
+	bool bStandaloneCohortClient = false;
 #endif
 	void PollBossReadiness();
 	void PressBossCombatAttack();
@@ -60,6 +61,7 @@ private:
 	bool bCohortCompleted = false;
 	bool bCheckReplicatedHealth = false;
 	bool bAcknowledgedHealth = false;
+	bool bObservedPulseCost = false;
 	bool bReleaseMeasuredConnection = false;
 	bool bBossCombatPrepared = false;
 	bool bBossCombatReady = false;

@@ -34,7 +34,7 @@ bool FProjectJRealtimeProtocolAdmissionTest::RunTest(const FString&)
     // quest-history and preceding realtime schemas through the engine's real compatibility path.
     TestFalse(TEXT("No override bypasses protocol admission"), FNetworkVersion::IsNetworkCompatibleOverride.IsBound());
     TestFalse(TEXT("No override replaces the protocol checksum"), FNetworkVersion::GetLocalNetworkVersionOverride.IsBound());
-    const uint32 PreviousProtocols[] = {8u, 11u, 12u};
+    const uint32 PreviousProtocols[] = {8u, 11u, 12u, 15u};
     for (uint32 PreviousProtocol : PreviousProtocols)
     {
         uint32 PreviousChecksum = 0;

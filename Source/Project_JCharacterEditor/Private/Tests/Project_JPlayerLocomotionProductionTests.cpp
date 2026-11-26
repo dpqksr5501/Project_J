@@ -51,6 +51,40 @@ UAnimBlueprint* Foundation()
 {
  return LoadObject<UAnimBlueprint>(nullptr, TEXT("/Game/Animation_Logic/ABPs/ABP_Player_Master.ABP_Player_Master"));
 }
+
+using FPoseIndexChecks = TMap<UPoseSearchDatabase*, TArray<TFunction<void(const UPoseSearchDatabase&)>>>;
+
+void QueuePoseIndexChecks(FAutomationTestBase& Test, FPoseIndexChecks& ByDatabase)
+{
+ for (auto& Pair : ByDatabase)
+ {
+  // UE may defer even starting a task until dependent assets finish loading. A
+  // blocking wait at that point asserts. Let the editor advance between polls.
+  FAutomationTestFramework::Get().EnqueueLatentCommand(MakeShared<FFunctionLatentCommand>(
+   [&Test, Database=TStrongObjectPtr<UPoseSearchDatabase>(Pair.Key), Checks=MoveTemp(Pair.Value), Deadline=0.0]() mutable
+   {
+    using namespace UE::PoseSearch;
+    if (!Database->Schema)
+    {
+     Test.AddError(TEXT("Missing pose schema on ") + Database->GetPathName());
+     return true;
+    }
+    const bool First = Deadline == 0.0;
+    if (First) Deadline = FPlatformTime::Seconds() + 120.0;
+    const auto Status = FAsyncPoseSearchDatabasesManagement::RequestAsyncBuildIndex(Database.Get(),
+     First ? ERequestAsyncBuildFlag::NewRequest : ERequestAsyncBuildFlag::ContinueRequest);
+    if (Status == EAsyncBuildIndexResult::InProgress && FPlatformTime::Seconds() < Deadline) return false;
+    if (Status != EAsyncBuildIndexResult::Success)
+    {
+     Test.AddError(FString::Printf(TEXT("Pose index %s: %s"), *Database->GetPathName(),
+      Status == EAsyncBuildIndexResult::Failed ? TEXT("build failed") : TEXT("timed out waiting for dependencies or indexing")));
+     return true;
+    }
+    for (const auto& Check : Checks) Check(*Database);
+    return true;
+   }));
+ }
+}
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJPlayerLocomotionProductionGraph,"ProjectJ.PlayerLocomotion.ProductionGraph",PlayerLocomotionTestFlags)
@@ -143,6 +177,7 @@ bool FProjectJPlayerLocomotionGroundCandidates::RunTest(const FString&)
  TestTrue(TEXT("Native chooser output contract"),OutputContext && OutputContext->Struct==FProject_JPlayerGroundChooserOutput::StaticStruct());
  TArray<UObject*> Owned;GetObjectsWithOuter(Chooser,Owned,EGetObjectsFlags::IncludeNestedObjects);
  int32 Databases=0,EnabledEntries=0;
+ FPoseIndexChecks IndexChecks;
  for(auto* Object:Owned) if(auto* DB=Cast<UPoseSearchDatabase>(Object))
  {
   ++Databases;TestNotNull(TEXT("Embedded database retains its schema"),DB->Schema.Get());
@@ -155,11 +190,13 @@ bool FProjectJPlayerLocomotionGroundCandidates::RunTest(const FString&)
    TestTrue(TEXT("Authored candidate range stays ordered"),Entry->GetSamplingRange().Max>=Entry->GetSamplingRange().Min);
   }
   if(DB->GetNumAnimationAssets()==0)continue;
-  using namespace UE::PoseSearch;
-  TestTrue(TEXT("Production embedded index builds with its own schema and statistics"),FAsyncPoseSearchDatabasesManagement::RequestAsyncBuildIndex(DB,ERequestAsyncBuildFlag::ContinueRequest|ERequestAsyncBuildFlag::WaitForCompletion)==EAsyncBuildIndexResult::Success);
-  TestTrue(TEXT("Nonempty candidate database has searchable poses"),DB->GetSearchIndex().GetNumPoses()>0);
+  IndexChecks.FindOrAdd(DB).Add([this](const UPoseSearchDatabase& Ready)
+  {
+   TestTrue(TEXT("Nonempty candidate database has searchable poses"),Ready.GetSearchIndex().GetNumPoses()>0);
+  });
  }
  TestTrue(TEXT("GASP owns embedded candidate databases"),Databases>=5);TestTrue(TEXT("Actual GASP candidate inventory is populated"),EnabledEntries>0);
+ QueuePoseIndexChecks(*this, IndexChecks);
  return true;
 }
 
@@ -486,8 +523,9 @@ bool FProjectJGroundedLandingPhase::RunTest(const FString&)
 {
  auto* BP=Foundation();if (!BP || !BP->GeneratedClass) return false;
  auto* Root=CastChecked<UProject_JPlayerAnimInstance>(BP->GeneratedClass->GetDefaultObject())->GroundAnimationChooser.Get();
+ if (!TestNotNull(TEXT("Grounded landing chooser"),Root)) return false;
  TArray<UObject*> Owned;GetObjectsWithOuter(Root,Owned,EGetObjectsFlags::IncludeNestedObjects);
- TSet<UPoseSearchDatabase*> Built;int32 LandingRows=0;
+ FPoseIndexChecks IndexChecks;int32 LandingRows=0;
  const auto* RowsProperty=FindFProperty<FArrayProperty>(FPoseSearchColumn::StaticStruct(),TEXT("RowValues"));
  if (!TestNotNull(TEXT("Serialized pose-search rows"),RowsProperty)) return false;
  for (UObject* Object:Owned) if (auto* Table=Cast<UChooserTable>(Object))
@@ -509,28 +547,27 @@ bool FProjectJGroundedLandingPhase::RunTest(const FString&)
      if (const auto* Foley=Cast<UProject_JAnimNotify_FoleyEvent>(Event.Notify);Foley && Foley->FoleyEvent.Event==Project_J::Foley::Land) Impact=FMath::Min(Impact,Event.GetTime());
     TestTrue(TEXT("Landing retains its authored impact event"),Impact<Sequence->GetPlayLength());
     auto* DB=Value.Database.Get();if (!TestNotNull(TEXT("Landing's actual embedded database"),DB)) continue;
-    using namespace UE::PoseSearch;
-    if (!Built.Contains(DB))
-    {
-     if (!TestTrue(TEXT("Landing index builds"),FAsyncPoseSearchDatabasesManagement::RequestAsyncBuildIndex(DB,ERequestAsyncBuildFlag::ContinueRequest|ERequestAsyncBuildFlag::WaitForCompletion)==EAsyncBuildIndexResult::Success)) return false;
-     Built.Add(DB);
-    }
     int32 Source=INDEX_NONE;
     for (int32 I=0;I<DB->GetNumAnimationAssets();++I) if (DB->GetDatabaseAnimationAsset(I)==&Value.Data) {Source=I;break;}
     TestTrue(TEXT("Chooser row maps to its database entry"),Source!=INDEX_NONE);
-    const auto& Index=DB->GetSearchIndex();int32 Selectable=0;
+    IndexChecks.FindOrAdd(DB).Add([this, Source, Impact](const UPoseSearchDatabase& Ready)
+    {
+    const auto& Index=Ready.GetSearchIndex();int32 Selectable=0;
     for (const auto& Asset:Index.Assets) if (Asset.GetSourceAssetIdx()==Source)
      for (int32 Pose=Asset.GetFirstPoseIdx();Pose<Asset.GetFirstPoseIdx()+Asset.GetNumPoses();++Pose)
       if (!Index.PoseMetadata[Pose].IsBlockTransition())
       {
        ++Selectable;
-       const float Time=Asset.GetTimeFromPoseIndex(Pose,DB->Schema->SampleRate);
+       const float Time=Asset.GetTimeFromPoseIndex(Pose,Ready.Schema->SampleRate);
        TestTrue(TEXT("Physical landing cannot replay the airborne approach"),Time>=Impact-.1f);
       }
-    TestTrue(TEXT("Every landing keeps a searchable impact pose"),Selectable>0);++LandingRows;
+    TestTrue(TEXT("Every landing keeps a searchable impact pose"),Selectable>0);
+    });
+    ++LandingRows;
    }
  }
  TestTrue(TEXT("Standing, walking, running and sprint landing rows were inspected"),LandingRows>=32);
+ QueuePoseIndexChecks(*this, IndexChecks);
  return true;
 }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJTransitionSearchAvailability,"ProjectJ.PlayerLocomotion.TransitionSearchAvailability",PlayerLocomotionTestFlags)
@@ -538,9 +575,10 @@ bool FProjectJTransitionSearchAvailability::RunTest(const FString&)
 {
  auto* BP=Foundation();if (!BP || !BP->GeneratedClass) return false;
  auto* Root=CastChecked<UProject_JPlayerAnimInstance>(BP->GeneratedClass->GetDefaultObject())->GroundAnimationChooser.Get();
+ if (!TestNotNull(TEXT("Ground transition chooser"),Root)) return false;
  const auto* RowsProperty=FindFProperty<FArrayProperty>(FPoseSearchColumn::StaticStruct(),TEXT("RowValues"));
  if (!TestNotNull(TEXT("Serialized search-row contract"),RowsProperty)) return false;
- TArray<UChooserTable*> Pending{Root};TSet<UChooserTable*> Seen;TSet<UPoseSearchDatabase*> Built;
+ TArray<UChooserTable*> Pending{Root};TSet<UChooserTable*> Seen;FPoseIndexChecks IndexChecks;
  int32 RowsChecked=0;
  while (!Pending.IsEmpty())
  {
@@ -565,22 +603,17 @@ bool FProjectJTransitionSearchAvailability::RunTest(const FString&)
     const FString Label=FString::Printf(TEXT("%s row %d (%s)"),*Table->GetName(),Row,*GetNameSafe(Animation));
     if (!TestNotNull(*Label,Animation)) continue;
     auto* DB=Value.Database.Get();if (!TestNotNull(*Label,DB)) continue;
-    using namespace UE::PoseSearch;
-    if (!Built.Contains(DB))
-    {
-     if (!TestTrue(*Label,FAsyncPoseSearchDatabasesManagement::RequestAsyncBuildIndex(DB,ERequestAsyncBuildFlag::NewRequest|ERequestAsyncBuildFlag::WaitForCompletion)==EAsyncBuildIndexResult::Success)) return false;
-     Built.Add(DB);
-    }
     int32 Source=INDEX_NONE;
     for (int32 I=0;I<DB->GetNumAnimationAssets();++I) if (DB->GetDatabaseAnimationAsset(I)==&Value.Data) {Source=I;break;}
     TestTrue(*Label,Source!=INDEX_NONE);
-    const auto& Index=DB->GetSearchIndex();int32 Selectable=0;
-    const auto* Sequence=Cast<UAnimSequence>(Animation);
+    IndexChecks.FindOrAdd(DB).Add([this, Source, Label, Sequence=TStrongObjectPtr<UAnimSequence>(Cast<UAnimSequence>(Animation))](const UPoseSearchDatabase& Ready)
+    {
+    const auto& Index=Ready.GetSearchIndex();int32 Selectable=0;
     for (const auto& Asset:Index.Assets) if (Asset.GetSourceAssetIdx()==Source)
      for (int32 Pose=Asset.GetFirstPoseIdx();Pose<Asset.GetFirstPoseIdx()+Asset.GetNumPoses();++Pose)
       if (!Index.PoseMetadata[Pose].IsBlockTransition())
       {
-       ++Selectable;const float Time=Asset.GetTimeFromPoseIndex(Pose,DB->Schema->SampleRate);
+       ++Selectable;const float Time=Asset.GetTimeFromPoseIndex(Pose,Ready.Schema->SampleRate);
        TestTrue(*Label,FMath::IsFinite(Time) && Time>=0.f);
        if (Sequence) TestTrue(*Label,Time<=Sequence->GetPlayLength()+UE_KINDA_SMALL_NUMBER);
        if (Sequence) for (const auto& Event:Sequence->Notifies)
@@ -588,12 +621,14 @@ bool FProjectJTransitionSearchAvailability::RunTest(const FString&)
          TestFalse(*FString::Printf(TEXT("%s: entry %.4fs cannot be inside excluded interval [%.4f, %.4f]"),*Label,Time,Event.GetTime(),Event.GetEndTriggerTime()),Time>Event.GetTime()+UE_KINDA_SMALL_NUMBER && Time<Event.GetEndTriggerTime()-UE_KINDA_SMALL_NUMBER);
       }
     TestTrue(*FString::Printf(TEXT("%s retains an entry pose outside transition blocks"),*Label),Selectable>0);
+    });
     ++RowsChecked;
    }
   }
  }
  AddInfo(FString::Printf(TEXT("Inspected %d active search rows in %d reachable tables"),RowsChecked,Seen.Num()));
  TestTrue(TEXT("Ground transition families were actually inspected"),RowsChecked>200);
+ QueuePoseIndexChecks(*this, IndexChecks);
  return true;
 }
 #endif

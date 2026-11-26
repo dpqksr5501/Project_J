@@ -13,6 +13,53 @@
 #include "Validation/Project_JDataValidation.h"
 #endif
 
+FName UProject_JAttackDefinition::GetPlaybackEntrySection() const
+{
+	if (MontageSectionName.IsNone() && WarningPolicy == EProject_JAttackWarningPolicy::MontageAttention && Montage)
+		return Montage->GetSectionName(Montage->GetSectionIndexFromPosition(0.f));
+	return MontageSectionName;
+}
+
+FString UProject_JAttackDefinition::GetWarningContractFailure() const
+{
+	if (WarningPolicy == EProject_JAttackWarningPolicy::GroundArea)
+	{
+		return !bMontageDriven && DamageEffect && AttackTag.IsValid() && MovementPolicy == EProject_JAttackMovementPolicy::InPlace
+			? FString()
+			: TEXT("GroundArea needs a non-montage, in-place attack with an attack tag and a damage effect.");
+	}
+	if (WarningPolicy != EProject_JAttackWarningPolicy::MontageAttention) return {};
+	if (!bMontageDriven || !Montage || !RequiredWarningCue.IsValid())
+		return TEXT("MontageAttention requires a montage-driven attack, its montage and RequiredWarningCue.");
+	const float EffectiveRate = PlayRate * Montage->RateScale;
+	if (!FMath::IsFinite(PlayRate) || PlayRate <= 0.f || !FMath::IsFinite(EffectiveRate) || EffectiveRate <= 0.f)
+		return TEXT("The required warning needs finite forward montage playback.");
+	const int32 Section = Montage->GetSectionIndex(GetPlaybackEntrySection());
+	if (Section == INDEX_NONE) return TEXT("The required warning's entry section does not exist.");
+	float EntryStart, EntryEnd;
+	Montage->GetSectionStartAndEndTime(Section, EntryStart, EntryEnd);
+	float FirstHit = EntryEnd;
+	float WarningStart = EntryEnd;
+	int32 Producers = 0;
+	for (const FAnimNotifyEvent& Event : Montage->Notifies)
+	{
+		const float Time = Event.GetTime();
+		if (!(Time >= EntryStart && Time < EntryEnd)) continue;
+		if (Cast<UProject_JAnimNotifyState_MeleeHit>(Event.NotifyStateClass))
+			FirstHit = FMath::Min(FirstHit, Event.GetTriggerTime());
+		const auto* Cue = Cast<UProject_JAnimNotifyState_CombatPresentationCue>(Event.NotifyStateClass);
+		if (!Cue || !Cue->IsGameplayWarning() || Cue->GetCueTag() != RequiredWarningCue) continue;
+		if (const FString Failure = Cue->GetWarningEventFailure(Event); !Failure.IsEmpty()) return Failure;
+		if (Event.GetTime() + Event.GetDuration() > EntryEnd + KINDA_SMALL_NUMBER)
+			return TEXT("The required warning must finish within the attack entry section.");
+		++Producers;
+		WarningStart = Event.GetTriggerTime();
+	}
+	if (Producers != 1) return FString::Printf(TEXT("Expected one Gameplay Warning '%s' in the attack entry section; found %d."), *RequiredWarningCue.ToString(), Producers);
+	if (!(WarningStart < FirstHit)) return TEXT("The required warning must begin before the first melee hit window.");
+	return {};
+}
+
 FString UProject_JAttackDefinition::GetMeleeTrajectoryFailure(const USkeletalMesh* SourceMesh) const
 {
     if (!MeleeTrajectory.bEnabled) return {};
@@ -93,6 +140,14 @@ EDataValidationResult UProject_JAttackDefinition::IsDataValid(FDataValidationCon
 {
 	EDataValidationResult Result = Super::IsDataValid(Context);
 	bool bHasError = Result == EDataValidationResult::Invalid;
+	if (const FString Failure = GetWarningContractFailure(); !Failure.IsEmpty())
+		Project_J::DataValidation::AddError(Context, bHasError, FText::FromString(Failure));
+	if (WarningPolicy == EProject_JAttackWarningPolicy::Legacy &&
+		(Context.GetValidationUsecase() == EDataValidationUsecase::Save || Context.GetValidationUsecase() == EDataValidationUsecase::PreSubmit))
+	{
+		Project_J::DataValidation::AddWarning(Context, NSLOCTEXT("ProjectJAttackDefinition", "UnclassifiedWarningPolicy",
+			"WarningPolicy is Legacy. Classify this attack when editing its warning behavior; existing execution is preserved."));
+	}
 	if (const FString Failure=MeleeTrajectory.GetValidationFailure(); !Failure.IsEmpty())
 	{ Project_J::DataValidation::AddError(Context,bHasError,FText::FromString(Failure)); }
 	if (!MeleeTrajectory.bEnabled && !AdditionalMeleeTrajectories.IsEmpty())

@@ -136,9 +136,11 @@ private:
     const FProject_JStreamingVelocityProfile& GetVelocityProfile() const;
     FName GetDetailGridName() const;
     bool BuildPawnVelocityPlan(const APawn& Pawn, const FProject_JStreamingVelocityProfile& Profile, FTwoStageStreamingPlan& OutPlan) const;
+    bool HasDiscontinuousPosition(const APawn& Pawn, const FVector& Position, double Now) const;
     mutable TWeakObjectPtr<const APawn> ObservedPawn;
     mutable uint64 VelocitySampleFrame = MAX_uint64;
     mutable FVector LastObservedVelocity = FVector::ZeroVector;
+    mutable FVector LastObservedPosition = FVector::ZeroVector;
     mutable double LastObservedVelocityTime = 0.0;
     mutable float ObservedYawRate = 0.0f;
     mutable TOptional<float> ObservedFlightAltitude;

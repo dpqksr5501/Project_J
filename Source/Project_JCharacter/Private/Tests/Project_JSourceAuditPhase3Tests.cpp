@@ -25,6 +25,7 @@
 #include "Combat/Project_JGameplayAbility_Melee.h"
 #include "Animation/Project_JLocomotionProfile.h"
 #include "Animation/AnimMontage.h"
+#include "Animation/Project_JAnimNotifyState_CombatPresentationCue.h"
 #include "Animation/AnimInstance.h"
 #include "Engine/SkeletalMesh.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -116,6 +117,30 @@ bool FProjectJAudit3MontageRateTest::RunTest(const FString&) {
     auto* Task=Ability->MontageTask; Ability->StartComboNode(Second);
     TestTrue(TEXT("Existing task/notify ownership is preserved"),Ability->MontageTask==Task);
     TestEqual(TEXT("Reused montage adopts next node rate"),Player->GetMesh()->GetAnimInstance()->Montage_GetPlayRate(Montage),2.f);
+    // An unsectioned required warning must revisit its producer, even on this live reused task.
+    auto* Required = Second.AttackDefinition.Get();
+    Required->WarningPolicy = EProject_JAttackWarningPolicy::MontageAttention;
+    Required->RequiredWarningCue = FGameplayTag::RequestGameplayTag(TEXT("ProjectJ.Tests.Presentation.Cue"));
+    Required->MontageSectionName = NAME_None;
+    Required->bMontageDriven = true;
+    Montage->Notifies.Reset();
+    auto* Warning = NewObject<UProject_JAnimNotifyState_CombatPresentationCue>(Montage);
+    auto* Purpose = FindFProperty<FEnumProperty>(Warning->GetClass(), TEXT("Purpose"));
+    auto* CueTag = FindFProperty<FStructProperty>(Warning->GetClass(), TEXT("CueTag"));
+    if (!TestNotNull(TEXT("Warning purpose"), Purpose) || !TestNotNull(TEXT("Warning cue"), CueTag)) return false;
+    Purpose->GetUnderlyingProperty()->SetIntPropertyValue(Purpose->ContainerPtrToValuePtr<void>(Warning), static_cast<uint64>(EProject_JCombatCuePurpose::GameplayWarning));
+    *CueTag->ContainerPtrToValuePtr<FGameplayTag>(Warning) = Required->RequiredWarningCue;
+    auto& Event = Montage->Notifies.AddDefaulted_GetRef();
+    Event.NotifyStateClass = Warning;
+    Event.SetTime(0.05f);
+    Event.SetDuration(0.1f);
+    Event.bCanBeFilteredViaRequest = false;
+    const auto* Anim = Player->GetMesh()->GetAnimInstance();
+    TestTrue(TEXT("Second section advanced beyond the default warning"), Anim->Montage_GetPosition(Montage) > Event.GetTime());
+    TestTrue(TEXT("A different player skill satisfies the warning contract"), Required->GetWarningContractFailure().IsEmpty());
+    Ability->StartComboNode(Second);
+    TestTrue(TEXT("Shared execution reenters before the required warning"), Ability->IsActive() && Ability->MontageTask == Task
+        && Anim->Montage_GetPosition(Montage) < Event.GetTime());
     Input->HandleInputTagReleased(InputTag);ASC->CancelAllAbilities();return true;
 }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAudit3BudgetAuthoringTest,"ProjectJ.SourceAudit3.BudgetAuthoringContract",SourceAuditPhase3TestFlags)

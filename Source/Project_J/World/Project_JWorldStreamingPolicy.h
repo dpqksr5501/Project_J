@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "World/Project_JDistantMeshPolicy.h"
 #include "Project_JWorldStreamingPolicy.generated.h"
 
 /**
@@ -77,9 +78,9 @@ struct PROJECT_J_API FProject_JFoliageHLODPolicy
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Foliage|HLOD")
 	FName RequiredFoliageHLODLayerName = TEXT("HLODLayer_Foliage_Impostor");
 
-	/** Mandatory WPO wind cut distance (cm) so mid/far foliage stays in VSM static cache. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Foliage|VSM", meta = (ClampMin = "1000.0", ClampMax = "15000.0"))
-	float MaxAllowedWPODisableDistanceCm = 10000.0f;
+	/** Preserves the serialized field and existing Blueprint pins. Authoring uses the shared project-wide canopy limit. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Foliage|VSM", meta = (DisplayName = "Legacy WPO Distance"))
+	float MaxAllowedWPODisableDistanceCm = Project_J::World::MaxCanopyWPODisableDistanceCm;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Foliage|Impostor", meta = (ClampMin = "10000.0"))
 	float ImpostorTransitionDistanceCm = 35000.0f;

@@ -144,7 +144,7 @@ void AProject_JLocalDungeonFixture::BeginPlay()
 		if (!FFileHelper::SaveArrayToFile(Bytes, *AdmissionFile)) return;
 	}
 	bReady = true;
-	UE_LOG(LogProjectJLocalDungeonFixture, Display, TEXT("DUNGEON_FIXTURE_READY %s"), *FixtureRole);
+	UE_LOG(LogProjectJLocalDungeonFixture, Display, TEXT("DUNGEON_FIXTURE_READY %s map=%s"), *FixtureRole, *GetWorld()->GetPackage()->GetName());
 #endif
 }
 
@@ -204,7 +204,9 @@ void AProject_JLocalDungeonFixture::PostLogin(APlayerController* NewPlayer)
 		}
 		if (!Dungeon->ClaimDungeonClearReward(Allocation, Character)) return;
 		FProject_JChannelInfo Channel;
-		Channel.ZoneId = FName(*GetWorld()->GetMapName());
+		FProject_JReturnAnchor Origin;
+		if (!Dungeon->GetCharacterReturnAnchor(Character, Origin)) return;
+		Channel.ZoneId = Origin.ZoneId;
 		Channel.ChannelId = 1;
 		Channel.ServerEndpoint = Endpoint(SourcePort);
 		Channel.LastHeartbeatSeconds = Dungeon->GetCurrentUtcEpochSeconds();

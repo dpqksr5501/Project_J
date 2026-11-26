@@ -54,6 +54,8 @@ def bind():
     cue.import_text('(TagName="PresentationCue.Combat.BossTestCleave")')
     warning_start, warning_end = impacts[0] - 0.35, impacts[0] - 0.02
     assert unreal.Project_JAssetMigrationLibrary.add_montage_gameplay_warning(montage, cue, warning_start, warning_end)
+    attack.set_editor_property("warning_policy", unreal.Project_JAttackWarningPolicy.MONTAGE_ATTENTION)
+    attack.set_editor_property("required_warning_cue", cue)
     if attack.get_editor_property("montage") != montage:
         attack.set_editor_property("montage", montage)
     if activation.get_editor_property("attack_definition_override") != attack:

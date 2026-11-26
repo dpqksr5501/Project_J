@@ -7,7 +7,7 @@ class UBoxComponent;
 class UProject_JInteractionTargetComponent;
 class UProject_JDungeonDefinition;
 
-/** Same-world, stationary on-foot travel. Destination is a server-authored place ID. */
+/** An authored interaction to an in-world place, a dungeon ticket, or a standalone map. */
 UCLASS()
 class PROJECT_J_API AProject_JWorldPortal : public AActor, public IProject_JInteractable
 {
@@ -15,6 +15,8 @@ class PROJECT_J_API AProject_JWorldPortal : public AActor, public IProject_JInte
 public:
     AProject_JWorldPortal();
     UPROPERTY(EditAnywhere, Replicated, BlueprintReadOnly, Category="Portal") FName DestinationPlaceId;
+    /** Standalone map transition. Online worlds keep their server-owned routing and ticket flow. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Portal") TSoftObjectPtr<UWorld> StandaloneDestination;
     /** Optional dungeon ID: when non-none, interacting allocates an on-demand dungeon instance via BP01 pipeline. */
     UPROPERTY(EditAnywhere, Replicated, BlueprintReadOnly, Category="Portal|Dungeon") FName DungeonId;
     /** Optional DungeonDefinition DataAsset: auto-registers map/party-size/reward metadata and fills DungeonId on BeginPlay. */
@@ -30,6 +32,8 @@ public:
     virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
 #endif
 private:
+    bool HasConsistentDungeonDefinition() const;
+    bool HasUsableStandaloneDestination() const;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UBoxComponent> InteractionBounds;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UProject_JInteractionTargetComponent> InteractionTarget;
 };

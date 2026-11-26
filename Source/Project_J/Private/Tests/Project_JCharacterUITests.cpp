@@ -1,5 +1,6 @@
 #if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
+#include "Misc/DataValidation.h"
 #include "UI/Project_JCharacterUIProfile.h"
 #include "UI/Project_JUILayoutSettings.h"
 #include "Project_JAttributeSet.h"
@@ -30,10 +31,28 @@ bool FProjectJUIProfileSelectionTest::RunTest(const FString&)
 	Catalog->Profiles.Add(Tie); TestEqual(TEXT("Equal priority/specificity has a stable ID tie break"), Catalog->Resolve(Context), Tie);
 	Algo::Reverse(Catalog->Profiles); TestEqual(TEXT("Asset array reorder does not change result"), Catalog->Resolve(Context), Tie);
 	Tie->ProfileId = Advance->ProfileId; TestEqual(TEXT("Duplicate IDs fail closed"), Catalog->Resolve(Context), Class);
+	FDataValidationContext DuplicateIds;
+	TestTrue(TEXT("Catalog validation identifies ambiguous saved layout IDs"), Catalog->IsDataValid(DuplicateIds) == EDataValidationResult::Invalid && DuplicateIds.GetNumErrors() > 0);
 	Class->bOverrideSkills = true; Class->Skills = {{Tag, FText()}, {Tag, FText()}};
 	TestEqual(TEXT("Duplicate input slots are rejected"), Catalog->Resolve(Context), Default);
+	Class->Skills[0].ClassId = TEXT("Warrior");
+	Class->Skills[1].ClassId = TEXT("Spellblade");
+	TestTrue(TEXT("Different classes may reuse a control"), Class->IsUsable());
+	TestEqual(TEXT("Only the matching class projects the control"), Class->ResolveSkills({}, TEXT("Warrior")).Num(), 1);
+	Class->Skills[1].ClassId = NAME_None;
+	TestFalse(TEXT("A shared control cannot shadow a class-specific control"), Class->IsUsable());
+	FDataValidationContext SlotConflict;
+	TestTrue(TEXT("Selected profile reports the ambiguous input"), Class->IsDataValid(SlotConflict) == EDataValidationResult::Invalid && SlotConflict.GetNumErrors() > 0);
+	Catalog->Profiles = {Class};
+	FDataValidationContext BadChild;
+	TestTrue(TEXT("Validating the catalog alone finds broken member profiles"), Catalog->IsDataValid(BadChild) == EDataValidationResult::Invalid);
 	Class->Skills.Reset(); TestEqual(TEXT("Explicit empty override hides skills"), Catalog->Resolve(Context), Class);
 	Catalog->Profiles.Reset(); TestNull(TEXT("Empty catalog falls back to native presentation"), Catalog->Resolve(Context));
+	FDataValidationContext Empty;
+	TestTrue(TEXT("An intentionally empty catalog supports the native HUD"), Catalog->IsDataValid(Empty) == EDataValidationResult::Valid);
+	Catalog->Profiles.Add(nullptr);
+	FDataValidationContext Missing;
+	TestTrue(TEXT("An unassigned catalog entry has an actionable error"), Catalog->IsDataValid(Missing) == EDataValidationResult::Invalid && Missing.GetNumErrors() > 0);
 	return true;
 }
 
@@ -91,6 +110,15 @@ bool FProjectJUIAssetContractTest::RunTest(const FString&)
 		{
 			TestEqual(TEXT("Stable default layout identity"), Profile->ProfileId, FName(TEXT("Default")));
 			TestFalse(TEXT("Default keeps real controller skills"), Profile->bOverrideSkills);
+			const auto Pulse = FGameplayTag::RequestGameplayTag(TEXT("InputTag.Skill.Caps.T"));
+			const auto Original = FGameplayTag::RequestGameplayTag(TEXT("InputTag.Skill.Q"));
+			const TArray<FProject_JUISkillSlot> ControllerSlots{{Original, FText::FromString(TEXT("My Q"))}};
+			const auto Presented = Profile->ResolveSkills(ControllerSlots, TEXT("Spellblade"));
+			TestTrue(TEXT("Spellblade receives its saved pulse icon after the original controller slot"),
+				Presented.Num() == 2 && Presented[0].Label.ToString() == TEXT("My Q")
+				&& Presented[1].InputTag == Pulse && Presented[1].Icon.LoadSynchronous() != nullptr);
+			TestEqual(TEXT("Other classes keep their controller slots"), Profile->ResolveSkills(ControllerSlots, TEXT("Other")).Num(), 1);
+			TestEqual(TEXT("Existing tagged slot is not duplicated"), Profile->ResolveSkills(Presented, TEXT("Spellblade")).Num(), 2);
 			TestFalse(TEXT("Default keeps real HP/MP attributes"), Profile->bOverrideResources);
 		}
 	}

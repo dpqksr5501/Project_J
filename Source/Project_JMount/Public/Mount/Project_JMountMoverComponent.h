@@ -9,6 +9,7 @@
 #include "Mount/Project_JMountMoverTypes.h"
 #include "MoverSimulationTypes.h"
 #include "Movement/Project_JMoverComponent.h"
+#include "World/Project_JStreamingMovementSource.h"
 #include "Project_JMountMoverComponent.generated.h"
 
 class UCapsuleComponent;
@@ -106,7 +107,7 @@ public:
  * reins Hand IK targets, and force-stop flight safety on unpossess/death.
  */
 UCLASS(Blueprintable)
-class PROJECT_JMOUNT_API AProject_JMountMoverPawn : public APawn, public IAbilitySystemInterface, public IProject_JInteractable, public IMoverInputProducerInterface
+class PROJECT_JMOUNT_API AProject_JMountMoverPawn : public APawn, public IAbilitySystemInterface, public IProject_JInteractable, public IMoverInputProducerInterface, public IProject_JStreamingMovementSource
 {
 	GENERATED_BODY()
 
@@ -178,6 +179,7 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Mount")
 	bool IsFlying() const;
+	virtual bool UsesAirborneStreamingPrediction_Implementation() const override { return IsFlying(); }
 
 	UFUNCTION(BlueprintPure, Category = "Mount|Health")
 	float GetHealth() const { return Health; }

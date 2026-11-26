@@ -98,13 +98,6 @@ void UProject_JGameplayAbility_Melee::ActivateAbility(const FGameplayAbilitySpec
 		return;
 	}
 	WeaponRevokedHandle = AttackEquipment->OnWeaponRevoked().AddUObject(this, &ThisClass::OnWeaponRevoked);
-	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
-	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-		return;
-	}
-	// Commit hooks may revoke equipment and synchronously end this activation.
-	if (!IsActive() || !HasActiveWeapon()) { return; }
 
 	ActiveComboDefinition = nullptr;
 	ActiveAttackDefinition = nullptr;
@@ -452,7 +445,7 @@ void UProject_JGameplayAbility_Melee::StartComboNode(const FProject_JComboNode& 
 			return;
 		}
 	}
-	if (!AttackDefinition)
+	if (!Node.NodeTag.IsValid() || !AttackDefinition || !AttackDefinition->GetWarningContractFailure().IsEmpty())
 	{
 		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 		return;
@@ -463,16 +456,38 @@ void UProject_JGameplayAbility_Melee::StartComboNode(const FProject_JComboNode& 
 		if (!AttackDefinition->GetMeleeTrajectoryFailure(SourceMesh?SourceMesh->GetSkeletalMeshAsset():nullptr).IsEmpty())
 		{ EndAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo,true,true); return; }
 	}
-	ApplyAttackMovementPolicy(*AttackDefinition);
 	UAnimMontage* NodeMontage = AttackDefinition->Montage.Get();
-	const FName NodeSection = AttackDefinition->MontageSectionName;
+	const FName NodeSection = AttackDefinition->GetPlaybackEntrySection();
 	const float NodePlayRate = AttackDefinition->PlayRate;
 	if (!NodeMontage)
 	{
 		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 		return;
 	}
+	if (!CurrentComboNodeTag.IsValid())
+	{
+		const auto* ActorInfo = GetCurrentActorInfo();
+		if (!ActorInfo || bCommittingOpeningNode) { return; }
+		// Opening input can arrive through the authority input event after GAS
+		// activation. That event has no matching client effect prediction window.
+		if (ActorInfo->IsNetAuthority())
+		{
+			TGuardValue<bool> CommitGuard(bCommittingOpeningNode, true);
+			const uint64 Binding = ComboInputBindingRevision;
+			const bool bCommitted = CommitAbility(CurrentSpecHandle, ActorInfo, CurrentActivationInfo);
+			// Effect application can cancel, change equipment or rebind the same ASC.
+			if (!IsActive() || Binding != ComboInputBindingRevision || !HasActiveWeapon()) { return; }
+			if (!bCommitted)
+			{
+				EndAbility(CurrentSpecHandle, ActorInfo, CurrentActivationInfo, true, true);
+				return;
+			}
+			ReconcileCombatConfiguration();
+			if (!IsActive()) { return; }
+		}
+	}
 
+	ApplyAttackMovementPolicy(*AttackDefinition);
 	if (IsComboDebugEnabled())
 	{
 		UE_LOG(LogProjectJCombatCombo, Log, TEXT("Play Node=%s Attack=%s Montage=%s Section=%s SameMontage=%d"),

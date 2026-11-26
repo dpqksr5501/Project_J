@@ -99,10 +99,12 @@ void FProject_JCrowdDensityBudgetSolver::EvaluateForViewer(
 	int32 MaxNonExemptAllowed,
 	float HysteresisBonus,
 	TSet<uint32>& OutAllowed,
-	int32& OutCulledCount)
+	int32& OutCulledCount,
+	FProject_JCrowdDensitySelectionCounts* OutCounts)
 {
 	OutAllowed.Reset();
 	OutCulledCount = 0;
+	FProject_JCrowdDensitySelectionCounts Counts;
 
 	struct FScoredCandidate
 	{
@@ -121,13 +123,14 @@ void FProject_JCrowdDensityBudgetSolver::EvaluateForViewer(
 	{
 		if (Cand.bAlwaysExempt)
 		{
+			++Counts.Exempt;
 			OutAllowed.Add(Cand.ObjectId);
 			continue;
 		}
 		const double DistSq = FVector::DistSquared(ViewerLocation, Cand.Location);
 		if (Cand.MaxCullDistanceSq > 0.0 && DistSq > Cand.MaxCullDistanceSq)
 		{
-			++OutCulledCount;
+			++Counts.OutsideDistance;
 			continue;
 		}
 		if (MaxNonExemptAllowed <= 0)
@@ -147,7 +150,7 @@ void FProject_JCrowdDensityBudgetSolver::EvaluateForViewer(
 		}
 		else
 		{
-			++OutCulledCount;
+			++Counts.OverCap;
 			if (IsWorse(Ranked.HeapTop(), Candidate))
 			{
 				Ranked.HeapPopDiscard(IsWorse, EAllowShrinking::No);
@@ -156,6 +159,8 @@ void FProject_JCrowdDensityBudgetSolver::EvaluateForViewer(
 		}
 	}
 	for (const FScoredCandidate& Item : Ranked) OutAllowed.Add(Item.ObjectId);
+	OutCulledCount = Counts.OutsideDistance + Counts.OverCap;
+	if (OutCounts) *OutCounts = Counts;
 }
 
 bool UProject_JCrowdDensityNetObjectFilter::IsCrowdDensityFilterEnabled()
@@ -290,6 +295,8 @@ void UProject_JCrowdDensityNetObjectFilter::PreFilter(FNetObjectPreFilteringPara
 	FrameActors.Reset();
 	PassAllowedPairs = 0;
 	PassCulledPairs = 0;
+	PassExemptPairs = 0;
+	PassOverCapPairs = 0;
 
 	const float DefaultDist = FilterConfig ? FilterConfig->DefaultMaxDistanceCm : 12000.0f;
 	const double DefaultDistSq = static_cast<double>(DefaultDist) * static_cast<double>(DefaultDist);
@@ -394,8 +401,9 @@ void UProject_JCrowdDensityNetObjectFilter::Filter(FNetObjectFilteringParams& Pa
 	const float Hysteresis = FilterConfig ? FilterConfig->HysteresisRetentionBonus : 1.35f;
 
 	int32 CulledThisConnection = 0;
+	FProject_JCrowdDensitySelectionCounts Counts;
 	FProject_JCrowdDensityBudgetSolver::EvaluateForViewer(
-		ViewerLocation, ScratchCandidates, PrevAllowed, ActiveEffectiveCap, Hysteresis, ScratchAllowed, CulledThisConnection);
+		ViewerLocation, ScratchCandidates, PrevAllowed, ActiveEffectiveCap, Hysteresis, ScratchAllowed, CulledThisConnection, &Counts);
 
 	for (uint32 AllowedIdx : ScratchAllowed)
 	{
@@ -408,6 +416,8 @@ void UProject_JCrowdDensityNetObjectFilter::Filter(FNetObjectFilteringParams& Pa
 
 	PassAllowedPairs += ScratchAllowed.Num();
 	PassCulledPairs += CulledThisConnection;
+	PassExemptPairs += Counts.Exempt;
+	PassOverCapPairs += Counts.OverCap;
 }
 
 void UProject_JCrowdDensityNetObjectFilter::PostFilter(FNetObjectPostFilteringParams&)
@@ -416,4 +426,6 @@ void UProject_JCrowdDensityNetObjectFilter::PostFilter(FNetObjectPostFilteringPa
 	LatestStats.EffectiveCap = ActiveEffectiveCap;
 	LatestStats.LastPassAllowedPairs = PassAllowedPairs;
 	LatestStats.LastPassCulledPairs = PassCulledPairs;
+	LatestStats.LastPassExemptPairs = PassExemptPairs;
+	LatestStats.LastPassOverCapPairs = PassOverCapPairs;
 }

@@ -18,6 +18,8 @@ struct PROJECT_J_API FProject_JUISkillSlot
 	/** Presentation hint only. Enhanced Input remains the source of key bindings. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) FText InputHint;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TSoftObjectPtr<UTexture2D> Icon;
+	/** Empty for shared slots. Class-specific skills can share the player's existing HUD layout. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FName ClassId;
 };
 
 USTRUCT(BlueprintType)
@@ -76,12 +78,18 @@ class PROJECT_J_API UProject_JCharacterUIProfile : public UDataAsset
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Match") FGameplayTagContainer RequiredTags;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Match") FGameplayTagContainer BlockedTags;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skills") bool bOverrideSkills = false;
+	/** Extend controller slots while preserving custom bindings and their order. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skills", meta=(EditCondition="!bOverrideSkills")) bool bAppendSkills = false;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skills") TArray<FProject_JUISkillSlot> Skills;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Resources") bool bOverrideResources = false;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Resources") TArray<FProject_JUIResourceDefinition> Resources;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skin")
 	TSubclassOf<UProject_JCharacterHUDModule> CharacterModuleClass;
 	bool IsUsable() const;
+#if WITH_EDITOR
+	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
+#endif
+	TArray<FProject_JUISkillSlot> ResolveSkills(const TArray<FProject_JUISkillSlot>& Base, FName CurrentClass) const;
 	bool Matches(const FProject_JUIContext &Context) const;
 	int32 Specificity() const;
 };
@@ -94,6 +102,9 @@ class PROJECT_J_API UProject_JUIProfileCatalog : public UDataAsset
 	/** Hard references keep assigned profiles and their widget classes in the cook dependency graph. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly) TArray<TObjectPtr<UProject_JCharacterUIProfile>> Profiles;
 	UProject_JCharacterUIProfile *Resolve(const FProject_JUIContext &Context) const;
+#if WITH_EDITOR
+	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
+#endif
 };
 
 namespace ProjectJUI

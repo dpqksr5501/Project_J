@@ -112,4 +112,5 @@ private:
 	TMap<uint64, TMap<TWeakObjectPtr<AActor>, FMultiHitCooldown>> MultiHitCooldowns;
 	uint64 NextProjectileId = 0;
 	uint32 TickCounter = 0;
+	bool bTicking = false;
 };

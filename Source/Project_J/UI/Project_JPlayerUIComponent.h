@@ -128,7 +128,7 @@ class PROJECT_J_API UProject_JPlayerUIComponent : public UActorComponent
 	TWeakObjectPtr<UProject_JCraftingJobsComponent> BoundCraftingJobs;
 	FDelegateHandle CraftingJobsHandle, CraftingRequestHandle;
 	uint64 CraftingBindingRevision = 0;
-	void LoadPreferences();
+	void LoadPreferences(bool bRefreshSlots);
 	void StorePreferences();
 	FProject_JHUDPreferences HUDPreferences;
 	FString PreferencesKey;

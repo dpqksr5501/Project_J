@@ -61,7 +61,10 @@ uint64 UProject_JProjectileManagerSubsystem::SpawnProjectile(
 	FProjectJOnProjectileHit OnHit)
 {
 	check(IsInGameThread());
-	if (ActiveProjectiles.Num() >= MaxProjectiles || Origin.ContainsNaN() || Velocity.ContainsNaN()
+	const UWorld* World = GetWorld();
+	if (!IsInitialized() || !World || World->bIsTearingDown || World->GetNetMode() == NM_Client
+		|| (Instigator && (!IsValid(Instigator) || Instigator->IsActorBeingDestroyed() || Instigator->GetWorld() != World))
+		|| ActiveProjectiles.Num() >= MaxProjectiles || Origin.ContainsNaN() || Velocity.ContainsNaN()
 		|| Velocity.IsNearlyZero() || !FMath::IsFinite(CollisionRadius) || CollisionRadius <= 0.0f
 		|| !FMath::IsFinite(MaxLifeSeconds) || MaxLifeSeconds <= 0.0f || !FMath::IsFinite(GravityScale))
 	{
@@ -151,12 +154,15 @@ bool UProject_JProjectileManagerSubsystem::CancelProjectile(uint64 ProjectileId)
 
 void UProject_JProjectileManagerSubsystem::Tick(float DeltaSeconds)
 {
+	check(IsInGameThread());
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_ProjectileManager_Tick);
 	UWorld* World = GetWorld();
-	if (!World || World->bIsTearingDown || World->GetNetMode() == NM_Client || DeltaSeconds <= 0.0f)
+	if (bTicking || !IsInitialized() || !World || World->bIsTearingDown || World->GetNetMode() == NM_Client
+		|| !FMath::IsFinite(DeltaSeconds) || DeltaSeconds <= 0.0f)
 	{
 		return;
 	}
+	TGuardValue<bool> TickGuard(bTicking, true);
 
 	if ((++TickCounter % 60u) == 0u && !MultiHitCooldowns.IsEmpty())
 	{
@@ -253,11 +259,20 @@ void UProject_JProjectileManagerSubsystem::Tick(float DeltaSeconds)
 
 	// Callbacks can spawn, cancel, or destroy targets. Resolve all pending state
 	// before notifying gameplay code.
-	for (const FPendingHitCallback& Pending : ReusablePendingHits)
+	if (ReusablePendingHits.IsEmpty()) return;
+	// A hit callback may synchronously tear down the subsystem and clear its member arrays.
+	// Keep this delivery batch alive until the current delegate returns.
+	auto PendingHits = MoveTemp(ReusablePendingHits);
+	for (const FPendingHitCallback& Pending : PendingHits)
 	{
+		if (!IsInitialized() || World->bIsTearingDown) break;
 		Pending.Callback.ExecuteIfBound(Pending.ProjectileId, Pending.HitActor.Get(), Pending.Hit);
 	}
-	ReusablePendingHits.Reset();
+	if (IsInitialized())
+	{
+		PendingHits.Reset();
+		ReusablePendingHits = MoveTemp(PendingHits);
+	}
 }
 
 void UProject_JProjectileManagerSubsystem::PrepareSweep(const FProject_JActiveProjectile& Proj)
@@ -355,13 +370,14 @@ bool UProject_JProjectileManagerSubsystem::ResolveSweep(
 
 bool UProject_JProjectileManagerSubsystem::AdmitMultiHitTarget(uint64 ChannelId, AActor* Target, double NowSeconds, float CooldownSeconds)
 {
+	check(IsInGameThread());
 	if (!ChannelId || !IsValid(Target) || !FMath::IsFinite(NowSeconds) || !FMath::IsFinite(CooldownSeconds) || CooldownSeconds < 0.0f)
 	{
 		return false;
 	}
-	check(IsInGameThread());
 	const UWorld* World = GetWorld();
-	if (!World || World->bIsTearingDown || World->GetNetMode() == NM_Client)
+	if (!IsInitialized() || !World || World->bIsTearingDown || World->GetNetMode() == NM_Client
+		|| Target->IsActorBeingDestroyed() || Target->GetWorld() != World)
 	{
 		return false;
 	}

@@ -6,6 +6,8 @@
 #include "Engine/World.h"
 #include "Game/Project_JCheatManager.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/WorldSettings.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/ScopeExit.h"
@@ -168,6 +170,25 @@ bool FProjectJPhase1HighSpeedStreamingTest::RunTest(const FString&)
 	++GFrameCounter;
 	TestTrue(TEXT("Confirmed clearance over a loaded surface permits detail suppression"),
 		Source->BuildPawnVelocityPlan(*Mount, Profile, Plan) && Plan.bSuppressDetailGrid);
+	auto* Ground = World->SpawnActor<ACharacter>(FVector(5000, 0, 0), FRotator::ZeroRotator);
+	if (!TestNotNull(TEXT("Unrelated ground pawn"), Ground)) return false;
+	Ground->GetCharacterMovement()->Velocity = FVector(0, 3000, 1000);
+	Source->FlightReadinessPawn = Mount;
+	Source->HysteresisAnchorTime = World->GetTimeSeconds();
+	TestTrue(TEXT("Same-frame pawn swap uses the ground pawn's heading without the flight grid exclusion"),
+		Source->BuildPawnVelocityPlan(*Ground, Profile, Plan) && Plan.bHighSpeedActive && !Plan.bSuppressDetailGrid && !Plan.bTurnWidened
+		&& !Plan.Stage1LoadedShapes.IsEmpty() && Plan.Stage1LoadedShapes.Last().Location.Y > 0 && Plan.Stage1LoadedShapes.Last().Location.Z == 0);
+	TestTrue(TEXT("The new pawn retires both old flight readiness and the trailing anchor"),
+		!Source->FlightReadinessPawn.IsValid() && Source->HysteresisAnchorTime < 0);
+	Source->FlightReadinessPawn = Ground;
+	Source->HysteresisAnchorTime = World->GetTimeSeconds();
+	TestTrue(TEXT("The same pawn can jump to another streaming region in the same frame"),
+		Ground->SetActorLocation(FVector(100000, 0, 0), false, nullptr, ETeleportType::TeleportPhysics));
+	Ground->GetCharacterMovement()->Velocity = FVector(3000, 0, 0);
+	TestTrue(TEXT("The new region gets a fresh heading and no old residency hold"),
+		Source->BuildPawnVelocityPlan(*Ground, Profile, Plan) && !Plan.bTurnWidened
+		&& !Plan.Stage1LoadedShapes.IsEmpty() && Plan.Stage1LoadedShapes.Last().Location.X > 0
+		&& Source->HysteresisAnchorTime < 0 && !Source->FlightReadinessPawn.IsValid());
 	return true;
 }
 

@@ -55,6 +55,10 @@ struct PROJECT_JCHARACTER_API FProject_JHitQuerySpec
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Query")
 	bool bAllowSSR = false;
+
+	/** Existing shape queries allow contact with a small body margin. Ground warnings use center membership. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Query", meta = (ClampMin = "0.0", ClampMax = "100.0"))
+	float TargetPaddingCm = 45.0f;
 };
 
 /** Server-clamped Motion Warping attack target (prevents client warp-distance cheats). */
@@ -102,6 +106,7 @@ class UAbilitySystemComponent;
 namespace Project_J::Combat
 {
 	PROJECT_JCHARACTER_API bool CanAffectCombatTarget(const AActor* Source, const AActor* Target, const UAbilitySystemComponent* TargetASC);
+	inline double GetCircleHalfHeight(double Radius) { return FMath::Max(150.0, Radius); }
 	/** Pure geometric membership test for AoECircle / AoECone / AoERectangle / AoEDonut. */
 	inline bool IsPointInsideAoESpec(const FProject_JHitQuerySpec& Spec, const FVector& TargetPoint, float TargetRadius = 0.0f)
 	{
@@ -116,7 +121,7 @@ namespace Project_J::Combat
 		switch (Spec.Kind)
 		{
 		case EProject_JHitQueryKind::AoECircle:
-			return Dist2D <= EffectiveOuter && FMath::Abs(Delta.Z) <= FMath::Max(150.0, EffectiveOuter);
+			return Dist2D <= EffectiveOuter && FMath::Abs(Delta.Z) <= GetCircleHalfHeight(EffectiveOuter);
 
 		case EProject_JHitQueryKind::AoEDonut:
 		{
