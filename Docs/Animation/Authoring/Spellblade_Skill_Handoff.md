@@ -1,15 +1,15 @@
 # Spellblade 스킬 구현·개선 인계
 
-2026-11-10 기준 `codex/spellblade-combat-kit`의 실행 경로다. `DA_Spellblade_Equip` → `DA_CombatStyle_SpellbladeKit` → 콤보·커맨드·무기 애니메이션 프로필 순서로 실제 사용 중인 에셋을 찾는다. 원본 대조와 자세 제작은 [전투 에셋 검토](Spellblade_CombatKit.md), 궤적의 생성·종료와 군중 예산은 [전투 VFX 구조](../../Combat/Architecture/CombatVFXArchitecture.md)를 따른다.
+2026-11-25 에셋 이름 정리 이후의 실행 경로다. `DA_Spellblade_Equip` → `DA_CombatStyle_Spellblade_Longblade` → 콤보·커맨드·무기 애니메이션 프로필 순서로 실제 사용 중인 에셋을 찾는다. 원본 대조와 자세 제작은 [전투 에셋 검토](Spellblade_CombatKit.md), 궤적의 생성·종료와 군중 예산은 [전투 VFX 구조](../../Combat/Architecture/CombatVFXArchitecture.md)를 따른다.
 
 ## 직업별 실행 경로
 
 | 직업 ID | 캐릭터 BP | 시작 무기 | 전투 스타일 DA | 전투 레이어 |
 | --- | --- | --- | --- | --- |
-| `Spellblade` | `BP_Spellblade` | `DA_Spellblade_Equip` | `DA_CombatStyle_SpellbladeKit` | `ABP_Spellblade` |
-| `GreatSword` | `BP_Greatsword` | `DA_Greatsword_Equip` | `DA_CombatStyle_Spellblade` | `ABP_Greatsword_Basic` |
+| `Spellblade` | `BP_Spellblade` | `DA_Spellblade_Equip` | `DA_CombatStyle_Spellblade_Longblade` | `ABP_Spellblade` |
+| `GreatSword` | `BP_Greatsword` | `DA_Greatsword_Equip` | `DA_CombatStyle_Greatsword` | `ABP_Greatsword_Basic` |
 
-두 캐릭터는 `BP_Player_Master`와 `ABP_Player_Master`를 공유한다. 각 직업의 기본 전투 스타일은 자신의 시작 무기와 동일한 DA를 사용하며 각자 입력 매핑, 커맨드, 콤보, 공격 정의와 몽타주를 선택한다. `GA_Spellblade`는 두 스타일의 데이터를 실행하는 공통 근접 어빌리티다. `GA_Spellblade_MovementDash`는 Spellblade 스타일만 부여한다. `GreatSword` 저장 ID는 유지한다. Basic 전투 데이터에 남은 예전 `Spellblade` 파일명은 현재 스타일 경로와 저장 식별자 호환을 위해 유지한다.
+두 캐릭터는 `BP_Player_Master`와 `ABP_Player_Master`를 공유한다. 각 직업의 기본 전투 스타일은 자신의 시작 무기와 동일한 DA를 사용하며 각자 입력 매핑, 커맨드, 콤보, 공격 정의와 몽타주를 선택한다. `GA_Spellblade`는 두 스타일의 데이터를 실행하는 공통 근접 어빌리티다. `GA_Spellblade_MovementDash`는 Spellblade 스타일만 부여한다. `GreatSword` 저장 ID는 유지한다. 기본 대검 전투 에셋의 옛 경로와 ID는 현재 `Greatsword` 이름으로 리디렉트된다.
 
 `BP_Project_JGameMode`의 `PlayerPawnClassesByJob`이 서버 PlayerState에 확정된 직업을 해당 BP에 연결한다. 첫 스폰과 리스폰이 같은 규칙을 사용한다. 매핑을 사용하는 게임 모드는 연결이 없거나 잘못된 직업의 스폰을 거절한다. 직업이 정해지지 않은 기본 맵 세션은 `BP_Spellblade`로 시작한다. Greatsword는 Manny 외형을 사용하고 `DA_Greatsword_Presentation`이 발도 시 `WeaponSocket_Greatsword_Combat`, 납도 시 `WeaponSocket_Back`을 선택한다. 두 BP의 시작 무기는 프로필이 없는 테스트 스폰에 적용하며 저장 프로필의 장비는 기존 복원 경로가 소유한다.
 
@@ -30,17 +30,17 @@
 | 원본 공격·이동·발도 FBX | `C:/Users/I/Desktop/Greatsword_A` |
 | 원본 Longblade와 장식 FBX, 텍스처 | `C:/Users/I/Desktop/GreatSword_Test/weapons` 및 `textures` 하위 폴더. `longblade`, `longblade_in`, `aiguillette`, `aiguillette_in` |
 | 초기 UE5 리깅 패키지 | 최초 공유 경로 `C:/Users/I/Desktop/GreatSword_UE5_Final`은 인계 시점에 확인되지 않았다. 현재 실행 기준은 아래 프로젝트 메시 |
-| 실행 몸체·무기 | `/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete`, `/Game/Weapons/Spellblade` |
-| 리타깃 원본·리타기터 | `/Game/Characters/Spellblade/Spellblade_Woman`, `/Game/Characters/Spellblade/Animation/CombatKit/RTG_SpellbladeLegacy_to_Manny_CombatKit`, 같은 폴더의 `RTG_SpellbladeLegacy_to_DirectKit` |
-| 시퀀스 / 몽타주 | `/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences` (`DirectBody`, `Aerial`, `Locomotion` 하위 포함) / `/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit` |
-| 전투 입력·데이터 | `/Game/DataAssetSets/Skill_Input_Mapping_Data/Spellblade/DA_Spellblade_Mapping_Data`, `/Game/DataAssetSets/CombatStyle/Spellblade/DA_CombatStyle_SpellbladeKit`, `/Game/DataAssetSets/AttackDefinition/Spellblade/CombatKit` |
+| 실행 몸체·무기 | `/Game/Characters/Spellblade/Meshes/SK_Spellblade_Leader`, `/Game/Weapons/Spellblade` |
+| 리타깃 원본·리타기터 | `/Game/Characters/Spellblade/Spellblade_Woman`, `/Game/Characters/Spellblade/Animation/Retarget/RTG_Spellblade_LegacyToManny`, 같은 폴더의 `RTG_Spellblade_LegacyToCharacter` |
+| 시퀀스 / 몽타주 | `/Game/Anim_Assets/Spellblade/Animations/Sword/Longblade/Sequences` (`DirectBody`, `Aerial`, `Locomotion` 하위 포함) / `/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/Longblade` |
+| 전투 입력·데이터 | `/Game/DataAssetSets/Skill_Input_Mapping_Data/Spellblade/DA_Spellblade_Mapping_Data`, `/Game/DataAssetSets/CombatStyle/Spellblade/DA_CombatStyle_Spellblade_Longblade`, `/Game/DataAssetSets/AttackDefinition/Spellblade/Longblade` |
 | 제작 자료 | [401개 원본 조사](Greatsword_A_Animation_Survey_2026-11-03.md), [포즈·연계 후보 미리보기](Data/GreatswordA_20261103/Review.html), [원본 파일명·해시·프로젝트 경로](Data/SpellbladeCombatKit/MotionProvenance.json) |
 
-기존 Greatsword 시퀀스 45개와 몽타주 15개는 `/Game/Anim_Assets/Great_Sword/Animations/Sword`와 그 아래 `Montage`로 복원했다. `AM_Spellblade_*`였던 기존 대검 몽타주 13개는 원래 `AM_Greatsword_*` 이름을 사용한다. `Sword_Idle_Seq`는 `ABP_Greatsword_Basic`과 `BS_Greatsword_Legacy`가 참조한다. 2026-11-24에 `ABP_Spellblade`의 `CombatUpperBody`에서 이 시퀀스를 참조하던 고립된 플레이어 노드를 제거했다. 저장 전후 컴파일된 애니메이션 노드 5개의 이름과 타입이 일치했고, 새 Editor에서 연결 없는 노드가 사라진 것을 확인했다. Spellblade 전용 시퀀스·몽타주는 `CombatKit/Sequences`와 `Montage/CombatKit`에 있다. 기존 참조 복구 묶음과 ABP 변경 전 백업은 로컬 중앙 보관소에 있다.
+기존 Greatsword 시퀀스 45개와 몽타주 15개는 `/Game/Anim_Assets/Great_Sword/Animations/Sword`와 그 아래 `Montage`로 복원했다. `AM_Spellblade_*`였던 기존 대검 몽타주 13개는 원래 `AM_Greatsword_*` 이름을 사용한다. `Sword_Idle_Seq`는 `ABP_Greatsword_Basic`과 `BS_Greatsword_Legacy`가 참조한다. 2026-11-24에 `ABP_Spellblade`의 `CombatUpperBody`에서 이 시퀀스를 참조하던 고립된 플레이어 노드를 제거했다. 저장 전후 컴파일된 애니메이션 노드 5개의 이름과 타입이 일치했고, 새 Editor에서 연결 없는 노드가 사라진 것을 확인했다. Spellblade 전용 시퀀스·몽타주는 `Longblade/Sequences`와 `Montage/Longblade`에 있다. 기존 참조 복구 묶음과 ABP 변경 전 백업은 로컬 중앙 보관소에 있다.
 
 ## 현재 플레이에서 사용 중
 
-아래의 축약된 몽타주 이름에는 공통 접두사 `AM_SpellbladeKit_`가 붙는다. 공격 원본 파일에는 `.fbx`를 붙여 원본 폴더에서 찾을 수 있다.
+아래의 축약된 몽타주 이름에는 공통 접두사 `AM_Spellblade_Longblade_`가 붙는다. 공격 원본 파일에는 `.fbx`를 붙여 원본 폴더에서 찾을 수 있다.
 
 | 입력 | 몽타주 | 원본 파일명 | 동작 |
 | --- | --- | --- | --- |
@@ -49,18 +49,18 @@
 | Q → 좌클릭 또는 Q를 누른 채 좌클릭 | `QuickSkill` → `QuickFollow` | `pdw_01_01_att_skill_crossatt_01`, `pdw_01_01_att_skill_crossatt_02` | 빠른 베기와 후속, 16/59cm |
 | 좌·우클릭 조합 → R | `ChordLunge` → `ChargeRelease` | `pdw_01_01_att_skill_lunge_00`, `pdw_01_01_att_skill_charging_att_00` | 찌르기에서 R로 연계. 기본 1·2타에서도 찌르기로 분기 가능 |
 | R 단독 / T | `ChargeRelease` / `Finisher` | `pdw_01_01_att_skill_charging_att_00` / `pdw_01_01_att_skill_finish_00` | 즉시 발동하는 강공격 42/44cm. R 홀드 차징은 미구현 |
-| 지상 전투 F | `AM_Longblade_Kick` | `pdw_01_01_att_kick_01` | Longblade 전투 커맨드가 활성화된 동안 발차기. 비전투 상호작용과 탑승 입력은 기존 경로 사용 |
-| E → 좌클릭 또는 E | `AM_Longblade_Flurry_1`~`4` | `pdw_05_01_att_skill_comboatt_01`~`04`, `04_return` | 별도 4연격. 각 타의 입력 창에서 후속 타를 승인하며 마지막 타 몽타주가 전용 복귀를 재생 |
-| 지상 전투 Z | `AM_Longblade_Focus` | `pdw_01_01_att_skill_buff_00` | 집중. 시전 완료 후 6초간 초당 마나 5 회복 |
-| 지상 전투 X | `AM_Longblade_Mend` | `pdw_05_00_att_skill_stand_magic_l_00` | 재생. 시전 완료 후 6초간 초당 체력 4 회복 |
-| 지상 전투 C | `AM_Longblade_Haste` | `pdw_05_00_att_skill_stand_magic_r_00` | 가속. 시전 완료 후 6초간 달리기·질주 속도 15% 증가 |
+| 지상 전투 F | `AM_Spellblade_Longblade_Kick` | `pdw_01_01_att_kick_01` | Longblade 전투 커맨드가 활성화된 동안 발차기. 비전투 상호작용과 탑승 입력은 기존 경로 사용 |
+| E → 좌클릭 또는 E | `AM_Spellblade_Longblade_Flurry_1`~`4` | `pdw_05_01_att_skill_comboatt_01`~`04`, `04_return` | 별도 4연격. 각 타의 입력 창에서 후속 타를 승인하며 마지막 타 몽타주가 전용 복귀를 재생 |
+| 지상 전투 Z | `AM_Spellblade_Longblade_Focus` | `pdw_01_01_att_skill_buff_00` | 집중. 시전 완료 후 6초간 초당 마나 5 회복 |
+| 지상 전투 X | `AM_Spellblade_Longblade_Mend` | `pdw_05_00_att_skill_stand_magic_l_00` | 재생. 시전 완료 후 6초간 초당 체력 4 회복 |
+| 지상 전투 C | `AM_Spellblade_Longblade_Haste` | `pdw_05_00_att_skill_stand_magic_r_00` | 가속. 시전 완료 후 6초간 달리기·질주 속도 15% 증가 |
 | 지상 전투 G → 좌클릭 | `ShortDash` → `BasicCut01` | `pdw_01_01_att_shotdash_elbow_00` | 오른팔꿈치 돌진. 루트 키 180cm. 이동 입력 방향으로 돌진하고 타격 뒤 기본 3연타의 첫 타로 연계 |
 | 전투 질주 + 좌클릭 | `SprintAttack` | `pdw_01_01_att_rundash_00` | 이동 입력 방향 돌진 공격, 280cm |
 | 공중 좌·우클릭 | `AirLight` / `AirHeavy` | `pdw_05_00_att_jumpatt_00` / `pdw_05_01_att_skill_explosion_2jump_00` | 상체 포즈와 수평 루트 45/72cm, 기존 낙하·착지 유지 |
 | 공중 V | `GroundSkill` | `pdw_01_01_att_skill_ground_att_01` | 공중 내려베기. 상체 타격과 원본 첫 0.20초의 수직 하강 약 102cm, Mover 착지 |
-| 지상 전투 Caps+E → E 또는 좌클릭 | `AM_Longblade_Bash1`~`Bash4` | `pdw_01_01_att_skill_bash4combo_att_00`~`03` | 별도 4연격. 후속 입력이 없거나 마지막 타가 끝나면 복귀 포즈를 재생 |
-| 지상 전투 Caps+Q → Q 또는 우클릭 | `AM_Longblade_Twin1`~`Twin2` | `pdw_05_01_att_skill_combo_01`~`02` | 2연격. Q로 양쪽 타를 실행할 수 있음 |
-| 지상 전투 Caps+V | `AM_Longblade_GroundGush` | `pdw_05_00_att_skill_groundgush_00` | 원본처럼 짧게 디디고 제자리로 돌아오는 지면 강타. 검 궤적이 타격 범위를 결정 |
+| 지상 전투 Caps+E → E 또는 좌클릭 | `AM_Spellblade_Longblade_Bash1`~`Bash4` | `pdw_01_01_att_skill_bash4combo_att_00`~`03` | 별도 4연격. 후속 입력이 없거나 마지막 타가 끝나면 복귀 포즈를 재생 |
+| 지상 전투 Caps+Q → Q 또는 우클릭 | `AM_Spellblade_Longblade_Twin1`~`Twin2` | `pdw_05_01_att_skill_combo_01`~`02` | 2연격. Q로 양쪽 타를 실행할 수 있음 |
+| 지상 전투 Caps+V | `AM_Spellblade_Longblade_GroundGush` | `pdw_05_00_att_skill_groundgush_00` | 원본처럼 짧게 디디고 제자리로 돌아오는 지면 강타. 검 궤적이 타격 범위를 결정 |
 | Shift+우클릭 | `MovementDash` | `pdw_01_01_att_move_dash_ing_01` | 이동 전용 루트 모션 1,000cm. 입력이 없으면 몸 방향. 장애물이 있으면 Mover 충돌 처리 적용 |
 | 전투 진입·해제 | `Draw` / `Sheathe` | `pdw_01_01_stand_weapon_out_00` / `pdw_01_01_stand_weapon_in_00` | 기존 `UpperBody` 슬롯, 이동 중 하체 보행 유지. 노티파이에서 같은 무기 액터를 손↔등으로 이동 |
 
@@ -97,7 +97,7 @@
 - 후속 `Project_JSpellbladePolish -ApplyAttackTravel`은 Caps 7개 시퀀스와 E 4타·전용 복귀에 원본 수평 루트를 적용한다. E 1~3타는 이미 캡슐을 움직이던 루트 키에 공격 데이터 정책을 맞췄다. 새 루트와 고정 메시 포즈를 합친 결과를 원본과 비교한 표본에서 양발·골반·오른손의 최대 위치 차이는 0.11cm였다. 지면 강타는 마지막 이동 키가 재생된 뒤 블렌드아웃하도록 조정했다. 평지 전용 서버 PIE에서 지면 강타 2회 종료의 시작점 편차는 회당 약 1~2.3cm였고, 실제 Caps Bash·Twin과 E Flurry 전타 및 복귀, F의 제자리 발차기를 확인했다. 복귀를 끝낸 위치와 복귀 도중 최대 이동 거리는 원본처럼 다를 수 있다.
 - 후속 PIE 품질 검증에서는 Bash 1·2타와 Twin 1타의 타격 이후 일부 손목 키만 다듬었다. 원본 시퀀스 길이와 루트 키를 검증했고, Caps Bash 4연격과 1·2·3타 단독 종료, Twin 2연격과 1타 종료, 지면 강타를 재현했다. T의 쇄골 및 팔 타이밍 시안은 왼손 재접촉을 개선하지 못해 복원했다. T는 기존 자세에서 손이 접근하는 동안 최대 약 16cm 떨어졌고, 그립 가중치 0.9 이상 표본은 약 0.21cm 이내였다. 원본과 비교 자료는 중앙 보관소의 `SpellbladeCaps` 항목에 있다.
 - `-ApplyDowncutTravel`은 공중 V의 원본 첫 0.20초에서 하강 102cm를 분리한다. 새 시퀀스의 복귀 루트는 0이며, 몽타주 메타데이터가 하강 시간만 기존 Mover 레이어에 전달한다. 전용 서버 PIE에서 실제 V를 점프의 두 시점에 눌러 재생과 수직 이동을 확인했다. 낮은 경우 약 0.15초에 착지했고, 높은 경우 루트 종료 뒤 자연 낙하가 이어져 약 0.28초에 착지했다. 둘 다 서버와 클라이언트가 Walking과 공격 해제로 복귀했다.
-- 후속 공중 V 점검에서 Post Process를 꺼도 복귀 때 왼손이 크게 움직였다. `AM_SpellbladeKit_GroundSkill`의 두 번째 세그먼트를 원본 0.32–2.20초, 약 2.07배속으로 저작했다. 기존 4.5배속 구간 후반의 별도 팔 스윙을 잘라냈다. 전체 길이 약 1.227초, 첫 0.32초의 타격 포즈, 기존 노티파이, 하강 0.20초는 보존한다. 시퀀스 120Hz 표본에서 복귀 중 왼손의 상완 기준 최대 이동 속도는 1,291→219cm/s였다. `UProject_JMontageVerticalMotion.bAirborneOnly`가 설정된 몽타주는 Falling이 끝나는 시점에 수직 루트 모션을 넘긴다. 기존 Spellblade의 일반 점프 속도 612.37cm/s는 이제 [플레이어 공통 이동 설정](../../Architecture/Runtime/Player_Character_Master.md#현재-제작-구조)에서 관리한다.
+- 후속 공중 V 점검에서 Post Process를 꺼도 복귀 때 왼손이 크게 움직였다. `AM_Spellblade_Longblade_GroundSkill`의 두 번째 세그먼트를 원본 0.32–2.20초, 약 2.07배속으로 저작했다. 기존 4.5배속 구간 후반의 별도 팔 스윙을 잘라냈다. 전체 길이 약 1.227초, 첫 0.32초의 타격 포즈, 기존 노티파이, 하강 0.20초는 보존한다. 시퀀스 120Hz 표본에서 복귀 중 왼손의 상완 기준 최대 이동 속도는 1,291→219cm/s였다. `UProject_JMontageVerticalMotion.bAirborneOnly`가 설정된 몽타주는 Falling이 끝나는 시점에 수직 루트 모션을 넘긴다. 기존 Spellblade의 일반 점프 속도 612.37cm/s는 이제 [플레이어 공통 이동 설정](../../Architecture/Runtime/Player_Character_Master.md#현재-제작-구조)에서 관리한다.
 - 단독 PIE에서 점프 상승량은 121.4→179.6cm였다. 같은 입력 시점의 V 복귀에서 머리 기준 왼손 최대 이동 속도는 688→229cm/s였다. 전용 서버 PIE에서 일반 점프 상승량은 서버·클라이언트 모두 182.5cm였다. 네 가지 공중 입력 시점에서 양쪽 V 재생과 평지 착지를 확인했고, 마지막 표본의 높이 차이는 네 경우 모두 0.01cm 미만이었다. 높은 곳에서 쓰면 0.20초의 저작 하강 뒤 자연 낙하가 이어진다. 평지 입력·자세 검증으로, 정점 V의 지상 적 피해와 경사 착지는 별도 검증 범위다.
 - 전용 서버 PIE에서 실제 E로 4타까지 이어졌고 Z/X/C는 각 서버 효과가 적용됐다. 같은 조건의 평지 가속 비교에서 이동 구간 평균 속도가 약 478→550cm/s였다. 실제 G의 평지 전진은 양쪽 약 180cm였고, 실제 좌클릭으로 기본 1타에 이어졌다. 공중 V는 두 번 모두 양쪽에서 몽타주를 재생했고, 지상에서는 공중 노드에 진입하지 않았다.
 - 현재 제작 명령은 `Project_JSpellbladePolish -ApplyStance -FbxRoot=<원본 폴더>`와 `-ApplyGuardLayer`다. 실제 몸체로 변환한 원본 `Idle00` 양손 준비 루프와 방향별 이동 루프를 사용한다. 아래 `Idle02`·`-RefineGuard` 수치는 이전 제작 이력이다. 현재 포즈와 Z/X/C의 단일 시전 테이크는 [전투 제작 가이드](Spellblade_CombatKit.md)를 따른다.

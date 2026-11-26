@@ -1163,9 +1163,9 @@ bool FProjectJCanonicalMeleeCompatibleSkeletonTest::RunTest(const FString&)
     TestTrue(TEXT("Same-skeleton NPC keys and complete source stamp stay identical to the existing saved path"),
         FProject_JMeleeTrajectory::StaticStruct()->CompareScriptStruct(&NPCRebuilt,&SavedNPC->MeleeTrajectory,PPF_None));
     const TStrongObjectPtr<UProject_JAttackDefinition> SelectedAttack(LoadObject<UProject_JAttackDefinition>(nullptr,
-        TEXT("/Game/DataAssetSets/AttackDefinition/Spellblade/DA_Attack_Spellblade_LMB1.DA_Attack_Spellblade_LMB1")));
+        TEXT("/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1.DA_Attack_Greatsword_LMB1")));
     const TStrongObjectPtr<USkeletalMesh> SelectedMesh(LoadObject<USkeletalMesh>(nullptr,
-        TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete.SK_Spellblade_Complete")));
+        TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Leader.SK_Spellblade_Leader")));
     if (!TestNotNull(TEXT("Actual player attack exists"),SelectedAttack.Get()) || !TestNotNull(TEXT("Actual player main mesh exists"),SelectedMesh.Get())) return false;
     USkeleton* const OriginalTarget=SelectedMesh->GetSkeleton();
     if (!TestNotNull(TEXT("Actual player target skeleton exists"),OriginalTarget) || !TestNotNull(TEXT("Actual player montage exists"),SelectedAttack->Montage.Get())) return false;

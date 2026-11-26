@@ -645,7 +645,7 @@ bool FProjectJPresentationCueLifetimeValidationTest::RunTest(const FString& Para
 	// The real authored profile is read as a whole. A newly unsafe saved cue is
 	// reported, never rewritten or relabelled to make this test succeed.
 	TStrongObjectPtr<UProject_JAttackPresentationProfile> SavedProfile(LoadObject<UProject_JAttackPresentationProfile>(nullptr,
-		TEXT("/Game/DataAssetSets/Presentation/Spellblade/DA_AP_Spellblade/DA_AP_Spellblade.DA_AP_Spellblade")));
+		TEXT("/Game/DataAssetSets/Presentation/Greatsword/DA_AP_Greatsword.DA_AP_Greatsword")));
 	if (!TestNotNull(TEXT("Actual saved Spellblade presentation profile loads"), SavedProfile.Get())) return false;
 	TestTrue(TEXT("Actual saved profile contains authored cues"), !SavedProfile->Cues.IsEmpty());
 	TMap<UPackage*, bool> PackageDirtyStates;

@@ -34,7 +34,7 @@ bool FProjectJMeleeLifetimeTest::RunTest(const FString& Parameters)
  auto* ASC = NewObject<UProject_JAbilitySystemComponent>(Player);
  FindFProperty<FObjectPropertyBase>(AProject_JBaseCharacter::StaticClass(), TEXT("AbilitySystemComponent"))->SetObjectPropertyValue_InContainer(Player, ASC);
  ASC->RegisterComponent(); ASC->InitAbilityActorInfo(Player, Player);
- auto* Style = LoadObject<UProject_JCombatStyleDefinition>(nullptr, TEXT("/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Spellblade.DA_CombatStyle_Spellblade"));
+ auto* Style = LoadObject<UProject_JCombatStyleDefinition>(nullptr, TEXT("/Game/DataAssetSets/CombatStyle/Greatsword/DA_CombatStyle_Greatsword.DA_CombatStyle_Greatsword"));
  auto* Mesh = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple.SKM_Quinn_Simple"));
  UClass* AbilityClass = LoadClass<UProject_JGameplayAbility_Melee>(nullptr, TEXT("/Game/GAs/Spellblade/GA_Spellblade.GA_Spellblade_C"));
  if (!TestNotNull(TEXT("Existing combat style"), Style) || !TestNotNull(TEXT("Existing mesh"), Mesh) || !TestNotNull(TEXT("Existing melee Blueprint class"), AbilityClass))

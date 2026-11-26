@@ -445,7 +445,7 @@ bool FProjectJSSRHistoricalSweepTest::RunTest(const FString&)
 		if (!TestNotNull(TEXT("Packet RPC actual authority source"), Attacker) || !TestNotNull(TEXT("Packet RPC actual recipient"), Victim)) return false;
 		auto* PacketHit = NewObject<UProject_JCombatHitValidationComponent>(Attacker); Attacker->AddInstanceComponent(PacketHit); PacketHit->RegisterComponent();
 		auto* Rewind = NewObject<UProject_JServerSideRewindComponent>(Victim); Victim->AddInstanceComponent(Rewind); Rewind->RegisterComponent();
-		const auto* Reference = LoadObject<UProject_JAttackDefinition>(nullptr, TEXT("/Game/DataAssetSets/AttackDefinition/Spellblade/DA_Attack_Spellblade_LMB1.DA_Attack_Spellblade_LMB1"));
+		const auto* Reference = LoadObject<UProject_JAttackDefinition>(nullptr, TEXT("/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1.DA_Attack_Greatsword_LMB1"));
 		if (!TestNotNull(TEXT("Existing authored damage effect for packet RPC"), Reference) || !Reference->DamageEffect) return false;
 		const auto* Effect = Reference->DamageEffect->GetDefaultObject<UGameplayEffect>();
 		float Delta = 0.f;
@@ -1385,7 +1385,7 @@ class FProjectJSSRExecutionClockLatent : public IAutomationLatentCommand
         HistoryA = NewObject<UProject_JServerSideRewindComponent>(A); A->AddInstanceComponent(HistoryA); HistoryA->RegisterComponent();
         HistoryB = NewObject<UProject_JServerSideRewindComponent>(B); B->AddInstanceComponent(HistoryB); HistoryB->RegisterComponent();
         Definition.Reset(LoadObject<UProject_JAttackDefinition>(nullptr,
-            TEXT("/Game/DataAssetSets/AttackDefinition/Spellblade/DA_Attack_Spellblade_LMB1_Canonical.DA_Attack_Spellblade_LMB1_Canonical")));
+            TEXT("/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1_Canonical.DA_Attack_Greatsword_LMB1_Canonical")));
         if (!TestTrue(TEXT("Unchanged selected canonical definition"), Definition.IsValid() && Definition->MeleeTrajectory.bEnabled && Definition->DamageEffect && Definition->AttackTag.IsValid())) return false;
         Effect = Definition->DamageEffect->GetDefaultObject<UGameplayEffect>();
         Delta = 0.f;

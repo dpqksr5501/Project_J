@@ -533,7 +533,7 @@ bool FProjectJNPCBoundedCleaveTest::RunTest(const FString&)
 {
 	FActionFixture F;
 	const auto* Reference = LoadObject<UProject_JAttackDefinition>(nullptr,
-		TEXT("/Game/DataAssetSets/AttackDefinition/Spellblade/DA_Attack_Spellblade_LMB1.DA_Attack_Spellblade_LMB1"));
+		TEXT("/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1.DA_Attack_Greatsword_LMB1"));
 	auto* MeshAsset = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple.SKM_Quinn_Simple"));
 	if (!TestNotNull(TEXT("Existing damage/montage authoring"), Reference) || !Reference->Montage || !Reference->DamageEffect
 		|| !TestNotNull(TEXT("Existing NPC mesh"), MeshAsset) || MeshAsset->GetRefSkeleton().GetNum() == 0) { return false; }

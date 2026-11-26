@@ -92,7 +92,7 @@ bool FProjectJAudit3PrepareMontageTest::RunTest(const FString&) {
     if(!TestTrue(TEXT("Only a disposable source-audit package can be created"),Path.StartsWith(TEXT("/Game/__SourceAuditTests__/"))))return false;
     const FString File=FPackageName::LongPackageNameToFilename(Path,FPackageName::GetAssetPackageExtension());
     if(!TestFalse(TEXT("Never overwrite an existing test or user asset"),IFileManager::Get().FileExists(*File)))return false;
-    auto* Style=LoadObject<UProject_JCombatStyleDefinition>(nullptr,TEXT("/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Spellblade.DA_CombatStyle_Spellblade"));
+    auto* Style=LoadObject<UProject_JCombatStyleDefinition>(nullptr,TEXT("/Game/DataAssetSets/CombatStyle/Greatsword/DA_CombatStyle_Greatsword.DA_CombatStyle_Greatsword"));
     if(!TestNotNull(TEXT("Read-only production style"),Style)||!Style->ComboDefinition||Style->ComboDefinition->Nodes.IsEmpty())return false;
     auto* Source=Style->ComboDefinition->Nodes[0].AttackDefinition->Montage.Get();
     if(!TestNotNull(TEXT("Source montage"),Source))return false;

@@ -643,7 +643,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJNPCCleaveContactTest, "ProjectJ.NPCGam
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJNPCCleaveContactTest::RunTest(const FString&)
 {
-    const TStrongObjectPtr<const UProject_JAttackDefinition> Reference(LoadObject<UProject_JAttackDefinition>(nullptr,TEXT("/Game/DataAssetSets/AttackDefinition/Spellblade/DA_Attack_Spellblade_LMB1.DA_Attack_Spellblade_LMB1")));
+    const TStrongObjectPtr<const UProject_JAttackDefinition> Reference(LoadObject<UProject_JAttackDefinition>(nullptr,TEXT("/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1.DA_Attack_Greatsword_LMB1")));
     const TStrongObjectPtr<USkeletalMesh> MeshAsset(LoadObject<USkeletalMesh>(nullptr,TEXT("/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple.SKM_Quinn_Simple")));
     if(!TestNotNull(TEXT("Existing working attack"),Reference.Get()) || !Reference->Montage || !Reference->DamageEffect || !TestNotNull(TEXT("Existing NPC mesh"),MeshAsset.Get())) return false;
     // Additional teleport/rotation/provider swap, then primary and legacy-default counterparts.

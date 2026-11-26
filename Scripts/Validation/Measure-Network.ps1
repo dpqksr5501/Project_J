@@ -180,13 +180,13 @@ if($Cleave){
 }
 $canonicalAssetFiles=@(
  'Content/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_Equip.uasset',
- 'Content/DataAssetSets/CombatStyle/DA_CombatStyle_Spellblade.uasset',
- 'Content/DataAssetSets/Combo/DA_Combo_Spellblade.uasset',
- 'Content/DataAssetSets/AttackDefinition/Spellblade/DA_Attack_Spellblade_LMB1.uasset',
- 'Content/DataAssetSets/Animation_Profiles/Equip/DA_Spellblade_CanonicalEquip.uasset',
- 'Content/DataAssetSets/CombatStyle/DA_CombatStyle_Spellblade_Canonical.uasset',
- 'Content/DataAssetSets/Combo/DA_Combo_Spellblade_Canonical.uasset',
- 'Content/DataAssetSets/AttackDefinition/Spellblade/DA_Attack_Spellblade_LMB1_Canonical.uasset')
+ 'Content/DataAssetSets/CombatStyle/Greatsword/DA_CombatStyle_Greatsword.uasset',
+ 'Content/DataAssetSets/Combo/Greatsword/DA_Combo_Greatsword.uasset',
+ 'Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1.uasset',
+ 'Content/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_CanonicalEquip.uasset',
+ 'Content/DataAssetSets/CombatStyle/Greatsword/DA_CombatStyle_Greatsword_Canonical.uasset',
+ 'Content/DataAssetSets/Combo/Greatsword/DA_Combo_Greatsword_Canonical.uasset',
+ 'Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1_Canonical.uasset')
 if($CanonicalMeleeMovingRecipient){$canonicalAssetFiles+=@('Content/Tests/Combat/L_CanonicalNetwork.umap')}
 $canonicalAssetsBefore=if($CanonicalMelee){@($canonicalAssetFiles|ForEach-Object{[ordered]@{path=$_;sha256=(Get-FileHash -LiteralPath (Join-Path $projectRoot $_) -Algorithm SHA256).Hash.ToLowerInvariant()}})}else{@()}
 if($CanonicalMelee){$canonicalAssetsBefore|ConvertTo-Json|Set-Content -LiteralPath "$runRoot/CanonicalAssetsBefore.json" -Encoding utf8}
@@ -1144,10 +1144,10 @@ if($CanonicalMelee){
    $requiresRawContact=!$CanonicalMeleeMovingRecipient -or [int]$row.role -ne 3
    $valid=$valid -and $row.schema -eq 1 -and $row.success -and !$row.failure -and $row.prediction_key -gt 0 -and $row.actual_handle -match '^[0-9]+$' -and $row.matching_grant_count -gt 0 -and $row.native_frame -ge 0 -and
     !!$row.trajectory_stamp -and $row.authored_keys -ge 2 -and !!$row.node_tag -and !!$row.attack_tag -and $row.native_active -and $row.montage -and $row.raw_contacts -ge 0 -and (!$requiresRawContact -or $row.raw_contacts -ge 1) -and $row.natural_ends -eq 1 -and $row.attack_finalizations -gt 0 -and $row.delegates_retired -and $row.cleanup_passed -and !$row.rpc_invocation_inferred_from_effect
-   $valid=$valid -and $row.equipment -ceq '/Game/DataAssetSets/Animation_Profiles/Equip/DA_Spellblade_CanonicalEquip.DA_Spellblade_CanonicalEquip' -and
-    $row.style -ceq '/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Spellblade_Canonical.DA_CombatStyle_Spellblade_Canonical' -and
-    $row.combo -ceq '/Game/DataAssetSets/Combo/DA_Combo_Spellblade_Canonical.DA_Combo_Spellblade_Canonical' -and
-    $row.attack -ceq '/Game/DataAssetSets/AttackDefinition/Spellblade/DA_Attack_Spellblade_LMB1_Canonical.DA_Attack_Spellblade_LMB1_Canonical'
+   $valid=$valid -and $row.equipment -ceq '/Game/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_CanonicalEquip.DA_Greatsword_CanonicalEquip' -and
+    $row.style -ceq '/Game/DataAssetSets/CombatStyle/Greatsword/DA_CombatStyle_Greatsword_Canonical.DA_CombatStyle_Greatsword_Canonical' -and
+    $row.combo -ceq '/Game/DataAssetSets/Combo/Greatsword/DA_Combo_Greatsword_Canonical.DA_Combo_Greatsword_Canonical' -and
+    $row.attack -ceq '/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1_Canonical.DA_Attack_Greatsword_LMB1_Canonical'
   }
   $valid=$valid -and $authority.role -eq 3 -and $owner.role -eq 2 -and $owner.locally_controlled -and
    $authority.actual_handle -ceq $owner.actual_handle -and $authority.prediction_key -eq $owner.prediction_key -and $authority.source_mesh -ceq $owner.source_mesh -and $authority.trajectory_stamp -ceq $owner.trajectory_stamp -and $authority.node_tag -ceq $owner.node_tag -and

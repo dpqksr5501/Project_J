@@ -1,5 +1,13 @@
 # Spellblade 이름·무기 이주
 
+2026-11-25 이름 정리에서 UE 마네킹 기본 대검의 전투 스타일·공격·콤보·커맨드·연출 및 대검 기반 Canonical 검증 에셋을 `Greatsword`로 정리했다. Spellblade 롱블레이드 에셋에는 `Spellblade_Longblade`를 쓰고 전투 경로는 `Longblade`로 옮겼다. 캐릭터 몸체용 `DirectBody`와 공용 기준 모션을 각각 보존했다. 제작 리타기터는 `Characters/Spellblade/Animation/Retarget`에 있다.
+
+`SK_Spellblade_Leader`는 모듈 파츠에 애니메이션 포즈를 전달하는 대표 메시다. 2026-11-26에 공유 스켈레톤을 `SK_Spellblade_Character`로 정리했다. 이전 `SKEL_Spellblade_Character`와 `SK_Spellblade_Complete_Skeleton` 경로는 각각 최종 경로로 연결된다. 대표 메시의 재임포트 원본은 `SK_Spellblade_Complete.fbx`다.
+
+옛 소프트 오브젝트 경로는 `DefaultEngine.ini`의 Core Redirects, 이름이 바뀐 Primary Asset ID는 `DefaultGame.ini`의 Asset Manager 리디렉트가 처리한다. UE 마네킹 기본 대검의 기존 `DA_CombatStyle_Spellblade` ID는 새 `DA_CombatStyle_Greatsword`로 연결된다. 직업 ID, 장비 ID와 Gameplay Tag는 보존한다. 이전 패키지와 SHA-256은 중앙 보관소의 `GreatswordNamingBefore_20261125.zip`, `SpellbladeCombatNamingBefore_20261125.zip`, `SpellbladeRigNamingBefore_20261125.zip` 내부 `Manifest.json`에 있다. 복원 시 해당 매핑의 새 패키지를 따로 보존한 뒤 이전 패키지와 참조자를 원래 경로에 풀고 같은 변경의 경로 및 리디렉트 설정도 되돌린다.
+
+이름 이관 후 에디터 빌드와 직업·장비 복원 등 집중 테스트 4개가 통과했다. 스켈레톤 접두사 변경 후에는 이전 경로 두 개와 대표 메시·머리·기본 의상의 참조를 새 Unreal 프로세스에서 확인했다. 마지막 접두사 변경 전 스켈레톤과 참조 패키지는 `SpellbladeSkeletonPrefixNamingBefore_20261126.zip`에 보관했다. 렌더링 PIE와 Cook은 이번 검증 범위에 포함하지 않았다.
+
 현재 캐릭터와 전용 제작 자원의 이름은 **Spellblade**로 통일한다. 기존 Basic 대검은 별도 장비로 보존한다. 파일 이름, 저장 데이터의 식별자, 게임플레이 태그는 서로 다른 계약이므로 일괄 문자열 치환 대상으로 취급하지 않는다.
 
 ## 이름과 보존 경계

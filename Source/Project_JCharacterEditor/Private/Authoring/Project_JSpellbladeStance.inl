@@ -1,5 +1,5 @@
-const FString StanceFolder = Sequences + TEXT("Locomotion/Longblade/");
-constexpr TCHAR GuardPrefix[] = TEXT("AS_LongbladeStance_");
+const FString StanceFolder = Sequences + TEXT("Locomotion/Guard/");
+constexpr TCHAR GuardPrefix[] = TEXT("AS_Spellblade_Longblade_Stance_");
 
 struct FStanceTake
 {
@@ -112,7 +112,7 @@ void InspectStancePose(UAnimSequence& Clip, USkeletalMesh& Mesh, bool bLegacy)
 
 bool VerifyStance(const UBlendSpace& Blend)
 {
-	const auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete"));
+	const auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Leader"));
 	if (!Body || Blend.GetBlendSamples().Num() != 10) { return false; }
 	const UAnimSequence* Idle = nullptr;
 	for (const auto& Sample : Blend.GetBlendSamples())
@@ -203,8 +203,8 @@ TArray<UAnimSequence*> RetargetStanceTakes(const FString& Params, TConstArrayVie
 	FString SourceFolder;
 	if (!FParse::Value(*Params, TEXT("FbxRoot="), SourceFolder)) { return {}; }
 	auto* Legacy = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Spellblade_Woman"));
-	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete"));
-	auto* Rig = Asset<UIKRetargeter>(TEXT("/Game/Characters/Spellblade/Animation/CombatKit/RTG_SpellbladeLegacy_to_DirectKit"));
+	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Leader"));
+	auto* Rig = Asset<UIKRetargeter>(TEXT("/Game/Characters/Spellblade/Animation/Retarget/RTG_Spellblade_LegacyToCharacter"));
 	if (!Legacy || !Body || !Rig) { return {}; }
 	if (!bApply && FParse::Param(*Params, TEXT("TrialResetArmAlignment")))
 	{
@@ -377,7 +377,7 @@ bool AuditSharedArmRetarget(const FString& Params)
 	if (Clips.IsEmpty()) { return false; }
 	if (FParse::Param(*Params, TEXT("BakeArmRollTrial")))
 	{
-		auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete"));
+		auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Leader"));
 		if (!Body) { return false; }
 		for (UAnimSequence* Clip : Clips)
 		{
@@ -449,7 +449,7 @@ bool ResolveStanceWeaponMount(const USkeletalMesh& Body, const USkeletalMesh& We
 bool FitReadyGrip(UAnimSequence& Ready, UAnimSequence& Original)
 {
 	auto* Legacy = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Spellblade_Woman"));
-	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete"));
+	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Leader"));
 	const auto* Weapon = Asset<USkeletalMesh>(TEXT("/Game/Weapons/Spellblade/SK_Spellblade_longblade"));
 	if (!Legacy || !Body || !Weapon) { return false; }
 	const auto* PalmL = Body->FindSocket(TEXT("PalmGrip_L"));
@@ -568,7 +568,7 @@ const FName CarryArmBones[] = {TEXT("upperarm_r"), TEXT("lowerarm_r"), TEXT("han
 
 bool RefitCarryWrist(bool bApply)
 {
-	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete"));
+	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Leader"));
 	if (!Body) { return false; }
 	const auto& Ref = Body->GetRefSkeleton();
 	const FName UpperName(TEXT("upperarm_r")), LowerName(TEXT("lowerarm_r")), HandName(TEXT("hand_r"));
@@ -597,7 +597,7 @@ bool RefitCarryWrist(bool bApply)
 	TArray<FFit> Fits;
 	for (UAnimSequence* Source : Clips)
 	{
-		if (!Source->GetName().StartsWith(TEXT("AS_LongbladeStance_")) || Source->GetSkeleton() != Body->GetSkeleton()) { return false; }
+		if (!Source->GetName().StartsWith(TEXT("AS_Spellblade_Longblade_Stance_")) || Source->GetSkeleton() != Body->GetSkeleton()) { return false; }
 		auto& Fit = Fits.AddDefaulted_GetRef();
 		Fit.Clip = Source;
 		double Before = 0., After = 0., MaxShift = 0.;
@@ -898,7 +898,7 @@ bool FitCarryContact(UAnimSequence& Clip, USkeletalMesh& Body, const FTransform&
 
 bool PrepareCarryContact(bool bApply, const FString* TrialSource = nullptr)
 {
-	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete"));
+	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Leader"));
 	auto* Weapon = Asset<USkeletalMesh>(TEXT("/Game/Weapons/Spellblade/SK_Spellblade_longblade"));
 	const auto* Defaults = StanceBodyDefaults();
 	const auto* Profile = Defaults ? Defaults->HandGripProfile.Get() : nullptr;
@@ -1048,7 +1048,7 @@ bool PrepareCarryContact(bool bApply, const FString* TrialSource = nullptr)
 
 bool AuthorCarryElbowClearance(bool bApply)
 {
-	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete"));
+	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Leader"));
 	if (!Body) { return false; }
 	const FName UpperBone(TEXT("upperarm_l")), ForearmBone(TEXT("lowerarm_l")), HandBone(TEXT("hand_l"));
 	const int32 HandIndex = Body->GetRefSkeleton().FindBoneIndex(HandBone);
@@ -1128,7 +1128,7 @@ bool AuthorCarryElbowClearance(bool bApply)
 
 bool AuthorCastWeaponClearance(bool bApply)
 {
-	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete"));
+	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Leader"));
 	const auto* Weapon = Asset<USkeletalMesh>(TEXT("/Game/Weapons/Spellblade/SK_Spellblade_longblade"));
 	const auto* Grip = Weapon ? Weapon->FindSocket(StancePrimaryGripName()) : nullptr;
 	const auto* Tip = Weapon ? Weapon->FindSocket(TEXT("WeaponGroundProbe_Tip")) : nullptr;
@@ -1202,7 +1202,7 @@ bool AuthorCastWeaponClearance(bool bApply)
 	for (const TCHAR* Role : {TEXT("Buff"), TEXT("CastLeft"), TEXT("CastRight")})
 	{
 		if (FCString::Strcmp(Role, TEXT("Buff")) == 0) { continue; }
-		auto* Clip = Asset<UAnimSequence>(Sequences + TEXT("DirectBody/Skill/AS_LongbladeCast_") + Role);
+		auto* Clip = Asset<UAnimSequence>(Sequences + TEXT("DirectBody/Skill/AS_Spellblade_Longblade_Cast_") + Role);
 		if (!Clip) { return false; }
 		const int32 FadeKeys = FMath::Max(1, FMath::RoundToInt(Clip->GetDataModel()->GetFrameRate().AsDecimal() * .32));
 		TArray<FFrame> Frames;
@@ -1326,7 +1326,7 @@ bool RaiseWeaponTipAtElbow(const FVector& Tip, double Height, FTransform& Elbow,
 
 bool AuthorCastGroundClearance(bool bApply)
 {
-	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete"));
+	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Leader"));
 	const auto* Weapon = Asset<USkeletalMesh>(TEXT("/Game/Weapons/Spellblade/SK_Spellblade_longblade"));
 	const auto* TipSocket = Weapon ? Weapon->FindSocket(TEXT("WeaponGroundProbe_Tip")) : nullptr;
 	const auto* GripSocket = Weapon ? Weapon->FindSocket(StancePrimaryGripName()) : nullptr;
@@ -1420,7 +1420,7 @@ const FName ForwardGuardSupport[] = {TEXT("spine_03"), TEXT("spine_04"), TEXT("s
 // Ready posture and the same rigid grip used by the runtime attachment.
 bool FitForwardGuard(UAnimSequence& Forward, UAnimSequence& Ready)
 {
-	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete"));
+	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Leader"));
 	const auto* Weapon = Asset<USkeletalMesh>(TEXT("/Game/Weapons/Spellblade/SK_Spellblade_longblade"));
 	const auto* Defaults = StanceBodyDefaults();
 	const auto* Profile = Defaults ? Defaults->HandGripProfile.Get() : nullptr;
@@ -1596,7 +1596,7 @@ double StrafeCarryLift(FStringView Take)
 
 bool FitStrafeCarry(UAnimSequence& Clip, double BladeLiftDegrees, const UAnimSequence& RightArmReference)
 {
-	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete"));
+	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Leader"));
 	const auto* Weapon = Asset<USkeletalMesh>(TEXT("/Game/Weapons/Spellblade/SK_Spellblade_longblade"));
 	const auto* Tip = Weapon ? Weapon->FindSocket(TEXT("WeaponGroundProbe_Tip")) : nullptr;
 	FTransform WeaponInHand;
@@ -1766,12 +1766,12 @@ bool VerifyGuardBlendArmEnvelope(const UAnimSequence* TrialLeft = nullptr, const
 	return bValid;
 }
 
-const FString ReadyChestGuardReviewPath = Sequences + TEXT("SourceTransient/StanceAudit/AS_LongbladeReadyChestGuardReview");
+const FString ReadyChestGuardReviewPath = Sequences + TEXT("SourceTransient/StanceAudit/AS_Spellblade_Longblade_GuardReadyChestGuardReview");
 
 bool TrialReadyGuard(bool bSave)
 {
 	auto* Ready = Asset<UAnimSequence>(StanceFolder + FString(GuardPrefix) + TEXT("Ready"));
-	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete"));
+	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Leader"));
 	const auto* Weapon = Asset<USkeletalMesh>(TEXT("/Game/Weapons/Spellblade/SK_Spellblade_longblade"));
 	const auto* Defaults = StanceBodyDefaults();
 	const auto* Profile = Defaults ? Defaults->HandGripProfile.Get() : nullptr;
@@ -1950,7 +1950,7 @@ bool PrepareStance(const FString& Params, UBlendSpace& Blend, bool bApply)
 		return AuthorGuardStance(Params, Blend);
 	}
 
-	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete"));
+	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Leader"));
 	if (!Body) { return false; }
 	UE_LOG(LogTemp, Display, TEXT("SpellbladeStanceSkeleton Blend=%s Body=%s"),
 		*GetPathNameSafe(Blend.GetSkeleton()), *GetPathNameSafe(Body->GetSkeleton()));
@@ -1977,7 +1977,7 @@ bool PrepareStance(const FString& Params, UBlendSpace& Blend, bool bApply)
 
 bool VerifyGuardPose(UProject_JCombatStyleDefinition& Style, UBlendSpace& Blend)
 {
-	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete"));
+	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Leader"));
 	const auto* Node = Style.ComboDefinition->FindNode(Tag(TEXT("Combo.Spellblade.Light.1")));
 	const auto* Palm = Body ? Body->FindSocket(TEXT("PalmGrip_R")) : nullptr;
 	if (!Palm || !Node || !Node->AttackDefinition || !VerifyStance(Blend)) { return false; }
@@ -2052,7 +2052,7 @@ bool InspectGuardGraph()
 			}
 		}
 	}
-	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete"));
+	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Leader"));
 	auto* Clip = Asset<UAnimSequence>(StanceFolder + FString(GuardPrefix) + GuardTakes[0].Name);
 	if (!Body || !Clip) { return false; }
 	FAnimPoseEvaluationOptions Options;
@@ -2210,7 +2210,7 @@ bool VerifySpellbladeAssetPreviews()
 
 bool AuditSpellbladeArmPreview(UBlendSpace& Blend)
 {
-	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete"));
+	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Leader"));
 	auto* Quinn = Asset<USkeletalMesh>(TEXT("/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple"));
 	auto* Legacy = Asset<UBlendSpace>(LegacyBlendPath);
 	if (!Body || !Quinn || !Legacy) { return false; }
@@ -2276,7 +2276,7 @@ bool PrepareCastLayer(bool bApply)
 {
 	const FName CastSlotName(Project_J::Animation::CastUpperBodySlot);
 	auto* Blueprint = Asset<UAnimBlueprint>(TEXT("/Game/Animation_Logic/ABPs/ABP_Player_Master"));
-	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete"));
+	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Leader"));
 	if (!Blueprint || !Blueprint->TargetSkeleton || !Body || !Body->GetSkeleton()) { return false; }
 
 	TArray<UEdGraph*> Graphs;
@@ -2772,7 +2772,7 @@ bool ShapeCastGaze(UAnimSequence& Clip, USkeletalMesh& Body)
 
 bool PrepareDirectBodyUpperMontages(const FString& Params, UProject_JCombatStyleDefinition& Style, bool bApply)
 {
-	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete"));
+	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Leader"));
 	const auto* Profile = Style.WeaponAnimationProfile.Get();
 	if (!Body || !Profile) { return false; }
 	TSet<UAnimSequence*> ClipsToSave;
@@ -2794,7 +2794,7 @@ bool PrepareDirectBodyUpperMontages(const FString& Params, UProject_JCombatStyle
 	{
 		if (!Asset<UAnimSequence>(DirectSkillPath + Take.Name)) { MissingTakes.Add(Take); }
 	}
-	if (!MissingTakes.IsEmpty() && (!bApply || RetargetStanceTakes(Params, MissingTakes, TEXT("AS_SpellbladeDirect_"),
+	if (!MissingTakes.IsEmpty() && (!bApply || RetargetStanceTakes(Params, MissingTakes, TEXT("AS_Spellblade_Longblade_Direct_"),
 		true, Sequences + TEXT("DirectBody/Skill")).Num() != MissingTakes.Num())) { return false; }
 
 	for (const auto& Cast : BuffCasts())

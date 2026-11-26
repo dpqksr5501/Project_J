@@ -2,20 +2,20 @@
 
 다른 채팅에서 이어서 구현할 때는 [Spellblade 스킬 구현·개선 인계](Spellblade_Skill_Handoff.md)에서 원본 경로, 현재 입력과 몽타주, 미연결 후보를 먼저 확인한다.
 
-Spellblade Longblade 장비는 `DA_CombatStyle_SpellbladeKit`를 사용한다. 기존 대검은 기존 스타일과 레이어를 사용한다. 에셋은 기존 Spellblade 경로 아래의 `CombatKit`에 보관한다.
+Spellblade Longblade 장비는 `DA_CombatStyle_Spellblade_Longblade`를 사용한다. 기존 대검은 기존 스타일과 레이어를 사용한다. 에셋은 기존 Spellblade 경로 아래의 `Longblade`에 보관한다.
 
 | 에셋 | 검토 경로 |
 | --- | --- |
-| 공용 기준 시퀀스 30개 | `/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences` |
-| 실제 몸체용 시퀀스 | `/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/DirectBody` |
-| 공격·이동·발도·납도 몽타주 | `/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit` |
-| 상체 BS | `/Game/Animation_Logic/BSs/Spellblade/CombatKit/BS_Spellblade` |
-| 이전 Greatsword BS | `/Game/Animation_Logic/BSs/Spellblade/BS_Greatsword_Legacy` |
+| 공용 기준 시퀀스 30개 | `/Game/Anim_Assets/Spellblade/Animations/Sword/Longblade/Sequences` |
+| 실제 몸체용 시퀀스 | `/Game/Anim_Assets/Spellblade/Animations/Sword/Longblade/Sequences/DirectBody` |
+| 공격·이동·발도·납도 몽타주 | `/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/Longblade` |
+| 상체 BS | `/Game/Animation_Logic/BSs/Spellblade/Longblade/BS_Spellblade_Longblade` |
+| 이전 Greatsword BS | `/Game/Animation_Logic/BSs/GreatSword/BS_Greatsword_Legacy` |
 | 전용 링크드 레이어 | `/Game/Animation_Logic/ABPs/Spellblade/ABP_Spellblade` |
-| 공격 VFX 매핑과 공용 검 연출 프로필 | `/Game/DataAssetSets/Presentation/Spellblade/CombatKit` |
-| 제작용 리타기터 | `RTG_SpellbladeLegacy_to_Manny_CombatKit`, `RTG_SpellbladeLegacy_to_DirectKit` |
+| 공격 VFX 매핑과 공용 검 연출 프로필 | `/Game/DataAssetSets/Presentation/Spellblade/Longblade` |
+| 제작용 리타기터 | `RTG_Spellblade_LegacyToManny`, `RTG_Spellblade_LegacyToCharacter` |
 
-[모션 출처 목록](Data/SpellbladeCombatKit/MotionProvenance.json)에 초기 변환 원본 파일명, SHA-256, 출력 에셋, 길이와 샘플 키 수를 기록했다. Longblade 상체 블렌드 스페이스는 `SK_Spellblade_Complete`용 준비 루프와 전후좌우 이동 루프를 사용한다. 하체는 공용 GASP 모션 매칭을 사용한다.
+[모션 출처 목록](Data/SpellbladeCombatKit/MotionProvenance.json)에 초기 변환 원본 파일명, SHA-256, 출력 에셋, 길이와 샘플 키 수를 기록했다. Longblade 상체 블렌드 스페이스는 `SK_Spellblade_Leader`용 준비 루프와 전후좌우 이동 루프를 사용한다. 하체는 공용 GASP 모션 매칭을 사용한다.
 
 스크립트로 Blend Space의 샘플 배열을 교체할 때는 `RebuildBlendSpaceInterpolation`으로 보간 데이터를 재생성한 뒤 저장한다. Longblade는 기존 샘플 인덱스가 보간 데이터에 남아 고속 입력에서 범위를 벗어났다. 에디터 제작 도구에서 그리드·삼각형·선분 인덱스를 새 샘플 배열에 맞춰 검증한다.
 
@@ -46,7 +46,7 @@ G는 지상 오른팔꿈치 돌진으로 루트 모션 180cm를 사용한다. �
 
 확장 지상 공격은 `DefaultSlot`에서 재생한다. Mover가 리타깃 시퀀스의 원본 XY 궤적을 지상 루트 모션으로 적용하고, 골반 높이·몸의 회전은 시각 포즈로 유지한다. 중간 타에 후속 입력이 없으면 같은 몽타주가 원본 복귀를 재생한다. 복귀 전 자세 유지 구간을 짧게 압축하고 발을 옮기는 부분은 상대적으로 천천히 재생한다. 피격·사망·탑승·공중 상태 제한과 검 판정은 기존 근접 전투 경로를 사용한다.
 
-정지 샘플 `AS_LongbladeStance_Ready`의 원본은 `pdw_01_01_stand_idle_00.fbx`다. 양손이 가슴 높이에서 검을 드는 전투 준비 루프를 사용한다. `-ApplyStance -FbxRoot=<원본 애니메이션 FBX 폴더>`는 원본 오른손의 손바닥 좌표계에서 검의 방향을 옮기고, 생산 무기의 실제 오른손 부착과 왼손 그립을 사용해 양팔을 함께 굽힌다. 팔 길이와 루프의 움직임을 유지한다. 속도 500 샘플은 `move_run_f/b/l/r_00`의 직접 리타깃을 사용하므로 속도와 방향이 변할 때 실제 이동 포즈를 합성한다. 이동 포즈의 칼끝은 실제 무기 길이와 GASP에서 측정한 손 높이를 기준으로 여유를 확보한다. `Idle02` 및 이전 가드 샘플은 비교용으로 보존한다.
+정지 샘플 `AS_Spellblade_Longblade_Stance_Ready`의 원본은 `pdw_01_01_stand_idle_00.fbx`다. 양손이 가슴 높이에서 검을 드는 전투 준비 루프를 사용한다. `-ApplyStance -FbxRoot=<원본 애니메이션 FBX 폴더>`는 원본 오른손의 손바닥 좌표계에서 검의 방향을 옮기고, 생산 무기의 실제 오른손 부착과 왼손 그립을 사용해 양팔을 함께 굽힌다. 팔 길이와 루프의 움직임을 유지한다. 속도 500 샘플은 `move_run_f/b/l/r_00`의 직접 리타깃을 사용하므로 속도와 방향이 변할 때 실제 이동 포즈를 합성한다. 이동 포즈의 칼끝은 실제 무기 길이와 GASP에서 측정한 손 높이를 기준으로 여유를 확보한다. `Idle02` 및 이전 가드 샘플은 비교용으로 보존한다.
 
 Longblade의 `CombatUpperBody`는 양쪽 `clavicle_l`·`clavicle_r`에서 시작하는 두 하위 체인을 로컬 공간에서 합성한다. 정지와 이동 모두 기본 포즈가 골반·척추·목·머리를 구동하고, 가드의 쇄골부터 손가락까지는 그 프레임의 가슴을 따라간다. 마스터 ABP와 무기별 링크드 레이어 경계에서 지속 가드와 발도·납도·시전 몽타주를 각각 처리한다. `-ApplyGuardLayer`와 `-VerifyGuardLayer`가 이 마스크를 관리한다. 기존 `spine_03`부터의 메시 공간 합성에서는 준비 클립의 가슴과 목 자세가 정지 중에도 적용됐다.
 
@@ -58,7 +58,7 @@ Longblade의 `CombatUpperBody`는 양쪽 `clavicle_l`·`clavicle_r`에서 시작
 
 후속 제작은 리타깃한 원본의 오른팔과 검 방향, 팔꿈치 방향을 출발점으로 쓰고 정지·전진 및 좌우·후진의 왼손 방향을 각각 굽는다. 가드 제작 시 칼날 중심선과 머리 사이에 여유를 두며 양팔의 도달 범위를 함께 검사한다. `-TrialSourceCarry -TrialStanceGrips -SaveStanceReview -FbxRoot=<원본 FBX 폴더>`는 미연결 미리보기를 만든다. `-InstallStanceGripTrial`은 비교를 마친 시퀀스의 자세 키를 기존 다섯 경로로 옮기고 `LeftHandCarryAuthoredRotation`을 쓴다. 런타임은 이 커브의 운반 구간에서 합성된 왼손목 방향을 보존하며 손바닥 위치만 맞춘다. 발도·납도와 공격 자체가 지정한 접촉은 해당 동작의 규칙을 따른다. 교체 전 패키지는 `SpellbladeStanceInstallBefore_*`로 복원할 수 있다.
 
-전진 가드 제작은 `AS_LongbladeStance_Forward`에서 정지 가드의 가슴 방향을 제작 기준으로 사용한다. `spine_03`부터 `spine_05`까지 정지 가드 방향으로 섞은 뒤 로컬 키를 계산한다. 오른손과 검의 그립을 이 가슴 기준으로 잡아 양팔을 맞추고, 왼팔은 원본 팔꿈치 방향과 손목 중립 축을 함께 사용한다. 런타임 가드 마스크는 결과의 쇄골과 팔 키를 사용한다. `-TrialForwardGuard`로 복제본을 평가하고 `-ApplyForwardGuard`로 시퀀스에 저장한다. 전체 스탠스 재설치도 같은 제작을 사용한다.
+전진 가드 제작은 `AS_Spellblade_Longblade_Stance_Forward`에서 정지 가드의 가슴 방향을 제작 기준으로 사용한다. `spine_03`부터 `spine_05`까지 정지 가드 방향으로 섞은 뒤 로컬 키를 계산한다. 오른손과 검의 그립을 이 가슴 기준으로 잡아 양팔을 맞추고, 왼팔은 원본 팔꿈치 방향과 손목 중립 축을 함께 사용한다. 런타임 가드 마스크는 결과의 쇄골과 팔 키를 사용한다. `-TrialForwardGuard`로 복제본을 평가하고 `-ApplyForwardGuard`로 시퀀스에 저장한다. 전체 스탠스 재설치도 같은 제작을 사용한다.
 
 쇄골 마스크 전의 전진 가드 비교에서 W 가속의 `spine_03`–`spine_05` 축 기울기 중앙값은 31.1°에서 27.6°, 지속 전진 표본에서는 19.4°에서 17.3°로 줄었다. 지속 전진의 칼끝 최저 높이는 34.5→115.2cm였고, 왼손목 굽힘 최대는 23.3°였다. 출발과 지속 이동은 기존 전방 출발 클립과 `BS_Neutral_Run_Loop_F`를 선택했다. W·대각선 입력·W→A 전환의 각 158개 표본에서 견갑 및 상의와 얼굴 교차는 각각 0건이었다. 보관소에서 `SpellbladeForwardGuard`로 당시 렌더와 측정을, `SpellbladeForwardGuardBefore_*`로 변경 전 에셋을 찾을 수 있다.
 
@@ -68,7 +68,7 @@ Longblade의 `CombatUpperBody`는 양쪽 `clavicle_l`·`clavicle_r`에서 시작
 
 #### 스트레이프 키와 에셋 미리보기
 
-`AS_LongbladeStance_Left`의 오른쪽 아래팔은 기존 키에서 프레임 사이 42.8°, 루프 경계에서 43.3° 바뀌었다. `Right`의 아래팔은 손의 방향과 팔 축이 조금만 변하는 구간에서 최대 56.5° 돌아갔다. 두 현상은 바닥 여유를 조정하기 전 패키지에도 있었다. 좌우 제작은 공통 가슴 상대 자세에서 팔꿈치 평면과 아래팔 회전을 구해 매 프레임의 양손 그립을 다시 맞춘다. 저장 전 팔과 손 회전의 프레임 간 변화와 루프 경계를 검사한다. 저장본의 오른쪽 아래팔 프레임 간 최대는 각각 7.6°와 7.9°, 루프 경계는 2.4°와 3.0°다.
+`AS_Spellblade_Longblade_Stance_Left`의 오른쪽 아래팔은 기존 키에서 프레임 사이 42.8°, 루프 경계에서 43.3° 바뀌었다. `Right`의 아래팔은 손의 방향과 팔 축이 조금만 변하는 구간에서 최대 56.5° 돌아갔다. 두 현상은 바닥 여유를 조정하기 전 패키지에도 있었다. 좌우 제작은 공통 가슴 상대 자세에서 팔꿈치 평면과 아래팔 회전을 구해 매 프레임의 양손 그립을 다시 맞춘다. 저장 전 팔과 손 회전의 프레임 간 변화와 루프 경계를 검사한다. 저장본의 오른쪽 아래팔 프레임 간 최대는 각각 7.6°와 7.9°, 루프 경계는 2.4°와 3.0°다.
 
 Persona 에셋 브라우저의 호버 미리보기는 액터 없이 `UDebugSkelMeshComponent`를 만든다. Spellblade 메시의 후처리 ABP에 있는 UE 5.8 IK Rig 노드가 소유 액터에서 목표 생성 컴포넌트를 찾다가 두 번 크래시했다. 프로젝트 후처리 인스턴스가 `EditorPreview`의 액터 없는 컴포넌트에서만 후처리 실행을 막는다. `-VerifySpellbladeAssetPreviews`는 같은 컴포넌트의 메시 지정, 에셋 재생 및 BS 샘플 평가를 재현한다. Spellblade 시퀀스 143개, 몽타주 58개, BS 2개가 통과했고, 소유자 없는 후처리 76건에서 가드가 적용됐다. 검사 중 전투 VFX와 타격 노티파이는 소유 캐릭터가 없어 건너뛰었다.
 
@@ -92,9 +92,9 @@ Persona 에셋 브라우저의 호버 미리보기는 액터 없이 `UDebugSkelM
 }
 ```
 
-Spellblade의 공용 이동은 `SK_Spellblade_Complete`에서 마스터 ABP의 UE5 모션매칭을 직접 평가한다. 전투 W는 `BS_Neutral_Run_Loop_F`, A/D는 `M_Neutral_Run_Loop_LL/RL`을 실제 선택했다. 전투 가드 소스의 일부 하체 키에서 루프 경계 각도 차이가 있어도, 현재 가드 레이어는 쇄골·양팔을 합성하며 하체의 이동을 이 소스로 교체하지 않는다.
+Spellblade의 공용 이동은 `SK_Spellblade_Leader`에서 마스터 ABP의 UE5 모션매칭을 직접 평가한다. 전투 W는 `BS_Neutral_Run_Loop_F`, A/D는 `M_Neutral_Run_Loop_LL/RL`을 실제 선택했다. 전투 가드 소스의 일부 하체 키에서 루프 경계 각도 차이가 있어도, 현재 가드 레이어는 쇄골·양팔을 합성하며 하체의 이동을 이 소스로 교체하지 않는다.
 
-후속 감사에서는 시퀀스 145개의 14,284키, 몽타주 58개, Blend Space 2개를 확인했다. 시작 장비·스타일에서 도달 가능한 몽타주는 32개이고 Blend Space는 현행 `BS_Spellblade` 한 개다. 전완 축 회전 후보 두 개는 모두 비교본이었다. 원본 FBX 18개와 대응하는 강한 회전 구간을 비교했으며 기본 2타 왼쪽 위팔은 원본 112.3°와 현행 121.8°, 질주 공격 왼손은 원본과 현행 모두 약 134.8°였다. 질주 공격의 오른쪽 전완은 98.9°에서 113.6°로 커졌다. 원본에 이미 큰 회전이 있는 공격을 공용 리타깃이나 합성 규칙에서 일괄 완화하면 무기 궤적과 타격 구간이 달라질 수 있다. 이 감사에서는 에셋을 다시 저장하지 않았다.
+후속 감사에서는 시퀀스 145개의 14,284키, 몽타주 58개, Blend Space 2개를 확인했다. 시작 장비·스타일에서 도달 가능한 몽타주는 32개이고 Blend Space는 현행 `BS_Spellblade_Longblade` 한 개다. 전완 축 회전 후보 두 개는 모두 비교본이었다. 원본 FBX 18개와 대응하는 강한 회전 구간을 비교했으며 기본 2타 왼쪽 위팔은 원본 112.3°와 현행 121.8°, 질주 공격 왼손은 원본과 현행 모두 약 134.8°였다. 질주 공격의 오른쪽 전완은 98.9°에서 113.6°로 커졌다. 원본에 이미 큰 회전이 있는 공격을 공용 리타깃이나 합성 규칙에서 일괄 완화하면 무기 궤적과 타격 구간이 달라질 수 있다. 이 감사에서는 에셋을 다시 저장하지 않았다.
 
 후속 수정은 [공격 팔 제작기](../../../Scripts/Authoring/Refit-SpellbladeAttackArms.py)로 기본 2타의 왼팔과 질주 공격의 오른팔을 각각 다시 베이크했다. 어깨·손과 팔 길이로 가능한 팔꿈치 위치를 계산하고, 자세 사이의 이동이 작은 경로를 연결한다. 원래 손 변환으로 손목 키를 다시 만들고 원본 구간 양 끝을 보존한다. 30Hz 키에서만 손을 맞추면 키 사이에 7cm 이상의 차이가 생겨 두 공격만 120Hz로 제작하고 기본 압축 재생률도 일치시켰다. 별도 플랫폼 오버라이드는 같은 샘플링을 확인할 수 없으면 제작을 중단한다.
 
@@ -200,7 +200,7 @@ Longblade 공격 데이터 29개와 관련 몽타주 34개에서 기존 추가 �
 
 단독 PIE에서 전투 정지 및 W/A/D 이동 69개 표본의 왼손 그립 가중치는 모두 1이었다. 정면 이동 대시, 기본 1타, 공중 V, Z/X/C의 시작 직후 이전 평가 프레임을 제외한 본 구간 656개 표본은 가중치 0이며 유효한 왼손목 목표가 없었다. 각 동작 종료 뒤 전투 운반 그립이 복귀했다.
 
-정면 이동 대시 원본의 손·검 상대 회전은 시작 프레임 대비 약 2.2° 이내이고 준비 루프 시작과는 약 173° 차이가 난다. 대시용 역그립을 `AS_SpellbladeDirect_MovementDash`의 양손·왼팔과 `Bip_Weapon_R`에 저작했다. 대시 몽타주는 기존 Weapon Motion 상태에서 이 무기 본을 사용한다. 양손 IK 가중치는 0이고, 일반 장착으로 복귀할 때 기존 접촉 핸드오프를 사용한다. 진입과 종료 블렌드 사이인 0.090–0.390초에 무기 본이 검을 구동한다. 공용 손바닥·검 그립 소켓은 운반 자세에서 사용한다. 시퀀스의 120Hz 표본에서 왼손바닥 접촉 오차는 최대 0.183cm와 0.433°였다.
+정면 이동 대시 원본의 손·검 상대 회전은 시작 프레임 대비 약 2.2° 이내이고 준비 루프 시작과는 약 173° 차이가 난다. 대시용 역그립을 `AS_Spellblade_Longblade_Direct_MovementDash`의 양손·왼팔과 `Bip_Weapon_R`에 저작했다. 대시 몽타주는 기존 Weapon Motion 상태에서 이 무기 본을 사용한다. 양손 IK 가중치는 0이고, 일반 장착으로 복귀할 때 기존 접촉 핸드오프를 사용한다. 진입과 종료 블렌드 사이인 0.090–0.390초에 무기 본이 검을 구동한다. 공용 손바닥·검 그립 소켓은 운반 자세에서 사용한다. 시퀀스의 120Hz 표본에서 왼손바닥 접촉 오차는 최대 0.183cm와 0.433°였다.
 
 전용 서버 PIE의 평지 대시 본 구간에서 왼손바닥과 검 손잡이의 오차는 최대 0.142cm였고 양쪽 손 IK는 0이었다. 진입과 종료를 포함한 표본의 칼끝은 바닥에서 최소 42.6cm 위에 있었다. 진입 직후에는 장착이 넘어오는 동안 손과 손잡이가 잠시 벌어졌으며, 본 구간과 구분한다. 종료 후 운반 그립이 복귀했고 서버·클라이언트 위치 차이는 0.002cm 이하였다.
 
@@ -220,7 +220,7 @@ Longblade 공격 데이터 29개와 관련 몽타주 34개에서 기존 추가 �
 
 후속 렌더링 PIE에서 A/D 초기 이동의 왼손 꺾임 최대치는 각각 54→39°, 54→46°였고 후진은 122→38°였다. D의 초기 이동 중앙값은 22→44°였다. 이 비교에서 손목 꺾임은 손의 기준 자세 축과 전완 사이의 각도다. 정착한 D 이동의 준비 자세 대비 가슴 회전 중앙값은 177→0°, D→A 반전 뒤에는 −11→3°였다. 실제 하체에서 `Loop_LL`, `Loop_RL`, `Pivot_RL_LL`이 평가되는 것을 확인했다. 평지 20개 사례와 정지·이동 시전 효과를 재검증했다. 새 무기와 리그 조합, 경사, 원격 플레이는 이 검증 범위 밖이다. 이번 검증 기록과 이전 루프·레이어 복원 매핑은 `SpellbladeWrist` 및 `SpellbladeWristBefore_*`로 찾을 수 있다.
 
-`DA_CombatStyle_SpellbladeKit`의 `Lock Facing During Swing`은 공격 노드가 실제로 시작될 때 카메라 수평 방향을 읽고, 해당 타의 재생 중에는 카메라 입력이 몸 방향을 바꾸지 않게 한다. 버퍼 입력의 방향을 저장하지 않으므로 다음 타는 전환이 승인된 시점의 방향을 사용한다. 질주 공격은 이동 입력으로 방향을 잡는다. 잠금은 실행 중인 근접 어빌리티의 수명을 따르며 피격·취소·장비 해제 후에는 정상 조향으로 돌아간다. 루트 키의 회전과 무기 포즈는 애니메이션이 계속 소유한다.
+`DA_CombatStyle_Spellblade_Longblade`의 `Lock Facing During Swing`은 공격 노드가 실제로 시작될 때 카메라 수평 방향을 읽고, 해당 타의 재생 중에는 카메라 입력이 몸 방향을 바꾸지 않게 한다. 버퍼 입력의 방향을 저장하지 않으므로 다음 타는 전환이 승인된 시점의 방향을 사용한다. 질주 공격은 이동 입력으로 방향을 잡는다. 잠금은 실행 중인 근접 어빌리티의 수명을 따르며 피격·취소·장비 해제 후에는 정상 조향으로 돌아간다. 루트 키의 회전과 무기 포즈는 애니메이션이 계속 소유한다.
 
 ## 콤보·복귀·연출 제작 기준
 
@@ -245,7 +245,7 @@ Longblade 공격 데이터 29개와 관련 몽타주 34개에서 기존 추가 �
 
 ## 발도·납도
 
-Longblade 장비 → Longblade 전투 스타일 → `DA_SpellbladeKit_WeaponProfile`에서 전용 전환 몽타주를 선택한다. 발도·납도는 실제 몸체에 맞춰 오프라인 리타깃한 `AS_SpellbladeDirect_Draw`와 `AS_SpellbladeDirect_Sheathe`를 기존 `UpperBody` 슬롯에서 재생한다. 두 시퀀스의 루트 모션은 꺼져 있고 GASP가 하체 보행을 유지한다. 공용 무기 부착 노티파이가 같은 무기 액터의 위치를 전환한다. 손으로 옮긴 후 발도가 중단되면 기존 전환 종료 경로에서 다시 등에 부착한다. 장비 상태와 능력 부여는 기존 장비 시스템이 처리한다.
+Longblade 장비 → Longblade 전투 스타일 → `DA_Spellblade_Longblade_WeaponProfile`에서 전용 전환 몽타주를 선택한다. 발도·납도는 실제 몸체에 맞춰 오프라인 리타깃한 `AS_Spellblade_Longblade_Direct_Draw`와 `AS_Spellblade_Longblade_Direct_Sheathe`를 기존 `UpperBody` 슬롯에서 재생한다. 두 시퀀스의 루트 모션은 꺼져 있고 GASP가 하체 보행을 유지한다. 공용 무기 부착 노티파이가 같은 무기 액터의 위치를 전환한다. 손으로 옮긴 후 발도가 중단되면 기존 전환 종료 경로에서 다시 등에 부착한다. 장비 상태와 능력 부여는 기존 장비 시스템이 처리한다.
 
 Z·X·C는 `Greatsword_A`의 원본 모션을 실제 Spellblade 몸체로 직접 리타깃한 시퀀스에서 작성한다. `GreatSword_Test`는 원본 메시·리그의 출처다. 시전은 원본과 리타깃의 흉추 기준 머리 속도를 비교했고 두 결과의 최대치가 유사했다. 이전 몽타주의 구간별 가속은 이 움직임을 최대 4.6배로 재생했다. `-ApplyDirectBodyUpperMontages`는 목과 머리 궤적을 흉추 기준으로 다듬은 `AS_LongbladeCast_*`를 `CastUpperBody`에 1배속 단일 구간으로 연결한다. 준비 자세에서 0.38초에 걸쳐 들어가고 복귀 블렌드는 0.40초다. 원본 및 리타깃 원자료는 제작 비교에 사용한다. `-VerifyDirectBodyUpperMontages`는 실제 스타일의 발도·납도·시전 경로를 다시 연다.
 
@@ -259,14 +259,14 @@ Z·X·C는 `Greatsword_A`의 원본 모션을 실제 Spellblade 몸체로 직접
 
 | 전환 | 몽타주 | 무기 부착 |
 | --- | --- | --- |
-| 발도 | `AM_SpellbladeKit_Draw` | `Bip_Weapon_R_Attach_In` → 오른손 그립 |
-| 납도 | `AM_SpellbladeKit_Sheathe` | 오른손 그립 → `Bip_Weapon_R_Attach_In` |
+| 발도 | `AM_Spellblade_Longblade_Draw` | `Bip_Weapon_R_Attach_In` → 오른손 그립 |
+| 납도 | `AM_Spellblade_Longblade_Sheathe` | 오른손 그립 → `Bip_Weapon_R_Attach_In` |
 
 새 무기에서는 장비 프로필의 발도·납도 슬롯과 전용 상체 레이어를 같이 검수한다. 전환 시점의 손바닥과 실제 등 그립이 어긋나면, 전환 클립에서 해당 손의 닿는 구간을 보정한다. Longblade는 발도 0.70초와 납도 1.07초 주변의 오른팔 키를 실제 등 그립에 맞춰 오프라인 베이크했다.
 
 `longblade`와 `aiguillette`의 발도·납도 메시 네 개가 `M_Spellblade_Weapon`을 사용한다. 원본 `aiguillette`는 검과 함께 움직이는 보조 파츠다. 앞·좌·우 원본의 `Bip_Weapon_R` 회전을 손목과 검지·중지·새끼손가락이 만드는 손 좌표계로 옮겨 비교했다. 세 방향에서 같은 장착 회전이 나왔고, 이전 `WeaponGrip_R_Aligned` 회전과는 약 158.6° 차이였다. 발도 메시의 소켓 회전과 해당 공격들의 칼끝 오프셋을 함께 보정했다. 현재 정지와 이동은 같은 준비 그립 계열을 사용한다.
 
-그립 각도는 Unreal의 Output Log에서 `py "<프로젝트 폴더>/Scripts/Authoring/Preview-SpellbladeGrip.py"`를 실행해 미리 본다. 레벨 뷰포트에서 `F`로 선택된 Spellblade에 초점을 맞춘다. 캐릭터 공통 각도는 `SK_Spellblade_Complete`의 `PalmGrip_R`, Longblade에만 필요한 각도는 `SK_Spellblade_longblade`의 `WeaponGrip_R_Aligned`에서 조정한다. 프리뷰는 실제 장착과 같은 손 접점, 무기 루트 기준과 장착 계산을 사용하며 저장 전 회전도 반영한다. 같은 명령을 다시 실행하면 프리뷰가 닫힌다. 각도를 확정한 뒤에는 발도·납도, 왼손 접점과 공격 데이터의 칼끝 오프셋을 확인한다.
+그립 각도는 Unreal의 Output Log에서 `py "<프로젝트 폴더>/Scripts/Authoring/Preview-SpellbladeGrip.py"`를 실행해 미리 본다. 레벨 뷰포트에서 `F`로 선택된 Spellblade에 초점을 맞춘다. 캐릭터 공통 각도는 `SK_Spellblade_Leader`의 `PalmGrip_R`, Longblade에만 필요한 각도는 `SK_Spellblade_longblade`의 `WeaponGrip_R_Aligned`에서 조정한다. 프리뷰는 실제 장착과 같은 손 접점, 무기 루트 기준과 장착 계산을 사용하며 저장 전 회전도 반영한다. 같은 명령을 다시 실행하면 프리뷰가 닫힌다. 각도를 확정한 뒤에는 발도·납도, 왼손 접점과 공격 데이터의 칼끝 오프셋을 확인한다.
 
 왼손목 회전을 보존하는 다섯 지속 가드에서는 `WeaponGrip_L`의 0° 회전도 유효하다. 이 경우 접점 위치를 검증하며, 제작 키가 이미 정한 손목 회전에 맞춰 소켓을 다시 회전시키지 않는다.
 
@@ -312,9 +312,9 @@ Caps 확장 7개 타격 시퀀스와 E Flurry 4타·복귀는 `Project_JSpellbla
 
 ## 근접 타격 궤적 베이크
 
-`DA_Spellblade_Equip → DA_CombatStyle_SpellbladeKit → DA_Combo_SpellbladeKit`과 스타일의 추가 공격 목록을 기준으로 관리한다. 활성 정의 29개 중 근접 공격 26개의 네이티브 타격 창 28개에 궤적을 저장했다. 기본·연계·차지·질주·공중 공격과 Longblade의 Bash, Flurry, Twin 등이 포함된다. Flurry 1·2타는 한 공격 안의 두 타격 창을 각각 저장한다. Focus(Z, 마나), Mend(X, 회복), Haste(C, 가속)는 기존 GAS 효과 스킬이다.
+`DA_Spellblade_Equip → DA_CombatStyle_Spellblade_Longblade → DA_Combo_Spellblade_Longblade`과 스타일의 추가 공격 목록을 기준으로 관리한다. 활성 정의 29개 중 근접 공격 26개의 네이티브 타격 창 28개에 궤적을 저장했다. 기본·연계·차지·질주·공중 공격과 Longblade의 Bash, Flurry, Twin 등이 포함된다. Flurry 1·2타는 한 공격 안의 두 타격 창을 각각 저장한다. Focus(Z, 마나), Mend(X, 회복), Haste(C, 가속)는 기존 GAS 효과 스킬이다.
 
-콘텐츠 브라우저의 `/Game/DataAssetSets/AttackDefinition/Spellblade/CombatKit`에서 기존 공격 DA를 열면 첫 창의 `MeleeTrajectory`와 후속 창의 `AdditionalMeleeTrajectories`를 볼 수 있다. 공격 정의와 궤적을 같은 패키지에 저장하므로 에셋 참조와 롤백 단위도 공격 DA 하나다. `_Canonical` 회귀용 에셋은 별도 테스트 픽스처로 유지한다.
+콘텐츠 브라우저의 `/Game/DataAssetSets/AttackDefinition/Spellblade/Longblade`에서 기존 공격 DA를 열면 첫 창의 `MeleeTrajectory`와 후속 창의 `AdditionalMeleeTrajectories`를 볼 수 있다. 공격 정의와 궤적을 같은 패키지에 저장하므로 에셋 참조와 롤백 단위도 공격 DA 하나다. `_Canonical` 회귀용 에셋은 별도 테스트 픽스처로 유지한다.
 
 각 타격 창을 포함하는 하나의 몽타주 세그먼트를 평가한다. 창 양 끝은 반드시 샘플링하고, 기본 120Hz가 창당 64개 키 제한을 넘으면 60Hz를 시도한다. 여러 세그먼트에 걸치는 창, 겹치는 창, 호환되지 않는 스켈레톤, 정지 궤적은 저장 전에 확인한다. 원본 시퀀스·장비 소켓·몽타주 타이밍을 바꾸면 베이크 지문을 다시 확인한다. 샘플링 오차 검사는 압축 시퀀스의 메시 공간을 기준으로 하며 공중 블렌드, 회전, 경사, 이동 표적 판정은 플레이 검수에 포함한다.
 
@@ -375,6 +375,6 @@ F는 기존 상호작용 바인딩에서 한 번 처리한다. 유효한 지상 
 
 평지 PIE 비교에서 정지 손잡이의 머리 본 기준 높이 중앙값은 +1.3cm에서 −12.6cm로, 왼쪽 팔꿈치의 어깨 본 기준 높이는 +6.7cm에서 −3.5cm로 바뀌었다. W/A/D, 이동 후 정지, 대각선 및 W→A에서 가드가 잡힌 프레임의 양손 접촉 오차는 0.01cm 미만이었다. 왼손목 굽힘 지표의 정지 중앙값은 14.8°에서 35.6°로 늘었다.
 
-검토 승인 후 `-InstallReadyGuardReview`로 양팔 여섯 트랙을 기존 `AS_LongbladeStance_Ready`에 옮겼다. 전투 Blend Space의 속도 0 샘플은 기존 Ready 경로를 유지하고, 이동 시퀀스·ABP·그립 소켓에는 변경이 없다. 교체 전 시퀀스는 중앙 보관소의 `SpellbladeReadyInstallBefore_*`로 복원할 수 있다.
+검토 승인 후 `-InstallReadyGuardReview`로 양팔 여섯 트랙을 기존 `AS_Spellblade_Longblade_Stance_Ready`에 옮겼다. 전투 Blend Space의 속도 0 샘플은 기존 Ready 경로를 유지하고, 이동 시퀀스·ABP·그립 소켓에는 변경이 없다. 교체 전 시퀀스는 중앙 보관소의 `SpellbladeReadyInstallBefore_*`로 복원할 수 있다.
 
 설치에 썼던 검토용 시퀀스도 중앙 보관소로 옮겼다. 활성 Blend Space는 설치된 Ready를 사용한다. 검토본이 다시 필요하면 중앙 명세에서 원래 `SourceTransient/StanceAudit` 경로로 복원하거나, 현재 자세를 기준으로 새 시안을 생성한다.

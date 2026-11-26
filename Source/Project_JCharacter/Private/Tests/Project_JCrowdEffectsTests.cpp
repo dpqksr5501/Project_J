@@ -51,7 +51,7 @@ namespace
 {
 constexpr const TCHAR* OwnedTrailSystemPath=TEXT("/Game/Effects/ProjectJ/Combat/NS_CombatTrail.NS_CombatTrail");
 constexpr const TCHAR* OwnedTrailTypePath=TEXT("/Game/Effects/ProjectJ/Combat/NET_CombatTrail.NET_CombatTrail");
-constexpr const TCHAR* TrailProfilePath=TEXT("/Game/DataAssetSets/Presentation/Spellblade/DA_AP_Spellblade/DA_AP_Spellblade.DA_AP_Spellblade");
+constexpr const TCHAR* TrailProfilePath=TEXT("/Game/DataAssetSets/Presentation/Greatsword/DA_AP_Greatsword.DA_AP_Greatsword");
 bool HasOwnedTrailPolicy(const UNiagaraSystem* System,const UNiagaraEffectType* Type,const UNiagaraSystem* Vendor)
 {
 	if (!IsValid(System) || !IsValid(Type) || !IsValid(Vendor) || System->GetEffectType()!=Type
@@ -1246,9 +1246,9 @@ bool FProjectJCrowdEffectsTest::RunTest(const FString&)
 		// Current saved presentation consumes the project-owned active-policy system.
 		// Earlier98 evidence separately verified the old tagged-struct true default.
 		TStrongObjectPtr<UProject_JAttackPresentationProfile> Authored(LoadObject<UProject_JAttackPresentationProfile>(nullptr,
-			TEXT("/Game/DataAssetSets/Presentation/Spellblade/DA_AP_Spellblade/DA_AP_Spellblade.DA_AP_Spellblade")));
+			TEXT("/Game/DataAssetSets/Presentation/Greatsword/DA_AP_Greatsword.DA_AP_Greatsword")));
 		TStrongObjectPtr<UProject_JCombatPresentationSet> AuthoredSet(LoadObject<UProject_JCombatPresentationSet>(nullptr,
-			TEXT("/Game/DataAssetSets/Presentation/Spellblade/DA_CPS_Spellblade_Base.DA_CPS_Spellblade_Base")));
+			TEXT("/Game/DataAssetSets/Presentation/Greatsword/DA_CPS_Greatsword_Base.DA_CPS_Greatsword_Base")));
 		if (!TestNotNull(TEXT("Actual migrated Spellblade presentation profile loads"),Authored.Get())
 			|| !TestNotNull(TEXT("Actual migrated Spellblade presentation set loads"),AuthoredSet.Get())) { return true; }
 		const bool ProfileDirtyBefore = Authored->GetOutermost()->IsDirty(), SetDirtyBefore = AuthoredSet->GetOutermost()->IsDirty();

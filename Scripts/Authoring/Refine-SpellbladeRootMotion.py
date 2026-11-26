@@ -58,7 +58,7 @@ def travel_curve(keys):
 
 
 def resolve_routes():
-    style = u.load_asset('/Game/DataAssetSets/CombatStyle/Spellblade/DA_CombatStyle_SpellbladeKit')
+    style = u.load_asset('/Game/DataAssetSets/CombatStyle/Spellblade/DA_CombatStyle_Spellblade_Longblade')
     combo = get(style, 'combo_definition')
     routes = {}
     prefix = 'Attack.Spellblade.'

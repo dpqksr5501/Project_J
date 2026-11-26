@@ -100,7 +100,7 @@ class FSecondaryPhysicsEquivalence : public IAutomationLatentCommand
 		if (bHairTrial)
 		{
 			UClass* RetargetClass = LoadClass<UAnimInstance>(nullptr, TEXT("/Game/Characters/Spellblade/Animation/ABP_Spellblade_Retarget.ABP_Spellblade_Retarget_C"));
-			auto* TrialMesh = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete.SK_Spellblade_Complete"));
+			auto* TrialMesh = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Leader.SK_Spellblade_Leader"));
 			if (!RetargetClass || !TrialMesh) return false;
 			Authored->SetSkeletalMeshAsset(TrialMesh);
 			Authored->SetAnimInstanceClass(RetargetClass);

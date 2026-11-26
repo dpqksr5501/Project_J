@@ -27,14 +27,14 @@ Enhanced Input action
   -> DA_Greatsword_InputMapping_Data
   -> InputTag.*
   -> Greatsword AbilitySet entry (GA_Spellblade)
-  -> DA_Combo_Spellblade node/transition
+  -> DA_Combo_Greatsword node/transition
   -> DA_Attack_Greatsword_* montage, movement, hit, damage
 ```
 
 - `InputTag.*` describes player intent, never a montage name.
 - `Combo.*` identifies a node in one combo graph.
 - `Attack.*` identifies one reusable attack payload.
-- `DA_Combo_Spellblade` owns only graph flow. Each node references an `AttackDefinition` that owns the montage, movement policy, hit specification, and damage effect.
+- `DA_Combo_Greatsword` owns only graph flow. Each node references an `AttackDefinition` that owns the montage, movement policy, hit specification, and damage effect.
 
 ## Current Tag Convention
 
@@ -153,8 +153,8 @@ No `IA_LMBRMB` or IMC mapping is needed. The router combines the already-bound `
 
 1. Add the three LMB, RMB, and LMB+RMB rows shown above to the Greatsword mapping DA. Keep the chord priority above either individual row.
 2. Add `InputTag.Weapon.Chord.LMBRMB` to the `GA_Spellblade` AbilitySet entry's `Additional Input Tags`.
-3. Create `DA_Attack_Spellblade_LMBRMB` with `Attack.Greatsword.LMBRMB.1`, its montage, hit data, and movement policy. Add it to the Greatsword AttackSet.
-4. Add `Combo.Greatsword.LMBRMB.1` to `DA_Combo_Spellblade`; set its `Start Input Tags` to the chord input and assign the new AttackDefinition. Leave it empty only when another node reaches it through a transition.
+3. Create `DA_Attack_Greatsword_LMBRMB` with `Attack.Greatsword.LMBRMB.1`, its montage, hit data, and movement policy. Add it to the Greatsword AttackSet.
+4. Add `Combo.Greatsword.LMBRMB.1` to `DA_Combo_Greatsword`; set its `Start Input Tags` to the chord input and assign the new AttackDefinition. Leave it empty only when another node reaches it through a transition.
 5. Restart the editor after C++/tag changes, then test LMB-only, RMB-only, LMB->RMB, and RMB->LMB. Enable `Project_J.Combat.ComboDebug 1` if the chord route does not start.
 
 ## AttackDefinition and Root Motion

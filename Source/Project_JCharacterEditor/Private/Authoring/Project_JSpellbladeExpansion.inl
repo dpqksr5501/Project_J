@@ -47,8 +47,8 @@ bool ImportExpansion(const FString& Params)
 	if (!FParse::Value(*Params, TEXT("FbxRoot="), SourceFolder)) { return false; }
 	const bool bAudit = FParse::Param(*Params, TEXT("AuditTravel"));
 	auto* Legacy = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Spellblade_Woman"));
-	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete"));
-	auto* Rig = Asset<UIKRetargeter>(TEXT("/Game/Characters/Spellblade/Animation/CombatKit/RTG_SpellbladeLegacy_to_DirectKit"));
+	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Leader"));
+	auto* Rig = Asset<UIKRetargeter>(TEXT("/Game/Characters/Spellblade/Animation/Retarget/RTG_Spellblade_LegacyToCharacter"));
 	if (!Legacy || !Body || !Rig) { return false; }
 
 	FIKRetargetBatchOperationInputs Retarget;
@@ -56,7 +56,7 @@ bool ImportExpansion(const FString& Params)
 	Retarget.TargetMesh = Body;
 	Retarget.IKRetargetAsset = Rig;
 	Retarget.TargetPath = ExpansionFolder;
-	Retarget.Prefix = TEXT("AS_Longblade_");
+	Retarget.Prefix = TEXT("AS_Spellblade_Longblade_");
 	Retarget.bIncludeReferencedAssets = false;
 	TArray<UAssetImportTask*> Tasks;
 	for (const auto& Source : ExpansionSources)
@@ -217,10 +217,10 @@ bool AuthorExpansion(UProject_JCombatStyleDefinition& Style, UProject_JSkillInpu
 	for (const auto& Strike : ExpansionStrikes)
 	{
 		const FString Name = Strike.Name;
-		auto* Clip = Asset<UAnimSequence>(ExpansionFolder / (TEXT("AS_Longblade_") + Name));
-		auto* Attack = Duplicate(BaseAttack, SpellbladeDataRoot + TEXT("AttackDefinition/Spellblade/CombatKit/DA_Attack_Longblade_") + Name);
+		auto* Clip = Asset<UAnimSequence>(ExpansionFolder / (TEXT("AS_Spellblade_Longblade_") + Name));
+		auto* Attack = Duplicate(BaseAttack, SpellbladeDataRoot + TEXT("AttackDefinition/Spellblade/Longblade/DA_Attack_Spellblade_Longblade_") + Name);
 		if (!Clip || !Attack || Clip->HasRootMotion() || Strike.OpeningEnd >= Clip->GetPlayLength()) { return false; }
-		const FString MontageName = TEXT("AM_Longblade_") + Name;
+		const FString MontageName = TEXT("AM_Spellblade_Longblade_") + Name;
 		const FString MontageFolder = Montages + TEXT("Authored");
 		if (FPackageName::DoesPackageExist(MontageFolder / MontageName)) { return false; }
 		auto* Factory = NewObject<UAnimMontageFactory>();
@@ -455,7 +455,7 @@ bool ApplyAttackTravel(const UProject_JCombatStyleDefinition& Style, TArray<UObj
 		const auto& Strike = ExpansionStrikes[Index];
 		const FString Name = Strike.Name;
 		const auto* Node = Style.ComboDefinition->FindNode(Tag(TEXT("Combo.Spellblade.") + Name));
-		auto* Clip = Asset<UAnimSequence>(ExpansionFolder / (TEXT("AS_Longblade_") + Name));
+		auto* Clip = Asset<UAnimSequence>(ExpansionFolder / (TEXT("AS_Spellblade_Longblade_") + Name));
 		if (!Node || !Node->AttackDefinition || !Node->AttackDefinition->Montage || !Clip) { return false; }
 		auto& Attack = *Node->AttackDefinition;
 		auto& Montage = *Attack.Montage;
@@ -506,7 +506,7 @@ bool ApplyAttackTravel(const UProject_JCombatStyleDefinition& Style, TArray<UObj
 			{
 				auto* Source = Cast<UAnimSequence>(Segments[Segment].GetAnimReference());
 				auto* Clip = Duplicate(Source, ExpansionFolder / (Segment == 0
-					? TEXT("AS_Longblade_Flurry4Travel") : TEXT("AS_Longblade_Flurry4ReturnTravel")));
+					? TEXT("AS_Spellblade_Longblade_Flurry4Travel") : TEXT("AS_Spellblade_Longblade_Flurry4ReturnTravel")));
 				if (!Clip || !BakeAttackTravel(*Clip)) { return false; }
 				Segments[Segment].SetAnimReference(Clip, false);
 				Assets.Add(Clip);
@@ -557,7 +557,7 @@ bool ApplyDowncutTravel(const UProject_JCombatStyleDefinition& Style)
 	auto& Segments = Montage.SlotAnimTracks[0].AnimTrack.AnimSegments;
 	if (Segments.Num() != 2 || Segments[0].GetAnimReference() != Segments[1].GetAnimReference()) { return false; }
 	auto* Source = Cast<UAnimSequence>(Segments[0].GetAnimReference());
-	auto* Clip = Duplicate(Source, ExpansionFolder / TEXT("AS_Longblade_DownCutVertical"));
+	auto* Clip = Duplicate(Source, ExpansionFolder / TEXT("AS_Spellblade_Longblade_DownCutVertical"));
 	constexpr float DescentEnd = .2f;
 	if (!Clip || !BakeAttackTravel(*Clip, DescentEnd)) { return false; }
 	for (auto& Segment : Segments) { Segment.SetAnimReference(Clip, false); }

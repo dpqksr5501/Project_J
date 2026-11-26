@@ -188,7 +188,7 @@ bool FProjectJConfirmedHealthLossTest::RunTest(const FString&)
         F.Stats->OnConfirmedHealthGELoss.Remove(DynamicObserver);
 
         const TStrongObjectPtr<const UProject_JAttackDefinition> Existing(LoadObject<UProject_JAttackDefinition>(nullptr,
-            TEXT("/Game/DataAssetSets/AttackDefinition/Spellblade/DA_Attack_Spellblade_LMB1.DA_Attack_Spellblade_LMB1")));
+            TEXT("/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1.DA_Attack_Greatsword_LMB1")));
         if(!TestTrue(TEXT("Existing authored melee data supplies its production GE class"),Existing && Existing->DamageEffect)) return false;
         const auto* ClassDefault = Existing->DamageEffect->GetDefaultObject<UGameplayEffect>();
         int32 CDOEvents = 0;

@@ -481,7 +481,7 @@ bool AuditLongbladeGripFrames(const FString& Params)
 	};
 	const double Durations[] = {2., 1.16, 1.02, 1.10, 1.067};
 	auto* Legacy = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Spellblade_Woman"));
-	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete"));
+	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Leader"));
 	const auto* Weapon = Asset<USkeletalMesh>(TEXT("/Game/Weapons/Spellblade/SK_Spellblade_longblade"));
 	const auto* GripSocket = Weapon ? Weapon->FindSocket(TEXT("WeaponGrip_R_Aligned")) : nullptr;
 	const auto* TipSocket = Weapon ? Weapon->FindSocket(TEXT("WeaponGroundProbe_Tip")) : nullptr;
@@ -662,7 +662,7 @@ bool AuditLongbladeGripFrames(const FString& Params)
 
 bool ConfigureLongbladeSourceDrive(const FString& Params, const UProject_JCombatStyleDefinition& Style)
 {
-	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete"));
+	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Leader"));
 	const auto* Weapon = Asset<USkeletalMesh>(TEXT("/Game/Weapons/Spellblade/SK_Spellblade_longblade"));
 	const auto* Item = Asset<UProject_JEquipmentItemDefinition>(SpellbladeDataRoot + TEXT("Animation_Profiles/Equip/DA_Spellblade_Equip"));
 	auto* Profile = Item ? Item->WeaponPresentationProfile.Get() : nullptr;
@@ -915,13 +915,13 @@ bool AuditLongbladeWeaponArc(const FString& Params, const UProject_JCombatStyleD
 		{TEXT("Sheathe"), TEXT("stand_weapon_in_00")}
 	};
 	auto* Legacy = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Spellblade_Woman"));
-	auto* Current = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete"));
+	auto* Current = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Leader"));
 	const auto* Weapon = Asset<USkeletalMesh>(TEXT("/Game/Weapons/Spellblade/SK_Spellblade_longblade"));
 	const auto* Tip = Weapon ? Weapon->FindSocket(TEXT("WeaponGroundProbe_Tip")) : nullptr;
 	const auto* Grip = Weapon ? Weapon->FindSocket(TEXT("WeaponGrip_R_Aligned")) : nullptr;
 	const auto* Light = Style.ComboDefinition->FindNode(Tag(TEXT("Combo.Spellblade.Light.1")));
 	const auto* Attack = Light ? Light->AttackDefinition.Get() : nullptr;
-	const auto* Sheathe = Asset<UAnimMontage>(Montages + TEXT("Equipment/AM_SpellbladeKit_Sheathe"));
+	const auto* Sheathe = Asset<UAnimMontage>(Montages + TEXT("Equipment/AM_Spellblade_Longblade_Sheathe"));
 	FTransform WeaponInHand;
 	if (!Legacy || !Current || !Tip || !Grip || !Attack || !Attack->Montage || !Sheathe
 		|| !ResolveStanceWeaponMount(*Current, *Weapon, WeaponInHand)) { return false; }
@@ -1056,7 +1056,7 @@ bool AuditCastShoulderStages(const FString& Params)
 	}
 	auto* Legacy = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Spellblade_Woman"));
 	const auto* LegacyShoulder = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Clothes/sho"));
-	auto* Current = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete"));
+	auto* Current = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Leader"));
 	TArray<FName> OriginalBones, CurrentBones;
 	if ((!bDeform && (!ExportShoulderSurface(Legacy, TEXT("Legacy"), &OriginalBones)
 		|| !ExportShoulderSurface(LegacyShoulder, TEXT("LegacyShoulder"), &OriginalBones)))
@@ -1093,7 +1093,7 @@ bool AuditCastShoulderStages(const FString& Params)
 			UAnimSequence* const* Raw = Retargeted.FindByPredicate([&](const UAnimSequence* Clip) { return Clip->GetName() == Expected; });
 			const bool bEquipment = Role == TEXT("Draw") || Role == TEXT("Sheathe");
 			const FString Package = bActions ? Sequences + TEXT("DirectBody/")
-				+ (bEquipment ? TEXT("Equipment/") : TEXT("CombatRevision/")) + TEXT("AS_SpellbladeDirect_") + Role
+				+ (bEquipment ? TEXT("Equipment/") : TEXT("CombatRevision/")) + TEXT("AS_Spellblade_Longblade_Direct_") + Role
 				: CastPerformancePath + Role;
 			auto* Authored = Asset<UAnimSequence>(Package);
 			if (bDeform)

@@ -16,8 +16,8 @@ import unreal
 
 
 EQUIP = "/Game/DataAssetSets/Animation_Profiles/Equip/DA_Spellblade_Equip"
-MESH = "/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete"
-ATTACK_ROOT = "/Game/DataAssetSets/AttackDefinition/Spellblade/CombatKit/"
+MESH = "/Game/Characters/Spellblade/Meshes/SK_Spellblade_Leader"
+ATTACK_ROOT = "/Game/DataAssetSets/AttackDefinition/Spellblade/Longblade/"
 
 
 def read(obj, prop):

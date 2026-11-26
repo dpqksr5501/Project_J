@@ -24,7 +24,7 @@ SPELLBLADE_ROOTS = (
 SPELLBLADE_CONSUMERS = (
     "/Game/Character_BPs/Spellblade/BP_Spellblade",
     "/Game/DataAssetSets/Animation_Profiles/Equip/DA_Spellblade_Equip",
-    "/Game/DataAssetSets/CombatStyle/Spellblade/DA_CombatStyle_SpellbladeKit",
+    "/Game/DataAssetSets/CombatStyle/Spellblade/DA_CombatStyle_Spellblade_Longblade",
     "/Game/DataAssetSets/Skill_Input_Mapping_Data/Spellblade/DA_Spellblade_Mapping_Data",
 )
 BONES = (

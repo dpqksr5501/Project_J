@@ -93,7 +93,7 @@ bool FProjectJAudit3MontageRateTest::RunTest(const FString&) {
     FWorld Scope; auto* W=Scope.World; auto* Player=W->SpawnActor<AProject_JSpellbladeCharacter>();
     auto* ASC=NewObject<UProject_JAbilitySystemComponent>(Player);ASC->RegisterComponent();ASC->InitAbilityActorInfo(Player,Player);
     FindFProperty<FObjectPropertyBase>(AProject_JBaseCharacter::StaticClass(),TEXT("AbilitySystemComponent"))->SetObjectPropertyValue_InContainer(Player,ASC);
-    auto* Source=LoadObject<UProject_JCombatStyleDefinition>(nullptr,TEXT("/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Spellblade.DA_CombatStyle_Spellblade"));
+    auto* Source=LoadObject<UProject_JCombatStyleDefinition>(nullptr,TEXT("/Game/DataAssetSets/CombatStyle/Greatsword/DA_CombatStyle_Greatsword.DA_CombatStyle_Greatsword"));
     if(!TestNotNull(TEXT("Authored style fixture"),Source))return false;
     auto* Style=DuplicateObject(Source,Player); Style->AbilitySets.Reset();Style->CommandSet=nullptr;
     Style->ComboDefinition=DuplicateObject(Source->ComboDefinition.Get(),Style);

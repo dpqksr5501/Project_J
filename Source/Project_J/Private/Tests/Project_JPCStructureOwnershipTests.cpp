@@ -165,7 +165,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAuthoredClassGrantOwnershipTest, "Proj
 bool FProjectJAuthoredClassGrantOwnershipTest::RunTest(const FString&)
 {
     auto* Class = LoadObject<UProject_JCharacterClassDefinition>(nullptr, TEXT("/Game/DataAssetSets/Class/DA_Class_Greatsword.DA_Class_Greatsword"));
-    auto* Set = LoadObject<UProject_JAbilitySet>(nullptr, TEXT("/Game/AS/AS_Spellblade_Base.AS_Spellblade_Base"));
+    auto* Set = LoadObject<UProject_JAbilitySet>(nullptr, TEXT("/Game/AS/AS_Greatsword_Base.AS_Greatsword_Base"));
     if (!TestNotNull(TEXT("Actual class asset"), Class) || !TestNotNull(TEXT("Actual weapon set"), Set) ||
         !TestNotNull(TEXT("Default style remains the weapon grant owner"), Class->DefaultCombatStyle.Get())) return false;
     auto* Style = Class->DefaultCombatStyle.Get();

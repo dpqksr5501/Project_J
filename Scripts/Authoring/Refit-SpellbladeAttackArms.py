@@ -12,7 +12,7 @@ from pathlib import Path
 import unreal as u
 
 
-KIT = "/Game/Anim_Assets/Spellblade/Animations/Sword/"
+SPELLBLADE_SWORD_ROOT = "/Game/Anim_Assets/Spellblade/Animations/Sword/"
 # Montage directory, montage role, arm, inclusive authored key interval, pole limits.
 RECIPES = (
     ("CombatRevision", "BasicCut02", "l", (16, 26), .01, 19.),
@@ -153,7 +153,7 @@ def transforms(pose, bones):
 
 
 def resolve_clip(folder, role):
-    montage = u.load_asset(KIT + f"Montage/CombatKit/{folder}/AM_SpellbladeKit_{role}")
+    montage = u.load_asset(SPELLBLADE_SWORD_ROOT + f"Montage/Longblade/{folder}/AM_Spellblade_Longblade_{role}")
     assert montage, role
     slots = montage.get_editor_property("slot_anim_tracks")
     segments = [segment for slot in slots
@@ -161,7 +161,7 @@ def resolve_clip(folder, role):
     assert len(segments) == 1, montage.get_path_name()
     segment = segments[0]
     clip = segment.get_editor_property("anim_reference")
-    assert clip and clip.get_name() == f"AS_SpellbladeDirect_{role}", montage.get_path_name()
+    assert clip and clip.get_name() == f"AS_Spellblade_Longblade_Direct_{role}", montage.get_path_name()
     return clip, segment
 
 
@@ -234,7 +234,7 @@ def main():
     mode.add_argument("--apply", action="store_true")
     mode.add_argument("--verify", action="store_true")
     args = parser.parse_args()
-    body = u.load_asset("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete")
+    body = u.load_asset("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Leader")
     assert body
     options = u.AnimPoseEvaluationOptions()
     options.set_editor_property("optional_skeletal_mesh", body)

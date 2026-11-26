@@ -88,20 +88,20 @@
 
 namespace
 {
-const FString Kit = TEXT("/Game/Anim_Assets/Spellblade/Animations/Sword/");
-const FString Sequences = Kit + TEXT("CombatKit/Sequences/");
-const FString DirectSkillPath = Sequences + TEXT("DirectBody/Skill/AS_SpellbladeDirect_");
-const FString CastPerformancePath = Sequences + TEXT("DirectBody/Skill/AS_LongbladeCast_");
+const FString SpellbladeSwordRoot = TEXT("/Game/Anim_Assets/Spellblade/Animations/Sword/");
+const FString Sequences = SpellbladeSwordRoot + TEXT("Longblade/Sequences/");
+const FString DirectSkillPath = Sequences + TEXT("DirectBody/Skill/AS_Spellblade_Longblade_Direct_");
+const FString CastPerformancePath = Sequences + TEXT("DirectBody/Skill/AS_Spellblade_Longblade_Cast_");
 constexpr float CastBlendIn = .38f;
 constexpr float CastBlendOut = .40f;
-const FString Montages = Kit + TEXT("Montage/CombatKit/");
+const FString Montages = SpellbladeSwordRoot + TEXT("Montage/Longblade/");
 const FString SpellbladeDataRoot = TEXT("/Game/DataAssetSets/");
-const FString StylePath = SpellbladeDataRoot + TEXT("CombatStyle/Spellblade/DA_CombatStyle_SpellbladeKit");
+const FString StylePath = SpellbladeDataRoot + TEXT("CombatStyle/Spellblade/DA_CombatStyle_Spellblade_Longblade");
 const FString MappingPath = SpellbladeDataRoot + TEXT("Skill_Input_Mapping_Data/Spellblade/DA_Spellblade_Mapping_Data");
-const FString BlendPath = TEXT("/Game/Animation_Logic/BSs/Spellblade/CombatKit/BS_Spellblade");
-const FString LegacyBlendPath = TEXT("/Game/Animation_Logic/BSs/Spellblade/BS_Greatsword_Legacy");
+const FString BlendPath = TEXT("/Game/Animation_Logic/BSs/Spellblade/Longblade/BS_Spellblade_Longblade");
+const FString LegacyBlendPath = TEXT("/Game/Animation_Logic/BSs/GreatSword/BS_Greatsword_Legacy");
 const FString InputPath = TEXT("/Game/Input/IMC_Default");
-const FString DashPath = Sequences + TEXT("DirectBody/CombatRevision/AS_SpellbladeDirect_MovementDash");
+const FString DashPath = Sequences + TEXT("DirectBody/CombatRevision/AS_Spellblade_Longblade_Direct_MovementDash");
 
 FGameplayTag Tag(const FString& Name)
 {
@@ -433,7 +433,7 @@ bool AuthorStrikes(UProject_JCombatStyleDefinition& Style, TArray<UObject*>& Ass
 		[BaseAttack](const auto& Entry) { return Entry.AttackTag == BaseAttack->AttackTag; });
 	if (!Trail || !Trail->Profile) { return false; }
 	const FProject_JCombatAttackPresentationEntry TrailEntry = *Trail;
-	UAnimSequence* Return = Asset<UAnimSequence>(Sequences + TEXT("Recovery/AS_SpellbladeKit_Light04Recovery"));
+	UAnimSequence* Return = Asset<UAnimSequence>(Sequences + TEXT("Recovery/AS_Spellblade_Longblade_Light04Recovery"));
 	if (!Return) { return false; }
 
 	const FGameplayTag GroundOnly = Tag(TEXT("State.Movement.InAir"));
@@ -449,11 +449,11 @@ bool AuthorStrikes(UProject_JCombatStyleDefinition& Style, TArray<UObject*>& Ass
 		const bool bKick = Index == 0;
 		const bool bFinal = Index == UE_ARRAY_COUNT(Strikes) - 1;
 		UAnimSequence* Clip = Asset<UAnimSequence>(Index >= 1 && Index <= 3
-			? Sequences + TEXT("DirectBody/Melee/AS_SpellbladeDirect_") + Role
-			: Sequences + TEXT("Melee/AS_SpellbladeKit_") + Role);
-		UAnimMontage* Preview = Asset<UAnimMontage>(Montages + TEXT("Melee/AM_SpellbladeKit_") + Role);
-		UAnimMontage* Montage = Duplicate(Preview, Montages + TEXT("Authored/AM_Longblade_") + NodeSuffix.Replace(TEXT("."), TEXT("_")));
-		UProject_JAttackDefinition* Attack = Duplicate(BaseAttack, SpellbladeDataRoot + TEXT("AttackDefinition/Spellblade/CombatKit/DA_Attack_Longblade_")
+			? Sequences + TEXT("DirectBody/Melee/AS_Spellblade_Longblade_Direct_") + Role
+			: Sequences + TEXT("Melee/AS_Spellblade_Longblade_") + Role);
+		UAnimMontage* Preview = Asset<UAnimMontage>(Montages + TEXT("Melee/AM_Spellblade_Longblade_") + Role);
+		UAnimMontage* Montage = Duplicate(Preview, Montages + TEXT("Authored/AM_Spellblade_Longblade_") + NodeSuffix.Replace(TEXT("."), TEXT("_")));
+		UProject_JAttackDefinition* Attack = Duplicate(BaseAttack, SpellbladeDataRoot + TEXT("AttackDefinition/Spellblade/Longblade/DA_Attack_Spellblade_Longblade_")
 			+ NodeSuffix.Replace(TEXT("."), TEXT("_")));
 		if (!Clip || !Montage || !Attack || Montage->SlotAnimTracks.Num() != 1 || !Clip->GetSkeleton()
 			|| (bFinal && Return->GetSkeleton() != Clip->GetSkeleton())) { return false; }
@@ -615,9 +615,9 @@ bool AuthorBuffCasts(UProject_JCombatStyleDefinition& Style, UInputMappingContex
 		const FString Name = Cast.Name;
 		const auto CommandTag = Tag(TEXT("Command.Spellblade.") + Name);
 		auto* Clip = Asset<UAnimSequence>(CastPerformancePath + Cast.Clip);
-		auto* Preview = Asset<UAnimMontage>(Montages + TEXT("Skill/AM_SpellbladeKit_") + Cast.Clip);
-		auto* Montage = Duplicate(Preview, Montages + TEXT("Authored/AM_Longblade_") + Name);
-		auto* Attack = Duplicate(BaseAttack, SpellbladeDataRoot + TEXT("AttackDefinition/Spellblade/CombatKit/DA_Attack_Longblade_") + Name);
+		auto* Preview = Asset<UAnimMontage>(Montages + TEXT("Skill/AM_Spellblade_Longblade_") + Cast.Clip);
+		auto* Montage = Duplicate(Preview, Montages + TEXT("Authored/AM_Spellblade_Longblade_") + Name);
+		auto* Attack = Duplicate(BaseAttack, SpellbladeDataRoot + TEXT("AttackDefinition/Spellblade/Longblade/DA_Attack_Spellblade_Longblade_") + Name);
 		if (!Clip || !Montage || !Attack || Montage->SlotAnimTracks.Num() != 1 || Clip->HasRootMotion()) { return false; }
 		Montage->Notifies.Reset();
 		SetBuffPerformance(*Montage, *Clip);
@@ -699,14 +699,14 @@ bool AuthorReserveAttacks(UProject_JCombatStyleDefinition& Style, UInputMappingC
 		|| Combo.FindNode(Tag(TEXT("Combo.Spellblade.Air.DownCut")))) { return false; }
 	const FGameplayTag BaseNodeTag = Base->NodeTag;
 	auto* BaseAttack = Base->AttackDefinition.Get();
-	auto* Rush = Asset<UProject_JAttackDefinition>(SpellbladeDataRoot + TEXT("AttackDefinition/Spellblade/CombatKit/DA_Attack_SpellbladeKit_ShortDash"));
+	auto* Rush = Asset<UProject_JAttackDefinition>(SpellbladeDataRoot + TEXT("AttackDefinition/Spellblade/Longblade/DA_Attack_Spellblade_Longblade_ShortDash"));
 	auto* RushMontage = Rush ? Rush->Montage.Get() : nullptr;
-	const FString RushSource = Sequences + TEXT("DirectBody/Melee/AS_SpellbladeDirect_ShortDash");
+	const FString RushSource = Sequences + TEXT("DirectBody/Melee/AS_Spellblade_Longblade_Direct_ShortDash");
 	auto* RushClip = Duplicate(Asset<UAnimSequence>(RushSource), RushSource + TEXT("_Travel"));
-	auto* DownMontage = Asset<UAnimMontage>(Montages + TEXT("Skill/AM_SpellbladeKit_GroundSkill"));
-	auto* DownClip = Asset<UAnimSequence>(Sequences + TEXT("Skill/AS_SpellbladeKit_GroundSkill"));
-	auto* Down = Duplicate(BaseAttack, SpellbladeDataRoot + TEXT("AttackDefinition/Spellblade/CombatKit/DA_Attack_Longblade_DownCut"));
-	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete"));
+	auto* DownMontage = Asset<UAnimMontage>(Montages + TEXT("Skill/AM_Spellblade_Longblade_GroundSkill"));
+	auto* DownClip = Asset<UAnimSequence>(Sequences + TEXT("Skill/AS_Spellblade_Longblade_GroundSkill"));
+	auto* Down = Duplicate(BaseAttack, SpellbladeDataRoot + TEXT("AttackDefinition/Spellblade/Longblade/DA_Attack_Spellblade_Longblade_DownCut"));
+	auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Leader"));
 	const auto* Trail = Style.CombatPresentationSet->AttackPresentations.FindByPredicate([BaseAttack](const auto& Entry)
 		{ return Entry.AttackTag == BaseAttack->AttackTag; });
 	if (!Rush || !RushMontage || !RushClip || !DownMontage || !DownClip || !Down || !Body || !Trail
@@ -922,7 +922,7 @@ void MoveSwingCueStart(UAnimMontage& Montage, FAnimNotifyEvent& Event, float New
 
 bool ApplyBasicCut03Trail()
 {
-	auto* Montage = Asset<UAnimMontage>(Montages + TEXT("CombatRevision/AM_SpellbladeKit_BasicCut03Ground"));
+	auto* Montage = Asset<UAnimMontage>(Montages + TEXT("CombatRevision/AM_Spellblade_Longblade_BasicCut03Ground"));
 	if (!Montage) { return false; }
 	const FGameplayTag TrailTag = Tag(TEXT("PresentationCue.Combat.Trail"));
 	auto* Event = Montage->Notifies.FindByPredicate([TrailTag](const FAnimNotifyEvent& Candidate)
@@ -1001,19 +1001,19 @@ bool PolishSwingTrailsAndCastFacing(bool bApply)
 	// 60 Hz weapon-hand pose review. The original end stays aligned with the end of the swing.
 	struct FTrailTiming { const TCHAR* Montage; float OriginalStart; int32 FirstVisibleFrame; };
 	const FTrailTiming Timings[] = {
-		{TEXT("AM_SpellbladeKit_AirLight"), .14f, 5},
-		{TEXT("AM_SpellbladeKit_BasicCut01"), .48f, 27},
-		{TEXT("AM_SpellbladeKit_RightAttack"), .45f, 26},
-		{TEXT("AM_SpellbladeKit_QuickSkill"), .40f, 21},
-		{TEXT("AM_SpellbladeKit_Finisher"), 1.53f, 89},
-		{TEXT("AM_SpellbladeKit_QuickFollow"), .44f, 25},
-		{TEXT("AM_SpellbladeKit_ChordLunge"), .63f, 34},
-		{TEXT("AM_Longblade_Flurry_1"), .19f, 8},
-		{TEXT("AM_Longblade_Flurry_1"), .82f, 46},
-		{TEXT("AM_Longblade_Flurry_2"), .23f, 11},
-		{TEXT("AM_Longblade_Flurry_2"), .66f, 36},
-		{TEXT("AM_Longblade_Bash4"), .17f, 7},
-		{TEXT("AM_Longblade_GroundGush"), 1.33f, 76},
+		{TEXT("AM_Spellblade_Longblade_AirLight"), .14f, 5},
+		{TEXT("AM_Spellblade_Longblade_BasicCut01"), .48f, 27},
+		{TEXT("AM_Spellblade_Longblade_RightAttack"), .45f, 26},
+		{TEXT("AM_Spellblade_Longblade_QuickSkill"), .40f, 21},
+		{TEXT("AM_Spellblade_Longblade_Finisher"), 1.53f, 89},
+		{TEXT("AM_Spellblade_Longblade_QuickFollow"), .44f, 25},
+		{TEXT("AM_Spellblade_Longblade_ChordLunge"), .63f, 34},
+		{TEXT("AM_Spellblade_Longblade_Flurry_1"), .19f, 8},
+		{TEXT("AM_Spellblade_Longblade_Flurry_1"), .82f, 46},
+		{TEXT("AM_Spellblade_Longblade_Flurry_2"), .23f, 11},
+		{TEXT("AM_Spellblade_Longblade_Flurry_2"), .66f, 36},
+		{TEXT("AM_Spellblade_Longblade_Bash4"), .17f, 7},
+		{TEXT("AM_Spellblade_Longblade_GroundGush"), 1.33f, 76},
 	};
 	for (const auto& Timing : Timings)
 	{
@@ -1090,7 +1090,7 @@ int32 UProject_JSpellbladePolishCommandlet::Main(const FString& Params)
 		Options.OptionalSkeletalMesh = Asset<USkeletalMesh>(TEXT("/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple"));
 		for (const TCHAR* Role : {TEXT("GroundSkill"), TEXT("Buff"), TEXT("CastLeft"), TEXT("CastRight")})
 		{
-			const auto* Clip = Asset<UAnimSequence>(Sequences + TEXT("Skill/AS_SpellbladeKit_") + Role);
+			const auto* Clip = Asset<UAnimSequence>(Sequences + TEXT("Skill/AS_Spellblade_Longblade_") + Role);
 			if (!Clip || !Options.OptionalSkeletalMesh) { return 10; }
 			for (double Time = 0.; Time <= Clip->GetPlayLength(); Time += .1)
 			{
@@ -1263,7 +1263,7 @@ int32 UProject_JSpellbladePolishCommandlet::Main(const FString& Params)
 	}
 	else if (FParse::Param(*Params, TEXT("Apply")))
 	{
-		auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete"));
+		auto* Body = Asset<USkeletalMesh>(TEXT("/Game/Characters/Spellblade/Meshes/SK_Spellblade_Leader"));
 		if (!Body || Body->GetRefSkeleton().FindBoneIndex(TEXT("ball_l")) == INDEX_NONE
 			|| Input->GetMappings().ContainsByPredicate([](const auto& Row) { return Row.Key == EKeys::Z; })
 			|| Style->ComboDefinition->FindNode(Tag(TEXT("Combo.Spellblade.Kick")))) { return 2; }

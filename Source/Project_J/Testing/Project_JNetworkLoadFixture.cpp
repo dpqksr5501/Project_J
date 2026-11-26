@@ -210,10 +210,10 @@ bool PublishAttributeBases(UAbilitySystemComponent* ASC, int32 Slot, int32 Stage
 const FName FixtureQuestId(TEXT("NetworkFixture.Quest"));
 const FName FixtureCompoundQuestId(TEXT("NetworkFixture.Compound"));
 const FName FixtureQuestEvent(TEXT("NetworkFixture.Objective"));
-const TCHAR* CanonicalEquipPath=TEXT("/Game/DataAssetSets/Animation_Profiles/Equip/DA_Spellblade_CanonicalEquip.DA_Spellblade_CanonicalEquip");
-const TCHAR* CanonicalStylePath=TEXT("/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Spellblade_Canonical.DA_CombatStyle_Spellblade_Canonical");
-const TCHAR* CanonicalComboPath=TEXT("/Game/DataAssetSets/Combo/DA_Combo_Spellblade_Canonical.DA_Combo_Spellblade_Canonical");
-const TCHAR* CanonicalAttackPath=TEXT("/Game/DataAssetSets/AttackDefinition/Spellblade/DA_Attack_Spellblade_LMB1_Canonical.DA_Attack_Spellblade_LMB1_Canonical");
+const TCHAR* CanonicalEquipPath=TEXT("/Game/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_CanonicalEquip.DA_Greatsword_CanonicalEquip");
+const TCHAR* CanonicalStylePath=TEXT("/Game/DataAssetSets/CombatStyle/Greatsword/DA_CombatStyle_Greatsword_Canonical.DA_CombatStyle_Greatsword_Canonical");
+const TCHAR* CanonicalComboPath=TEXT("/Game/DataAssetSets/Combo/Greatsword/DA_Combo_Greatsword_Canonical.DA_Combo_Greatsword_Canonical");
+const TCHAR* CanonicalAttackPath=TEXT("/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1_Canonical.DA_Attack_Greatsword_LMB1_Canonical");
 bool ReadCanonicalReferences(AProject_JPlayerCharacter* Player, UProject_JEquipmentItemDefinition*& Item,
  UProject_JAttackDefinition*& Attack, TArray<FGameplayAbilitySpecHandle>& Grants, FGameplayTagContainer& HitTags,FString* Failure=nullptr)
 {

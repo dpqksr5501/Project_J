@@ -9,8 +9,8 @@ def start_preview():
     if editor.get_game_world():
         raise RuntimeError('Stop PIE before opening the grip preview.')
 
-    body_asset = u.load_asset('/Game/Characters/Spellblade/Meshes/SK_Spellblade_Complete')
-    draw_pose = u.load_asset('/Game/Anim_Assets/Spellblade/Animations/Sword/CombatKit/Sequences/DirectBody/Equipment/AS_SpellbladeDirect_Draw')
+    body_asset = u.load_asset('/Game/Characters/Spellblade/Meshes/SK_Spellblade_Leader')
+    draw_pose = u.load_asset('/Game/Anim_Assets/Spellblade/Animations/Sword/Longblade/Sequences/DirectBody/Equipment/AS_Spellblade_Longblade_Direct_Draw')
     weapon_asset = u.load_asset('/Game/Weapons/Spellblade/SK_Spellblade_longblade')
     trim_asset = u.load_asset('/Game/Weapons/Spellblade/SK_Spellblade_aiguillette')
     equip = u.load_asset('/Game/DataAssetSets/Animation_Profiles/Equip/DA_Spellblade_Equip')

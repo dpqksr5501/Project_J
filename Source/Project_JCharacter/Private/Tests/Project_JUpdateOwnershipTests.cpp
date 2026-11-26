@@ -59,7 +59,7 @@ bool FProjectJRemoteMontageTimingTest::RunTest(const FString&)
 	ON_SCOPE_EXIT { World->EndPlay(EEndPlayReason::LevelTransition); World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
 	auto* PlayerClass = LoadClass<AProject_JPlayerCharacter>(nullptr,
 		TEXT("/Game/Character_BPs/Spellblade/BP_Spellblade.BP_Spellblade_C"));
-	auto* Attack = LoadObject<UAnimMontage>(nullptr, TEXT("/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit/CombatRevision/AM_SpellbladeKit_BasicCut01.AM_SpellbladeKit_BasicCut01"));
+	auto* Attack = LoadObject<UAnimMontage>(nullptr, TEXT("/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/Longblade/CombatRevision/AM_Spellblade_Longblade_BasicCut01.AM_Spellblade_Longblade_BasicCut01"));
 	if (!TestNotNull(TEXT("Saved Spellblade loads"), PlayerClass) || !TestNotNull(TEXT("Saved attack montage loads"), Attack)) return false;
 	auto* Player = World->SpawnActor<AProject_JPlayerCharacter>(PlayerClass);
 	if (!TestNotNull(TEXT("Spellblade fixture spawns"), Player)) return false;
@@ -146,7 +146,7 @@ bool FProjectJHiddenLeaderMontageTimingTest::RunTest(const FString&)
 	ON_SCOPE_EXIT { World->EndPlay(EEndPlayReason::LevelTransition); World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
 	auto* PlayerClass = LoadClass<AProject_JPlayerCharacter>(nullptr,
 		TEXT("/Game/Character_BPs/Spellblade/BP_Spellblade.BP_Spellblade_C"));
-	auto* Attack = LoadObject<UAnimMontage>(nullptr, TEXT("/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/CombatKit/CombatRevision/AM_SpellbladeKit_BasicCut01.AM_SpellbladeKit_BasicCut01"));
+	auto* Attack = LoadObject<UAnimMontage>(nullptr, TEXT("/Game/Anim_Assets/Spellblade/Animations/Sword/Montage/Longblade/CombatRevision/AM_Spellblade_Longblade_BasicCut01.AM_Spellblade_Longblade_BasicCut01"));
 	if (!TestNotNull(TEXT("Saved Spellblade"), PlayerClass) || !TestNotNull(TEXT("Saved montage"), Attack)) return false;
 	auto* Player = World->SpawnActor<AProject_JPlayerCharacter>(PlayerClass);
 	if (!TestNotNull(TEXT("Spellblade instance"), Player)) return false;
