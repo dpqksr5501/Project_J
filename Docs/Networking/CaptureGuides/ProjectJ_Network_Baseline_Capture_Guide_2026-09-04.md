@@ -52,6 +52,8 @@ NetworkRuntime World=... NetMode=Client ... HasServerConnection=1 ...
 
 이 단계의 목적은 animation presentation의 완전한 시각 품질이 아니라 authority, CMC movement, replicated semantic state, one-shot event가 remote proxy에서 정상 전달되는지를 확인하는 것이다. 증상이 있으면 A/B 어느 쪽에서 보였는지와 재현 순서를 기록한다.
 
+Mover 이동·탑승 중 서버 보정을 조사할 때는 `NetworkPrediction` 채널로 입력·동기 상태·보정 이벤트를 수집한다. 아래 `net` 채널은 NetDriver·Iris 트래픽 기준선을 수집하는 데 사용한다. [Network Prediction 캡처 절차](../../Performance/CaptureGuides/ProjectJ_Baseline_Capture_Guide_2026-09-03.md#world-streaming과-network-prediction-캡처)
+
 ## 4. 2-client trace
 
 functional path가 정상임을 확인한 뒤, server와 client를 별도 trace로 수집한다. PIE의 동일 process trace는 world가 섞일 수 있으므로, 비용 수치는 standalone/packaged Development dedicated server에서 재측정하는 것을 최종 기준으로 한다.

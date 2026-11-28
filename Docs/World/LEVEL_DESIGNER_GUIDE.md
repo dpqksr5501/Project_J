@@ -75,6 +75,8 @@ Python/JSON은 **오프라인 제작 입력과 도구**다. 게임은 이미 저
 
 지피는 기존 인계 기준 180~300m 거리 범위이며 중원경 전환 품질이 부족하다. 후속 아트에서는 가까운 풀 메시, 중경 군집·관목, 먼 지표 색·법선·숲 덩어리를 함께 설계한다. 모든 풀을 수 km까지 표시하는 것을 기본 해법으로 삼지 않는다.
 
+고속 이동 중 셀 로드나 HLOD 전환이 늦는 구간은 에디터의 World Streaming Insights로 스트리밍 소스와 셀 상태를 대조한다. [World Streaming 캡처 절차](../Performance/CaptureGuides/ProjectJ_Baseline_Capture_Guide_2026-09-03.md#world-streaming과-network-prediction-캡처)
+
 ## 6. 남은 공간·아트 작업과 권장 제작 방향
 
 아래는 **후속 제안이며 구현 완료 사항이 아니다.** 목표는 채워 넣은 오브젝트 수보다 지형·생활·이동·시야가 읽히는 공간이다. [v4 기획](Project_J_8x8km_WorldGen_Completion_Expansion_v4.md), [v5 복구 지시](Project_J_World_Visual_Quality_Recovery_Codex_v5.md), [목표 월드맵](초반%20지역%208×8km%20판타지%20월드맵.png)을 함께 본다.

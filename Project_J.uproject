@@ -171,6 +171,20 @@
       "Enabled": true
     },
     {
+      "Name": "WorldStreamingInsights",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Editor"
+      ]
+    },
+    {
+      "Name": "NetworkPredictionInsights",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Editor"
+      ]
+    },
+    {
       "Name": "CurveExpression",
       "Enabled": true
     },

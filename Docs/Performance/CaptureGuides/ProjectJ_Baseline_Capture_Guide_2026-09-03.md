@@ -70,6 +70,23 @@ Trace.Stop
 
 생성된 `.utrace` 위치는 Output Log의 Trace 메시지 또는 Unreal Insights Trace Store에서 확인한다. 파일 위치/이름을 바꾸기보다 원본 `.utrace`를 보관한다.
 
+### World Streaming과 Network Prediction 캡처
+
+2026-11-28에 [프로젝트 설정](../../../Project_J.uproject)에서 두 Insights 플러그인을 Editor 타깃에 활성화했다. UE 5.8.4 설치본에 포함된 파일은 World Streaming Insights 1,530,301바이트와 Network Prediction Insights 1,765,900바이트다. 엔진 설치본을 재사용하므로 추가 다운로드는 없었고, 프로젝트 설정은 273바이트 늘었다.
+
+1. `Saved/Profiling` 폴더를 준비한다. 에디터의 Output Log 명령 입력란에서 PIE를 시작하기 전에 아래 명령 중 조사 대상에 맞는 하나를 실행한다. `<Project_J>`는 저장소 절대 경로로 바꾼다.
+2. `Trace.Status`로 출력 파일과 원하는 채널이 활성화됐는지 확인한다. **World Streaming**은 MainWorld에서 셀 경계나 HLOD 전환 지점을 통과하고, **Network Prediction**은 연결된 클라이언트에서 이동·탑승 중 서버 보정을 재현한다.
+3. 재현 직후 `Trace.Stop`을 실행한다. 에디터의 Unreal Insights 메뉴에서 `Open Trace File → Open in Same Instance`로 파일을 연다. World Streaming은 Timing View에서 스트리밍 소스와 셀 전환 시점을 보고, Network Prediction은 `Network Prediction Insights` 탭에서 입력·동기 상태·보정 이벤트를 대조한다.
+
+```text
+Trace.File "<Project_J>/Saved/Profiling/MainWorld_Streaming.utrace" cpu,frame,bookmark,WorldStreaming
+Trace.File "<Project_J>/Saved/Profiling/Mover_Prediction.utrace" cpu,frame,bookmark,NetworkPrediction
+```
+
+설치형 5.8.4에서는 World Streaming 분석용 DLL이 Editor에 있으므로 에디터 안에서 트레이스를 연다. 플러그인 활성화와 캡처 시작은 별개다. 생성된 트레이스는 크기가 수집 채널과 재현 시간에 따라 달라진다.
+
+**확인 범위.** UE 5.8.4 Editor에서 두 DLL의 로드, `Trace.Status`의 두 채널 활성화, 파일 기록과 종료 코드 0을 확인했다. MainWorld 실제 이동과 멀티플레이 보정 트레이스의 분석은 후속 재현 범위다.
+
 ## 4. Scenario 실행 순서
 
 각 scenario는 20~30초의 안정 구간과, 10초의 locomotion/combat 구간을 포함한다. 시작 장비/전투 모드/카메라 거리를 동일하게 유지한다.
