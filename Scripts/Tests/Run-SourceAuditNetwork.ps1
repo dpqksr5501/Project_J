@@ -28,7 +28,7 @@ New-Item -ItemType Directory -Path $out|Out-Null
 . "$root/Scripts/Validation/Source-Provenance.ps1"
 . "$root/Scripts/Audit/Continuation-ScratchPaths.ps1"
 $scratch=New-ContinuationScratchRun (Get-ContinuationScratchContext $root) "AuditNetwork_$Name"
-$exe='C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+$exe='C:/Program Files/Epic Games/UE_5.9/Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
 $provenance=Get-ProjectJSourceProvenance -ProjectRoot $root -RuntimePaths @($exe)
 $packets=switch($Condition){
  'Baseline' {@('-PktLag=0','-PktLagVariance=0','-PktLoss=0','-PktOrder=0','-PktDup=0')}

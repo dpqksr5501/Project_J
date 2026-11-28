@@ -2,7 +2,9 @@
 
 #include "DefaultMovementSet/Modes/FallingMode.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "DefaultMovementSet/CharacterMoverSimulationTypes.h"
 #include "MoverComponent.h"
+#include "MoverSimulation.h"
 #include "MoveLibrary/MovementUtils.h"
 #include "MoveLibrary/BasedMovementUtils.h"
 #include "MoveLibrary/FloorQueryUtils.h"
@@ -198,7 +200,7 @@ void UFallingMode::SimulationTick_Implementation(const FSimulationTickParams& Pa
 		if (FloorUnderActor.IsWalkableFloor())
 		{
 			UGroundMovementUtils::TryMoveToKeepMinHeightAboveFloor(MoverComponent, FloorUnderActor, CommonLegacySettings->MaxWalkSlopeCosine, MoveRecord);
-			CaptureFinalState(UpdatedComponent, *StartingSyncState, FloorUnderActor, DeltaSeconds, DeltaSeconds * PctTimeApplied, ProposedMove.AngularVelocityDegrees, OutputSyncState, OutputState, MoveRecord);
+			CaptureFinalState(UpdatedComponent, *StartingSyncState, FloorUnderActor, DeltaSeconds, DeltaSeconds * PctTimeApplied, ProposedMove.AngularVelocityDegrees, OutputSyncState, OutputState, MoveRecord, Params.SimContext.Simulation, Params.TimeStep);
 			return;
 		}
 	}
@@ -231,7 +233,7 @@ void UFallingMode::SimulationTick_Implementation(const FSimulationTickParams& Pa
 			Hit, FloorCheckSettings, OUT LandingFloor))
 		{
 			UGroundMovementUtils::TryMoveToKeepMinHeightAboveFloor(MoverComponent, LandingFloor, CommonLegacySettings->MaxWalkSlopeCosine, MoveRecord); // make sure we maintain a small gap over walking surfaces
-			CaptureFinalState(UpdatedComponent, *StartingSyncState, LandingFloor, DeltaSeconds, DeltaSeconds * PctTimeApplied, ProposedMove.AngularVelocityDegrees, OutputSyncState, OutputState, MoveRecord);
+			CaptureFinalState(UpdatedComponent, *StartingSyncState, LandingFloor, DeltaSeconds, DeltaSeconds * PctTimeApplied, ProposedMove.AngularVelocityDegrees, OutputSyncState, OutputState, MoveRecord, Params.SimContext.Simulation, Params.TimeStep);
 			return;
 		}
 		
@@ -251,7 +253,7 @@ void UFallingMode::SimulationTick_Implementation(const FSimulationTickParams& Pa
 		if (LandingFloor.IsWalkableFloor())
 		{
 			UGroundMovementUtils::TryMoveToKeepMinHeightAboveFloor(MoverComponent, LandingFloor, CommonLegacySettings->MaxWalkSlopeCosine, MoveRecord); // make sure we maintain a small gap over walking surfaces
-			CaptureFinalState(UpdatedComponent, *StartingSyncState, LandingFloor, DeltaSeconds, DeltaSeconds * PctTimeApplied, ProposedMove.AngularVelocityDegrees, OutputSyncState, OutputState, MoveRecord);
+			CaptureFinalState(UpdatedComponent, *StartingSyncState, LandingFloor, DeltaSeconds, DeltaSeconds * PctTimeApplied, ProposedMove.AngularVelocityDegrees, OutputSyncState, OutputState, MoveRecord, Params.SimContext.Simulation, Params.TimeStep);
 			return;
 		}
 	}
@@ -261,7 +263,7 @@ void UFallingMode::SimulationTick_Implementation(const FSimulationTickParams& Pa
 		PctTimeApplied = 1.f;
 	}
 	
-	CaptureFinalState(UpdatedComponent, *StartingSyncState, LandingFloor, DeltaSeconds, DeltaSeconds* PctTimeApplied, ProposedMove.AngularVelocityDegrees, OutputSyncState, OutputState, MoveRecord);
+	CaptureFinalState(UpdatedComponent, *StartingSyncState, LandingFloor, DeltaSeconds, DeltaSeconds* PctTimeApplied, ProposedMove.AngularVelocityDegrees, OutputSyncState, OutputState, MoveRecord, Params.SimContext.Simulation, Params.TimeStep);
 }
 
 
@@ -316,15 +318,14 @@ void UFallingMode::ProcessLanded(const FFloorCheckResult& FloorResult, FVector L
 
 	// This would also be a good spot for implementing some falling physics interactions (i.e. falling into a movable object and pushing it based off of this actors velocity)
 	
-	// if a new mode was set go ahead and switch to it after this tick and broadcast we landed
+	// if a new mode was set go ahead and switch to it after this tick
 	if (!NextMovementMode.IsNone())
 	{
 		TickEndData.MovementEndState.NextModeName = NextMovementMode;
-		OnLanded.Broadcast(NextMovementMode, FloorResult.HitResult);
 	}
 }
 
-void UFallingMode::CaptureFinalState(USceneComponent* UpdatedComponent, const FMoverDefaultSyncState& StartSyncState, const FFloorCheckResult& FloorResult, float DeltaSeconds, float DeltaSecondsUsed, const FVector& AngularVelocityDegrees, FMoverDefaultSyncState& OutputSyncState, FMoverTickEndData& TickEndData, FMovementRecord& Record) const
+void UFallingMode::CaptureFinalState(USceneComponent* UpdatedComponent, const FMoverDefaultSyncState& StartSyncState, const FFloorCheckResult& FloorResult, float DeltaSeconds, float DeltaSecondsUsed, const FVector& AngularVelocityDegrees, FMoverDefaultSyncState& OutputSyncState, FMoverTickEndData& TickEndData, FMovementRecord& Record, UMoverSimulation* Simulation, const FMoverTimeStep& TimeStep) const
 {
 	UMoverBlackboard* SimBlackboard = GetMoverComponent()->GetSimBlackboard_Mutable();
 
@@ -351,6 +352,12 @@ void UFallingMode::CaptureFinalState(USceneComponent* UpdatedComponent, const FM
 
 	FRelativeBaseInfo MovementBaseInfo;
 	ProcessLanded(FloorResult, FinalLocation, EffectiveVelocity, MovementBaseInfo, TickEndData);
+
+	// If ProcessLanded queued a transition to a new mode, the actor landed this tick, so surface an event.
+	if (Simulation && !TickEndData.MovementEndState.NextModeName.IsNone())
+	{
+		Simulation->AddEvent(MakeShared<FLandedEventData>(TimeStep, FloorResult.HitResult, TickEndData.MovementEndState.NextModeName));
+	}
 
 	if (MovementBaseInfo.HasRelativeInfo())
 	{

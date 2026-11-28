@@ -32,10 +32,22 @@ UMovementModeStateMachine::UMovementModeStateMachine(const FObjectInitializer& O
 
 void UMovementModeStateMachine::BeginDestroy()
 {
+	Uninit();
+
+	Super::BeginDestroy();
+}
+
+void UMovementModeStateMachine::Uninit()
+{
+	ClearAllMovementModes(/*bUninitializing?*/true);
+	ClearAllGlobalTransitions();
+
 	QueuedModeTransition = nullptr;
 	Simulation = nullptr;
 
-	Super::BeginDestroy();
+	WorkingSubstepStartData = FMoverTickStartData();
+	WorkingSimTickParams = FSimulationTickParams();
+	WorkingSimTickEndData = nullptr;
 }
 
 void UMovementModeStateMachine::RegisterMovementMode(FName ModeName, TObjectPtr<UBaseMovementMode> Mode, bool bIsDefaultMode)
@@ -74,9 +86,9 @@ void UMovementModeStateMachine::UnregisterMovementMode(FName ModeName)
 	}
 }
 
-void UMovementModeStateMachine::ClearAllMovementModes()
+void UMovementModeStateMachine::ClearAllMovementModes(bool bUninitializing)
 {
-	if (Modes.Contains(CurrentModeName))
+	if (!bUninitializing && Modes.Contains(CurrentModeName))
 	{
 		if (TObjectPtr<UBaseMovementMode> CurrentMode = Modes[CurrentModeName])
 		{
@@ -103,7 +115,10 @@ void UMovementModeStateMachine::ClearAllMovementModes()
 
 	Modes.Empty();
 	
-	ConstructDefaultModes();	// Note that we're resetting to our defaults so we keep the null movement mode
+	if (!bUninitializing)
+	{
+		ConstructDefaultModes();	// Note that we're resetting to our defaults so we keep the null movement mode
+	}
 }
 
 void UMovementModeStateMachine::SetDefaultMode(FName NewDefaultModeName)
@@ -860,10 +875,6 @@ void UMovementModeStateMachine::AdvanceToNextMode()
 			Modes[PreviousModeName]->Deactivate(MoverEventContext, NextModeName, SimContext);
 		}
 
-		// signal movement mode change event
-		const UMoverComponent* MoverComp = CastChecked<UMoverComponent>(SimContext.SimulationOwner);
-		
-
 		if (Simulation)
 		{
 			FRollbackBlackboardSimWrapper RollbackBlackboard = Simulation->GetRollbackBlackboardSimWrapper();
@@ -888,7 +899,11 @@ void UMovementModeStateMachine::AdvanceToNextMode()
 
 		Modes[CurrentModeName]->Activate(MoverEventContext, PreviousModeName, SimContext, WorkingSimTickParams.StartState, InProgressSyncState, InProgressAuxState);
 
-		MoverComp->OnMovementModeChanged.Broadcast(PreviousModeName, NextModeName);
+		// Surface an event that our movement mode has changed
+		if (Simulation)
+		{
+			Simulation->AddEvent(MakeShared<FMovementModeChangedEventData>(CurrentBaseTimeStep, PreviousModeName, NextModeName));
+		}
 	}
 }
 

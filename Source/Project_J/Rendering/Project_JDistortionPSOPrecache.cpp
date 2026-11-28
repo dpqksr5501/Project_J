@@ -21,11 +21,11 @@ namespace ProjectJDistortionPrecache
 		return INDEX_NONE;
 	}
 
-	// UE 5.8's deferred rough-refraction collector omits VarianceCoverage.
+	// The UE 5.8 and 5.9 Preview 2 deferred rough-refraction collector omits VarianceCoverage.
 	// Supplement the engine collector through its public interface. Do not replace
 	// its shader/state selection, alter visual settings, or modify installed engines.
 	static TAutoConsoleVariable<int32> CVarEnabled(TEXT("ProjectJ.Rendering.PrecacheRoughRefraction"), 1,
-		TEXT("Supplement UE 5.8 rough-refraction PSOs with the missing render target. Set before material load; 0 is the comparison baseline."));
+		TEXT("Supplement deferred rough-refraction PSOs with the missing render target. Set before material load; 0 is the comparison baseline."));
 
 	static bool AddMissingRenderTarget(FGraphicsPipelineStateInitializer& PSO)
 	{
@@ -46,7 +46,7 @@ namespace ProjectJDistortionPrecache
 		virtual void CollectPSOInitializers(const FSceneTexturesConfig& SceneTexturesConfig, const FMaterial& Material,
 			const FPSOPrecacheVertexFactoryData& VertexFactoryData, const FPSOPrecacheParams& Params, TArray<FPSOPrecacheData>& Out) override
 		{
-#if !UE_VERSION_OLDER_THAN(5, 8, 0) && UE_VERSION_OLDER_THAN(5, 9, 0)
+#if !UE_VERSION_OLDER_THAN(5, 8, 0) && UE_VERSION_OLDER_THAN(5, 10, 0)
 			if (!CVarEnabled.GetValueOnAnyThread() || !Material.IsDistorted() || GetPSOPrecacheMode() == EPSOPrecacheMode::PreloadShader) { return; }
 			const int32 Index = FindCollector(TEXT("Distortion"));
 			if (Index == INDEX_NONE) { return; }
@@ -82,7 +82,7 @@ namespace ProjectJDistortionPrecache
 namespace ProjectJSkyCapturePrecache
 {
 	static TAutoConsoleVariable<int32> CVarEnabled(TEXT("ProjectJ.Rendering.PrecacheSkyCaptureDepth"), 1,
-		TEXT("Supplement UE 5.8 sky-capture depth PSOs through the existing engine collector. Set before material load; 0 is the comparison baseline."));
+		TEXT("Supplement sky-capture depth PSOs through the existing engine collector. Set before material load; 0 is the comparison baseline."));
 
 	static bool AddMissingCaptureDepth(FGraphicsPipelineStateInitializer& PSO)
 	{
@@ -118,7 +118,7 @@ namespace ProjectJSkyCapturePrecache
 		virtual void CollectPSOInitializers(const FSceneTexturesConfig& SceneTexturesConfig, const FMaterial& Material,
 			const FPSOPrecacheVertexFactoryData& VertexFactoryData, const FPSOPrecacheParams& Params, TArray<FPSOPrecacheData>& Out) override
 		{
-#if !UE_VERSION_OLDER_THAN(5, 8, 0) && UE_VERSION_OLDER_THAN(5, 9, 0)
+#if !UE_VERSION_OLDER_THAN(5, 8, 0) && UE_VERSION_OLDER_THAN(5, 10, 0)
 			if (!CVarEnabled.GetValueOnAnyThread() || !Material.IsSky()
 				|| GetFeatureLevelShadingPath(FeatureLevel) != EShadingPath::Deferred
 				|| GetPSOPrecacheMode() == EPSOPrecacheMode::PreloadShader) { return; }

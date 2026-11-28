@@ -74,6 +74,8 @@ Trace.Stop
 
 2026-11-28에 [프로젝트 설정](../../../Project_J.uproject)에서 두 Insights 플러그인을 Editor 타깃에 활성화했다. UE 5.8.4 설치본에 포함된 파일은 World Streaming Insights 1,530,301바이트와 Network Prediction Insights 1,765,900바이트다. 엔진 설치본을 재사용하므로 추가 다운로드는 없었고, 프로젝트 설정은 273바이트 늘었다.
 
+UE 5.9 Preview 2(CL 60738873)에서 각 플러그인 설치 폴더의 파일 크기 합계는 World Streaming Insights **2,547,493바이트**, Network Prediction Insights **1,763,473바이트**다. 합계는 **4,310,966바이트(4.11 MiB)**다. 두 플러그인은 엔진 설치본을 사용하며 프로젝트에서는 Editor 타깃에만 활성화한다. 캡처한 트레이스 파일 용량은 별도다.
+
 1. `Saved/Profiling` 폴더를 준비한다. 에디터의 Output Log 명령 입력란에서 PIE를 시작하기 전에 아래 명령 중 조사 대상에 맞는 하나를 실행한다. `<Project_J>`는 저장소 절대 경로로 바꾼다.
 2. `Trace.Status`로 출력 파일과 원하는 채널이 활성화됐는지 확인한다. **World Streaming**은 MainWorld에서 셀 경계나 HLOD 전환 지점을 통과하고, **Network Prediction**은 연결된 클라이언트에서 이동·탑승 중 서버 보정을 재현한다.
 3. 재현 직후 `Trace.Stop`을 실행한다. 에디터의 Unreal Insights 메뉴에서 `Open Trace File → Open in Same Instance`로 파일을 연다. World Streaming은 Timing View에서 스트리밍 소스와 셀 전환 시점을 보고, Network Prediction은 `Network Prediction Insights` 탭에서 입력·동기 상태·보정 이벤트를 대조한다.

@@ -9,7 +9,7 @@ New-Item -ItemType Directory -Path $out|Out-Null
 $arguments=@("$projectRoot/Project_J.uproject",'-NullRHI','-unattended','-nosound','-NoLiveCoding','-NoDDCCleanup','-nop4',"-UserDir=$out/User",'-SaveToUserDir',"-ABSLOG=$out/Run.log",'-culture=en',"-ProjectJAuditReadName=$Name","-ExecutePythonScript=$projectRoot/Scripts/Audit/Read-ContinuationLevelAssets.py")
 if($StyleFieldRepair){$arguments+='-ProjectJAuditStyleFieldRepair'}
 $arguments|ConvertTo-Json|Set-Content "$out/arguments.json" -Encoding utf8
-$process=Start-Process 'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe' -ArgumentList (($arguments|ForEach-Object {'"'+$_+'"'}) -join ' ') -WindowStyle Hidden -PassThru
+$process=Start-Process 'C:/Program Files/Epic Games/UE_5.9/Engine/Binaries/Win64/UnrealEditor-Cmd.exe' -ArgumentList (($arguments|ForEach-Object {'"'+$_+'"'}) -join ' ') -WindowStyle Hidden -PassThru
 $nativeHandle=$process.Handle
 $process.WaitForExit()
 [ordered]@{exitCode=$process.ExitCode;hasExited=$process.HasExited;publicPropertyRead=$true;assetSave=$false}|ConvertTo-Json|Set-Content "$out/process.json" -Encoding utf8

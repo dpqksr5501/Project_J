@@ -12,7 +12,7 @@
  * A walking mode that uses a critically damped spring for translation and rotation.
  * The strength of the critically damped spring is set via smoothing times (separate for translation and rotation)
  */
-UCLASS(BlueprintType)
+UCLASS(MinimalAPI, BlueprintType)
 class USimpleSpringWalkingMode : public USimpleWalkingMode
 {
 	GENERATED_BODY()

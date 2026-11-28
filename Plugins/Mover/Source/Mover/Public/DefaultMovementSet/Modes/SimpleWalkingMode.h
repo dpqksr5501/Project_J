@@ -11,7 +11,7 @@
 /**
  * Basic walking mode that implements the ground based walking
  */
-UCLASS(BlueprintType, Abstract)
+UCLASS(MinimalAPI, BlueprintType, Abstract)
 class USimpleWalkingMode : public UWalkingMode
 {
 	GENERATED_BODY()

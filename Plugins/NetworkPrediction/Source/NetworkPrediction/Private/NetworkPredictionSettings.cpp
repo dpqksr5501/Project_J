@@ -8,6 +8,10 @@
 #include "Engine/Canvas.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/LevelScriptActor.h"
+#include "Containers/Ticker.h"
+#include "GameFramework/InputSettings.h"
+#include "GameFramework/PlayerController.h"
+#include "GameFramework/PlayerInput.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(NetworkPredictionSettings)
 
@@ -31,13 +35,114 @@ namespace UE_NETWORK_PREDICTION
 	struct FDevMenuState
 	{
 		bool bIsActive = false;
+		bool bKeysBound = false;
 		int32 ActiveHUD = INDEX_NONE;
 
 		float LastMaxX = 0.f;
 		float LastMaxY = 0.f;
-		
+
 		TArray<FNetworkPredictionDevHUD> DevHUDs;
 	};
+
+	namespace
+	{
+		TMap<TWeakObjectPtr<UWorld>, FDevMenuState> DevMenuStates;
+
+		const TCHAR* const DevMenuKeyNames[] = { TEXT("zero"), TEXT("one"), TEXT("two"), TEXT("three"), TEXT("four"), TEXT("five"), TEXT("six"), TEXT("seven"), TEXT("eight"), TEXT("nine") };
+		constexpr int32 NumDevMenuKeys = UE_ARRAY_COUNT(DevMenuKeyNames);
+
+		FString MakeDevMenuKeyCommand(const int32 Choice)
+		{
+			return FString::Printf(TEXT("np2.DevMenu %d"), Choice);
+		}
+
+		UPlayerInput* GetDevMenuPlayerInput(UWorld* World)
+		{
+			const ULocalPlayer* const LocalPlayer = World ? World->GetFirstLocalPlayerFromController() : nullptr;
+			return (LocalPlayer && LocalPlayer->PlayerController) ? LocalPlayer->PlayerController->PlayerInput.Get() : nullptr;
+		}
+
+		void BindDevMenuKeys(FDevMenuState& State, UWorld* World)
+		{
+			if (ULocalPlayer* LocalPlayer = World->GetFirstLocalPlayerFromController())
+			{
+				for (int32 Choice = 0; Choice < NumDevMenuKeys; ++Choice)
+				{
+					LocalPlayer->Exec(World, *FString::Printf(TEXT("setbind %s \"%s\""), DevMenuKeyNames[Choice], *MakeDevMenuKeyCommand(Choice)), *GLog);
+				}
+				State.bKeysBound = true;
+			}
+		}
+
+		// setbind has no unbind form (an empty command still leaves a binding behind), so remove the bindings it added
+		// directly and save, since setbind persisted them to the player input config.
+		void UnbindDevMenuKeys(FDevMenuState& State, UWorld* World)
+		{
+			UPlayerInput* PlayerInput = GetDevMenuPlayerInput(World);
+			const bool bLivePlayerInput = PlayerInput != nullptr;
+			if (!PlayerInput)
+			{
+				// No live player input (e.g. the world is being torn down): edit the saved config through the class default
+				// object instead, reloading first so bindings saved this session by other setbinds are kept.
+				PlayerInput = UInputSettings::GetDefaultPlayerInputClass()->GetDefaultObject<UPlayerInput>();
+				PlayerInput->ReloadConfig();
+			}
+
+			const int32 NumRemoved = PlayerInput->DebugExecBindings.RemoveAll([](const FKeyBind& Bind)
+			{
+				for (int32 Choice = 0; Choice < NumDevMenuKeys; ++Choice)
+				{
+					if (Bind.Key == FKey(DevMenuKeyNames[Choice]) && Bind.Command == MakeDevMenuKeyCommand(Choice)
+						&& !Bind.Control && !Bind.Shift && !Bind.Alt && !Bind.Cmd)
+					{
+						return true;
+					}
+				}
+				return false;
+			});
+
+			if (NumRemoved > 0)
+			{
+				PlayerInput->SaveConfig();
+			}
+			State.bKeysBound = false;
+
+			UE_LOGF(LogNetworkPrediction, Verbose, "np2.DevMenu removed %d key bindings for world %ls (%ls).",
+				NumRemoved, *GetNameSafe(World), bLivePlayerInput ? TEXT("live player input") : TEXT("saved config"));
+		}
+
+		void OnDevMenuWorldCleanup(UWorld* World, bool bSessionEnded, bool bCleanupResources)
+		{
+			if (FDevMenuState* State = DevMenuStates.Find(World))
+			{
+				if (State->bKeysBound)
+				{
+					UnbindDevMenuKeys(*State, World);
+				}
+				DevMenuStates.Remove(World);
+			}
+		}
+
+		// Binds or unbinds on the next tick: this can run from a binding whose command string UPlayerInput::Exec is still parsing,
+		// and setbind or the unbind would change or free that string. World cleanup unbinds instead if the world goes away first.
+		void SyncDevMenuKeyBindings(UWorld* World)
+		{
+			FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([WeakWorld = TWeakObjectPtr<UWorld>(World)](float)
+			{
+				UWorld* const TickWorld = WeakWorld.Get();
+				FDevMenuState* const State = TickWorld ? DevMenuStates.Find(TickWorld) : nullptr;
+				if (State && State->bIsActive && !State->bKeysBound)
+				{
+					BindDevMenuKeys(*State, TickWorld);
+				}
+				else if (State && !State->bIsActive && State->bKeysBound)
+				{
+					UnbindDevMenuKeys(*State, TickWorld);
+				}
+				return false;
+			}));
+		}
+	}
 
 	FORCENOINLINE void DrawText(FDevMenuState& State, UCanvas* Canvas, const TCHAR* Str, float& X, float& Y, bool bEnabled=true)
 	{
@@ -115,9 +220,19 @@ namespace UE_NETWORK_PREDICTION
 
 	FORCENOINLINE void DevMenu(const TArray< FString >& Args, UWorld* InWorld)
 	{
-		static TMap<TWeakObjectPtr<UWorld>, FDevMenuState> WorldHandlesMap;	
+		if (!InWorld)
+		{
+			UE_LOGF(LogNetworkPrediction, Warning, "np2.DevMenu needs a world.");
+			return;
+		}
 
-		FDevMenuState& State = WorldHandlesMap.FindOrAdd(InWorld);
+		static FDelegateHandle WorldCleanupHandle;
+		if (!WorldCleanupHandle.IsValid())
+		{
+			WorldCleanupHandle = FWorldDelegates::OnWorldCleanup.AddStatic(&OnDevMenuWorldCleanup);
+		}
+
+		FDevMenuState& State = DevMenuStates.FindOrAdd(InWorld);
 
 		int32 Choice = INDEX_NONE;
 		if (Args.Num() > 0)
@@ -135,6 +250,7 @@ namespace UE_NETWORK_PREDICTION
 			{
 				State.ActiveHUD = INDEX_NONE;
 			}
+			SyncDevMenuKeyBindings(InWorld);
 			return;
 		}
 
@@ -208,10 +324,14 @@ namespace UE_NETWORK_PREDICTION
 					{
 						if (ULocalPlayer* LocalPlayer = InWorld->GetFirstLocalPlayerFromController())
 						{
-							LocalPlayer->Exec(InWorld, *Item.ExecCommand, *GLog);
-							if (Item.bAutoBack)
+							// The command can clean up this world or add another world's menu state, either of which invalidates State and Item.
+							const FString ExecCommand = Item.ExecCommand;
+							const bool bAutoBack = Item.bAutoBack;
+							LocalPlayer->Exec(InWorld, *ExecCommand, *GLog);
+							FDevMenuState* const StateAfterExec = DevMenuStates.Find(InWorld);
+							if (bAutoBack && StateAfterExec)
 							{
-								State.ActiveHUD = INDEX_NONE;
+								StateAfterExec->ActiveHUD = INDEX_NONE;
 							}
 						}
 					}
@@ -219,36 +339,7 @@ namespace UE_NETWORK_PREDICTION
 			}
 		}
 
-		// One time init:
-		TWeakObjectPtr<UWorld> WeakWorld(InWorld);
-		bool bRegisteredInput  = false;
-		auto BindInput = [&bRegisteredInput, WeakWorld]()
-		{
-			if (UWorld* World = WeakWorld.Get())
-			{
-				if (ULocalPlayer* LocalPlayer = World->GetFirstLocalPlayerFromController())
-				{
-					//LocalPlayer->Exec(InWorld, *FString::Printf(TEXT("setbind %d \"np2.DevMenu %d\n"), i, i), *GLog);
-
-					LocalPlayer->Exec(World, TEXT("setbind one \"np2.DevMenu 1\""), *GLog);
-					LocalPlayer->Exec(World, TEXT("setbind two \"np2.DevMenu 2\""), *GLog);
-					LocalPlayer->Exec(World, TEXT("setbind three \"np2.DevMenu 3\""), *GLog);
-					LocalPlayer->Exec(World, TEXT("setbind four \"np2.DevMenu 4\""), *GLog);
-					LocalPlayer->Exec(World, TEXT("setbind five \"np2.DevMenu 5\""), *GLog);
-					LocalPlayer->Exec(World, TEXT("setbind six \"np2.DevMenu 6\""), *GLog);
-					LocalPlayer->Exec(World, TEXT("setbind seven \"np2.DevMenu 7\""), *GLog);
-					LocalPlayer->Exec(World, TEXT("setbind eight \"np2.DevMenu 8\""), *GLog);
-					LocalPlayer->Exec(World, TEXT("setbind nine \"np2.DevMenu 9\""), *GLog);
-					LocalPlayer->Exec(World, TEXT("setbind zero \"np2.DevMenu 0\""), *GLog);
-					bRegisteredInput = true;
-				}
-			}
-		};
-
-		if (!bRegisteredInput)
-		{
-			BindInput();
-		}
+		SyncDevMenuKeyBindings(InWorld);
 
 		static FDelegateHandle Handle;
 		if (Handle.IsValid())
@@ -258,14 +349,52 @@ namespace UE_NETWORK_PREDICTION
 
 		Handle = AHUD::OnHUDPostRender.AddLambda([](AHUD* HUD, UCanvas* Canvas)
 		{
-			DrawDevHUD(WorldHandlesMap, HUD, Canvas);
+			DrawDevHUD(DevMenuStates, HUD, Canvas);
 		});
 	}
+
+	void PrintDevMenu(UWorld* InWorld)
+	{
+		const FDevMenuState* const State = DevMenuStates.Find(InWorld);
+		if (!State)
+		{
+			UE_LOGF(LogNetworkPrediction, Display, "np2.DevMenu has not been built for world %ls yet. Run np2.DevMenu in this world first.", *GetNameSafe(InWorld));
+			return;
+		}
+
+		const FString ActiveHUDStr = State->DevHUDs.IsValidIndex(State->ActiveHUD)
+			? FString::Printf(TEXT("[%d] %s"), State->ActiveHUD + 1, *State->DevHUDs[State->ActiveHUD].HUDName)
+			: FString(TEXT("none"));
+
+		UE_LOGF(LogNetworkPrediction, Display, "np2.DevMenu for world %ls: Shown: %ls, Keys bound: %ls, Active HUD: %ls",
+			*GetNameSafe(InWorld), State->bIsActive ? TEXT("true") : TEXT("false"), State->bKeysBound ? TEXT("true") : TEXT("false"), *ActiveHUDStr);
+
+		if (State->DevHUDs.Num() <= 0)
+		{
+			UE_LOGF(LogNetworkPrediction, Display, "  No HUDs listed yet; they are built by the first np2.DevMenu call other than np2.DevMenu 0.");
+		}
+
+		for (int32 HUDIdx = 0; HUDIdx < State->DevHUDs.Num(); ++HUDIdx)
+		{
+			const FNetworkPredictionDevHUD& DevHUD = State->DevHUDs[HUDIdx];
+			UE_LOGF(LogNetworkPrediction, Display, "  [%d] %ls", HUDIdx + 1, *DevHUD.HUDName);
+
+			for (int32 ItemIdx = 0; ItemIdx < DevHUD.Items.Num(); ++ItemIdx)
+			{
+				const FNetworkPredictionDevHUDItem& Item = DevHUD.Items[ItemIdx];
+				UE_LOGF(LogNetworkPrediction, Display, "    [%d] %ls: %ls", ItemIdx + 1, *Item.DisplayName, *Item.ExecCommand);
+			}
+		}
+	}
+
 }
 
-FAutoConsoleCommandWithWorldAndArgs DevMenuToggleCmd(TEXT("np2.DevMenu"), TEXT(""),
-	FConsoleCommandWithWorldAndArgsDelegate::CreateLambda([](const TArray< FString >& Args, UWorld* InWorld) 
+FAutoConsoleCommandWithWorldAndArgs DevMenuToggleCmd(TEXT("np2.DevMenu"), TEXT("Network Prediction dev HUD menu. While hidden, any call shows it. At the top level, N opens HUD N (1 is Level Script, then the project settings DevHUDs); inside a HUD, N runs item N. 0 goes back, or hides the menu at the top level. Showing the menu binds the number keys one..zero to np2.DevMenu (via setbind); hiding it removes those bindings."),
+	FConsoleCommandWithWorldAndArgsDelegate::CreateLambda([](const TArray< FString >& Args, UWorld* InWorld)
 {
 	UE_NETWORK_PREDICTION::DevMenu(Args, InWorld);
-	
+
 }));
+
+FAutoConsoleCommandWithWorld DevMenuPrintCmd(TEXT("np2.DevMenu.Print"), TEXT("Logs the np2.DevMenu state for this world: whether it is shown, the active HUD, and every HUD and item with the number that selects it and the item's exec command."),
+	FConsoleCommandWithWorldDelegate::CreateStatic(&UE_NETWORK_PREDICTION::PrintDevMenu));

@@ -1,6 +1,6 @@
 # Project J
 
-**Unreal Engine 5.8 · C++ · 개인 개발 3인칭 액션 MMORPG 프로토타입**
+**Unreal Engine 5.9 Preview 2 · C++ · 개인 개발 3인칭 액션 MMORPG 프로토타입**
 
 Project J는 온라인 액션 게임의 이동·전투·네트워크 시스템을 C++로 개발하는 개인 프로젝트입니다. GAS를 이용한 서버 권위형 전투, Mover 이동, Motion Matching 기반 포즈 검색, Mass와 비동기 처리를 실제 캐릭터 플레이에 연결하고 있습니다.
 
@@ -78,13 +78,27 @@ Cloth 실험은 D3D12 1280×720 Epic, producer 200개·표시 파츠 2,000개·N
 
 ## 빌드와 실행
 
-Unreal Engine **5.8**, Win64 C++ 도구 체인과 Windows SDK, **Git LFS**가 필요합니다. [.vsconfig](.vsconfig)와 [Project_J.uproject](Project_J.uproject)에 도구·플러그인 구성이 있습니다. 프로젝트에서 사용하는 엔진 플러그인 수정은 [Mover](Plugins/Mover/PROJECT_J_PATCH.md)·[NetworkPrediction](Plugins/NetworkPrediction/PROJECT_J_PATCH.md)에 설명했습니다.
+Unreal Engine **5.9 Preview 2**, Win64 C++ 도구 체인과 Windows SDK, **Git LFS**가 필요합니다. [.vsconfig](.vsconfig)와 [Project_J.uproject](Project_J.uproject)에 도구·플러그인 구성이 있습니다. 프로젝트에서 사용하는 엔진 플러그인 수정은 [Mover](Plugins/Mover/PROJECT_J_PATCH.md)·[NetworkPrediction](Plugins/NetworkPrediction/PROJECT_J_PATCH.md)에 설명했습니다.
+
+### 5.9에서 사용할 수 있는 기능
+
+| 기능 | Project J에서 사용하는 방법 |
+| --- | --- |
+| 블루프린트 Graph DSL · Chooser Python API | 에디터에서 GameMode 그래프와 이동 애니메이션 Chooser를 읽을 수 있습니다. [실행 예제](Scripts/Validation/Verify-EditorToolsets.py)가 실제 프로젝트 에셋을 조회합니다. |
+| MCP · Knowledge Base | 에디터를 연 뒤 로컬 MCP 클라이언트를 연결하면 프로젝트 설명을 받습니다. `ProjectJ` 지식 베이스에서 `Docs/Overview` 문서를 검색할 수 있습니다. |
+| 지오메트리 · 테스트 · 진단 | Geometry Toolset으로 레벨 블록아웃을 제작하고 Modular Test Runner로 모듈 테스트를 실행할 수 있습니다. AllToolsets가 성능, 내비게이션, Rewind Debugger, UI 도구를 제공합니다. |
+| Mass Characters · 오프라인 애니메이션 생성 | 에디터 시작 인수 `-EnablePlugins=ProjectJPreviewTools`로 [캐릭터 제작 도구](Plugins/ProjectJPreviewTools/ProjectJPreviewTools.uplugin)를 켜거나 플러그인 창에서 **Project J Character Authoring Preview**를 선택합니다. 일반 게임은 기존 Iris·Mover 캐릭터 경로를 사용합니다. |
+| 렌더링 · 월드 | 5.9의 기본 Nanite 컬링 분류와 World Partition 내비게이션 타일 풀 수정이 적용됩니다. 점진적 NavMesh 빌드는 월드별로 시험할 수 있습니다. 필드 NPC 경로 준비 시간은 해당 월드에서 측정해야 합니다. |
+
+정식 5.9로 전환할 때는 에디터를 닫고 새 엔진의 Mover·NetworkPrediction과 프로젝트 패치를 비교한 뒤 Editor와 Game을 다시 빌드합니다. 블루프린트 컴파일, 위 도구 예제, MMO 샌드박스 PIE와 Windows Cook을 다시 실행합니다. [Epic 5.9 변경 내역](https://dev.epicgames.com/documentation/unreal-engine/unreal-engine-5-9-release-notes) · [Unreal MCP 사용법](https://dev.epicgames.com/documentation/unreal-engine/unreal-mcp-in-unreal-editor)
+
+캐릭터 제작 도구를 처음 켜면 엔진의 Python 환경이 추가 패키지를 설치합니다. 이 Win64 설치본에서 CUDA용 PyTorch 패키지 하나의 다운로드 크기는 약 2.51 GB입니다. Fab과 Lore도 에디터에서 로드되며, 이 저장소의 소스와 에셋 버전 관리는 Git과 Git LFS를 사용합니다.
 
 저장소 루트 PowerShell에서 실행합니다. 엔진 경로는 설치 위치에 맞추고, 에디터와 기존 빌드가 종료된 상태에서 진행합니다.
 
 ```powershell
 git lfs pull
-$engineRoot = 'C:/Program Files/Epic Games/UE_5.8'
+$engineRoot = 'C:/Program Files/Epic Games/UE_5.9'
 $projectFile = (Resolve-Path './Project_J.uproject').Path
 & "$engineRoot/Engine/Binaries/DotNET/UnrealBuildTool/UnrealBuildTool.exe" `
     Project_JEditor Win64 Development "-Project=$projectFile" -WaitMutex

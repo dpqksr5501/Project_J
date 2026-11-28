@@ -128,6 +128,17 @@ public:
  	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "General")
 	bool bIgnoreBaseRotation = false;
 
+	/**
+	 * If true, the based-movement catch-up sweep ignores collisions with the movement base AND every actor attached to it.
+	 * Use this for compound platforms (e.g. a wall attached to a moving platform). Without it, child actors carried by the
+	 * base can block the character's catch-up move and produce wall-clipping / stuck behaviour.
+	 */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "General|Based Movement")
+	bool bIgnoreBaseAttachedActors = true;
+	// Known limitation: implemented as a post-filter on sweep hits, which stops at the first blocking hit. If an ignored
+	// attached actor sits in front of a real blocker on the same sweep path, the real blocker is never recorded and the
+	// character passes through both. Proper fix lives at the UWorld / Chaos sweep API layer.
+
 	/** Instantaneous speed induced in an actor upon jumping */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Jumping", meta = (ClampMin = "0", UIMin = "0", ForceUnits = "cm/s"))
 	float JumpUpwardsSpeed = 500.0f;

@@ -5,7 +5,7 @@
 #include "NetworkPredictionConfig.generated.h"
 
 // Must be kept in sync with ENP_TickingPolicy
-UENUM()
+UENUM(meta=(PythonType))
 enum class ENetworkPredictionTickingPolicy : uint8
 {
 	// Client ticks at local frame rate. Server ticks clients independently at client input cmd rate.
@@ -26,7 +26,7 @@ enum class ENetworkPredictionLocalInputPolicy : uint8
 };
 
 // Must be kept in sync with ENP_NetworkLOD. Note: SimExtrapolate Not currently implemented so it is hidden
-UENUM()
+UENUM(meta=(PythonType))
 enum class ENetworkLOD : uint8
 {
 	Interpolated	= 1 << 0,

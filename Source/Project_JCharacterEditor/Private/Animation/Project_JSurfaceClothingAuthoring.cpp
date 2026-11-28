@@ -292,7 +292,7 @@ bool UProject_JPlayerLocomotionLibrary::RefreshSurfaceClothing(USkeletalMesh* Me
 	for (int32 Section = 0; Section < Assets.Num(); ++Section)
 	{
 		auto* Asset = CastChecked<UClothingAssetCommon>(Assets[Section]);
-		Asset->Modify(); Asset->InvalidateAllCachedData(); Asset->ApplyParameterMasks();
+		Asset->Modify(); Asset->InvalidateFlaggedCachedData(EClothingCachedDataFlagsCommon::All); Asset->ApplyParameterMasks();
 		if (!FSkeletalMeshClothingSystemUtilities::AssignClothingToSection(Mesh, Asset, 0, Section, 0, nullptr)) return false;
 	}
 	Mesh->MarkPackageDirty();

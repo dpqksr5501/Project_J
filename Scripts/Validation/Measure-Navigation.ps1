@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $true)][string]$RunName,
-    [string]$EngineRoot = 'C:/Program Files/Epic Games/UE_5.8',
+    [string]$EngineRoot = 'C:/Program Files/Epic Games/UE_5.9',
     [switch]$Build,
     [switch]$Regression
 )

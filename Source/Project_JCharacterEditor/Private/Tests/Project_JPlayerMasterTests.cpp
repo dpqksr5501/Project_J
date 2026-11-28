@@ -1,5 +1,6 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
+#include "Misc/App.h"
 #include "Project_JPlayerCharacter.h"
 #include "Combat/Project_JGameplayAbility_Sprint.h"
 #include "Animation/Project_JPlayerAnimInstance.h"
@@ -96,8 +97,11 @@ bool FProjectJPlayerMasterAssembly::RunTest(const FString&)
 			TestEqual(TEXT("Clothing follows visual body, not hidden Manny source"),
 				static_cast<USceneComponent*>(Part->LeaderPoseComponent.Get()), Part->GetAttachParent());
 			TestEqual(TEXT("Parts follow the actual presented body in either skeleton route"), Part->LeaderPoseComponent.Get(), Body);
-			TestEqual(TEXT("Only independent cloth retains its component tick"), Part->IsComponentTickEnabled(),
-				Part->GetSkeletalMeshAsset()->HasActiveClothingAssets());
+			// The standalone game world suppresses cloth creation under NullRHI.
+			const bool bExpectClothTick = (IsRunningCommandlet() || FApp::CanEverRender()) &&
+				Part->GetSkeletalMeshAsset()->HasActiveClothingAssets();
+			TestEqual(FString::Printf(TEXT("%s ticks only for renderable independent cloth"), *Part->GetName()),
+				Part->IsComponentTickEnabled(), bExpectClothTick);
 			TestNull(TEXT("Shared-pose clothing has no duplicate animation instance"), Part->GetAnimInstance());
 		}
 		TArray<UProject_JPlayerInputBindingComponent*> Inputs; Avatar->GetComponents(Inputs);

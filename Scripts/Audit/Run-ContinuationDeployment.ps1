@@ -42,7 +42,7 @@ if($Mode -eq 'Cook'){
   '-Map=/Game/ThirdPerson/Lvl_ThirdPerson+/Engine/Maps/Entry',"-OutputDir=$out/Cooked/[Platform]",
   '-unattended','-nop4','-NoDDCCleanup','-NoLiveCoding',"-UserDir=$out/User","-ABSLOG=$out/Cook.log",'-UTF8Output')
  $arguments | ConvertTo-Json | Set-Content -LiteralPath "$out/arguments.json" -Encoding utf8
- $process=Start-Process 'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe' -ArgumentList (($arguments | ForEach-Object {'"'+$_+'"'}) -join ' ') -WindowStyle Hidden -PassThru
+ $process=Start-Process 'C:/Program Files/Epic Games/UE_5.9/Engine/Binaries/Win64/UnrealEditor-Cmd.exe' -ArgumentList (($arguments | ForEach-Object {'"'+$_+'"'}) -join ' ') -WindowStyle Hidden -PassThru
  $handle=$process.Handle
  Write-Output "Started configured Cook PID=$($process.Id)"
  $process.WaitForExit()
@@ -54,7 +54,7 @@ if($Mode -eq 'Cook'){
   "-stagingdirectory=$out/Package",'-utf8output','-unattended','-nocleanstage')
  $arguments | ConvertTo-Json | Set-Content -LiteralPath "$out/arguments.json" -Encoding utf8
  Write-Output 'Started package-only AutomationTool; C++ compile and Cook disabled.'
- & 'C:/Program Files/Epic Games/UE_5.8/Engine/Build/BatchFiles/RunUAT.bat' @arguments *> "$out/Stage.log"
+ & 'C:/Program Files/Epic Games/UE_5.9/Engine/Build/BatchFiles/RunUAT.bat' @arguments *> "$out/Stage.log"
  $exitCode=$LASTEXITCODE
  $nativeExited=$true # Synchronous AutomationTool invocation has returned.
 }

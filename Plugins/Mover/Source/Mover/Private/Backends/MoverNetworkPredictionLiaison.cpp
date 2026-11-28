@@ -286,6 +286,11 @@ bool UMoverNetworkPredictionLiaisonComponent::WritePrevPresentationSyncState(con
 	return bDidWriteSucceed;
 }
 
+void UMoverNetworkPredictionLiaisonComponent::ResetSimulation()
+{
+	SetupSimulation();
+}
+
 
 #if WITH_EDITOR
 EDataValidationResult UMoverNetworkPredictionLiaisonComponent::ValidateData(FDataValidationContext& Context, const UMoverComponent& ValidationMoverComp) const
@@ -361,7 +366,6 @@ void UMoverNetworkPredictionLiaisonComponent::UninitializeComponent()
 	Super::UninitializeComponent();
 }
 
-
 void UMoverNetworkPredictionLiaisonComponent::RegisterComponentTickFunctions(bool bRegister)
 {
 	Super::RegisterComponentTickFunctions(bRegister);
@@ -376,11 +380,6 @@ void UMoverNetworkPredictionLiaisonComponent::InitializeNetworkPredictionProxy()
 	{
 		NetworkPredictionProxy.Init<FMoverActorModelDef>(GetWorld(), GetReplicationProxies(), this, this);
 	}
-}
-
-void UMoverNetworkPredictionLiaisonComponent::ResetSimulation()
-{
-	SetupSimulation();
 }
 
 void UMoverNetworkPredictionLiaisonComponent::SetupSimulation()
@@ -429,12 +428,5 @@ void UMoverNetworkPredictionLiaisonComponent::SetupSimulation()
 	}
 
 }
-
-
-void UMoverNetworkPredictionLiaisonComponent::OnRegister()
-{
-	Super::OnRegister();
-}
-
 
 #undef LOCTEXT_NAMESPACE

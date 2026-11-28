@@ -4,6 +4,7 @@
 
 #include "MoverComponent.h"
 #include "DefaultMovementSet/LayeredMoves/MontageStateProvider.h"
+#include "DefaultMovementSet/CharacterMoverSimulationTypes.h"
 #include "MovementModifiers/StanceModifier.h"
 #include "CharacterMoverComponent.generated.h"
 
@@ -105,8 +106,14 @@ public:
 	// Broadcast when this actor changes stances.
 	UPROPERTY(BlueprintAssignable, Category = Mover)
 	FMover_OnStanceChanged OnStanceChanged;
+
+	// Broadcast on the game thread after this actor lands on a valid surface, exposing post-landed movement mode name and floor hit result
+	UPROPERTY(BlueprintAssignable, Category = Mover)
+	FMover_OnLanded OnLanded;
 	
 protected:
+	UE_API virtual void ProcessSimulationEvent(const FMoverSimulationEventData& EventData) override;
+
 	UFUNCTION()
 	UE_API virtual void OnMoverPreSimulationTick(const FMoverTimeStep& TimeStep, const FMoverInputCmdContext& InputCmd);
 

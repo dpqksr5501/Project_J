@@ -11,7 +11,7 @@
 /**
  * Basic flying mode that will move exactly where inputs request. Easy to derive from to create custom behaviors
  */
-UCLASS(BlueprintType, Abstract)
+UCLASS(MinimalAPI, BlueprintType, Abstract)
 class USimpleFlyingMode : public UFlyingMode
 {
 	GENERATED_BODY()

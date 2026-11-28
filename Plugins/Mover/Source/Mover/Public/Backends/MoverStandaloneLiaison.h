@@ -109,6 +109,7 @@ public:
 	UE_API virtual int32 GetCurrentSimFrame() override;
 	UE_API virtual bool ReadPendingSyncState(OUT FMoverSyncState& OutSyncState) override;
 	UE_API virtual bool WritePendingSyncState(const FMoverSyncState& SyncStateToWrite) override;
+	UE_API virtual void ResetSimulation() override;
 	// End IMoverBackendLiaisonInterface
 
 	// Begin UActorComponent interface
@@ -156,6 +157,8 @@ protected:
 	UE_API void TickInputProduction(float DeltaSeconds);
 	UE_API void TickMovementSimulation(float DeltaSeconds);
 	UE_API void TickApplySimulationState(float DeltaSeconds);
+
+	void SetupSimulation();
 
 	UE_API void UpdateSimulationTime();
 

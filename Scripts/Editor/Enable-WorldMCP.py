@@ -1,4 +1,4 @@
-"""Enable the requested editor-only MCP plugins in explicitly supplied UE 5.8 projects.
+"""Enable editor-only MCP plugins in explicitly supplied UE 5.8 or 5.9 projects.
 
 Backups are kept under this task's Saved directory. No asset, renderer, remote
 Python setting, firewall rule, user-wide Codex setting, or engine file is changed.
@@ -14,8 +14,9 @@ ROOT = Path(__file__).resolve().parents[2]
 def enable(project):
     project = Path(project).resolve(strict=True)
     data = json.loads(project.read_text(encoding="utf-8-sig"))
-    if data.get("EngineAssociation") != "5.8":
-        raise ValueError(f"Only the requested UE 5.8 projects are eligible: {project}")
+    version = data.get("EngineAssociation")
+    if version not in {"5.8", "5.9"}:
+        raise ValueError(f"Unsupported EngineAssociation {version!r}: {project}")
     backup = ROOT / "Saved/StarterWorld/ProjectDescriptorBackups"
     backup.mkdir(parents=True, exist_ok=True)
     digest = hashlib.sha256(project.read_bytes()).hexdigest()
@@ -34,8 +35,12 @@ def enable(project):
     port = {"Project_J": 8000, "assets": 8001, "MedievalVillage": 8002}.get(project.stem, 8003)
     config = project.parent / "Config/DefaultEditorPerProjectUserSettings.ini"
     before = config.read_text(encoding="utf-8-sig") if config.exists() else ""
-    section = "[/Script/ModelContextProtocolEngine.ModelContextProtocolSettings]"
+    module = "ModelContextProtocol" if version == "5.9" else "ModelContextProtocolEngine"
+    section = f"[/Script/{module}.ModelContextProtocolSettings]"
     lines = before.splitlines()
+    legacy = "[/Script/ModelContextProtocolEngine.ModelContextProtocolSettings]"
+    if version == "5.9" and section not in lines:
+        lines = [section if line.strip() == legacy else line for line in lines]
     index = next((i for i, line in enumerate(lines) if line.strip() == section), None)
     if index is None:
         lines.extend(["", section])

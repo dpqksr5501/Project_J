@@ -402,6 +402,10 @@ void UMoverComponent::FinalizeFrame(const FMoverSyncState* SyncState, const FMov
 		DispatchGameplayTagTransitionEvents(PreviousGameplayTags, InternalGameplayTags, {}, CachedLastSimTickTimeStep);
 	}
 
+	// Drain simulation events emitted during the sim tick (e.g. landing, movement-mode-changed) and dispatch them
+	// on the game thread
+	DispatchPendingSimulationEvents();
+
 	if (PrimaryVisualComponent)
 	{
 		if (!PrimaryVisualComponent->GetRelativeTransform().Equals(BaseVisualComponentTransform))
@@ -420,6 +424,10 @@ void UMoverComponent::FinalizeUnchangedFrame()
 {
 	CachedLastSimTickTimeStep.BaseSimTimeMs = BackendLiaisonComp->GetCurrentSimTimeMs();
 	CachedLastSimTickTimeStep.ServerFrame = BackendLiaisonComp->GetCurrentSimFrame();
+
+	// Drain simulation events emitted during the sim tick (e.g. landing, movement-mode-changed) and dispatch them
+	// on the game thread
+	DispatchPendingSimulationEvents();
 
 	if (OnPostFinalize.IsBound())
 	{
@@ -530,7 +538,8 @@ void UMoverComponent::TickInterpolatedSimProxy(const FMoverTimeStep& TimeStep, c
 		Modifier->OnEnd(MoverComp, TimeStep, SyncState, AuxState);
 	}
 
-	// Emit events when movement mode changes
+	// Emit events when movement mode changes for sim proxies. Interpolated sim proxies don't run the movement
+	// mode state machine, so instead detect the change here and broadcast directly.
 	if (CachedSyncState.MovementMode != SyncState.MovementMode)
 	{
 		OnMovementModeChanged.Broadcast(CachedSyncState.MovementMode, SyncState.MovementMode);
@@ -1142,9 +1151,9 @@ void UMoverComponent::FindAndRegisterDefaults()
 {
 	FindDefaultUpdatedComponent();
 
-	if (UMoverNetworkPredictionLiaisonComponent* NppBackend = Cast<UMoverNetworkPredictionLiaisonComponent>(BackendLiaisonComp.GetObject()))
+	if (BackendLiaisonComp)
 	{
-		NppBackend->ResetSimulation();
+		BackendLiaisonComp->ResetSimulation();
 	}
 }
 
@@ -2428,6 +2437,7 @@ bool UMoverComponent::WithPredictionContext(const FMoverPredictTrajectoryParams&
     const UBaseMovementMode* CurrentMovementMode = GetMovementMode();
     FMoverDefaultSyncState* StepSyncState = StepState.SyncState.SyncStateCollection.FindMutableDataByType<FMoverDefaultSyncState>();
     if (!CurrentMovementMode || !StepSyncState) return false;
+    Simulation->RollbackBlackboard->BeginPrediction();
     const bool bOrigHasGravityOverride = bHasGravityOverride;
     const FVector OrigGravityAccelOverride = GravityAccelOverride;
     if (PredictionParams.bDisableGravity)
@@ -3200,6 +3210,40 @@ void UMoverComponent::DispatchSimulationEvent(const FMoverSimulationEventData& E
 	if (OnPostSimEventReceived.IsBound())
 	{
 		OnPostSimEventReceived.Broadcast(EventData);
+	}
+}
+
+void UMoverComponent::DispatchPendingSimulationEvents()
+{
+	// Drain and dispatch simulation events here, during finalization, which always runs on the game thread.
+
+	// The asynchronous (ChaosMover) backend drains events through its own FinalizeFrame -> SetSimulationOutput path and
+	// must never reach this drain, or events would dispatch twice. Once the backends are in better alignment, dispatching
+	// will be via a shared path.
+	if (IsBackendAsync())
+	{
+		return;
+	}
+
+	// TODO (NPP resim dedup): On the NetworkPrediction backend, a rollback replays sim ticks before FinalizeFrame, so an
+	// event emitted in AdvanceToNextMode can be re-added to SimEvents on each replayed tick and dispatched more than once
+	// for a single logical change (e.g. OnMovementModeChanged / OnLanded firing multiple times after a misprediction).
+	// RollbackToPriorState does not currently clear SimEvents. The asynchronous backend solves this with ProcessedEvents/IsEqual
+	// dedup plus bReEmitOnResim (see UChaosMoverSimulation), though needs some work to avoid loss of events in some
+	// cases. The synchronous drain has no such dedup yet, so this is correct for standalone (no resim) and for the async
+	// backend, but can double-fire under networked rollback.
+	// Future work should move the event filtering to a common location at the point of dispatch on the game thread, since
+	// it's the only place where we can know with certainty whether an event instance has already been sent or not.
+
+	if (Simulation)
+	{
+		for (const TSharedPtr<FMoverSimulationEventData>& Event : Simulation->ConsumeEvents())
+		{
+			if (const FMoverSimulationEventData* Data = Event.Get())
+			{
+				DispatchSimulationEvent(*Data);
+			}
+		}
 	}
 }
 

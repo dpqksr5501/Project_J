@@ -1,6 +1,6 @@
 # Project J Mover lifecycle patch
 
-The project plugin overrides Epic's Mover because it consumes the project NetworkPrediction override. The lifecycle patch below is based on the installed UE 5.8.4 / 58902052 sources. Other Mover behavior and Epic copyright headers are preserved.
+The project plugin overrides Epic's Mover because it consumes the project NetworkPrediction override. The current upstream base is Epic UE 5.9 Preview 2 (60738873). The project trajectory implementation enters the new rollback-blackboard prediction session before sampling. Recompare these changes with Epic's Mover source when moving to 5.9 final.
 
 `UKinematicActorSimulation::BeginDestroy` releases its UObject references without invoking runtime `Uninit`. Both liaison implementations already call `Uninit` from EndPlay/UninitializeComponent (and simulation replacement). Garbage collection has no ordering guarantee between the simulation and its FSM: the FSM can have cleared its queued transition before the simulation starts destruction. Runtime clear also constructs replacement default modes, which must not run while collecting the object graph.
 

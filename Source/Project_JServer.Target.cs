@@ -8,8 +8,8 @@ public class Project_JServerTarget : TargetRules
 	public Project_JServerTarget(TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Server;
-		DefaultBuildSettings = BuildSettingsVersion.V7;
-		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_8;
+		DefaultBuildSettings = BuildSettingsVersion.V8;
+		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_9;
 		bUseUnityBuild = false;
 		bUseLoggingInShipping = true;
 		if (Target.Platform == UnrealTargetPlatform.Linux)

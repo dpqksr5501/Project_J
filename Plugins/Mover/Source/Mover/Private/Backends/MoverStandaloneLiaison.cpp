@@ -130,44 +130,20 @@ bool UMoverStandaloneLiaisonComponent::WritePendingSyncState(const FMoverSyncSta
 	return true;
 }
 
+void UMoverStandaloneLiaisonComponent::ResetSimulation()
+{
+	if (Simulation)
+	{
+		Simulation->Uninit();
+		Simulation = nullptr;
+	}
+
+	SetupSimulation();
+}
+
 void UMoverStandaloneLiaisonComponent::InitializeComponent()
 {
-	MoverComp = GetOwner()->FindComponentByClass<UMoverComponent>();
-
-	if (ensureMsgf(MoverComp, TEXT("Use of UMoverStandaloneLiaisonComponent requires a sibling UMoverComponent. No movement will occur.")))
-	{
-		Simulation = NewObject<UKinematicActorSimulation>(MoverComp, SimulationClass, *SimulationClass->GetName(), RF_Transient);
-
-		UKinematicActorSimulation::FInitParams SimInitParams;
-
-		if (MoverComp)
-		{
-			MoverComp->SetSimulation(*Simulation);
-
-			SimInitParams.StartingMovementMode = MoverComp->StartingMovementMode;
-			SimInitParams.World = GetWorld();
-			SimInitParams.MoverComp = MoverComp;
-			SimInitParams.UpdatedComp = MoverComp->GetUpdatedComponent();
-
-			for (const TPair<FName, TObjectPtr<UBaseMovementMode>>& Element : MoverComp->MovementModes)
-			{
-				if (Element.Key != NAME_None && Element.Value.Get() != nullptr)
-				{
-					SimInitParams.ModesToRegister.Add(Element.Key, TWeakObjectPtr<UBaseMovementMode>(Element.Value.Get()));
-				}
-			}
-
-			for (const TObjectPtr<UBaseMovementModeTransition>& Transition : MoverComp->Transitions)
-			{
-				if (Transition != nullptr)
-				{
-					SimInitParams.TransitionsToRegister.Add(TWeakObjectPtr<UBaseMovementModeTransition>(Transition.Get()));
-				}
-			}
-		}
-
-		Simulation->Init(SimInitParams);
-	}
+	SetupSimulation();
 	
 	Super::InitializeComponent();
 }
@@ -397,6 +373,47 @@ void UMoverStandaloneLiaisonComponent::RegisterComponentTickFunctions(bool bRegi
 		{
 			ApplyStateTickFunction.UnRegisterTickFunction();
 		}
+	}
+}
+
+
+void UMoverStandaloneLiaisonComponent::SetupSimulation()
+{
+	MoverComp = GetOwner()->FindComponentByClass<UMoverComponent>();
+
+	if (ensureMsgf(MoverComp, TEXT("Use of UMoverStandaloneLiaisonComponent requires a sibling UMoverComponent. No movement will occur.")))
+	{
+		Simulation = NewObject<UKinematicActorSimulation>(MoverComp, SimulationClass, *SimulationClass->GetName(), RF_Transient);
+
+		UKinematicActorSimulation::FInitParams SimInitParams;
+
+		if (MoverComp)
+		{
+			MoverComp->SetSimulation(*Simulation);
+
+			SimInitParams.StartingMovementMode = MoverComp->StartingMovementMode;
+			SimInitParams.World = GetWorld();
+			SimInitParams.MoverComp = MoverComp;
+			SimInitParams.UpdatedComp = MoverComp->GetUpdatedComponent();
+
+			for (const TPair<FName, TObjectPtr<UBaseMovementMode>>& Element : MoverComp->MovementModes)
+			{
+				if (Element.Key != NAME_None && Element.Value.Get() != nullptr)
+				{
+					SimInitParams.ModesToRegister.Add(Element.Key, TWeakObjectPtr<UBaseMovementMode>(Element.Value.Get()));
+				}
+			}
+
+			for (const TObjectPtr<UBaseMovementModeTransition>& Transition : MoverComp->Transitions)
+			{
+				if (Transition != nullptr)
+				{
+					SimInitParams.TransitionsToRegister.Add(TWeakObjectPtr<UBaseMovementModeTransition>(Transition.Get()));
+				}
+			}
+		}
+
+		Simulation->Init(SimInitParams);
 	}
 }
 

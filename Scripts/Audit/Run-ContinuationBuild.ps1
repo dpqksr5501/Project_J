@@ -42,7 +42,7 @@ if ($DiagnoseIncremental) {
 }
 $arguments | ConvertTo-Json | Set-Content -LiteralPath "$out/arguments.json" -Encoding utf8
 $started = Get-Date
-& 'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/DotNET/UnrealBuildTool/UnrealBuildTool.exe' @arguments
+& 'C:/Program Files/Epic Games/UE_5.9/Engine/Binaries/DotNET/UnrealBuildTool/UnrealBuildTool.exe' @arguments
 $buildExit = $LASTEXITCODE
 if ($DiagnoseIncremental) { Capture-IncrementalState 'After' }
 [ordered]@{exitCode=$buildExit; elapsedSeconds=((Get-Date)-$started).TotalSeconds; directUBT=$true; target=$Target; configuration=$Configuration; moduleScope=$Modules; fullTarget=(!$Modules)} | ConvertTo-Json | Set-Content -LiteralPath "$out/process.json" -Encoding utf8

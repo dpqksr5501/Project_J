@@ -17,7 +17,7 @@ New-Item -ItemType Directory -Path $out | Out-Null
 $renderArguments = if ($UseRHI) { @('-RenderOffscreen','-windowed','-ResX=1280','-ResY=720') } else { @('-NullRHI') }
 $arguments = @("$projectRoot/Project_J.uproject",'-unattended','-nosound','-nop4','-NoDDCCleanup','-NoLiveCoding',"-UserDir=$($scratch.UserDirectory)", "-ABSLOG=$out/Run.log", "-ReportExportPath=$out", '-TestExit=Automation Test Queue Empty', "-ExecCmds=a.Budget.BudgetMs 0.1,Automation RunTests $Tests; Quit") + $renderArguments
 $arguments | ConvertTo-Json | Set-Content -LiteralPath "$out/arguments.json" -Encoding utf8
-$process = Start-Process 'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe' -ArgumentList (($arguments | ForEach-Object { '"'+$_+'"' }) -join ' ') -WindowStyle Hidden -PassThru
+$process = Start-Process 'C:/Program Files/Epic Games/UE_5.9/Engine/Binaries/Win64/UnrealEditor-Cmd.exe' -ArgumentList (($arguments | ForEach-Object { '"'+$_+'"' }) -join ' ') -WindowStyle Hidden -PassThru
 $nativeHandle = $process.Handle
 Write-Output "Started $Name PID=$($process.Id)"
 $process.WaitForExit()

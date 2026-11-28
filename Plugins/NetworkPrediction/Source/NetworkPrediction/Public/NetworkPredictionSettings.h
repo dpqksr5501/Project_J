@@ -9,7 +9,7 @@
 class ANetworkPredictionReplicatedManager;
 struct FPropertyChangedEvent;
 
-USTRUCT(meta=(ShowOnlyInnerProperties))
+USTRUCT(meta=(ShowOnlyInnerProperties, PythonType))
 struct FNetworkPredictionSettings
 {
 	GENERATED_BODY()
@@ -65,7 +65,7 @@ struct FNetworkPredictionSettings
 	int32 MaximumRemoteInputFaultLimit = 6;
 };
 
-USTRUCT(meta=(ShowOnlyInnerProperties))
+USTRUCT(meta=(ShowOnlyInnerProperties, PythonType))
 struct FNetworkPredictionDevHUDItem
 {
 	GENERATED_BODY();
@@ -89,7 +89,7 @@ struct FNetworkPredictionDevHUDItem
 	bool bRequireNotPIE = false;
 };
 
-USTRUCT(meta=(ShowOnlyInnerProperties))
+USTRUCT(meta=(ShowOnlyInnerProperties, PythonType))
 struct FNetworkPredictionDevHUD
 {
 	GENERATED_BODY()
@@ -110,7 +110,7 @@ struct FNetworkPredictionDevHUD
 };
 
 
-UCLASS(config=NetworkPrediction, defaultconfig, meta=(DisplayName="Network Prediction"))
+UCLASS(config=NetworkPrediction, defaultconfig, meta=(DisplayName="Network Prediction", PythonType))
 class UNetworkPredictionSettingsObject : public UObject
 {
 	GENERATED_BODY()

@@ -3,12 +3,12 @@
 #pragma once
 
 #include "MovementMode.h"
-#include "FallingMode.h"
 #include "AsyncFallingMode.generated.h"
 
 #define UE_API MOVER_API
 
 class UCommonLegacyMovementSettings;
+class UMoverSimulation;
 struct FFloorCheckResult;
 
 /**
@@ -29,10 +29,6 @@ public:
 	UE_API virtual void GenerateMove_Implementation(const FMoverSimContext& SimContext, const FMoverTickStartData& StartState, const FMoverTimeStep& TimeStep, FProposedMove& OutProposedMove) const override;
 	UE_API virtual void SimulationTick_Implementation(const FSimulationTickParams& Params, FMoverTickEndData& OutputState) override;
 
-	// Broadcast when this actor lands on a valid surface.
-	UPROPERTY(BlueprintAssignable, Category = Mover)
-	FMover_OnLanded OnLanded;
-	
 	/**
 	 * If true, actor will land and lose all speed in the vertical direction upon landing. If false, actor's vertical speed will be redirected based on the surface normal it hit.
 	 * Note: Actor's horizontal speed will not be affected if true. If false, horizontal speed may be increased on landing.
@@ -91,7 +87,7 @@ protected:
 	UFUNCTION(BlueprintCallable, Category=Mover)
 	UE_API virtual void ProcessLanded(const FFloorCheckResult& FloorResult, FVector Location, FVector& Velocity, FRelativeBaseInfo& BaseInfo, FMoverTickEndData& TickEndData) const;
 
-	UE_API void CaptureFinalState(const FMoverDefaultSyncState* StartSyncState, const FVector FinalLocation, const FRotator FinalRotation, const FFloorCheckResult& FloorResult, float DeltaSeconds, float DeltaSecondsUsed, const FVector& AngularVelocityDegrees, FMoverDefaultSyncState& OutputSyncState, FMoverTickEndData& TickEndData, FMovementRecord& Record) const;
+	void CaptureFinalState(const FMoverDefaultSyncState* StartSyncState, const FVector FinalLocation, const FRotator FinalRotation, const FFloorCheckResult& FloorResult, float DeltaSeconds, float DeltaSecondsUsed, const FVector& AngularVelocityDegrees, FMoverDefaultSyncState& OutputSyncState, FMoverTickEndData& TickEndData, FMovementRecord& Record, UMoverSimulation* Simulation, const FMoverTimeStep& TimeStep) const;
 
 	TWeakObjectPtr<const UCommonLegacyMovementSettings> CommonLegacySettings;
 };

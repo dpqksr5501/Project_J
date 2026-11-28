@@ -2,7 +2,7 @@
 
 ## 한 줄 설명
 
-Project J는 Unreal Engine 5.8 기반의 **3인칭 액션 MMORPG 프로토타입**이다.
+Project J는 Unreal Engine 5.9 Preview 2 기반의 **3인칭 액션 MMORPG 프로토타입**이다.
 
 현재 개발의 중심은 플레이어 캐릭터의 반응성 높은 이동과 전투 기반이며, 장기적으로 직업·무기·스킬·장비·다수 플레이어·NPC·월드 인스턴스·백엔드 서비스가 결합되는 MMORPG 구조를 목표로 한다.
 

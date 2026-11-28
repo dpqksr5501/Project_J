@@ -5,8 +5,15 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "MoverComponent.h"
 #include "DefaultMovementSet/LayeredMoves/AnimRootMotionLayeredMove.h"
+#include "DefaultMovementSet/LayeredMoves/AnimRootMotionConsumerLayeredMove.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(PlayMoverMontageCallbackProxy)
+
+FAutoConsoleVariable CVarMoverUseConsumerForRootMotionMontages(
+	TEXT("mover.anim.UseRootMotionMontageConsumer"),
+	false,
+	TEXT("If enabled, use a consumer-style layered move for root motion montages. If disabled, use the basic extractive style.  Only enable for non-player characters and when animation and movement will tick at the same rate. Corrections will occur otherwise."),
+	ECVF_Cheat);
 
 UPlayMoverMontageCallbackProxy::UPlayMoverMontageCallbackProxy(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -70,47 +77,62 @@ bool UPlayMoverMontageCallbackProxy::PlayMoverMontage(
 				OnCompleted.AddUniqueDynamic(this, &UPlayMoverMontageCallbackProxy::OnMoverMontageEnded);
 				OnInterrupted.AddUniqueDynamic(this, &UPlayMoverMontageCallbackProxy::OnMoverMontageEnded);
 
-				// Disable the actual animation-driven root motion, in favor of our own layered move
-				MontageInstance->PushDisableRootMotion();
-
 				const float StartingMontagePosition = MontageInstance->GetPosition();	// position in seconds, disregarding PlayRate
 
-				// Queue a layered move to perform the same anim root motion over the same time span.
-				// Use the async variant when the backend runs on a worker thread so that GenerateMove_Async
-				// is called instead of the game-thread-only GenerateMove.
-				TSharedPtr<FLayeredMove_AnimRootMotion> AnimRootMotionMove = InMoverComponent->IsBackendAsync()
-					? MakeShared<FLayeredMove_AnimRootMotion_SimDriven>()
-					: MakeShared<FLayeredMove_AnimRootMotion>();
-				AnimRootMotionMove->MontageState.Montage = MontageToPlay;
-				AnimRootMotionMove->MontageState.PlayRate = PlayRate;
-				AnimRootMotionMove->MontageState.StartingMontagePosition = StartingMontagePosition;
-				AnimRootMotionMove->MontageState.CurrentPosition = StartingMontagePosition;
-				AnimRootMotionMove->MontageState.BlendOutTimeSeconds = (BlendOutOverride >= 0.f) ? BlendOutOverride : MontageToPlay->GetDefaultBlendOutTime();
-				// Heuristic: auto blend-out is enabled when the last declared section has no outgoing link.
-				// Montages with non-linear section graphs where the terminal section is not the last declared
-				// one will be not blend out. If more control is needed, PlayMontage will have to expose more options.
-				AnimRootMotionMove->MontageState.bEnableAutoBlendOut = MontageToPlay->CompositeSections.IsEmpty() || MontageToPlay->CompositeSections.Last().NextSectionName == NAME_None;
-#if !UE_BUILD_SHIPPING
-				AnimRootMotionMove->MontageState.Debug_MontageName = MontageToPlay->GetFName();
-#endif
-				
-				float RemainingUnscaledMontageSeconds(0.f);
-
-				if (PlayRate > 0.f)
+				if (CVarMoverUseConsumerForRootMotionMontages->GetBool())
 				{
-					// playing forwards, so working towards the end of the montage
-					RemainingUnscaledMontageSeconds = MontageToPlay->GetPlayLength() - StartingMontagePosition;
+					TSharedPtr<FLayeredMove_AnimRootMotionConsumer> ConsumerMove = MakeShared<FLayeredMove_AnimRootMotionConsumer>();
+					ConsumerMove->MontageState.Montage = MontageToPlay;
+					ConsumerMove->MontageState.PlayRate = PlayRate;
+					ConsumerMove->MontageState.StartingMontagePosition = StartingMontagePosition;
+					ConsumerMove->MontageState.CurrentPosition = StartingMontagePosition;
+					ConsumerMove->MixMode = MixMode;
+
+					InMoverComponent->QueueLayeredMove(ConsumerMove);
+
 				}
 				else
 				{
-					// playing backwards, so working towards the start of the montage
-					RemainingUnscaledMontageSeconds = StartingMontagePosition;	
+					// Disable the actual animation-driven root motion, in favor of our own layered move
+					MontageInstance->PushDisableRootMotion();
+
+					// Queue a layered move to perform the same anim root motion over the same time span.
+					// Use the async variant when the backend runs on a worker thread so that GenerateMove_Async
+					// is called instead of the game-thread-only GenerateMove.
+					TSharedPtr<FLayeredMove_AnimRootMotion> AnimRootMotionMove = InMoverComponent->IsBackendAsync()
+						? MakeShared<FLayeredMove_AnimRootMotion_SimDriven>()
+						: MakeShared<FLayeredMove_AnimRootMotion>();
+					AnimRootMotionMove->MontageState.Montage = MontageToPlay;
+					AnimRootMotionMove->MontageState.PlayRate = PlayRate;
+					AnimRootMotionMove->MontageState.StartingMontagePosition = StartingMontagePosition;
+					AnimRootMotionMove->MontageState.CurrentPosition = StartingMontagePosition;
+					AnimRootMotionMove->MontageState.BlendOutTimeSeconds = (BlendOutOverride >= 0.f) ? BlendOutOverride : MontageToPlay->GetDefaultBlendOutTime();
+					// Heuristic: auto blend-out is enabled when the last declared section has no outgoing link.
+					// Montages with non-linear section graphs where the terminal section is not the last declared
+					// one will be not blend out. If more control is needed, PlayMontage will have to expose more options.
+					AnimRootMotionMove->MontageState.bEnableAutoBlendOut = MontageToPlay->CompositeSections.IsEmpty() || MontageToPlay->CompositeSections.Last().NextSectionName == NAME_None;
+#if !UE_BUILD_SHIPPING
+					AnimRootMotionMove->MontageState.Debug_MontageName = MontageToPlay->GetFName();
+#endif
+
+					float RemainingUnscaledMontageSeconds(0.f);
+
+					if (PlayRate > 0.f)
+					{
+						// playing forwards, so working towards the end of the montage
+						RemainingUnscaledMontageSeconds = MontageToPlay->GetPlayLength() - StartingMontagePosition;
+					}
+					else
+					{
+						// playing backwards, so working towards the start of the montage
+						RemainingUnscaledMontageSeconds = StartingMontagePosition;
+					}
+
+					AnimRootMotionMove->DurationMs = (RemainingUnscaledMontageSeconds / FMath::Abs(PlayRate)) * (1.0 / MontageToPlay->RateScale) * 1000.f;
+					AnimRootMotionMove->MixMode = MixMode;
+
+					InMoverComponent->QueueLayeredMove(AnimRootMotionMove);
 				}
-
-				AnimRootMotionMove->DurationMs = (RemainingUnscaledMontageSeconds / FMath::Abs(PlayRate)) * (1.0 / MontageToPlay->RateScale) * 1000.f;
-				AnimRootMotionMove->MixMode = MixMode;
-
-				InMoverComponent->QueueLayeredMove(AnimRootMotionMove);
 			}
 		}
 	}

@@ -18,7 +18,7 @@ if ($Mode -eq 'Reload') {
  if ($IncludeLegacyAnimation) {$arguments+="-CookDir=$projectRoot/Content/Animation_Logic/ABPs"}
 }
 $arguments | ConvertTo-Json | Set-Content "$out/Arguments.json" -Encoding utf8
-$p=Start-Process 'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe' -ArgumentList (($arguments | ForEach-Object {'"'+$_+'"'}) -join ' ') -WindowStyle Hidden -PassThru
+$p=Start-Process 'C:/Program Files/Epic Games/UE_5.9/Engine/Binaries/Win64/UnrealEditor-Cmd.exe' -ArgumentList (($arguments | ForEach-Object {'"'+$_+'"'}) -join ' ') -WindowStyle Hidden -PassThru
 $handle=$p.Handle
 Write-Output "Started asset $Mode PID=$($p.Id)"
 $p.WaitForExit()

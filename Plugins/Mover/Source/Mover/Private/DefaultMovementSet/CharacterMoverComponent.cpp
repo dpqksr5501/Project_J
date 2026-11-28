@@ -4,6 +4,7 @@
 
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
+#include "DefaultMovementSet/CharacterMoverSimulationTypes.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "DefaultMovementSet/InstantMovementEffects/BasicInstantMovementEffects.h"
 #include "DefaultMovementSet/Modes/FallingMode.h"
@@ -327,5 +328,16 @@ void UCharacterMoverComponent::UpdateSyncedMontageState(const FMoverTimeStep& Ti
 				}
 			}
 		}
+	}
+}
+
+void UCharacterMoverComponent::ProcessSimulationEvent(const FMoverSimulationEventData& EventData)
+{
+	Super::ProcessSimulationEvent(EventData);
+
+	// Landed event
+	if (const FLandedEventData* LandedData = EventData.CastTo<FLandedEventData>())
+	{
+		OnLanded.Broadcast(LandedData->NewModeName, LandedData->HitResult);
 	}
 }

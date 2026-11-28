@@ -30,12 +30,13 @@ class UMovementModeStateMachine : public UObject
 
 public:
 	UE_API virtual void BeginDestroy() override;
+	UE_API void Uninit();
 
 	UE_API void RegisterMovementMode(FName ModeName, TObjectPtr<UBaseMovementMode> Mode, bool bIsDefaultMode);
 	UE_API void RegisterMovementMode(FName ModeName, TSubclassOf<UBaseMovementMode> ModeType, bool bIsDefaultMode);
 
 	UE_API void UnregisterMovementMode(FName ModeName);
-	UE_API void ClearAllMovementModes();
+	UE_API void ClearAllMovementModes(bool bUninitializing=false);
 
 	UE_API void RegisterGlobalTransition(TObjectPtr<UBaseMovementModeTransition> Transition);
 	UE_API void UnregisterGlobalTransition(TObjectPtr<UBaseMovementModeTransition> Transition);

@@ -106,6 +106,10 @@ public:
 
 	const FNetworkPredictionSettings& GetSettings() const { return Settings; }
 
+	/** The settings this world copied from UNetworkPredictionSettingsObject when it started. */
+	UFUNCTION(meta = (PythonCallable), Category = "Network Prediction")
+	FNetworkPredictionSettings GetLatchedSettings() const { return Settings; }
+
 	const FFixedTickState& GetFixedTickState() const { return FixedTickState; }
 	const FVariableTickState& GetVariableTickState() const { return VariableTickState; }
 	

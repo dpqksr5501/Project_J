@@ -203,8 +203,8 @@ bool UProject_JPlayerLocomotionLibrary::ConfigureCompatibleFoundation(UAnimBluep
  {
   if(auto* Rig=Cast<UAnimGraphNode_ControlRig>(Node))
   {
-   Rig->Node.SetControlRigClass(TSubclassOf<UControlRig>(FootRig->GeneratedClass.Get()));
-   // SetControlRigClass is a runtime override: it deliberately retains the previous
+   Rig->Node.SetControlRigAssetReference(FControlRigAssetStrongReference(TSubclassOf<UControlRig>(FootRig->GeneratedClass.Get())));
+   // The runtime override deliberately retains the previous
    // default. OnInitializeAnimInstance clears that override when a default exists.
    // Authored migration must update both reflected references, or play still uses
    // the UEFN hierarchy despite the graph displaying the Manny rig.

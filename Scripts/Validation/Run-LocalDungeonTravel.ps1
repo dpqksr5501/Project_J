@@ -28,7 +28,7 @@ $scratch = New-ContinuationScratchRun $scratchContext $RunName
 $output = "$projectRoot/Saved/Validation/Continuation_20261014/$RunName"
 if (Test-Path -LiteralPath $output) { throw 'Choose an unused evidence directory.' }
 New-Item -ItemType Directory -Path $output | Out-Null
-$exe = 'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+$exe = 'C:/Program Files/Epic Games/UE_5.9/Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
 $runId = [guid]::NewGuid().ToString()
 
 function Start-FixtureProcess($role, $target, $roleArguments) {

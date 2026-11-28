@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory=$true)][ValidatePattern('^[A-Za-z0-9_-]+$')][string]$RunName,
-    [string]$EngineRoot='C:/Program Files/Epic Games/UE_5.8'
+    [string]$EngineRoot='C:/Program Files/Epic Games/UE_5.9'
 )
 $ErrorActionPreference='Stop'
 $root=(Resolve-Path (Join-Path $PSScriptRoot '../..')).Path

@@ -23,7 +23,7 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(AsyncNavWalkingMode)
 
-#if UE_DEBUG_RECORDING_ENABLED
+#if UE_DEBUG_RECORDING_ENABLED || UE_DEBUG_RENDERING_ENABLED
 static const FName AsyncWalkModeLogCategory = FName("AsyncNavWalkingMode");
 #endif
 
@@ -510,7 +510,7 @@ void UAsyncNavWalkingMode::FindBestNavMeshLocation(const FVector& TraceStart, co
 		OutHitResult.bBlockingHit = true;
 	}
 
-#if UE_DEBUG_RECORDING_ENABLED
+#if UE_DEBUG_RECORDING_ENABLED || UE_DEBUG_RENDERING_ENABLED
 	const float DebugNormalLength = 50.0f;
 	UE_VLOG_SEGMENT(GetMoverComponent(), AsyncWalkModeLogCategory, Display, TraceStart, TraceEnd, FColor::Green, TEXT(""));
 	for (int i = 0; i < MultiTraceHits.Num(); i++)
@@ -518,7 +518,7 @@ void UAsyncNavWalkingMode::FindBestNavMeshLocation(const FVector& TraceStart, co
 		UE_VLOG_SPHERE(GetMoverComponent(), "AsyncNavWalkingMode", Display, MultiTraceHits[i].ImpactPoint, i == 0 ? 5.0f : 2.5f, i == 0 ? FColor::Red : FColor::Yellow, TEXT("%i"), i);
 		UE_VLOG_ARROW(GetMoverComponent(), "AsyncNavWalkingMode", Display, MultiTraceHits[i].ImpactPoint, (MultiTraceHits[i].ImpactPoint + DebugNormalLength * MultiTraceHits[i].ImpactNormal), i == 0 ? FColor::Red : FColor::Yellow, TEXT(""));
 	}
-#endif // UE_DEBUG_RECORDING_ENABLED
+#endif // UE_DEBUG_RECORDING_ENABLED || UE_DEBUG_RENDERING_ENABLED
 
 	if (AsyncWalkingModeCVars::bUseNavMeshNormal && CachedNavLocation.HasNodeRef() && MultiTraceHits.Num() > 0)
 	{

@@ -50,7 +50,7 @@ foreach($assetType in $AssetTypes){
  New-Item -ItemType Directory -Path $run|Out-Null
  $arguments=@("$projectRoot/Project_J.uproject",'-run=Project_JAssetValidation',"-AssetType=$assetType",'-IncludeOnlyOnDiskAssets','-NullRHI','-unattended','-NoLiveCoding','-NoDDCCleanup','-nop4','-nosound',"-UserDir=$run/User","-ABSLOG=$run/Run.log",'-UTF8Output','-culture=en')
  $arguments|ConvertTo-Json|Set-Content "$run/arguments.json" -Encoding utf8
- $process=Start-Process 'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe' -ArgumentList (($arguments|ForEach-Object{'"'+$_+'"'}) -join ' ') -WindowStyle Hidden -PassThru
+ $process=Start-Process 'C:/Program Files/Epic Games/UE_5.9/Engine/Binaries/Win64/UnrealEditor-Cmd.exe' -ArgumentList (($arguments|ForEach-Object{'"'+$_+'"'}) -join ' ') -WindowStyle Hidden -PassThru
  $nativeHandle=$process.Handle
  $process.WaitForExit()
  $summary=$null

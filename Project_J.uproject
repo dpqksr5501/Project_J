@@ -1,6 +1,6 @@
 {
   "FileVersion": 3,
-  "EngineAssociation": "5.8",
+  "EngineAssociation": "5.9",
   "Category": "",
   "Description": "",
   "Modules": [
@@ -154,6 +154,21 @@
     {
       "Name": "AutomationTestToolset",
       "Enabled": true
+    },
+    {
+      "Name": "KnowledgeBaseToolset",
+      "Enabled": true,
+      "TargetAllowList": ["Editor"]
+    },
+    {
+      "Name": "GeometryToolset",
+      "Enabled": true,
+      "TargetAllowList": ["Editor"]
+    },
+    {
+      "Name": "ModularTestRunnerEditor",
+      "Enabled": true,
+      "TargetAllowList": ["Editor"]
     },
     {
       "Name": "AllToolsets",

@@ -8,8 +8,8 @@ public class Project_JTarget : TargetRules
 	public Project_JTarget(TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Game;
-		DefaultBuildSettings = BuildSettingsVersion.V7;
-		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_8;
+		DefaultBuildSettings = BuildSettingsVersion.V8;
+		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_9;
 		// Match the installed engine's Default dependency-cache partition
 		// while retaining non-unity compilation without -DisableUnity.
 		bUseUnityBuild = false;

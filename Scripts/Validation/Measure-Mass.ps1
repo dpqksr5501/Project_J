@@ -1,7 +1,7 @@
 param(
     [Parameter(Mandatory = $true)][ValidatePattern('^[A-Za-z0-9_-]+$')][string]$RunName,
     [switch]$Regression,
-    [string]$EngineRoot = 'C:/Program Files/Epic Games/UE_5.8'
+    [string]$EngineRoot = 'C:/Program Files/Epic Games/UE_5.9'
 )
 $ErrorActionPreference = 'Stop'
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path.Replace('\','/')

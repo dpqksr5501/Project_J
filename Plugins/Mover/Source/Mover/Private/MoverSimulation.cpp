@@ -76,3 +76,27 @@ TArray<TSharedPtr<FLayeredMoveInstance>> UMoverSimulation::ConsumeQueuedLayeredM
 	UE::TRWScopeLock Lock(SimQueueLock, SLT_Write);
 	return MoveTemp(QueuedLayeredMoveInstances);
 }
+
+// -----------------------------------------------------------------------------
+// Simulation event system
+// -----------------------------------------------------------------------------
+
+void UMoverSimulation::AddEvent(TSharedPtr<FMoverSimulationEventData> Event)
+{
+	SimEvents.Add(Event);
+	if (const FMoverSimulationEventData* EventData = Event.Get())
+	{
+		ProcessSimulationEvent(*EventData);
+	}
+}
+
+const TArray<TSharedPtr<FMoverSimulationEventData>>& UMoverSimulation::GetEvents() const
+{
+	return SimEvents;
+}
+
+TArray<TSharedPtr<FMoverSimulationEventData>> UMoverSimulation::ConsumeEvents()
+{
+	// Moving the array leaves SimEvents empty, draining the accumulator for the next tick.
+	return MoveTemp(SimEvents);
+}

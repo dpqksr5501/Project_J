@@ -23,7 +23,7 @@ $traceHash=(Get-FileHash -LiteralPath $trace -Algorithm SHA256).Hash
 $arguments=@("-OpenTraceFile=$trace",'-AutoQuit','-NoUI','-unattended',"-ExecOnAnalysisCompleteCmd=@=$out/Export.rsp","-ABSLOG=$out/Insights.log")
 $arguments|ConvertTo-Json|Set-Content "$out/arguments.json" -Encoding utf8
 $quoted=@($arguments|ForEach-Object {if($_ -match '^([^=]+)=(.*)$'){$Matches[1]+'="'+$Matches[2]+'"'}else{$_}})-join ' '
-$process=Start-Process 'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealInsights.exe' -ArgumentList $quoted -WindowStyle Hidden -PassThru
+$process=Start-Process 'C:/Program Files/Epic Games/UE_5.9/Engine/Binaries/Win64/UnrealInsights.exe' -ArgumentList $quoted -WindowStyle Hidden -PassThru
 $nativeHandle=$process.Handle
 $process.WaitForExit()
 [ordered]@{exitCode=$process.ExitCode;trace=$trace;traceSHA256=$traceHash;traceSHAUnchanged=((Get-FileHash -LiteralPath $trace -Algorithm SHA256).Hash -eq $traceHash);gameplayReplay=$false;binaryMutation=$false;scope='Existing trace GT WorldTick callee trees, full captured world scopes + authored CPU regions. No worker critical-path/active CPU claim.'}|ConvertTo-Json|Set-Content "$out/process.json" -Encoding utf8

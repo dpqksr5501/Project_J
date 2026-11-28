@@ -38,7 +38,7 @@
     [ValidateRange(1,199)][int]$VerifyCrowdCap,
     [ValidateRange(1,1000)][double]$MaxBurstTickIntervalP95Ms,
     [ValidateRange(1025,65535)][int]$Port = 17976,
-    [string]$UnrealEditor = 'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+    [string]$UnrealEditor = 'C:/Program Files/Epic Games/UE_5.9/Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
 )
 $ErrorActionPreference = 'Stop'
 if ($SplitGenerators -and (!$MeasureCombat -or $Clients -lt 2)) { throw 'Split measurement requires at least two combat clients.' }

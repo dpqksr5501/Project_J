@@ -3,7 +3,7 @@ param(
  [string]$Filters = 'ProjectJ.Crowd.+ProjectJ.GroupD.+ProjectJ.NPCDecision.+ProjectJ.GroupA.+ProjectJ.Combat.WeaponPresentation+ProjectJ.Integrated.VisualAssetSharing',
  [switch]$Rendered,
  [ValidatePattern('^[A-Za-z0-9_-]+$')][string]$Suite='CrowdE_20260910',
- [string]$EngineRoot = 'C:/Program Files/Epic Games/UE_5.8'
+ [string]$EngineRoot = 'C:/Program Files/Epic Games/UE_5.9'
 )
 $ErrorActionPreference='Stop'
 $projectRoot=(Resolve-Path (Join-Path $PSScriptRoot '../..')).Path.Replace('\','/')

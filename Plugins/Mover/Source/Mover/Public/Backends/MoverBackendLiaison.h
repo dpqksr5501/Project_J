@@ -64,6 +64,9 @@ public:
 	 *  NewSyncState is the sync state at NewBaseTimeStep, i.e., the state the simulation has been restored to. */
 	virtual void OnSimulationRollback(const FMoverSyncState& NewSyncState, const FMoverTimeStep& NewBaseTimeStep, const FMoverTimeStep& PreRollbackTimeStep) {}
 
+	/** Called by component that orchestrates the liaison to indicate that the simulation needs to be reset and reinitialized */
+	virtual void ResetSimulation() {}
+
 #if WITH_EDITOR
 	virtual EDataValidationResult ValidateData(FDataValidationContext& Context, const UMoverComponent& ValidationMoverComp) const { return EDataValidationResult::Valid; }
 #endif // WITH_EDITOR

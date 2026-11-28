@@ -1,6 +1,6 @@
 # Project J NetworkPrediction override
 
-Origin: installed Epic UE 5.8.3, build `58210709`, `Engine/Plugins/Runtime/NetworkPrediction`. Current validation uses installed UE 5.8.4, build `58902052`. Epic copyright headers are retained. Source/config/descriptor only; engine binaries and caches are not copied. This records the override's origin separately from the current host; it does not claim an automatic engine upgrade/rebase.
+Origin: installed Epic UE 5.8.3, build `58210709`, `Engine/Plugins/Runtime/NetworkPrediction`. The current upstream source base is Epic UE 5.9 Preview 2, build `60738873`. Epic copyright headers are retained. Source/config/descriptor only; engine binaries and caches are not copied. Compare the project clock and interpolation changes against the shipping engine sources when updating to 5.9 final.
 
 The project plugin overrides the installed plugin by the same name. `Plugins/Mover` is rebuilt in the same project plugin scope because engine modules cannot depend on project modules; its own lifecycle, settings and prediction patches are recorded in [its patch notes](../Mover/PROJECT_J_PATCH.md). Do not enable another independent presentation clock or modify the installed engine.
 

@@ -44,7 +44,7 @@ if ($NaniteMode -ge 0) {
  if($ConsoleCommands -match '(?i)r\.SkinnedMesh\.RenderNanite'){throw 'Use NaniteMode as the sole render-path setting.'}
  $ConsoleCommands = ($ConsoleCommands.TrimEnd(',') + ",r.SkinnedMesh.RenderNanite $NaniteMode").TrimStart(',')
 }
-$exe = if ($Executable) { (Resolve-Path -LiteralPath $Executable).Path } else { 'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe' }
+$exe = if ($Executable) { (Resolve-Path -LiteralPath $Executable).Path } else { 'C:/Program Files/Epic Games/UE_5.9/Engine/Binaries/Win64/UnrealEditor-Cmd.exe' }
 $arguments=@('/Engine/Maps/Entry?game=/Script/Engine.GameModeBase','-game','-unattended','-nop4','-nosplash','-nosound','-NoDDCCleanup','-NoLiveCoding',
  '-RenderOffscreen','-windowed',"-ResX=$ResolutionX","-ResY=$ResolutionY",'-ProjectJRenderedCrowdFixture',"-ProjectJRenderedCrowdOutput=$out","-ABSLOG=$out/Run.log",
  "-ExecCmds=t.MaxFPS 0,r.VSync 0,$ConsoleCommands", '-statnamedevents', "-UserDir=$out/User/", '-SaveToUserDir',"-ProjectJRenderedCrowdCount=$Count")

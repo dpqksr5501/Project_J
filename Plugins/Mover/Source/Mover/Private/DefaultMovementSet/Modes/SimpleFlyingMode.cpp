@@ -99,7 +99,7 @@ void USimpleFlyingMode::GenerateFlyingMove_Implementation(FMoverTickStartData& S
 	const FQuat& DesiredFacing, const FQuat& CurrentFacing, FVector& InOutAngularVelocityDegrees, FVector& InOutVelocity)
 {
 	InOutVelocity = DesiredVelocity;
-	FQuat ToFacing = CurrentFacing.Inverse() * DesiredFacing;
+	FQuat ToFacing = (CurrentFacing.Inverse() * DesiredFacing).GetShortestArcWith(FQuat::Identity);
 	InOutAngularVelocityDegrees = DeltaSeconds > 0.0f ? FMath::RadiansToDegrees(ToFacing.ToRotationVector() / DeltaSeconds) : FVector::ZeroVector;
 }
 

@@ -7,6 +7,11 @@
 
 #include "CharacterMoverSimulationTypes.generated.h"
 
+// Fired after the actor lands on a valid surface. First param is the name of the mode this actor is in after landing;
+// second param is the hit result from hitting the floor. Landing is surfaced through the simulation event system as an
+// FLandedEventData and broadcast on the game thread by UCharacterMoverComponent::OnLanded.
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FMover_OnLanded, const FName&, NextMovementModeName, const FHitResult&, HitResult);
+
 USTRUCT()
 struct FLandedEventData : public FMoverSimulationEventData
 {

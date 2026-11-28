@@ -15,6 +15,7 @@
 #include "Net/Iris/ReplicationSystem/EngineReplicationBridge.h"
 #include "Net/Iris/ReplicationSystem/ReplicationSystemUtil.h"
 #include <cmath>
+#include <limits>
 
 namespace
 {
@@ -272,9 +273,10 @@ bool UProject_JPlayerStateAudienceFilter::BuildConservativeBound(const FVector& 
 	const double Required = FMath::Max(PawnExtent, FVector::Distance(PawnPosition, AvatarPosition) + AvatarExtent);
 	if (!FMath::IsFinite(Required) || Required > MaxRadius) return false;
 	// Expand even exact casts: double distance/addition and float square both round.
-	float Radius = std::nextafter(float(Required), INFINITY);
+	constexpr float PositiveInfinity = std::numeric_limits<float>::infinity();
+	float Radius = std::nextafter(float(Required), PositiveInfinity);
 	while (FMath::IsFinite(Radius) && double(Radius * Radius) < Required * Required)
-		Radius = std::nextafter(Radius, INFINITY);
+		Radius = std::nextafter(Radius, PositiveInfinity);
 	if (!FMath::IsFinite(Radius) || !FMath::IsFinite(Radius * Radius) || Radius > MaxRadius) return false;
 	OutCenter = PawnPosition; OutRadius = Radius;
 	return true;

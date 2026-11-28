@@ -200,7 +200,7 @@ bool FitLongbladeArmor(bool bApply, bool bCollar)
 		const FName Material = Slots.Get(Mesh.GetPolygonPolygonGroup(Polygon));
 		MaterialNames.Add(Material);
 		auto& Vertices = Material == TargetMaterial->ImportedMaterialSlotName ? SectionVertices : OtherVertices;
-		Vertices.Append(Mesh.GetPolygonVertices(Polygon));
+		Vertices.Append(Mesh.GetPolygonPerimeterVertices(Polygon));
 	}
 	const int32 SharedCount = SectionVertices.Intersect(OtherVertices).Num();
 	if (SectionVertices.IsEmpty() || OtherVertices.IsEmpty() || SharedCount != 0)
@@ -364,7 +364,7 @@ bool FitSleeveSurface(bool bApply)
 	for (FPolygonID Polygon : Skin.Polygons().GetElementIDs())
 	{
 		FFace Face{Polygon, {}, {}};
-		Skin.GetPolygonVertexInstances(Polygon, Face.Corners);
+		Skin.GetPolygonPerimeterVertexInstances(Polygon, Face.Corners);
 		if (Face.Corners.Num() != 3) { return false; }
 		for (int32 I = 0; I < 3; ++I) { Face.Points[I] = SkinPosition.Get(Skin.GetVertexInstanceVertex(Face.Corners[I])); }
 		if (FVector3f::DistSquared((Face.Points[0] + Face.Points[1] + Face.Points[2]) / 3.f, Elbow) < FMath::Square(Radius))
@@ -380,7 +380,7 @@ bool FitSleeveSurface(bool bApply)
 	for (FPolygonID Polygon : Lace.Polygons().GetElementIDs())
 	{
 		if (LaceSlots.Get(Lace.GetPolygonPolygonGroup(Polygon)) != Lower->GetMaterials()[LaceIndex].ImportedMaterialSlotName) { continue; }
-		const auto Corners = Lace.GetPolygonVertexInstances(Polygon);
+		const auto Corners = Lace.GetPolygonPerimeterVertexInstances(Polygon);
 		if (Corners.Num() != 3) { return false; }
 		FVector3f Points[3];
 		for (int32 I = 0; I < 3; ++I) { Points[I] = LacePosition.Get(Lace.GetVertexInstanceVertex(Corners[I])); }

@@ -1,5 +1,9 @@
 # Project J 프로젝트 맥락
 
+**2026-11-29 · 5.9 브랜치.** UE 5.9 Preview 2(CL 60738873)에서 Editor와 Win64 Development 게임을 빌드했다. 프로젝트 블루프린트 80개를 컴파일했고, 한국어 플레이어 회귀 155개, 이동·복제·스트리밍 집중 검사 25개, D3D12 의상·PSO·Iris 검사 3개가 각각 통과했다. 검사 모음 사이에 중복 항목이 있다. MMO 샌드박스에서 탑승·비행 47.35m·UI 복원을 확인했다. 시작 맵·메인 월드·샌드박스를 포함해 3,373개 패키지를 오류·경고 없이 Windows용으로 쿠킹한 뒤 패키징했고, 패키지에서 D3D12 메인 월드 진입과 정상 종료를 확인했다.
+
+MCP 클라이언트의 프로젝트 지침 수신과 도구 검색, Graph DSL의 GameMode 읽기, Chooser 행 조회, Knowledge Base 문서 검색을 확인했다. 선택형 캐릭터 제작 도구는 에디터에서 Mass 보간 trait와 오프라인 애니메이션 가져오기 설정 클래스를 로드했다. 5.9 전용 서버와 대규모 멀티플레이 성능은 별도 검증 대상이다. [사용법과 정식 버전 전환 절차](../../README.md#59에서-사용할-수-있는-기능)
+
 **2026-11-25 제작 맵·군중·소셜 적용 점검.** MainWorld B01의 기존 조우에 보스와 개인 보상을 연결했다. 저장 후 새 에디터로 재검사했고 D3D12 단독 PIE에서 안전 집결지 대기, 접근 시 생성, 클리브 경고, 일반 공격 10회 처치와 2,645골드 우편을 확인했다. 필드 보스의 파티 공유는 처치 위치와 서버가 확인한 파티원 위치를 사용한다. 온라인 차단 목록은 PostgreSQL의 캐릭터 세션에 연결했다. 제작된 기능, 엔진 기능이 실제로 작동하는 경로, 추후 규모 검증 항목은 [제작·런타임 후속 점검](../Architecture/Planning/Project_J_PhaseAD_Codex_Audit_2026-11-25.md#제작런타임-적용-후속-점검)에 기록했다.
 
 **2026-11-25 온라인 게임플레이 후속 변경.** 온라인 퀘스트 수령은 아이템·XP·완료 이력을 PostgreSQL에서 함께 확정한다. 필드 보스는 처치별 지급 명단과 재생성 대기 시간을 SQLite에 함께 저장한다. 온라인 입장 준비 조건에 저장소 복구와 채널 등록 응답을 연결했고, 플레이어가 FIFO 순번을 보고 대기를 취소할 수 있다. 아래 Phase A~D 감사는 이 변경 전의 기록이다. [후속 변경과 검증 범위](../Architecture/Planning/Project_J_PhaseAD_Codex_Audit_2026-11-25.md#온라인-게임플레이-후속-변경)
@@ -446,7 +450,7 @@ MMORPG의 운영 인증·영속 저장·실제 존 이전 등 구현/보류 경�
 
 ## 1. 프로젝트 성격과 현재 범위
 
-- Unreal Engine **5.8** 기반의 3인칭 액션 MMORPG 지향 프로젝트다.
+- Unreal Engine **5.9 Preview 2** 기반의 3인칭 액션 MMORPG 지향 프로젝트다.
 - 핵심은 C++ 기반 캐릭터 이동, GAS, 데이터 기반 직업/장비/전투, 네트워크 권한, 그리고 Mover·데이터 기반 로코모션 애니메이션이다.
 - 현재 기본 맵은 `Lvl_ThirdPerson`, 기본 GameMode는 `BP_Project_JGameMode`다. 이 Blueprint는 `Project_JGameMode`를 상속하고, GameState/PlayerState는 C++ 클래스다. 실제 CDO의 Pawn은 `BP_GreatSword`, Controller는 `BP_ThirdPersonPlayerController`의 override다. Third Person 샘플 에셋이 남아 있지만 최종 게임 구조를 의미하지는 않는다.
 - 대검은 첫 번째 실제 직업 수직 슬라이스다. 기존 테스트 `BP_Player`는 `BP_Player_Master`로 승격했고 `BP_GreatSword`는 그 자식이다. 공통 컴포넌트·입력·Manny source는 부모, 직업·장비·몸체 프로필은 자식이 공급한다. 테스트용 로컬 능력·속성 기본값과 의상 연결 BP 호출을 정리했다. 생산 대검·현재 테스트 NPC는 공통 `ABP_Player_Master`를 사용하며, NPC는 플레이어 BP를 상속하지 않는다. [마스터 제작 계약](../Architecture/Runtime/Player_Character_Master.md)을 따른다. 구형 `ABP_Player`는 퇴역했다.
@@ -671,7 +675,7 @@ DumpMMOProfilingSnapshot [MaxDetailedCharacters]
 ## 새 Codex 채팅에 붙여 넣을 최소 컨텍스트
 
 ```text
-UE 5.8 C++ Project J 작업이다. 먼저 Docs/Overview/ProjectContext.md와 기능별 관련 문서를 읽고,
+UE 5.9 C++ Project J 작업이다. 먼저 Docs/Overview/ProjectContext.md와 기능별 관련 문서를 읽고,
 Source/Config를 좁게 분석한 뒤 작업해줘. BP_Player는 공통 아바타 제작 기반이며,
 생산 휴머노이드 기준은 AProject_JPlayerCharacter → 직업 native class → BP_직업,
 ABP_Player_Master + 직업 Linked Anim Layer 구조다. 이동은 Mover와 native 이동·애니메이션 계산,

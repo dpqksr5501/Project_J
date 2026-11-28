@@ -18,6 +18,39 @@
 // TODO: Consider different rules for interpolation/merging/reconciliation checks. 
 // This could be accomplished via cvars / Mover settings / per-type metadata , etc.
 
+FMoverUserDefinedDataStruct& FMoverUserDefinedDataStruct::operator=(const FMoverUserDefinedDataStruct& Other)
+{
+	if (this != &Other)
+	{
+		Super::operator=(Other);
+
+		// The instance first: its old contents are destroyed while their type is still referenced
+		StructInstance = Other.StructInstance;
+		UpdateStructTypeRef();
+	}
+	return *this;
+}
+
+void FMoverUserDefinedDataStruct::InitializeAs(const UScriptStruct* InUserDefinedStruct, const uint8* InStructMemory)
+{
+	StructInstance.InitializeAs(InUserDefinedStruct, InStructMemory);
+	UpdateStructTypeRef();
+}
+
+void FMoverUserDefinedDataStruct::PostSerialize(const FArchive& Ar)
+{
+	UpdateStructTypeRef();
+}
+
+void FMoverUserDefinedDataStruct::UpdateStructTypeRef()
+{
+	const UScriptStruct* StructType = StructInstance.GetScriptStruct();
+	if (StructTypeRef.Get() != StructType)
+	{
+		StructTypeRef.Reset(StructType);
+	}
+}
+
 bool FMoverUserDefinedDataStruct::ShouldReconcile(const FMoverDataStructBase& AuthorityState) const
 {
 	const FMoverUserDefinedDataStruct& TypedAuthority = static_cast<const FMoverUserDefinedDataStruct&>(AuthorityState);
@@ -33,6 +66,7 @@ void FMoverUserDefinedDataStruct::Interpolate(const FMoverDataStructBase& From, 
 
 	// copy all properties from the heaviest-weighted source rather than interpolate
 	StructInstance = PrimarySource.StructInstance;
+	UpdateStructTypeRef();
 }
 
 void FMoverUserDefinedDataStruct::Merge(const FMoverDataStructBase& From)
@@ -77,6 +111,7 @@ bool FMoverUserDefinedDataStruct::NetSerialize(FArchive& Ar, UPackageMap* Map, b
 
 	Super::NetSerialize(Ar, Map, bSuperSuccess);
 	bStructSuccess = NetSerializeUserDefinedStruct(StructInstance, Ar, Map);
+	UpdateStructTypeRef();	// loading may have retyped the instance
 
 	bOutSuccess = bSuperSuccess && bStructSuccess;
 

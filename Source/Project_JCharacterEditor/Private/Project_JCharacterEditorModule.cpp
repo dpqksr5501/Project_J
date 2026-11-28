@@ -481,8 +481,10 @@ class FProject_JCharacterEditorModule final : public IModuleInterface
 public:
 	virtual void StartupModule() override
 	{
-#if PLATFORM_WINDOWS
+#if PLATFORM_WINDOWS || WITH_DEV_AUTOMATION_TESTS
 		const FEngineVersion& Version = FEngineVersion::Current();
+#endif
+#if PLATFORM_WINDOWS
 		if (!IsRunningCommandlet() && Version.GetMajor() == 5 && Version.GetMinor() == 8 && Version.GetPatch() == 4)
 		{
 			EditorExitHandle = FCoreDelegates::OnExit.AddLambda([]()
@@ -497,11 +499,9 @@ public:
 		}
 #endif
 #if WITH_DEV_AUTOMATION_TESTS
-		// UE 5.8.3/5.8.4's three Core formatting tests compare localized FText output
-		// with English literals. Run their source-language contract in isolation;
-		// never skip assertions, suppress errors, or change the user's settings.
-		if (FEngineVersion::Current().GetMajor()==5 && FEngineVersion::Current().GetMinor()==8 &&
-			(FEngineVersion::Current().GetPatch()==3 || FEngineVersion::Current().GetPatch()==4))
+		// These Core tests still compare localized FText output with English literals in 5.9.
+		const bool bAffected58 = Version.GetMinor() == 8 && (Version.GetPatch() == 3 || Version.GetPatch() == 4);
+		if (Version.GetMajor() == 5 && (bAffected58 || Version.GetMinor() == 9))
 		{
 			auto& Tests=FAutomationTestFramework::Get();
 			TestCultureStartHandle=Tests.OnTestStartEvent.AddRaw(this,&FProject_JCharacterEditorModule::BeginEngineFormatTest);

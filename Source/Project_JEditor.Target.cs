@@ -8,8 +8,8 @@ public class Project_JEditorTarget : TargetRules
 	public Project_JEditorTarget(TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Editor;
-		DefaultBuildSettings = BuildSettingsVersion.V7;
-		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_8;
+		DefaultBuildSettings = BuildSettingsVersion.V8;
+		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_9;
 		// Keep non-unity explicit here: installed UE 5.8 forces Default
 		// intermediates, while -DisableUnity queries a mismatched NU cache.
 		bUseUnityBuild = false;

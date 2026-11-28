@@ -1,6 +1,6 @@
 param(
  [Parameter(Mandatory=$true)][string]$RunRoot,
- [string]$EngineRoot='C:/Program Files/Epic Games/UE_5.8',
+ [string]$EngineRoot='C:/Program Files/Epic Games/UE_5.9',
  [ValidatePattern('^[A-Za-z0-9_-]+\.utrace$')][string]$TraceFileName='Run.utrace'
 )
 $ErrorActionPreference='Stop'

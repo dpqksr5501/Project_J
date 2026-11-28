@@ -986,6 +986,11 @@ protected:
 	MOVER_API void StopDrivenMontage(const FMoverSimDrivenMontageEntry& LastEntry, UAnimInstance* AnimInstance);
 
 private:
+	// Drain any simulation events accumulated on the simulation this tick and dispatch them on the game thread.
+	// Called only from FinalizeFrame / FinalizeUnchangedFrame on the synchronous (NetworkPrediction / Standalone)
+	// backends. The asynchronous (ChaosMover) backend instead routes events through SetSimulationOutput -> DispatchSimulationEvents.
+	void DispatchPendingSimulationEvents();
+
 	// Whether to override the up direction with a fixed value instead of using gravity to deduce it
 	UPROPERTY(EditDefaultsOnly, Category="Mover|UpDirection")
 	bool bHasUpDirectionOverride = false;

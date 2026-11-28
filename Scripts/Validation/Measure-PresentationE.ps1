@@ -16,7 +16,7 @@ $out="$root/Saved/Validation/GroupE_20260910/$RunName"
 if(Test-Path -LiteralPath $out){throw 'Preserve previous run; use a unique name.'}
 New-Item -ItemType Directory -Path $out | Out-Null
 $cooked=![string]::IsNullOrWhiteSpace($Executable)
-$exe=if($cooked){(Resolve-Path -LiteralPath $Executable).Path}else{'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe'}
+$exe=if($cooked){(Resolve-Path -LiteralPath $Executable).Path}else{'C:/Program Files/Epic Games/UE_5.9/Engine/Binaries/Win64/UnrealEditor-Cmd.exe'}
 if(!$UserDirectory){$UserDirectory="$out/UserCache"}
 $reused=Test-Path -LiteralPath $UserDirectory
 New-Item -ItemType Directory -Path $UserDirectory -Force | Out-Null

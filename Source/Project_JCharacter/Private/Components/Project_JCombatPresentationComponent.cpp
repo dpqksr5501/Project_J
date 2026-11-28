@@ -13,7 +13,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraWorldManager.h"
 #include "NiagaraComponentPool.h"
-#include "Particles/ParticleSystemComponent.h"
+#include "NiagaraComponentPoolMethodEnum.h"
 #include "Project_JBaseCharacter.h"
 #include "Project_JPlayerCharacter.h"
 #include "Components/SkeletalMeshComponent.h"

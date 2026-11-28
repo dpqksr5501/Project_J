@@ -45,7 +45,7 @@ if($Mode -eq 'Cook'){
   if($absoluteRoots.Count){$arguments+="-NeverCookDir=$($absoluteRoots -join '+')"}
  }
  $arguments|ConvertTo-Json|Set-Content "$out/arguments.json" -Encoding utf8
- $process=Start-Process 'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe' -ArgumentList (($arguments|ForEach-Object {'"'+$_+'"'}) -join ' ') -WindowStyle Hidden -PassThru
+ $process=Start-Process 'C:/Program Files/Epic Games/UE_5.9/Engine/Binaries/Win64/UnrealEditor-Cmd.exe' -ArgumentList (($arguments|ForEach-Object {'"'+$_+'"'}) -join ' ') -WindowStyle Hidden -PassThru
  $nativeHandle=$process.Handle
  $process.WaitForExit()
  [ordered]@{exitCode=$process.ExitCode;hasExited=$process.HasExited;output=$scratch.CookDirectory;userDirectory=$scratch.UserDirectory;scratchRoot=$scratch.Root;scope='Windows explicit maps + configured AssetManager/AlwaysCook closure; declared validation inputs only, not transitive closure coverage; previous outputs preserved.';maps=$Maps;assetValidation=$null}|ConvertTo-Json|Set-Content "$out/process.json" -Encoding utf8
@@ -53,7 +53,7 @@ if($Mode -eq 'Cook'){
 }else{
  $arguments=@('BuildCookRun',"-project=$projectRoot/Project_J.uproject",'-noP4','-installed','-platform=Win64',"-clientconfig=$StageConfiguration",'-skipbuild','-skipcook','-nocompile','-nocompileuat',"-CookOutputDir=$CookDirectory",'-stage','-pak','-iostore','-package',"-stagingdirectory=$($scratch.PackageDirectory)",'-utf8output','-unattended','-nocleanstage')
  $arguments|ConvertTo-Json|Set-Content "$out/arguments.json" -Encoding utf8
- & 'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/ThirdParty/DotNet/10.0/win-x64/dotnet.exe' 'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/DotNET/AutomationTool/AutomationTool.dll' @arguments *> "$out/Stage.log"
+ & 'C:/Program Files/Epic Games/UE_5.9/Engine/Binaries/ThirdParty/DotNet/10.0/win-x64/dotnet.exe' 'C:/Program Files/Epic Games/UE_5.9/Engine/Binaries/DotNET/AutomationTool/AutomationTool.dll' @arguments *> "$out/Stage.log"
  $stageExit=$LASTEXITCODE
  [ordered]@{exitCode=$stageExit;configuration=$StageConfiguration;packageDirectory=$scratch.PackageDirectory;cookDirectory=$CookDirectory;scratchRoot=$scratch.Root;scope='Stage/package only: direct UBT and separate Cook; unique directory, prior stages preserved.';assetValidation=$null}|ConvertTo-Json|Set-Content "$out/process.json" -Encoding utf8
  if($stageExit -ne 0){throw 'Stage completed with failure; retain first error.'}

@@ -10,6 +10,8 @@
 #include "MoveLibrary/FloorQueryUtils.h"
 #include "MoveLibrary/MovementUtils.h"
 #include "DefaultMovementSet/Settings/CommonLegacyMovementSettings.h"
+#include "DefaultMovementSet/CharacterMoverSimulationTypes.h"
+#include "MoverSimulation.h"
 
 #include "DrawDebugHelpers.h"
 
@@ -233,7 +235,7 @@ void UAsyncFallingMode::SimulationTick_Implementation(const FSimulationTickParam
 		{
 			// Adjust height to float slightly above walkable floor
 			LocationInProgress = UGroundMovementUtils::TestMoveToKeepMinHeightAboveFloor(Params.MovingComps, LocationInProgress, RotationInProgress, CommonLegacySettings->MaxWalkSlopeCosine, IN OUT LandingFloor, IN OUT MoveRecord);
-			CaptureFinalState(StartingSyncState, LocationInProgress, RotationInProgress.Rotator(), LandingFloor, DeltaSeconds, DeltaSeconds * PctTimeApplied, ProposedMove.AngularVelocityDegrees, OutputSyncState, OutputState, IN OUT MoveRecord);
+			CaptureFinalState(StartingSyncState, LocationInProgress, RotationInProgress.Rotator(), LandingFloor, DeltaSeconds, DeltaSeconds * PctTimeApplied, ProposedMove.AngularVelocityDegrees, OutputSyncState, OutputState, IN OUT MoveRecord, Params.SimContext.Simulation, Params.TimeStep);
 			return;
 		}
 
@@ -270,7 +272,7 @@ void UAsyncFallingMode::SimulationTick_Implementation(const FSimulationTickParam
 		PctTimeApplied = 1.f;
 	}
 	
-	CaptureFinalState(StartingSyncState, LocationInProgress, RotationInProgress.Rotator(), LandingFloor, DeltaSeconds, DeltaSeconds* PctTimeApplied,ProposedMove.AngularVelocityDegrees, OutputSyncState, OutputState, MoveRecord);
+	CaptureFinalState(StartingSyncState, LocationInProgress, RotationInProgress.Rotator(), LandingFloor, DeltaSeconds, DeltaSeconds* PctTimeApplied,ProposedMove.AngularVelocityDegrees, OutputSyncState, OutputState, MoveRecord, Params.SimContext.Simulation, Params.TimeStep);
 }
 
 
@@ -292,8 +294,6 @@ void UAsyncFallingMode::OnUnregistered(const FMoverSimContext& SimContext)
 
 void UAsyncFallingMode::ProcessLanded(const FFloorCheckResult& FloorResult, FVector Location, FVector& Velocity, FRelativeBaseInfo& BaseInfo, FMoverTickEndData& TickEndData) const
 {
-	// TODO: Refactor landed events for async movement. For now, leave the immediate event, but listeners are limited in what they can do from a worker thread.
-
 	const UMoverComponent* MoverComp = GetMoverComponent();
 	UMoverBlackboard* SimBlackboard = MoverComp->GetSimBlackboard_Mutable();
 
@@ -327,15 +327,14 @@ void UAsyncFallingMode::ProcessLanded(const FFloorCheckResult& FloorResult, FVec
 
 	// This would also be a good spot for implementing some falling physics interactions (i.e. falling into a movable object and pushing it based off of this actors velocity)
 	
-	// if a new mode was set go ahead and switch to it after this tick and broadcast we landed
+	// if a new mode was set go ahead and switch to it after this tick
 	if (!NextMovementMode.IsNone())
 	{
 		TickEndData.MovementEndState.NextModeName = NextMovementMode;
-		OnLanded.Broadcast(NextMovementMode, FloorResult.HitResult);
 	}
 }
 
-void UAsyncFallingMode::CaptureFinalState(const FMoverDefaultSyncState* StartSyncState, const FVector FinalLocation, const FRotator FinalRotation, const FFloorCheckResult& FloorResult, float DeltaSeconds, float DeltaSecondsUsed, const FVector& AngularVelocityDegrees, FMoverDefaultSyncState& OutputSyncState, FMoverTickEndData& TickEndData, FMovementRecord& Record) const
+void UAsyncFallingMode::CaptureFinalState(const FMoverDefaultSyncState* StartSyncState, const FVector FinalLocation, const FRotator FinalRotation, const FFloorCheckResult& FloorResult, float DeltaSeconds, float DeltaSecondsUsed, const FVector& AngularVelocityDegrees, FMoverDefaultSyncState& OutputSyncState, FMoverTickEndData& TickEndData, FMovementRecord& Record, UMoverSimulation* Simulation, const FMoverTimeStep& TimeStep) const
 {
 	UMoverBlackboard* SimBlackboard = GetMoverComponent()->GetSimBlackboard_Mutable();
 
@@ -359,6 +358,12 @@ void UAsyncFallingMode::CaptureFinalState(const FMoverDefaultSyncState* StartSyn
 
 	FRelativeBaseInfo MovementBaseInfo;
 	ProcessLanded(FloorResult, FinalLocation, EffectiveVelocity, MovementBaseInfo, TickEndData);
+
+	// If ProcessLanded queued a transition to a new mode, the actor landed this tick so surface an event
+	if (Simulation && !TickEndData.MovementEndState.NextModeName.IsNone())
+	{
+		Simulation->AddEvent(MakeShared<FLandedEventData>(TimeStep, FloorResult.HitResult, TickEndData.MovementEndState.NextModeName));
+	}
 
 	if (MovementBaseInfo.HasRelativeInfo())
 	{

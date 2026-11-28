@@ -16,7 +16,7 @@ param(
     [switch]$ThinClient,
     [switch]$ServerTrace,
     [string]$GeneratorReportDirectory,
-    [string]$UnrealEditor = 'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+    [string]$UnrealEditor = 'C:/Program Files/Epic Games/UE_5.9/Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
 )
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path "$PSScriptRoot/../..").Path

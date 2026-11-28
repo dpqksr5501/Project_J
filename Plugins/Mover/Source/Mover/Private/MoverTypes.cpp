@@ -149,6 +149,11 @@ bool FMoverDataCollection::SerializeDebugData(FArchive& Ar)
 			{
 				FMoverDataStructBase* NewMoverData = AddDataByType(MoveDataStruct);
 				MoveDataStruct->SerializeBin(Ar, NewMoverData);
+				// SerializeBin skips the type's post-serialize step (FMoverUserDefinedDataStruct refreshes its type reference there)
+				if (UScriptStruct::ICppStructOps* StructOps = MoveDataStruct->GetCppStructOps(); StructOps && StructOps->HasPostSerialize())
+				{
+					StructOps->PostSerialize(Ar, NewMoverData);
+				}
 			}
 		}
 	}
@@ -415,7 +420,7 @@ FMoverDataStructBase* FMoverDataCollection::AddDataByType(const UScriptStruct* D
 		if (DataStructType->IsA<UUserDefinedStruct>())
 		{
 			NewDataInstance = CreateDataByType(FMoverUserDefinedDataStruct::StaticStruct());
-			static_cast<FMoverUserDefinedDataStruct*>(NewDataInstance.Get())->StructInstance.InitializeAs(DataStructType);
+			static_cast<FMoverUserDefinedDataStruct*>(NewDataInstance.Get())->InitializeAs(DataStructType);
 		}
 		else
 		{
@@ -646,7 +651,7 @@ DEFINE_FUNCTION(UMoverDataCollectionLibrary::execK2_AddDataToCollection)
 			if (SourceStructProp->Struct->IsA<UUserDefinedStruct>())
 			{
 				FMoverUserDefinedDataStruct UserDefinedDataWrapper;
-				UserDefinedDataWrapper.StructInstance.InitializeAs(SourceStructProp->Struct, (uint8*)SourceDataAsRawPtr);
+				UserDefinedDataWrapper.InitializeAs(SourceStructProp->Struct, (uint8*)SourceDataAsRawPtr);
 
 				TargetCollection.AddDataByCopy(&UserDefinedDataWrapper);
 			}

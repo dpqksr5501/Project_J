@@ -14,6 +14,7 @@
 class UMoverBlackboard;
 struct FLayeredMoveInstance;
 struct FMoverSyncState;
+struct FMoverSimulationEventData;
 
 /**
 * WIP Base class for a Mover simulation.
@@ -102,6 +103,20 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Mover)
 	virtual void AttemptTeleport(const FMoverTimeStep& TimeStep, const FTransform& TargetTransform, bool bUseActorRotation, FMoverSyncState& OutputState) {}
 
+	// -------------------------------------------------------------------------
+	// Simulation event system. Events are accumulated during a simulation tick
+	// and drained by backends for later game-thread dispatch.
+	// -------------------------------------------------------------------------
+
+	/** Add a simulation event. Calls ProcessSimulationEvent for immediate handling, then stores for later GT dispatch. */
+	UE_API void AddEvent(TSharedPtr<FMoverSimulationEventData> Event);
+
+	/** Read access to accumulated events. Typically used by derived classes for filtering before drain. */
+	UE_API const TArray<TSharedPtr<FMoverSimulationEventData>>& GetEvents() const;
+
+	/** Move all accumulated events out and clear the internal list. Call at end of sim tick to drain into output data. */
+	UE_API TArray<TSharedPtr<FMoverSimulationEventData>> ConsumeEvents();
+
 
 protected:
 	UPROPERTY(Transient)
@@ -111,6 +126,9 @@ protected:
 	TObjectPtr<URollbackBlackboard> RollbackBlackboard = nullptr;
 
 	FRollbackBlackboardSimWrapper RollbackBlackboardSimWrapper;
+
+	/** Override to react to simulation events immediately when they are added (e.g. handling mode changes on the sim thread). */
+	virtual void ProcessSimulationEvent(const FMoverSimulationEventData& EventData) {}
 
 // TODO: These friend clases are temporary until the control flow changes to include a Simulation object consistently
 friend class UMoverComponent;
@@ -127,6 +145,9 @@ private:
 
 	/** Instanced layered moves staged by the GT (via MakeAndQueueLayeredMove), consumed each tick. */
 	TArray<TSharedPtr<FLayeredMoveInstance>> QueuedLayeredMoveInstances;
+
+	/** Events accumulated during the current simulation tick. Drained via ConsumeEvents() at end of tick. */
+	TArray<TSharedPtr<FMoverSimulationEventData>> SimEvents;
 };
 
 #undef UE_API

@@ -1,6 +1,6 @@
 param(
  [Parameter(Mandatory=$true)][string]$RunRoot,
- [string]$EngineRoot='C:/Program Files/Epic Games/UE_5.8'
+ [string]$EngineRoot='C:/Program Files/Epic Games/UE_5.9'
 )
 $ErrorActionPreference='Stop'
 if(@(Get-Process UnrealEditor*,Project_J,UnrealBuildTool,dotnet,LiveCoding*,MSBuild,ShaderCompileWorker,UnrealInsights -ErrorAction SilentlyContinue).Count){throw 'Wait for engine/analysis completion.'}

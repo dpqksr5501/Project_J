@@ -13,7 +13,7 @@ New-Item -ItemType Directory -Path $out|Out-Null
 # comparable with earlier NullRHI captures; retain the exact test and count contract.
 $arguments=@("$projectRoot/Project_J.uproject",'-RenderOffscreen','-unattended','-nosound','-NoLiveCoding','-NoDDCCleanup','-nop4',"-UserDir=$($scratch.UserDirectory)",'-SaveToUserDir',"-ABSLOG=$out/Run.log", "-ReportExportPath=$out", "-ProjectJNotifyOutput=$out/NotifyLifecycle.json",'-trace=cpu,frame,region,counters',"-tracefile=$out/CPU.utrace",'-statnamedevents','-TestExit=Automation Test Queue Empty','-ExecCmds=Automation RunTests ProjectJ.Animation.SharedNotifyLifecycle; Quit')
 $arguments|ConvertTo-Json|Set-Content "$out/arguments.json" -Encoding utf8
-$process=Start-Process 'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe' -ArgumentList (($arguments|ForEach-Object {'"'+$_+'"'}) -join ' ') -WindowStyle Hidden -PassThru
+$process=Start-Process 'C:/Program Files/Epic Games/UE_5.9/Engine/Binaries/Win64/UnrealEditor-Cmd.exe' -ArgumentList (($arguments|ForEach-Object {'"'+$_+'"'}) -join ' ') -WindowStyle Hidden -PassThru
 $nativeHandle=$process.Handle; $process.WaitForExit()
 [ordered]@{exitCode=$process.ExitCode;hasExited=$process.HasExited;scratchRoot=$scratch.Root;userDirectory=$scratch.UserDirectory;rendering='RHI/RenderOffscreen';comparisonScope='Physical visual notify lifetime validation; execution conditions changed from older NullRHI runs, no cross-mode timing comparison.'}|ConvertTo-Json|Set-Content "$out/process.json" -Encoding utf8
 if($null -eq $process.ExitCode -or $process.ExitCode -ne 0 -or !(Test-Path "$out/NotifyLifecycle.json")){throw 'Notify fixture failed; retain first error.'}

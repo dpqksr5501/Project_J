@@ -66,6 +66,7 @@ public:
 	UE_API virtual bool WritePresentationSyncState(const FMoverSyncState& SyncStateToWrite) override;
 	UE_API virtual bool ReadPrevPresentationSyncState(FMoverSyncState& OutSyncState) override;
 	UE_API virtual bool WritePrevPresentationSyncState(const FMoverSyncState& SyncStateToWrite) override;
+	UE_API virtual void ResetSimulation() override;
 #if WITH_EDITOR
 	UE_API virtual EDataValidationResult ValidateData(FDataValidationContext& Context, const UMoverComponent& ValidationMoverComp) const override;
 #endif
@@ -77,7 +78,6 @@ public:
 	// UObject interface
 	UE_API void InitializeComponent() override;
 	UE_API void UninitializeComponent() override;
-	UE_API void OnRegister() override;
 	UE_API void RegisterComponentTickFunctions(bool bRegister) override;
 	// End UObject interface
 
@@ -89,11 +89,8 @@ public:
 public:
 	UE_API UMoverNetworkPredictionLiaisonComponent();
 
-
-
 protected:
-	friend class UMoverComponent;
-	void ResetSimulation();
+
 	void SetupSimulation();
 
 	TObjectPtr<UMoverComponent> MoverComp;	// the component that we're in charge of driving

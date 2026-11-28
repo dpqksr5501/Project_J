@@ -209,29 +209,41 @@ void URollbackBlackboard::EndRollback()
 	InRollbackThreadId = 0;
 }
 
-void URollbackBlackboard::BeginPredictionFrame(const FMoverTimeStep& PendingTimeStep)
+void URollbackBlackboard::BeginPrediction()
 {
 	check(BufferFlags & ERollbackBufferFlags::Prediction);
-	check(!bIsPredictionInProgress || InPredictionThreadId == FPlatformTLS::GetCurrentThreadId());
-	
-	if (!bIsPredictionInProgress)
+	check(InPredictionThreadId != FPlatformTLS::GetCurrentThreadId()); // if we're trying to re-enter from the same thread, we may wait forever so catch any asymmetric Begin*** calls
+
+	PredictionSeriesLock.WriteLock();
+
+	InPredictionThreadId = FPlatformTLS::GetCurrentThreadId();
+}
+
+void URollbackBlackboard::BeginPredictionFrame(const FMoverTimeStep& PendingTimeStep)
+{
+	if (!ensureMsgf(IsInPredictionThread(), TEXT("Call BeginPrediction before iterating any BeginPredictionFrame calls")))
 	{
-		bIsPredictionInProgress = true;
-		InPredictionThreadId = FPlatformTLS::GetCurrentThreadId();
+		return;
 	}
+
+	// NOTE: This function does nothing now, but exists as a placeholder for any future functionality
+	// we might need for parity with the non-predictive flow
 }
 
 void URollbackBlackboard::EndPrediction()
 {
-	check(((BufferFlags & ERollbackBufferFlags::Prediction) == ERollbackBufferFlags::Prediction) && bIsPredictionInProgress && IsInPredictionThread());
-
-	bIsPredictionInProgress = false;
-	InPredictionThreadId = 0;
+	if (!ensureMsgf(IsInPredictionThread(), TEXT("Call BeginPrediction before EndPrediction for symmetry")))
+	{
+		return;
+	}
 
 	for (const TPair<FName, TUniquePtr<BlackboardEntryBase>>& KVP : EntryMap)
 	{
 		KVP.Value->InvalidatePredictiveState();
 	}
+
+	InPredictionThreadId = 0;
+	PredictionSeriesLock.WriteUnlock();
 }
 
 bool URollbackBlackboard::IsInSimulationThread() const

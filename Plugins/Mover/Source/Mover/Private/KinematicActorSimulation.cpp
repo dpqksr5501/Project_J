@@ -55,8 +55,7 @@ void UKinematicActorSimulation::Uninit()
 {
 	if (IsValid(ModeFSM) && !ModeFSM->HasAnyFlags(RF_BeginDestroyed | RF_FinishDestroyed))
 	{
-		ModeFSM->ClearAllMovementModes();
-		ModeFSM->ClearAllGlobalTransitions();
+		ModeFSM->Uninit();
 	}
 
 	MoverComp = nullptr;
@@ -158,6 +157,9 @@ void UKinematicActorSimulation::RollbackToPriorState(const FMoverTimeStep& NewBa
 
 	bJustStartedResim = true;
 
+	// TODO (NPP resim dedup): SimEvents accumulated via AddEvent are not cleared here, so events emitted during the
+	// replayed ticks of a resim can be dispatched more than once at the next FinalizeFrame. See the matching TODO in
+	// UMoverComponent::DispatchPendingSimulationEvents; the fix is to mirror the ChaosMover ProcessedEvents/IsEqual dedup.
 	OnSimulationRolledBack(NewBaseTimeStep, SyncState, AuxState);
 }
 

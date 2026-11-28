@@ -30,7 +30,7 @@ param(
     [ValidateRange(0,200)][int]$PacketLag = 0,
     [ValidateRange(0,20)][int]$PacketLoss = 0,
     [int]$Port = 17871,
-    [string]$EngineRoot = 'C:/Program Files/Epic Games/UE_5.8',
+    [string]$EngineRoot = 'C:/Program Files/Epic Games/UE_5.9',
     [string]$Executable,
     [switch]$RenderedCrowd,
     [switch]$RenderedClientCSV,

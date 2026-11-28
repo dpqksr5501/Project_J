@@ -1,6 +1,6 @@
 # 기여 안내
 
-Project J는 개인 학습·기술 연구·포트폴리오를 위한 UE 5.8 C++ MMORPG 프로토타입이다. 작업 전 [프로젝트 맥락](Docs/Overview/ProjectContext.md), [작업 규칙](AGENTS.md), [변경 마감 기준](Docs/Maintenance/Change_Completion_Policy.md)을 확인한다.
+Project J는 개인 학습·기술 연구·포트폴리오를 위한 UE 5.9 Preview 2 C++ MMORPG 프로토타입이다. 작업 전 [프로젝트 맥락](Docs/Overview/ProjectContext.md), [작업 규칙](AGENTS.md), [변경 마감 기준](Docs/Maintenance/Change_Completion_Policy.md)을 확인한다.
 
 ## C++와 시스템 개선
 

@@ -4,7 +4,7 @@ param(
  [ValidateRange(0,20)][int]$PacketLoss=10,
  [ValidateRange(0,200)][int]$PacketLag=50,
  [ValidateRange(1024,65535)][int]$Port=17941,
- [string]$EngineRoot='C:/Program Files/Epic Games/UE_5.8',
+ [string]$EngineRoot='C:/Program Files/Epic Games/UE_5.9',
  [string]$Executable
 )
 $ErrorActionPreference='Stop'

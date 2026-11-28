@@ -7,7 +7,7 @@ param(
     [switch]$NotifyCounters,
     [switch]$NotifyLifecycle,
     [ValidatePattern('^[A-Za-z0-9_-]+$')][string]$OutputName = 'TraceExport',
-    [string]$EngineRoot = 'C:/Program Files/Epic Games/UE_5.8'
+    [string]$EngineRoot = 'C:/Program Files/Epic Games/UE_5.9'
 )
 $ErrorActionPreference = 'Stop'
 if (@(Get-Process UnrealEditor*,UnrealBuildTool,dotnet,LiveCoding*,MSBuild,ShaderCompileWorker,UnrealInsights -ErrorAction SilentlyContinue).Count) { throw 'Wait until engine and trace analysis processes finish.' }

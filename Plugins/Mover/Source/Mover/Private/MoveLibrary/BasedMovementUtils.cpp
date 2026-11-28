@@ -357,6 +357,33 @@ FRelativeBaseInfo UBasedMovementUtils::ApplyMovementBaseChange(UMoverComponent* 
 		const bool bSweep = true;	// we need this to be a sweeping movement in case the base movement pushes us into an obstacle... we need to get scraped off
 		FHitResult MoveHitResult;
 
+		// MOVECOMP_IgnoreBases only filters hits that share an IsBasedOnActor relationship with the moving actor; it does not
+		// cover sibling actors merely attached to the base (e.g. a wall parented to a moving platform). When bIgnoreBaseAttachedActors
+		// is set, register the base's owning actor in MoveIgnoreActors and switch the sweep to root-actor-aware filtering so the
+		// whole compound platform is ignored during this catch-up move.
+		UPrimitiveComponent* UpdatedPrimitive = Cast<UPrimitiveComponent>(UpdatedComponent);
+		AActor* BaseOwnerActor = nullptr;
+		if (UpdatedPrimitive && CurrentBaseInfo.MovementBase.IsValid())
+		{
+			if (const UCommonLegacyMovementSettings* CommonSettings = TargetMoverComp->FindSharedSettings<UCommonLegacyMovementSettings>();
+				CommonSettings && CommonSettings->bIgnoreBaseAttachedActors)
+			{
+				if (AActor* BaseOwner = CurrentBaseInfo.MovementBase->GetOwner())
+				{
+					UpdatedPrimitive->IgnoreActorWhenMoving(BaseOwner, true);
+					MoveComponentFlags |= MOVECOMP_CheckBlockingRootActorInIgnoreList;
+					BaseOwnerActor = BaseOwner;
+				}
+			}
+		}
+		ON_SCOPE_EXIT
+		{
+			if (BaseOwnerActor)
+			{
+				UpdatedPrimitive->IgnoreActorWhenMoving(BaseOwnerActor, false);
+			}
+		};
+
 		bool bDidMove = UMovementUtils::TryMoveUpdatedComponent_Internal(FMovingComponentSet(TargetMoverComp), WorldBaseMovementDelta, WorldTargetQuat, bSweep, MoveComponentFlags, &MoveHitResult, ETeleportType::None);
 
 		NewTransform = UpdatedComponent->GetComponentTransform();

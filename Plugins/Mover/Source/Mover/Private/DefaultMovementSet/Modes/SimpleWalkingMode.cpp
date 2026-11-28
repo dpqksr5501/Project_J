@@ -102,7 +102,7 @@ void USimpleWalkingMode::GenerateWalkMove_Implementation(FMoverTickStartData& St
 {
 	InOutVelocity = DesiredVelocity;
 
-	FQuat ToFacing = CurrentFacing.Inverse() * DesiredFacing;
+	FQuat ToFacing = (CurrentFacing.Inverse() * DesiredFacing).GetShortestArcWith(FQuat::Identity);
 	InOutAngularVelocityDegrees = DeltaSeconds > 0.0f ? FMath::RadiansToDegrees(ToFacing.ToRotationVector() / DeltaSeconds) : FVector::ZeroVector;
 }
 

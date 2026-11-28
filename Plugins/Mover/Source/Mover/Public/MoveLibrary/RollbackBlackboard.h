@@ -4,6 +4,7 @@
 
 #include "RollbackCircularBuffer.h"
 #include "MoverLog.h"
+#include "Misc/TransactionallySafeRWLock.h"
 #include "UObject/Interface.h"
 #include "UObject/Object.h"
 #include "Templates/SharedPointer.h"
@@ -455,7 +456,7 @@ private:
 	template<typename EntryT>
 	bool TrySet_Predictive(FName ObjName, const EntryT& Obj)
 	{
-		check(bIsPredictionInProgress && (InPredictionThreadId == FPlatformTLS::GetCurrentThreadId()));
+		check(InPredictionThreadId == FPlatformTLS::GetCurrentThreadId());
 
 		if (BlackboardEntry<EntryT>* Entry = static_cast<BlackboardEntry<EntryT>*>(FindEntry(ObjName)))
 		{
@@ -469,7 +470,7 @@ private:
 	template<typename EntryT>
 	bool TryGet_Predictive(FName ObjName, EntryT& OutFoundValue) const
 	{
-		check(bIsPredictionInProgress && (InPredictionThreadId == FPlatformTLS::GetCurrentThreadId()));
+		check(InPredictionThreadId == FPlatformTLS::GetCurrentThreadId());
 
 		if (BlackboardEntry<EntryT>* Entry = static_cast<BlackboardEntry<EntryT>*>(FindEntry(ObjName)))
 		{
@@ -482,7 +483,7 @@ private:
 	template<typename EntryT>
 	const EntryT* TryGetRef_Predictive(FName ObjName) const
 	{
-		check(bIsPredictionInProgress && (InPredictionThreadId == FPlatformTLS::GetCurrentThreadId()));
+		check(InPredictionThreadId == FPlatformTLS::GetCurrentThreadId());
 
 		if (BlackboardEntry<EntryT>* Entry = static_cast<BlackboardEntry<EntryT>*>(FindEntry(ObjName)))
 		{
@@ -515,8 +516,9 @@ public:	// Administration functions for keeping the blackboard in sync with the 
 	UE_API void BeginRollback(const FMoverTimeStep& NewBaseTimeStep);	// NewBaseTimeStep represents the current time and the PENDING step that's next to be resimulated
 	UE_API void EndRollback();
 
-	// BeginPredictionFrame/EndPrediction: this is for predictive simulation that is temporary and can't rollback. Note there may be multiple calls to BeginPredictionFrame before a single call to EndPrediction.
-	UE_API void BeginPredictionFrame(const FMoverTimeStep& PendingTimeStep);	// Called to start a new prediction OR continue a sequential frame
+	// BeginPrediction/BeginPredictionFrame/EndPrediction: this is for predictive simulation that is temporary and can't rollback. Call BeginPrediction before calling BeginPredictionFrame multiple times. Finish with a single call to EndPrediction.
+	UE_API void BeginPrediction(); // Called to start a new series of predicted frames, blocking if another thread is already predicting
+	UE_API void BeginPredictionFrame(const FMoverTimeStep& PendingTimeStep);	// Called to start each sequential predicted frame
 	UE_API void EndPrediction();	// Called at the end of ALL prediction frames
 
 private:
@@ -535,8 +537,9 @@ private:
 	bool bIsRollbackInProgress = false;
 	uint32 InRollbackThreadId = 0;
 
-	bool bIsPredictionInProgress = false;
-	uint32 InPredictionThreadId = 0;
+	mutable FCriticalSection PredictSectionLock;
+	mutable FTransactionallySafeRWLock PredictionSeriesLock;	// used to prevent multiple threads from predicting concurrently
+	std::atomic<uint32> InPredictionThreadId = 0;
 
 	EntryTimeStamp CurrentSimTimeStamp;	// this is the "committed" simulation time, and will lag behind InProgressSimTimeStamp while in the middle of a simulation frame
 	EntryTimeStamp InProgressSimTimeStamp;	// this is the sim time that's actively being used mid-simulation. It is only valid during a simulation step.

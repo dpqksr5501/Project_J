@@ -3,7 +3,7 @@ if (!(Get-Command Get-ProjectJSourceProvenance -ErrorAction SilentlyContinue) -o
  . "$PSScriptRoot/../Validation/Source-Provenance.ps1"
 }
 function Get-ProjectJAssetValidationEditorPath {
- 'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+ 'C:/Program Files/Epic Games/UE_5.9/Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
 }
 function Read-ProjectJValidationJson {
  param([Parameter(Mandatory)][string]$Path,[int]$MaxBytes=1048576)
